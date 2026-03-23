@@ -1,0 +1,91 @@
+{
+  "name": "nuxt-photo",
+  "version": "0.0.0",
+  "description": "Nuxt-first headless photo album, image, and lightbox module",
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "photo",
+    "image",
+    "gallery",
+    "album",
+    "lightbox"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git"
+  },
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo#readme",
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/module.d.mts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "workspaces": [
+    "playground"
+  ],
+  "scripts": {
+    "prepack": "nuxt-module-build build",
+    "dev": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground && nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
+    "verify": "npm run lint && npm run test && npm run test:types && npm run prepack",
+    "release": "npm run verify && changelogen --release && npm publish && git push --follow-tags",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^4.4.2",
+    "@vueuse/core": "^14.2.1"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^3.2.3",
+    "@nuxt/eslint-config": "^1.15.2",
+    "@nuxt/module-builder": "^1.0.2",
+    "@nuxt/schema": "^4.4.2",
+    "@nuxt/test-utils": "^4.0.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
+    "@types/node": "latest",
+    "changelogen": "^0.6.2",
+    "eslint": "^10.0.3",
+    "jsdom": "^25.0.1",
+    "nuxt": "^4.4.2",
+    "typescript": "~5.9.3",
+    "vue": "^3.5.30",
+    "vitest": "^4.1.0",
+    "vue-tsc": "^3.2.5"
+  },
+  "peerDependencies": {
+    "@nuxt/image": "^2.0.0",
+    "nuxt": "^4.4.2",
+    "vue": "^3.5.30"
+  },
+  "peerDependenciesMeta": {
+    "@nuxt/image": {
+      "optional": true
+    }
+  }
+}
