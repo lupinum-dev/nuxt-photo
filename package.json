@@ -79,13 +79,7 @@
     "vue-tsc": "^3.2.5"
   },
   "peerDependencies": {
-    "@nuxt/image": "^2.0.0",
     "nuxt": "^4.4.2",
     "vue": "^3.5.30"
-  },
-  "peerDependenciesMeta": {
-    "@nuxt/image": {
-      "optional": true
-    }
   }
 }
