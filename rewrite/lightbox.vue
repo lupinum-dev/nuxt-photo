@@ -83,7 +83,11 @@
                     :style="slideCellStyle"
                   >
                     <div class="slide-frame" :style="getSlideFrameStyle(view.photo)">
-                      <div class="slide-zoom" :style="getSlideZoomStyle(view)">
+                      <div
+                        class="slide-zoom"
+                        :ref="setSlideZoomRef(view.offset)"
+                        :style="getSlideZoomStyle(view)"
+                      >
                         <img
                           class="lightbox-image"
                           :src="view.photo.full"
@@ -245,6 +249,7 @@ const photos: Photo[] = [
 ]
 
 const thumbRefs = new Map<number, HTMLElement>()
+const slideZoomRefs = new Map<-1 | 0 | 1, HTMLElement>()
 const mediaAreaRef = ref<HTMLElement | null>(null)
 
 const activeIndex = ref(0)
@@ -339,6 +344,7 @@ const openDurationMs = 420
 const closeDurationMs = 380
 const slideDurationMs = 260
 const zoomDurationMs = 220
+const wheelZoomDurationMs = 120
 
 const imageLoadCache = new Map<string, Promise<void>>()
 
@@ -351,6 +357,22 @@ let lastTap:
       clientY: number
     }
   | null = null
+let lastWheelTime = 0
+
+const panzoomMotion = {
+  x: 0,
+  y: 0,
+  scale: 1,
+  targetX: 0,
+  targetY: 0,
+  targetScale: 1,
+  velocityX: 0,
+  velocityY: 0,
+  velocityScale: 0,
+  tension: 170,
+  friction: 17,
+  rafId: 0,
+}
 
 function setThumbRef(index: number) {
   return (value: Element | ComponentPublicInstance | null) => {
@@ -365,6 +387,29 @@ function setThumbRef(index: number) {
     } else {
       thumbRefs.delete(index)
     }
+  }
+}
+
+function setSlideZoomRef(offset: -1 | 0 | 1) {
+  return (value: Element | ComponentPublicInstance | null) => {
+    const element = value instanceof HTMLElement
+      ? value
+      : value && '$el' in value && value.$el instanceof HTMLElement
+        ? value.$el
+        : null
+
+    if (element instanceof HTMLElement) {
+      slideZoomRefs.set(offset, element)
+      if (offset === 0) {
+        applyActivePanzoomTransform()
+      }
+      else {
+        element.style.transform = 'translate3d(0px, 0px, 0) scale(1)'
+      }
+      return
+    }
+
+    slideZoomRefs.delete(offset)
   }
 }
 
@@ -599,8 +644,8 @@ function getTargetPanForZoom(targetZoom: number, clientPoint?: { x: number; y: n
   }
 
   const point = clientPoint ? getPointFromClient(clientPoint.x, clientPoint.y) : { x: 0, y: 0 }
-  const currentZoom = zoomState.value.current
-  const currentPan = panState.value
+  const currentZoom = panzoomMotion.scale
+  const currentPan = { x: panzoomMotion.x, y: panzoomMotion.y }
 
   const targetPan = {
     x: point.x - ((point.x - currentPan.x) / currentZoom) * targetZoom,
@@ -608,6 +653,111 @@ function getTargetPanForZoom(targetZoom: number, clientPoint?: { x: number; y: n
   }
 
   return clampPan(targetPan, targetZoom)
+}
+
+function applyActivePanzoomTransform() {
+  const activeZoomElement = slideZoomRefs.get(0)
+  if (!activeZoomElement) return
+
+  activeZoomElement.style.transform = `translate3d(${panzoomMotion.x}px, ${panzoomMotion.y}px, 0) scale(${panzoomMotion.scale})`
+}
+
+function stopPanzoomSpring() {
+  if (!panzoomMotion.rafId) return
+  cancelAnimationFrame(panzoomMotion.rafId)
+  panzoomMotion.rafId = 0
+}
+
+function syncPanzoomRefs(scale = panzoomMotion.scale, pan: PanState = { x: panzoomMotion.x, y: panzoomMotion.y }) {
+  zoomState.value = {
+    ...zoomState.value,
+    current: scale,
+  }
+  panState.value = { ...pan }
+}
+
+function setPanzoomImmediate(scale: number, pan: PanState, syncRefs = true) {
+  stopPanzoomSpring()
+
+  panzoomMotion.scale = scale
+  panzoomMotion.targetScale = scale
+  panzoomMotion.x = pan.x
+  panzoomMotion.y = pan.y
+  panzoomMotion.targetX = pan.x
+  panzoomMotion.targetY = pan.y
+  panzoomMotion.velocityScale = 0
+  panzoomMotion.velocityX = 0
+  panzoomMotion.velocityY = 0
+
+  applyActivePanzoomTransform()
+
+  if (syncRefs) {
+    syncPanzoomRefs(scale, pan)
+  }
+}
+
+function startPanzoomSpring(
+  targetScale: number,
+  targetPan: PanState,
+  options?: {
+    tension?: number
+    friction?: number
+  },
+) {
+  panzoomMotion.targetScale = targetScale
+  panzoomMotion.targetX = targetPan.x
+  panzoomMotion.targetY = targetPan.y
+  panzoomMotion.tension = options?.tension ?? 170
+  panzoomMotion.friction = options?.friction ?? 17
+
+  syncPanzoomRefs(targetScale, targetPan)
+
+  if (panzoomMotion.rafId) return
+
+  let lastTime = performance.now()
+
+  const step = (now: number) => {
+    const dt = Math.min(0.064, (now - lastTime) / 1000)
+    lastTime = now
+
+    const scaleDistance = panzoomMotion.targetScale - panzoomMotion.scale
+    const xDistance = panzoomMotion.targetX - panzoomMotion.x
+    const yDistance = panzoomMotion.targetY - panzoomMotion.y
+
+    const spring = panzoomMotion.tension
+    const damping = panzoomMotion.friction
+
+    panzoomMotion.velocityScale += (scaleDistance * spring - panzoomMotion.velocityScale * damping) * dt
+    panzoomMotion.velocityX += (xDistance * spring - panzoomMotion.velocityX * damping) * dt
+    panzoomMotion.velocityY += (yDistance * spring - panzoomMotion.velocityY * damping) * dt
+
+    panzoomMotion.scale += panzoomMotion.velocityScale * dt
+    panzoomMotion.x += panzoomMotion.velocityX * dt
+    panzoomMotion.y += panzoomMotion.velocityY * dt
+
+    applyActivePanzoomTransform()
+
+    const done = Math.abs(scaleDistance) < 0.001
+      && Math.abs(xDistance) < 0.35
+      && Math.abs(yDistance) < 0.35
+      && Math.abs(panzoomMotion.velocityScale) < 0.001
+      && Math.abs(panzoomMotion.velocityX) < 0.08
+      && Math.abs(panzoomMotion.velocityY) < 0.08
+
+    if (done) {
+      panzoomMotion.scale = panzoomMotion.targetScale
+      panzoomMotion.x = panzoomMotion.targetX
+      panzoomMotion.y = panzoomMotion.targetY
+      applyActivePanzoomTransform()
+      panzoomMotion.rafId = 0
+      syncPanzoomRefs()
+      return
+    }
+
+    panzoomMotion.rafId = requestAnimationFrame(step)
+  }
+
+  panzoomMotion.rafId = requestAnimationFrame(step)
 }
 
 async function animateNumber(
@@ -662,6 +812,38 @@ async function animatePanZoom(targetZoom: number, targetPan: PanState, duration 
   panState.value = clampPan(targetPan, targetZoom)
 }
 
+function normalizeWheelZoomFactor(event: WheelEvent) {
+  const direction = Math.max(Math.min(-event.deltaY, 1), -1)
+  if (direction === 0) return 1
+  return direction > 0 ? 1.5 : 0.5
+}
+
+function getWheelTargetZoom(event: WheelEvent) {
+  const zoomFactor = normalizeWheelZoomFactor(event)
+
+  return Math.min(
+    zoomState.value.max,
+    Math.max(zoomState.value.fit, panzoomMotion.scale * zoomFactor),
+  )
+}
+
+function applyWheelZoom(event: WheelEvent) {
+  if (!zoomAllowed.value) return
+
+  const targetZoom = getWheelTargetZoom(event)
+  if (targetZoom === panzoomMotion.scale) return
+
+  const targetPan = getTargetPanForZoom(targetZoom, {
+    x: event.clientX,
+    y: event.clientY,
+  })
+
+  startPanzoomSpring(targetZoom, targetPan, {
+    tension: 170,
+    friction: 17,
+  })
+}
+
 async function animateSlideTo(targetOffset: number, duration = slideDurationMs) {
   const start = slideDragOffset.value
   await animateNumber(start, targetOffset, duration, (value) => {
@@ -680,7 +862,13 @@ function refreshZoomState(reset = false) {
   const next = computeZoomLevels(currentPhoto.value)
   const current = reset
     ? next.fit
-    : Math.min(next.max, Math.max(next.fit, zoomState.value.current))
+    : Math.min(next.max, Math.max(next.fit, panzoomMotion.targetScale))
+  const nextPan = current <= next.fit + 0.01
+    ? { x: 0, y: 0 }
+    : clampPan({
+        x: panzoomMotion.targetX,
+        y: panzoomMotion.targetY,
+      }, current, currentPhoto.value)
 
   zoomState.value = {
     fit: next.fit,
@@ -688,10 +876,8 @@ function refreshZoomState(reset = false) {
     max: next.max,
     current,
   }
-
-  panState.value = current <= next.fit + 0.01
-    ? { x: 0, y: 0 }
-    : clampPan(panState.value, current, currentPhoto.value)
+  panState.value = nextPan
+  setPanzoomImmediate(current, nextPan, false)
 }
 
 function resetGestureState() {
@@ -826,24 +1012,20 @@ function getSlideFrameStyle(photo: Photo): CSSProperties {
 }
 
 function getSlideZoomStyle(view: SlideView): CSSProperties {
-  const scale = view.isActive ? zoomState.value.current : 1
-  const panX = view.isActive ? panState.value.x : 0
-  const panY = view.isActive ? panState.value.y : 0
-
   return {
-    transform: `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`,
+    transform: view.isActive ? undefined : 'translate3d(0px, 0px, 0) scale(1)',
   }
 }
 
 async function toggleZoom(clientPoint?: { x: number; y: number }) {
-  if (!lightboxMounted.value || animating.value || !zoomAllowed.value) return
+  if (!lightboxMounted.value || ghostVisible.value || !zoomAllowed.value) return
 
   const targetZoom = isZoomedIn.value ? zoomState.value.fit : zoomState.value.secondary
   const targetPan = getTargetPanForZoom(targetZoom, clientPoint)
-
-  animating.value = true
-  await animatePanZoom(targetZoom, targetPan)
-  animating.value = false
+  startPanzoomSpring(targetZoom, targetPan, {
+    tension: 170,
+    friction: 17,
+  })
 }
 
 async function open(index: number) {
@@ -929,8 +1111,7 @@ async function close() {
   resetGestureState()
 
   if (isZoomedIn.value || closeDragY.value) {
-    zoomState.value = { ...zoomState.value, current: zoomState.value.fit }
-    panState.value = { x: 0, y: 0 }
+    setPanzoomImmediate(zoomState.value.fit, { x: 0, y: 0 })
     closeDragY.value = 0
     await nextFrame()
   }
@@ -1052,7 +1233,10 @@ function onMediaPointerDown(event: PointerEvent) {
     velocityX: 0,
     velocityY: 0,
     moved: false,
-    startPan: { ...panState.value },
+    startPan: {
+      x: panzoomMotion.x,
+      y: panzoomMotion.y,
+    },
   }
 
   gesturePhase.value = 'idle'
@@ -1096,7 +1280,11 @@ function onMediaPointerMove(event: PointerEvent) {
       y: pointerSession.startPan.y + deltaY,
     }
 
-    panState.value = clampPanWithResistance(targetPan)
+    setPanzoomImmediate(
+      panzoomMotion.scale,
+      clampPanWithResistance(targetPan, panzoomMotion.scale),
+      false,
+    )
   }
 }
 
@@ -1134,7 +1322,17 @@ async function onMediaPointerUp(event: PointerEvent) {
   }
 
   if (mode === 'pan') {
-    panState.value = clampPan(panState.value)
+    const clampedPan = clampPan(
+      {
+        x: panzoomMotion.x,
+        y: panzoomMotion.y,
+      },
+      panzoomMotion.scale,
+    )
+    startPanzoomSpring(panzoomMotion.scale, clampedPan, {
+      tension: 170,
+      friction: 17,
+    })
   }
 }
 
@@ -1142,7 +1340,16 @@ function onMediaPointerCancel(event: PointerEvent) {
   if (!pointerSession || event.pointerId !== pointerSession.id) return
 
   resetGestureState()
-  panState.value = clampPan(panState.value)
+  setPanzoomImmediate(
+    panzoomMotion.scale,
+    clampPan(
+      {
+        x: panzoomMotion.x,
+        y: panzoomMotion.y,
+      },
+      panzoomMotion.scale,
+    ),
+  )
   closeDragY.value = 0
   slideDragOffset.value = 0
 }
@@ -1150,32 +1357,19 @@ function onMediaPointerCancel(event: PointerEvent) {
 function onWheel(event: WheelEvent) {
   if (!lightboxMounted.value || animating.value) return
 
-  const hasModifier = event.ctrlKey || event.metaKey || event.altKey
+  const now = Date.now()
+  const isTrackpad = Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
+  const throttleMs = isTrackpad ? 200 : 45
 
-  if (hasModifier && zoomAllowed.value) {
+  if (now - lastWheelTime < throttleMs) {
     event.preventDefault()
-
-    const zoomFactor = event.deltaY < 0 ? 1.12 : 0.88
-    const targetZoom = Math.min(
-      zoomState.value.max,
-      Math.max(zoomState.value.fit, zoomState.value.current * zoomFactor),
-    )
-    const targetPan = getTargetPanForZoom(targetZoom, {
-      x: event.clientX,
-      y: event.clientY,
-    })
-
-    void animatePanZoom(targetZoom, targetPan, 120)
     return
   }
 
-  if (isZoomedIn.value) {
-    event.preventDefault()
-    panState.value = clampPan({
-      x: panState.value.x - event.deltaX,
-      y: panState.value.y - event.deltaY,
-    })
-  }
+  lastWheelTime = now
+
+  event.preventDefault()
+  applyWheelZoom(event)
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -1193,7 +1387,16 @@ function onKeydown(event: KeyboardEvent) {
 
   if (event.key === 'ArrowRight') {
     if (isZoomedIn.value) {
-      panState.value = clampPan({ x: panState.value.x - 80, y: panState.value.y })
+      setPanzoomImmediate(
+        panzoomMotion.scale,
+        clampPan(
+          {
+            x: panzoomMotion.x - 80,
+            y: panzoomMotion.y,
+          },
+          panzoomMotion.scale,
+        ),
+      )
     } else {
       void commitSlideChange(1)
     }
@@ -1201,7 +1404,16 @@ function onKeydown(event: KeyboardEvent) {
 
   if (event.key === 'ArrowLeft') {
     if (isZoomedIn.value) {
-      panState.value = clampPan({ x: panState.value.x + 80, y: panState.value.y })
+      setPanzoomImmediate(
+        panzoomMotion.scale,
+        clampPan(
+          {
+            x: panzoomMotion.x + 80,
+            y: panzoomMotion.y,
+          },
+          panzoomMotion.scale,
+        ),
+      )
     } else {
       void commitSlideChange(-1)
     }
