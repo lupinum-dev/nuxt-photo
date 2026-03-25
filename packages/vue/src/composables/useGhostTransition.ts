@@ -1,0 +1,403 @@
+import { computed, nextTick, ref, type ComponentPublicInstance, type ComputedRef, type CSSProperties, type Ref } from 'vue'
+import {
+  flipTransform,
+  isUsableRect,
+  makeGhostBaseStyle,
+  ensureImageLoaded,
+  nextFrame,
+  wait,
+  animateNumber,
+  easeOutCubic,
+  shouldUseFlip,
+  type AreaMetrics,
+  type PanState,
+  type PhotoItem,
+  type DebugLogger,
+  type TransitionModeConfig,
+} from '@nuxt-photo/core'
+
+const openDurationMs = 420
+const closeDurationMs = 380
+const fadeDurationMs = 200
+
+export type TransitionCallbacks = {
+  syncGeometry: () => void
+  refreshZoomState: (reset: boolean) => void
+  resetGestureState: () => void
+  cancelTapTimer: () => void
+}
+
+export type CloseCallbacks = TransitionCallbacks & {
+  setPanzoomImmediate: (scale: number, pan: PanState) => void
+  isZoomedIn: ComputedRef<boolean>
+}
+
+export function useGhostTransition(
+  _photos: PhotoItem[],
+  activeIndex: Ref<number>,
+  currentPhoto: ComputedRef<PhotoItem>,
+  areaMetrics: Ref<AreaMetrics | null>,
+  getAbsoluteFrameRect: (photo: PhotoItem) => { left: number; top: number; width: number; height: number } | null,
+  debug?: DebugLogger,
+  transitionConfig?: TransitionModeConfig,
+) {
+  const lightboxMounted = ref(false)
+  const animating = ref(false)
+  const ghostVisible = ref(false)
+  const ghostSrc = ref('')
+  const ghostStyle = ref<CSSProperties>({})
+  const hiddenThumbIndex = ref<number | null>(null)
+
+  const overlayOpacity = ref(0)
+  const mediaOpacity = ref(0)
+  const chromeOpacity = ref(0)
+  const uiVisible = ref(true)
+
+  const closeDragY = ref(0)
+
+  const thumbRefs = new Map<number, HTMLElement>()
+
+  const controlsDisabled = computed(() => animating.value || ghostVisible.value)
+
+  const chromeStyle = computed<CSSProperties>(() => ({
+    opacity: String(uiVisible.value ? chromeOpacity.value : 0),
+    pointerEvents: uiVisible.value && chromeOpacity.value > 0.05 ? 'auto' : 'none',
+  }))
+
+  const closeDragRatio = computed(() => {
+    const height = areaMetrics.value?.height || 1
+    return Math.min(0.75, Math.abs(closeDragY.value) / Math.max(240, height * 0.85))
+  })
+
+  const backdropStyle = computed<CSSProperties>(() => ({
+    opacity: String(overlayOpacity.value * (1 - closeDragRatio.value)),
+  }))
+
+  const lightboxUiStyle = computed<CSSProperties>(() => ({
+    transform: `translate3d(0, ${closeDragY.value}px, 0) scale(${1 - closeDragRatio.value * 0.05})`,
+  }))
+
+  function setThumbRef(index: number) {
+    return (value: Element | ComponentPublicInstance | null) => {
+      const el = value instanceof HTMLElement
+        ? value
+        : value && '$el' in value && value.$el instanceof HTMLElement
+          ? value.$el
+          : null
+
+      if (el instanceof HTMLElement) {
+        thumbRefs.set(index, el)
+      } else {
+        thumbRefs.delete(index)
+      }
+    }
+  }
+
+  function resetOpenState() {
+    ghostVisible.value = false
+    chromeOpacity.value = 1
+    animating.value = false
+  }
+
+  function resetCloseState() {
+    ghostVisible.value = false
+    ghostSrc.value = ''
+    hiddenThumbIndex.value = null
+    closeDragY.value = 0
+    overlayOpacity.value = 0
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+    animating.value = false
+    lightboxMounted.value = false
+  }
+
+  function isNoneMode(): boolean {
+    return transitionConfig?.mode === 'none'
+  }
+
+  async function doInstantOpen(photo: PhotoItem) {
+    debug?.log('transitions', 'open: INSTANT (mode=none)')
+    overlayOpacity.value = 1
+    await ensureImageLoaded(photo.src)
+    mediaOpacity.value = 1
+    chromeOpacity.value = 1
+  }
+
+  async function doFadeOpen(photo: PhotoItem) {
+    debug?.log('transitions', 'open: using smooth FADE')
+    animating.value = true
+
+    await animateNumber(0, 1, fadeDurationMs, (v) => {
+      overlayOpacity.value = v
+    }, easeOutCubic)
+
+    await ensureImageLoaded(photo.src)
+
+    mediaOpacity.value = 1
+    chromeOpacity.value = 1
+    animating.value = false
+  }
+
+  async function doFlipOpen(index: number, photo: PhotoItem, fromRect: DOMRect, toRect: { left: number; top: number; width: number; height: number }) {
+    debug?.log('transitions', 'open: using FLIP animation')
+
+    animating.value = true
+    hiddenThumbIndex.value = index
+
+    const thumbSrc = photo.thumbSrc || photo.src
+    ghostSrc.value = thumbSrc
+    ghostVisible.value = true
+    ghostStyle.value = {
+      position: 'fixed',
+      zIndex: '60',
+      objectFit: 'cover',
+      transformOrigin: 'top left',
+      pointerEvents: 'none',
+      willChange: 'transform',
+      borderRadius: '18px',
+      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+      transition:
+        `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      ...makeGhostBaseStyle(toRect),
+      transform: flipTransform(fromRect, toRect),
+    }
+
+    await nextFrame()
+
+    overlayOpacity.value = 1
+    ghostStyle.value = {
+      ...ghostStyle.value,
+      transform: 'translate(0px, 0px) scale(1, 1)',
+      borderRadius: '24px',
+      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+    }
+
+    await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.src)])
+
+    mediaOpacity.value = 1
+    await nextFrame()
+    resetOpenState()
+  }
+
+  async function open(index: number, callbacks: TransitionCallbacks) {
+    if (animating.value) return
+
+    debug?.group('transitions', `open(index=${index})`)
+
+    callbacks.resetGestureState()
+    callbacks.cancelTapTimer()
+
+    activeIndex.value = index
+    uiVisible.value = true
+
+    lightboxMounted.value = true
+    overlayOpacity.value = 0
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+
+    await nextTick()
+    await nextFrame()
+
+    callbacks.syncGeometry()
+    callbacks.refreshZoomState(true)
+
+    const photo = currentPhoto.value
+
+    try {
+      if (isNoneMode()) {
+        await doInstantOpen(photo)
+        debug?.log('transitions', 'open: complete')
+        debug?.groupEnd('transitions')
+        return
+      }
+
+      const thumbEl = thumbRefs.get(index)
+      const fromRect = thumbEl?.getBoundingClientRect() ?? null
+      const toRect = getAbsoluteFrameRect(photo)
+
+      const useFlip = fromRect && toRect && isUsableRect(fromRect)
+        && (!transitionConfig || shouldUseFlip(fromRect, transitionConfig, debug))
+
+      if (useFlip) {
+        await doFlipOpen(index, photo, fromRect, toRect)
+      } else {
+        await doFadeOpen(photo)
+      }
+
+      debug?.log('transitions', 'open: complete')
+      debug?.groupEnd('transitions')
+    } catch (err) {
+      debug?.warn('transitions', 'open: error, forcing recovery', err)
+      debug?.groupEnd('transitions')
+      overlayOpacity.value = 1
+      mediaOpacity.value = 1
+      resetOpenState()
+    }
+  }
+
+  async function doInstantClose() {
+    debug?.log('transitions', 'close: INSTANT (mode=none)')
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+    overlayOpacity.value = 0
+  }
+
+  async function doFadeClose() {
+    debug?.log('transitions', 'close: using smooth FADE')
+    animating.value = true
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+
+    await animateNumber(overlayOpacity.value, 0, fadeDurationMs, (v) => {
+      overlayOpacity.value = v
+    }, easeOutCubic)
+  }
+
+  async function doFlipClose(photo: PhotoItem, fromRect: { left: number; top: number; width: number; height: number }, toRect: DOMRect) {
+    debug?.log('transitions', 'close: using FLIP animation')
+
+    animating.value = true
+    hiddenThumbIndex.value = activeIndex.value
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+
+    const thumbSrc = photo.thumbSrc || photo.src
+    ghostSrc.value = thumbSrc
+    ghostVisible.value = true
+    ghostStyle.value = {
+      position: 'fixed',
+      zIndex: '60',
+      objectFit: 'cover',
+      transformOrigin: 'top left',
+      pointerEvents: 'none',
+      willChange: 'transform',
+      borderRadius: '24px',
+      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+      transition:
+        `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      ...makeGhostBaseStyle(toRect),
+      transform: flipTransform(fromRect, toRect),
+    }
+
+    await nextFrame()
+
+    overlayOpacity.value = 0
+    ghostStyle.value = {
+      ...ghostStyle.value,
+      transform: 'translate(0px, 0px) scale(1, 1)',
+      borderRadius: '18px',
+      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+    }
+
+    await wait(closeDurationMs)
+  }
+
+  async function close(callbacks: CloseCallbacks) {
+    if (!lightboxMounted.value || animating.value) return
+
+    debug?.group('transitions', `close(activeIndex=${activeIndex.value})`)
+
+    callbacks.cancelTapTimer()
+    callbacks.resetGestureState()
+
+    if (callbacks.isZoomedIn.value || closeDragY.value) {
+      debug?.log('transitions', 'close: resetting zoom/drag before close')
+      callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
+      closeDragY.value = 0
+      await nextFrame()
+    }
+
+    callbacks.syncGeometry()
+
+    const photo = currentPhoto.value
+
+    try {
+      if (isNoneMode()) {
+        await doInstantClose()
+        debug?.log('transitions', 'close: complete')
+        debug?.groupEnd('transitions')
+        resetCloseState()
+        return
+      }
+
+      const fromRect = getAbsoluteFrameRect(photo)
+      const toRect = thumbRefs.get(activeIndex.value)?.getBoundingClientRect() ?? null
+
+      const useFlip = fromRect && toRect && isUsableRect(toRect)
+        && (!transitionConfig || shouldUseFlip(toRect, transitionConfig, debug))
+
+      if (useFlip) {
+        await doFlipClose(photo, fromRect, toRect)
+      } else {
+        await doFadeClose()
+      }
+
+      debug?.log('transitions', 'close: complete')
+      debug?.groupEnd('transitions')
+    } catch (err) {
+      debug?.warn('transitions', 'close: error, forcing recovery', err)
+      debug?.groupEnd('transitions')
+    }
+
+    resetCloseState()
+  }
+
+  async function animateCloseDragTo(target: number, duration = 220) {
+    const start = closeDragY.value
+    await animateNumber(start, target, duration, (value) => {
+      closeDragY.value = value
+    })
+  }
+
+  async function handleCloseGesture(deltaY: number, velocityY: number, closeFn: () => Promise<void>) {
+    const threshold = Math.min(180, (areaMetrics.value?.height ?? 600) * 0.2)
+
+    debug?.log('gestures', `closeGesture: deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)} threshold=${threshold.toFixed(0)}`)
+
+    if (Math.abs(deltaY) > threshold || Math.abs(velocityY) > 0.55) {
+      debug?.log('gestures', 'closeGesture: threshold exceeded → closing')
+      await closeFn()
+      return
+    }
+
+    debug?.log('gestures', 'closeGesture: below threshold → bouncing back')
+    animating.value = true
+    try {
+      await animateCloseDragTo(0)
+    } finally {
+      animating.value = false
+    }
+  }
+
+  function handleBackdropClick(closeFn: () => Promise<void>) {
+    if (animating.value) return
+    debug?.log('transitions', 'backdrop click → closing')
+    void closeFn()
+  }
+
+  return {
+    lightboxMounted,
+    animating,
+    ghostVisible,
+    ghostSrc,
+    ghostStyle,
+    hiddenThumbIndex,
+    overlayOpacity,
+    mediaOpacity,
+    chromeOpacity,
+    uiVisible,
+    closeDragY,
+    controlsDisabled,
+    chromeStyle,
+    closeDragRatio,
+    backdropStyle,
+    lightboxUiStyle,
+
+    setThumbRef,
+    open,
+    close,
+    animateCloseDragTo,
+    handleCloseGesture,
+    handleBackdropClick,
+  }
+}

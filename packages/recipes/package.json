@@ -1,0 +1,32 @@
+{
+  "name": "@nuxt-photo/recipes",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles/*": "./dist/styles/*"
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub"
+  },
+  "dependencies": {
+    "@nuxt-photo/core": "workspace:*",
+    "@nuxt-photo/vue": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "unbuild": "^3.5.0",
+    "typescript": "^5.9.2",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.8"
+  }
+}

@@ -1,0 +1,8 @@
+export { default as LightboxRoot } from './LightboxRoot.vue'
+export { default as LightboxOverlay } from './LightboxOverlay.vue'
+export { default as LightboxViewport } from './LightboxViewport.vue'
+export { default as LightboxSlide } from './LightboxSlide.vue'
+export { default as LightboxControls } from './LightboxControls.vue'
+export { default as LightboxPortal } from './LightboxPortal.vue'
+export { default as PhotoTrigger } from './PhotoTrigger.vue'
+export { default as PhotoImage } from './PhotoImage.vue'

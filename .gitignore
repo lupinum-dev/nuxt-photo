@@ -1,4 +1,7 @@
 node_modules
+dist
+.output
+.nuxt
 .env
 .env.local
 .env.development.local
