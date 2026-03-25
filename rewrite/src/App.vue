@@ -65,18 +65,20 @@
                     class="slide-cell"
                     :style="slideCellStyle"
                   >
-                    <div class="slide-frame" :style="getSlideFrameStyle(view.photo)">
-                      <div
-                        class="slide-zoom"
-                        :ref="setSlideZoomRef(view.offset)"
-                        :style="getSlideZoomStyle(view)"
-                      >
-                        <img
-                          class="lightbox-image"
-                          :src="view.photo.full"
-                          :alt="view.photo.title"
-                          draggable="false"
-                        />
+                    <div class="slide-effect" :style="getSlideEffectStyle(view)">
+                      <div class="slide-frame" :style="getSlideFrameStyle(view.photo)">
+                        <div
+                          class="slide-zoom"
+                          :ref="setSlideZoomRef(view.offset)"
+                          :style="getSlideZoomStyle(view)"
+                        >
+                          <img
+                            class="lightbox-image"
+                            :src="view.photo.full"
+                            :alt="view.photo.title"
+                            draggable="false"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -151,6 +153,7 @@ const {
   handleBackdropClick,
   getSlideFrameStyle,
   getSlideZoomStyle,
+  getSlideEffectStyle,
 } = useLightbox(photos)
 </script>
 
@@ -332,6 +335,15 @@ const {
   flex: none;
   display: grid;
   place-items: center;
+}
+
+.slide-effect {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  will-change: transform, opacity;
+  transform-origin: center center;
 }
 
 .slide-frame {

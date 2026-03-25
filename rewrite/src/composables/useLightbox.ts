@@ -1,5 +1,5 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import type { AreaMetrics, Photo } from '../types'
+import type { AreaMetrics, CarouselConfig, CarouselStyle, Photo } from '../types'
 import { isUsableRect } from '../utils/geometry'
 import { ensureImageLoaded } from '../utils/image'
 import { lockBodyScroll } from '../utils/body-scroll'
@@ -17,6 +17,7 @@ declare global {
       debug: ReturnType<typeof createDebug>['flags']
       transitionMode: string
       autoThreshold: number
+      carousel: CarouselConfig
     }
   }
 }
@@ -25,10 +26,18 @@ export function useLightbox(photos: Photo[]) {
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
 
+  const carouselConfig: CarouselConfig = {
+    style: 'classic',
+    spring: { tension: 260, friction: 22 },
+    thresholds: { distance: 0.18, velocity: 0.45 },
+    parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
+    fade: { minOpacity: 0 },
+  }
+
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
 
-  const carousel = useSlideCarousel(photos, areaMetrics, debug)
+  const carousel = useSlideCarousel(photos, areaMetrics, carouselConfig, debug)
   const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
   const ghost = useGhostTransition(
     photos,
@@ -141,6 +150,7 @@ export function useLightbox(photos: Photo[]) {
     commitSlideChange: carousel.commitSlideChange,
     resolveSlideTarget: carousel.resolveSlideTarget,
     animateSlideTo: carousel.animateSlideTo,
+    stopSlideSpring: carousel.stopSlideSpring,
 
     handleCloseGesture: ghost.handleCloseGesture,
     close: closeLightbox,
@@ -209,6 +219,7 @@ export function useLightbox(photos: Photo[]) {
           transitionConfig.autoThreshold = v
           console.log(`[lightbox] autoThreshold set to ${v}`)
         },
+        carousel: carouselConfig,
       }
 
       console.log(
@@ -222,7 +233,9 @@ export function useLightbox(photos: Photo[]) {
       console.log('  __lightbox.debug.slides = true        // slide changes only')
       console.log('  __lightbox.debug.geometry = true      // geometry sync only')
       console.log('  __lightbox.transitionMode = "auto"    // auto | flip | fade | none')
-      console.log('  __lightbox.autoThreshold = 0.4        // visibility % for auto mode')
+      console.log('  __lightbox.autoThreshold = 0.55       // visibility % for auto mode')
+      console.log('  __lightbox.carousel.style = "classic" // classic | parallax | fade')
+      console.log('  __lightbox.carousel.spring            // { tension, friction }')
 
       for (const photo of photos) {
         void ensureImageLoaded(photo.full)
@@ -232,6 +245,7 @@ export function useLightbox(photos: Photo[]) {
 
   onBeforeUnmount(() => {
     gestures.cancelTapTimer()
+    carousel.stopSlideSpring()
 
     if (typeof window !== 'undefined') {
       window.removeEventListener('keydown', gestures.onKeydown)
@@ -314,5 +328,6 @@ export function useLightbox(photos: Photo[]) {
     handleBackdropClick: () => ghost.handleBackdropClick(closeLightbox),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
     getSlideZoomStyle: carousel.getSlideZoomStyle,
+    getSlideEffectStyle: carousel.getSlideEffectStyle,
   }
 }

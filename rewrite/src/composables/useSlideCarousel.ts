@@ -1,18 +1,19 @@
 import { computed, ref, type CSSProperties, type Ref } from 'vue'
-import type { AreaMetrics, Photo, SlideView } from '../types'
+import type { AreaMetrics, CarouselConfig, Photo, SlideView } from '../types'
 import { fitRect, getLoopedIndex } from '../utils/geometry'
-import { animateNumber } from '../utils/animation'
+import { createSpring1D, runSpring, stopSpring, type Spring1D } from '../utils/spring'
 import type { DebugLogger } from './useDebug'
-
-const slideDurationMs = 260
 
 export function useSlideCarousel(
   photos: Photo[],
   areaMetrics: Ref<AreaMetrics | null>,
+  config: CarouselConfig,
   debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
   const slideDragOffset = ref(0)
+
+  const slideSpring: Spring1D = createSpring1D(config.spring.tension, config.spring.friction)
 
   const currentPhoto = computed<Photo>(() => photos[activeIndex.value] ?? photos[0]!)
 
@@ -57,23 +58,70 @@ export function useSlideCarousel(
     }
   }
 
+  function getSlideEffectStyle(view: SlideView): CSSProperties {
+    const width = areaMetrics.value?.width ?? 1
+    const progress = slideDragOffset.value / width
+    const slidePosition = view.offset + progress
+
+    switch (config.style) {
+      case 'classic':
+        return {}
+
+      case 'parallax': {
+        const { amount, scale, opacity } = config.parallax
+        const absPos = Math.min(1, Math.abs(slidePosition))
+        const parallaxShift = slidePosition * amount * width * -1
+        const scaleValue = 1 - absPos * (1 - scale)
+        const opacityValue = 1 - absPos * (1 - opacity)
+        return {
+          transform: `translate3d(${parallaxShift}px, 0, 0) scale(${scaleValue})`,
+          opacity: String(Math.max(0, opacityValue)),
+        }
+      }
+
+      case 'fade': {
+        const absPos = Math.min(1, Math.abs(slidePosition))
+        const opacityValue = Math.max(config.fade.minOpacity, 1 - absPos)
+        return {
+          opacity: String(opacityValue),
+          transform: `translate3d(${slidePosition * 40}px, 0, 0)`,
+        }
+      }
+    }
+  }
+
   function resolveSlideTarget(dragDelta: number, velocityX: number) {
     const width = areaMetrics.value?.width ?? 0
-    const threshold = width * 0.18
+    const threshold = width * config.thresholds.distance
 
-    if (dragDelta <= -threshold || velocityX <= -0.45) return 1
-    if (dragDelta >= threshold || velocityX >= 0.45) return -1
+    if (dragDelta <= -threshold || velocityX <= -config.thresholds.velocity) return 1
+    if (dragDelta >= threshold || velocityX >= config.thresholds.velocity) return -1
     return 0
   }
 
-  async function animateSlideTo(targetOffset: number, duration = slideDurationMs) {
-    const start = slideDragOffset.value
-    await animateNumber(start, targetOffset, duration, (value) => {
-      slideDragOffset.value = value
+  function stopSlideSpring() {
+    stopSpring(slideSpring)
+  }
+
+  function animateSlideTo(targetOffset: number, initialVelocity = 0): Promise<void> {
+    return new Promise((resolve) => {
+      slideSpring.value = slideDragOffset.value
+      slideSpring.target = targetOffset
+      slideSpring.velocity = initialVelocity
+      slideSpring.tension = config.spring.tension
+      slideSpring.friction = config.spring.friction
+
+      debug?.log('slides', `spring: ${slideSpring.value.toFixed(0)}→${targetOffset.toFixed(0)} v=${initialVelocity.toFixed(0)}`)
+
+      runSpring(
+        slideSpring,
+        (v) => { slideDragOffset.value = v },
+        resolve,
+      )
     })
   }
 
-  async function commitSlideChange(direction: number) {
+  async function commitSlideChange(direction: number, velocityPxPerSec = 0) {
     if (!direction) return
 
     const fromIndex = activeIndex.value
@@ -86,7 +134,7 @@ export function useSlideCarousel(
       return
     }
 
-    await animateSlideTo(direction > 0 ? -width : width)
+    await animateSlideTo(direction > 0 ? -width : width, velocityPxPerSec)
     activeIndex.value = toIndex
     slideDragOffset.value = 0
   }
@@ -101,8 +149,10 @@ export function useSlideCarousel(
     getAbsoluteFrameRect,
     getSlideFrameStyle,
     getSlideZoomStyle,
+    getSlideEffectStyle,
     resolveSlideTarget,
     animateSlideTo,
     commitSlideChange,
+    stopSlideSpring,
   }
 }

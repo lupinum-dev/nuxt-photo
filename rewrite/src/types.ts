@@ -70,3 +70,13 @@ export type PanzoomMotion = {
 }
 
 export type GhostStyleValue = CSSProperties
+
+export type CarouselStyle = 'classic' | 'parallax' | 'fade'
+
+export type CarouselConfig = {
+  style: CarouselStyle
+  spring: { tension: number; friction: number }
+  thresholds: { distance: number; velocity: number }
+  parallax: { amount: number; scale: number; opacity: number }
+  fade: { minOpacity: number }
+}

@@ -1,5 +1,6 @@
 import { ref, type ComputedRef, type Ref } from 'vue'
 import type { AreaMetrics, GestureMode, PanState, PanzoomMotion, Photo, PointerSession, ZoomState } from '../types'
+import { VelocityTracker } from '../utils/velocity'
 import type { DebugLogger } from './useDebug'
 
 export type GestureConfig = {
@@ -27,9 +28,10 @@ export type GestureConfig = {
   toggleZoom: (clientPoint?: { x: number; y: number }) => void
   getPanBounds: (photo: Photo, zoom: number) => { x: number; y: number }
 
-  commitSlideChange: (direction: number) => Promise<void>
+  commitSlideChange: (direction: number, velocityPxPerSec?: number) => Promise<void>
   resolveSlideTarget: (dragDelta: number, velocityX: number) => number
-  animateSlideTo: (targetOffset: number, duration?: number) => Promise<void>
+  animateSlideTo: (targetOffset: number, initialVelocity?: number) => Promise<void>
+  stopSlideSpring: () => void
 
   handleCloseGesture: (deltaY: number, velocityY: number, closeFn: () => Promise<void>) => Promise<void>
   close: () => Promise<void>
@@ -42,6 +44,8 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   let tapTimer: ReturnType<typeof setTimeout> | undefined
   let lastTap: { time: number; clientX: number; clientY: number } | null = null
   let lastWheelTime = 0
+
+  const velocityTracker = new VelocityTracker(100)
 
   function resetGestureState() {
     gesturePhase.value = 'idle'
@@ -109,10 +113,18 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   }
 
   function onMediaPointerDown(event: PointerEvent) {
-    if (!config.lightboxMounted.value || config.animating.value || config.ghostVisible.value) return
+    if (!config.lightboxMounted.value || config.ghostVisible.value) return
     if (event.pointerType === 'mouse' && event.button !== 0) return
 
+    // Allow interrupting slide spring animations
+    if (config.animating.value) {
+      config.stopSlideSpring()
+      config.animating.value = false
+    }
+
     cancelTapTimer()
+    velocityTracker.reset()
+    velocityTracker.addSample(event.clientX, event.clientY, event.timeStamp)
 
     pointerSession = {
       id: event.pointerId,
@@ -140,10 +152,9 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
     const deltaX = event.clientX - pointerSession.startX
     const deltaY = event.clientY - pointerSession.startY
-    const elapsed = Math.max(1, event.timeStamp - pointerSession.lastTime)
 
-    pointerSession.velocityX = (event.clientX - pointerSession.lastX) / elapsed
-    pointerSession.velocityY = (event.clientY - pointerSession.lastY) / elapsed
+    velocityTracker.addSample(event.clientX, event.clientY, event.timeStamp)
+
     pointerSession.lastX = event.clientX
     pointerSession.lastY = event.clientY
     pointerSession.lastTime = event.timeStamp
@@ -192,9 +203,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     const session = pointerSession
     const deltaX = event.clientX - session.startX
     const deltaY = event.clientY - session.startY
-    const velocityX = session.velocityX
-    const velocityY = session.velocityY
     const mode = gesturePhase.value
+
+    // Get buffered velocity (100ms window) instead of frame-to-frame
+    const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity()
 
     resetGestureState()
 
@@ -229,14 +241,18 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
   async function handleSlideGesture(deltaX: number, velocityX: number) {
     const direction = config.resolveSlideTarget(deltaX, velocityX)
-    debug?.log('gestures', `slideGesture: deltaX=${deltaX.toFixed(1)} vX=${velocityX.toFixed(3)} → direction=${direction}`)
+    // Convert px/ms → px/s for spring physics
+    const velocityPxPerSec = velocityX * 1000
+
+    debug?.log('gestures', `slideGesture: deltaX=${deltaX.toFixed(1)} vX=${velocityX.toFixed(3)} (${velocityPxPerSec.toFixed(0)} px/s) → direction=${direction}`)
 
     config.animating.value = true
     try {
       if (!direction) {
-        await config.animateSlideTo(0, 200)
+        // Spring back with momentum from the gesture
+        await config.animateSlideTo(0, velocityPxPerSec)
       } else {
-        await config.commitSlideChange(direction)
+        await config.commitSlideChange(direction, velocityPxPerSec)
       }
     } finally {
       config.animating.value = false
