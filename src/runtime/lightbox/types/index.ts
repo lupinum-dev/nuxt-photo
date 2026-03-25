@@ -1,4 +1,4 @@
-import type { EventHookOn } from '@vueuse/core'
+import type { EventHookOn } from '../../utils/dom-helpers'
 import type { Ref, ShallowRef } from 'vue'
 
 export interface Point {

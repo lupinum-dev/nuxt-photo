@@ -72,7 +72,7 @@ const edgeImage = {
         <span class="expectation expectation--zoom">Expected: zoom</span>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         :src="controlImage.src"
         :thumbnail-src="controlImage.thumbnailSrc"
         :alt="controlImage.alt"
@@ -99,7 +99,7 @@ const edgeImage = {
         <span class="expectation expectation--fade">Expected: graceful fade</span>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         :src="missingDimsImage.src"
         :thumbnail-src="missingDimsImage.thumbnailSrc"
         :alt="missingDimsImage.alt"
@@ -124,7 +124,7 @@ const edgeImage = {
         <span class="expectation expectation--fade">Expected: graceful fade</span>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         :src="mismatchedImage.src"
         :thumbnail-src="mismatchedImage.thumbnailSrc"
         :alt="mismatchedImage.alt"
@@ -153,7 +153,7 @@ const edgeImage = {
 
       <div class="edge-bleed">
         <div class="edge-card">
-          <PhotoImg
+          <PhotoLightboxImg
             :src="edgeImage.src"
             :thumbnail-src="edgeImage.thumbnailSrc"
             :alt="edgeImage.alt"

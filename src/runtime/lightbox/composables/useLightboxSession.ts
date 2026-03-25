@@ -1,4 +1,4 @@
-import { useEventListener } from '@vueuse/core'
+import { useEventListener } from '../../utils/dom-helpers'
 import { effectScope } from 'vue'
 import type {
   Bounds,

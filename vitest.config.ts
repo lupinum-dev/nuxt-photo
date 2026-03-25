@@ -6,5 +6,6 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],
     exclude: ['playground/**', 'node_modules/**'],
+    setupFiles: ['./test/setup-dom.ts'],
   },
 })

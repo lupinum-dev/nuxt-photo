@@ -19,3 +19,11 @@ export const PhotoImg = defineAsyncComponent(
 export const PhotoLightbox = defineAsyncComponent(
   () => import('./app/components/NuxtPhotoLightbox.vue'),
 )
+
+export const PhotoLightboxAlbum = defineAsyncComponent(
+  () => import('./app/components/NuxtPhotoLightboxAlbum.vue'),
+)
+
+export const PhotoLightboxImg = defineAsyncComponent(
+  () => import('./app/components/NuxtPhotoLightboxImg.vue'),
+)

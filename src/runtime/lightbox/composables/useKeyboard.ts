@@ -1,4 +1,4 @@
-import { useEventListener } from '@vueuse/core'
+import { useEventListener } from '../../utils/dom-helpers'
 import type { KeyboardInstance, LightboxInstance } from '../types'
 import { specialKeyUsed } from '../utils/dom'
 

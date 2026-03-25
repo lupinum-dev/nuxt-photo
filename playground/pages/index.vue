@@ -3,12 +3,12 @@ const features = [
   {
     path: '/standalone',
     label: 'Standalone Images',
-    description: 'PhotoImg with semantic triggers, caption modes, and lightbox control.',
+    description: 'PhotoImg as a lean renderer plus PhotoLightboxImg for opt-in overlay behavior.',
   },
   {
     path: '/album',
     label: 'Photo Album',
-    description: 'PhotoAlbum with layout switching, responsive layout props, custom slots, and controlled lightbox.',
+    description: 'PhotoAlbum for layout and PhotoLightboxAlbum for controlled overlay flows.',
   },
   {
     path: '/gallery',

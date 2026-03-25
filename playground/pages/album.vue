@@ -35,7 +35,7 @@ function onClick(payload: { index: number }) {
             Layout modes &amp; controlled lightbox
           </h2>
           <p class="section-description">
-            Switch between rows, columns, and masonry. The lightbox index is controlled via v-model.
+            Switch between rows, columns, and masonry. The wrapper owns the lightbox; the base album owns layout only.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ function onClick(payload: { index: number }) {
         </div>
       </div>
 
-      <PhotoAlbum
+      <PhotoLightboxAlbum
         v-model:lightbox-index="lightboxIndex"
         :items="albumItems"
         :layout="layout"
@@ -121,11 +121,9 @@ function onClick(payload: { index: number }) {
         :spacing="{ 0: 10, 768: 12 }"
         :padding="0"
       >
-        <template #photo="{ item, imageProps, layout: photoLayout, open }">
-          <button
+        <template #photo="{ item, imageProps, layout: photoLayout }">
+          <div
             class="photo-card"
-            type="button"
-            @click="open"
           >
             <PhotoImage
               v-bind="imageProps"
@@ -135,7 +133,7 @@ function onClick(payload: { index: number }) {
               <strong>{{ item.caption || item.alt }}</strong>
               <span>{{ photoLayout.mode }} #{{ photoLayout.index + 1 }}</span>
             </span>
-          </button>
+          </div>
         </template>
       </PhotoAlbum>
     </section>

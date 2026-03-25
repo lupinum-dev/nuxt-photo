@@ -1,24 +1,17 @@
-<!-- Layout-driven album component that combines album rendering with an optional local lightbox. -->
+<!-- Layout-driven album component focused on rendering and click interactions only. -->
 <script setup lang="ts">
 import type {
-  LightboxControlsSlotProps,
-  LightboxImageItem,
   PhotoAlbumEmits,
   PhotoAlbumProps,
   PhotoSlotContext,
 } from '../../types'
-import { computed, ref, watch } from 'vue'
-import { useLightboxConfig } from '../composables/useLightboxConfig'
+import { computed } from 'vue'
 import { usePhotoAlbumLayout } from '../composables/usePhotoAlbumLayout'
-import { getInitialPointerPos } from '../../utils/pointer'
 import NuxtPhotoAlbumPhoto from './NuxtPhotoAlbumPhoto.vue'
-import NuxtPhotoLightbox from './NuxtPhotoLightbox.vue'
 
 const props = withDefaults(defineProps<PhotoAlbumProps>(), {
   defaultContainerWidth: 1024,
   layout: 'masonry',
-  lightbox: true,
-  lightboxIndex: null,
   columns: undefined,
   spacing: undefined,
   padding: undefined,
@@ -32,12 +25,7 @@ const emit = defineEmits<PhotoAlbumEmits>()
 
 defineSlots<{
   photo?: (context: PhotoSlotContext) => unknown
-  controls?: (props: LightboxControlsSlotProps) => unknown
 }>()
-
-const lightboxRef = ref<InstanceType<typeof NuxtPhotoLightbox> | null>(null)
-const activeLightboxIndex = ref<number | null>(null)
-const isLightboxOpen = ref(false)
 
 const {
   measureRef,
@@ -61,145 +49,32 @@ const {
 })
 
 const definedLayoutOptions = computed(() => layoutOptions.value as NonNullable<typeof layoutOptions.value>)
-
-const { lightboxEnabled, lightboxOptions } = useLightboxConfig(() => props.lightbox)
-
-const items = computed(() =>
-  props.items.filter(
-    item =>
-      Number.isFinite(item.width)
-      && Number.isFinite(item.height)
-      && item.width > 0
-      && item.height > 0,
-  ),
-)
-
-const lightboxItems = computed<LightboxImageItem[]>(() =>
-  items.value.map(item => ({
-    ...item,
-    id: item.key ?? item.src,
-    msrc: item.thumbnailSrc ?? item.src,
-    type: 'image',
-  })),
-)
-
-function closeLightbox() {
-  lightboxRef.value?.close()
-}
-
-async function openAtIndex(index: number, event?: MouseEvent) {
-  if (!lightboxEnabled.value) {
-    return
-  }
-
-  const opened = lightboxRef.value?.open(
-    index,
-    lightboxOptions.value,
-    event?.currentTarget instanceof HTMLElement ? event.currentTarget : null,
-    getInitialPointerPos(event),
-  )
-
-  if (opened !== false) {
-    activeLightboxIndex.value = index
-  }
-
-  return opened
-}
+const className = computed(() => ['photo-album', `photo-album--${props.layout}`])
 
 function createSlotContext(
-  entry: { item: typeof props.items[number], index: number, layout: PhotoSlotContext['layout'], imageProps: PhotoSlotContext['imageProps'] },
+  entry: {
+    item: typeof props.items[number]
+    index: number
+    layout: PhotoSlotContext['layout']
+    imageProps: PhotoSlotContext['imageProps']
+  },
 ): PhotoSlotContext {
-  const selected = isLightboxOpen.value && activeLightboxIndex.value === entry.index
-
   return {
     imageProps: entry.imageProps,
     index: entry.index,
     item: entry.item,
     layout: entry.layout,
-    open: (event?: MouseEvent) => openAtIndex(entry.index, event),
-    selected,
+    layoutOptions: definedLayoutOptions.value,
   }
 }
 
-const className = computed(() => ['photo-album', `photo-album--${props.layout}`])
-
-async function handlePhotoClick(context: PhotoSlotContext, event: MouseEvent) {
-  const payload = {
+function handlePhotoClick(context: PhotoSlotContext) {
+  emit('click', {
     index: context.index,
     item: context.item,
     layout: context.layout,
-  } as const
-
-  emit('click', payload)
-
-  if (!lightboxEnabled.value) {
-    return
-  }
-
-  const opened = await context.open(event)
-  if (opened === false) {
-    return
-  }
-
-  emit('update:lightbox-index', context.index)
-  emit('lightbox-open', { item: context.item, index: context.index })
+  })
 }
-
-function handleLightboxOpen() {
-  isLightboxOpen.value = true
-}
-
-function handleLightboxClose() {
-  isLightboxOpen.value = false
-  activeLightboxIndex.value = null
-}
-
-function handleLightboxChange(index: number) {
-  activeLightboxIndex.value = index
-}
-
-watch(
-  () => props.lightboxIndex,
-  (nextValue: number | null | undefined) => {
-    if (!lightboxEnabled.value) {
-      return
-    }
-
-    if (nextValue === null) {
-      if (isLightboxOpen.value) {
-        closeLightbox()
-      }
-      return
-    }
-
-    if (!Number.isInteger(nextValue)) {
-      return
-    }
-
-    if (
-      isLightboxOpen.value
-      && activeLightboxIndex.value === nextValue
-    ) {
-      return
-    }
-
-    void openAtIndex(nextValue as number)
-  },
-  { immediate: true },
-)
-
-watch(
-  [isLightboxOpen, activeLightboxIndex],
-  ([nextIsOpen, nextIndex]: [boolean, number | null]) => {
-    if (!nextIsOpen) {
-      emit('update:lightbox-index', null)
-      emit('lightbox-close')
-      return
-    }
-
-    emit('update:lightbox-index', nextIndex ?? 0)
-  },
-)
 </script>
 
 <template>
@@ -235,36 +110,17 @@ watch(
           >
             <NuxtPhotoAlbumPhoto
               :image-props="entry.imageProps"
-              :interactive="lightboxEnabled"
+              :interactive="true"
               :item="entry.item"
               :layout="entry.layout"
               :layout-options="definedLayoutOptions"
               :photo-class="photoClass"
-              :selected="isLightboxOpen && activeLightboxIndex === entry.index"
-              @click="(event: MouseEvent) => handlePhotoClick(createSlotContext(entry), event)"
+              :selected="false"
+              @click="handlePhotoClick(createSlotContext(entry))"
             />
           </slot>
         </template>
       </div>
     </div>
-
-    <NuxtPhotoLightbox
-      v-if="lightboxEnabled"
-      ref="lightboxRef"
-      :items="lightboxItems"
-      :options="lightboxOptions"
-      :image="image"
-      teleport-to="body"
-      @open="handleLightboxOpen"
-      @close="handleLightboxClose"
-      @change="handleLightboxChange"
-    >
-      <template #controls="controlProps">
-        <slot
-          name="controls"
-          v-bind="controlProps"
-        />
-      </template>
-    </NuxtPhotoLightbox>
   </div>
 </template>

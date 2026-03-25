@@ -1,4 +1,4 @@
-import { useResizeObserver } from '@vueuse/core'
+import { useResizeObserver } from '../../utils/dom-helpers'
 import type { Ref } from 'vue'
 import { nextTick, ref, watch } from 'vue'
 import { resolveBreakpoint } from '../../utils/responsives'

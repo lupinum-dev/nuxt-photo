@@ -1,0 +1,1151 @@
+{
+  "generatedAt": "2026-03-25T14:37:37.843Z",
+  "results": [
+    {
+      "name": "img-base",
+      "previousName": "only-img",
+      "features": {
+        "img": true,
+        "album": false,
+        "lightbox": false
+      },
+      "totalJs": {
+        "raw": 205159,
+        "gz": 78754
+      },
+      "totalCss": {
+        "raw": 13140,
+        "gz": 5368
+      },
+      "chunks": [
+        {
+          "name": "D0z72sXR.js",
+          "type": "js",
+          "rawSize": 173411,
+          "gzipSize": 65452
+        },
+        {
+          "name": "XKa23I1O.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1702
+        },
+        {
+          "name": "Bguo5vEV.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1560
+        },
+        {
+          "name": "DQ_X4nEX.js",
+          "type": "js",
+          "rawSize": 5142,
+          "gzipSize": 1482
+        },
+        {
+          "name": "CKAAsQ51.js",
+          "type": "js",
+          "rawSize": 3926,
+          "gzipSize": 1436
+        },
+        {
+          "name": "Bz4qP5qo.js",
+          "type": "js",
+          "rawSize": 2686,
+          "gzipSize": 1259
+        },
+        {
+          "name": "entry.DHTSNAGG.css",
+          "type": "css",
+          "rawSize": 3453,
+          "gzipSize": 1223
+        },
+        {
+          "name": "nioyCoNV.js",
+          "type": "js",
+          "rawSize": 2693,
+          "gzipSize": 1174
+        },
+        {
+          "name": "p-wXLQf7.js",
+          "type": "js",
+          "rawSize": 2388,
+          "gzipSize": 1116
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "AKeS1R_o.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 810
+        },
+        {
+          "name": "Dn9Rwlt6.js",
+          "type": "js",
+          "rawSize": 1397,
+          "gzipSize": 784
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "pKiosJPe.js",
+          "type": "js",
+          "rawSize": 653,
+          "gzipSize": 368
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "BrHwCBC7.js",
+          "type": "js",
+          "rawSize": 378,
+          "gzipSize": 293
+        },
+        {
+          "name": "DsTAD1LW.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 243
+        }
+      ]
+    },
+    {
+      "name": "album-base",
+      "previousName": "only-album",
+      "features": {
+        "img": false,
+        "album": true,
+        "lightbox": false
+      },
+      "totalJs": {
+        "raw": 217857,
+        "gz": 83044
+      },
+      "totalCss": {
+        "raw": 12764,
+        "gz": 5291
+      },
+      "chunks": [
+        {
+          "name": "DeCxv13C.js",
+          "type": "js",
+          "rawSize": 173480,
+          "gzipSize": 65467
+        },
+        {
+          "name": "BDQ03JFs.js",
+          "type": "js",
+          "rawSize": 15769,
+          "gzipSize": 5767
+        },
+        {
+          "name": "KwpAW6UR.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1701
+        },
+        {
+          "name": "DXiXLpth.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1559
+        },
+        {
+          "name": "CMfKanuU.js",
+          "type": "js",
+          "rawSize": 5142,
+          "gzipSize": 1482
+        },
+        {
+          "name": "Bh9MzpUt.js",
+          "type": "js",
+          "rawSize": 3887,
+          "gzipSize": 1407
+        },
+        {
+          "name": "DIdDQBfC.js",
+          "type": "js",
+          "rawSize": 2679,
+          "gzipSize": 1261
+        },
+        {
+          "name": "entry.Bp7at-Ol.css",
+          "type": "css",
+          "rawSize": 3077,
+          "gzipSize": 1146
+        },
+        {
+          "name": "BntvWmlb.js",
+          "type": "js",
+          "rawSize": 2388,
+          "gzipSize": 1114
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "C8gSicS2.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 809
+        },
+        {
+          "name": "epHyeYO2.js",
+          "type": "js",
+          "rawSize": 1397,
+          "gzipSize": 783
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "BaMYxN44.js",
+          "type": "js",
+          "rawSize": 630,
+          "gzipSize": 379
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "YsJll8Mu.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 240
+        }
+      ]
+    },
+    {
+      "name": "lightbox-only",
+      "previousName": "only-lightbox",
+      "features": {
+        "img": false,
+        "album": false,
+        "lightbox": true
+      },
+      "totalJs": {
+        "raw": 281033,
+        "gz": 102590
+      },
+      "totalCss": {
+        "raw": 15233,
+        "gz": 5867
+      },
+      "chunks": [
+        {
+          "name": "Ct8td_tW.js",
+          "type": "js",
+          "rawSize": 176430,
+          "gzipSize": 66582
+        },
+        {
+          "name": "BI8TLMMn.js",
+          "type": "js",
+          "rawSize": 74392,
+          "gzipSize": 23347
+        },
+        {
+          "name": "entry.BAnMHy8j.css",
+          "type": "css",
+          "rawSize": 5546,
+          "gzipSize": 1722
+        },
+        {
+          "name": "DzlM08iY.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1701
+        },
+        {
+          "name": "C4tduIHI.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1558
+        },
+        {
+          "name": "tOKN99Va.js",
+          "type": "js",
+          "rawSize": 5142,
+          "gzipSize": 1480
+        },
+        {
+          "name": "BFfHll3W.js",
+          "type": "js",
+          "rawSize": 3922,
+          "gzipSize": 1431
+        },
+        {
+          "name": "MnzJIR0m.js",
+          "type": "js",
+          "rawSize": 2666,
+          "gzipSize": 1245
+        },
+        {
+          "name": "D-Nh49UO.js",
+          "type": "js",
+          "rawSize": 2398,
+          "gzipSize": 1120
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "BA97zAUB.js",
+          "type": "js",
+          "rawSize": 1570,
+          "gzipSize": 847
+        },
+        {
+          "name": "txg-f0Ei.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 809
+        },
+        {
+          "name": "0nL5QY3h.js",
+          "type": "js",
+          "rawSize": 1430,
+          "gzipSize": 802
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "D4XzBrrD.js",
+          "type": "js",
+          "rawSize": 598,
+          "gzipSize": 355
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "r_ZuWnE3.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 238
+        }
+      ]
+    },
+    {
+      "name": "gallery-only",
+      "features": {
+        "img": false,
+        "album": false,
+        "lightbox": true
+      },
+      "totalJs": {
+        "raw": 281057,
+        "gz": 102622
+      },
+      "totalCss": {
+        "raw": 15233,
+        "gz": 5867
+      },
+      "chunks": [
+        {
+          "name": "LA0UJypA.js",
+          "type": "js",
+          "rawSize": 176432,
+          "gzipSize": 66572
+        },
+        {
+          "name": "CNW2ERQ_.js",
+          "type": "js",
+          "rawSize": 74392,
+          "gzipSize": 23349
+        },
+        {
+          "name": "entry.BAnMHy8j.css",
+          "type": "css",
+          "rawSize": 5546,
+          "gzipSize": 1722
+        },
+        {
+          "name": "BLak6V4y.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1700
+        },
+        {
+          "name": "dY-C3y8n.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1560
+        },
+        {
+          "name": "C4eCrAKU.js",
+          "type": "js",
+          "rawSize": 5142,
+          "gzipSize": 1483
+        },
+        {
+          "name": "DImRy-3y.js",
+          "type": "js",
+          "rawSize": 3922,
+          "gzipSize": 1436
+        },
+        {
+          "name": "KkYjh_ss.js",
+          "type": "js",
+          "rawSize": 2666,
+          "gzipSize": 1247
+        },
+        {
+          "name": "V3OEmrzU.js",
+          "type": "js",
+          "rawSize": 2398,
+          "gzipSize": 1122
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "BsDHk65R.js",
+          "type": "js",
+          "rawSize": 1570,
+          "gzipSize": 850
+        },
+        {
+          "name": "D_Y_pH2Q.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 808
+        },
+        {
+          "name": "Dgsnufnq.js",
+          "type": "js",
+          "rawSize": 1430,
+          "gzipSize": 805
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "DMnvr-iq.js",
+          "type": "js",
+          "rawSize": 620,
+          "gzipSize": 373
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "CK_8IdEy.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 242
+        }
+      ]
+    },
+    {
+      "name": "img-lightbox-wrapper",
+      "previousName": "img+lightbox",
+      "features": {
+        "img": true,
+        "album": false,
+        "lightbox": true
+      },
+      "totalJs": {
+        "raw": 288476,
+        "gz": 105645
+      },
+      "totalCss": {
+        "raw": 15650,
+        "gz": 5949
+      },
+      "chunks": [
+        {
+          "name": "DapYQzy_.js",
+          "type": "js",
+          "rawSize": 176649,
+          "gzipSize": 66681
+        },
+        {
+          "name": "CrhoGN__.js",
+          "type": "js",
+          "rawSize": 74400,
+          "gzipSize": 23352
+        },
+        {
+          "name": "v8D0yA5o.js",
+          "type": "js",
+          "rawSize": 6517,
+          "gzipSize": 2467
+        },
+        {
+          "name": "entry.CgeUHiaF.css",
+          "type": "css",
+          "rawSize": 5963,
+          "gzipSize": 1804
+        },
+        {
+          "name": "CgjXIY0q.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1700
+        },
+        {
+          "name": "CtbsDwAb.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1560
+        },
+        {
+          "name": "DolN9B90.js",
+          "type": "js",
+          "rawSize": 5215,
+          "gzipSize": 1518
+        },
+        {
+          "name": "Qsi9sRe0.js",
+          "type": "js",
+          "rawSize": 3978,
+          "gzipSize": 1459
+        },
+        {
+          "name": "BJD4gjVJ.js",
+          "type": "js",
+          "rawSize": 2686,
+          "gzipSize": 1259
+        },
+        {
+          "name": "DZGaNduM.js",
+          "type": "js",
+          "rawSize": 2398,
+          "gzipSize": 1120
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "CtzeJkXS.js",
+          "type": "js",
+          "rawSize": 1526,
+          "gzipSize": 823
+        },
+        {
+          "name": "C8n49eTY.js",
+          "type": "js",
+          "rawSize": 1452,
+          "gzipSize": 810
+        },
+        {
+          "name": "CIylQDxm.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 810
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "B51-mLj_.js",
+          "type": "js",
+          "rawSize": 698,
+          "gzipSize": 386
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "aLOJN38Y.js",
+          "type": "js",
+          "rawSize": 378,
+          "gzipSize": 292
+        },
+        {
+          "name": "C7OrpMju.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 241
+        },
+        {
+          "name": "4BZEy3vH.js",
+          "type": "js",
+          "rawSize": 94,
+          "gzipSize": 92
+        }
+      ]
+    },
+    {
+      "name": "album-lightbox-wrapper",
+      "previousName": "album+lightbox",
+      "features": {
+        "img": false,
+        "album": true,
+        "lightbox": true
+      },
+      "totalJs": {
+        "raw": 300427,
+        "gz": 109487
+      },
+      "totalCss": {
+        "raw": 15274,
+        "gz": 5884
+      },
+      "chunks": [
+        {
+          "name": "GdQNit-M.js",
+          "type": "js",
+          "rawSize": 176630,
+          "gzipSize": 66667
+        },
+        {
+          "name": "sWwllRyy.js",
+          "type": "js",
+          "rawSize": 74408,
+          "gzipSize": 23355
+        },
+        {
+          "name": "BgxwbuP5.js",
+          "type": "js",
+          "rawSize": 18978,
+          "gzipSize": 6637
+        },
+        {
+          "name": "entry.BY-7OvpL.css",
+          "type": "css",
+          "rawSize": 5587,
+          "gzipSize": 1739
+        },
+        {
+          "name": "DWYEfx-h.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1698
+        },
+        {
+          "name": "Bq_7BNGh.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1556
+        },
+        {
+          "name": "BkZnvpOk.js",
+          "type": "js",
+          "rawSize": 5142,
+          "gzipSize": 1483
+        },
+        {
+          "name": "DvHAclSK.js",
+          "type": "js",
+          "rawSize": 3949,
+          "gzipSize": 1444
+        },
+        {
+          "name": "D8rR4Vhf.js",
+          "type": "js",
+          "rawSize": 2701,
+          "gzipSize": 1274
+        },
+        {
+          "name": "ZmZuR7ZN.js",
+          "type": "js",
+          "rawSize": 2398,
+          "gzipSize": 1121
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "DOKj6N0y.js",
+          "type": "js",
+          "rawSize": 1521,
+          "gzipSize": 822
+        },
+        {
+          "name": "BVg3xO-p.js",
+          "type": "js",
+          "rawSize": 1447,
+          "gzipSize": 812
+        },
+        {
+          "name": "B1aF6-Vn.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 809
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "DmT8vUJN.js",
+          "type": "js",
+          "rawSize": 674,
+          "gzipSize": 401
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "B4aziptd.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 241
+        },
+        {
+          "name": "4BZEy3vH.js",
+          "type": "js",
+          "rawSize": 94,
+          "gzipSize": 92
+        }
+      ]
+    },
+    {
+      "name": "everything",
+      "previousName": "everything",
+      "features": {
+        "img": true,
+        "album": true,
+        "lightbox": true
+      },
+      "totalJs": {
+        "raw": 307068,
+        "gz": 112222
+      },
+      "totalCss": {
+        "raw": 15691,
+        "gz": 5964
+      },
+      "chunks": [
+        {
+          "name": "CTjiEDx8.js",
+          "type": "js",
+          "rawSize": 176680,
+          "gzipSize": 66697
+        },
+        {
+          "name": "DU9IpHET.js",
+          "type": "js",
+          "rawSize": 74408,
+          "gzipSize": 23355
+        },
+        {
+          "name": "DXaO0Jds.js",
+          "type": "js",
+          "rawSize": 18047,
+          "gzipSize": 6289
+        },
+        {
+          "name": "1Be2j-ds.js",
+          "type": "js",
+          "rawSize": 5853,
+          "gzipSize": 2216
+        },
+        {
+          "name": "entry.mzutGZ_b.css",
+          "type": "css",
+          "rawSize": 6004,
+          "gzipSize": 1819
+        },
+        {
+          "name": "CWIZfg7O.js",
+          "type": "js",
+          "rawSize": 3769,
+          "gzipSize": 1700
+        },
+        {
+          "name": "hjcPCcAg.js",
+          "type": "js",
+          "rawSize": 3478,
+          "gzipSize": 1559
+        },
+        {
+          "name": "WUICnD8H.js",
+          "type": "js",
+          "rawSize": 5215,
+          "gzipSize": 1518
+        },
+        {
+          "name": "DPNvacey.js",
+          "type": "js",
+          "rawSize": 3978,
+          "gzipSize": 1461
+        },
+        {
+          "name": "BaOX0nED.js",
+          "type": "js",
+          "rawSize": 2728,
+          "gzipSize": 1287
+        },
+        {
+          "name": "CFiP26R6.js",
+          "type": "js",
+          "rawSize": 2398,
+          "gzipSize": 1121
+        },
+        {
+          "name": "Cd6FGB3-.js",
+          "type": "js",
+          "rawSize": 3436,
+          "gzipSize": 1075
+        },
+        {
+          "name": "error-404.B4j2Gr0W.css",
+          "type": "css",
+          "rawSize": 2430,
+          "gzipSize": 857
+        },
+        {
+          "name": "2XuE-5qF.js",
+          "type": "js",
+          "rawSize": 1526,
+          "gzipSize": 825
+        },
+        {
+          "name": "DVe8WKTW.js",
+          "type": "js",
+          "rawSize": 1452,
+          "gzipSize": 814
+        },
+        {
+          "name": "CVIBfrBc.js",
+          "type": "js",
+          "rawSize": 1476,
+          "gzipSize": 808
+        },
+        {
+          "name": "error-500.DANvCauQ.css",
+          "type": "css",
+          "rawSize": 1907,
+          "gzipSize": 726
+        },
+        {
+          "name": "BGNhboZ_.js",
+          "type": "js",
+          "rawSize": 1095,
+          "gzipSize": 633
+        },
+        {
+          "name": "lightbox.qfGOl845.css",
+          "type": "css",
+          "rawSize": 1324,
+          "gzipSize": 554
+        },
+        {
+          "name": "t3QAIuMn.js",
+          "type": "js",
+          "rawSize": 1109,
+          "gzipSize": 532
+        },
+        {
+          "name": "index.CuggFtLF.css",
+          "type": "css",
+          "rawSize": 1016,
+          "gzipSize": 466
+        },
+        {
+          "name": "gallery.CWHfMPpY.css",
+          "type": "css",
+          "rawSize": 932,
+          "gzipSize": 464
+        },
+        {
+          "name": "fallbacks.BzFczx19.css",
+          "type": "css",
+          "rawSize": 811,
+          "gzipSize": 411
+        },
+        {
+          "name": "album.B91Mn5Mz.css",
+          "type": "css",
+          "rawSize": 666,
+          "gzipSize": 351
+        },
+        {
+          "name": "standalone.CXW_bpfh.css",
+          "type": "css",
+          "rawSize": 601,
+          "gzipSize": 316
+        },
+        {
+          "name": "D2PUyul-.js",
+          "type": "js",
+          "rawSize": 326,
+          "gzipSize": 240
+        },
+        {
+          "name": "4BZEy3vH.js",
+          "type": "js",
+          "rawSize": 94,
+          "gzipSize": 92
+        }
+      ]
+    }
+  ]
+}

@@ -35,6 +35,8 @@ export {
   PhotoGallery,
   PhotoImg,
   PhotoLightbox,
+  PhotoLightboxAlbum,
+  PhotoLightboxImg,
 } from './runtime/exports'
 export { usePhotoLightbox } from './runtime/app/composables/usePhotoLightbox'
 export { usePhotoAlbumLayout } from './runtime/app/composables/usePhotoAlbumLayout'
@@ -142,6 +144,20 @@ export default defineNuxtModule<ModuleOptions>({
         name: `${prefix}Lightbox`,
         filePath: resolver.resolve('./runtime/app/components/NuxtPhotoLightbox.vue'),
       })
+
+      if (features.img) {
+        addComponent({
+          name: `${prefix}LightboxImg`,
+          filePath: resolver.resolve('./runtime/app/components/NuxtPhotoLightboxImg.vue'),
+        })
+      }
+
+      if (features.album) {
+        addComponent({
+          name: `${prefix}LightboxAlbum`,
+          filePath: resolver.resolve('./runtime/app/components/NuxtPhotoLightboxAlbum.vue'),
+        })
+      }
     }
 
     if (features.img || features.album) {

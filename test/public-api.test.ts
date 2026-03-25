@@ -9,9 +9,12 @@ describe('public api', () => {
     expect(publicApi).toHaveProperty('PhotoImg')
     expect(publicApi).toHaveProperty('PhotoGallery')
     expect(publicApi).toHaveProperty('PhotoLightbox')
+    expect(publicApi).toHaveProperty('PhotoLightboxAlbum')
+    expect(publicApi).toHaveProperty('PhotoLightboxImg')
     expect(publicApi).toHaveProperty('usePhotoLightbox')
     expect(publicApi).toHaveProperty('usePhotoAlbumLayout')
     expect(publicApi).toHaveProperty('usePhotoGroup')
+    expect(publicApi).toHaveProperty('useContainerWidth')
 
     expect(publicApi).not.toHaveProperty('NuxtMasonry')
     expect(publicApi).not.toHaveProperty('PhotoSwipe')

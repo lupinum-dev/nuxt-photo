@@ -105,6 +105,8 @@ describe('bundle partitioning', () => {
     expect(components).toContain('PhotoImage')
     expect(components).not.toContain('PhotoLightbox')
     expect(components).not.toContain('PhotoGallery')
+    expect(components).not.toContain('PhotoLightboxAlbum')
+    expect(components).not.toContain('PhotoLightboxImg')
     expect(imports).not.toContain('usePhotoLightbox')
 
     expect(outputText).toContain('photo-album__photo-button')
@@ -119,6 +121,8 @@ describe('bundle partitioning', () => {
     expect(components).not.toContain('PhotoAlbum')
     expect(components).not.toContain('PhotoImg')
     expect(components).not.toContain('PhotoImage')
+    expect(components).not.toContain('PhotoLightboxAlbum')
+    expect(components).not.toContain('PhotoLightboxImg')
     expect(imports).toContain('usePhotoLightbox')
 
     expect(outputText).toContain('photo-lightbox')

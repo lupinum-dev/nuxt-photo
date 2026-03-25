@@ -1,9 +1,16 @@
 // @vitest-environment jsdom
 
 import { defineComponent, h, nextTick } from 'vue'
-import { mount } from '@vue/test-utils'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { PhotoAlbum, PhotoGallery, PhotoImg, PhotoLightbox, usePhotoLightbox } from '../src/runtime'
+import { flushPromises, mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  PhotoGallery,
+  PhotoImg,
+  PhotoLightbox,
+  PhotoLightboxAlbum,
+  PhotoLightboxImg,
+  usePhotoLightbox,
+} from '../src/runtime'
 import type { ComponentPublicInstance } from 'vue'
 import type {
   LightboxImageItem,
@@ -11,6 +18,7 @@ import type {
   LightboxItem,
   LightboxOptions,
 } from '../src/runtime/types'
+import { mockImageDecode, setDocumentClientWidth } from './setup-dom'
 
 const testImageStub = defineComponent({
   inheritAttrs: false,
@@ -116,13 +124,6 @@ function createThumbElement(widthOrRect: number | Partial<ThumbRect> = 150, heig
   return img
 }
 
-function mockImageDecode() {
-  Object.defineProperty(HTMLImageElement.prototype, 'decode', {
-    configurable: true,
-    value: vi.fn().mockResolvedValue(undefined),
-  })
-}
-
 function getRenderedSlideSources(): string[] {
   return Array.from(document.body.querySelectorAll('.photo-lightbox__item')).map((holder) => {
     const img = holder.querySelector('img.photo-lightbox__img:not(.photo-lightbox__img--placeholder)') as HTMLImageElement | null
@@ -140,62 +141,9 @@ function getDebugLogDetails(
 }
 
 async function flushLightbox(): Promise<void> {
-  await nextTick()
-  await Promise.resolve()
+  await flushPromises()
   await nextTick()
 }
-
-function setDocumentClientWidth(width: number): void {
-  Object.defineProperty(document.documentElement, 'clientWidth', {
-    configurable: true,
-    value: width,
-  })
-}
-
-beforeEach(() => {
-  Object.defineProperty(window, 'innerWidth', {
-    configurable: true,
-    writable: true,
-    value: 1200,
-  })
-  Object.defineProperty(window, 'innerHeight', {
-    configurable: true,
-    writable: true,
-    value: 800,
-  })
-  setDocumentClientWidth(1200)
-  Object.defineProperty(window, 'matchMedia', {
-    configurable: true,
-    writable: true,
-    value: vi.fn().mockImplementation(() => ({
-      matches: false,
-      media: '',
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  })
-  Object.defineProperty(window, 'ResizeObserver', {
-    configurable: true,
-    writable: true,
-    value: class {
-      disconnect = vi.fn()
-      observe = vi.fn()
-      unobserve = vi.fn()
-    },
-  })
-})
-
-afterEach(() => {
-  document.body.innerHTML = ''
-  document.body.style.overflow = ''
-  document.body.style.paddingRight = ''
-  vi.useRealTimers()
-  vi.restoreAllMocks()
-})
 
 describe('usePhotoLightbox controller', () => {
   it('creates a fresh session per open and retains controller listeners', async () => {
@@ -782,7 +730,7 @@ describe('PhotoGallery', () => {
 })
 
 describe('PhotoImg', () => {
-  it('renders a native button trigger and keeps the caption outside it', () => {
+  it('renders a native button trigger only when interactive and keeps the caption outside it', () => {
     const wrapper = mount(PhotoImg, {
       props: {
         src: 'https://example.com/standalone.jpg',
@@ -791,7 +739,7 @@ describe('PhotoImg', () => {
         description: 'Description',
         width: 1600,
         height: 1200,
-        lightbox: createBaseOptions(),
+        interactive: true,
       },
       global: {
         components: {
@@ -811,10 +759,30 @@ describe('PhotoImg', () => {
     expect(caption.element.closest('[data-slot="photo-trigger"]')).toBeNull()
   })
 
+  it('renders a passive div trigger by default', () => {
+    const wrapper = mount(PhotoImg, {
+      props: {
+        src: 'https://example.com/standalone.jpg',
+        alt: 'Standalone',
+        width: 1600,
+        height: 1200,
+      },
+      global: {
+        components: {
+          PhotoImage: testImageStub,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-slot="photo-trigger"]').element.tagName).toBe('DIV')
+  })
+})
+
+describe('PhotoLightboxImg', () => {
   it('opens its own local lightbox without shared group state', async () => {
     mockImageDecode()
 
-    const wrapper = mount(PhotoImg, {
+    const wrapper = mount(PhotoLightboxImg, {
       attachTo: document.body,
       props: {
         src: 'https://example.com/standalone.jpg',
@@ -838,7 +806,7 @@ describe('PhotoImg', () => {
   })
 
   it('passes the controls slot through to the internal lightbox', async () => {
-    const wrapper = mount(PhotoImg, {
+    const wrapper = mount(PhotoLightboxImg, {
       attachTo: document.body,
       props: {
         src: 'https://example.com/standalone.jpg',
@@ -875,7 +843,7 @@ describe('PhotoImg', () => {
   it('uses thumbnailSrc for the inline image while opening the full source in the lightbox', async () => {
     mockImageDecode()
 
-    const wrapper = mount(PhotoImg, {
+    const wrapper = mount(PhotoLightboxImg, {
       attachTo: document.body,
       props: {
         src: 'https://example.com/full.jpg',
@@ -904,10 +872,10 @@ describe('PhotoImg', () => {
     mockImageDecode()
 
     const wrapper = mount(defineComponent({
-      components: { PhotoImg },
+      components: { PhotoLightboxImg },
       template: `
         <div>
-          <PhotoImg
+          <PhotoLightboxImg
             src="https://example.com/group-a.jpg"
             alt="A"
             :width="1600"
@@ -915,7 +883,7 @@ describe('PhotoImg', () => {
             group="portfolio"
             :lightbox="options"
           />
-          <PhotoImg
+          <PhotoLightboxImg
             src="https://example.com/group-b.jpg"
             alt="B"
             :width="1600"
@@ -949,7 +917,7 @@ describe('PhotoImg', () => {
   it('does not leak grouped state across separate app instances', async () => {
     mockImageDecode()
 
-    const first = mount(PhotoImg, {
+    const first = mount(PhotoLightboxImg, {
       attachTo: document.body,
       props: {
         src: 'https://example.com/app-one.jpg',
@@ -966,7 +934,7 @@ describe('PhotoImg', () => {
       },
     })
 
-    mount(PhotoImg, {
+    mount(PhotoLightboxImg, {
       attachTo: document.body,
       props: {
         src: 'https://example.com/app-two.jpg',
@@ -992,9 +960,9 @@ describe('PhotoImg', () => {
   })
 })
 
-describe('PhotoAlbum', () => {
+describe('PhotoLightboxAlbum', () => {
   it('passes the controls slot through to the internal lightbox', async () => {
-    const wrapper = mount(PhotoAlbum, {
+    const wrapper = mount(PhotoLightboxAlbum, {
       attachTo: document.body,
       props: {
         items: createSlides().slice(0, 3),

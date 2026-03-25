@@ -1,4 +1,4 @@
-import { useEventListener } from '@vueuse/core'
+import { useEventListener } from '../../utils/dom-helpers'
 import type { LightboxInstance, ScrollWheelInstance } from '../types'
 
 export function useScrollWheel(lightbox: LightboxInstance): ScrollWheelInstance {

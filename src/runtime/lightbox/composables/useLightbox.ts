@@ -2,7 +2,7 @@
  * Public lightbox controller for the headless runtime.
  * Session construction lives in `useLightboxSession.ts` and thumbnail/preflight logic lives in `thumbnailGeometry.ts`.
  */
-import { createEventHook, usePreferredReducedMotion } from '@vueuse/core'
+import { createEventHook, usePreferredReducedMotion } from '../../utils/dom-helpers'
 import { readonly, ref, shallowRef, toValue, watch } from 'vue'
 import type { MaybeRefOrGetter } from 'vue'
 import type {

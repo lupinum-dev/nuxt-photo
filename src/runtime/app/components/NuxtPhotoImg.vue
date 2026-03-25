@@ -1,37 +1,13 @@
-<!-- Standalone image component with optional caption handling and a local or grouped lightbox. -->
+<!-- Standalone image component with optional caption handling and an opt-in interactive trigger. -->
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import type {
   CaptionVisibilityMode,
-  ImageConfig,
-  LightboxConfig,
-  LightboxControlsSlotProps,
-  LightboxImageItem,
+  PhotoImgEmits,
+  PhotoImgProps,
   PhotoItem,
 } from '../../types'
-import { getInitialPointerPos } from '../../utils/pointer'
 import { buildImageProps } from '../../utils/imageProps'
-import { useLightboxConfig } from '../composables/useLightboxConfig'
-import { usePhotoGroup } from '../composables/usePhotoGroup'
-import NuxtPhotoLightbox from './NuxtPhotoLightbox.vue'
-
-interface PhotoImgProps {
-  src: string
-  alt?: string
-  width: number
-  height: number
-  thumbnailSrc?: string
-  caption?: string
-  description?: string
-  captionVisible?: CaptionVisibilityMode
-  lightbox?: LightboxConfig
-  group?: string
-  image?: ImageConfig
-  imageClass?: HTMLAttributes['class']
-  captionClass?: HTMLAttributes['class']
-  descriptionClass?: HTMLAttributes['class']
-}
 
 const props = withDefaults(
   defineProps<PhotoImgProps>(),
@@ -39,20 +15,17 @@ const props = withDefaults(
     alt: '',
     captionVisible: undefined,
     description: undefined,
-    lightbox: true,
-    group: undefined,
+    interactive: false,
   },
 )
 
+const emit = defineEmits<PhotoImgEmits>()
+
 defineSlots<{
   caption?: (props: { caption?: string, description?: string }) => unknown
-  controls?: (props: LightboxControlsSlotProps) => unknown
 }>()
 
-const lightboxRef = ref<InstanceType<typeof NuxtPhotoLightbox> | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
-
-const { lightboxEnabled, lightboxOptions } = useLightboxConfig(() => props.lightbox)
 
 const resolvedCaptionVisible = computed<CaptionVisibilityMode>(() => {
   if (props.captionVisible) {
@@ -66,33 +39,16 @@ const showCaptionBelow = computed(() =>
   ['below', 'both'].includes(resolvedCaptionVisible.value),
 )
 
-const showCaptionInLightbox = computed(() =>
-  ['lightbox', 'both'].includes(resolvedCaptionVisible.value),
-)
-
 const item = computed<PhotoItem>(() => ({
   alt: props.alt,
-  caption: showCaptionInLightbox.value ? props.caption : undefined,
-  description: showCaptionInLightbox.value ? props.description : undefined,
+  caption: props.caption,
+  description: props.description,
   height: props.height,
   href: undefined,
   src: props.src,
   thumbnailSrc: props.thumbnailSrc,
   width: props.width,
 }))
-
-const lightboxItem = computed<LightboxImageItem>(() => ({
-  ...item.value,
-  id: item.value.key ?? item.value.src,
-  msrc: item.value.thumbnailSrc ?? item.value.src,
-  type: 'image',
-}))
-
-const standaloneLightboxItems = computed(() => [lightboxItem.value])
-
-const groupState = props.group
-  ? usePhotoGroup(props.group, lightboxItem, triggerRef)
-  : null
 
 const imageProps = computed(() => ({
   ...buildImageProps(
@@ -110,67 +66,33 @@ const imageProps = computed(() => ({
   },
 }))
 
-function openStandalone(event: MouseEvent) {
-  return lightboxRef.value?.open(
-    0,
-    lightboxOptions.value,
-    triggerRef.value,
-    getInitialPointerPos(event),
-  )
-}
-
-function getGroupThumbnailElement(index: number) {
-  return groupState?.getThumbnailElement(index) ?? null
-}
-
-function getStandaloneThumbnailElement() {
-  return triggerRef.value
-}
-
 function handleClick(event: MouseEvent) {
-  if (!lightboxEnabled.value) {
+  if (!props.interactive) {
     return
   }
 
-  if (groupState) {
-    groupState.open(lightboxOptions.value, triggerRef.value, getInitialPointerPos(event))
-    return
-  }
-
-  openStandalone(event)
+  emit('click', event)
 }
 
-watch(
-  () => groupState?.isHost.value,
-  (isHost) => {
-    if (!groupState || !isHost) {
-      return
-    }
-
-    groupState.registerController({
-      close: () => lightboxRef.value?.close(),
-      open: (index, options, sourceElement, initialPointerPos) =>
-        lightboxRef.value?.open(index, options, sourceElement, initialPointerPos) ?? false,
-    })
-  },
-  { immediate: true },
-)
+defineExpose({
+  triggerElement: triggerRef,
+})
 </script>
 
 <template>
   <figure
     class="photo-img"
-    :class="{ 'photo-img--interactive': lightboxEnabled }"
+    :class="{ 'photo-img--interactive': interactive }"
     data-slot="photo-img"
   >
     <component
-      :is="lightboxEnabled ? 'button' : 'div'"
+      :is="interactive ? 'button' : 'div'"
       ref="triggerRef"
       class="photo-img__trigger"
-      :type="lightboxEnabled ? 'button' : undefined"
-      :aria-label="lightboxEnabled ? `Open image${alt ? `: ${alt}` : ''}` : undefined"
+      :type="interactive ? 'button' : undefined"
+      :aria-label="interactive ? `Open image${alt ? `: ${alt}` : ''}` : undefined"
       data-slot="photo-trigger"
-      @click="lightboxEnabled ? handleClick($event as MouseEvent) : undefined"
+      @click="interactive ? handleClick($event as MouseEvent) : undefined"
     >
       <PhotoImage v-bind="imageProps" />
     </component>
@@ -202,22 +124,5 @@ watch(
         </span>
       </slot>
     </figcaption>
-
-    <NuxtPhotoLightbox
-      v-if="lightboxEnabled && (!groupState || groupState.isHost.value)"
-      ref="lightboxRef"
-      :items="groupState ? groupState.items.value : standaloneLightboxItems"
-      :options="lightboxOptions"
-      :image="image"
-      :get-thumbnail-element="groupState ? getGroupThumbnailElement : getStandaloneThumbnailElement"
-      teleport-to="body"
-    >
-      <template #controls="controlProps">
-        <slot
-          name="controls"
-          v-bind="controlProps"
-        />
-      </template>
-    </NuxtPhotoLightbox>
   </figure>
 </template>

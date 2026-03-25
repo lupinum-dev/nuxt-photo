@@ -1,6 +1,6 @@
 <!-- Headless lightbox view component that exposes programmatic control and render slots. -->
 <script setup lang="ts">
-import { useResizeObserver } from '@vueuse/core'
+import { useResizeObserver } from '../../utils/dom-helpers'
 import { computed, onBeforeUnmount, ref, toRef, watch } from 'vue'
 import type {
   LightboxControlsSlotProps,
@@ -88,8 +88,10 @@ controller.hooks.onOpen(() => {
   emit('open')
 })
 
-controller.hooks.onChange((index: number) => {
-  emit('change', index)
+controller.hooks.onChange((index) => {
+  if (typeof index === 'number') {
+    emit('change', index)
+  }
 })
 
 controller.hooks.onClose(() => {

@@ -42,7 +42,7 @@ const galleryImages = [
         </div>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&h=900&fit=crop"
         alt="Fog over a mountain valley"
         caption="Mountain Fog"
@@ -69,7 +69,7 @@ const galleryImages = [
         </div>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         src="https://images.unsplash.com/photo-1483347756197-71ef80e95f73?w=1800&h=1200&fit=crop"
         alt="Northern lights over a snowy landscape"
         caption="Aurora Borealis"
@@ -96,7 +96,7 @@ const galleryImages = [
         </div>
       </div>
 
-      <PhotoImg
+      <PhotoLightboxImg
         src="https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=2000&h=1000&fit=crop"
         alt="Desert panorama at golden hour"
         caption="Golden Desert"
@@ -118,7 +118,7 @@ const galleryImages = [
             Lightbox disabled
           </h2>
           <p class="section-description">
-            Clicking this image does nothing. The lightbox is turned off.
+            Base PhotoImg now renders without any overlay ownership.
           </p>
         </div>
       </div>
@@ -130,7 +130,6 @@ const galleryImages = [
         :width="1200"
         :height="1200"
         caption-visible="below"
-        :lightbox="false"
       />
     </section>
 

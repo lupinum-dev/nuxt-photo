@@ -180,12 +180,40 @@ export type PhotoLayoutItem = InternalLayoutMetrics & {
 /** Loose render-prop object forwarded to `PhotoImage`. */
 export type PhotoImageProps = Record<string, unknown>
 
+/** Base public props for `PhotoImg`. */
+export interface PhotoImgProps {
+  src: string
+  alt?: string
+  width: number
+  height: number
+  thumbnailSrc?: string
+  caption?: string
+  description?: string
+  captionVisible?: CaptionVisibilityMode
+  image?: ImageConfig
+  imageClass?: HTMLAttributes['class']
+  captionClass?: HTMLAttributes['class']
+  descriptionClass?: HTMLAttributes['class']
+  interactive?: boolean
+}
+
+/** Public props for the lightbox-enabled `PhotoImg` convenience wrapper. */
+export interface PhotoLightboxImgProps extends Omit<PhotoImgProps, 'interactive'> {
+  lightbox?: LightboxConfig
+  group?: string
+}
+
 /** Slot payload for `PhotoAlbum` photo slots. */
 export interface PhotoSlotContext<T extends PhotoItem = PhotoItem> {
   item: T
   index: number
   layout: PhotoLayoutItem
+  layoutOptions: LayoutOptions
   imageProps: PhotoImageProps
+}
+
+/** Lightbox-aware slot payload used by `PhotoLightboxAlbum`. */
+export interface PhotoLightboxSlotContext<T extends PhotoItem = PhotoItem> extends PhotoSlotContext<T> {
   selected: boolean
   open: (event?: MouseEvent) => Promise<boolean | undefined>
 }
@@ -200,9 +228,6 @@ export interface PhotoInteractionPayload<T extends PhotoItem = PhotoItem> {
 /** Event contract for `PhotoAlbum`. */
 export interface PhotoAlbumEmits<T extends PhotoItem = PhotoItem> {
   'click': [PhotoInteractionPayload<T>]
-  'update:lightbox-index': [number | null]
-  'lightbox-open': [{ item: T, index: number }]
-  'lightbox-close': []
 }
 
 export type ResponsiveProp<T> = T | Record<number, T>
@@ -219,10 +244,21 @@ export interface PhotoAlbumProps<T extends PhotoItem = PhotoItem> {
   containerWidth?: number
   defaultContainerWidth?: number
   image?: ImageConfig
-  lightbox?: LightboxConfig
-  lightboxIndex?: number | null
   photoClass?: HTMLAttributes['class']
   imageClass?: HTMLAttributes['class']
+}
+
+/** Event contract for the lightbox-enabled album convenience wrapper. */
+export interface PhotoLightboxAlbumEmits<T extends PhotoItem = PhotoItem> extends PhotoAlbumEmits<T> {
+  'update:lightbox-index': [number | null]
+  'lightbox-open': [{ item: T, index: number }]
+  'lightbox-close': []
+}
+
+/** Public props for the lightbox-enabled `PhotoAlbum` convenience wrapper. */
+export interface PhotoLightboxAlbumProps<T extends PhotoItem = PhotoItem> extends PhotoAlbumProps<T> {
+  lightbox?: LightboxConfig
+  lightboxIndex?: number | null
 }
 
 /** A fully prepared album entry with layout metadata and image props attached. */
@@ -294,4 +330,9 @@ export interface LightboxControlsSlotProps {
   prev: () => void
   toggleZoom: () => void
   setUiVisible: (isVisible: boolean) => void
+}
+
+/** Event contract for `PhotoImg`. */
+export interface PhotoImgEmits {
+  'click': [MouseEvent]
 }

@@ -268,9 +268,8 @@ describe('PhotoAlbum', () => {
     expect(html).toContain('img')
   })
 
-  it('owns a local lightbox instance and syncs lightbox emits from photo clicks', async () => {
+  it('emits click payloads when photos are selected', async () => {
     const wrapper = mount(PhotoAlbum, {
-      attachTo: document.body,
       props: {
         containerWidth: 960,
         columns: { 0: 2, 768: 3, 1280: 5 },
@@ -293,25 +292,10 @@ describe('PhotoAlbum', () => {
 
     expect(targetButton).toBeDefined()
     await targetButton!.trigger('click')
-    await nextTick()
-    await Promise.resolve()
-    await nextTick()
-
-    expect(wrapper.emitted('lightbox-open')?.[0]?.[0]).toMatchObject({
+    expect(wrapper.emitted('click')?.[0]?.[0]).toMatchObject({
       index: 1,
       item: expect.objectContaining({ src: '/two.jpg' }),
     })
-    expect(wrapper.emitted('update:lightbox-index')?.at(-1)).toEqual([1])
-    expect(document.body.querySelector('.photo-lightbox--open')).not.toBeNull()
-
-    const lightbox = wrapper.findComponent({ name: 'NuxtPhotoLightbox' })
-    ;(lightbox.vm as { close: () => void }).close()
-    await nextTick()
-    await Promise.resolve()
-    await nextTick()
-
-    expect(wrapper.emitted('lightbox-close')).toBeTruthy()
-    expect(wrapper.emitted('update:lightbox-index')).toContainEqual([null])
   })
 
   it('falls back to native img when NuxtImg is unavailable', () => {
@@ -350,15 +334,13 @@ describe('PhotoAlbum', () => {
     expect(image.attributes('srcset')).toBeUndefined()
   })
 
-  it('emits controlled lightbox hooks on selection', async () => {
+  it('emits click events for the default photo renderer', async () => {
     const wrapper = mount(PhotoAlbum, {
-      attachTo: document.body,
       props: {
         containerWidth: 960,
         columns: { 0: 2, 768: 3, 1280: 5 },
         items,
         layout: 'columns',
-        lightbox: true,
         padding: 0,
         spacing: { 0: 16, 768: 20 },
         targetRowHeight: { 0: 180, 768: 220 },
@@ -372,12 +354,8 @@ describe('PhotoAlbum', () => {
 
     await wrapper.find('button').trigger('click')
     await nextTick()
-    await Promise.resolve()
-    await nextTick()
 
     expect(wrapper.emitted('click')).toHaveLength(1)
-    expect(wrapper.emitted('update:lightbox-index')).toContainEqual([0])
-    expect(wrapper.emitted('lightbox-open')).toHaveLength(1)
   })
 
   it('restores variable-width balanced columns for showcase-style data', () => {
