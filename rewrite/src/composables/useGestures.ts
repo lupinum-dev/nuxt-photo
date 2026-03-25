@@ -1,5 +1,6 @@
 import { ref, type ComputedRef, type Ref } from 'vue'
 import type { AreaMetrics, GestureMode, PanState, PanzoomMotion, Photo, PointerSession, ZoomState } from '../types'
+import type { DebugLogger } from './useDebug'
 
 export type GestureConfig = {
   lightboxMounted: Ref<boolean>
@@ -34,7 +35,7 @@ export type GestureConfig = {
   close: () => Promise<void>
 }
 
-export function useGestures(config: GestureConfig) {
+export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   const gesturePhase = ref<GestureMode>('idle')
 
   let pointerSession: PointerSession | null = null
@@ -65,12 +66,14 @@ export function useGestures(config: GestureConfig) {
 
     if (isDoubleTap) {
       lastTap = null
+      debug?.log('gestures', 'double-tap → toggleZoom at', { x: clientX, y: clientY })
       config.toggleZoom({ x: clientX, y: clientY })
       return
     }
 
     lastTap = { time: now, clientX, clientY }
     tapTimer = setTimeout(() => {
+      debug?.log('gestures', 'single-tap → toggle UI visibility')
       config.uiVisible.value = !config.uiVisible.value
       tapTimer = undefined
     }, 220)
@@ -149,6 +152,7 @@ export function useGestures(config: GestureConfig) {
     if (gesturePhase.value === 'idle') {
       const mode = classifyGesture(deltaX, deltaY, pointerSession.pointerType)
       if (mode !== 'idle') {
+        debug?.log('gestures', `classified: ${mode} (deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} pointer=${pointerSession.pointerType})`)
         gesturePhase.value = mode
       }
     }
@@ -194,6 +198,8 @@ export function useGestures(config: GestureConfig) {
 
     resetGestureState()
 
+    debug?.log('gestures', `pointerUp: mode=${mode} moved=${session.moved} deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} vX=${velocityX.toFixed(3)} vY=${velocityY.toFixed(3)}`)
+
     if (!session.moved || mode === 'idle') {
       handleTap(event.clientX, event.clientY)
       return
@@ -223,6 +229,7 @@ export function useGestures(config: GestureConfig) {
 
   async function handleSlideGesture(deltaX: number, velocityX: number) {
     const direction = config.resolveSlideTarget(deltaX, velocityX)
+    debug?.log('gestures', `slideGesture: deltaX=${deltaX.toFixed(1)} vX=${velocityX.toFixed(3)} → direction=${direction}`)
 
     if (!direction) {
       config.animating.value = true
@@ -265,6 +272,7 @@ export function useGestures(config: GestureConfig) {
 
     lastWheelTime = now
     event.preventDefault()
+    debug?.log('zoom', `wheel: deltaY=${event.deltaY.toFixed(1)} isTrackpad=${isTrackpad}`)
     config.applyWheelZoom(event)
   }
 
@@ -272,11 +280,13 @@ export function useGestures(config: GestureConfig) {
     if (!config.lightboxMounted.value || config.animating.value) return
 
     if (event.key === 'Escape') {
+      debug?.log('gestures', 'key: Escape → close')
       void config.close()
       return
     }
 
     if (event.key === 'z' || event.key === 'Z') {
+      debug?.log('gestures', 'key: Z → toggleZoom')
       config.toggleZoom()
       return
     }

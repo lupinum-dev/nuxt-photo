@@ -2,10 +2,12 @@ import { computed, type ComputedRef, type Ref, type ComponentPublicInstance } fr
 import { ref } from 'vue'
 import type { AreaMetrics, PanState, PanzoomMotion, Photo, ZoomState } from '../types'
 import { fitRect, rubberband } from '../utils/geometry'
+import type { DebugLogger } from './useDebug'
 
 export function usePanzoom(
   currentPhoto: ComputedRef<Photo>,
   areaMetrics: Ref<AreaMetrics | null>,
+  debug?: DebugLogger,
 ) {
   const zoomState = ref<ZoomState>({ fit: 1, secondary: 1, max: 1, current: 1 })
   const panState = ref<PanState>({ x: 0, y: 0 })
@@ -155,6 +157,7 @@ export function usePanzoom(
     targetPan: PanState,
     options?: { tension?: number; friction?: number },
   ) {
+    debug?.log('zoom', `spring start: scale=${panzoomMotion.scale.toFixed(3)}→${targetScale.toFixed(3)} pan=(${targetPan.x.toFixed(1)},${targetPan.y.toFixed(1)})`)
     panzoomMotion.targetScale = targetScale
     panzoomMotion.targetX = targetPan.x
     panzoomMotion.targetY = targetPan.y
@@ -202,6 +205,7 @@ export function usePanzoom(
         applyActivePanzoomTransform()
         panzoomMotion.rafId = 0
         syncPanzoomRefs()
+        debug?.log('zoom', `spring settled: scale=${panzoomMotion.scale.toFixed(3)} pan=(${panzoomMotion.x.toFixed(1)},${panzoomMotion.y.toFixed(1)})`)
         return
       }
 
@@ -224,6 +228,8 @@ export function usePanzoom(
           currentPhoto.value,
         )
 
+    debug?.log('zoom', `refreshZoomState(reset=${reset}): fit=${next.fit.toFixed(3)} secondary=${next.secondary.toFixed(3)} max=${next.max.toFixed(3)} current=${current.toFixed(3)}`)
+
     zoomState.value = { fit: next.fit, secondary: next.secondary, max: next.max, current }
     panState.value = nextPan
     setPanzoomImmediate(current, nextPan, false)
@@ -233,6 +239,7 @@ export function usePanzoom(
     if (!zoomAllowed.value) return
 
     const targetZoom = isZoomedIn.value ? zoomState.value.fit : zoomState.value.secondary
+    debug?.log('zoom', `toggleZoom: ${isZoomedIn.value ? 'zoom out' : 'zoom in'} → ${targetZoom.toFixed(3)}`)
     const targetPan = getTargetPanForZoom(targetZoom, clientPoint)
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
   }

@@ -2,12 +2,14 @@ import { computed, ref, type CSSProperties, type Ref } from 'vue'
 import type { AreaMetrics, Photo, SlideView } from '../types'
 import { fitRect, getLoopedIndex } from '../utils/geometry'
 import { animateNumber } from '../utils/animation'
+import type { DebugLogger } from './useDebug'
 
 const slideDurationMs = 260
 
 export function useSlideCarousel(
   photos: Photo[],
   areaMetrics: Ref<AreaMetrics | null>,
+  debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
   const slideDragOffset = ref(0)
@@ -74,14 +76,18 @@ export function useSlideCarousel(
   async function commitSlideChange(direction: number) {
     if (!direction) return
 
+    const fromIndex = activeIndex.value
+    const toIndex = getLoopedIndex(activeIndex.value + direction, photos.length)
+    debug?.log('slides', `commitSlideChange: direction=${direction} index=${fromIndex}→${toIndex} photo="${photos[toIndex]?.title}"`)
+
     const width = areaMetrics.value?.width ?? 0
     if (!width) {
-      activeIndex.value = getLoopedIndex(activeIndex.value + direction, photos.length)
+      activeIndex.value = toIndex
       return
     }
 
     await animateSlideTo(direction > 0 ? -width : width)
-    activeIndex.value = getLoopedIndex(activeIndex.value + direction, photos.length)
+    activeIndex.value = toIndex
     slideDragOffset.value = 0
   }
 

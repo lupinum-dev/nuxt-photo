@@ -8,27 +8,50 @@ import { usePanzoom } from './usePanzoom'
 import { useSlideCarousel } from './useSlideCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
+import { createDebug } from './useDebug'
+import { createTransitionMode } from './useTransitionMode'
+
+declare global {
+  interface Window {
+    __lightbox?: {
+      debug: ReturnType<typeof createDebug>['flags']
+      transitionMode: string
+      autoThreshold: number
+    }
+  }
+}
 
 export function useLightbox(photos: Photo[]) {
+  const debug = createDebug()
+  const transitionConfig = createTransitionMode()
+
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
 
-  const carousel = useSlideCarousel(photos, areaMetrics)
-  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics)
+  const carousel = useSlideCarousel(photos, areaMetrics, debug)
+  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
   const ghost = useGhostTransition(
     photos,
     carousel.activeIndex,
     carousel.currentPhoto,
     areaMetrics,
     carousel.getAbsoluteFrameRect,
+    debug,
+    transitionConfig,
   )
 
   function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
-    if (!mediaAreaEl) return null
+    if (!mediaAreaEl) {
+      debug.warn('geometry', 'syncGeometry: mediaAreaRef is null')
+      return null
+    }
 
     const rect = mediaAreaEl.getBoundingClientRect()
-    if (!isUsableRect(rect)) return null
+    if (!isUsableRect(rect)) {
+      debug.warn('geometry', 'syncGeometry: rect not usable', { left: rect.left, top: rect.top, width: rect.width, height: rect.height })
+      return null
+    }
 
     areaMetrics.value = {
       left: rect.left,
@@ -37,6 +60,7 @@ export function useLightbox(photos: Photo[]) {
       height: rect.height,
     }
 
+    debug.log('geometry', 'syncGeometry:', areaMetrics.value)
     return areaMetrics.value
   }
 
@@ -112,7 +136,7 @@ export function useLightbox(photos: Photo[]) {
 
     handleCloseGesture: ghost.handleCloseGesture,
     close: closeLightbox,
-  })
+  }, debug)
 
   // Computed styles that depend on multiple composables
   const mediaTrackStyle = computed<CSSProperties>(() => {
@@ -138,11 +162,14 @@ export function useLightbox(photos: Photo[]) {
 
   // Watchers
   watch(ghost.lightboxMounted, (mounted) => {
+    debug.log('transitions', `lightboxMounted → ${mounted}`)
     lockBodyScroll(mounted)
   })
 
-  watch(carousel.activeIndex, async () => {
+  watch(carousel.activeIndex, async (newIndex) => {
     if (!ghost.lightboxMounted.value) return
+
+    debug.log('slides', `activeIndex changed → ${newIndex} ("${carousel.currentPhoto.value.title}")`)
 
     await nextTick()
     await nextFrame()
@@ -157,6 +184,38 @@ export function useLightbox(photos: Photo[]) {
       window.addEventListener('keydown', gestures.onKeydown)
       window.addEventListener('resize', onResize)
 
+      // Expose debug harness on window
+      window.__lightbox = {
+        debug: debug.flags,
+        get transitionMode() { return transitionConfig.mode },
+        set transitionMode(v: string) {
+          if (v === 'flip' || v === 'fade' || v === 'auto') {
+            transitionConfig.mode = v
+            console.log(`[lightbox] transitionMode set to "${v}"`)
+          } else {
+            console.warn(`[lightbox] invalid transitionMode "${v}", use: flip | fade | auto`)
+          }
+        },
+        get autoThreshold() { return transitionConfig.autoThreshold },
+        set autoThreshold(v: number) {
+          transitionConfig.autoThreshold = v
+          console.log(`[lightbox] autoThreshold set to ${v}`)
+        },
+      }
+
+      console.log(
+        '%c[lightbox] Debug harness loaded. Use window.__lightbox to control:',
+        'color: #a78bfa; font-weight: bold',
+      )
+      console.log('  __lightbox.debug.all = true          // enable all logging')
+      console.log('  __lightbox.debug.transitions = true   // transitions only')
+      console.log('  __lightbox.debug.gestures = true      // gestures only')
+      console.log('  __lightbox.debug.zoom = true          // zoom/pan only')
+      console.log('  __lightbox.debug.slides = true        // slide changes only')
+      console.log('  __lightbox.debug.geometry = true      // geometry sync only')
+      console.log('  __lightbox.transitionMode = "auto"    // auto | flip | fade')
+      console.log('  __lightbox.autoThreshold = 0.4        // visibility % for auto mode')
+
       for (const photo of photos) {
         void ensureImageLoaded(photo.full)
       }
@@ -169,6 +228,7 @@ export function useLightbox(photos: Photo[]) {
     if (typeof window !== 'undefined') {
       window.removeEventListener('keydown', gestures.onKeydown)
       window.removeEventListener('resize', onResize)
+      delete window.__lightbox
     }
 
     if (typeof document !== 'undefined') {
@@ -178,6 +238,7 @@ export function useLightbox(photos: Photo[]) {
 
   function onResize() {
     if (!ghost.lightboxMounted.value) return
+    debug.log('geometry', 'window resize')
     syncGeometry()
     panzoom.refreshZoomState(false)
   }

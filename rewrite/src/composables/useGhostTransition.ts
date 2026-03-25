@@ -4,6 +4,8 @@ import { flipTransform, isUsableRect, makeGhostBaseStyle } from '../utils/geomet
 import { ensureImageLoaded } from '../utils/image'
 import { nextFrame, wait } from '../utils/timing'
 import { animateNumber } from '../utils/animation'
+import type { DebugLogger } from './useDebug'
+import { type TransitionModeConfig, shouldUseFlip } from './useTransitionMode'
 
 const openDurationMs = 420
 const closeDurationMs = 380
@@ -25,7 +27,9 @@ export function useGhostTransition(
   activeIndex: Ref<number>,
   currentPhoto: ComputedRef<Photo>,
   areaMetrics: Ref<AreaMetrics | null>,
-  getAbsoluteFrameRect: (photo: Photo) => ReturnType<typeof import('../utils/geometry').fitRect> | null,
+  getAbsoluteFrameRect: (photo: Photo) => { left: number; top: number; width: number; height: number } | null,
+  debug?: DebugLogger,
+  transitionConfig?: TransitionModeConfig,
 ) {
   const lightboxMounted = ref(false)
   const animating = ref(false)
@@ -79,8 +83,19 @@ export function useGhostTransition(
     }
   }
 
+  function doFadeIn(photo: Photo) {
+    debug?.log('transitions', 'open: using FADE (no FLIP)')
+    overlayOpacity.value = 1
+    return ensureImageLoaded(photo.full).then(() => {
+      mediaOpacity.value = 1
+      chromeOpacity.value = 1
+    })
+  }
+
   async function open(index: number, callbacks: TransitionCallbacks) {
     if (animating.value) return
+
+    debug?.group('transitions', `open(index=${index})`)
 
     callbacks.resetGestureState()
     callbacks.cancelTapTimer()
@@ -104,13 +119,21 @@ export function useGhostTransition(
     const fromRect = thumbEl?.getBoundingClientRect() ?? null
     const toRect = getAbsoluteFrameRect(photo)
 
-    if (!isUsableRect(fromRect) || !toRect) {
-      overlayOpacity.value = 1
-      await ensureImageLoaded(photo.full)
-      mediaOpacity.value = 1
-      chromeOpacity.value = 1
+    debug?.log('transitions', 'fromRect (thumb):', fromRect ? { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height } : null)
+    debug?.log('transitions', 'toRect (frame):', toRect)
+    debug?.log('transitions', 'isUsableRect(fromRect):', isUsableRect(fromRect))
+
+    // Determine transition mode
+    const useFlip = fromRect && toRect && isUsableRect(fromRect)
+      && (!transitionConfig || shouldUseFlip(fromRect, transitionConfig, debug))
+
+    if (!useFlip) {
+      await doFadeIn(photo)
+      debug?.groupEnd('transitions')
       return
     }
+
+    debug?.log('transitions', 'open: using FLIP animation')
 
     animating.value = true
     hiddenThumbIndex.value = index
@@ -132,6 +155,8 @@ export function useGhostTransition(
       transform: flipTransform(fromRect, toRect),
     }
 
+    debug?.log('transitions', 'open: ghost mounted, FLIP transform:', flipTransform(fromRect, toRect))
+
     await nextFrame()
 
     overlayOpacity.value = 1
@@ -142,6 +167,8 @@ export function useGhostTransition(
       boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
     }
 
+    debug?.log('transitions', 'open: animation started, waiting', openDurationMs, 'ms + image load')
+
     await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.full)])
 
     mediaOpacity.value = 1
@@ -149,15 +176,32 @@ export function useGhostTransition(
     ghostVisible.value = false
     chromeOpacity.value = 1
     animating.value = false
+
+    debug?.log('transitions', 'open: complete')
+    debug?.groupEnd('transitions')
+  }
+
+  async function doFadeOut() {
+    debug?.log('transitions', 'close: using FADE (no FLIP)')
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+    overlayOpacity.value = 0
+    await wait(220)
+    ghostVisible.value = false
+    lightboxMounted.value = false
+    hiddenThumbIndex.value = null
   }
 
   async function close(callbacks: CloseCallbacks) {
     if (!lightboxMounted.value || animating.value) return
 
+    debug?.group('transitions', `close(activeIndex=${activeIndex.value})`)
+
     callbacks.cancelTapTimer()
     callbacks.resetGestureState()
 
     if (callbacks.isZoomedIn.value || closeDragY.value) {
+      debug?.log('transitions', 'close: resetting zoom/drag before close')
       callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
       closeDragY.value = 0
       await nextFrame()
@@ -169,16 +213,21 @@ export function useGhostTransition(
     const fromRect = getAbsoluteFrameRect(photo)
     const toRect = thumbRefs.get(activeIndex.value)?.getBoundingClientRect() ?? null
 
-    if (!fromRect || !isUsableRect(toRect)) {
-      mediaOpacity.value = 0
-      chromeOpacity.value = 0
-      overlayOpacity.value = 0
-      await wait(220)
-      ghostVisible.value = false
-      lightboxMounted.value = false
-      hiddenThumbIndex.value = null
+    debug?.log('transitions', 'fromRect (frame):', fromRect)
+    debug?.log('transitions', 'toRect (thumb):', toRect ? { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height } : null)
+    debug?.log('transitions', 'isUsableRect(toRect):', isUsableRect(toRect))
+
+    // Determine transition mode
+    const useFlip = fromRect && toRect && isUsableRect(toRect)
+      && (!transitionConfig || shouldUseFlip(toRect, transitionConfig, debug))
+
+    if (!useFlip) {
+      await doFadeOut()
+      debug?.groupEnd('transitions')
       return
     }
+
+    debug?.log('transitions', 'close: using FLIP animation')
 
     animating.value = true
     hiddenThumbIndex.value = activeIndex.value
@@ -202,6 +251,8 @@ export function useGhostTransition(
       transform: flipTransform(fromRect, toRect),
     }
 
+    debug?.log('transitions', 'close: ghost mounted, FLIP transform:', flipTransform(fromRect, toRect))
+
     await nextFrame()
 
     overlayOpacity.value = 0
@@ -212,6 +263,8 @@ export function useGhostTransition(
       boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
     }
 
+    debug?.log('transitions', 'close: animation started, waiting', closeDurationMs, 'ms')
+
     await wait(closeDurationMs)
 
     ghostVisible.value = false
@@ -219,6 +272,9 @@ export function useGhostTransition(
     hiddenThumbIndex.value = null
     closeDragY.value = 0
     animating.value = false
+
+    debug?.log('transitions', 'close: complete')
+    debug?.groupEnd('transitions')
   }
 
   async function animateCloseDragTo(target: number, duration = 220) {
@@ -231,11 +287,15 @@ export function useGhostTransition(
   async function handleCloseGesture(deltaY: number, velocityY: number, closeFn: () => Promise<void>) {
     const threshold = Math.min(180, (areaMetrics.value?.height ?? 600) * 0.2)
 
+    debug?.log('gestures', `closeGesture: deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)} threshold=${threshold.toFixed(0)}`)
+
     if (Math.abs(deltaY) > threshold || Math.abs(velocityY) > 0.55) {
+      debug?.log('gestures', 'closeGesture: threshold exceeded → closing')
       await closeFn()
       return
     }
 
+    debug?.log('gestures', 'closeGesture: below threshold → bouncing back')
     animating.value = true
     await animateCloseDragTo(0)
     animating.value = false
@@ -243,6 +303,7 @@ export function useGhostTransition(
 
   function handleBackdropClick(closeFn: () => Promise<void>) {
     if (animating.value) return
+    debug?.log('transitions', 'backdrop click → closing')
     void closeFn()
   }
 
