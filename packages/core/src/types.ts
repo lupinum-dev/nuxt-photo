@@ -113,25 +113,6 @@ export type OpenTransitionPlan = {
 
 // ─── Layout ───
 
-export type LayoutItem = {
-  index: number
-  photo: PhotoItem
-  left: number
-  top: number
-  width: number
-  height: number
-}
-
-export type LayoutOutput = {
-  items: LayoutItem[]
-  containerHeight: number
-}
-
-export interface AlbumLayoutAdapter {
-  name: string
-  compute(input: LayoutInput): LayoutOutput
-}
-
 export type LayoutInput = {
   photos: PhotoItem[]
   containerWidth: number
@@ -151,8 +132,6 @@ export type MasonryLayoutOptions = LayoutInput & {
   columns?: number
 }
 
-// ─── Grouped layout (flexbox / SSR-proof) ───
-
 export type LayoutEntry = {
   index: number
   photo: PhotoItem
@@ -168,18 +147,6 @@ export type LayoutGroup = {
   entries: LayoutEntry[]
   columnsGaps?: number[]
   columnsRatios?: number[]
-}
-
-export type GroupedLayoutOptions = {
-  containerWidth: number
-  spacing: number
-  padding: number
-  layout: 'rows' | 'columns' | 'masonry'
-}
-
-export type GroupedLayoutOutput = {
-  groups: LayoutGroup[]
-  layoutOptions: GroupedLayoutOptions
 }
 
 // ─── Image adapter ───

@@ -1,3 +1,3 @@
-export { computeRowsLayout, computeRowsGroupedLayout, createRowsLayoutAdapter } from './rows'
-export { computeColumnsLayout, computeColumnsGroupedLayout, createColumnsLayoutAdapter } from './columns'
-export { computeMasonryLayout, computeMasonryGroupedLayout, createMasonryLayoutAdapter } from './masonry'
+export { computeRowsLayout } from './rows'
+export { computeColumnsLayout } from './columns'
+export { computeMasonryLayout } from './masonry'

@@ -1,4 +1,4 @@
-import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, LayoutItem, PhotoItem } from '../types'
+import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
 import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
 function ratio(item: PhotoItem) {
@@ -107,11 +107,11 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
 }
 
 /**
- * Grouped columns layout — returns LayoutGroup[] for flexbox rendering.
- * Uses shortest-path algorithm for optimal photo distribution across columns.
- * Returns columnsGaps and columnsRatios metadata for CSS calc() widths.
+ * Columns layout — distributes photos into balanced columns using
+ * shortest-path algorithm for optimal distribution. Returns LayoutGroup[]
+ * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
-export function computeColumnsGroupedLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
+export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
   const { photos, containerWidth, spacing = 8, padding = 0, columns = 3 } = options
   if (photos.length === 0 || columns < 1) return []
 
@@ -120,7 +120,6 @@ export function computeColumnsGroupedLayout(options: ColumnsLayoutOptions): Layo
   const result = computeColumnsModel(photos, columns, containerWidth, spacing, padding, targetColumnWidth)
   if (!result) return []
 
-  // Check for invalid dimensions — fall back to fewer columns
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 
   const groups: LayoutGroup[] = []
@@ -148,10 +147,9 @@ export function computeColumnsGroupedLayout(options: ColumnsLayoutOptions): Layo
       itemsCount: columnItems.length,
     }))
 
-    // Check for invalid entries
     if (entries.some(e => e.width <= 0 || e.height <= 0)) {
       if (columns > 1) {
-        return computeColumnsGroupedLayout({ ...options, columns: columns - 1 })
+        return computeColumnsLayout({ ...options, columns: columns - 1 })
       }
       return []
     }
@@ -166,54 +164,4 @@ export function computeColumnsGroupedLayout(options: ColumnsLayoutOptions): Layo
   }
 
   return groups
-}
-
-// ─── Legacy flat layout (kept for backward compat) ───
-
-export function computeColumnsLayout(options: ColumnsLayoutOptions): { items: LayoutItem[]; containerHeight: number } {
-  const { photos, containerWidth, spacing = 8, padding = 0, columns = 3 } = options
-  if (photos.length === 0 || columns < 1) return { items: [], containerHeight: 0 }
-
-  const groups = computeColumnsGroupedLayout(options)
-  if (groups.length === 0) return { items: [], containerHeight: 0 }
-
-  const items: LayoutItem[] = []
-  let currentLeft = padding
-  let maxHeight = 0
-
-  for (const group of groups) {
-    let currentTop = padding
-
-    for (const entry of group.entries) {
-      items.push({
-        index: entry.index,
-        photo: entry.photo,
-        left: currentLeft,
-        top: currentTop,
-        width: entry.width,
-        height: entry.height,
-      })
-      currentTop += entry.height + spacing
-    }
-
-    if (currentTop > maxHeight) maxHeight = currentTop
-    currentLeft += (group.entries[0]?.width ?? 0) + spacing
-  }
-
-  return { items, containerHeight: Math.max(0, maxHeight - spacing + padding) }
-}
-
-export function createColumnsLayoutAdapter(options?: { columns?: number }): {
-  name: string
-  compute: (input: ColumnsLayoutOptions) => { items: LayoutItem[]; containerHeight: number }
-} {
-  return {
-    name: 'columns',
-    compute(input) {
-      return computeColumnsLayout({
-        ...input,
-        columns: input.columns ?? options?.columns ?? 3,
-      })
-    },
-  }
 }

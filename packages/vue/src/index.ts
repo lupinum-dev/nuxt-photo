@@ -20,9 +20,6 @@ export type {
   ImageAdapter,
   ImageSource,
   LayoutInput,
-  LayoutOutput,
   LayoutEntry,
   LayoutGroup,
-  GroupedLayoutOptions,
-  GroupedLayoutOutput,
 } from '@nuxt-photo/core'

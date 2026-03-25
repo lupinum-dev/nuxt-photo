@@ -41,9 +41,9 @@
 import { ref, computed, onMounted, onBeforeUnmount, type CSSProperties } from 'vue'
 import { PhotoImage } from '@nuxt-photo/vue'
 import {
-  computeRowsGroupedLayout,
-  computeColumnsGroupedLayout,
-  computeMasonryGroupedLayout,
+  computeRowsLayout,
+  computeColumnsLayout,
+  computeMasonryLayout,
   type PhotoItem,
   type ImageAdapter,
   type LayoutGroup,
@@ -79,9 +79,19 @@ let resizeObserver: ResizeObserver | null = null
 onMounted(() => {
   if (!containerRef.value) return
 
+  let initialWidth = 0
+
   resizeObserver = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width
-    if (width && width > 0) {
+    if (!width || width <= 0) return
+
+    if (initialWidth === 0) {
+      initialWidth = width
+      return
+    }
+
+    if (Math.abs(width - initialWidth) > 1) {
+      initialWidth = width
       containerWidth.value = width
     }
   })
@@ -102,11 +112,11 @@ const groups = computed<LayoutGroup[]>(() => {
 
   switch (props.layout) {
     case 'rows':
-      return computeRowsGroupedLayout({ ...input, targetRowHeight: props.targetRowHeight })
+      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight })
     case 'columns':
-      return computeColumnsGroupedLayout({ ...input, columns: props.columns })
+      return computeColumnsLayout({ ...input, columns: props.columns })
     case 'masonry':
-      return computeMasonryGroupedLayout({ ...input, columns: props.columns })
+      return computeMasonryLayout({ ...input, columns: props.columns })
   }
 })
 
