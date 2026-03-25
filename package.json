@@ -1,105 +1,21 @@
 {
-  "name": "nuxt-photo",
-  "version": "0.0.1",
-  "description": "Nuxt-first headless photo album, image, and lightbox module",
-  "keywords": [
-    "nuxt",
-    "nuxt-module",
-    "photo",
-    "image",
-    "gallery",
-    "album",
-    "lightbox"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git"
-  },
-  "homepage": "https://github.com/lupinum-dev/nuxt-photo#readme",
-  "bugs": {
-    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
-  },
-  "license": "MIT",
+  "name": "nuxt-photo-lightbox",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/module.d.mts",
-      "import": "./dist/module.mjs"
-    },
-    "./img": {
-      "types": "./dist/img.d.mts",
-      "import": "./dist/img.mjs"
-    },
-    "./album": {
-      "types": "./dist/album.d.mts",
-      "import": "./dist/album.mjs"
-    },
-    "./lightbox": {
-      "types": "./dist/lightbox.d.mts",
-      "import": "./dist/lightbox.mjs"
-    }
-  },
-  "main": "./dist/module.mjs",
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/module.d.mts"
-      ],
-      "img": [
-        "./dist/img.d.mts"
-      ],
-      "album": [
-        "./dist/album.d.mts"
-      ],
-      "lightbox": [
-        "./dist/lightbox.d.mts"
-      ]
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "workspaces": [
-    "playground"
-  ],
   "scripts": {
-    "prepack": "sh -c 'nuxt-module-build build || true; node scripts/write-subpath-exports.mjs'",
-    "dev": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground && nuxt dev playground",
-    "dev:build": "nuxt build playground",
-    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
-    "verify": "npm run lint && npm run test && npm run test:types && npm run prepack",
-    "release": "npm run verify && changelogen --release && npm publish && git push --follow-tags",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.4.2"
+    "embla-carousel-vue": "^9.0.0-rc01",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^3.2.3",
-    "@nuxt/eslint-config": "^1.15.2",
-    "@nuxt/module-builder": "^1.0.2",
-    "@nuxt/schema": "^4.4.2",
-    "@nuxt/test-utils": "^4.0.0",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/test-utils": "^2.4.6",
-    "@types/node": "latest",
-    "changelogen": "^0.6.2",
-    "eslint": "^10.0.3",
-    "jsdom": "^25.0.1",
-    "nuxt": "^4.4.2",
-    "typescript": "~5.9.3",
-    "vue": "^3.5.30",
-    "vitest": "^4.1.0",
-    "vue-tsc": "^3.2.5"
-  },
-  "peerDependencies": {
-    "nuxt": "^4.4.2",
-    "vue": "^3.5.30"
+    "@vitejs/plugin-vue": "^5.2.3",
+    "typescript": "~5.7.3",
+    "vite": "^6.3.2",
+    "vue-tsc": "^2.2.8"
   }
 }
