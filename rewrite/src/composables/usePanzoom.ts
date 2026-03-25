@@ -12,7 +12,8 @@ export function usePanzoom(
   const zoomState = ref<ZoomState>({ fit: 1, secondary: 1, max: 1, current: 1 })
   const panState = ref<PanState>({ x: 0, y: 0 })
 
-  const slideZoomRefs = new Map<-1 | 0 | 1, HTMLElement>()
+  let activeSlideIndex = 0
+  const slideZoomRefs = new Map<number, HTMLElement>()
 
   const panzoomMotion: PanzoomMotion = {
     x: 0,
@@ -116,7 +117,7 @@ export function usePanzoom(
   }
 
   function applyActivePanzoomTransform() {
-    const activeZoomElement = slideZoomRefs.get(0)
+    const activeZoomElement = slideZoomRefs.get(activeSlideIndex)
     if (!activeZoomElement) return
     activeZoomElement.style.transform = `translate3d(${panzoomMotion.x}px, ${panzoomMotion.y}px, 0) scale(${panzoomMotion.scale})`
   }
@@ -265,7 +266,11 @@ export function usePanzoom(
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
   }
 
-  function setSlideZoomRef(offset: -1 | 0 | 1) {
+  function setActiveSlideIndex(index: number) {
+    activeSlideIndex = index
+  }
+
+  function setSlideZoomRef(slideIndex: number) {
     return (value: Element | ComponentPublicInstance | null) => {
       const element = value instanceof HTMLElement
         ? value
@@ -274,8 +279,8 @@ export function usePanzoom(
           : null
 
       if (element instanceof HTMLElement) {
-        slideZoomRefs.set(offset, element)
-        if (offset === 0) {
+        slideZoomRefs.set(slideIndex, element)
+        if (slideIndex === activeSlideIndex) {
           applyActivePanzoomTransform()
         } else {
           element.style.transform = 'translate3d(0px, 0px, 0) scale(1)'
@@ -283,7 +288,7 @@ export function usePanzoom(
         return
       }
 
-      slideZoomRefs.delete(offset)
+      slideZoomRefs.delete(slideIndex)
     }
   }
 
@@ -294,6 +299,7 @@ export function usePanzoom(
     zoomAllowed,
     panzoomMotion,
 
+    setActiveSlideIndex,
     setSlideZoomRef,
     computeZoomLevels,
     getPanBounds,

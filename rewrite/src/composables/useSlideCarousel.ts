@@ -1,35 +1,46 @@
-import { computed, ref, type CSSProperties, type Ref } from 'vue'
-import type { AreaMetrics, CarouselConfig, Photo, SlideView } from '../types'
-import { fitRect, getLoopedIndex } from '../utils/geometry'
-import { createSpring1D, runSpring, stopSpring, type Spring1D } from '../utils/spring'
+import { computed, ref, watch, type ComputedRef, type CSSProperties, type Ref } from 'vue'
+import useEmblaCarousel from 'embla-carousel-vue'
+import type { AreaMetrics, CarouselConfig, Photo } from '../types'
+import { fitRect } from '../utils/geometry'
 import type { DebugLogger } from './useDebug'
 
 export function useSlideCarousel(
   photos: Photo[],
   areaMetrics: Ref<AreaMetrics | null>,
   config: CarouselConfig,
+  isZoomedIn: ComputedRef<boolean>,
+  animating: Ref<boolean>,
   debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
-  const slideDragOffset = ref(0)
+  const scrollProgress = ref(0)
 
-  const slideSpring: Spring1D = createSpring1D(config.spring.tension, config.spring.friction)
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 25 })
 
   const currentPhoto = computed<Photo>(() => photos[activeIndex.value] ?? photos[0]!)
 
-  const slideViews = computed<SlideView[]>(() => {
-    if (!photos.length) return []
+  // Wire up Embla events when API becomes available
+  watch(emblaApi, (api) => {
+    if (!api) return
 
-    return ([-1, 0, 1] as const).map((offset) => {
-      const index = getLoopedIndex(activeIndex.value + offset, photos.length)
-      return {
-        photo: photos[index]!,
-        index,
-        offset,
-        isActive: offset === 0,
+    api.on('select', (_api, event) => {
+      const newIndex = event.detail.targetSnap
+      debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex} ("${photos[newIndex]?.title}")`)
+      activeIndex.value = newIndex
+    })
+
+    api.on('scroll', (_api) => {
+      scrollProgress.value = _api.scrollProgress()
+    })
+
+    // Block Embla drag when zoomed in or during ghost transitions
+    api.on('pointerdown', () => {
+      if (isZoomedIn.value || animating.value) {
+        debug?.log('gestures', `embla pointerdown blocked (zoomed=${isZoomedIn.value} animating=${animating.value})`)
+        return false
       }
     })
-  })
+  }, { immediate: true })
 
   function getRelativeFrameRect(photo: Photo, area = areaMetrics.value) {
     if (!area) return null
@@ -52,16 +63,24 @@ export function useSlideCarousel(
     }
   }
 
-  function getSlideZoomStyle(view: SlideView): CSSProperties {
-    return {
-      transform: view.isActive ? undefined : 'translate3d(0px, 0px, 0) scale(1)',
-    }
-  }
+  function getSlideEffectStyle(slideIndex: number): CSSProperties {
+    const api = emblaApi.value
+    if (!api) return {}
 
-  function getSlideEffectStyle(view: SlideView): CSSProperties {
-    const width = areaMetrics.value?.width ?? 1
-    const progress = slideDragOffset.value / width
-    const slidePosition = view.offset + progress
+    const snaps = api.snapList()
+    if (!snaps.length) return {}
+
+    const progress = scrollProgress.value
+    const snapPos = snaps[slideIndex] ?? 0
+
+    // Calculate distance from current position, handling loop wrapping
+    let distance = progress - snapPos
+    if (distance > 0.5) distance -= 1
+    if (distance < -0.5) distance += 1
+
+    // Normalize: distance of 1/n (one slide away) = slidePosition of 1
+    const n = photos.length
+    const slidePosition = distance * n
 
     switch (config.style) {
       case 'classic':
@@ -70,6 +89,7 @@ export function useSlideCarousel(
       case 'parallax': {
         const { amount, scale, opacity } = config.parallax
         const absPos = Math.min(1, Math.abs(slidePosition))
+        const width = areaMetrics.value?.width ?? 1
         const parallaxShift = slidePosition * amount * width * -1
         const scaleValue = 1 - absPos * (1 - scale)
         const opacityValue = 1 - absPos * (1 - opacity)
@@ -90,69 +110,37 @@ export function useSlideCarousel(
     }
   }
 
-  function resolveSlideTarget(dragDelta: number, velocityX: number) {
-    const width = areaMetrics.value?.width ?? 0
-    const threshold = width * config.thresholds.distance
-
-    if (dragDelta <= -threshold || velocityX <= -config.thresholds.velocity) return 1
-    if (dragDelta >= threshold || velocityX >= config.thresholds.velocity) return -1
-    return 0
+  function goToNext() {
+    emblaApi.value?.goToNext()
   }
 
-  function stopSlideSpring() {
-    stopSpring(slideSpring)
+  function goToPrev() {
+    emblaApi.value?.goToPrev()
   }
 
-  function animateSlideTo(targetOffset: number, initialVelocity = 0): Promise<void> {
-    return new Promise((resolve) => {
-      slideSpring.value = slideDragOffset.value
-      slideSpring.target = targetOffset
-      slideSpring.velocity = initialVelocity
-      slideSpring.tension = config.spring.tension
-      slideSpring.friction = config.spring.friction
-
-      debug?.log('slides', `spring: ${slideSpring.value.toFixed(0)}→${targetOffset.toFixed(0)} v=${initialVelocity.toFixed(0)}`)
-
-      runSpring(
-        slideSpring,
-        (v) => { slideDragOffset.value = v },
-        resolve,
-      )
-    })
+  function goTo(index: number, instant = false) {
+    emblaApi.value?.goTo(index, instant)
   }
 
-  async function commitSlideChange(direction: number, velocityPxPerSec = 0) {
-    if (!direction) return
-
-    const fromIndex = activeIndex.value
-    const toIndex = getLoopedIndex(activeIndex.value + direction, photos.length)
-    debug?.log('slides', `commitSlideChange: direction=${direction} index=${fromIndex}→${toIndex} photo="${photos[toIndex]?.title}"`)
-
-    const width = areaMetrics.value?.width ?? 0
-    if (!width) {
-      activeIndex.value = toIndex
-      return
-    }
-
-    await animateSlideTo(direction > 0 ? -width : width, velocityPxPerSec)
-    activeIndex.value = toIndex
-    slideDragOffset.value = 0
+  function selectedSnap(): number {
+    return emblaApi.value?.selectedSnap() ?? activeIndex.value
   }
 
   return {
+    emblaRef,
+    emblaApi,
     activeIndex,
-    slideDragOffset,
     currentPhoto,
-    slideViews,
+    scrollProgress,
 
     getRelativeFrameRect,
     getAbsoluteFrameRect,
     getSlideFrameStyle,
-    getSlideZoomStyle,
     getSlideEffectStyle,
-    resolveSlideTarget,
-    animateSlideTo,
-    commitSlideChange,
-    stopSlideSpring,
+
+    goToNext,
+    goToPrev,
+    goTo,
+    selectedSnap,
   }
 }

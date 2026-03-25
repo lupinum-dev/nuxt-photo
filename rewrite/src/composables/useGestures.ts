@@ -1,5 +1,5 @@
 import { ref, type ComputedRef, type Ref } from 'vue'
-import type { AreaMetrics, GestureMode, PanState, PanzoomMotion, Photo, PointerSession, ZoomState } from '../types'
+import type { AreaMetrics, GestureMode, PanState, PanzoomMotion, Photo, ZoomState } from '../types'
 import { VelocityTracker } from '../utils/velocity'
 import type { DebugLogger } from './useDebug'
 
@@ -15,7 +15,6 @@ export type GestureConfig = {
   uiVisible: Ref<boolean>
   panState: Ref<PanState>
   zoomState: Ref<ZoomState>
-  slideDragOffset: Ref<number>
   closeDragY: Ref<number>
   controlsDisabled: ComputedRef<boolean>
 
@@ -28,10 +27,10 @@ export type GestureConfig = {
   toggleZoom: (clientPoint?: { x: number; y: number }) => void
   getPanBounds: (photo: Photo, zoom: number) => { x: number; y: number }
 
-  commitSlideChange: (direction: number, velocityPxPerSec?: number) => Promise<void>
-  resolveSlideTarget: (dragDelta: number, velocityX: number) => number
-  animateSlideTo: (targetOffset: number, initialVelocity?: number) => Promise<void>
-  stopSlideSpring: () => void
+  goToNext: () => void
+  goToPrev: () => void
+  goTo: (index: number, instant?: boolean) => void
+  selectedSnap: () => number
 
   handleCloseGesture: (deltaY: number, velocityY: number, closeFn: () => Promise<void>) => Promise<void>
   close: () => Promise<void>
@@ -40,16 +39,28 @@ export type GestureConfig = {
 export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   const gesturePhase = ref<GestureMode>('idle')
 
-  let pointerSession: PointerSession | null = null
+  let pointerSession: {
+    id: number
+    pointerType: string
+    startX: number
+    startY: number
+    lastX: number
+    lastY: number
+    moved: boolean
+    startPan: PanState
+  } | null = null
+
   let tapTimer: ReturnType<typeof setTimeout> | undefined
   let lastTap: { time: number; clientX: number; clientY: number } | null = null
   let lastWheelTime = 0
+  let emblaStolen = false
 
   const velocityTracker = new VelocityTracker(100)
 
   function resetGestureState() {
     gesturePhase.value = 'idle'
     pointerSession = null
+    emblaStolen = false
   }
 
   function cancelTapTimer() {
@@ -114,12 +125,18 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
   function onMediaPointerDown(event: PointerEvent) {
     if (!config.lightboxMounted.value || config.ghostVisible.value) return
+
+    // Block everything during ghost animations
+    if (config.animating.value) {
+      event.stopPropagation()
+      return
+    }
+
     if (event.pointerType === 'mouse' && event.button !== 0) return
 
-    // Allow interrupting slide spring animations
-    if (config.animating.value) {
-      config.stopSlideSpring()
-      config.animating.value = false
+    // When zoomed in, block Embla entirely — we handle pan
+    if (config.isZoomedIn.value) {
+      event.stopPropagation()
     }
 
     cancelTapTimer()
@@ -133,9 +150,6 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       startY: event.clientY,
       lastX: event.clientX,
       lastY: event.clientY,
-      lastTime: event.timeStamp,
-      velocityX: 0,
-      velocityY: 0,
       moved: false,
       startPan: {
         x: config.panzoomMotion.x,
@@ -144,11 +158,16 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     }
 
     gesturePhase.value = 'idle'
-    config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
+    emblaStolen = false
+
+    // Take pointer capture when zoomed (we own the gesture)
+    if (config.isZoomedIn.value) {
+      config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
+    }
   }
 
   function onMediaPointerMove(event: PointerEvent) {
-    if (!pointerSession || event.pointerId !== pointerSession.id || config.animating.value) return
+    if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     const deltaX = event.clientX - pointerSession.startX
     const deltaY = event.clientY - pointerSession.startY
@@ -157,7 +176,6 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
     pointerSession.lastX = event.clientX
     pointerSession.lastY = event.clientY
-    pointerSession.lastTime = event.timeStamp
     pointerSession.moved = pointerSession.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
 
     if (gesturePhase.value === 'idle') {
@@ -165,12 +183,32 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       if (mode !== 'idle') {
         debug?.log('gestures', `classified: ${mode} (deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} pointer=${pointerSession.pointerType})`)
         gesturePhase.value = mode
+
+        // Steal from Embla for close-drag
+        if (mode === 'close') {
+          event.stopPropagation()
+          emblaStolen = true
+          // Cancel any Embla drag in progress
+          config.goTo(config.selectedSnap(), true)
+          config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
+        }
+
+        // For zoomed-in slide (edge detection), trigger programmatic navigation
+        if (mode === 'slide' && config.isZoomedIn.value) {
+          if (deltaX > 0) {
+            config.goToPrev()
+          } else {
+            config.goToNext()
+          }
+          resetGestureState()
+          return
+        }
       }
     }
 
-    if (gesturePhase.value === 'slide') {
-      config.slideDragOffset.value = deltaX
-      return
+    // Stop propagation for modes we own
+    if (gesturePhase.value === 'close' || gesturePhase.value === 'pan') {
+      event.stopPropagation()
     }
 
     if (gesturePhase.value === 'close') {
@@ -189,15 +227,20 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         false,
       )
     }
+
+    // 'slide' mode: do nothing — Embla handles it
   }
 
   async function onMediaPointerUp(event: PointerEvent) {
     if (!pointerSession || event.pointerId !== pointerSession.id) return
 
-    try {
-      config.mediaAreaRef.value?.releasePointerCapture(event.pointerId)
-    } catch {
-      // ignored
+    // Release pointer capture if we took it
+    if (config.isZoomedIn.value || emblaStolen) {
+      try {
+        config.mediaAreaRef.value?.releasePointerCapture(event.pointerId)
+      } catch {
+        // ignored
+      }
     }
 
     const session = pointerSession
@@ -205,20 +248,19 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     const deltaY = event.clientY - session.startY
     const mode = gesturePhase.value
 
-    // Get buffered velocity (100ms window) instead of frame-to-frame
     const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity()
 
     resetGestureState()
+
+    // Stop propagation for modes we own
+    if (mode === 'close' || mode === 'pan') {
+      event.stopPropagation()
+    }
 
     debug?.log('gestures', `pointerUp: mode=${mode} moved=${session.moved} deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} vX=${velocityX.toFixed(3)} vY=${velocityY.toFixed(3)}`)
 
     if (!session.moved || mode === 'idle') {
       handleTap(event.clientX, event.clientY)
-      return
-    }
-
-    if (mode === 'slide') {
-      await handleSlideGesture(deltaX, velocityX)
       return
     }
 
@@ -237,41 +279,26 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         friction: 17,
       })
     }
-  }
 
-  async function handleSlideGesture(deltaX: number, velocityX: number) {
-    const direction = config.resolveSlideTarget(deltaX, velocityX)
-    // Convert px/ms → px/s for spring physics
-    const velocityPxPerSec = velocityX * 1000
-
-    debug?.log('gestures', `slideGesture: deltaX=${deltaX.toFixed(1)} vX=${velocityX.toFixed(3)} (${velocityPxPerSec.toFixed(0)} px/s) → direction=${direction}`)
-
-    config.animating.value = true
-    try {
-      if (!direction) {
-        // Spring back with momentum from the gesture
-        await config.animateSlideTo(0, velocityPxPerSec)
-      } else {
-        await config.commitSlideChange(direction, velocityPxPerSec)
-      }
-    } finally {
-      config.animating.value = false
-    }
+    // 'slide' mode: Embla handles snap/settle — nothing to do
   }
 
   function onMediaPointerCancel(event: PointerEvent) {
     if (!pointerSession || event.pointerId !== pointerSession.id) return
 
+    const wasZoomed = config.isZoomedIn.value || emblaStolen
     resetGestureState()
-    config.setPanzoomImmediate(
-      config.panzoomMotion.scale,
-      config.clampPan(
-        { x: config.panzoomMotion.x, y: config.panzoomMotion.y },
+
+    if (wasZoomed) {
+      config.setPanzoomImmediate(
         config.panzoomMotion.scale,
-      ),
-    )
+        config.clampPan(
+          { x: config.panzoomMotion.x, y: config.panzoomMotion.y },
+          config.panzoomMotion.scale,
+        ),
+      )
+    }
     config.closeDragY.value = 0
-    config.slideDragOffset.value = 0
   }
 
   function onWheel(event: WheelEvent) {
@@ -317,10 +344,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
           ),
         )
       } else if (!config.controlsDisabled.value) {
-        config.animating.value = true
-        void config.commitSlideChange(1).catch(() => {}).finally(() => {
-          config.animating.value = false
-        })
+        config.goToNext()
       }
     }
 
@@ -334,10 +358,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
           ),
         )
       } else if (!config.controlsDisabled.value) {
-        config.animating.value = true
-        void config.commitSlideChange(-1).catch(() => {}).finally(() => {
-          config.animating.value = false
-        })
+        config.goToPrev()
       }
     }
   }

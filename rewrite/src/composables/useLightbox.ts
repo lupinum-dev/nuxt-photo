@@ -1,6 +1,5 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import type { AreaMetrics, CarouselConfig, CarouselStyle, Photo } from '../types'
-import { isUsableRect } from '../utils/geometry'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { CarouselConfig, Photo } from '../types'
 import { ensureImageLoaded } from '../utils/image'
 import { lockBodyScroll } from '../utils/body-scroll'
 import { nextFrame } from '../utils/timing'
@@ -10,6 +9,8 @@ import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
 import { createDebug } from './useDebug'
 import { createTransitionMode } from './useTransitionMode'
+import type { AreaMetrics } from '../types'
+import { isUsableRect } from '../utils/geometry'
 
 declare global {
   interface Window {
@@ -28,8 +29,6 @@ export function useLightbox(photos: Photo[]) {
 
   const carouselConfig: CarouselConfig = {
     style: 'classic',
-    spring: { tension: 260, friction: 22 },
-    thresholds: { distance: 0.18, velocity: 0.45 },
     parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
     fade: { minOpacity: 0 },
   }
@@ -37,8 +36,23 @@ export function useLightbox(photos: Photo[]) {
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
 
-  const carousel = useSlideCarousel(photos, areaMetrics, carouselConfig, debug)
+  // Proxy refs to break circular init dependency:
+  // carousel needs isZoomedIn (from panzoom) and animating (from ghost),
+  // but panzoom needs currentPhoto (from carousel)
+  const isZoomedInProxy = ref(false)
+  const animatingProxy = ref(false)
+
+  const carousel = useSlideCarousel(
+    photos,
+    areaMetrics,
+    carouselConfig,
+    computed(() => isZoomedInProxy.value),
+    animatingProxy,
+    debug,
+  )
+
   const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
+
   const ghost = useGhostTransition(
     photos,
     carousel.activeIndex,
@@ -48,6 +62,10 @@ export function useLightbox(photos: Photo[]) {
     debug,
     transitionConfig,
   )
+
+  // Sync proxy refs
+  watch(panzoom.isZoomedIn, (v) => { isZoomedInProxy.value = v }, { immediate: true })
+  watch(ghost.animating, (v) => { animatingProxy.value = v }, { immediate: true })
 
   function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
@@ -90,36 +108,26 @@ export function useLightbox(photos: Photo[]) {
 
   async function openLightbox(index: number) {
     skipActiveIndexWatch = true
-    carousel.slideDragOffset.value = 0
     ghost.closeDragY.value = 0
+    // Navigate Embla to the target slide instantly before opening
+    carousel.goTo(index, true)
     await ghost.open(index, transitionCallbacks)
     skipActiveIndexWatch = false
   }
 
   async function closeLightbox() {
     await ghost.close(closeCallbacks)
-    carousel.slideDragOffset.value = 0
     ghost.closeDragY.value = 0
   }
 
-  async function next() {
+  function next() {
     if (ghost.controlsDisabled.value) return
-    ghost.animating.value = true
-    try {
-      await carousel.commitSlideChange(1)
-    } finally {
-      ghost.animating.value = false
-    }
+    carousel.goToNext()
   }
 
-  async function prev() {
+  function prev() {
     if (ghost.controlsDisabled.value) return
-    ghost.animating.value = true
-    try {
-      await carousel.commitSlideChange(-1)
-    } finally {
-      ghost.animating.value = false
-    }
+    carousel.goToPrev()
   }
 
   const gestures = useGestures({
@@ -134,7 +142,6 @@ export function useLightbox(photos: Photo[]) {
     uiVisible: ghost.uiVisible,
     panState: panzoom.panState,
     zoomState: panzoom.zoomState,
-    slideDragOffset: carousel.slideDragOffset,
     closeDragY: ghost.closeDragY,
     controlsDisabled: ghost.controlsDisabled,
 
@@ -147,36 +154,14 @@ export function useLightbox(photos: Photo[]) {
     toggleZoom: panzoom.toggleZoom,
     getPanBounds: panzoom.getPanBounds,
 
-    commitSlideChange: carousel.commitSlideChange,
-    resolveSlideTarget: carousel.resolveSlideTarget,
-    animateSlideTo: carousel.animateSlideTo,
-    stopSlideSpring: carousel.stopSlideSpring,
+    goToNext: carousel.goToNext,
+    goToPrev: carousel.goToPrev,
+    goTo: carousel.goTo,
+    selectedSnap: carousel.selectedSnap,
 
     handleCloseGesture: ghost.handleCloseGesture,
     close: closeLightbox,
   }, debug)
-
-  // Computed styles that depend on multiple composables
-  const mediaTrackStyle = computed<CSSProperties>(() => {
-    const area = areaMetrics.value
-    const width = area?.width ?? 0
-    const height = area?.height ?? 0
-
-    return {
-      width: `${width * 3}px`,
-      height: `${height}px`,
-      opacity: String(ghost.mediaOpacity.value),
-      transform: `translate3d(${-width + carousel.slideDragOffset.value}px, 0, 0)`,
-    }
-  })
-
-  const slideCellStyle = computed<CSSProperties>(() => {
-    const area = areaMetrics.value
-    return {
-      width: `${area?.width ?? 0}px`,
-      height: `${area?.height ?? 0}px`,
-    }
-  })
 
   // Watchers
   watch(ghost.lightboxMounted, (mounted) => {
@@ -188,6 +173,8 @@ export function useLightbox(photos: Photo[]) {
     if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
 
     debug.log('slides', `activeIndex changed → ${newIndex} ("${carousel.currentPhoto.value.title}")`)
+
+    panzoom.setActiveSlideIndex(newIndex)
 
     await nextTick()
     await nextFrame()
@@ -202,7 +189,6 @@ export function useLightbox(photos: Photo[]) {
       window.addEventListener('keydown', gestures.onKeydown)
       window.addEventListener('resize', onResize)
 
-      // Expose debug harness on window
       window.__lightbox = {
         debug: debug.flags,
         get transitionMode() { return transitionConfig.mode },
@@ -235,7 +221,6 @@ export function useLightbox(photos: Photo[]) {
       console.log('  __lightbox.transitionMode = "auto"    // auto | flip | fade | none')
       console.log('  __lightbox.autoThreshold = 0.55       // visibility % for auto mode')
       console.log('  __lightbox.carousel.style = "classic" // classic | parallax | fade')
-      console.log('  __lightbox.carousel.spring            // { tension, friction }')
 
       for (const photo of photos) {
         void ensureImageLoaded(photo.full)
@@ -245,7 +230,6 @@ export function useLightbox(photos: Photo[]) {
 
   onBeforeUnmount(() => {
     gestures.cancelTapTimer()
-    carousel.stopSlideSpring()
 
     if (typeof window !== 'undefined') {
       window.removeEventListener('keydown', gestures.onKeydown)
@@ -271,8 +255,6 @@ export function useLightbox(photos: Photo[]) {
     // Carousel
     activeIndex: carousel.activeIndex,
     currentPhoto: carousel.currentPhoto,
-    slideViews: carousel.slideViews,
-    slideDragOffset: carousel.slideDragOffset,
 
     // Panzoom
     zoomState: panzoom.zoomState,
@@ -301,12 +283,9 @@ export function useLightbox(photos: Photo[]) {
     // Gestures
     gesturePhase: gestures.gesturePhase,
 
-    // Computed styles
-    mediaTrackStyle,
-    slideCellStyle,
-
     // Refs
     mediaAreaRef,
+    emblaRef: carousel.emblaRef,
 
     // Ref callbacks
     setThumbRef: ghost.setThumbRef,
@@ -327,7 +306,6 @@ export function useLightbox(photos: Photo[]) {
     toggleZoom: panzoom.toggleZoom,
     handleBackdropClick: () => ghost.handleBackdropClick(closeLightbox),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
-    getSlideZoomStyle: carousel.getSlideZoomStyle,
     getSlideEffectStyle: carousel.getSlideEffectStyle,
   }
 }

@@ -51,31 +51,30 @@
               ref="mediaAreaRef"
               class="media-area"
               :class="{ 'media-area--zoomed': isZoomedIn, 'media-area--dragging': gesturePhase !== 'idle' }"
-              @pointerdown="onMediaPointerDown"
-              @pointermove="onMediaPointerMove"
-              @pointerup="onMediaPointerUp"
-              @pointercancel="onMediaPointerCancel"
+              @pointerdown.capture="onMediaPointerDown"
+              @pointermove.capture="onMediaPointerMove"
+              @pointerup.capture="onMediaPointerUp"
+              @pointercancel.capture="onMediaPointerCancel"
               @wheel="onWheel"
             >
-              <div class="media-viewport">
-                <div class="media-track" :style="mediaTrackStyle">
+              <div class="embla__viewport" ref="emblaRef" :style="{ opacity: mediaOpacity }">
+                <div class="embla__container">
                   <div
-                    v-for="view in slideViews"
-                    :key="`${view.index}-${view.photo.id}`"
-                    class="slide-cell"
-                    :style="slideCellStyle"
+                    v-for="(photo, i) in photos"
+                    :key="photo.id"
+                    class="embla__slide"
                   >
-                    <div class="slide-effect" :style="getSlideEffectStyle(view)">
-                      <div class="slide-frame" :style="getSlideFrameStyle(view.photo)">
+                    <div class="slide-effect" :style="getSlideEffectStyle(i)">
+                      <div class="slide-frame" :style="getSlideFrameStyle(photo)">
                         <div
                           class="slide-zoom"
-                          :ref="setSlideZoomRef(view.offset)"
-                          :style="getSlideZoomStyle(view)"
+                          :ref="setSlideZoomRef(i)"
                         >
                           <img
                             class="lightbox-image"
-                            :src="view.photo.full"
-                            :alt="view.photo.title"
+                            :src="photo.full"
+                            :alt="photo.title"
+                            loading="lazy"
                             draggable="false"
                           />
                         </div>
@@ -118,7 +117,6 @@ import PhotoGallery from './components/PhotoGallery.vue'
 const {
   activeIndex,
   currentPhoto,
-  slideViews,
   lightboxMounted,
   ghostVisible,
   ghostSrc,
@@ -128,14 +126,14 @@ const {
   zoomAllowed,
   controlsDisabled,
   gesturePhase,
+  mediaOpacity,
 
   backdropStyle,
   lightboxUiStyle,
   chromeStyle,
-  mediaTrackStyle,
-  slideCellStyle,
 
   mediaAreaRef,
+  emblaRef,
   setThumbRef,
   setSlideZoomRef,
 
@@ -152,7 +150,6 @@ const {
   toggleZoom,
   handleBackdropClick,
   getSlideFrameStyle,
-  getSlideZoomStyle,
   getSlideEffectStyle,
 } = useLightbox(photos)
 </script>
@@ -297,7 +294,6 @@ const {
   position: relative;
   width: min(1240px, calc(100vw - 72px));
   height: min(78vh, calc(100vh - 150px));
-  touch-action: none;
   overflow: hidden;
 }
 
@@ -309,6 +305,8 @@ const {
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
     radial-gradient(circle at top, rgba(63, 74, 168, 0.22), transparent 55%);
   border-radius: 28px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .media-area--zoomed {
@@ -319,20 +317,22 @@ const {
   cursor: grabbing;
 }
 
-.media-viewport {
+/* Embla carousel */
+.embla__viewport {
+  overflow: hidden;
   position: absolute;
   inset: 0;
-  overflow: hidden;
 }
 
-.media-track {
+.embla__container {
   display: flex;
-  position: relative;
-  will-change: transform, opacity;
+  height: 100%;
+  touch-action: pan-y pinch-zoom;
 }
 
-.slide-cell {
-  flex: none;
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
   display: grid;
   place-items: center;
 }

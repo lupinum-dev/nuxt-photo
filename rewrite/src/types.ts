@@ -24,13 +24,6 @@ export type PanState = {
   y: number
 }
 
-export type SlideView = {
-  photo: Photo
-  index: number
-  offset: -1 | 0 | 1
-  isActive: boolean
-}
-
 export type RectLike = {
   left: number
   top: number
@@ -39,20 +32,6 @@ export type RectLike = {
 }
 
 export type AreaMetrics = RectLike
-
-export type PointerSession = {
-  id: number
-  pointerType: string
-  startX: number
-  startY: number
-  lastX: number
-  lastY: number
-  lastTime: number
-  velocityX: number
-  velocityY: number
-  moved: boolean
-  startPan: PanState
-}
 
 export type PanzoomMotion = {
   x: number
@@ -75,8 +54,6 @@ export type CarouselStyle = 'classic' | 'parallax' | 'fade'
 
 export type CarouselConfig = {
   style: CarouselStyle
-  spring: { tension: number; friction: number }
-  thresholds: { distance: number; velocity: number }
   parallax: { amount: number; scale: number; opacity: number }
   fade: { minOpacity: number }
 }
