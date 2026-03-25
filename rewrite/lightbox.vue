@@ -60,15 +60,15 @@
             </div>
           </div>
 
-            <div class="stage">
-              <div ref="mediaAreaRef" class="media-area">
-                <div
-                  class="media-shell"
-                  :style="mediaShellStyle"
-                >
-                  <img
-                    :key="currentPhoto.id"
-                    class="lightbox-image"
+          <div class="stage">
+            <div ref="mediaAreaRef" class="media-area">
+              <div
+                class="media-shell"
+                :style="mediaShellStyle"
+              >
+                <img
+                  :key="currentPhoto.id"
+                  class="lightbox-image"
                   :src="currentPhoto.full"
                   :alt="currentPhoto.title"
                   draggable="false"
@@ -76,7 +76,7 @@
               </div>
             </div>
 
-            <div class="caption" :style="{ opacity: mediaOpacity }">
+            <div class="caption" :style="{ opacity: captionOpacity }">
               <h2>{{ currentPhoto.title }}</h2>
               <p>{{ currentPhoto.subtitle }}</p>
             </div>
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties, type ComponentPublicInstance } from 'vue'
 
 type Photo = {
   id: number
@@ -175,22 +175,33 @@ const animating = ref(false)
 
 const overlayOpacity = ref(0)
 const mediaOpacity = ref(0)
+const captionOpacity = ref(0)
 
 const ghostVisible = ref(false)
 const ghostSrc = ref('')
 const ghostStyle = ref<CSSProperties>({})
 const mediaFrameStyle = ref<CSSProperties>({})
+const openDurationMs = 420
+const closeDurationMs = 380
 
 const hiddenThumbIndex = ref<number | null>(null)
+const previousBodyOverflow = ref('')
+const previousBodyPaddingRight = ref('')
 
-const currentPhoto = computed(() => photos[activeIndex.value])
+const currentPhoto = computed<Photo>(() => photos[activeIndex.value] ?? photos[0]!)
 const mediaShellStyle = computed(() => ({
   ...mediaFrameStyle.value,
   opacity: mediaOpacity.value,
 }))
 
 function setThumbRef(index: number) {
-  return (el: Element | null) => {
+  return (value: Element | ComponentPublicInstance | null) => {
+    const el = value instanceof HTMLElement
+      ? value
+      : value && '$el' in value && value.$el instanceof HTMLElement
+        ? value.$el
+        : null
+
     if (el instanceof HTMLElement) {
       thumbRefs.set(index, el)
     } else {
@@ -209,7 +220,7 @@ function nextFrame() {
   })
 }
 
-function isUsableRect(rect: DOMRect | null) {
+function isUsableRect(rect: DOMRect | null): rect is DOMRect {
   if (!rect) return false
   if (rect.width < 24 || rect.height < 24) return false
   if (rect.bottom < 0 || rect.right < 0) return false
@@ -236,7 +247,10 @@ function fitRect(container: DOMRect, aspect: number) {
   }
 }
 
-function flipTransform(from: DOMRect, to: { left: number; top: number; width: number; height: number }) {
+function flipTransform(
+  from: { left: number; top: number; width: number; height: number },
+  to: { left: number; top: number; width: number; height: number },
+) {
   const dx = from.left - to.left
   const dy = from.top - to.top
   const sx = from.width / to.width
@@ -291,6 +305,25 @@ function ensureImageLoaded(src: string) {
   return promise
 }
 
+function lockBodyScroll(locked: boolean) {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return
+
+  if (locked) {
+    previousBodyOverflow.value = document.body.style.overflow
+    previousBodyPaddingRight.value = document.body.style.paddingRight
+
+    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth)
+    const currentPaddingRight = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0
+
+    document.body.style.overflow = 'hidden'
+    document.body.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+    return
+  }
+
+  document.body.style.overflow = previousBodyOverflow.value
+  document.body.style.paddingRight = previousBodyPaddingRight.value
+}
+
 async function open(index: number) {
   if (animating.value) return
 
@@ -298,6 +331,7 @@ async function open(index: number) {
   lightboxMounted.value = true
   overlayOpacity.value = 0
   mediaOpacity.value = 0
+  captionOpacity.value = 0
 
   await nextTick()
   await nextFrame()
@@ -312,6 +346,7 @@ async function open(index: number) {
     overlayOpacity.value = 1
     await ensureImageLoaded(photo.full)
     mediaOpacity.value = 1
+    captionOpacity.value = 1
     return
   }
 
@@ -330,7 +365,8 @@ async function open(index: number) {
     borderRadius: '18px',
     boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
     transition:
-      'transform 420ms cubic-bezier(0.22, 1, 0.36, 1), border-radius 420ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1)',
+      `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 80ms linear`,
+    opacity: '1',
     ...makeGhostBaseStyle(toRect),
     transform: flipTransform(fromRect!, toRect),
   }
@@ -345,10 +381,13 @@ async function open(index: number) {
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
   }
 
-  await Promise.all([wait(420), ensureImageLoaded(photo.full)])
+  await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.full)])
 
   mediaOpacity.value = 1
+  await nextFrame()
+
   ghostVisible.value = false
+  captionOpacity.value = 1
   animating.value = false
 }
 
@@ -363,6 +402,7 @@ async function close() {
 
   if (!isUsableRect(toRect) || !fromRect) {
     mediaOpacity.value = 0
+    captionOpacity.value = 0
     overlayOpacity.value = 0
     await wait(220)
     ghostVisible.value = false
@@ -377,6 +417,7 @@ async function close() {
   ghostSrc.value = photo.full
   ghostVisible.value = true
   mediaOpacity.value = 0
+  captionOpacity.value = 0
 
   ghostStyle.value = {
     position: 'fixed',
@@ -385,14 +426,13 @@ async function close() {
     transformOrigin: 'top left',
     pointerEvents: 'none',
     willChange: 'transform',
-    borderRadius: '18px',
-    boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
     transition:
-      'transform 380ms cubic-bezier(0.22, 1, 0.36, 1), border-radius 380ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 380ms cubic-bezier(0.22, 1, 0.36, 1)',
+      `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     ...makeGhostBaseStyle(toRect!),
-    transform: flipTransform(fromRect as DOMRect, toRect!),
+    transform: flipTransform(fromRect, toRect),
     borderRadius: '24px',
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+    opacity: '1',
   }
 
   await nextFrame()
@@ -405,7 +445,7 @@ async function close() {
     boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
   }
 
-  await wait(380)
+  await wait(closeDurationMs)
 
   ghostVisible.value = false
   lightboxMounted.value = false
@@ -437,8 +477,7 @@ function onResize() {
 }
 
 watch(lightboxMounted, (mounted) => {
-  if (typeof document === 'undefined') return
-  document.body.style.overflow = mounted ? 'hidden' : ''
+  lockBodyScroll(mounted)
 })
 
 watch(activeIndex, async () => {
@@ -467,7 +506,7 @@ onBeforeUnmount(() => {
   }
 
   if (typeof document !== 'undefined') {
-    document.body.style.overflow = ''
+    lockBodyScroll(false)
   }
 })
 </script>
@@ -698,7 +737,6 @@ onBeforeUnmount(() => {
   position: relative;
   flex: none;
   overflow: hidden;
-  transition: opacity 160ms ease;
 }
 
 .lightbox-image {
