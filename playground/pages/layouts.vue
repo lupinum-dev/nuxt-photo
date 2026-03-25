@@ -67,7 +67,7 @@
               :alt="photo.alt || ''"
               loading="lazy"
               draggable="false"
-              :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '12px', aspectRatio: `${photo.width} / ${photo.height}` }"
+              :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '4px', aspectRatio: `${photo.width} / ${photo.height}` }"
             />
           </div>
         </template>
@@ -94,13 +94,13 @@ const ctx = useLightbox(photos)
 
 <style scoped>
 .page {
-  padding: 48px 24px 72px;
+  padding: 80px 48px 120px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 }
 
 .header__title {
@@ -113,7 +113,7 @@ const ctx = useLightbox(photos)
   margin: 12px 0 0;
   font-size: 16px;
   line-height: 1.5;
-  color: rgba(236, 240, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .header__desc code {
@@ -122,18 +122,18 @@ const ctx = useLightbox(photos)
   border-radius: 4px;
   font-size: 13px;
   font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(180, 200, 255, 0.9);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  margin-bottom: 32px;
-  padding: 20px;
+  gap: 32px;
+  margin-bottom: 48px;
+  padding: 24px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 
 .control-group {
@@ -153,14 +153,14 @@ const ctx = useLightbox(photos)
   display: flex;
   gap: 4px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 4px;
 }
 
 .control-tab {
   padding: 8px 16px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.6);
@@ -182,7 +182,7 @@ const ctx = useLightbox(photos)
 
 .control-range {
   width: 160px;
-  accent-color: rgba(130, 150, 255, 0.8);
+  accent-color: #b3b3b3;
 }
 
 .album-trigger {
@@ -197,7 +197,7 @@ const ctx = useLightbox(photos)
 
 @media (max-width: 700px) {
   .page {
-    padding: 28px 16px 48px;
+    padding: 48px 20px 64px;
   }
 
   .controls {

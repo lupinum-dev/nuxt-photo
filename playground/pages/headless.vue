@@ -169,13 +169,13 @@ const ctx = useLightbox(photos)
 
 <style scoped>
 .page {
-  padding: 48px 24px 72px;
+  padding: 80px 48px 120px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .header {
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 
 .header__title {
@@ -188,7 +188,7 @@ const ctx = useLightbox(photos)
   margin: 12px 0 0;
   font-size: 16px;
   line-height: 1.5;
-  color: rgba(236, 240, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .header__desc code {
@@ -197,32 +197,32 @@ const ctx = useLightbox(photos)
   border-radius: 4px;
   font-size: 13px;
   font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(180, 200, 255, 0.9);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Simple CSS grid for thumbnails */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
   margin-bottom: 64px;
 }
 
 .grid__item {
   position: relative;
   aspect-ratio: 4/3;
-  border-radius: 12px;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 200ms ease, opacity 200ms ease;
 }
 
 .grid__item:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
 .grid__item:focus-visible {
-  outline: 2px solid rgba(130, 150, 255, 0.8);
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
 
@@ -285,7 +285,7 @@ const ctx = useLightbox(photos)
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.08);
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .hl__actions {
@@ -297,7 +297,7 @@ const ctx = useLightbox(photos)
   height: 38px;
   padding: 0 16px;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
   color: white;
@@ -341,7 +341,7 @@ const ctx = useLightbox(photos)
   height: min(78vh, calc(100vh - 150px));
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .hl__media--zoomed { cursor: grab; }
@@ -394,7 +394,7 @@ const ctx = useLightbox(photos)
   user-select: none;
   -webkit-user-drag: none;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 .hl__info {
@@ -417,10 +417,10 @@ const ctx = useLightbox(photos)
 
 /* Explanation section */
 .code-hint {
-  padding: 32px;
+  padding: 40px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  border-radius: 8px;
 }
 
 .code-hint h2 {
@@ -442,13 +442,13 @@ const ctx = useLightbox(photos)
   border-radius: 4px;
   font-size: 13px;
   font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(180, 200, 255, 0.9);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .feature-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .feature {
@@ -456,7 +456,7 @@ const ctx = useLightbox(photos)
   gap: 12px;
   padding: 16px;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -466,17 +466,17 @@ const ctx = useLightbox(photos)
   height: 32px;
   display: grid;
   place-items: center;
-  background: rgba(130, 150, 255, 0.12);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
   font-size: 16px;
-  color: rgba(160, 180, 255, 0.9);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .feature strong {
   display: block;
   font-size: 13px;
   font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(200, 210, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 2px;
 }
 
@@ -488,7 +488,7 @@ const ctx = useLightbox(photos)
 
 @media (max-width: 700px) {
   .page {
-    padding: 28px 16px 48px;
+    padding: 48px 20px 64px;
   }
 
   .grid {

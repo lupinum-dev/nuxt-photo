@@ -37,21 +37,22 @@ import { photos } from '~/composables/photos'
 
 <style scoped>
 .page {
-  padding: 48px 24px 72px;
+  padding: 80px 48px 120px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .hero {
-  margin-bottom: 40px;
+  margin-bottom: 64px;
 }
 
 .hero__eyebrow {
   margin: 0 0 8px;
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(215, 223, 255, 0.72);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .hero__title {
@@ -62,21 +63,21 @@ import { photos } from '~/composables/photos'
 }
 
 .hero__lede {
-  max-width: 700px;
-  margin: 16px 0 0;
+  max-width: 580px;
+  margin: 20px 0 0;
   font-size: 18px;
   line-height: 1.5;
-  color: rgba(236, 240, 255, 0.8);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .gallery-section {
-  margin-bottom: 64px;
+  margin-bottom: 80px;
 }
 
 .footer {
-  text-align: center;
+  text-align: left;
   color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -93,7 +94,7 @@ import { photos } from '~/composables/photos'
 
 @media (max-width: 700px) {
   .page {
-    padding: 28px 16px 48px;
+    padding: 48px 20px 64px;
   }
 }
 </style>
