@@ -77,10 +77,14 @@ export function useLightbox(photos: Photo[]) {
     isZoomedIn: panzoom.isZoomedIn,
   }
 
+  let skipActiveIndexWatch = false
+
   async function openLightbox(index: number) {
+    skipActiveIndexWatch = true
     carousel.slideDragOffset.value = 0
     ghost.closeDragY.value = 0
     await ghost.open(index, transitionCallbacks)
+    skipActiveIndexWatch = false
   }
 
   async function closeLightbox() {
@@ -89,20 +93,24 @@ export function useLightbox(photos: Photo[]) {
     ghost.closeDragY.value = 0
   }
 
-  function next() {
+  async function next() {
     if (ghost.controlsDisabled.value) return
     ghost.animating.value = true
-    void carousel.commitSlideChange(1).then(() => {
+    try {
+      await carousel.commitSlideChange(1)
+    } finally {
       ghost.animating.value = false
-    })
+    }
   }
 
-  function prev() {
+  async function prev() {
     if (ghost.controlsDisabled.value) return
     ghost.animating.value = true
-    void carousel.commitSlideChange(-1).then(() => {
+    try {
+      await carousel.commitSlideChange(-1)
+    } finally {
       ghost.animating.value = false
-    })
+    }
   }
 
   const gestures = useGestures({
@@ -167,7 +175,7 @@ export function useLightbox(photos: Photo[]) {
   })
 
   watch(carousel.activeIndex, async (newIndex) => {
-    if (!ghost.lightboxMounted.value) return
+    if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
 
     debug.log('slides', `activeIndex changed → ${newIndex} ("${carousel.currentPhoto.value.title}")`)
 
@@ -189,11 +197,11 @@ export function useLightbox(photos: Photo[]) {
         debug: debug.flags,
         get transitionMode() { return transitionConfig.mode },
         set transitionMode(v: string) {
-          if (v === 'flip' || v === 'fade' || v === 'auto') {
+          if (v === 'flip' || v === 'fade' || v === 'auto' || v === 'none') {
             transitionConfig.mode = v
             console.log(`[lightbox] transitionMode set to "${v}"`)
           } else {
-            console.warn(`[lightbox] invalid transitionMode "${v}", use: flip | fade | auto`)
+            console.warn(`[lightbox] invalid transitionMode "${v}", use: flip | fade | auto | none`)
           }
         },
         get autoThreshold() { return transitionConfig.autoThreshold },
@@ -213,7 +221,7 @@ export function useLightbox(photos: Photo[]) {
       console.log('  __lightbox.debug.zoom = true          // zoom/pan only')
       console.log('  __lightbox.debug.slides = true        // slide changes only')
       console.log('  __lightbox.debug.geometry = true      // geometry sync only')
-      console.log('  __lightbox.transitionMode = "auto"    // auto | flip | fade')
+      console.log('  __lightbox.transitionMode = "auto"    // auto | flip | fade | none')
       console.log('  __lightbox.autoThreshold = 0.4        // visibility % for auto mode')
 
       for (const photo of photos) {

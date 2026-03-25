@@ -4,11 +4,13 @@ import { flipTransform, isUsableRect, makeGhostBaseStyle } from '../utils/geomet
 import { ensureImageLoaded } from '../utils/image'
 import { nextFrame, wait } from '../utils/timing'
 import { animateNumber } from '../utils/animation'
+import { easeOutCubic } from '../utils/easing'
 import type { DebugLogger } from './useDebug'
 import { type TransitionModeConfig, shouldUseFlip } from './useTransitionMode'
 
 const openDurationMs = 420
 const closeDurationMs = 380
+const fadeDurationMs = 200
 
 export type TransitionCallbacks = {
   syncGeometry: () => void
@@ -83,13 +85,119 @@ export function useGhostTransition(
     }
   }
 
-  function doFadeIn(photo: Photo) {
-    debug?.log('transitions', 'open: using FADE (no FLIP)')
+  function resetOpenState() {
+    ghostVisible.value = false
+    chromeOpacity.value = 1
+    animating.value = false
+  }
+
+  function resetCloseState() {
+    ghostVisible.value = false
+    ghostSrc.value = ''
+    hiddenThumbIndex.value = null
+    closeDragY.value = 0
+    overlayOpacity.value = 0
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+    animating.value = false
+    // lightboxMounted set LAST — triggers watchers
+    lightboxMounted.value = false
+  }
+
+  function isNoneMode(): boolean {
+    return transitionConfig?.mode === 'none'
+  }
+
+  // --- OPEN ---
+
+  async function doInstantOpen(photo: Photo) {
+    debug?.log('transitions', 'open: INSTANT (mode=none)')
     overlayOpacity.value = 1
-    return ensureImageLoaded(photo.full).then(() => {
-      mediaOpacity.value = 1
-      chromeOpacity.value = 1
-    })
+    await ensureImageLoaded(photo.full)
+    mediaOpacity.value = 1
+    chromeOpacity.value = 1
+  }
+
+  async function doFadeOpen(photo: Photo) {
+    debug?.log('transitions', 'open: using smooth FADE')
+    animating.value = true
+
+    // Animate overlay in
+    await animateNumber(0, 1, fadeDurationMs, (v) => {
+      overlayOpacity.value = v
+    }, easeOutCubic)
+
+    // Load image while overlay is visible
+    await ensureImageLoaded(photo.full)
+
+    // Show media + chrome
+    mediaOpacity.value = 1
+    chromeOpacity.value = 1
+    animating.value = false
+  }
+
+  async function doFlipOpen(index: number, photo: Photo, fromRect: DOMRect, toRect: { left: number; top: number; width: number; height: number }) {
+    debug?.log('transitions', 'open: using FLIP animation')
+
+    animating.value = true
+    hiddenThumbIndex.value = index
+
+    ghostSrc.value = photo.thumb
+    ghostVisible.value = true
+    ghostStyle.value = {
+      position: 'fixed',
+      zIndex: '60',
+      objectFit: 'cover',
+      transformOrigin: 'top left',
+      pointerEvents: 'none',
+      willChange: 'transform',
+      borderRadius: '18px',
+      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+      background: 'rgba(255, 0, 0, 0.3)',
+      transition:
+        `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+      ...makeGhostBaseStyle(toRect),
+      transform: flipTransform(fromRect, toRect),
+    }
+
+    debug?.log('transitions', 'open: ghost initial style:', JSON.stringify({
+      left: `${toRect.left}px`, top: `${toRect.top}px`,
+      width: `${toRect.width}px`, height: `${toRect.height}px`,
+      transform: flipTransform(fromRect, toRect),
+    }))
+
+    await nextFrame()
+
+    // Verify ghost element exists in DOM
+    const ghostEl = document.querySelector('.ghost-image') as HTMLElement | null
+    debug?.log('transitions', 'open: ghost element after nextFrame:', ghostEl ? {
+      offsetWidth: ghostEl.offsetWidth,
+      offsetHeight: ghostEl.offsetHeight,
+      computedTransform: getComputedStyle(ghostEl).transform,
+      computedPosition: getComputedStyle(ghostEl).position,
+      computedDisplay: getComputedStyle(ghostEl).display,
+      computedVisibility: getComputedStyle(ghostEl).visibility,
+      computedOpacity: getComputedStyle(ghostEl).opacity,
+      naturalWidth: (ghostEl as HTMLImageElement).naturalWidth,
+      naturalHeight: (ghostEl as HTMLImageElement).naturalHeight,
+      currentSrc: (ghostEl as HTMLImageElement).currentSrc,
+    } : 'NOT FOUND IN DOM')
+
+    overlayOpacity.value = 1
+    ghostStyle.value = {
+      ...ghostStyle.value,
+      transform: 'translate(0px, 0px) scale(1, 1)',
+      borderRadius: '24px',
+      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+    }
+
+    debug?.log('transitions', 'open: transition target set, waiting', openDurationMs, 'ms + image load')
+
+    await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.full)])
+
+    mediaOpacity.value = 1
+    await nextFrame()
+    resetOpenState()
   }
 
   async function open(index: number, callbacks: TransitionCallbacks) {
@@ -115,81 +223,129 @@ export function useGhostTransition(
     callbacks.refreshZoomState(true)
 
     const photo = currentPhoto.value
-    const thumbEl = thumbRefs.get(index)
-    const fromRect = thumbEl?.getBoundingClientRect() ?? null
-    const toRect = getAbsoluteFrameRect(photo)
 
-    debug?.log('transitions', 'fromRect (thumb):', fromRect ? { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height } : null)
-    debug?.log('transitions', 'toRect (frame):', toRect)
-    debug?.log('transitions', 'isUsableRect(fromRect):', isUsableRect(fromRect))
+    try {
+      // Instant mode — no animation at all
+      if (isNoneMode()) {
+        await doInstantOpen(photo)
+        debug?.log('transitions', 'open: complete')
+        debug?.groupEnd('transitions')
+        return
+      }
 
-    // Determine transition mode
-    const useFlip = fromRect && toRect && isUsableRect(fromRect)
-      && (!transitionConfig || shouldUseFlip(fromRect, transitionConfig, debug))
+      const thumbEl = thumbRefs.get(index)
+      const fromRect = thumbEl?.getBoundingClientRect() ?? null
+      const toRect = getAbsoluteFrameRect(photo)
 
-    if (!useFlip) {
-      await doFadeIn(photo)
+      debug?.log('transitions', 'fromRect (thumb):', fromRect ? { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height } : null)
+      debug?.log('transitions', 'toRect (frame):', toRect)
+      debug?.log('transitions', 'isUsableRect(fromRect):', isUsableRect(fromRect))
+
+      // Determine transition mode
+      const useFlip = fromRect && toRect && isUsableRect(fromRect)
+        && (!transitionConfig || shouldUseFlip(fromRect, transitionConfig, debug))
+
+      if (useFlip) {
+        await doFlipOpen(index, photo, fromRect, toRect)
+      } else {
+        await doFadeOpen(photo)
+      }
+
+      debug?.log('transitions', 'open: complete')
       debug?.groupEnd('transitions')
-      return
+    } catch (err) {
+      debug?.warn('transitions', 'open: error, forcing recovery', err)
+      debug?.groupEnd('transitions')
+      // Force a usable state: show the lightbox without animation
+      overlayOpacity.value = 1
+      mediaOpacity.value = 1
+      resetOpenState()
     }
+  }
 
-    debug?.log('transitions', 'open: using FLIP animation')
+  // --- CLOSE ---
+
+  async function doInstantClose() {
+    debug?.log('transitions', 'close: INSTANT (mode=none)')
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+    overlayOpacity.value = 0
+  }
+
+  async function doFadeClose() {
+    debug?.log('transitions', 'close: using smooth FADE')
+    animating.value = true
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
+
+    // Animate overlay out smoothly
+    await animateNumber(overlayOpacity.value, 0, fadeDurationMs, (v) => {
+      overlayOpacity.value = v
+    }, easeOutCubic)
+  }
+
+  async function doFlipClose(photo: Photo, fromRect: { left: number; top: number; width: number; height: number }, toRect: DOMRect) {
+    debug?.log('transitions', 'close: using FLIP animation')
 
     animating.value = true
-    hiddenThumbIndex.value = index
+    hiddenThumbIndex.value = activeIndex.value
+    mediaOpacity.value = 0
+    chromeOpacity.value = 0
 
     ghostSrc.value = photo.thumb
     ghostVisible.value = true
     ghostStyle.value = {
       position: 'fixed',
       zIndex: '60',
-      objectFit: 'contain',
+      objectFit: 'cover',
       transformOrigin: 'top left',
       pointerEvents: 'none',
       willChange: 'transform',
-      borderRadius: '18px',
-      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+      borderRadius: '24px',
+      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+      background: 'rgba(0, 0, 255, 0.3)',
       transition:
-        `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       ...makeGhostBaseStyle(toRect),
       transform: flipTransform(fromRect, toRect),
     }
 
-    debug?.log('transitions', 'open: ghost mounted, FLIP transform:', flipTransform(fromRect, toRect))
+    debug?.log('transitions', 'close: ghost initial style:', JSON.stringify({
+      left: `${toRect.left}px`, top: `${toRect.top}px`,
+      width: `${toRect.width}px`, height: `${toRect.height}px`,
+      transform: flipTransform(fromRect, toRect),
+    }))
 
     await nextFrame()
 
-    overlayOpacity.value = 1
+    // Verify ghost element exists in DOM
+    const ghostEl = document.querySelector('.ghost-image') as HTMLElement | null
+    debug?.log('transitions', 'close: ghost element after nextFrame:', ghostEl ? {
+      offsetWidth: ghostEl.offsetWidth,
+      offsetHeight: ghostEl.offsetHeight,
+      boundingRect: ghostEl.getBoundingClientRect(),
+      computedTransform: getComputedStyle(ghostEl).transform,
+      computedPosition: getComputedStyle(ghostEl).position,
+      computedDisplay: getComputedStyle(ghostEl).display,
+      computedVisibility: getComputedStyle(ghostEl).visibility,
+      computedOpacity: getComputedStyle(ghostEl).opacity,
+      computedZIndex: getComputedStyle(ghostEl).zIndex,
+      naturalWidth: (ghostEl as HTMLImageElement).naturalWidth,
+      naturalHeight: (ghostEl as HTMLImageElement).naturalHeight,
+      complete: (ghostEl as HTMLImageElement).complete,
+    } : 'NOT FOUND IN DOM')
+
+    overlayOpacity.value = 0
     ghostStyle.value = {
       ...ghostStyle.value,
       transform: 'translate(0px, 0px) scale(1, 1)',
-      borderRadius: '24px',
-      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+      borderRadius: '18px',
+      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
     }
 
-    debug?.log('transitions', 'open: animation started, waiting', openDurationMs, 'ms + image load')
+    debug?.log('transitions', 'close: transition target set, waiting', closeDurationMs, 'ms')
 
-    await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.full)])
-
-    mediaOpacity.value = 1
-    await nextFrame()
-    ghostVisible.value = false
-    chromeOpacity.value = 1
-    animating.value = false
-
-    debug?.log('transitions', 'open: complete')
-    debug?.groupEnd('transitions')
-  }
-
-  async function doFadeOut() {
-    debug?.log('transitions', 'close: using FADE (no FLIP)')
-    mediaOpacity.value = 0
-    chromeOpacity.value = 0
-    overlayOpacity.value = 0
-    await wait(220)
-    ghostVisible.value = false
-    lightboxMounted.value = false
-    hiddenThumbIndex.value = null
+    await wait(closeDurationMs)
   }
 
   async function close(callbacks: CloseCallbacks) {
@@ -210,71 +366,43 @@ export function useGhostTransition(
     callbacks.syncGeometry()
 
     const photo = currentPhoto.value
-    const fromRect = getAbsoluteFrameRect(photo)
-    const toRect = thumbRefs.get(activeIndex.value)?.getBoundingClientRect() ?? null
 
-    debug?.log('transitions', 'fromRect (frame):', fromRect)
-    debug?.log('transitions', 'toRect (thumb):', toRect ? { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height } : null)
-    debug?.log('transitions', 'isUsableRect(toRect):', isUsableRect(toRect))
+    try {
+      // Instant mode
+      if (isNoneMode()) {
+        await doInstantClose()
+        debug?.log('transitions', 'close: complete')
+        debug?.groupEnd('transitions')
+        resetCloseState()
+        return
+      }
 
-    // Determine transition mode
-    const useFlip = fromRect && toRect && isUsableRect(toRect)
-      && (!transitionConfig || shouldUseFlip(toRect, transitionConfig, debug))
+      const fromRect = getAbsoluteFrameRect(photo)
+      const toRect = thumbRefs.get(activeIndex.value)?.getBoundingClientRect() ?? null
 
-    if (!useFlip) {
-      await doFadeOut()
+      debug?.log('transitions', 'fromRect (frame):', fromRect)
+      debug?.log('transitions', 'toRect (thumb):', toRect ? { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height } : null)
+      debug?.log('transitions', 'isUsableRect(toRect):', isUsableRect(toRect))
+
+      // Determine transition mode
+      const useFlip = fromRect && toRect && isUsableRect(toRect)
+        && (!transitionConfig || shouldUseFlip(toRect, transitionConfig, debug))
+
+      if (useFlip) {
+        await doFlipClose(photo, fromRect, toRect)
+      } else {
+        await doFadeClose()
+      }
+
+      // Log BEFORE resetting state (lightboxMounted=false triggers watchers)
+      debug?.log('transitions', 'close: complete')
       debug?.groupEnd('transitions')
-      return
+    } catch (err) {
+      debug?.warn('transitions', 'close: error, forcing recovery', err)
+      debug?.groupEnd('transitions')
     }
 
-    debug?.log('transitions', 'close: using FLIP animation')
-
-    animating.value = true
-    hiddenThumbIndex.value = activeIndex.value
-    mediaOpacity.value = 0
-    chromeOpacity.value = 0
-
-    ghostSrc.value = photo.full
-    ghostVisible.value = true
-    ghostStyle.value = {
-      position: 'fixed',
-      zIndex: '60',
-      objectFit: 'contain',
-      transformOrigin: 'top left',
-      pointerEvents: 'none',
-      willChange: 'transform',
-      borderRadius: '24px',
-      boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
-      transition:
-        `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-      ...makeGhostBaseStyle(toRect),
-      transform: flipTransform(fromRect, toRect),
-    }
-
-    debug?.log('transitions', 'close: ghost mounted, FLIP transform:', flipTransform(fromRect, toRect))
-
-    await nextFrame()
-
-    overlayOpacity.value = 0
-    ghostStyle.value = {
-      ...ghostStyle.value,
-      transform: 'translate(0px, 0px) scale(1, 1)',
-      borderRadius: '18px',
-      boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
-    }
-
-    debug?.log('transitions', 'close: animation started, waiting', closeDurationMs, 'ms')
-
-    await wait(closeDurationMs)
-
-    ghostVisible.value = false
-    lightboxMounted.value = false
-    hiddenThumbIndex.value = null
-    closeDragY.value = 0
-    animating.value = false
-
-    debug?.log('transitions', 'close: complete')
-    debug?.groupEnd('transitions')
+    resetCloseState()
   }
 
   async function animateCloseDragTo(target: number, duration = 220) {
@@ -297,8 +425,11 @@ export function useGhostTransition(
 
     debug?.log('gestures', 'closeGesture: below threshold → bouncing back')
     animating.value = true
-    await animateCloseDragTo(0)
-    animating.value = false
+    try {
+      await animateCloseDragTo(0)
+    } finally {
+      animating.value = false
+    }
   }
 
   function handleBackdropClick(closeFn: () => Promise<void>) {

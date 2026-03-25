@@ -231,16 +231,16 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     const direction = config.resolveSlideTarget(deltaX, velocityX)
     debug?.log('gestures', `slideGesture: deltaX=${deltaX.toFixed(1)} vX=${velocityX.toFixed(3)} → direction=${direction}`)
 
-    if (!direction) {
-      config.animating.value = true
-      await config.animateSlideTo(0, 200)
-      config.animating.value = false
-      return
-    }
-
     config.animating.value = true
-    await config.commitSlideChange(direction)
-    config.animating.value = false
+    try {
+      if (!direction) {
+        await config.animateSlideTo(0, 200)
+      } else {
+        await config.commitSlideChange(direction)
+      }
+    } finally {
+      config.animating.value = false
+    }
   }
 
   function onMediaPointerCancel(event: PointerEvent) {
@@ -302,7 +302,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         )
       } else if (!config.controlsDisabled.value) {
         config.animating.value = true
-        void config.commitSlideChange(1).then(() => {
+        void config.commitSlideChange(1).catch(() => {}).finally(() => {
           config.animating.value = false
         })
       }
@@ -319,7 +319,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         )
       } else if (!config.controlsDisabled.value) {
         config.animating.value = true
-        void config.commitSlideChange(-1).then(() => {
+        void config.commitSlideChange(-1).catch(() => {}).finally(() => {
           config.animating.value = false
         })
       }
