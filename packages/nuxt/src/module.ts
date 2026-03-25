@@ -81,6 +81,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         { name: 'computeRowsLayout', from: '@nuxt-photo/core' },
         { name: 'computeColumnsLayout', from: '@nuxt-photo/core' },
         { name: 'computeMasonryLayout', from: '@nuxt-photo/core' },
+        { name: 'computeRowsGroupedLayout', from: '@nuxt-photo/core' },
+        { name: 'computeColumnsGroupedLayout', from: '@nuxt-photo/core' },
+        { name: 'computeMasonryGroupedLayout', from: '@nuxt-photo/core' },
         { name: 'createNativeImageAdapter', from: '@nuxt-photo/core' },
       ])
     }

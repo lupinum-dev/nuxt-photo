@@ -30,7 +30,7 @@
               :alt="photo.alt || ''"
               loading="lazy"
               draggable="false"
-              :style="{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '12px' }"
+              :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '12px', aspectRatio: `${photo.width} / ${photo.height}` }"
             />
           </slot>
         </div>

@@ -1,3 +1,3 @@
-import type { LayoutInput, LayoutOutput, AlbumLayoutAdapter, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions } from '../types'
+import type { LayoutInput, LayoutOutput, AlbumLayoutAdapter, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup, GroupedLayoutOptions, GroupedLayoutOutput } from '../types'
 
-export type { LayoutInput, LayoutOutput, AlbumLayoutAdapter, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions }
+export type { LayoutInput, LayoutOutput, AlbumLayoutAdapter, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup, GroupedLayoutOptions, GroupedLayoutOutput }

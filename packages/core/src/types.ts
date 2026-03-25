@@ -151,6 +151,37 @@ export type MasonryLayoutOptions = LayoutInput & {
   columns?: number
 }
 
+// ─── Grouped layout (flexbox / SSR-proof) ───
+
+export type LayoutEntry = {
+  index: number
+  photo: PhotoItem
+  width: number
+  height: number
+  positionIndex: number
+  itemsCount: number
+}
+
+export type LayoutGroup = {
+  type: 'row' | 'column'
+  index: number
+  entries: LayoutEntry[]
+  columnsGaps?: number[]
+  columnsRatios?: number[]
+}
+
+export type GroupedLayoutOptions = {
+  containerWidth: number
+  spacing: number
+  padding: number
+  layout: 'rows' | 'columns' | 'masonry'
+}
+
+export type GroupedLayoutOutput = {
+  groups: LayoutGroup[]
+  layoutOptions: GroupedLayoutOptions
+}
+
 // ─── Image adapter ───
 
 export type ImageSource = {

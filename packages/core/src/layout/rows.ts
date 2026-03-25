@@ -1,9 +1,128 @@
-import type { LayoutItem, PhotoItem, RowsLayoutOptions } from '../types'
+import type { LayoutEntry, LayoutGroup, LayoutItem, PhotoItem, RowsLayoutOptions } from '../types'
+import { findShortestPath, type GraphFunction } from './dijkstra'
+import { round } from './round'
+
+function ratio(item: PhotoItem) {
+  return item.width / item.height
+}
+
+function findIdealNodeSearch(
+  items: PhotoItem[],
+  targetRowHeight: number,
+  containerWidth: number,
+) {
+  const minRatio = items.reduce(
+    (acc, item) => Math.min(acc, ratio(item)),
+    Number.MAX_VALUE,
+  )
+  return round(containerWidth / targetRowHeight / minRatio) + 2
+}
+
+function getCommonHeight(
+  row: PhotoItem[],
+  containerWidth: number,
+  spacing: number,
+  padding: number,
+) {
+  const rowWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
+  const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
+  return rowWidth / totalAspectRatio
+}
+
+function cost(
+  items: PhotoItem[],
+  start: number,
+  end: number,
+  width: number,
+  targetRowHeight: number,
+  spacing: number,
+  padding: number,
+) {
+  const row = items.slice(start, end)
+  const commonHeight = getCommonHeight(row, width, spacing, padding)
+  if (commonHeight <= 0) return undefined
+  return (commonHeight - targetRowHeight) ** 2 * row.length
+}
+
+function makeGetRowNeighbors(
+  items: PhotoItem[],
+  containerWidth: number,
+  targetRowHeight: number,
+  spacing: number,
+  padding: number,
+  limitNodeSearch: number,
+): GraphFunction<number> {
+  return (node: number) => {
+    const results = new Map<number, number>()
+    results.set(node, 0)
+
+    for (let index = node + 1; index < items.length + 1; index += 1) {
+      if (index - node > limitNodeSearch) break
+
+      const currentCost = cost(
+        items, node, index,
+        containerWidth, targetRowHeight,
+        spacing, padding,
+      )
+      if (currentCost === undefined) break
+      results.set(index, currentCost)
+    }
+
+    return results
+  }
+}
 
 /**
- * Justified rows layout — fits photos into rows of approximately equal height.
- * Uses a greedy algorithm that fills each row to match the target height.
+ * Grouped rows layout — returns LayoutGroup[] for flexbox rendering.
+ * Uses Dijkstra's shortest path for optimal row breaks.
  */
+export function computeRowsGroupedLayout(options: RowsLayoutOptions): LayoutGroup[] {
+  const { photos, containerWidth, spacing = 8, padding = 0, targetRowHeight = 300 } = options
+  if (photos.length === 0) return []
+
+  const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
+
+  const path = findShortestPath(
+    makeGetRowNeighbors(photos, containerWidth, targetRowHeight, spacing, padding, limitNodeSearch),
+    0,
+    photos.length,
+  )
+
+  if (path === undefined) return []
+
+  const groups: LayoutGroup[] = []
+
+  for (let rowIndex = 1; rowIndex < path.length; rowIndex += 1) {
+    const rowItems = photos
+      .map((photo, index) => ({ photo, index }))
+      .slice(path[rowIndex - 1], path[rowIndex])
+
+    const height = getCommonHeight(
+      rowItems.map(({ photo }) => photo),
+      containerWidth,
+      spacing,
+      padding,
+    )
+
+    groups.push({
+      type: 'row',
+      index: rowIndex - 1,
+      entries: rowItems.map(({ photo, index }, positionIndex) => ({
+        index,
+        photo,
+        width: height * ratio(photo),
+        height,
+        positionIndex,
+        itemsCount: rowItems.length,
+      })),
+    })
+  }
+
+  return groups
+}
+
+// ─── Legacy flat layout (kept for backward compat) ───
+
 export function computeRowsLayout(options: RowsLayoutOptions): { items: LayoutItem[]; containerHeight: number } {
   const { photos, containerWidth, spacing = 8, padding = 0, targetRowHeight = 300 } = options
   if (photos.length === 0) return { items: [], containerHeight: 0 }
@@ -12,7 +131,6 @@ export function computeRowsLayout(options: RowsLayoutOptions): { items: LayoutIt
   const items: LayoutItem[] = []
   let currentTop = padding
 
-  // Split photos into rows using greedy bin packing
   const rows = buildRows(photos, availableWidth, targetRowHeight, spacing)
 
   for (const row of rows) {
@@ -23,16 +141,11 @@ export function computeRowsLayout(options: RowsLayoutOptions): { items: LayoutIt
     }
   }
 
-  // Remove trailing spacing
   const containerHeight = currentTop - spacing + padding
-
   return { items, containerHeight }
 }
 
-type Row = {
-  photos: PhotoItem[]
-  startIndex: number
-}
+type Row = { photos: PhotoItem[]; startIndex: number }
 
 function buildRows(
   photos: PhotoItem[],
@@ -47,7 +160,6 @@ function buildRows(
     let rowEnd = rowStart
     let totalAspect = 0
 
-    // Greedily add photos to the row until we exceed or match target height
     while (rowEnd < photos.length) {
       const photo = photos[rowEnd]!
       const aspect = photo.width / photo.height
@@ -56,10 +168,8 @@ function buildRows(
       const rowHeight = (availableWidth - gapWidth) / newTotalAspect
 
       if (rowHeight < targetRowHeight && rowEnd > rowStart) {
-        // Adding this photo makes the row too short — check if it's better with or without
         const heightWithout = (availableWidth - (rowEnd - rowStart - 1) * spacing) / totalAspect
         const heightWith = rowHeight
-
         if (Math.abs(heightWith - targetRowHeight) < Math.abs(heightWithout - targetRowHeight)) {
           totalAspect = newTotalAspect
           rowEnd++
@@ -71,10 +181,7 @@ function buildRows(
       rowEnd++
     }
 
-    rows.push({
-      photos: photos.slice(rowStart, rowEnd),
-      startIndex: rowStart,
-    })
+    rows.push({ photos: photos.slice(rowStart, rowEnd), startIndex: rowStart })
     rowStart = rowEnd
   }
 
@@ -111,7 +218,6 @@ function layoutRow(
       width,
       height: rowHeight,
     })
-
     currentLeft += width + spacing
   }
 

@@ -21,4 +21,8 @@ export type {
   ImageSource,
   LayoutInput,
   LayoutOutput,
+  LayoutEntry,
+  LayoutGroup,
+  GroupedLayoutOptions,
+  GroupedLayoutOutput,
 } from '@nuxt-photo/core'
