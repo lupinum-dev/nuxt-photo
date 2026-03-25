@@ -1,15 +1,23 @@
 <template>
-  <div ref="containerRef" class="np-album" :style="{ position: 'relative', height: `${layoutResult.containerHeight}px` }">
+  <div
+    ref="containerRef"
+    class="np-album"
+    :style="{
+      position: 'relative',
+      width: '100%',
+      aspectRatio: `${containerWidth || 1} / ${layoutResult.containerHeight || 1}`,
+    }"
+  >
     <div
       v-for="item in layoutResult.items"
       :key="item.photo.id"
       class="np-album__item"
       :style="{
         position: 'absolute',
-        left: `${item.left}px`,
-        top: `${item.top}px`,
-        width: `${item.width}px`,
-        height: `${item.height}px`,
+        left: `${(item.left / (containerWidth || 1)) * 100}%`,
+        top: `${(item.top / (layoutResult.containerHeight || 1)) * 100}%`,
+        width: `${(item.width / (containerWidth || 1)) * 100}%`,
+        height: `${(item.height / (layoutResult.containerHeight || 1)) * 100}%`,
       }"
     >
       <slot name="item" :photo="item.photo" :index="item.index" :width="item.width" :height="item.height">
@@ -60,15 +68,28 @@ const containerWidth = ref(800)
 let resizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
-  if (containerRef.value) {
-    containerWidth.value = containerRef.value.clientWidth
-    resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        containerWidth.value = entry.contentRect.width
-      }
-    })
-    resizeObserver.observe(containerRef.value)
-  }
+  if (!containerRef.value) return
+
+  let initialWidth = 0
+
+  resizeObserver = new ResizeObserver((entries) => {
+    const width = entries[0]?.contentRect.width
+    if (!width || width <= 0) return
+
+    if (initialWidth === 0) {
+      // First measurement after mount — record but don't recompute.
+      // The SSR percentage layout is already visually correct at any width.
+      initialWidth = width
+      return
+    }
+
+    // Genuine resize — recompute layout
+    if (Math.abs(width - initialWidth) > 1) {
+      initialWidth = width
+      containerWidth.value = width
+    }
+  })
+  resizeObserver.observe(containerRef.value)
 })
 
 onBeforeUnmount(() => {

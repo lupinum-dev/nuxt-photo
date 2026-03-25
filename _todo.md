@@ -1,0 +1,3 @@
+- fix layout columns
+- fix SSR proofness, no layoutshit
+- Images can be used by Nuxt Img automatically (no need for )
