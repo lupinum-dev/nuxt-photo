@@ -60,15 +60,15 @@
             </div>
           </div>
 
-          <div class="stage">
-            <div ref="mediaAreaRef" class="media-area">
-              <div
-                class="media-shell"
-                :style="{ opacity: mediaOpacity }"
-              >
-                <img
-                  :key="currentPhoto.id"
-                  class="lightbox-image"
+            <div class="stage">
+              <div ref="mediaAreaRef" class="media-area">
+                <div
+                  class="media-shell"
+                  :style="mediaShellStyle"
+                >
+                  <img
+                    :key="currentPhoto.id"
+                    class="lightbox-image"
                   :src="currentPhoto.full"
                   :alt="currentPhoto.title"
                   draggable="false"
@@ -179,10 +179,15 @@ const mediaOpacity = ref(0)
 const ghostVisible = ref(false)
 const ghostSrc = ref('')
 const ghostStyle = ref<CSSProperties>({})
+const mediaFrameStyle = ref<CSSProperties>({})
 
 const hiddenThumbIndex = ref<number | null>(null)
 
 const currentPhoto = computed(() => photos[activeIndex.value])
+const mediaShellStyle = computed(() => ({
+  ...mediaFrameStyle.value,
+  opacity: mediaOpacity.value,
+}))
 
 function setThumbRef(index: number) {
   return (el: Element | null) => {
@@ -248,6 +253,44 @@ function makeGhostBaseStyle(to: { left: number; top: number; width: number; heig
   }
 }
 
+function syncMediaFrame() {
+  const mediaAreaEl = mediaAreaRef.value
+  if (!mediaAreaEl) return null
+
+  const areaRect = mediaAreaEl.getBoundingClientRect()
+  if (!isUsableRect(areaRect)) return null
+
+  const fittedRect = fitRect(areaRect, currentPhoto.value.width / currentPhoto.value.height)
+  mediaFrameStyle.value = {
+    width: `${fittedRect.width}px`,
+    height: `${fittedRect.height}px`,
+  }
+
+  return fittedRect
+}
+
+const imageLoadCache = new Map<string, Promise<void>>()
+
+function ensureImageLoaded(src: string) {
+  const cached = imageLoadCache.get(src)
+  if (cached) return cached
+
+  const promise = new Promise<void>((resolve) => {
+    const image = new Image()
+
+    image.onload = () => resolve()
+    image.onerror = () => resolve()
+    image.src = src
+
+    if (image.complete) {
+      resolve()
+    }
+  })
+
+  imageLoadCache.set(src, promise)
+  return promise
+}
+
 async function open(index: number) {
   if (animating.value) return
 
@@ -260,14 +303,14 @@ async function open(index: number) {
   await nextFrame()
 
   const thumbEl = thumbRefs.get(index)
-  const mediaAreaEl = mediaAreaRef.value
   const photo = currentPhoto.value
 
   const fromRect = thumbEl?.getBoundingClientRect() ?? null
-  const areaRect = mediaAreaEl?.getBoundingClientRect() ?? null
+  const toRect = syncMediaFrame()
 
-  if (!isUsableRect(fromRect) || !isUsableRect(areaRect)) {
+  if (!isUsableRect(fromRect) || !toRect) {
     overlayOpacity.value = 1
+    await ensureImageLoaded(photo.full)
     mediaOpacity.value = 1
     return
   }
@@ -275,14 +318,12 @@ async function open(index: number) {
   animating.value = true
   hiddenThumbIndex.value = index
 
-  const toRect = fitRect(areaRect, photo.width / photo.height)
-
-  ghostSrc.value = photo.full
+  ghostSrc.value = photo.thumb
   ghostVisible.value = true
   ghostStyle.value = {
     position: 'fixed',
     zIndex: '60',
-    objectFit: 'cover',
+    objectFit: 'contain',
     transformOrigin: 'top left',
     pointerEvents: 'none',
     willChange: 'transform',
@@ -304,7 +345,7 @@ async function open(index: number) {
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
   }
 
-  await wait(420)
+  await Promise.all([wait(420), ensureImageLoaded(photo.full)])
 
   mediaOpacity.value = 1
   ghostVisible.value = false
@@ -316,12 +357,11 @@ async function close() {
 
   const photo = currentPhoto.value
   const thumbEl = thumbRefs.get(activeIndex.value)
-  const mediaAreaEl = mediaAreaRef.value
 
   const toRect = thumbEl?.getBoundingClientRect() ?? null
-  const areaRect = mediaAreaEl?.getBoundingClientRect() ?? null
+  const fromRect = syncMediaFrame()
 
-  if (!isUsableRect(toRect) || !isUsableRect(areaRect)) {
+  if (!isUsableRect(toRect) || !fromRect) {
     mediaOpacity.value = 0
     overlayOpacity.value = 0
     await wait(220)
@@ -334,8 +374,6 @@ async function close() {
   animating.value = true
   hiddenThumbIndex.value = activeIndex.value
 
-  const fromRect = fitRect(areaRect, photo.width / photo.height)
-
   ghostSrc.value = photo.full
   ghostVisible.value = true
   mediaOpacity.value = 0
@@ -343,7 +381,7 @@ async function close() {
   ghostStyle.value = {
     position: 'fixed',
     zIndex: '60',
-    objectFit: 'cover',
+    objectFit: 'contain',
     transformOrigin: 'top left',
     pointerEvents: 'none',
     willChange: 'transform',
@@ -393,18 +431,31 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') prev()
 }
 
+function onResize() {
+  if (!lightboxMounted.value || animating.value) return
+  syncMediaFrame()
+}
+
 watch(lightboxMounted, (mounted) => {
   if (typeof document === 'undefined') return
   document.body.style.overflow = mounted ? 'hidden' : ''
 })
 
+watch(activeIndex, async () => {
+  if (!lightboxMounted.value) return
+
+  await nextTick()
+  await nextFrame()
+  syncMediaFrame()
+})
+
 onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('keydown', onKeydown)
+    window.addEventListener('resize', onResize)
 
     for (const photo of photos) {
-      const img = new Image()
-      img.src = photo.full
+      void ensureImageLoaded(photo.full)
     }
   }
 })
@@ -412,6 +463,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('keydown', onKeydown)
+    window.removeEventListener('resize', onResize)
   }
 
   if (typeof document !== 'undefined') {
@@ -643,8 +695,9 @@ onBeforeUnmount(() => {
 }
 
 .media-shell {
-  width: 100%;
-  height: 100%;
+  position: relative;
+  flex: none;
+  overflow: hidden;
   transition: opacity 160ms ease;
 }
 
