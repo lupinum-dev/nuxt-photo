@@ -33,7 +33,7 @@
         <!-- Stage -->
         <div class="np-lightbox__stage">
           <div
-            ref="ctx.mediaAreaRef"
+            :ref="(el: any) => { ctx.mediaAreaRef.value = el as HTMLElement }"
             class="np-lightbox__media"
             :class="{
               'np-lightbox__media--zoomed': ctx.isZoomedIn.value,
@@ -45,7 +45,7 @@
             @pointercancel.capture="ctx.onMediaPointerCancel"
             @wheel="ctx.onWheel"
           >
-            <div class="np-lightbox__viewport" ref="ctx.emblaRef" :style="{ opacity: ctx.mediaOpacity.value }">
+            <div class="np-lightbox__viewport" :ref="(el: any) => { ctx.emblaRef.value = el as HTMLElement }" :style="{ opacity: ctx.mediaOpacity.value }">
               <div class="np-lightbox__container">
                 <div
                   v-for="(photo, i) in ctx.photos"

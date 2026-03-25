@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm -r build",
-    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r --filter=!nuxt-photo-playground build",
+    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground dev",
+    "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
+    "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint"
   },
