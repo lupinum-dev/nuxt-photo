@@ -14,8 +14,9 @@ export function useSlideCarousel(
 ) {
   const activeIndex = ref(0)
   const scrollProgress = ref(0)
+  const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 25 })
+  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
 
   const currentPhoto = computed<Photo>(() => photos[activeIndex.value] ?? photos[0]!)
 
@@ -119,6 +120,9 @@ export function useSlideCarousel(
   }
 
   function goTo(index: number, instant = false) {
+    // Set startSnap so if Embla reinits (e.g. viewport remounts), it starts here
+    emblaOptions.value = { ...emblaOptions.value, startSnap: index }
+    activeIndex.value = index
     emblaApi.value?.goTo(index, instant)
   }
 
