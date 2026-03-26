@@ -19,11 +19,30 @@ export default defineNuxtPlugin({
         }
       }
 
-      const sizes = context === 'slide'
-        ? '100vw'
-        : '(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 400px'
-      const quality = context === 'slide' ? 85 : 80
-      const result = image.getSizes(src, { sizes, quality })
+      if (context === 'slide') {
+        // Generate srcset explicitly — avoids getSizes() format issues with @nuxt/image v2
+        // Lightbox media area is min(1240px, calc(100vw - 72px))
+        const quality = 85
+        const targetWidths = [640, 960, 1240, 1600, 2000]
+        const widths = targetWidths.filter(w => w <= photo.width * 1.5)
+        const srcsetWidths = widths.length > 0 ? widths : [Math.min(1240, photo.width)]
+
+        const srcset = srcsetWidths
+          .map(w => `${image(src, { width: w, quality })} ${w}w`)
+          .join(', ')
+
+        return {
+          src: image(src, { width: Math.min(1240, photo.width), quality }),
+          srcset,
+          sizes: 'min(1240px, calc(100vw - 72px))',
+          width: photo.width,
+          height: photo.height,
+        }
+      }
+
+      // thumb context: use Nuxt Image v2 breakpoint syntax (not CSS media queries)
+      const sizes = 'sm:100vw md:50vw lg:400px'
+      const result = image.getSizes(src, { sizes, quality: 80 })
 
       return {
         src: result.src,

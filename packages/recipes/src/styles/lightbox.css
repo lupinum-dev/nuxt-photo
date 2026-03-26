@@ -92,11 +92,11 @@
   overflow: hidden;
 }
 
-.np-lightbox__media--zoomed {
+.np-lightbox__media[data-zoomed] {
   cursor: grab;
 }
 
-.np-lightbox__media--dragging.np-lightbox__media--zoomed {
+.np-lightbox__media[data-gesture][data-zoomed] {
   cursor: grabbing;
 }
 

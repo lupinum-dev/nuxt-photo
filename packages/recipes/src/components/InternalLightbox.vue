@@ -27,12 +27,8 @@
 
       <div class="np-lightbox__stage">
         <LightboxViewport
-          v-slot="{ photos, emblaRef, mediaOpacity, isZoomedIn, gesturePhase }"
+          v-slot="{ photos, emblaRef, mediaOpacity }"
           class="np-lightbox__media"
-          :class="{
-            'np-lightbox__media--zoomed': isZoomedIn,
-            'np-lightbox__media--dragging': gesturePhase !== 'idle',
-          }"
         >
           <div class="np-lightbox__viewport" :ref="emblaRef" :style="{ opacity: mediaOpacity }">
             <div class="np-lightbox__container">

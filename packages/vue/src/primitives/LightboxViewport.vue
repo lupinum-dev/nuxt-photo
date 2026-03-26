@@ -2,6 +2,8 @@
   <div
     :ref="ctx.mediaAreaRef"
     v-bind="$attrs"
+    :data-zoomed="ctx.isZoomedIn.value || undefined"
+    :data-gesture="ctx.gesturePhase.value !== 'idle' ? ctx.gesturePhase.value : undefined"
     @pointerdown.capture="ctx.onMediaPointerDown"
     @pointermove.capture="ctx.onMediaPointerMove"
     @pointerup.capture="ctx.onMediaPointerUp"
@@ -12,8 +14,6 @@
       :photos="ctx.photos.value"
       :embla-ref="ctx.emblaRef"
       :media-opacity="ctx.mediaOpacity.value"
-      :is-zoomed-in="ctx.isZoomedIn.value"
-      :gesture-phase="ctx.gesturePhase.value"
     />
   </div>
 </template>

@@ -175,7 +175,7 @@ if (parentGroup) {
 
 // Layout
 const containerRef = ref<HTMLElement | null>(null)
-const containerWidth = ref(0)
+const containerWidth = ref(1200) // SSR-safe initial value; corrected by ResizeObserver on mount
 
 let resizeObserver: ResizeObserver | null = null
 
