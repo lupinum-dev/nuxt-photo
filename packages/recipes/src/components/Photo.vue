@@ -5,6 +5,7 @@
     :photo="photo"
     :adapter="adapter"
     :loading="loading"
+    :lightbox-component="lightboxComponent"
     v-bind="$attrs"
   />
 
@@ -33,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Component } from 'vue'
 import { PhotoImage, PhotoGroupContextKey } from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
 import PhotoSolo from './PhotoSolo.vue'
@@ -41,18 +42,22 @@ import PhotoSolo from './PhotoSolo.vue'
 const props = defineProps<{
   photo: PhotoItem
   /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
-  lightbox?: boolean
+  lightbox?: boolean | Component
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
   adapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
 }>()
+const slots = useSlots()
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
 
 // Standalone mode: lightbox prop set and no parent group
-const isSolo = computed(() => !group && props.lightbox === true && !props.lightboxIgnore)
+const isSolo = computed(() => !group && !!props.lightbox && !props.lightboxIgnore)
+const lightboxComponent = computed<Component | undefined>(() =>
+  props.lightbox === true || props.lightbox === undefined ? undefined : props.lightbox,
+)
 
 // Ref for the thumb element (used when inside a group)
 const thumbRef = ref<HTMLElement | null>(null)
@@ -65,7 +70,12 @@ const id = Symbol()
 
 onMounted(() => {
   if (group && !props.lightboxIgnore && !isSolo.value) {
-    group.register(id, props.photo, () => thumbRef.value)
+    group.register(
+      id,
+      props.photo,
+      () => thumbRef.value,
+      slots.slide ? slotProps => slots.slide?.(slotProps) ?? null : null,
+    )
   }
 })
 

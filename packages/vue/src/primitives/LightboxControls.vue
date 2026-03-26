@@ -1,13 +1,13 @@
 <template>
   <div :style="ctx.chromeStyle.value" v-bind="$attrs">
     <slot
-      :active-index="ctx.activeIndex"
-      :current-photo="ctx.currentPhoto"
-      :photos="ctx.photos"
-      :count="ctx.photos.value.length"
-      :is-zoomed-in="ctx.isZoomedIn"
-      :zoom-allowed="ctx.zoomAllowed"
-      :controls-disabled="ctx.transitionInProgress"
+      :active-index="ctx.activeIndex.value"
+      :current-photo="ctx.activePhoto.value"
+      :photos="ctx.photos.value"
+      :count="ctx.count.value"
+      :is-zoomed-in="ctx.isZoomedIn.value"
+      :zoom-allowed="ctx.zoomAllowed.value"
+      :controls-disabled="ctx.transitionInProgress.value"
       :next="ctx.next"
       :prev="ctx.prev"
       :close="ctx.close"
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxChromeKey } from '../provide/keys'
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxChromeKey)!
 </script>

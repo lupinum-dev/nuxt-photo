@@ -1,5 +1,5 @@
 <template>
-  <div class="np-gallery">
+  <PhotoGroup :photos="photos" :lightbox="false" class="np-gallery">
     <PhotoAlbum
       :photos="photos"
       :layout="layout"
@@ -12,34 +12,12 @@
       :bento-pattern-interval="bentoPatternInterval"
       :adapter="adapter"
     >
-      <template #item="{ photo, index, width, height }">
-        <div
-          :ref="ctx.setThumbRef(index)"
-          class="np-gallery__trigger"
-          role="button"
-          tabindex="0"
-          :aria-label="photo.alt || `View photo ${index + 1}`"
-          :style="{
-            opacity: ctx.hiddenThumbIndex.value === index ? 0 : 1,
-            cursor: 'pointer',
-          }"
-          @click="ctx.open(index)"
-          @keydown.enter="ctx.open(index)"
-          @keydown.space.prevent="ctx.open(index)"
-        >
-          <slot name="thumbnail" :photo="photo" :index="index" :width="width" :height="height">
-            <PhotoImage
-              :photo="photo"
-              context="thumb"
-              loading="lazy"
-              :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '12px', aspectRatio: `${photo.width} / ${photo.height}` }"
-            />
-          </slot>
-        </div>
+      <template v-if="$slots.thumbnail" #thumbnail="slotProps">
+        <slot name="thumbnail" v-bind="slotProps" />
       </template>
     </PhotoAlbum>
 
-    <Lightbox :ctx="ctx">
+    <Lightbox>
       <template v-if="$slots.slide" #slide="slideProps">
         <slot name="slide" v-bind="slideProps" />
       </template>
@@ -50,14 +28,14 @@
         <slot name="actions" v-bind="actionsProps" />
       </template>
     </Lightbox>
-  </div>
+  </PhotoGroup>
 </template>
 
 <script setup lang="ts">
-import { useLightbox, PhotoImage } from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter, BentoSizing } from '@nuxt-photo/core'
 import PhotoAlbum from './PhotoAlbum.vue'
 import Lightbox from './Lightbox.vue'
+import PhotoGroup from './PhotoGroup.vue'
 
 const props = withDefaults(defineProps<{
   photos: PhotoItem[]
@@ -85,5 +63,4 @@ const props = withDefaults(defineProps<{
   bentoPatternInterval: 5,
 })
 
-const ctx = useLightbox(props.photos)
 </script>

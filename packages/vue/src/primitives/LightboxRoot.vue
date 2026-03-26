@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="ctx.lightboxMounted.value" v-bind="$attrs">
+    <div v-if="ctx.isOpen.value" v-bind="$attrs">
       <slot />
     </div>
   </Teleport>
@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxControllerKey } from '../provide/keys'
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxControllerKey)!
 </script>

@@ -1,112 +1,86 @@
 <template>
-  <Teleport to="body">
-    <div
-      v-if="ctx.lightboxMounted.value"
-      class="np-lightbox"
-      role="dialog"
-      aria-modal="true"
-    >
-      <!-- Backdrop -->
-      <div
-        class="np-lightbox__backdrop"
-        :style="ctx.backdropStyle.value"
-        @click="ctx.handleBackdropClick"
-      />
+  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true">
+    <LightboxOverlay class="np-lightbox__backdrop" />
 
-      <!-- UI layer -->
-      <div class="np-lightbox__ui" :style="ctx.lightboxUiStyle.value">
-        <!-- Controls -->
-        <div class="np-lightbox__topbar" :style="ctx.chromeStyle.value">
-          <slot name="counter" :active-index="ctx.activeIndex.value" :count="ctx.photos.value.length">
+    <div class="np-lightbox__ui">
+      <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
+        <div class="np-lightbox__topbar">
+          <slot name="counter" :active-index="activeIndex" :count="count">
             <div class="np-lightbox__counter">
-              {{ ctx.activeIndex.value + 1 }} / {{ ctx.photos.value.length }}
+              {{ activeIndex + 1 }} / {{ count }}
             </div>
           </slot>
 
           <div class="np-lightbox__actions">
-            <slot name="actions" :prev="ctx.prev" :next="ctx.next" :close="ctx.close" :toggle-zoom="ctx.toggleZoom" :is-zoomed-in="ctx.isZoomedIn.value" :zoom-allowed="ctx.zoomAllowed.value" :controls-disabled="ctx.transitionInProgress.value">
-              <button class="np-lightbox__btn" aria-label="Previous" :disabled="ctx.transitionInProgress.value" @click="ctx.prev">&#8592;</button>
-              <button class="np-lightbox__btn" aria-label="Next" :disabled="ctx.transitionInProgress.value" @click="ctx.next">&#8594;</button>
+            <slot
+              name="actions"
+              :prev="prev"
+              :next="next"
+              :close="close"
+              :toggle-zoom="toggleZoom"
+              :is-zoomed-in="isZoomedIn"
+              :zoom-allowed="zoomAllowed"
+              :controls-disabled="controlsDisabled"
+            >
+              <button class="np-lightbox__btn" aria-label="Previous" :disabled="controlsDisabled" @click="prev">&#8592;</button>
+              <button class="np-lightbox__btn" aria-label="Next" :disabled="controlsDisabled" @click="next">&#8594;</button>
               <button
                 class="np-lightbox__btn"
-                :aria-label="ctx.isZoomedIn.value ? 'Fit' : 'Zoom'"
-                :disabled="ctx.transitionInProgress.value || !ctx.zoomAllowed.value"
-                @click="ctx.toggleZoom()"
+                :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
+                :disabled="controlsDisabled || !zoomAllowed"
+                @click="toggleZoom()"
               >
-                {{ ctx.isZoomedIn.value ? 'Fit' : 'Zoom' }}
+                {{ isZoomedIn ? 'Fit' : 'Zoom' }}
               </button>
-              <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" :disabled="ctx.transitionInProgress.value" @click="ctx.close">&#10005;</button>
+              <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" :disabled="controlsDisabled" @click="close">&#10005;</button>
             </slot>
           </div>
         </div>
+      </LightboxControls>
 
-        <!-- Stage -->
-        <div class="np-lightbox__stage">
-          <div
-            :ref="(el: any) => { ctx.mediaAreaRef.value = el as HTMLElement }"
-            class="np-lightbox__media"
-            :class="{
-              'np-lightbox__media--zoomed': ctx.isZoomedIn.value,
-              'np-lightbox__media--dragging': ctx.gesturePhase.value !== 'idle',
-            }"
-            @pointerdown.capture="ctx.onMediaPointerDown"
-            @pointermove.capture="ctx.onMediaPointerMove"
-            @pointerup.capture="ctx.onMediaPointerUp"
-            @pointercancel.capture="ctx.onMediaPointerCancel"
-            @wheel="ctx.onWheel"
-          >
-            <div class="np-lightbox__viewport" :ref="(el: any) => { ctx.emblaRef.value = el as HTMLElement }" :style="{ opacity: ctx.mediaOpacity.value }">
-              <div class="np-lightbox__container">
-                <div
-                  v-for="(photo, i) in ctx.photos.value"
-                  :key="photo.id"
-                  class="np-lightbox__slide"
-                >
-                  <div class="np-lightbox__effect" :style="ctx.getSlideEffectStyle(i)">
-                    <div class="np-lightbox__frame" :style="ctx.getSlideFrameStyle(photo)">
-                      <div class="np-lightbox__zoom" :ref="ctx.setSlideZoomRef(i)">
-                        <slot name="slide" :photo="photo" :index="i">
-                          <PhotoImage
-                            class="np-lightbox__img"
-                            :photo="photo"
-                            context="slide"
-                            loading="lazy"
-                          />
-                        </slot>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <div class="np-lightbox__stage">
+        <LightboxViewport v-slot="{ photos, emblaRef, mediaOpacity, isZoomedIn, gesturePhase }" class="np-lightbox__media" :class="{
+          'np-lightbox__media--zoomed': isZoomedIn,
+          'np-lightbox__media--dragging': gesturePhase !== 'idle',
+        }">
+          <div class="np-lightbox__viewport" :ref="emblaRef" :style="{ opacity: mediaOpacity }">
+            <div class="np-lightbox__container">
+              <LightboxSlide
+                v-for="(photo, i) in photos"
+                :key="photo.id"
+                :photo="photo"
+                :index="i"
+                class="np-lightbox__slide"
+              >
+                <template v-if="$slots.slide" #default="slotProps">
+                  <slot name="slide" v-bind="slotProps" />
+                </template>
+              </LightboxSlide>
             </div>
           </div>
+        </LightboxViewport>
 
-          <!-- Caption -->
-          <div class="np-lightbox__caption" :style="ctx.chromeStyle.value">
-            <slot name="caption" :photo="ctx.currentPhoto.value" :index="ctx.activeIndex.value">
-              <h2 v-if="ctx.currentPhoto.value.caption">{{ ctx.currentPhoto.value.caption }}</h2>
-              <p v-if="ctx.currentPhoto.value.description">{{ ctx.currentPhoto.value.description }}</p>
-            </slot>
-          </div>
-        </div>
+        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
+          <slot name="caption" :photo="photo" :index="activeIndex">
+            <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
+            <p v-if="photo?.description">{{ photo.description }}</p>
+          </slot>
+        </LightboxCaption>
       </div>
-
-      <!-- Ghost transition image -->
-      <img
-        v-if="ctx.ghostVisible.value"
-        class="np-lightbox__ghost"
-        :src="ctx.ghostSrc.value"
-        alt=""
-        aria-hidden="true"
-        :style="ctx.ghostStyle.value"
-      />
     </div>
-  </Teleport>
+
+    <LightboxPortal class="np-lightbox__ghost" />
+  </LightboxRoot>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
-import { LightboxContextKey, PhotoImage } from '@nuxt-photo/vue'
-
-const ctx = inject(LightboxContextKey)!
+import {
+  LightboxCaption,
+  LightboxControls,
+  LightboxOverlay,
+  LightboxPortal,
+  LightboxRoot,
+  LightboxSlide,
+  LightboxViewport,
+} from '@nuxt-photo/vue'
 </script>

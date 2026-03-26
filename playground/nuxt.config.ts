@@ -1,8 +1,11 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt', '@nuxt/image', 'nuxt-shiki'],
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt', 'nuxt-shiki'],
 
-  photo: {
+  nuxtPhoto: {
     css: 'default',
+    image: {
+      provider: 'nuxt-image',
+    },
   },
 
   shiki: {

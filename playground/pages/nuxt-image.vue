@@ -4,9 +4,9 @@
       <p class="hero__eyebrow">@nuxt/image Integration</p>
       <h1 class="hero__title">First-class NuxtImage support.</h1>
       <p class="hero__lede">
-        When <code>@nuxt/image</code> is installed, nuxt-photo automatically routes all images
-        through its optimization pipeline. Zero config — thumbnails get responsive
-        <code>srcset</code>, lightbox slides get full-viewport srcset. No adapter prop needed.
+        Set <code>nuxtPhoto.image.provider = 'nuxt-image'</code> and nuxt-photo routes all images
+        through Nuxt Image's optimization pipeline. Thumbnails get responsive
+        <code>srcset</code>, lightbox slides get full-viewport <code>srcset</code>, and no adapter prop is needed.
       </p>
     </header>
 
@@ -28,7 +28,7 @@
       <h2 class="section__title">Layer 1 — Album with lightbox</h2>
       <p class="section__desc">
         <code>&lt;PhotoAlbum&gt;</code> handles layout + lightbox. Every thumbnail and slide is
-        served through <code>@nuxt/image</code>'s provider automatically.
+        served through the configured <code>@nuxt/image</code> provider.
       </p>
       <div class="gallery-wrap">
         <PhotoAlbum

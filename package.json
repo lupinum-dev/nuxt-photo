@@ -8,8 +8,9 @@
     "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "test:unit": "vitest run",
+    "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
     "test:e2e": "pnpm run build:playground && playwright test",
-    "test": "pnpm test:unit && pnpm test:e2e",
+    "test": "pnpm test:unit && pnpm test:module-package && pnpm test:e2e",
     "lint": "pnpm -r lint"
   },
   "engines": {

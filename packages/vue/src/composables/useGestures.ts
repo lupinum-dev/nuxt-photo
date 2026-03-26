@@ -319,7 +319,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
             config.panzoomMotion.scale,
           ),
         )
-      } else if (!config.transitionInProgress.value) {
+      } else if (!(config.transitionInProgress?.value ?? false)) {
         config.goToNext()
       }
     }
@@ -333,7 +333,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
             config.panzoomMotion.scale,
           ),
         )
-      } else if (!config.transitionInProgress.value) {
+      } else if (!(config.transitionInProgress?.value ?? false)) {
         config.goToPrev()
       }
     }

@@ -42,12 +42,12 @@
   </div>
 
   <!-- Own lightbox — only rendered when not inside a parent PhotoGroup -->
-  <Lightbox v-if="hasOwnLightbox" />
+  <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, provide, watch, onMounted, onBeforeUnmount, type CSSProperties, type ComponentPublicInstance } from 'vue'
-import { PhotoImage, useLightbox, LightboxContextKey, PhotoGroupContextKey } from '@nuxt-photo/vue'
+import { ref, computed, inject, watch, onMounted, onBeforeUnmount, type CSSProperties, type Component, type ComponentPublicInstance } from 'vue'
+import { PhotoImage, PhotoGroupContextKey, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue'
 import {
   computeRowsLayout,
   computeColumnsLayout,
@@ -82,7 +82,7 @@ const props = withDefaults(defineProps<{
   bentoPatternInterval?: number
   adapter?: ImageAdapter
   /** Whether to enable lightbox. @default true */
-  lightbox?: boolean
+  lightbox?: boolean | Component
 }>(), {
   layout: 'rows',
   columns: 3,
@@ -99,12 +99,17 @@ const props = withDefaults(defineProps<{
 const parentGroup = inject(PhotoGroupContextKey, null)
 const hasLightbox = computed(() => props.lightbox !== false)
 const hasOwnLightbox = !parentGroup && props.lightbox !== false
+const LightboxComponent = computed<Component | null>(() => {
+  if (props.lightbox === false) return null
+  if (props.lightbox === true) return Lightbox
+  return props.lightbox as Component
+})
 
 // For standalone mode: create own lightbox context
-const ownCtx = !parentGroup ? useLightbox(computed(() => props.photos)) : null
+const ownCtx = !parentGroup ? useLightboxContext(computed(() => props.photos)) : null
 
 if (ownCtx) {
-  provide(LightboxContextKey, ownCtx)
+  provideLightboxContexts(ownCtx)
 }
 
 // Track thumb DOM elements by photo index
@@ -158,7 +163,7 @@ if (parentGroup) {
       if (!registrationIds.has(photo)) {
         const id = Symbol()
         registrationIds.set(photo, id)
-        parentGroup.register(id, photo, () => thumbElsMap[index] ?? null)
+        parentGroup.register(id, photo, () => thumbElsMap[index] ?? null, null)
       }
     })
   }, { immediate: true })
@@ -301,7 +306,6 @@ function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
       gridColumn: (entry.colSpan ?? 1) > 1 ? `span ${entry.colSpan}` : undefined,
       gridRow: (entry.rowSpan ?? 1) > 1 ? `span ${entry.rowSpan}` : undefined,
       overflow: 'hidden',
-      borderRadius: '4px',
       padding: `${props.padding}px`,
     }
   }

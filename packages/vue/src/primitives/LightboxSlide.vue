@@ -3,7 +3,9 @@
     <div :style="ctx.getSlideEffectStyle(index)">
       <div :style="ctx.getSlideFrameStyle(photo)">
         <div :ref="ctx.setSlideZoomRef(index)">
-          <slot :photo="photo" :index="index" />
+          <slot v-if="$slots.default" :photo="photo" :index="index" />
+          <component :is="customSlide" v-else-if="customSlide" />
+          <PhotoImage v-else :photo="photo" context="slide" loading="lazy" />
         </div>
       </div>
     </div>
@@ -11,14 +13,26 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, defineComponent, inject } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxSlideRendererKey, LightboxSlidesKey } from '../provide/keys'
+import PhotoImage from './PhotoImage.vue'
 
-defineProps<{
+const props = defineProps<{
   photo: PhotoItem
   index: number
 }>()
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxSlidesKey)!
+const resolveSlide = inject(LightboxSlideRendererKey, () => null)
+
+const customSlide = computed(() => {
+  const renderer = resolveSlide(props.photo)
+  if (!renderer) return null
+
+  return defineComponent({
+    name: 'NuxtPhotoCustomSlide',
+    setup: () => () => renderer({ photo: props.photo, index: props.index }) as any,
+  })
+})
 </script>

@@ -6,7 +6,7 @@
       <p class="hero__lede">
         Click any image. The thumbnail animates into a full lightbox with
         carousel navigation, pinch-to-zoom, pan gestures, and spring-physics transitions.
-        All auto-imported, zero config.
+        Auto-imported with an explicit, prefixed module surface.
       </p>
     </header>
 

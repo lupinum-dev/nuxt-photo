@@ -16,14 +16,14 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxTriggerKey } from '../provide/keys'
 
 const props = defineProps<{
   photo: PhotoItem
   index: number
 }>()
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxTriggerKey)!
 
 const ariaLabel = computed(() => props.photo.alt || `View photo ${props.index + 1}`)
 </script>

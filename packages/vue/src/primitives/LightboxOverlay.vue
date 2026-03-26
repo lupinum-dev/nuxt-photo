@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxOverlayKey } from '../provide/keys'
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxOverlayKey)!
 </script>

@@ -13,25 +13,33 @@
     <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
   </figure>
-  <Lightbox />
+  <component :is="lightboxComponent" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide, onMounted } from 'vue'
-import { useLightbox, LightboxContextKey, PhotoImage } from '@nuxt-photo/vue'
+import { ref, computed, onMounted, useSlots, type Component } from 'vue'
+import { PhotoImage, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
-import Lightbox from './Lightbox.vue'
+import DefaultLightbox from './Lightbox.vue'
 
 const props = defineProps<{
   photo: PhotoItem
   adapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
+  lightboxComponent?: Component
 }>()
 
 const thumbRef = ref<HTMLElement | null>(null)
-const ctx = useLightbox(computed(() => [props.photo]))
+const slots = useSlots()
+const ctx = useLightboxContext(computed(() => [props.photo]))
+const lightboxComponent = computed(() => props.lightboxComponent ?? DefaultLightbox)
 
-provide(LightboxContextKey, ctx)
+provideLightboxContexts(ctx, {
+  resolveSlide: photo => {
+    if (photo !== props.photo || !slots.slide) return null
+    return slotProps => slots.slide?.(slotProps) ?? null
+  },
+})
 
 onMounted(() => {
   ctx.setThumbRef(0)(thumbRef.value)

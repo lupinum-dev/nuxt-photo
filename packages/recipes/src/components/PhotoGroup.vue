@@ -1,11 +1,11 @@
 <template>
-  <slot :open="open" :set-thumb-ref="ctx.setThumbRef" />
+  <slot :open="open" :setThumbRef="ctx.setThumbRef" />
   <component :is="LightboxComponent" v-if="LightboxComponent" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, provide, type Component, type ComponentPublicInstance } from 'vue'
-import { useLightbox, LightboxContextKey, PhotoGroupContextKey, type PhotoGroupContext } from '@nuxt-photo/vue'
+import { provideLightboxContexts, PhotoGroupContextKey, type LightboxSlideRenderer, type PhotoGroupContext, useLightboxContext } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import DefaultLightbox from './Lightbox.vue'
 
@@ -22,17 +22,18 @@ const props = withDefaults(defineProps<{
 type Registration = {
   photo: PhotoItem
   getThumbEl: () => HTMLElement | null
+  renderSlide?: LightboxSlideRenderer | null
 }
 
 const registrationOrder: symbol[] = []
 const registrationMap = new Map<symbol, Registration>()
 const registrationVersion = ref(0)
 
-function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null) {
+function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null) {
   if (!registrationMap.has(id)) {
     registrationOrder.push(id)
   }
-  registrationMap.set(id, { photo, getThumbEl })
+  registrationMap.set(id, { photo, getThumbEl, renderSlide })
   registrationVersion.value++
 }
 
@@ -51,7 +52,7 @@ const collectedPhotos = computed<PhotoItem[]>(() => {
 })
 
 // Full internal lightbox context
-const ctx = useLightbox(collectedPhotos)
+const ctx = useLightboxContext(collectedPhotos)
 
 // Which photo's thumb is currently hidden during transitions
 const hiddenPhoto = computed<PhotoItem | null>(() => {
@@ -93,7 +94,15 @@ const groupContext: PhotoGroupContext = {
 }
 
 provide(PhotoGroupContextKey, groupContext)
-provide(LightboxContextKey, ctx)
+provideLightboxContexts(ctx, {
+  resolveSlide: photo => {
+    const registration = registrationOrder
+      .map(id => registrationMap.get(id))
+      .find(entry => entry?.photo === photo || entry?.photo.id === photo.id)
+
+    return registration?.renderSlide ?? null
+  },
+})
 
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {

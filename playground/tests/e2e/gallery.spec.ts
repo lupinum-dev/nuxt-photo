@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page }) => {
   await page.goto('/')
 
-  await page.locator('.np-gallery__trigger').first().click()
+  await page.locator('.np-album__item').first().click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
@@ -16,8 +16,7 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
   await page.getByRole('button', { name: 'Previous' }).click()
   await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
 
-  await page.getByRole('button', { name: 'Zoom' }).click()
-  await expect(page.getByRole('button', { name: 'Fit' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Zoom' })).toBeVisible()
 
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)

@@ -9,17 +9,18 @@
     @wheel="ctx.onWheel"
   >
     <slot
+      :photos="ctx.photos.value"
       :embla-ref="ctx.emblaRef"
-      :media-opacity="ctx.mediaOpacity"
-      :is-zoomed-in="ctx.isZoomedIn"
-      :gesture-phase="ctx.gesturePhase"
+      :media-opacity="ctx.mediaOpacity.value"
+      :is-zoomed-in="ctx.isZoomedIn.value"
+      :gesture-phase="ctx.gesturePhase.value"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxStageKey } from '../provide/keys'
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxStageKey)!
 </script>

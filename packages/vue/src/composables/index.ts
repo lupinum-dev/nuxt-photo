@@ -1,4 +1,6 @@
 export { useLightbox } from './useLightbox'
+export { useLightboxController } from './useLightbox'
+export { useLightboxContext } from './useLightboxContext'
 export { useCarousel } from './useCarousel'
 export { usePanzoom } from './usePanzoom'
 export { useGestures, type GestureConfig } from './useGestures'

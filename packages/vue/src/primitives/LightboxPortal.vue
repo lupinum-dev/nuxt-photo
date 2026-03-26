@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
-import { LightboxContextKey } from '../provide/keys'
+import { LightboxPortalKey } from '../provide/keys'
 
-const ctx = inject(LightboxContextKey)!
+const ctx = inject(LightboxPortalKey)!
 </script>

@@ -8,7 +8,7 @@ test('layout explorer switches layouts and still opens the lightbox', async ({ p
     await expect(page.locator('.np-album__item')).toHaveCount(12)
   }
 
-  await page.locator('.album-trigger').nth(1).click()
+  await page.locator('.np-album__item').nth(1).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(page.locator('.np-lightbox__counter')).toContainText('2 / 12')
