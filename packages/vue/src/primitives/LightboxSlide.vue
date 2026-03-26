@@ -1,11 +1,11 @@
 <template>
   <div v-bind="$attrs">
-    <div :style="ctx.getSlideEffectStyle(index)">
-      <div :style="ctx.getSlideFrameStyle(photo)">
-        <div :ref="ctx.setSlideZoomRef(index)">
+    <div class="np-lightbox__effect" :style="ctx.getSlideEffectStyle(index)">
+      <div class="np-lightbox__frame" :style="ctx.getSlideFrameStyle(photo)">
+        <div class="np-lightbox__zoom" :ref="ctx.setSlideZoomRef(index)">
           <slot v-if="$slots.default" :photo="photo" :index="index" />
           <component :is="customSlide" v-else-if="customSlide" />
-          <PhotoImage v-else :photo="photo" context="slide" loading="lazy" />
+          <PhotoImage v-else :photo="photo" context="slide" loading="lazy" class="np-lightbox__img" />
         </div>
       </div>
     </div>
