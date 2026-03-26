@@ -37,7 +37,12 @@
     </div>
 
     <Teleport to="body">
-      <div v-if="ctx.lightboxMounted.value" class="hl">
+      <div
+        v-if="ctx.lightboxMounted.value"
+        class="hl"
+        role="dialog"
+        aria-modal="true"
+      >
         <div
           class="hl__backdrop"
           :style="ctx.backdropStyle.value"

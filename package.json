@@ -7,10 +7,19 @@
     "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground dev",
     "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
-    "test": "pnpm -r test",
+    "test:unit": "vitest run",
+    "test:e2e": "pnpm run build:playground && playwright test",
+    "test": "pnpm test:unit && pnpm test:e2e",
     "lint": "pnpm -r lint"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "jsdom": "^29.0.1",
+    "vitest": "^4.1.1",
+    "vue": "^3.5.31"
   }
 }

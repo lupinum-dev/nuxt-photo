@@ -1,6 +1,11 @@
 <template>
   <Teleport to="body">
-    <div v-if="ctx.lightboxMounted.value" class="np-lightbox">
+    <div
+      v-if="ctx.lightboxMounted.value"
+      class="np-lightbox"
+      role="dialog"
+      aria-modal="true"
+    >
       <!-- Backdrop -->
       <div
         class="np-lightbox__backdrop"
@@ -20,12 +25,17 @@
 
           <div class="np-lightbox__actions">
             <slot name="actions" :prev="ctx.prev" :next="ctx.next" :close="ctx.close" :toggle-zoom="ctx.toggleZoom" :is-zoomed-in="ctx.isZoomedIn.value" :zoom-allowed="ctx.zoomAllowed.value" :controls-disabled="ctx.controlsDisabled.value">
-              <button class="np-lightbox__btn" @click="ctx.prev" :disabled="ctx.controlsDisabled.value">&#8592;</button>
-              <button class="np-lightbox__btn" @click="ctx.next" :disabled="ctx.controlsDisabled.value">&#8594;</button>
-              <button class="np-lightbox__btn" @click="ctx.toggleZoom()" :disabled="ctx.controlsDisabled.value || !ctx.zoomAllowed.value">
+              <button class="np-lightbox__btn" aria-label="Previous" @click="ctx.prev" :disabled="ctx.controlsDisabled.value">&#8592;</button>
+              <button class="np-lightbox__btn" aria-label="Next" @click="ctx.next" :disabled="ctx.controlsDisabled.value">&#8594;</button>
+              <button
+                class="np-lightbox__btn"
+                :aria-label="ctx.isZoomedIn.value ? 'Fit' : 'Zoom'"
+                @click="ctx.toggleZoom()"
+                :disabled="ctx.controlsDisabled.value || !ctx.zoomAllowed.value"
+              >
                 {{ ctx.isZoomedIn.value ? 'Fit' : 'Zoom' }}
               </button>
-              <button class="np-lightbox__btn np-lightbox__btn--close" @click="ctx.close" :disabled="ctx.controlsDisabled.value">&#10005;</button>
+              <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" @click="ctx.close" :disabled="ctx.controlsDisabled.value">&#10005;</button>
             </slot>
           </div>
         </div>

@@ -14,3 +14,5 @@ dist
 .cursor
 .cursorrules
 .cursorignore
+playwright-report
+test-results
