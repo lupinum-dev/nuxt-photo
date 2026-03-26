@@ -12,7 +12,6 @@ function localPhoto(
   return {
     id,
     src: `/photos/${id}.jpg`,
-    thumbSrc: `/photos/${id}.jpg`,
     width,
     height,
     alt,

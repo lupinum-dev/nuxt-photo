@@ -53,12 +53,12 @@
           <div class="hl__toolbar" :style="ctx.chromeStyle.value">
             <span class="hl__counter">{{ ctx.activeIndex.value + 1 }}/{{ photos.length }}</span>
             <div class="hl__actions">
-              <button class="hl__btn" @click="ctx.prev" :disabled="ctx.controlsDisabled.value" title="Previous">Prev</button>
-              <button class="hl__btn" @click="ctx.next" :disabled="ctx.controlsDisabled.value" title="Next">Next</button>
-              <button class="hl__btn" @click="ctx.toggleZoom()" :disabled="ctx.controlsDisabled.value || !ctx.zoomAllowed.value">
+              <button class="hl__btn" @click="ctx.prev" :disabled="ctx.transitionInProgress.value" title="Previous">Prev</button>
+              <button class="hl__btn" @click="ctx.next" :disabled="ctx.transitionInProgress.value" title="Next">Next</button>
+              <button class="hl__btn" @click="ctx.toggleZoom()" :disabled="ctx.transitionInProgress.value || !ctx.zoomAllowed.value">
                 {{ ctx.isZoomedIn.value ? 'Fit' : 'Zoom' }}
               </button>
-              <button class="hl__btn hl__btn--close" @click="ctx.close" :disabled="ctx.controlsDisabled.value">Close</button>
+              <button class="hl__btn hl__btn--close" @click="ctx.close" :disabled="ctx.transitionInProgress.value">Close</button>
             </div>
           </div>
 
@@ -171,6 +171,8 @@
 <script setup lang="ts">
 import { useLightbox } from '@nuxt-photo/vue'
 import { photos } from '~/composables/photos'
+
+useHead({ title: 'Headless — nuxt-photo' })
 
 const ctx = useLightbox(photos)
 

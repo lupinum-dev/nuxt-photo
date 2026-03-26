@@ -2,12 +2,19 @@
 // Only used for local TypeScript checking in the nuxt package build.
 // The real module is provided by @nuxt/image at runtime in the consumer's app.
 declare module '#image' {
+  interface ImageOptions {
+    width?: number
+    height?: number
+    quality?: number
+    format?: string
+    [key: string]: unknown
+  }
+  interface ImageSizesOptions extends ImageOptions {
+    sizes?: string
+  }
   interface ImageHelper {
-    (src: string, options?: Record<string, unknown>): string
-    getSizes(src: string, options?: {
-      sizes?: string
-      modifiers?: Record<string, unknown>
-    }): { src: string; srcset: string; sizes: string }
+    (src: string, options?: ImageOptions): string
+    getSizes(src: string, options?: ImageSizesOptions): { src: string; srcset: string; sizes: string }
   }
   export function useImage(): ImageHelper
 }

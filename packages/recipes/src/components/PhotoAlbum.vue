@@ -59,9 +59,13 @@ const props = withDefaults(defineProps<{
   photos: PhotoItem[]
   layout?: 'rows' | 'columns' | 'masonry' | 'bento'
   columns?: number
+  /** Gap between images in pixels @default 8 */
   spacing?: number
+  /** Outer padding around each image in pixels @default 0 */
   padding?: number
+  /** Target row height in pixels (rows layout only) @default 300 */
   targetRowHeight?: number
+  /** Row height in pixels (bento layout only) @default 280 */
   bentoRowHeight?: number
   bentoSizing?: BentoSizing
   bentoPatternInterval?: number
@@ -78,28 +82,18 @@ const props = withDefaults(defineProps<{
 })
 
 const containerRef = ref<HTMLElement | null>(null)
-const containerWidth = ref(800)
+const containerWidth = ref(0)
 
 let resizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   if (!containerRef.value) return
 
-  let initialWidth = 0
+  containerWidth.value = containerRef.value.getBoundingClientRect().width
 
   resizeObserver = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width
-    if (!width || width <= 0) return
-
-    if (initialWidth === 0) {
-      initialWidth = width
-      return
-    }
-
-    if (Math.abs(width - initialWidth) > 1) {
-      initialWidth = width
-      containerWidth.value = width
-    }
+    if (width && width > 0) containerWidth.value = width
   })
   resizeObserver.observe(containerRef.value)
 })
@@ -109,6 +103,8 @@ onBeforeUnmount(() => {
 })
 
 const groups = computed<LayoutGroup[]>(() => {
+  if (containerWidth.value <= 0) return []
+
   const input = {
     photos: props.photos,
     containerWidth: containerWidth.value,
@@ -117,8 +113,13 @@ const groups = computed<LayoutGroup[]>(() => {
   }
 
   switch (props.layout) {
-    case 'rows':
-      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight })
+    case 'rows': {
+      const result = computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight })
+      if (result.length === 0 && props.photos.length > 0) {
+        console.warn('[nuxt-photo] rows layout produced no groups — containerWidth may be too small for targetRowHeight')
+      }
+      return result
+    }
     case 'columns':
       return computeColumnsLayout({ ...input, columns: props.columns })
     case 'masonry':

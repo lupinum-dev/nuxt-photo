@@ -4,7 +4,7 @@ import type { EmblaCarouselVueType } from 'embla-carousel-vue'
 import { fitRect, type AreaMetrics, type CarouselConfig, type PhotoItem, type RectLike, type DebugLogger } from '@nuxt-photo/core'
 
 export function useCarousel(
-  photos: PhotoItem[],
+  photos: ComputedRef<PhotoItem[]>,
   areaMetrics: Ref<AreaMetrics | null>,
   config: CarouselConfig,
   isZoomedIn: ComputedRef<boolean>,
@@ -17,7 +17,7 @@ export function useCarousel(
 
   const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions) as EmblaCarouselVueType
 
-  const currentPhoto = computed<PhotoItem>(() => photos[activeIndex.value] ?? photos[0]!)
+  const currentPhoto = computed<PhotoItem>(() => photos.value[activeIndex.value] ?? photos.value[0]!)
 
   watch(emblaApi, (api) => {
     if (!api) return
@@ -75,7 +75,7 @@ export function useCarousel(
     if (distance > 0.5) distance -= 1
     if (distance < -0.5) distance += 1
 
-    const n = photos.length
+    const n = photos.value.length
     const slidePosition = distance * n
 
     switch (config.style) {

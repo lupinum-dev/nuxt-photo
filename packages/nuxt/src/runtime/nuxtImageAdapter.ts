@@ -25,7 +25,7 @@ export function createNuxtImageAdapter(): ImageAdapter {
       : '(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 400px'
     const quality = context === 'slide' ? 85 : 80
 
-    const result = img.getSizes(src, { sizes, modifiers: { quality } })
+    const result = img.getSizes(src, { sizes, quality })
     return {
       src: result.src,
       srcset: result.srcset,

@@ -59,7 +59,7 @@ export function useGhostTransition(
 
   const thumbRefs = new Map<number, HTMLElement>()
 
-  const controlsDisabled = computed(() => animating.value || ghostVisible.value)
+  const transitionInProgress = computed(() => animating.value || ghostVisible.value)
 
   const chromeStyle = computed<CSSProperties>(() => ({
     opacity: String(uiVisible.value ? chromeOpacity.value : 0),
@@ -513,7 +513,11 @@ export function useGhostTransition(
       // Scroll-into-view recovery for off-screen thumbnails
       if (plan.reason === 'thumb-off-screen' && thumbEl) {
         debug?.log('transitions', 'close: thumbnail off-screen, attempting scrollIntoView recovery')
-        thumbEl.scrollIntoView({ behavior: 'instant', block: 'nearest' })
+        try {
+          thumbEl.scrollIntoView({ behavior: 'instant', block: 'nearest' })
+        } catch {
+          thumbEl.scrollIntoView({ block: 'nearest' })
+        }
         await nextFrame()
 
         const retriedRect = thumbEl.getBoundingClientRect()
@@ -591,7 +595,7 @@ export function useGhostTransition(
     chromeOpacity,
     uiVisible,
     closeDragY,
-    controlsDisabled,
+    transitionInProgress,
     chromeStyle,
     closeDragRatio,
     backdropStyle,

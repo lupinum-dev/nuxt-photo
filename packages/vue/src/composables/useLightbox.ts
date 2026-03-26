@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
 import {
   ensureImageLoaded,
   lockBodyScroll,
@@ -15,7 +15,9 @@ import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
 
-export function useLightbox(photos: PhotoItem[]) {
+export function useLightbox(photosInput: MaybeRef<PhotoItem[]>) {
+  const photos = computed(() => toValue(photosInput))
+
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
 
@@ -37,7 +39,7 @@ export function useLightbox(photos: PhotoItem[]) {
   const animatingProxy = ref(false)
 
   const carousel = useCarousel(
-    photos,
+    photos,  // ComputedRef<PhotoItem[]>
     areaMetrics,
     carouselConfig,
     computed(() => isZoomedInProxy.value),
@@ -48,7 +50,7 @@ export function useLightbox(photos: PhotoItem[]) {
   const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
 
   const ghost = useGhostTransition(
-    photos,
+    photos.value,
     carousel.activeIndex,
     carousel.currentPhoto,
     areaMetrics,
@@ -113,12 +115,12 @@ export function useLightbox(photos: PhotoItem[]) {
   }
 
   function next() {
-    if (ghost.controlsDisabled.value) return
+    if (ghost.transitionInProgress.value) return
     carousel.goToNext()
   }
 
   function prev() {
-    if (ghost.controlsDisabled.value) return
+    if (ghost.transitionInProgress.value) return
     carousel.goToPrev()
   }
 
@@ -135,7 +137,7 @@ export function useLightbox(photos: PhotoItem[]) {
     panState: panzoom.panState,
     zoomState: panzoom.zoomState,
     closeDragY: ghost.closeDragY,
-    controlsDisabled: ghost.controlsDisabled,
+    transitionInProgress: ghost.transitionInProgress,
 
     panzoomMotion: panzoom.panzoomMotion,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
@@ -160,6 +162,13 @@ export function useLightbox(photos: PhotoItem[]) {
     lockBodyScroll(mounted)
   })
 
+  watch(photos, async () => {
+    if (ghost.lightboxMounted.value) {
+      await closeLightbox()
+    }
+    carousel.goTo(0, true)
+  })
+
   watch(carousel.activeIndex, async (newIndex) => {
     if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
 
@@ -179,7 +188,7 @@ export function useLightbox(photos: PhotoItem[]) {
       window.addEventListener('keydown', gestures.onKeydown)
       window.addEventListener('resize', onResize)
 
-      for (const photo of photos) {
+      for (const photo of photos.value) {
         void ensureImageLoaded(photo.src)
       }
     }
@@ -206,7 +215,7 @@ export function useLightbox(photos: PhotoItem[]) {
   }
 
   return {
-    photos,
+    photos,  // ComputedRef<PhotoItem[]> — reactive, use .value in templates
 
     activeIndex: carousel.activeIndex,
     currentPhoto: carousel.currentPhoto,
@@ -227,7 +236,7 @@ export function useLightbox(photos: PhotoItem[]) {
     chromeOpacity: ghost.chromeOpacity,
     uiVisible: ghost.uiVisible,
     closeDragY: ghost.closeDragY,
-    controlsDisabled: ghost.controlsDisabled,
+    transitionInProgress: ghost.transitionInProgress,
     chromeStyle: ghost.chromeStyle,
     closeDragRatio: ghost.closeDragRatio,
     backdropStyle: ghost.backdropStyle,

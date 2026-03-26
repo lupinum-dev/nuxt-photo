@@ -116,6 +116,8 @@ import { ref } from 'vue'
 import { useLightbox } from '@nuxt-photo/vue'
 import { photos } from '~/composables/photos'
 
+useHead({ title: 'Layouts — nuxt-photo' })
+
 const layouts = ['rows', 'columns', 'masonry', 'bento'] as const
 const layout = ref<'rows' | 'columns' | 'masonry' | 'bento'>('rows')
 const columns = ref(3)

@@ -92,6 +92,8 @@
 <script setup lang="ts">
 import { photos } from '~/composables/photos'
 
+useHead({ title: 'NuxtImage — nuxt-photo' })
+
 const hero = photos[0]
 const gridPhotos = photos.slice(0, 6)
 

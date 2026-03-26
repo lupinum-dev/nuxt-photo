@@ -17,9 +17,9 @@
       <div class="np-lightbox__ui" :style="ctx.lightboxUiStyle.value">
         <!-- Controls -->
         <div class="np-lightbox__topbar" :style="ctx.chromeStyle.value">
-          <slot name="counter" :active-index="ctx.activeIndex.value" :count="ctx.photos.length">
+          <slot name="counter" :active-index="ctx.activeIndex.value" :count="ctx.photos.value.length">
             <div class="np-lightbox__counter">
-              {{ ctx.activeIndex.value + 1 }} / {{ ctx.photos.length }}
+              {{ ctx.activeIndex.value + 1 }} / {{ ctx.photos.value.length }}
             </div>
           </slot>
 
@@ -58,7 +58,7 @@
             <div class="np-lightbox__viewport" :ref="(el: any) => { ctx.emblaRef.value = el as HTMLElement }" :style="{ opacity: ctx.mediaOpacity.value }">
               <div class="np-lightbox__container">
                 <div
-                  v-for="(photo, i) in ctx.photos"
+                  v-for="(photo, i) in ctx.photos.value"
                   :key="photo.id"
                   class="np-lightbox__slide"
                 >

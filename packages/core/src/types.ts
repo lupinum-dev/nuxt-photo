@@ -186,6 +186,13 @@ export type ImageSource = {
   height?: number
 }
 
+/**
+ * Context in which an image is being rendered.
+ * - `'thumb'` — grid thumbnail (smaller, responsive srcset)
+ * - `'slide'` — lightbox slide (full-viewport srcset)
+ * - `'preload'` — reserved for future preloading support; adapters may return a
+ *   single low-res URL here. The native adapter treats it the same as `'slide'`.
+ */
 export type ImageContext = 'thumb' | 'slide' | 'preload'
 
 export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource

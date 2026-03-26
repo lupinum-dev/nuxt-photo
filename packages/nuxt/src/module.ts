@@ -1,5 +1,9 @@
 import { defineNuxtModule, addComponent, addImports, addPlugin, createResolver, hasNuxtModule } from '@nuxt/kit'
 
+// Re-export core types so consumers can import from '@nuxt-photo/nuxt'
+export type { PhotoItem, ImageAdapter, ImageContext, ImageSource, LayoutGroup, LayoutEntry, BentoSizing } from '@nuxt-photo/core'
+export type { LightboxContext } from '@nuxt-photo/vue'
+
 export interface NuxtPhotoOptions {
   autoImports?: boolean
   components?: boolean | { prefix?: string }
@@ -96,6 +100,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         { name: 'computeColumnsLayout', from: '@nuxt-photo/core' },
         { name: 'computeMasonryLayout', from: '@nuxt-photo/core' },
         { name: 'createNativeImageAdapter', from: '@nuxt-photo/core' },
+        { name: 'computeBentoLayout', from: '@nuxt-photo/core' },
       ])
     }
 

@@ -39,6 +39,8 @@
 <script setup lang="ts">
 import { photos } from '~/composables/photos'
 
+useHead({ title: 'Gallery — nuxt-photo' })
+
 const galleryCode = `<PhotoGallery
   :photos="photos"
   layout="rows"

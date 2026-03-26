@@ -25,7 +25,7 @@ export type GestureConfig = {
   panState: Ref<PanState>
   zoomState: Ref<ZoomState>
   closeDragY: Ref<number>
-  controlsDisabled: ComputedRef<boolean>
+  transitionInProgress: ComputedRef<boolean>
 
   panzoomMotion: PanzoomMotion
   setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
@@ -319,7 +319,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
             config.panzoomMotion.scale,
           ),
         )
-      } else if (!config.controlsDisabled.value) {
+      } else if (!config.transitionInProgress.value) {
         config.goToNext()
       }
     }
@@ -333,7 +333,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
             config.panzoomMotion.scale,
           ),
         )
-      } else if (!config.controlsDisabled.value) {
+      } else if (!config.transitionInProgress.value) {
         config.goToPrev()
       }
     }
