@@ -28,10 +28,10 @@ export function computeZoomLevels(
   const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
 
   const naturalMax = Math.max(
-    1,
+    2,
     Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
   )
-  const secondary = naturalMax <= 1.05 ? 1 : Math.min(2, naturalMax)
+  const secondary = Math.min(2, naturalMax)
 
   return {
     fit: 1,

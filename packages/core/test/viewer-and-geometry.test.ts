@@ -37,6 +37,27 @@ describe('geometry and viewer utilities', () => {
     expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 600, y: -400 })
   })
 
+  it('always allows at least 2x zoom regardless of photo resolution', () => {
+    // Photo displayed at near-native resolution (1280px in 1240px frame) — was disabled before
+    const nearNative = computeZoomLevels(1280, 800, 1240, 775)
+    expect(nearNative.max).toBe(2)
+    expect(nearNative.secondary).toBe(2)
+
+    // Photo smaller than the display area — was disabled before
+    const small = computeZoomLevels(600, 400, 1200, 800)
+    expect(small.max).toBe(2)
+    expect(small.secondary).toBe(2)
+
+    // Large photo (>2x) — unchanged behavior
+    const large = computeZoomLevels(4000, 2000, 1200, 800)
+    expect(large.max).toBeCloseTo(3.33, 1)
+    expect(large.secondary).toBe(2)
+
+    // fit is always 1, current starts at 1
+    expect(nearNative.fit).toBe(1)
+    expect(nearNative.current).toBe(1)
+  })
+
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
     expect(
       computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, { x: 600, y: 400 }),
