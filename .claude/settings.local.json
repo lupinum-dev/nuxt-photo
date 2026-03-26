@@ -7,7 +7,10 @@
       "Bash(do echo:*)",
       "Read(//Users/matthias/Git/0_libs/nuxt-photo/packages/**)",
       "Bash(done)",
-      "Bash(pnpm test:unit --reporter=verbose)"
+      "Bash(pnpm test:unit --reporter=verbose)",
+      "Bash(/tmp/zoom_analysis.txt:*)",
+      "Read(//tmp/**)",
+      "Bash(npm test:*)"
     ]
   }
 }

@@ -22,6 +22,8 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import type { BentoSizing, ImageAdapter, PhotoItem } from '@nuxt-photo/core'
+
+defineOptions({ inheritAttrs: false })
 import { PhotoAlbum as RecipePhotoAlbum } from '@nuxt-photo/recipes'
 import Lightbox from './Lightbox.vue'
 

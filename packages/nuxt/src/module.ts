@@ -82,8 +82,10 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       addImports(AUTO_IMPORTS.map(name => ({ name, from: '@nuxt-photo/vue' })))
     }
 
-    if (options.css === 'default' && !nuxt.options.css.includes('@nuxt-photo/recipes/styles/lightbox.css')) {
-      nuxt.options.css.push('@nuxt-photo/recipes/styles/lightbox.css')
+    if (options.css === 'default') {
+      if (!nuxt.options.css.includes('@nuxt-photo/recipes/styles/lightbox.css')) {
+        nuxt.options.css.push('@nuxt-photo/recipes/styles/lightbox.css')
+      }
     }
   },
 })

@@ -16,6 +16,8 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
+
+defineOptions({ inheritAttrs: false })
 import { Photo as RecipePhoto } from '@nuxt-photo/recipes'
 import Lightbox from './Lightbox.vue'
 
