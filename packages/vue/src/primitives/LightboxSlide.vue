@@ -16,6 +16,7 @@
 import { computed, defineComponent, inject } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { LightboxSlideRendererKey, LightboxSlidesKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 import PhotoImage from './PhotoImage.vue'
 
 const props = defineProps<{
@@ -23,7 +24,7 @@ const props = defineProps<{
   index: number
 }>()
 
-const ctx = inject(LightboxSlidesKey)!
+const ctx = requireInjection(LightboxSlidesKey, 'LightboxSlide', 'an active lightbox slides context')
 const resolveSlide = inject(LightboxSlideRendererKey, () => null)
 
 const customSlide = computed(() => {

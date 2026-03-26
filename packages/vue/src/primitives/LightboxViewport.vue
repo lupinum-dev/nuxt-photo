@@ -19,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxStageKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxStageKey)!
+const ctx = requireInjection(LightboxStageKey, 'LightboxViewport', 'an active lightbox stage context')
 </script>

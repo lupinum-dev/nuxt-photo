@@ -6,6 +6,10 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
+    },
+    "./internal": {
+      "import": "./dist/internal.mjs",
+      "types": "./dist/internal.d.ts"
     }
   },
   "main": "./dist/index.mjs",

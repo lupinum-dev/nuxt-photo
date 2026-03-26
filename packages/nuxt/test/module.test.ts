@@ -126,6 +126,10 @@ describe('nuxt-photo module', () => {
       export: 'PhotoImage',
       filePath: '@nuxt-photo/vue',
     }))
+    expect(addComponent).not.toHaveBeenCalledWith(expect.objectContaining({
+      export: 'Lightbox',
+      filePath: '@nuxt-photo/recipes',
+    }))
   })
 
   it('only auto-imports vue composables', () => {

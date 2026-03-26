@@ -9,7 +9,7 @@ export interface NuxtPhotoOptions {
   }
 }
 
-const RECIPE_COMPONENTS = ['Photo', 'PhotoGroup', 'PhotoAlbum', 'Lightbox'] as const
+const RECIPE_COMPONENTS = ['Photo', 'PhotoGroup', 'PhotoAlbum'] as const
 const PRIMITIVE_COMPONENTS = [
   'LightboxRoot',
   'LightboxOverlay',

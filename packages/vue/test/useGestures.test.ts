@@ -2,7 +2,7 @@
 
 import { computed, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { useGestures } from '@nuxt-photo/vue'
+import { useGestures } from '../src/composables/useGestures'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function createGestureConfig(zoomedIn = false) {

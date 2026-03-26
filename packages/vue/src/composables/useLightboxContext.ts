@@ -53,7 +53,6 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
   const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
 
   const ghost = useGhostTransition(
-    photos.value,
     carousel.activeIndex,
     carousel.currentPhoto,
     areaMetrics,
@@ -233,7 +232,6 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
     count,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
-    currentPhoto: carousel.currentPhoto,
     isOpen: computed(() => ghost.lightboxMounted.value),
 
     zoomState: panzoom.zoomState,
@@ -241,7 +239,6 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
     isZoomedIn: panzoom.isZoomedIn,
     zoomAllowed: panzoom.zoomAllowed,
 
-    lightboxMounted: ghost.lightboxMounted,
     animating: ghost.animating,
     ghostVisible: ghost.ghostVisible,
     ghostSrc: ghost.ghostSrc,

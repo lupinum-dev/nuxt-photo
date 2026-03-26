@@ -7,8 +7,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxControllerKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxControllerKey)!
+const ctx = requireInjection(LightboxControllerKey, 'LightboxRoot', 'an active lightbox controller context')
 </script>

@@ -5,9 +5,15 @@
 
 <script setup lang="ts">
 import { ref, computed, provide, type Component, type ComponentPublicInstance } from 'vue'
-import { provideLightboxContexts, PhotoGroupContextKey, type LightboxSlideRenderer, type PhotoGroupContext, useLightboxContext } from '@nuxt-photo/vue'
+import {
+  provideLightboxContexts,
+  PhotoGroupContextKey,
+  type LightboxSlideRenderer,
+  type PhotoGroupContext,
+  useLightboxContext,
+} from '@nuxt-photo/vue/internal'
 import type { PhotoItem } from '@nuxt-photo/core'
-import DefaultLightbox from './Lightbox.vue'
+import InternalLightbox from './InternalLightbox.vue'
 
 const props = withDefaults(defineProps<{
   /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
@@ -107,7 +113,7 @@ provideLightboxContexts(ctx, {
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
-  if (props.lightbox === true) return DefaultLightbox
+  if (props.lightbox === true) return InternalLightbox
   return props.lightbox as Component
 })
 

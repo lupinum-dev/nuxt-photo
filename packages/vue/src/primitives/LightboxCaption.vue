@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxCaptionKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxCaptionKey)!
+const ctx = requireInjection(LightboxCaptionKey, 'LightboxCaption', 'an active lightbox caption context')
 </script>

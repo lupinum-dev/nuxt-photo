@@ -2,7 +2,7 @@
   <div :style="ctx.chromeStyle.value" v-bind="$attrs">
     <slot
       :active-index="ctx.activeIndex.value"
-      :current-photo="ctx.activePhoto.value"
+      :active-photo="ctx.activePhoto.value"
       :photos="ctx.photos.value"
       :count="ctx.count.value"
       :is-zoomed-in="ctx.isZoomedIn.value"
@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxChromeKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxChromeKey)!
+const ctx = requireInjection(LightboxChromeKey, 'LightboxControls', 'an active lightbox chrome context')
 </script>

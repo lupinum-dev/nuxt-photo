@@ -35,7 +35,6 @@ export type CloseCallbacks = TransitionCallbacks & {
 }
 
 export function useGhostTransition(
-  _photos: PhotoItem[],
   activeIndex: Ref<number>,
   currentPhoto: ComputedRef<PhotoItem>,
   areaMetrics: Ref<AreaMetrics | null>,

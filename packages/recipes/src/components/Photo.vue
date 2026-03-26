@@ -7,7 +7,11 @@
     :loading="loading"
     :lightbox-component="lightboxComponent"
     v-bind="$attrs"
-  />
+  >
+    <template v-if="$slots.slide" #slide="slotProps">
+      <slot name="slide" v-bind="slotProps" />
+    </template>
+  </PhotoSolo>
 
   <!-- Photo inside a PhotoGroup: clickable thumb that registers with the group -->
   <figure
@@ -28,14 +32,15 @@
 
   <!-- Plain image (no group, no lightbox, or lightbox-ignore) -->
   <figure v-else class="np-photo" v-bind="$attrs">
-    <PhotoImage :photo="photo" context="slide" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
+    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
   </figure>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Component } from 'vue'
-import { PhotoImage, PhotoGroupContextKey } from '@nuxt-photo/vue'
+import { PhotoImage } from '@nuxt-photo/vue'
+import { PhotoGroupContextKey } from '@nuxt-photo/vue/internal'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
 import PhotoSolo from './PhotoSolo.vue'
 

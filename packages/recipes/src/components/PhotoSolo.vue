@@ -18,9 +18,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, useSlots, type Component } from 'vue'
-import { PhotoImage, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue'
+import { PhotoImage } from '@nuxt-photo/vue'
+import { provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue/internal'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
-import DefaultLightbox from './Lightbox.vue'
+import InternalLightbox from './InternalLightbox.vue'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -31,12 +32,12 @@ const props = defineProps<{
 
 const thumbRef = ref<HTMLElement | null>(null)
 const slots = useSlots()
-const ctx = useLightboxContext(computed(() => [props.photo]))
-const lightboxComponent = computed(() => props.lightboxComponent ?? DefaultLightbox)
+const ctx = useLightboxContext(props.photo)
+const lightboxComponent = computed(() => props.lightboxComponent ?? InternalLightbox)
 
 provideLightboxContexts(ctx, {
   resolveSlide: photo => {
-    if (photo !== props.photo || !slots.slide) return null
+    if ((photo !== props.photo && photo.id !== props.photo.id) || !slots.slide) return null
     return slotProps => slots.slide?.(slotProps) ?? null
   },
 })

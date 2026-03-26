@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxOverlayKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxOverlayKey)!
+const ctx = requireInjection(LightboxOverlayKey, 'LightboxOverlay', 'an active lightbox overlay context')
 </script>

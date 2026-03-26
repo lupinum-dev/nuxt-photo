@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { LightboxPortalKey } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-const ctx = inject(LightboxPortalKey)!
+const ctx = requireInjection(LightboxPortalKey, 'LightboxPortal', 'an active lightbox portal context')
 </script>

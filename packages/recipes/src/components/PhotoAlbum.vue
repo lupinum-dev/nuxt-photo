@@ -47,7 +47,8 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount, type CSSProperties, type Component, type ComponentPublicInstance } from 'vue'
-import { PhotoImage, PhotoGroupContextKey, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue'
+import { PhotoImage } from '@nuxt-photo/vue'
+import { PhotoGroupContextKey, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue/internal'
 import {
   computeRowsLayout,
   computeColumnsLayout,
@@ -56,10 +57,9 @@ import {
   type PhotoItem,
   type ImageAdapter,
   type LayoutGroup,
-  type LayoutEntry,
   type BentoSizing,
 } from '@nuxt-photo/core'
-import Lightbox from './Lightbox.vue'
+import InternalLightbox from './InternalLightbox.vue'
 
 function round(value: number, digits = 0) {
   const factor = 10 ** digits
@@ -101,7 +101,7 @@ const hasLightbox = computed(() => props.lightbox !== false)
 const hasOwnLightbox = !parentGroup && props.lightbox !== false
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
-  if (props.lightbox === true) return Lightbox
+  if (props.lightbox === true) return InternalLightbox
   return props.lightbox as Component
 })
 
@@ -146,33 +146,30 @@ function isHidden(photo: PhotoItem): boolean {
 }
 
 // Registration with parent group
-const registrationIds = new Map<PhotoItem, symbol>()
+let registrationIds: symbol[] = []
 
 if (parentGroup) {
-  watch(() => props.photos, (newPhotos, oldPhotos) => {
-    // Unregister removed photos
-    for (const photo of (oldPhotos ?? [])) {
-      const id = registrationIds.get(photo)
-      if (id) {
-        parentGroup.unregister(id)
-        registrationIds.delete(photo)
-      }
+  function refreshGroupRegistrations(photos: PhotoItem[]) {
+    for (const id of registrationIds) {
+      parentGroup.unregister(id)
     }
-    // Register new photos
-    newPhotos.forEach((photo, index) => {
-      if (!registrationIds.has(photo)) {
-        const id = Symbol()
-        registrationIds.set(photo, id)
-        parentGroup.register(id, photo, () => thumbElsMap[index] ?? null, null)
-      }
+
+    registrationIds = photos.map((photo, index) => {
+      const id = Symbol()
+      parentGroup.register(id, photo, () => thumbElsMap[index] ?? null, null)
+      return id
     })
+  }
+
+  watch(() => props.photos.slice(), (photos) => {
+    refreshGroupRegistrations(photos)
   }, { immediate: true })
 
   onBeforeUnmount(() => {
-    for (const [photo, id] of registrationIds) {
+    for (const id of registrationIds) {
       parentGroup.unregister(id)
     }
-    registrationIds.clear()
+    registrationIds = []
   })
 }
 
