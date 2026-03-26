@@ -4,6 +4,8 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false })
+
 import { ref, computed, provide, type Component, type ComponentPublicInstance } from 'vue'
 import {
   provideLightboxContexts,

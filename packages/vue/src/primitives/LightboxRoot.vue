@@ -7,6 +7,8 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false })
+
 import { LightboxControllerKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 

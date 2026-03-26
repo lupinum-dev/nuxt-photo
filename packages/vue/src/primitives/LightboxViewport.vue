@@ -1,6 +1,6 @@
 <template>
   <div
-    ref="ctx.mediaAreaRef"
+    :ref="ctx.mediaAreaRef"
     v-bind="$attrs"
     @pointerdown.capture="ctx.onMediaPointerDown"
     @pointermove.capture="ctx.onMediaPointerMove"
