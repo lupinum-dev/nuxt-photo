@@ -8,7 +8,7 @@
     <div
       v-for="group in groups"
       :key="`${group.type}-${group.index}`"
-      :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
+      :class="group.type === 'grid' ? 'np-album__grid' : group.type === 'row' ? 'np-album__row' : 'np-album__column'"
       :style="groupStyle(group)"
     >
       <div
@@ -24,12 +24,10 @@
             :adapter="adapter"
             loading="lazy"
             class="np-album__img"
-            :style="{
-              display: 'block',
-              width: '100%',
-              height: 'auto',
-              aspectRatio: `${entry.photo.width} / ${entry.photo.height}`,
-            }"
+            :style="group.type === 'grid'
+              ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
+              : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
+            "
           />
         </slot>
       </div>
@@ -44,11 +42,12 @@ import {
   computeRowsLayout,
   computeColumnsLayout,
   computeMasonryLayout,
+  computeBentoLayout,
   type PhotoItem,
   type ImageAdapter,
   type LayoutGroup,
   type LayoutEntry,
-  type RowsAlgorithm,
+  type BentoSizing,
 } from '@nuxt-photo/core'
 
 function round(value: number, digits = 0) {
@@ -58,12 +57,14 @@ function round(value: number, digits = 0) {
 
 const props = withDefaults(defineProps<{
   photos: PhotoItem[]
-  layout?: 'rows' | 'columns' | 'masonry'
+  layout?: 'rows' | 'columns' | 'masonry' | 'bento'
   columns?: number
   spacing?: number
   padding?: number
   targetRowHeight?: number
-  rowAlgorithm?: RowsAlgorithm
+  bentoRowHeight?: number
+  bentoSizing?: BentoSizing
+  bentoPatternInterval?: number
   adapter?: ImageAdapter
 }>(), {
   layout: 'rows',
@@ -71,7 +72,9 @@ const props = withDefaults(defineProps<{
   spacing: 8,
   padding: 0,
   targetRowHeight: 300,
-  rowAlgorithm: 'dijkstra',
+  bentoRowHeight: 240,
+  bentoSizing: 'auto',
+  bentoPatternInterval: 5,
 })
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -115,15 +118,20 @@ const groups = computed<LayoutGroup[]>(() => {
 
   switch (props.layout) {
     case 'rows':
-      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight, algorithm: props.rowAlgorithm })
+      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight })
     case 'columns':
       return computeColumnsLayout({ ...input, columns: props.columns })
     case 'masonry':
       return computeMasonryLayout({ ...input, columns: props.columns })
+    case 'bento':
+      return computeBentoLayout({ ...input, columns: props.columns, rowHeight: props.bentoRowHeight, sizing: props.bentoSizing, patternInterval: props.bentoPatternInterval })
   }
 })
 
 const containerStyle = computed<CSSProperties>(() => {
+  if (props.layout === 'bento') {
+    return { width: '100%' }
+  }
   return {
     display: 'flex',
     flexDirection: props.layout === 'rows' ? 'column' : 'row',
@@ -134,6 +142,16 @@ const containerStyle = computed<CSSProperties>(() => {
 })
 
 function groupStyle(group: LayoutGroup): CSSProperties {
+  if (group.type === 'grid') {
+    return {
+      display: 'grid',
+      gridTemplateColumns: `repeat(${props.columns}, 1fr)`,
+      gridAutoRows: `${props.bentoRowHeight}px`,
+      gridAutoFlow: 'dense',
+      gap: `${props.spacing}px`,
+    }
+  }
+
   if (group.type === 'row') {
     return {
       alignItems: 'flex-start',
@@ -188,6 +206,16 @@ function groupStyle(group: LayoutGroup): CSSProperties {
 }
 
 function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
+  if (group.type === 'grid') {
+    return {
+      gridColumn: (entry.colSpan ?? 1) > 1 ? `span ${entry.colSpan}` : undefined,
+      gridRow: (entry.rowSpan ?? 1) > 1 ? `span ${entry.rowSpan}` : undefined,
+      overflow: 'hidden',
+      borderRadius: '4px',
+      padding: `${props.padding}px`,
+    }
+  }
+
   if (group.type === 'row') {
     // Row items: width proportional to their share of the row
     const gaps = props.spacing * (entry.itemsCount - 1) + 2 * props.padding * entry.itemsCount

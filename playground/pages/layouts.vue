@@ -34,6 +34,26 @@
         <input type="range" :min="120" :max="500" :step="10" v-model.number="targetRowHeight" class="control-range" />
       </div>
 
+      <div v-if="layout === 'bento'" class="control-group">
+        <label class="control-label">Row height: {{ bentoRowHeight }}px</label>
+        <input type="range" :min="100" :max="400" :step="10" v-model.number="bentoRowHeight" class="control-range" />
+      </div>
+
+      <div v-if="layout === 'bento'" class="control-group">
+        <label class="control-label">Sizing</label>
+        <div class="control-tabs">
+          <button
+            v-for="s in bentoSizings"
+            :key="s"
+            class="control-tab"
+            :class="{ 'control-tab--active': bentoSizing === s }"
+            @click="bentoSizing = s"
+          >
+            {{ s }}
+          </button>
+        </div>
+      </div>
+
       <div class="control-group">
         <label class="control-label">Spacing: {{ spacing }}px</label>
         <input type="range" :min="0" :max="24" v-model.number="spacing" class="control-range" />
@@ -47,6 +67,8 @@
         :columns="columns"
         :spacing="spacing"
         :target-row-height="targetRowHeight"
+        :bento-row-height="bentoRowHeight"
+        :bento-sizing="bentoSizing"
       >
         <template #item="{ photo, index, width, height }">
           <div
@@ -67,7 +89,10 @@
               :alt="photo.alt || ''"
               loading="lazy"
               draggable="false"
-              :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '4px', aspectRatio: `${photo.width} / ${photo.height}` }"
+              :style="layout === 'bento'
+                ? { width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '4px' }
+                : { width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '4px', aspectRatio: `${photo.width} / ${photo.height}` }
+              "
             />
           </div>
         </template>
@@ -91,11 +116,14 @@ import { ref } from 'vue'
 import { useLightbox } from '@nuxt-photo/vue'
 import { photos } from '~/composables/photos'
 
-const layouts = ['rows', 'columns', 'masonry'] as const
-const layout = ref<'rows' | 'columns' | 'masonry'>('rows')
+const layouts = ['rows', 'columns', 'masonry', 'bento'] as const
+const layout = ref<'rows' | 'columns' | 'masonry' | 'bento'>('rows')
 const columns = ref(3)
 const spacing = ref(6)
 const targetRowHeight = ref(280)
+const bentoRowHeight = ref(240)
+const bentoSizings = ['auto', 'pattern', 'manual'] as const
+const bentoSizing = ref<'auto' | 'pattern' | 'manual'>('auto')
 
 const ctx = useLightbox(photos)
 

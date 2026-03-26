@@ -136,11 +136,8 @@ export type LayoutInput = {
   padding?: number
 }
 
-export type RowsAlgorithm = 'dijkstra' | 'greedy' | 'knuth-plass' | 'linear-partition'
-
 export type RowsLayoutOptions = LayoutInput & {
   targetRowHeight?: number
-  algorithm?: RowsAlgorithm
 }
 
 export type ColumnsLayoutOptions = LayoutInput & {
@@ -151,6 +148,15 @@ export type MasonryLayoutOptions = LayoutInput & {
   columns?: number
 }
 
+export type BentoSizing = 'auto' | 'pattern' | 'manual'
+
+export type BentoLayoutOptions = LayoutInput & {
+  columns?: number
+  rowHeight?: number
+  sizing?: BentoSizing
+  patternInterval?: number
+}
+
 export type LayoutEntry = {
   index: number
   photo: PhotoItem
@@ -158,10 +164,12 @@ export type LayoutEntry = {
   height: number
   positionIndex: number
   itemsCount: number
+  colSpan?: number
+  rowSpan?: number
 }
 
 export type LayoutGroup = {
-  type: 'row' | 'column'
+  type: 'row' | 'column' | 'grid'
   index: number
   entries: LayoutEntry[]
   columnsGaps?: number[]

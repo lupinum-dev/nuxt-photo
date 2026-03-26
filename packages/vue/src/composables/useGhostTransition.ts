@@ -71,8 +71,11 @@ export function useGhostTransition(
     return Math.min(0.75, Math.abs(closeDragY.value) / Math.max(240, height * 0.85))
   })
 
+  const disableBackdropTransition = ref(false)
+
   const backdropStyle = computed<CSSProperties>(() => ({
     opacity: String(overlayOpacity.value * (1 - closeDragRatio.value)),
+    ...(disableBackdropTransition.value ? { transition: 'none' } : {}),
   }))
 
   const lightboxUiStyle = computed<CSSProperties>(() => ({
@@ -128,6 +131,7 @@ export function useGhostTransition(
     ghostSrc.value = ''
     hiddenThumbIndex.value = null
     closeDragY.value = 0
+    disableBackdropTransition.value = false
     overlayOpacity.value = 0
     mediaOpacity.value = 0
     chromeOpacity.value = 0
@@ -147,18 +151,60 @@ export function useGhostTransition(
     chromeOpacity.value = 1
   }
 
-  async function doFadeOpen(photo: PhotoItem) {
-    debug?.log('transitions', 'open: using smooth FADE')
+  async function doFadeOpen(photo: PhotoItem, targetRect: RectLike | null) {
+    const fadeOpenDuration = 300
+
     animating.value = true
+    const imgSrc = photo.thumbSrc || photo.src
 
-    await animateNumber(0, 1, fadeDurationMs, (v) => {
-      overlayOpacity.value = v
-    }, easeOutCubic)
+    if (targetRect) {
+      debug?.log('transitions', `open FADE: ghost scale-in at ${targetRect.width.toFixed(0)}x${targetRect.height.toFixed(0)} @ (${targetRect.left.toFixed(0)},${targetRect.top.toFixed(0)})`)
 
-    await ensureImageLoaded(photo.src)
+      ghostSrc.value = imgSrc
+      ghostVisible.value = true
+      ghostStyle.value = {
+        position: 'fixed',
+        zIndex: '60',
+        objectFit: 'contain',
+        transformOrigin: 'center center',
+        pointerEvents: 'none',
+        willChange: 'transform, opacity',
+        borderRadius: '16px',
+        opacity: '0',
+        transform: 'scale(0.92)',
+        ...makeGhostBaseStyle(targetRect),
+      }
 
-    mediaOpacity.value = 1
-    chromeOpacity.value = 1
+      await nextFrame()
+
+      // Animate ghost scale-in + backdrop together
+      await animateNumber(0, 1, fadeOpenDuration, (t) => {
+        const s = 0.92 + 0.08 * t
+        ghostStyle.value = {
+          ...ghostStyle.value,
+          transform: `scale(${s})`,
+          opacity: String(t),
+        }
+        overlayOpacity.value = t
+      }, easeOutCubic)
+
+      // Wait for full-res image then swap
+      await ensureImageLoaded(photo.src)
+      mediaOpacity.value = 1
+      ghostVisible.value = false
+      chromeOpacity.value = 1
+    } else {
+      debug?.log('transitions', 'open FADE: no target rect, simple overlay fade')
+
+      await animateNumber(0, 1, fadeOpenDuration, (v) => {
+        overlayOpacity.value = v
+      }, easeOutCubic)
+
+      await ensureImageLoaded(photo.src)
+      mediaOpacity.value = 1
+      chromeOpacity.value = 1
+    }
+
     animating.value = false
   }
 
@@ -245,7 +291,7 @@ export function useGhostTransition(
       if (useFlip) {
         await doFlipOpen(index, photo, fromRect, toRect)
       } else {
-        await doFadeOpen(photo)
+        await doFadeOpen(photo, toRect)
       }
 
       debug?.log('transitions', 'open: complete')
@@ -266,15 +312,59 @@ export function useGhostTransition(
     overlayOpacity.value = 0
   }
 
-  async function doFadeClose() {
-    debug?.log('transitions', `close FADE: starting — overlayOpacity=${overlayOpacity.value.toFixed(2)} duration=${fadeDurationMs}ms`)
-    animating.value = true
-    mediaOpacity.value = 0
-    chromeOpacity.value = 0
+  async function doFadeClose(photo: PhotoItem, frameRect: RectLike | null) {
+    const fadeCloseDuration = 300
+    const backdropDelayRatio = 0.2
 
-    await animateNumber(overlayOpacity.value, 0, fadeDurationMs, (v) => {
-      overlayOpacity.value = v
-    }, easeOutCubic)
+    animating.value = true
+    chromeOpacity.value = 0
+    disableBackdropTransition.value = true
+
+    if (frameRect) {
+      debug?.log('transitions', `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`)
+
+      // Show ghost at exact lightbox image position, then hide real image
+      ghostSrc.value = photo.src
+      ghostVisible.value = true
+      ghostStyle.value = {
+        position: 'fixed',
+        zIndex: '60',
+        objectFit: 'contain',
+        transformOrigin: 'center center',
+        pointerEvents: 'none',
+        willChange: 'transform, opacity',
+        borderRadius: '16px',
+        opacity: '1',
+        transform: 'scale(1)',
+        ...makeGhostBaseStyle(frameRect),
+      }
+      mediaOpacity.value = 0
+
+      await nextFrame()
+
+      const overlayStart = overlayOpacity.value
+
+      // Animate ghost scale-out + staggered backdrop fade
+      await animateNumber(0, 1, fadeCloseDuration, (t) => {
+        const s = 1 - 0.12 * t
+        ghostStyle.value = {
+          ...ghostStyle.value,
+          transform: `scale(${s})`,
+          opacity: String(1 - t),
+        }
+
+        // Backdrop starts fading after a delay
+        const backdropT = Math.max(0, (t - backdropDelayRatio) / (1 - backdropDelayRatio))
+        overlayOpacity.value = overlayStart * (1 - backdropT)
+      }, easeOutCubic)
+    } else {
+      debug?.log('transitions', 'close FADE: no frame rect, simple overlay fade')
+      mediaOpacity.value = 0
+
+      await animateNumber(overlayOpacity.value, 0, fadeDurationMs, (v) => {
+        overlayOpacity.value = v
+      }, easeOutCubic)
+    }
 
     debug?.log('transitions', 'close FADE: animation complete')
   }
@@ -289,6 +379,7 @@ export function useGhostTransition(
     debug?.log('transitions', 'close FLIP: starting')
 
     animating.value = true
+    disableBackdropTransition.value = true
     hiddenThumbIndex.value = activeIndex.value
     mediaOpacity.value = 0
     chromeOpacity.value = 0
@@ -426,7 +517,7 @@ export function useGhostTransition(
       } else if (plan.mode === 'flip' && plan.fromRect && plan.toRect) {
         await doFlipClose(photo, plan.fromRect, plan.toRect as DOMRect, dragOffsetY, dragScale)
       } else {
-        await doFadeClose()
+        await doFadeClose(photo, fromRect)
       }
 
       debug?.log('transitions', 'close: complete')

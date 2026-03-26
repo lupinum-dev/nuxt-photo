@@ -1,3 +1,3 @@
-import type { LayoutInput, RowsAlgorithm, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup } from '../types'
+import type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, BentoSizing, BentoLayoutOptions, LayoutEntry, LayoutGroup } from '../types'
 
-export type { LayoutInput, RowsAlgorithm, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup }
+export type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, BentoSizing, BentoLayoutOptions, LayoutEntry, LayoutGroup }
