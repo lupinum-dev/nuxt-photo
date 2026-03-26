@@ -1,4 +1,4 @@
-import type { BentoLayoutOptions, BentoSizing, LayoutGroup, PhotoItem } from '../types'
+import type { BentoLayoutOptions, LayoutGroup, PhotoItem } from '../types'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
@@ -15,55 +15,73 @@ function getMetaSpan(photo: PhotoItem, maxCols: number): Span | undefined {
   return undefined
 }
 
-function getAspectSpan(photo: PhotoItem, maxCols: number): Span {
-  const r = ratio(photo)
-  if (r > 1.5) return { colSpan: Math.min(2, maxCols), rowSpan: 1 }
-  if (r < 0.75) return { colSpan: 1, rowSpan: 2 }
-  return { colSpan: 1, rowSpan: 1 }
+function spanForRatio(r: number, maxCols: number): Span {
+  if (r >= 1.4) return { colSpan: Math.min(2, maxCols), rowSpan: 1 }
+  if (r <= 0.85) return { colSpan: 1, rowSpan: 2 }
+  return { colSpan: Math.min(2, maxCols), rowSpan: 2 }
 }
 
 function computeAutoSpans(photos: PhotoItem[], maxCols: number): Span[] {
-  const spans: Span[] = []
-  let cooldown = 0
+  const n = photos.length
+  const spans: Span[] = new Array(n)
 
-  for (let i = 0; i < photos.length; i++) {
-    // Meta always wins
+  // 1. Apply meta overrides first
+  const metaIndices = new Set<number>()
+  for (let i = 0; i < n; i++) {
     const meta = getMetaSpan(photos[i]!, maxCols)
     if (meta) {
-      spans.push(meta)
-      cooldown = 2
-      continue
+      spans[i] = meta
+      metaIndices.add(i)
     }
+  }
 
-    // During cooldown, force 1x1 to prevent clumping
-    if (cooldown > 0) {
-      spans.push({ colSpan: 1, rowSpan: 1 })
-      cooldown--
-      continue
+  // 2. Score remaining photos by deviation from square (higher = more interesting to span)
+  const candidates: { index: number; score: number; ratio: number }[] = []
+  for (let i = 0; i < n; i++) {
+    if (metaIndices.has(i)) continue
+    const r = ratio(photos[i]!)
+    candidates.push({ index: i, score: Math.abs(Math.log(r)), ratio: r })
+  }
+
+  // Sort by score descending — most extreme aspect ratios first
+  candidates.sort((a, b) => b.score - a.score)
+
+  // 3. Target ~30% spanned (including meta), minimum 2
+  const targetSpanned = Math.max(2, Math.ceil(n * 0.3))
+  const remainingSlots = Math.max(0, targetSpanned - metaIndices.size)
+
+  // 4. Pick top candidates, spacing them out (no two consecutive)
+  const spannedIndices = new Set(metaIndices)
+  let assigned = 0
+  for (const cand of candidates) {
+    if (assigned >= remainingSlots) break
+    // Ensure no adjacent spanned item
+    if (spannedIndices.has(cand.index - 1) || spannedIndices.has(cand.index + 1)) continue
+    spans[cand.index] = spanForRatio(cand.ratio, maxCols)
+    spannedIndices.add(cand.index)
+    assigned++
+  }
+
+  // If we still need more (couldn't space them out), relax the adjacency constraint
+  if (assigned < remainingSlots) {
+    for (const cand of candidates) {
+      if (assigned >= remainingSlots) break
+      if (spannedIndices.has(cand.index)) continue
+      spans[cand.index] = spanForRatio(cand.ratio, maxCols)
+      spannedIndices.add(cand.index)
+      assigned++
     }
+  }
 
-    // Try aspect ratio
-    const aspect = getAspectSpan(photos[i]!, maxCols)
-    if (aspect.colSpan > 1 || aspect.rowSpan > 1) {
-      spans.push(aspect)
-      cooldown = 2
-      continue
-    }
-
-    // Fallback: every ~5th unspanned photo gets a 2x2 hero
-    const spannedCount = spans.filter(s => s.colSpan > 1 || s.rowSpan > 1).length
-    const idealCount = Math.floor((i + 1) / 5)
-    if (spannedCount < idealCount && i > 0) {
-      spans.push({ colSpan: Math.min(2, maxCols), rowSpan: 2 })
-      cooldown = 2
-      continue
-    }
-
-    spans.push({ colSpan: 1, rowSpan: 1 })
+  // 5. Fill remaining with 1x1
+  for (let i = 0; i < n; i++) {
+    if (!spans[i]) spans[i] = { colSpan: 1, rowSpan: 1 }
   }
 
   return spans
 }
+
+const PATTERN_CYCLE: Array<'wide' | '2x2' | 'tall'> = ['wide', '2x2', 'tall', '2x2']
 
 export function computeBentoLayout(options: BentoLayoutOptions): LayoutGroup[] {
   const {
@@ -71,8 +89,8 @@ export function computeBentoLayout(options: BentoLayoutOptions): LayoutGroup[] {
     containerWidth,
     spacing = 8,
     padding = 0,
-    columns = 4,
-    rowHeight = 240,
+    columns = 3,
+    rowHeight = 280,
     sizing = 'auto',
     patternInterval = 5,
   } = options
@@ -87,14 +105,22 @@ export function computeBentoLayout(options: BentoLayoutOptions): LayoutGroup[] {
     case 'auto':
       spans = computeAutoSpans(photos, columns)
       break
-    case 'pattern':
+    case 'pattern': {
+      let cycleIndex = 0
       spans = photos.map((photo, index) => {
         const meta = getMetaSpan(photo, columns)
         if (meta) return meta
-        if (index % patternInterval === 0) return { colSpan: Math.min(2, columns), rowSpan: 2 }
+        if (index % patternInterval === 0) {
+          const type = PATTERN_CYCLE[cycleIndex % PATTERN_CYCLE.length]!
+          cycleIndex++
+          if (type === 'wide') return { colSpan: Math.min(2, columns), rowSpan: 1 }
+          if (type === 'tall') return { colSpan: 1, rowSpan: 2 }
+          return { colSpan: Math.min(2, columns), rowSpan: 2 }
+        }
         return { colSpan: 1, rowSpan: 1 }
       })
       break
+    }
     case 'manual':
       spans = photos.map(photo => getMetaSpan(photo, columns) ?? { colSpan: 1, rowSpan: 1 })
       break

@@ -72,7 +72,7 @@ const props = withDefaults(defineProps<{
   spacing: 8,
   padding: 0,
   targetRowHeight: 300,
-  bentoRowHeight: 240,
+  bentoRowHeight: 280,
   bentoSizing: 'auto',
   bentoPatternInterval: 5,
 })

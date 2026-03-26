@@ -10,6 +10,7 @@ export const photos: PhotoItem[] = [
     alt: 'Desert landscape at golden hour',
     caption: 'Desert Light',
     description: 'Golden hour over sand dunes with long shadows stretching across the landscape.',
+    meta: { span: 'wide' },
   },
   {
     id: 2,
@@ -50,6 +51,7 @@ export const photos: PhotoItem[] = [
     alt: 'Mountain peak framed by trees',
     caption: 'Alpine Frame',
     description: 'A snow-capped peak framed perfectly by towering pines.',
+    meta: { span: 'tall' },
   },
   {
     id: 6,
@@ -70,6 +72,7 @@ export const photos: PhotoItem[] = [
     alt: 'Lavender field under cloudy sky',
     caption: 'Lavender Dreams',
     description: 'Endless rows of lavender stretching toward a dramatic sky.',
+    meta: { featured: true },
   },
   {
     id: 8,
@@ -100,6 +103,7 @@ export const photos: PhotoItem[] = [
     alt: 'Autumn leaves close-up',
     caption: 'Amber Detail',
     description: 'Macro shot of autumn leaves with rich amber and crimson tones.',
+    meta: { span: '2x2' },
   },
   {
     id: 11,

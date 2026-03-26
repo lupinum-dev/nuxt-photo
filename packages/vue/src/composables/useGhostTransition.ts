@@ -323,7 +323,7 @@ export function useGhostTransition(
     if (frameRect) {
       debug?.log('transitions', `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`)
 
-      // Show ghost at exact lightbox image position, then hide real image
+      // Show ghost at exact lightbox image position, let it render, THEN hide real image
       ghostSrc.value = photo.src
       ghostVisible.value = true
       ghostStyle.value = {
@@ -338,8 +338,9 @@ export function useGhostTransition(
         transform: 'scale(1)',
         ...makeGhostBaseStyle(frameRect),
       }
-      mediaOpacity.value = 0
 
+      await nextFrame()
+      mediaOpacity.value = 0
       await nextFrame()
 
       const overlayStart = overlayOpacity.value
@@ -381,12 +382,11 @@ export function useGhostTransition(
     animating.value = true
     disableBackdropTransition.value = true
     hiddenThumbIndex.value = activeIndex.value
-    mediaOpacity.value = 0
     chromeOpacity.value = 0
 
-    const thumbSrc = photo.thumbSrc || photo.src
-    ghostSrc.value = thumbSrc
-    debug?.log('transitions', `close FLIP: ghostSrc=${thumbSrc}`)
+    // Use full-res src (already loaded & cached) to avoid any loading flash
+    ghostSrc.value = photo.src
+    debug?.log('transitions', `close FLIP: ghostSrc=${photo.src}`)
 
     // Adjust fromRect to match the visual position if there was a drag offset
     const adjustedFromRect: RectLike = (dragOffsetY !== 0 || dragScale !== 1)
@@ -406,6 +406,7 @@ export function useGhostTransition(
     debug?.log('transitions', `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`)
     debug?.log('transitions', `close FLIP: initial transform: ${initialTransform}`)
 
+    // Show ghost and let it render BEFORE hiding the real image to avoid black flash
     ghostVisible.value = true
     ghostStyle.value = {
       position: 'fixed',
@@ -425,6 +426,10 @@ export function useGhostTransition(
     debug?.log('transitions', 'close FLIP: ghost visible, waiting for next frame')
     await nextFrame()
 
+    // Hide real image only after ghost has rendered
+    mediaOpacity.value = 0
+    await nextFrame()
+
     debug?.log('transitions', 'close FLIP: animating to identity (thumbnail position)')
     overlayOpacity.value = 0
     ghostStyle.value = {
@@ -435,6 +440,17 @@ export function useGhostTransition(
     }
 
     await wait(closeDurationMs)
+
+    // Cross-fade: unhide thumbnail and fade ghost out so thumbnails with CSS
+    // opacity transitions don't flash black when the ghost is removed instantly
+    hiddenThumbIndex.value = null
+    ghostStyle.value = {
+      ...ghostStyle.value,
+      transition: 'opacity 180ms ease',
+      opacity: '0',
+    }
+    await wait(180)
+
     debug?.log('transitions', `close FLIP: animation complete (${closeDurationMs}ms)`)
   }
 

@@ -121,7 +121,7 @@ const layout = ref<'rows' | 'columns' | 'masonry' | 'bento'>('rows')
 const columns = ref(3)
 const spacing = ref(6)
 const targetRowHeight = ref(280)
-const bentoRowHeight = ref(240)
+const bentoRowHeight = ref(280)
 const bentoSizings = ['auto', 'pattern', 'manual'] as const
 const bentoSizing = ref<'auto' | 'pattern' | 'manual'>('auto')
 
