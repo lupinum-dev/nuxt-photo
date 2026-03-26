@@ -1,1 +1,1 @@
-export { LightboxContextKey, type LightboxContext } from './keys'
+export { LightboxContextKey, type LightboxContext, ImageAdapterKey } from './keys'

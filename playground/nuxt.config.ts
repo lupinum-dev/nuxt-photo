@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt', 'nuxt-shiki'],
+  modules: ['@nuxt-photo/nuxt', '@nuxt/image', 'nuxt-shiki'],
 
   photo: {
     css: 'default',

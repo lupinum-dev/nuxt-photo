@@ -13,8 +13,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { createNativeImageAdapter, type PhotoItem, type ImageAdapter, type ImageContext } from '@nuxt-photo/core'
+import { ImageAdapterKey } from '../provide/keys'
 
 const props = withDefaults(defineProps<{
   photo: PhotoItem
@@ -26,7 +27,11 @@ const props = withDefaults(defineProps<{
   loading: 'lazy',
 })
 
-const resolveImage = computed(() => props.adapter ?? createNativeImageAdapter())
+const injectedAdapter = inject(ImageAdapterKey, null)
+
+const resolveImage = computed((): ImageAdapter =>
+  props.adapter ?? injectedAdapter ?? createNativeImageAdapter()
+)
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))
 </script>

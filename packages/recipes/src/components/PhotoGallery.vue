@@ -25,11 +25,10 @@
           @keydown.space.prevent="ctx.open(index)"
         >
           <slot name="thumbnail" :photo="photo" :index="index" :width="width" :height="height">
-            <img
-              :src="photo.thumbSrc || photo.src"
-              :alt="photo.alt || ''"
+            <PhotoImage
+              :photo="photo"
+              context="thumb"
               loading="lazy"
-              draggable="false"
               :style="{ width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '12px', aspectRatio: `${photo.width} / ${photo.height}` }"
             />
           </slot>
@@ -52,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLightbox } from '@nuxt-photo/vue'
+import { useLightbox, PhotoImage } from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
 import PhotoAlbum from './PhotoAlbum.vue'
 import Lightbox from './Lightbox.vue'

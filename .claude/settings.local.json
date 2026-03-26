@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ls -la /Users/matthias/Git/0_libs/nuxt-photo/*.md /Users/matthias/Git/0_libs/nuxt-photo/LICENSE*)",
+      "Bash(for pkg:*)",
+      "Bash(do echo:*)",
+      "Read(//Users/matthias/Git/0_libs/nuxt-photo/packages/**)",
+      "Bash(done)",
+      "Bash(pnpm test:unit --reporter=verbose)"
     ]
   }
 }

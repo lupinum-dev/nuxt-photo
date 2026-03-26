@@ -66,12 +66,11 @@
                     <div class="np-lightbox__frame" :style="ctx.getSlideFrameStyle(photo)">
                       <div class="np-lightbox__zoom" :ref="ctx.setSlideZoomRef(i)">
                         <slot name="slide" :photo="photo" :index="i">
-                          <img
+                          <PhotoImage
                             class="np-lightbox__img"
-                            :src="photo.src"
-                            :alt="photo.alt || ''"
+                            :photo="photo"
+                            context="slide"
                             loading="lazy"
-                            draggable="false"
                           />
                         </slot>
                       </div>
@@ -107,6 +106,7 @@
 
 <script setup lang="ts">
 import type { LightboxContext } from '@nuxt-photo/vue'
+import { PhotoImage } from '@nuxt-photo/vue'
 
 const props = defineProps<{
   ctx: LightboxContext

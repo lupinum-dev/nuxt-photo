@@ -1,4 +1,4 @@
-import { defineNuxtModule, addComponent, addImports, createResolver } from '@nuxt/kit'
+import { defineNuxtModule, addComponent, addImports, addPlugin, createResolver, hasNuxtModule } from '@nuxt/kit'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean
@@ -19,11 +19,25 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     components: true,
     css: 'default',
     image: {
-      provider: 'native',
+      provider: undefined,
     },
   },
   setup(options, _nuxt) {
     const resolver = createResolver(import.meta.url)
+
+    // Auto-detect @nuxt/image or respect explicit provider config
+    const useNuxtImage =
+      options.image?.provider === 'nuxt-image' ||
+      (options.image?.provider !== 'native' && hasNuxtModule('@nuxt/image'))
+
+    if (useNuxtImage) {
+      addPlugin(resolver.resolve('./runtime/plugin'))
+      if (options.autoImports) {
+        addImports([
+          { name: 'createNuxtImageAdapter', from: resolver.resolve('./runtime/nuxtImageAdapter') },
+        ])
+      }
+    }
 
     // Register recipe components
     if (options.components !== false) {
