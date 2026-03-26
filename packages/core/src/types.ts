@@ -111,6 +111,22 @@ export type OpenTransitionPlan = {
     | 'reduced-motion'
 }
 
+export type CloseTransitionPlan = {
+  mode: 'flip' | 'fade' | 'instant'
+  fromRect?: RectLike
+  toRect?: RectLike
+  durationMs: number
+  reason:
+    | 'ok'
+    | 'missing-thumb-ref'
+    | 'thumb-off-screen'
+    | 'missing-frame-rect'
+    | 'mode-forced-fade'
+    | 'mode-forced-none'
+    | 'visibility-below-threshold'
+    | 'scrolled-into-view'
+}
+
 // ─── Layout ───
 
 export type LayoutInput = {
@@ -120,8 +136,11 @@ export type LayoutInput = {
   padding?: number
 }
 
+export type RowsAlgorithm = 'dijkstra' | 'greedy' | 'knuth-plass' | 'linear-partition'
+
 export type RowsLayoutOptions = LayoutInput & {
   targetRowHeight?: number
+  algorithm?: RowsAlgorithm
 }
 
 export type ColumnsLayoutOptions = LayoutInput & {

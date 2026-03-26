@@ -9,11 +9,13 @@ import {
   animateNumber,
   easeOutCubic,
   shouldUseFlip,
+  planCloseTransition,
   type AreaMetrics,
   type PanState,
   type PhotoItem,
   type DebugLogger,
   type TransitionModeConfig,
+  type RectLike,
 } from '@nuxt-photo/core'
 
 const openDurationMs = 420
@@ -99,7 +101,29 @@ export function useGhostTransition(
     animating.value = false
   }
 
+  let animationGuardId: ReturnType<typeof setTimeout> | null = null
+  const MAX_ANIMATION_MS = 2000
+
+  function startAnimationGuard() {
+    clearAnimationGuard()
+    animationGuardId = setTimeout(() => {
+      if (animating.value) {
+        debug?.warn('transitions', `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`)
+        resetCloseState()
+      }
+    }, MAX_ANIMATION_MS)
+  }
+
+  function clearAnimationGuard() {
+    if (animationGuardId) {
+      clearTimeout(animationGuardId)
+      animationGuardId = null
+    }
+  }
+
   function resetCloseState() {
+    debug?.log('transitions', 'resetCloseState: unmounting lightbox')
+    clearAnimationGuard()
     ghostVisible.value = false
     ghostSrc.value = ''
     hiddenThumbIndex.value = null
@@ -243,7 +267,7 @@ export function useGhostTransition(
   }
 
   async function doFadeClose() {
-    debug?.log('transitions', 'close: using smooth FADE')
+    debug?.log('transitions', `close FADE: starting — overlayOpacity=${overlayOpacity.value.toFixed(2)} duration=${fadeDurationMs}ms`)
     animating.value = true
     mediaOpacity.value = 0
     chromeOpacity.value = 0
@@ -251,10 +275,18 @@ export function useGhostTransition(
     await animateNumber(overlayOpacity.value, 0, fadeDurationMs, (v) => {
       overlayOpacity.value = v
     }, easeOutCubic)
+
+    debug?.log('transitions', 'close FADE: animation complete')
   }
 
-  async function doFlipClose(photo: PhotoItem, fromRect: { left: number; top: number; width: number; height: number }, toRect: DOMRect) {
-    debug?.log('transitions', 'close: using FLIP animation')
+  async function doFlipClose(
+    photo: PhotoItem,
+    fromRect: RectLike,
+    toRect: DOMRect,
+    dragOffsetY: number,
+    dragScale: number,
+  ) {
+    debug?.log('transitions', 'close FLIP: starting')
 
     animating.value = true
     hiddenThumbIndex.value = activeIndex.value
@@ -263,6 +295,26 @@ export function useGhostTransition(
 
     const thumbSrc = photo.thumbSrc || photo.src
     ghostSrc.value = thumbSrc
+    debug?.log('transitions', `close FLIP: ghostSrc=${thumbSrc}`)
+
+    // Adjust fromRect to match the visual position if there was a drag offset
+    const adjustedFromRect: RectLike = (dragOffsetY !== 0 || dragScale !== 1)
+      ? {
+          left: fromRect.left + (fromRect.width * (1 - dragScale)) / 2,
+          top: fromRect.top + dragOffsetY + (fromRect.height * (1 - dragScale)) / 2,
+          width: fromRect.width * dragScale,
+          height: fromRect.height * dragScale,
+        }
+      : fromRect
+
+    if (dragOffsetY !== 0 || dragScale !== 1) {
+      debug?.log('transitions', `close FLIP: drag-adjusted fromRect — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`, adjustedFromRect)
+    }
+
+    const initialTransform = flipTransform(adjustedFromRect, toRect)
+    debug?.log('transitions', `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`)
+    debug?.log('transitions', `close FLIP: initial transform: ${initialTransform}`)
+
     ghostVisible.value = true
     ghostStyle.value = {
       position: 'fixed',
@@ -276,11 +328,13 @@ export function useGhostTransition(
       transition:
         `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       ...makeGhostBaseStyle(toRect),
-      transform: flipTransform(fromRect, toRect),
+      transform: initialTransform,
     }
 
+    debug?.log('transitions', 'close FLIP: ghost visible, waiting for next frame')
     await nextFrame()
 
+    debug?.log('transitions', 'close FLIP: animating to identity (thumbnail position)')
     overlayOpacity.value = 0
     ghostStyle.value = {
       ...ghostStyle.value,
@@ -290,56 +344,98 @@ export function useGhostTransition(
     }
 
     await wait(closeDurationMs)
+    debug?.log('transitions', `close FLIP: animation complete (${closeDurationMs}ms)`)
   }
 
   async function close(callbacks: CloseCallbacks) {
-    if (!lightboxMounted.value || animating.value) return
+    if (!lightboxMounted.value || animating.value) {
+      debug?.warn('transitions', `close: BLOCKED — lightboxMounted=${lightboxMounted.value} animating=${animating.value}`)
+      return
+    }
 
     debug?.group('transitions', `close(activeIndex=${activeIndex.value})`)
+    debug?.log('transitions', `close: pre-state — isZoomedIn=${callbacks.isZoomedIn.value} closeDragY=${closeDragY.value.toFixed(1)} ghostVisible=${ghostVisible.value} mediaOpacity=${mediaOpacity.value.toFixed(2)}`)
+
+    startAnimationGuard()
 
     callbacks.cancelTapTimer()
     callbacks.resetGestureState()
 
-    if (callbacks.isZoomedIn.value || closeDragY.value) {
-      debug?.log('transitions', 'close: resetting zoom/drag before close')
-      callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
-      closeDragY.value = 0
-      await nextFrame()
+    // Capture drag state BEFORE resetting so we can position the ghost correctly
+    const dragOffsetY = closeDragY.value
+    const dragScale = 1 - closeDragRatio.value * 0.05
+    if (dragOffsetY !== 0) {
+      debug?.log('transitions', `close: captured drag state — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`)
     }
+
+    if (callbacks.isZoomedIn.value) {
+      debug?.log('transitions', 'close: resetting zoom')
+      callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
+    }
+    // Reset drag AFTER capturing
+    closeDragY.value = 0
+    await nextFrame()
 
     callbacks.syncGeometry()
 
     const photo = currentPhoto.value
 
     try {
-      if (isNoneMode()) {
-        await doInstantClose()
-        debug?.log('transitions', 'close: complete')
-        debug?.groupEnd('transitions')
-        resetCloseState()
-        return
+      const fromRect = getAbsoluteFrameRect(photo)
+      debug?.log('transitions', 'close: fromRect (lightbox frame)',
+        fromRect ? `${fromRect.width.toFixed(0)}x${fromRect.height.toFixed(0)} @ (${fromRect.left.toFixed(0)},${fromRect.top.toFixed(0)})` : 'NULL')
+
+      const thumbEl = thumbRefs.get(activeIndex.value)
+      debug?.log('transitions', `close: thumbRef lookup index=${activeIndex.value} found=${!!thumbEl} registeredRefs=[${[...thumbRefs.keys()].join(',')}]`)
+
+      const toRect = thumbEl?.getBoundingClientRect() ?? null
+      debug?.log('transitions', 'close: toRect (thumbnail)',
+        toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})` : 'NULL')
+
+      // Build a transition plan
+      let plan = planCloseTransition({
+        fromRect,
+        toRect,
+        thumbRefExists: !!thumbEl,
+        config: transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 },
+        debug,
+      })
+
+      debug?.log('transitions', `close: plan=${plan.mode} reason=${plan.reason}`)
+
+      // Scroll-into-view recovery for off-screen thumbnails
+      if (plan.reason === 'thumb-off-screen' && thumbEl) {
+        debug?.log('transitions', 'close: thumbnail off-screen, attempting scrollIntoView recovery')
+        thumbEl.scrollIntoView({ behavior: 'instant', block: 'nearest' })
+        await nextFrame()
+
+        const retriedRect = thumbEl.getBoundingClientRect()
+        debug?.log('transitions', 'close: retried toRect after scroll',
+          `${retriedRect.width.toFixed(0)}x${retriedRect.height.toFixed(0)} @ (${retriedRect.left.toFixed(0)},${retriedRect.top.toFixed(0)})`)
+
+        if (isUsableRect(retriedRect) && shouldUseFlip(retriedRect, transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 }, debug)) {
+          debug?.log('transitions', 'close: scroll recovery succeeded → upgrading to FLIP')
+          plan = { mode: 'flip', durationMs: closeDurationMs, fromRect: fromRect!, toRect: retriedRect as unknown as DOMRect, reason: 'scrolled-into-view' }
+        } else {
+          debug?.log('transitions', 'close: scroll recovery failed → staying with FADE')
+        }
       }
 
-      const fromRect = getAbsoluteFrameRect(photo)
-      const toRect = thumbRefs.get(activeIndex.value)?.getBoundingClientRect() ?? null
-
-      const useFlip = fromRect && toRect && isUsableRect(toRect)
-        && (!transitionConfig || shouldUseFlip(toRect, transitionConfig, debug))
-
-      if (useFlip) {
-        await doFlipClose(photo, fromRect, toRect)
+      if (plan.mode === 'instant') {
+        await doInstantClose()
+      } else if (plan.mode === 'flip' && plan.fromRect && plan.toRect) {
+        await doFlipClose(photo, plan.fromRect, plan.toRect as DOMRect, dragOffsetY, dragScale)
       } else {
         await doFadeClose()
       }
 
       debug?.log('transitions', 'close: complete')
-      debug?.groupEnd('transitions')
     } catch (err) {
       debug?.warn('transitions', 'close: error, forcing recovery', err)
+    } finally {
       debug?.groupEnd('transitions')
+      resetCloseState()
     }
-
-    resetCloseState()
   }
 
   async function animateCloseDragTo(target: number, duration = 220) {
@@ -356,6 +452,7 @@ export function useGhostTransition(
 
     if (Math.abs(deltaY) > threshold || Math.abs(velocityY) > 0.55) {
       debug?.log('gestures', 'closeGesture: threshold exceeded → closing')
+      debug?.log('transitions', `close: triggered by drag gesture — deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)}`)
       await closeFn()
       return
     }

@@ -6,6 +6,7 @@ export type DebugLogger = {
   flags: DebugFlags
   log: (channel: DebugChannel, ...args: unknown[]) => void
   warn: (channel: DebugChannel, ...args: unknown[]) => void
+  table: (channel: DebugChannel, data: Record<string, unknown>) => void
   group: (channel: DebugChannel, label: string) => void
   groupEnd: (channel: DebugChannel) => void
 }
@@ -54,6 +55,13 @@ export function createDebug(): DebugLogger {
     console.warn(fmt, style, ...args)
   }
 
+  function table(channel: DebugChannel, data: Record<string, unknown>) {
+    if (!isEnabled(channel)) return
+    const [fmt, style] = prefix(channel)
+    console.log(fmt, style)
+    console.table(data)
+  }
+
   function group(channel: DebugChannel, label: string) {
     if (!isEnabled(channel)) return
     const [fmt, style] = prefix(channel)
@@ -65,5 +73,5 @@ export function createDebug(): DebugLogger {
     console.groupEnd()
   }
 
-  return { flags, log, warn, group, groupEnd }
+  return { flags, log, warn, table, group, groupEnd }
 }

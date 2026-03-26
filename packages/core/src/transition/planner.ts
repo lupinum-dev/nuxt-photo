@@ -1,5 +1,6 @@
-import type { TransitionMode } from '../types'
+import type { TransitionMode, CloseTransitionPlan, RectLike } from '../types'
 import type { DebugLogger } from '../debug/logger'
+import { isUsableRect } from '../geometry/rect'
 
 export type TransitionModeConfig = {
   mode: TransitionMode
@@ -76,4 +77,51 @@ export function shouldUseFlip(
   )
 
   return useFlip
+}
+
+const CLOSE_FLIP_DURATION_MS = 380
+const CLOSE_FADE_DURATION_MS = 200
+
+export function planCloseTransition(opts: {
+  fromRect: RectLike | null
+  toRect: DOMRect | null
+  thumbRefExists: boolean
+  config: TransitionModeConfig
+  debug?: DebugLogger
+}): CloseTransitionPlan {
+  const { fromRect, toRect, thumbRefExists, config, debug } = opts
+
+  if (config.mode === 'none') {
+    debug?.log('transitions', 'planClose: mode=none → INSTANT')
+    return { mode: 'instant', durationMs: 0, reason: 'mode-forced-none' }
+  }
+
+  if (config.mode === 'fade') {
+    debug?.log('transitions', 'planClose: mode=fade → FADE')
+    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'mode-forced-fade' }
+  }
+
+  if (!fromRect) {
+    debug?.log('transitions', 'planClose: no fromRect (lightbox frame) → FADE')
+    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-frame-rect' }
+  }
+
+  if (!thumbRefExists) {
+    debug?.log('transitions', 'planClose: no thumb ref registered → FADE')
+    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-thumb-ref' }
+  }
+
+  if (!toRect || !isUsableRect(toRect)) {
+    debug?.log('transitions', `planClose: thumb rect unusable (${toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} at ${toRect.left.toFixed(0)},${toRect.top.toFixed(0)}` : 'null'}) → FADE`)
+    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'thumb-off-screen', fromRect }
+  }
+
+  if (config.mode === 'auto') {
+    if (!shouldUseFlip(toRect, config, debug)) {
+      return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'visibility-below-threshold', fromRect }
+    }
+  }
+
+  debug?.log('transitions', 'planClose: all checks passed → FLIP')
+  return { mode: 'flip', durationMs: CLOSE_FLIP_DURATION_MS, fromRect, toRect, reason: 'ok' }
 }

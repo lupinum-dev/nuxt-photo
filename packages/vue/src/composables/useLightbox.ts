@@ -19,6 +19,11 @@ export function useLightbox(photos: PhotoItem[]) {
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
 
+  // Expose debug to browser console for runtime toggling
+  if (typeof window !== 'undefined') {
+    ;(window as any).__NUXT_PHOTO_DEBUG__ = debug.flags
+  }
+
   const carouselConfig: CarouselConfig = {
     style: 'classic',
     parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },

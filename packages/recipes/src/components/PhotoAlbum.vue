@@ -48,6 +48,7 @@ import {
   type ImageAdapter,
   type LayoutGroup,
   type LayoutEntry,
+  type RowsAlgorithm,
 } from '@nuxt-photo/core'
 
 function round(value: number, digits = 0) {
@@ -62,6 +63,7 @@ const props = withDefaults(defineProps<{
   spacing?: number
   padding?: number
   targetRowHeight?: number
+  rowAlgorithm?: RowsAlgorithm
   adapter?: ImageAdapter
 }>(), {
   layout: 'rows',
@@ -69,6 +71,7 @@ const props = withDefaults(defineProps<{
   spacing: 8,
   padding: 0,
   targetRowHeight: 300,
+  rowAlgorithm: 'dijkstra',
 })
 
 const containerRef = ref<HTMLElement | null>(null)
@@ -112,7 +115,7 @@ const groups = computed<LayoutGroup[]>(() => {
 
   switch (props.layout) {
     case 'rows':
-      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight })
+      return computeRowsLayout({ ...input, targetRowHeight: props.targetRowHeight, algorithm: props.rowAlgorithm })
     case 'columns':
       return computeColumnsLayout({ ...input, columns: props.columns })
     case 'masonry':
