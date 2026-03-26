@@ -1,9 +1,7 @@
 <template>
-  <Teleport to="body">
-    <div v-if="ctx.lightboxMounted.value" v-bind="$attrs">
-      <slot />
-    </div>
-  </Teleport>
+  <div v-bind="$attrs">
+    <slot :photo="ctx.currentPhoto.value" :active-index="ctx.activeIndex.value" />
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -24,18 +24,18 @@
           </slot>
 
           <div class="np-lightbox__actions">
-            <slot name="actions" :prev="ctx.prev" :next="ctx.next" :close="ctx.close" :toggle-zoom="ctx.toggleZoom" :is-zoomed-in="ctx.isZoomedIn.value" :zoom-allowed="ctx.zoomAllowed.value" :controls-disabled="ctx.controlsDisabled.value">
-              <button class="np-lightbox__btn" aria-label="Previous" @click="ctx.prev" :disabled="ctx.controlsDisabled.value">&#8592;</button>
-              <button class="np-lightbox__btn" aria-label="Next" @click="ctx.next" :disabled="ctx.controlsDisabled.value">&#8594;</button>
+            <slot name="actions" :prev="ctx.prev" :next="ctx.next" :close="ctx.close" :toggle-zoom="ctx.toggleZoom" :is-zoomed-in="ctx.isZoomedIn.value" :zoom-allowed="ctx.zoomAllowed.value" :controls-disabled="ctx.transitionInProgress.value">
+              <button class="np-lightbox__btn" aria-label="Previous" :disabled="ctx.transitionInProgress.value" @click="ctx.prev">&#8592;</button>
+              <button class="np-lightbox__btn" aria-label="Next" :disabled="ctx.transitionInProgress.value" @click="ctx.next">&#8594;</button>
               <button
                 class="np-lightbox__btn"
                 :aria-label="ctx.isZoomedIn.value ? 'Fit' : 'Zoom'"
+                :disabled="ctx.transitionInProgress.value || !ctx.zoomAllowed.value"
                 @click="ctx.toggleZoom()"
-                :disabled="ctx.controlsDisabled.value || !ctx.zoomAllowed.value"
               >
                 {{ ctx.isZoomedIn.value ? 'Fit' : 'Zoom' }}
               </button>
-              <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" @click="ctx.close" :disabled="ctx.controlsDisabled.value">&#10005;</button>
+              <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" :disabled="ctx.transitionInProgress.value" @click="ctx.close">&#10005;</button>
             </slot>
           </div>
         </div>
@@ -105,12 +105,8 @@
 </template>
 
 <script setup lang="ts">
-import type { LightboxContext } from '@nuxt-photo/vue'
-import { PhotoImage } from '@nuxt-photo/vue'
+import { inject } from 'vue'
+import { LightboxContextKey, PhotoImage } from '@nuxt-photo/vue'
 
-const props = defineProps<{
-  ctx: LightboxContext
-}>()
-
-const ctx = props.ctx
+const ctx = inject(LightboxContextKey)!
 </script>

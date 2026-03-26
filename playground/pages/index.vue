@@ -11,7 +11,7 @@
     </header>
 
     <div class="gallery-section">
-      <PhotoGallery
+      <PhotoAlbum
         :photos="photos"
         layout="rows"
         :target-row-height="280"
@@ -41,7 +41,8 @@ import { photos } from '~/composables/photos'
 
 useHead({ title: 'Gallery — nuxt-photo' })
 
-const galleryCode = `<PhotoGallery
+const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
+<PhotoAlbum
   :photos="photos"
   layout="rows"
   :target-row-height="280"

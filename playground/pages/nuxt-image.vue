@@ -12,13 +12,26 @@
 
     <!-- Section 1: Full album (one-liner) -->
     <section class="section">
-      <h2 class="section__title">Full album</h2>
+      <h2 class="section__title">Layer 0 — Single photo</h2>
       <p class="section__desc">
-        <code>&lt;PhotoGallery&gt;</code> works out of the box. Every thumbnail and lightbox
-        slide is served through <code>@nuxt/image</code>'s provider.
+        One component, one prop. <code>&lt;Photo :photo="hero" lightbox /&gt;</code>
+        creates its own solo lightbox when clicked.
+      </p>
+      <div class="single-wrap">
+        <Photo :photo="hero" lightbox class="single-photo" />
+      </div>
+      <CodeExample :code="singleCode" title="Template" />
+    </section>
+
+    <!-- Section 2: Album -->
+    <section class="section">
+      <h2 class="section__title">Layer 1 — Album with lightbox</h2>
+      <p class="section__desc">
+        <code>&lt;PhotoAlbum&gt;</code> handles layout + lightbox. Every thumbnail and slide is
+        served through <code>@nuxt/image</code>'s provider automatically.
       </p>
       <div class="gallery-wrap">
-        <PhotoGallery
+        <PhotoAlbum
           :photos="photos"
           layout="rows"
           :target-row-height="260"
@@ -28,63 +41,42 @@
       <CodeExample :code="albumCode" title="Template" />
     </section>
 
-    <!-- Section 2: Custom grid with manual lightbox -->
+    <!-- Section 3: Custom thumbnail via slot -->
     <section class="section">
-      <h2 class="section__title">Custom grid + lightbox</h2>
+      <h2 class="section__title">Layer 2 — Custom thumbnail</h2>
       <p class="section__desc">
-        Use <code>PhotoImage</code> with <code>context="thumb"</code> in your own layout.
-        The <code>Lightbox</code> recipe handles slide images automatically.
+        Override just the thumbnail via <code>#thumbnail</code> slot.
+        Click handling, ref registration, and opacity during transitions are automatic.
       </p>
-      <div class="custom-grid">
-        <div
-          v-for="(photo, index) in gridPhotos"
-          :key="photo.id"
-          :ref="gridCtx.setThumbRef(index)"
-          class="custom-grid__item"
-          :style="{ opacity: gridCtx.hiddenThumbIndex.value === index ? 0 : 1 }"
-          role="button"
-          tabindex="0"
-          @click="gridCtx.open(index)"
-          @keydown.enter="gridCtx.open(index)"
-        >
-          <PhotoImage
-            :photo="photo"
-            context="thumb"
-            class="custom-grid__img"
-          />
-        </div>
+      <div class="gallery-wrap">
+        <PhotoAlbum :photos="photos.slice(0, 6)" layout="columns" :columns="3" :spacing="6">
+          <template #thumbnail="{ photo, width, height }">
+            <div class="custom-thumb">
+              <PhotoImage :photo="photo" context="thumb" class="custom-thumb__img" />
+              <div class="custom-thumb__overlay">
+                <span class="custom-thumb__caption">{{ photo.caption }}</span>
+              </div>
+            </div>
+          </template>
+        </PhotoAlbum>
       </div>
-      <Lightbox :ctx="gridCtx" />
-      <CodeExample :code="gridCode" title="Template" />
+      <CodeExample :code="slotCode" title="Template" />
     </section>
 
-    <!-- Section 3: Single photo -->
+    <!-- Section 4: Shared lightbox across two albums -->
     <section class="section">
-      <h2 class="section__title">Single photo</h2>
+      <h2 class="section__title">Layer 3 — Shared lightbox</h2>
       <p class="section__desc">
-        Use <code>PhotoImage</code> as a thumbnail that opens a lightbox. The same
-        component handles thumbnail optimization and lightbox display.
+        Wrap two <code>PhotoAlbum</code> components in <code>PhotoGroup</code>
+        to share one lightbox with navigation across both.
       </p>
-      <div class="single-wrap">
-        <div
-          :ref="singleCtx.setThumbRef(0)"
-          class="single-trigger"
-          :style="{ opacity: singleCtx.hiddenThumbIndex.value === 0 ? 0 : 1 }"
-          role="button"
-          tabindex="0"
-          @click="singleCtx.open(0)"
-          @keydown.enter="singleCtx.open(0)"
-        >
-          <PhotoImage
-            :photo="hero"
-            context="thumb"
-            class="single-img"
-          />
-          <div class="single-hint">Click to open</div>
+      <PhotoGroup class="gallery-wrap">
+        <PhotoAlbum :photos="photos.slice(0, 6)" layout="rows" :target-row-height="200" :spacing="6" />
+        <div style="margin-top: 8px">
+          <PhotoAlbum :photos="photos.slice(6)" layout="rows" :target-row-height="200" :spacing="6" />
         </div>
-      </div>
-      <Lightbox :ctx="singleCtx" />
-      <CodeExample :code="singleCode" title="Template" />
+      </PhotoGroup>
+      <CodeExample :code="groupCode" title="Template" />
     </section>
   </div>
 </template>
@@ -95,44 +87,33 @@ import { photos } from '~/composables/photos'
 useHead({ title: 'NuxtImage — nuxt-photo' })
 
 const hero = photos[0]
-const gridPhotos = photos.slice(0, 6)
 
-const singleCtx = useLightbox([hero])
-const gridCtx = useLightbox(gridPhotos)
+const singleCode = `<!-- Layer 0: one photo, one prop -->
+<Photo :photo="hero" lightbox />`
 
-const albumCode = `<PhotoGallery
+const albumCode = `<!-- Layer 1: album with lightbox baked in -->
+<PhotoAlbum
   :photos="photos"
   layout="rows"
   :target-row-height="260"
   :spacing="6"
 />`
 
-const gridCode = `<div class="grid">
-  <div
-    v-for="(photo, index) in photos"
-    :key="photo.id"
-    :ref="ctx.setThumbRef(index)"
-    @click="ctx.open(index)"
-  >
-    <PhotoImage :photo="photo" context="thumb" />
-  </div>
-</div>
+const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
+<PhotoAlbum :photos="photos" layout="columns" :columns="3">
+  <template #thumbnail="{ photo }">
+    <div class="my-thumb">
+      <PhotoImage :photo="photo" context="thumb" />
+      <span>{{ photo.caption }}</span>
+    </div>
+  </template>
+</PhotoAlbum>`
 
-<Lightbox :ctx="ctx" />
-
-<script setup>
-const ctx = useLightbox(photos)
-<\/script>`
-
-const singleCode = `<div :ref="ctx.setThumbRef(0)" @click="ctx.open(0)">
-  <PhotoImage :photo="photo" context="thumb" />
-</div>
-
-<Lightbox :ctx="ctx" />
-
-<script setup>
-const ctx = useLightbox([photo])
-<\/script>`
+const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
+<PhotoGroup>
+  <PhotoAlbum :photos="set1" layout="rows" />
+  <PhotoAlbum :photos="set2" layout="rows" />
+</PhotoGroup>`
 </script>
 
 <style scoped>
@@ -204,72 +185,72 @@ const ctx = useLightbox([photo])
   margin-bottom: 32px;
 }
 
-/* Custom grid */
-.custom-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  margin-bottom: 32px;
-}
-
-.custom-grid__item {
-  cursor: pointer;
-  border-radius: 8px;
-  overflow: hidden;
-  aspect-ratio: 4 / 3;
-}
-
-.custom-grid__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.2s ease;
-}
-
-.custom-grid__item:hover .custom-grid__img {
-  transform: scale(1.03);
-}
-
 /* Single photo */
 .single-wrap {
   margin-bottom: 32px;
   max-width: 480px;
 }
 
-.single-trigger {
-  position: relative;
-  cursor: pointer;
+.single-photo {
+  width: 100%;
   border-radius: 12px;
   overflow: hidden;
+  cursor: pointer;
 }
 
-.single-img {
+:deep(.single-photo .np-photo__img) {
   width: 100%;
   height: auto;
   display: block;
+  aspect-ratio: 16/9;
+  object-fit: cover;
 }
 
-.single-hint {
+/* Custom thumbnail */
+.custom-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.custom-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 200ms ease;
+}
+
+.custom-thumb:hover .custom-thumb__img {
+  transform: scale(1.03);
+}
+
+.custom-thumb__overlay {
   position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  pointer-events: none;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.65));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.custom-thumb:hover .custom-thumb__overlay {
+  opacity: 1;
+}
+
+.custom-thumb__caption {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
 }
 
 @media (max-width: 700px) {
   .page {
     padding: 48px 20px 64px;
-  }
-
-  .custom-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

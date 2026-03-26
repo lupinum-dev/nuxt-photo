@@ -4,7 +4,7 @@
       <h1 class="header__title">Layout Explorer</h1>
       <p class="header__desc">
         Switch between layout algorithms and adjust parameters in real-time.
-        Uses <code>PhotoAlbum</code> + <code>Lightbox</code> composed manually via <code>useLightbox</code>.
+        <code>PhotoAlbum</code> handles layout + lightbox automatically.
       </p>
     </header>
 
@@ -60,6 +60,7 @@
       </div>
     </div>
 
+    <!-- PhotoAlbum handles the lightbox automatically — no manual wiring needed -->
     <div class="album-section">
       <PhotoAlbum
         :photos="photos"
@@ -69,51 +70,18 @@
         :target-row-height="targetRowHeight"
         :bento-row-height="bentoRowHeight"
         :bento-sizing="bentoSizing"
-      >
-        <template #item="{ photo, index, width, height }">
-          <div
-            :ref="ctx.setThumbRef(index)"
-            class="album-trigger"
-            role="button"
-            tabindex="0"
-            :style="{
-              opacity: ctx.hiddenThumbIndex.value === index ? 0 : 1,
-              cursor: 'pointer',
-            }"
-            @click="ctx.open(index)"
-            @keydown.enter="ctx.open(index)"
-            @keydown.space.prevent="ctx.open(index)"
-          >
-            <img
-              :src="photo.thumbSrc || photo.src"
-              :alt="photo.alt || ''"
-              loading="lazy"
-              draggable="false"
-              :style="layout === 'bento'
-                ? { width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '4px' }
-                : { width: '100%', height: 'auto', objectFit: 'cover', display: 'block', borderRadius: '4px', aspectRatio: `${photo.width} / ${photo.height}` }
-              "
-            />
-          </div>
-        </template>
-      </PhotoAlbum>
-
-      <Lightbox :ctx="ctx" />
+      />
     </div>
 
     <div class="code-section">
       <h2 class="code-section__title">Usage</h2>
-      <div class="code-grid">
-        <CodeExample :code="scriptCode" title="Script" />
-        <CodeExample :code="templateCode" title="Template" />
-      </div>
+      <CodeExample :code="templateCode" title="Template" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useLightbox } from '@nuxt-photo/vue'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'Layouts — nuxt-photo' })
@@ -127,34 +95,20 @@ const bentoRowHeight = ref(280)
 const bentoSizings = ['auto', 'pattern', 'manual'] as const
 const bentoSizing = ref<'auto' | 'pattern' | 'manual'>('auto')
 
-const ctx = useLightbox(photos)
-
-const scriptCode = `<script setup>
-import { useLightbox } from '@nuxt-photo/vue'
-
-const layout = ref('rows')
-const columns = ref(3)
-const spacing = ref(6)
-const ctx = useLightbox(photos)
-<\/script>`
-
-const templateCode = `<PhotoAlbum
+const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
+<PhotoAlbum
   :photos="photos"
   :layout="layout"
   :columns="columns"
   :spacing="spacing"
->
-  <template #item="{ photo, index }">
-    <div
-      :ref="ctx.setThumbRef(index)"
-      @click="ctx.open(index)"
-    >
-      <img :src="photo.thumbSrc" />
-    </div>
-  </template>
-</PhotoAlbum>
+/>
 
-<Lightbox :ctx="ctx" />`
+<!-- Layer 2: custom thumbnail with #thumbnail slot — wiring still automatic -->
+<PhotoAlbum :photos="photos" layout="rows">
+  <template #thumbnail="{ photo, width, height }">
+    <MyCard :photo="photo" />
+  </template>
+</PhotoAlbum>`
 </script>
 
 <style scoped>
@@ -250,12 +204,6 @@ const templateCode = `<PhotoAlbum
   accent-color: #b3b3b3;
 }
 
-.album-trigger {
-  width: 100%;
-  height: 100%;
-  transition: opacity 200ms ease;
-}
-
 .album-section {
   margin-bottom: 64px;
 }
@@ -268,12 +216,6 @@ const templateCode = `<PhotoAlbum
   margin: 0 0 16px;
   font-size: 22px;
   letter-spacing: -0.02em;
-}
-
-.code-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 12px;
 }
 
 @media (max-width: 700px) {

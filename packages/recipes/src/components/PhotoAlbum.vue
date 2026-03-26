@@ -15,10 +15,17 @@
         v-for="entry in group.entries"
         :key="entry.photo.id"
         class="np-album__item"
-        :style="itemStyle(entry, group)"
+        :style="[itemStyle(entry, group), hasLightbox ? { cursor: 'pointer' } : {}]"
+        :ref="setItemRef(entry.index)"
+        @click="hasLightbox ? openPhoto(entry.photo, entry.index) : undefined"
       >
-        <slot name="item" :photo="entry.photo" :index="entry.index" :width="entry.width" :height="entry.height">
+        <div
+          :style="isHidden(entry.photo) ? { opacity: 0 } : undefined"
+          style="width:100%;height:100%"
+        >
+          <slot v-if="$slots.thumbnail" name="thumbnail" :photo="entry.photo" :index="entry.index" :width="entry.width" :height="entry.height" />
           <PhotoImage
+            v-else
             :photo="entry.photo"
             context="thumb"
             :adapter="adapter"
@@ -29,15 +36,18 @@
               : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
             "
           />
-        </slot>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Own lightbox — only rendered when not inside a parent PhotoGroup -->
+  <Lightbox v-if="hasOwnLightbox" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, type CSSProperties } from 'vue'
-import { PhotoImage } from '@nuxt-photo/vue'
+import { ref, computed, inject, provide, watch, onMounted, onBeforeUnmount, type CSSProperties, type ComponentPublicInstance } from 'vue'
+import { PhotoImage, useLightbox, LightboxContextKey, PhotoGroupContextKey } from '@nuxt-photo/vue'
 import {
   computeRowsLayout,
   computeColumnsLayout,
@@ -49,6 +59,7 @@ import {
   type LayoutEntry,
   type BentoSizing,
 } from '@nuxt-photo/core'
+import Lightbox from './Lightbox.vue'
 
 function round(value: number, digits = 0) {
   const factor = 10 ** digits
@@ -70,6 +81,8 @@ const props = withDefaults(defineProps<{
   bentoSizing?: BentoSizing
   bentoPatternInterval?: number
   adapter?: ImageAdapter
+  /** Whether to enable lightbox. @default true */
+  lightbox?: boolean
 }>(), {
   layout: 'rows',
   columns: 3,
@@ -79,8 +92,86 @@ const props = withDefaults(defineProps<{
   bentoRowHeight: 280,
   bentoSizing: 'auto',
   bentoPatternInterval: 5,
+  lightbox: true,
 })
 
+// Check for parent PhotoGroup
+const parentGroup = inject(PhotoGroupContextKey, null)
+const hasLightbox = computed(() => props.lightbox !== false)
+const hasOwnLightbox = !parentGroup && props.lightbox !== false
+
+// For standalone mode: create own lightbox context
+const ownCtx = !parentGroup ? useLightbox(computed(() => props.photos)) : null
+
+if (ownCtx) {
+  provide(LightboxContextKey, ownCtx)
+}
+
+// Track thumb DOM elements by photo index
+const thumbElsMap: Record<number, HTMLElement | null> = {}
+
+function setItemRef(index: number) {
+  return (el: Element | ComponentPublicInstance | null) => {
+    thumbElsMap[index] = el as HTMLElement | null
+  }
+}
+
+// Open handler
+function openPhoto(photo: PhotoItem, index: number) {
+  if (parentGroup) {
+    parentGroup.open(photo)
+  } else if (ownCtx) {
+    // Wire current thumb refs before opening
+    for (const [i, el] of Object.entries(thumbElsMap)) {
+      ownCtx.setThumbRef(Number(i))(el)
+    }
+    ownCtx.open(index)
+  }
+}
+
+// Is this photo's thumb hidden during transition?
+function isHidden(photo: PhotoItem): boolean {
+  if (parentGroup) return parentGroup.hiddenPhoto.value === photo
+  if (ownCtx) {
+    const idx = ownCtx.hiddenThumbIndex.value
+    if (idx === null) return false
+    return props.photos[idx] === photo
+  }
+  return false
+}
+
+// Registration with parent group
+const registrationIds = new Map<PhotoItem, symbol>()
+
+if (parentGroup) {
+  watch(() => props.photos, (newPhotos, oldPhotos) => {
+    // Unregister removed photos
+    for (const photo of (oldPhotos ?? [])) {
+      const id = registrationIds.get(photo)
+      if (id) {
+        parentGroup.unregister(id)
+        registrationIds.delete(photo)
+      }
+    }
+    // Register new photos
+    newPhotos.forEach((photo, index) => {
+      if (!registrationIds.has(photo)) {
+        const id = Symbol()
+        registrationIds.set(photo, id)
+        parentGroup.register(id, photo, () => thumbElsMap[index] ?? null)
+      }
+    })
+  }, { immediate: true })
+
+  onBeforeUnmount(() => {
+    for (const [photo, id] of registrationIds) {
+      parentGroup.unregister(id)
+    }
+    registrationIds.clear()
+  })
+}
+
+// Layout
 const containerRef = ref<HTMLElement | null>(null)
 const containerWidth = ref(0)
 
@@ -165,7 +256,6 @@ function groupStyle(group: LayoutGroup): CSSProperties {
 
   const columnsCount = groups.value.length || 1
 
-  // Masonry: equal-width columns
   if (
     props.layout === 'masonry'
     || group.columnsGaps === undefined
@@ -181,7 +271,6 @@ function groupStyle(group: LayoutGroup): CSSProperties {
     }
   }
 
-  // Balanced columns: proportional widths via CSS calc
   const totalRatio = group.columnsRatios.reduce((acc, v) => acc + v, 0)
   const totalAdjustedGaps = group.columnsRatios.reduce(
     (acc, v, ratioIndex) =>
@@ -218,7 +307,6 @@ function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
   }
 
   if (group.type === 'row') {
-    // Row items: width proportional to their share of the row
     const gaps = props.spacing * (entry.itemsCount - 1) + 2 * props.padding * entry.itemsCount
     return {
       boxSizing: 'content-box',
@@ -232,7 +320,6 @@ function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
     }
   }
 
-  // Column/masonry items: full width of column
   const isLast = entry.positionIndex === entry.itemsCount - 1
   return {
     boxSizing: 'content-box',
