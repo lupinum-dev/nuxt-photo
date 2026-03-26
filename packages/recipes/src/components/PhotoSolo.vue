@@ -3,7 +3,7 @@
     ref="thumbRef"
     class="np-photo"
     v-bind="$attrs"
-    :style="{ opacity: ctx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }"
+    :style="{ margin: 0, opacity: ctx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }"
     role="button"
     tabindex="0"
     @click="open"
@@ -18,6 +18,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, useSlots, type Component } from 'vue'
+
+defineOptions({ inheritAttrs: false })
 import { PhotoImage } from '@nuxt-photo/vue'
 import { provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue/internal'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'

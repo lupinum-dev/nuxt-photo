@@ -50,8 +50,8 @@
       </p>
       <div class="gallery-wrap">
         <PhotoAlbum :photos="photos.slice(0, 6)" layout="columns" :columns="3" :spacing="6">
-          <template #thumbnail="{ photo, width, height }">
-            <div class="custom-thumb">
+          <template #thumbnail="{ photo }">
+            <div class="custom-thumb" :style="{ aspectRatio: `${photo.width} / ${photo.height}` }">
               <PhotoImage :photo="photo" context="thumb" class="custom-thumb__img" />
               <div class="custom-thumb__overlay">
                 <span class="custom-thumb__caption">{{ photo.caption }}</span>
@@ -210,7 +210,6 @@ const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
 .custom-thumb {
   position: relative;
   width: 100%;
-  aspect-ratio: 4/3;
   border-radius: 6px;
   overflow: hidden;
 }

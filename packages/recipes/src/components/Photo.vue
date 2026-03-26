@@ -19,7 +19,7 @@
     ref="thumbRef"
     class="np-photo"
     v-bind="$attrs"
-    :style="{ opacity: isHidden ? 0 : 1, cursor: 'pointer' }"
+    :style="{ margin: 0, opacity: isHidden ? 0 : 1, cursor: 'pointer' }"
     role="button"
     tabindex="0"
     @click="group.open(photo)"
@@ -31,7 +31,7 @@
   </figure>
 
   <!-- Plain image (no group, no lightbox, or lightbox-ignore) -->
-  <figure v-else class="np-photo" v-bind="$attrs">
+  <figure v-else class="np-photo" v-bind="$attrs" :style="{ margin: 0 }">
     <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
   </figure>
@@ -39,6 +39,8 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Component } from 'vue'
+
+defineOptions({ inheritAttrs: false })
 import { PhotoImage } from '@nuxt-photo/vue'
 import { PhotoGroupContextKey } from '@nuxt-photo/vue/internal'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'

@@ -255,8 +255,14 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
   overflow: hidden;
 }
 
+.scattered__main {
+  position: relative;
+}
+
 .scattered__img--main {
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  height: auto;
 }
 
 .scattered__img--ignored {
