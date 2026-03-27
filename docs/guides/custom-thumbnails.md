@@ -1,0 +1,110 @@
+---
+title: Custom Thumbnails
+description: Replace default album thumbnails with custom content using the #thumbnail slot.
+navigation: true
+---
+
+# Custom Thumbnails
+
+The `#thumbnail` slot on `PhotoAlbum` lets you replace the default `<img>` element with any custom content — overlays, badges, custom image components, or entirely different markup.
+
+## Basic Usage
+
+```vue
+<PhotoAlbum :photos="photos">
+  <template #thumbnail="{ photo, index, width, height, hidden }">
+    <div :style="{ opacity: hidden ? 0 : 1, width: '100%', height: '100%' }">
+      <img
+        :src="photo.thumbSrc || photo.src"
+        :alt="photo.alt"
+        style="width: 100%; height: 100%; object-fit: cover;"
+      />
+      <span class="photo-number">{{ index + 1 }}</span>
+    </div>
+  </template>
+</PhotoAlbum>
+```
+
+## Slot Props
+
+| Prop | Type | Description |
+|---|---|---|
+| `photo` | `PhotoItem` | The photo data for this thumbnail. |
+| `index` | `number` | The index of this photo in the album. |
+| `width` | `number` | The computed width of the thumbnail in pixels. |
+| `height` | `number` | The computed height of the thumbnail in pixels. |
+| `hidden` | `boolean` | `true` when this thumbnail should be invisible (during FLIP transitions). Handle this by setting `opacity: 0` on your content. |
+
+## Handling the Hidden State
+
+During lightbox FLIP transitions, the source thumbnail needs to become invisible so it doesn't appear behind the animating ghost image. The `hidden` prop tells you when this is happening:
+
+```vue
+<template #thumbnail="{ photo, hidden }">
+  <div :style="{ opacity: hidden ? 0 : 1 }">
+    <!-- your content -->
+  </div>
+</template>
+```
+
+::callout{type="warning"}
+If you don't handle the `hidden` prop, the thumbnail will remain visible during FLIP transitions, creating a visual artifact where the photo appears in two places simultaneously.
+::
+
+## Examples
+
+### With overlay text
+
+```vue
+<PhotoAlbum :photos="photos">
+  <template #thumbnail="{ photo, hidden }">
+    <div class="thumb" :style="{ opacity: hidden ? 0 : 1 }">
+      <img :src="photo.src" :alt="photo.alt" />
+      <div class="overlay">
+        <h3>{{ photo.caption }}</h3>
+      </div>
+    </div>
+  </template>
+</PhotoAlbum>
+```
+
+### With NuxtImg
+
+```vue
+<PhotoAlbum :photos="photos">
+  <template #thumbnail="{ photo, width, hidden }">
+    <div :style="{ opacity: hidden ? 0 : 1 }">
+      <NuxtImg
+        :src="photo.src"
+        :width="width"
+        :alt="photo.alt"
+        loading="lazy"
+      />
+    </div>
+  </template>
+</PhotoAlbum>
+```
+
+### With blurhash placeholder
+
+```vue
+<PhotoAlbum :photos="photos">
+  <template #thumbnail="{ photo, width, height, hidden }">
+    <div :style="{ opacity: hidden ? 0 : 1, position: 'relative' }">
+      <BlurhashCanvas
+        v-if="photo.blurhash"
+        :hash="photo.blurhash"
+        :width="width"
+        :height="height"
+        style="position: absolute; inset: 0;"
+      />
+      <img
+        :src="photo.src"
+        :alt="photo.alt"
+        style="position: relative; width: 100%; height: auto;"
+        loading="lazy"
+      />
+    </div>
+  </template>
+</PhotoAlbum>
+```

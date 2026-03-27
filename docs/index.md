@@ -1,0 +1,82 @@
+---
+title: nuxt-photo
+description: A layered photo gallery and lightbox system for Vue and Nuxt.
+navigation: true
+---
+
+# nuxt-photo
+
+A layered photo gallery and lightbox system for Vue and Nuxt. Beautiful layouts, smooth FLIP transitions, touch gestures, and zoom — all with zero configuration.
+
+## Features
+
+- **Four layout algorithms** — rows, columns, masonry, and bento grid
+- **Integrated lightbox** — FLIP transitions, swipe gestures, pinch-to-zoom
+- **Responsive** — container-width-aware spacing, columns, and row heights
+- **SSR-ready** — zero CLS with server-rendered flex-grow fallbacks
+- **Layered architecture** — use the high-level recipes or build your own with primitives
+- **Nuxt Image support** — automatic `@nuxt/image` integration for optimized thumbnails and slides
+
+## Quick Example
+
+```vue
+<script setup>
+const photos = [
+  { id: 1, src: '/photos/landscape.jpg', width: 1600, height: 900 },
+  { id: 2, src: '/photos/portrait.jpg', width: 900, height: 1200 },
+  { id: 3, src: '/photos/square.jpg', width: 1000, height: 1000 },
+]
+</script>
+
+<template>
+  <PhotoAlbum :photos="photos" layout="rows" />
+</template>
+```
+
+That's it. The album renders a justified rows layout, and clicking any photo opens a lightbox with keyboard navigation, swipe gestures, and zoom.
+
+## Architecture
+
+nuxt-photo is built as four packages, each adding a layer:
+
+| Package | Layer | Description |
+|---|---|---|
+| `@nuxt-photo/core` | 0 | Framework-free layout algorithms, physics, geometry, and state machine |
+| `@nuxt-photo/vue` | 1 | Vue composables and primitive components |
+| `@nuxt-photo/recipes` | 2 | Ready-to-use Photo, PhotoAlbum, PhotoGroup components |
+| `@nuxt-photo/nuxt` | 3 | Nuxt module with auto-imports, CSS injection, and `@nuxt/image` integration |
+
+Most users only need `@nuxt-photo/nuxt`. The lower layers are there when you need full control.
+
+## Next Steps
+
+::card-grid
+#default
+  ::card{to="/docs/getting-started/installation"}
+  #title
+  Installation
+  #description
+  Install the package and configure the Nuxt module.
+  ::
+
+  ::card{to="/docs/getting-started/quick-start"}
+  #title
+  Quick Start
+  #description
+  Get a working gallery with lightbox in 5 minutes.
+  ::
+
+  ::card{to="/docs/guides/layouts"}
+  #title
+  Layouts
+  #description
+  Learn about rows, columns, masonry, and bento layouts.
+  ::
+
+  ::card{to="/docs/components/photo-album"}
+  #title
+  PhotoAlbum API
+  #description
+  Full props, slots, and usage reference.
+  ::
+::
