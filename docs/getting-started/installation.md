@@ -59,10 +59,12 @@ export default defineNuxtConfig({
     css: 'structure', // default
 
     // Image adapter configuration
+    // Set to false to disable image adapter entirely
     image: {
       // 'auto' detects @nuxt/image if installed
       // 'nuxt-image' requires @nuxt/image in modules
       // 'native' uses plain <img> tags
+      // 'custom' uses your own adapter via provide/inject
       provider: 'auto', // default
     },
 
@@ -100,6 +102,8 @@ If you're not using Nuxt, or you need only part of the system:
 | `@nuxt-photo/vue` | Vue composables and primitive lightbox components. |
 | `@nuxt-photo/recipes` | Ready-to-use components (Photo, PhotoAlbum, PhotoGroup). Requires `@nuxt-photo/vue`. |
 | `@nuxt-photo/nuxt` | Full Nuxt integration. Includes everything above. |
+
+Each package includes its dependencies — installing `@nuxt-photo/recipes` automatically includes `@nuxt-photo/vue` and `@nuxt-photo/core`.
 
 For plain Vue (without Nuxt):
 

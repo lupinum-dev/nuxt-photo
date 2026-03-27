@@ -91,6 +91,13 @@ Or make it responsive:
 
 The `responsive()` helper creates a function that picks the right value based on the album's container width. The keys are minimum widths in pixels — so `{ 0: 2, 768: 3, 1200: 4 }` means: 2 columns by default, 3 columns when the container is at least 768px wide, and 4 at 1200px+. See the [responsive guide](/docs/guides/responsive) for more.
 
+::callout{type="info"}
+`responsive()` is auto-imported in Nuxt. For plain Vue, import it from `@nuxt-photo/vue`:
+```ts
+import { responsive } from '@nuxt-photo/vue'
+```
+::
+
 ## 5. Add Captions
 
 Include `caption` and `description` fields in your photo data:
