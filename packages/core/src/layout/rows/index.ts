@@ -1,15 +1,17 @@
 import type { LayoutGroup, RowsLayoutOptions } from '../../types'
+import { validatePhotoDimensions } from '../types'
 import { findRowBreaks } from './knuthPlass'
 import { pathToGroups } from './pathToGroups'
 
 export function computeRowsLayout(options: RowsLayoutOptions): LayoutGroup[] {
   const {
-    photos,
     containerWidth,
     spacing = 8,
     padding = 0,
     targetRowHeight = 300,
   } = options
+
+  const photos = validatePhotoDimensions(options.photos)
 
   if (photos.length === 0) return []
 

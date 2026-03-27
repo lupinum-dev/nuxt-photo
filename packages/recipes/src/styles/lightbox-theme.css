@@ -1,0 +1,46 @@
+/* Theme styles for Lightbox recipe — visual appearance, colors, blur, typography */
+/* Import this file manually if using lightbox-structure.css on its own */
+.np-lightbox__backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+}
+
+.np-lightbox__counter {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.np-lightbox__btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 16px 40px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(8px);
+}
+
+.np-lightbox__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.np-lightbox__btn:disabled {
+  opacity: 0.45;
+}
+
+.np-lightbox__img {
+  border-radius: 16px;
+}
+
+.np-lightbox__caption {
+  color: white;
+}
+
+.np-lightbox__caption h2 {
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.np-lightbox__caption p {
+  color: rgba(255, 255, 255, 0.72);
+}

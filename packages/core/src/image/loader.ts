@@ -1,3 +1,4 @@
+const MAX_CACHE_SIZE = 500
 const imageLoadCache = new Map<string, Promise<void>>()
 
 export function ensureImageLoaded(src: string): Promise<void> {
@@ -21,5 +22,8 @@ export function ensureImageLoaded(src: string): Promise<void> {
   })
 
   imageLoadCache.set(src, promise)
+  if (imageLoadCache.size > MAX_CACHE_SIZE) {
+    imageLoadCache.delete(imageLoadCache.keys().next().value!)
+  }
   return promise
 }

@@ -24,7 +24,7 @@ export type GestureConfig = {
   uiVisible: Ref<boolean>
   panState: Ref<PanState>
   zoomState: Ref<ZoomState>
-  closeDragY: Ref<number>
+  setCloseDragY: (val: number) => void
   transitionInProgress: ComputedRef<boolean>
 
   panzoomMotion: PanzoomMotion
@@ -194,7 +194,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     }
 
     if (gesturePhase.value === 'close') {
-      config.closeDragY.value = deltaY
+      config.setCloseDragY(deltaY)
       return
     }
 
@@ -274,13 +274,13 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         ),
       )
     }
-    config.closeDragY.value = 0
+    config.setCloseDragY(0)
   }
 
   function onWheel(event: WheelEvent) {
     if (!config.lightboxMounted.value || config.animating.value) return
 
-    const now = Date.now()
+    const now = performance.now()
     const isTrackpad = Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
     const throttleMs = isTrackpad ? 200 : 45
 

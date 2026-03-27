@@ -1,5 +1,10 @@
 <template>
   <div :style="ctx.chromeStyle.value" v-bind="$attrs">
+    <div
+      class="np-sr-only"
+      aria-live="polite"
+      aria-atomic="true"
+    >Photo {{ ctx.activeIndex.value + 1 }} of {{ ctx.count.value }}</div>
     <slot
       :active-index="ctx.activeIndex.value"
       :active-photo="ctx.activePhoto.value"

@@ -1,3 +1,7 @@
+<!--
+  @deprecated Use <PhotoGroup> + <PhotoAlbum :lightbox="false"> composition instead.
+  PhotoGallery is a thin convenience wrapper that does not support all PhotoGroup features.
+-->
 <template>
   <PhotoGroup :photos="photos" :lightbox="lightbox" class="np-gallery">
     <PhotoAlbum

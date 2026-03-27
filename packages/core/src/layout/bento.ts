@@ -1,4 +1,5 @@
 import type { BentoLayoutOptions, LayoutGroup, PhotoItem } from '../types'
+import { validatePhotoDimensions } from './types'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
@@ -85,7 +86,6 @@ const PATTERN_CYCLE: Array<'wide' | '2x2' | 'tall'> = ['wide', '2x2', 'tall', '2
 
 export function computeBentoLayout(options: BentoLayoutOptions): LayoutGroup[] {
   const {
-    photos,
     containerWidth,
     spacing = 8,
     padding = 0,
@@ -94,6 +94,8 @@ export function computeBentoLayout(options: BentoLayoutOptions): LayoutGroup[] {
     sizing = 'auto',
     patternInterval = 5,
   } = options
+
+  const photos = validatePhotoDimensions(options.photos)
 
   if (photos.length === 0) return []
 

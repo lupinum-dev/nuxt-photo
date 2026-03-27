@@ -1,6 +1,6 @@
 // ─── Item types ───
 
-export type PhotoItem = {
+export type PhotoItem<TMeta extends Record<string, unknown> = Record<string, unknown>> = {
   id: string | number
   src: string
   thumbSrc?: string
@@ -11,7 +11,12 @@ export type PhotoItem = {
   description?: string
   blurhash?: string
   srcset?: string
-  meta?: Record<string, unknown>
+  meta?: TMeta
+}
+
+/** Normalize photo id to string for reliable comparison across string/number types. */
+export function photoId(photo: PhotoItem): string {
+  return String(photo.id)
 }
 
 export type SlideItem =
@@ -130,7 +135,7 @@ export type CloseTransitionPlan = {
 // ─── Layout ───
 
 export type LayoutInput = {
-  photos: PhotoItem[]
+  photos: PhotoItem<any>[]
   containerWidth: number
   spacing?: number
   padding?: number
@@ -195,7 +200,7 @@ export type ImageSource = {
  */
 export type ImageContext = 'thumb' | 'slide' | 'preload'
 
-export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
+export type ImageAdapter = (photo: PhotoItem<any>, context: ImageContext) => ImageSource
 
 // ─── Debug ───
 

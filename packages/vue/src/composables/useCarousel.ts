@@ -1,4 +1,4 @@
-import { computed, ref, watch, type ComputedRef, type CSSProperties, type Ref, type ShallowRef } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type CSSProperties, type Ref, type ShallowRef } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselVueType } from 'embla-carousel-vue'
 import { fitRect, type AreaMetrics, type CarouselConfig, type PhotoItem, type RectLike, type DebugLogger } from '@nuxt-photo/core'
@@ -78,6 +78,9 @@ export function useCarousel(
     const n = photos.value.length
     const slidePosition = distance * n
 
+    // Skip effect computation for slides more than 1.5 positions away — saves CPU per frame
+    if (Math.abs(slidePosition) > 1.5) return {}
+
     switch (config.style) {
       case 'classic':
         return {}
@@ -123,6 +126,10 @@ export function useCarousel(
   function selectedSnap(): number {
     return emblaApi.value?.selectedSnap() ?? activeIndex.value
   }
+
+  onBeforeUnmount(() => {
+    emblaApi.value?.destroy()
+  })
 
   return {
     emblaRef,

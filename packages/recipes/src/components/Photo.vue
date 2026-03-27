@@ -1,21 +1,25 @@
 <template>
-  <!-- Standalone photo with its own lightbox -->
-  <PhotoSolo
-    v-if="isSolo"
-    :photo="photo"
-    :adapter="adapter"
-    :loading="loading"
-    :lightbox-component="lightboxComponent"
-    v-bind="$attrs"
-  >
-    <template v-if="$slots.slide" #slide="slotProps">
-      <slot name="slide" v-bind="slotProps" />
-    </template>
-  </PhotoSolo>
-
-  <!-- Photo inside a PhotoGroup: clickable thumb that registers with the group -->
+  <!-- Standalone photo (no parent group): wraps in its own single-photo context -->
   <figure
-    v-else-if="group && !lightboxIgnore"
+    v-if="isSolo"
+    ref="thumbRef"
+    class="np-photo"
+    v-bind="$attrs"
+    :style="{ margin: 0, opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }"
+    role="button"
+    tabindex="0"
+    @click="soloOpen"
+    @keydown.enter="soloOpen"
+    @keydown.space.prevent="soloOpen"
+  >
+    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
+    <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
+  </figure>
+  <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
+
+  <!-- Photo inside a PhotoGroup (auto mode): clickable thumb that registers with the group -->
+  <figure
+    v-else-if="group && !lightboxIgnore && group.mode === 'auto'"
     ref="thumbRef"
     class="np-photo"
     v-bind="$attrs"
@@ -30,7 +34,7 @@
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
   </figure>
 
-  <!-- Plain image (no group, no lightbox, or lightbox-ignore) -->
+  <!-- Plain image (explicit group mode, no group, no lightbox, or lightbox-ignore) -->
   <figure v-else class="np-photo" v-bind="$attrs" :style="{ margin: 0 }">
     <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
@@ -42,9 +46,14 @@ import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Compo
 
 defineOptions({ inheritAttrs: false })
 import { PhotoImage } from '@nuxt-photo/vue'
-import { PhotoGroupContextKey } from '@nuxt-photo/vue/internal'
+import {
+  PhotoGroupContextKey,
+  LightboxComponentKey,
+  provideLightboxContexts,
+  useLightboxContext,
+} from '@nuxt-photo/vue/internal'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
-import PhotoSolo from './PhotoSolo.vue'
+import InternalLightbox from './InternalLightbox.vue'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -60,23 +69,45 @@ const slots = useSlots()
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
 
+// Global lightbox override
+const injectedLightbox = inject(LightboxComponentKey, null)
+
 // Standalone mode: lightbox prop set and no parent group
 const isSolo = computed(() => !group && !!props.lightbox && !props.lightboxIgnore)
-const lightboxComponent = computed<Component | undefined>(() =>
-  props.lightbox === true || props.lightbox === undefined ? undefined : props.lightbox,
-)
 
-// Ref for the thumb element (used when inside a group)
+// Solo lightbox context — only created when solo (outside group)
+const soloCtx = isSolo.value ? useLightboxContext(computed(() => props.photo)) : null
+
+if (soloCtx) {
+  provideLightboxContexts(soloCtx, {
+    resolveSlide: photo => {
+      if ((photo !== props.photo && String(photo.id) !== String(props.photo.id)) || !slots.slide) return null
+      return slotProps => slots.slide?.(slotProps) ?? null
+    },
+  })
+}
+
+const soloLightboxComponent = computed<Component>(() => {
+  if (props.lightbox === true || props.lightbox === undefined) {
+    return injectedLightbox ?? InternalLightbox
+  }
+  return (props.lightbox as Component) ?? InternalLightbox
+})
+
+// Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
 
 // Is this photo's thumb hidden during a transition?
 const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
 
-// Registration with parent group
+// Registration with parent group (auto mode only)
 const id = Symbol()
 
 onMounted(() => {
-  if (group && !props.lightboxIgnore && !isSolo.value) {
+  if (soloCtx) {
+    soloCtx.setThumbRef(0)(thumbRef.value)
+  }
+  if (group && group.mode === 'auto' && !props.lightboxIgnore && !isSolo.value) {
     group.register(
       id,
       props.photo,
@@ -87,8 +118,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (group && !props.lightboxIgnore && !isSolo.value) {
+  if (group && group.mode === 'auto' && !props.lightboxIgnore && !isSolo.value) {
     group.unregister(id)
   }
 })
+
+async function soloOpen() {
+  if (!soloCtx) return
+  soloCtx.setThumbRef(0)(thumbRef.value)
+  await soloCtx.open(0)
+}
 </script>

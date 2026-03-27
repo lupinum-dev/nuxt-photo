@@ -1,0 +1,66 @@
+/* Structural styles for PhotoAlbum recipe */
+
+.np-album {
+  width: 100%;
+  position: relative;
+}
+
+/* Container direction for row/column/masonry layouts */
+.np-album--rows,
+.np-album--columns,
+.np-album--masonry {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.np-album--rows {
+  flex-direction: column;
+}
+
+.np-album--columns,
+.np-album--masonry {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/* Row group */
+.np-album__row {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* Column group */
+.np-album__column {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+}
+
+/* Columns layout aligns column groups to space-between */
+.np-album--columns .np-album__column {
+  justify-content: space-between;
+}
+
+/* Masonry columns start from top */
+.np-album--masonry .np-album__column {
+  justify-content: flex-start;
+}
+
+/* Item — no extra static styles needed; dimensions come from inline styles */
+.np-album__item {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Image fills its item */
+.np-album__img {
+  display: block;
+}
+
+/* Skeleton placeholder shown before ResizeObserver measures width */
+.np-album__skeleton {
+  width: 100%;
+  min-height: 200px;
+}

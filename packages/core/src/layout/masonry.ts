@@ -1,4 +1,5 @@
 import type { LayoutEntry, LayoutGroup, MasonryLayoutOptions } from '../types'
+import { validatePhotoDimensions } from './types'
 
 /**
  * Masonry layout — places photos into equal-width columns using greedy
@@ -7,7 +8,8 @@ import type { LayoutEntry, LayoutGroup, MasonryLayoutOptions } from '../types'
  * Returns LayoutGroup[] for flexbox rendering.
  */
 export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup[] {
-  const { photos, containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
   const columnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns

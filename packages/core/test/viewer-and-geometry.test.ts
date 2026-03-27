@@ -37,25 +37,27 @@ describe('geometry and viewer utilities', () => {
     expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 600, y: -400 })
   })
 
-  it('always allows at least 2x zoom regardless of photo resolution', () => {
-    // Photo displayed at near-native resolution (1280px in 1240px frame) — was disabled before
+  it('limits zoom to natural resolution (floor 1), supports per-photo maxZoom override', () => {
+    // Photo displayed at near-native resolution: max zoom matches the photo/frame ratio, not forced to 2
     const nearNative = computeZoomLevels(1280, 800, 1240, 775)
-    expect(nearNative.max).toBe(2)
-    expect(nearNative.secondary).toBe(2)
+    expect(nearNative.max).toBeCloseTo(1280 / 1240, 2)
+    expect(nearNative.fit).toBe(1)
+    expect(nearNative.current).toBe(1)
 
-    // Photo smaller than the display area — was disabled before
+    // Photo smaller than display area: no meaningful zoom (floor is 1, not 2)
     const small = computeZoomLevels(600, 400, 1200, 800)
-    expect(small.max).toBe(2)
-    expect(small.secondary).toBe(2)
+    expect(small.max).toBe(1)
+    expect(small.secondary).toBe(1)
 
     // Large photo (>2x) — unchanged behavior
     const large = computeZoomLevels(4000, 2000, 1200, 800)
     expect(large.max).toBeCloseTo(3.33, 1)
     expect(large.secondary).toBe(2)
 
-    // fit is always 1, current starts at 1
-    expect(nearNative.fit).toBe(1)
-    expect(nearNative.current).toBe(1)
+    // Per-photo maxZoom via meta
+    const custom = computeZoomLevels(600, 400, 1200, 800, { id: '1', src: '', width: 600, height: 400, meta: { maxZoom: 3 } })
+    expect(custom.max).toBe(3)
+    expect(custom.secondary).toBe(2)
   })
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {

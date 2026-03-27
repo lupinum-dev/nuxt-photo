@@ -5,40 +5,60 @@
     :class="`np-album--${props.layout}`"
     :style="containerStyle"
   >
-    <div
-      v-for="group in groups"
-      :key="`${group.type}-${group.index}`"
-      :class="group.type === 'grid' ? 'np-album__grid' : group.type === 'row' ? 'np-album__row' : 'np-album__column'"
-      :style="groupStyle(group)"
-    >
+    <!-- Skeleton shown until ResizeObserver measures real width -->
+    <template v-if="!layoutReady">
+      <div class="np-album__skeleton" />
+    </template>
+
+    <template v-else>
       <div
-        v-for="entry in group.entries"
-        :key="entry.photo.id"
-        class="np-album__item"
-        :style="[itemStyle(entry, group), hasLightbox ? { cursor: 'pointer' } : {}]"
-        :ref="setItemRef(entry.index)"
-        @click="hasLightbox ? openPhoto(entry.photo, entry.index) : undefined"
+        v-for="group in groups"
+        :key="`${group.type}-${group.index}`"
+        :class="group.type === 'grid' ? 'np-album__grid' : group.type === 'row' ? 'np-album__row' : 'np-album__column'"
+        :style="groupStyle(group)"
       >
         <div
-          :style="isHidden(entry.photo) ? { opacity: 0 } : undefined"
-          style="width:100%;height:100%"
+          v-for="entry in group.entries"
+          :key="entry.photo.id"
+          class="np-album__item"
+          :style="itemStyle(entry, group)"
+          v-bind="hasLightbox ? {
+            ref: setItemRef(entry.index),
+            role: 'button',
+            tabindex: '0',
+            onClick: () => openPhoto(entry.photo, entry.index),
+            onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, entry.photo, entry.index),
+          } : { ref: setItemRef(entry.index) }"
         >
-          <slot v-if="$slots.thumbnail" name="thumbnail" :photo="entry.photo" :index="entry.index" :width="entry.width" :height="entry.height" />
-          <PhotoImage
-            v-else
-            :photo="entry.photo"
-            context="thumb"
-            :adapter="adapter"
-            loading="lazy"
-            class="np-album__img"
-            :style="group.type === 'grid'
-              ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
-              : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
-            "
-          />
+          <div
+            :style="isHidden(entry.photo) && !$slots.thumbnail ? { opacity: 0 } : undefined"
+            style="width:100%;height:100%"
+          >
+            <slot
+              v-if="$slots.thumbnail"
+              name="thumbnail"
+              :photo="entry.photo"
+              :index="entry.index"
+              :width="entry.width"
+              :height="entry.height"
+              :hidden="isHidden(entry.photo)"
+            />
+            <PhotoImage
+              v-else
+              :photo="entry.photo"
+              context="thumb"
+              :adapter="adapter"
+              loading="lazy"
+              class="np-album__img"
+              :style="group.type === 'grid'
+                ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
+                : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
+              "
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 
   <!-- Own lightbox — only rendered when not inside a parent PhotoGroup -->
@@ -48,15 +68,23 @@
 <script setup lang="ts">
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount, type CSSProperties, type Component, type ComponentPublicInstance } from 'vue'
 import { PhotoImage } from '@nuxt-photo/vue'
-import { PhotoGroupContextKey, provideLightboxContexts, useLightboxContext } from '@nuxt-photo/vue/internal'
+import {
+  PhotoGroupContextKey,
+  LightboxComponentKey,
+  provideLightboxContexts,
+  useLightboxContext,
+  type LightboxTransitionOption,
+} from '@nuxt-photo/vue/internal'
 import {
   computeRowsLayout,
   computeColumnsLayout,
   computeMasonryLayout,
   computeBentoLayout,
+  photoId,
   type PhotoItem,
   type ImageAdapter,
   type LayoutGroup,
+  type LayoutEntry,
   type BentoSizing,
 } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
@@ -83,6 +111,8 @@ const props = withDefaults(defineProps<{
   adapter?: ImageAdapter
   /** Whether to enable lightbox. @default true */
   lightbox?: boolean | Component
+  /** Transition mode for lightbox open/close */
+  transition?: LightboxTransitionOption
 }>(), {
   layout: 'rows',
   columns: 3,
@@ -97,16 +127,20 @@ const props = withDefaults(defineProps<{
 
 // Check for parent PhotoGroup
 const parentGroup = inject(PhotoGroupContextKey, null)
+
+// Global lightbox override
+const injectedLightbox = inject(LightboxComponentKey, null)
+
 const hasLightbox = computed(() => props.lightbox !== false)
 const hasOwnLightbox = !parentGroup && props.lightbox !== false
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
-  if (props.lightbox === true) return InternalLightbox
+  if (props.lightbox === true) return injectedLightbox ?? InternalLightbox
   return props.lightbox as Component
 })
 
 // For standalone mode: create own lightbox context
-const ownCtx = !parentGroup ? useLightboxContext(computed(() => props.photos)) : null
+const ownCtx = !parentGroup ? useLightboxContext(computed(() => props.photos), props.transition) : null
 
 if (ownCtx) {
   provideLightboxContexts(ownCtx)
@@ -126,11 +160,17 @@ function openPhoto(photo: PhotoItem, index: number) {
   if (parentGroup) {
     parentGroup.open(photo)
   } else if (ownCtx) {
-    // Wire current thumb refs before opening
     for (const [i, el] of Object.entries(thumbElsMap)) {
       ownCtx.setThumbRef(Number(i))(el)
     }
     ownCtx.open(index)
+  }
+}
+
+function handleItemKeydown(e: KeyboardEvent, photo: PhotoItem, index: number) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    openPhoto(photo, index)
   }
 }
 
@@ -145,48 +185,68 @@ function isHidden(photo: PhotoItem): boolean {
   return false
 }
 
-// Registration with parent group
+// ─── Stable group registration (diff-based) ────────────────────────────────
+
+const idToSymbol = new Map<string, symbol>() // normalized photo id → registration symbol
 let registrationIds: symbol[] = []
 
 if (parentGroup) {
-  function refreshGroupRegistrations(photos: PhotoItem[]) {
-    for (const id of registrationIds) {
-      parentGroup.unregister(id)
+  function syncRegistrations(photos: PhotoItem[]) {
+    const newIds = new Set(photos.map(photoId))
+    const oldIds = new Set(idToSymbol.keys())
+
+    // Remove photos that are no longer present
+    for (const pid of oldIds) {
+      if (!newIds.has(pid)) {
+        const sym = idToSymbol.get(pid)!
+        parentGroup!.unregister(sym)
+        idToSymbol.delete(pid)
+      }
     }
 
+    // Register new photos (preserve order in registrationIds for index mapping)
     registrationIds = photos.map((photo, index) => {
-      const id = Symbol()
-      parentGroup.register(id, photo, () => thumbElsMap[index] ?? null, null)
-      return id
+      const pid = photoId(photo)
+      let sym = idToSymbol.get(pid)
+      if (!sym) {
+        sym = Symbol()
+        idToSymbol.set(pid, sym)
+        parentGroup!.register(sym, photo, () => thumbElsMap[index] ?? null, null)
+      }
+      return sym
     })
   }
 
   watch(() => props.photos.slice(), (photos) => {
-    refreshGroupRegistrations(photos)
+    syncRegistrations(photos)
   }, { immediate: true })
 
   onBeforeUnmount(() => {
-    for (const id of registrationIds) {
-      parentGroup.unregister(id)
+    for (const sym of registrationIds) {
+      parentGroup.unregister(sym)
     }
+    idToSymbol.clear()
     registrationIds = []
   })
 }
 
-// Layout
+// ─── Layout ──────────────────────────────────────────────────────────────────
+
 const containerRef = ref<HTMLElement | null>(null)
-const containerWidth = ref(1200) // SSR-safe initial value; corrected by ResizeObserver on mount
+const containerWidth = ref(0)
+const layoutReady = ref(false)
 
 let resizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   if (!containerRef.value) return
 
-  containerWidth.value = containerRef.value.getBoundingClientRect().width
-
   resizeObserver = new ResizeObserver((entries) => {
     const width = entries[0]?.contentRect.width
-    if (width && width > 0) containerWidth.value = width
+    if (width && width > 0) {
+      containerWidth.value = width
+      layoutReady.value = true
+    }
   })
   resizeObserver.observe(containerRef.value)
 })
@@ -196,7 +256,7 @@ onBeforeUnmount(() => {
 })
 
 const groups = computed<LayoutGroup[]>(() => {
-  if (containerWidth.value <= 0) return []
+  if (!layoutReady.value || containerWidth.value <= 0) return []
 
   const input = {
     photos: props.photos,
@@ -227,10 +287,6 @@ const containerStyle = computed<CSSProperties>(() => {
     return { width: '100%' }
   }
   return {
-    display: 'flex',
-    flexDirection: props.layout === 'rows' ? 'column' : 'row',
-    flexWrap: 'nowrap',
-    justifyContent: props.layout === 'rows' ? undefined : 'space-between',
     width: '100%',
   }
 })
@@ -248,10 +304,6 @@ function groupStyle(group: LayoutGroup): CSSProperties {
 
   if (group.type === 'row') {
     return {
-      alignItems: 'flex-start',
-      display: 'flex',
-      flexFlow: 'row nowrap',
-      justifyContent: 'space-between',
       marginBottom: group.index < groups.value.length - 1 ? `${props.spacing}px` : undefined,
     }
   }
@@ -264,10 +316,6 @@ function groupStyle(group: LayoutGroup): CSSProperties {
     || group.columnsRatios === undefined
   ) {
     return {
-      alignItems: 'flex-start',
-      display: 'flex',
-      flexFlow: 'column nowrap',
-      justifyContent: props.layout === 'columns' ? 'space-between' : 'flex-start',
       marginLeft: group.index > 0 ? `${props.spacing}px` : undefined,
       width: `calc((100% - ${props.spacing * (columnsCount - 1)}px) / ${columnsCount})`,
     }
@@ -281,10 +329,6 @@ function groupStyle(group: LayoutGroup): CSSProperties {
   )
 
   return {
-    alignItems: 'flex-start',
-    display: 'flex',
-    flexFlow: 'column nowrap',
-    justifyContent: 'space-between',
     marginLeft: group.index > 0 ? `${props.spacing}px` : undefined,
     width: `calc((100% - ${round(
       (columnsCount - 1) * props.spacing
@@ -298,8 +342,11 @@ function groupStyle(group: LayoutGroup): CSSProperties {
 }
 
 function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
+  const cursor = hasLightbox.value ? { cursor: 'pointer' } : {}
+
   if (group.type === 'grid') {
     return {
+      ...cursor,
       gridColumn: (entry.colSpan ?? 1) > 1 ? `span ${entry.colSpan}` : undefined,
       gridRow: (entry.rowSpan ?? 1) > 1 ? `span ${entry.rowSpan}` : undefined,
       overflow: 'hidden',
@@ -310,6 +357,7 @@ function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
   if (group.type === 'row') {
     const gaps = props.spacing * (entry.itemsCount - 1) + 2 * props.padding * entry.itemsCount
     return {
+      ...cursor,
       boxSizing: 'content-box',
       display: 'block',
       height: 'auto',
@@ -323,6 +371,7 @@ function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
 
   const isLast = entry.positionIndex === entry.itemsCount - 1
   return {
+    ...cursor,
     boxSizing: 'content-box',
     display: 'block',
     height: 'auto',

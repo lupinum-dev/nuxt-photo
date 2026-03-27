@@ -1,7 +1,11 @@
+const CAPACITY = 32
+
 type Sample = { x: number; y: number; time: number }
 
 export class VelocityTracker {
-  private samples: Sample[] = []
+  private readonly buffer: (Sample | undefined)[] = new Array(CAPACITY)
+  private head = 0
+  private count = 0
   private readonly windowMs: number
 
   constructor(windowMs = 100) {
@@ -9,32 +13,35 @@ export class VelocityTracker {
   }
 
   reset() {
-    this.samples.length = 0
+    this.head = 0
+    this.count = 0
   }
 
   addSample(x: number, y: number, time: number) {
-    this.samples.push({ x, y, time })
-    const cutoff = time - this.windowMs * 2
-    while (this.samples.length > 2 && this.samples[0]!.time < cutoff) {
-      this.samples.shift()
-    }
+    this.buffer[this.head] = { x, y, time }
+    this.head = (this.head + 1) % CAPACITY
+    if (this.count < CAPACITY) this.count++
   }
 
   getVelocity(): { vx: number; vy: number } {
-    if (this.samples.length < 2) return { vx: 0, vy: 0 }
+    if (this.count < 2) return { vx: 0, vy: 0 }
 
-    const now = this.samples[this.samples.length - 1]!.time
-    const cutoff = now - this.windowMs
+    const newestSlot = (this.head - 1 + CAPACITY) % CAPACITY
+    const newest = this.buffer[newestSlot]!
+    const cutoff = newest.time - this.windowMs
 
-    let oldest = this.samples[this.samples.length - 1]!
-    for (const s of this.samples) {
+    // Iterate from oldest to newest to find the oldest sample still within window
+    const startSlot = (this.head - this.count + CAPACITY) % CAPACITY
+    let oldest = newest
+    for (let i = 0; i < this.count; i++) {
+      const slot = (startSlot + i) % CAPACITY
+      const s = this.buffer[slot]!
       if (s.time >= cutoff) {
         oldest = s
         break
       }
     }
 
-    const newest = this.samples[this.samples.length - 1]!
     const elapsed = newest.time - oldest.time
     if (elapsed < 1) return { vx: 0, vy: 0 }
 

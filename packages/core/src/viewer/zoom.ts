@@ -1,4 +1,4 @@
-import type { PanState, RectLike, ZoomState } from '../types'
+import type { PanState, PhotoItem, RectLike, ZoomState } from '../types'
 import { fitRect, rubberband } from '../geometry/rect'
 
 /**
@@ -18,17 +18,23 @@ export function computeFittedFrame(
 
 /**
  * Compute zoom levels for a photo within a given area.
+ * Respects an optional `photo.meta.maxZoom` override; the hard floor is 1 (no zoom).
  */
 export function computeZoomLevels(
   photoWidth: number,
   photoHeight: number,
   areaWidth: number,
   areaHeight: number,
+  photo?: PhotoItem,
 ): ZoomState {
   const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
 
-  const naturalMax = Math.max(
-    2,
+  const metaMax = typeof photo?.meta?.maxZoom === 'number' && (photo.meta.maxZoom as number) > 0
+    ? (photo.meta.maxZoom as number)
+    : null
+
+  const naturalMax = metaMax ?? Math.max(
+    1,
     Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
   )
   const secondary = Math.min(2, naturalMax)

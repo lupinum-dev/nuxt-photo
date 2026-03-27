@@ -145,6 +145,7 @@ describe('recipe contracts', () => {
     const unregister = vi.fn()
 
     const parentGroup: PhotoGroupContext = {
+      mode: 'explicit',
       register,
       unregister,
       open: vi.fn(async () => {}),
@@ -165,20 +166,24 @@ describe('recipe contracts', () => {
       provideValues: [[PhotoGroupContextKey, parentGroup]],
     })
 
+    // Initial: a and b registered
     expect(register.mock.calls.map(call => call[1].id)).toEqual(['a', 'b'])
 
+    // Reorder + insert c: only c is newly registered (diff-based — a and b preserved)
     photos.value = [b, a, c]
     await flushUi()
+    expect(register.mock.calls.map(call => call[1].id)).toEqual(['a', 'b', 'c'])
+    expect(unregister).not.toHaveBeenCalled()
 
-    expect(register.mock.calls.slice(-3).map(call => call[1].id)).toEqual(['b', 'a', 'c'])
-
+    // Remove b: only b gets unregistered; c and a are preserved
     photos.value = [c, a]
     await flushUi()
+    expect(register).toHaveBeenCalledTimes(3) // no new registrations
+    expect(unregister).toHaveBeenCalledTimes(1) // b removed
 
-    expect(register.mock.calls.slice(-2).map(call => call[1].id)).toEqual(['c', 'a'])
-    expect(unregister).toHaveBeenCalledTimes(5)
-
+    // Unmount: remaining registrations (c, a) cleaned up
     mounted.unmount()
+    expect(unregister).toHaveBeenCalledTimes(3) // b + c + a
   })
 
   it('renders custom solo slide content through a custom lightbox recipe', async () => {

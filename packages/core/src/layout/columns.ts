@@ -1,4 +1,5 @@
 import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import { validatePhotoDimensions } from './types'
 import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
 function ratio(item: PhotoItem) {
@@ -112,7 +113,8 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
 export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
-  const { photos, containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
   const targetColumnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns

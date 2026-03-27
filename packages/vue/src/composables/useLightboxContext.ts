@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
 import {
   ensureImageLoaded,
   lockBodyScroll,
@@ -6,16 +6,28 @@ import {
   createDebug,
   createTransitionMode,
   isUsableRect,
+  photoId,
   type CarouselConfig,
   type PhotoItem,
   type AreaMetrics,
+  type TransitionMode,
+  type TransitionModeConfig,
 } from '@nuxt-photo/core'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
 
-export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]>) {
+export type LightboxTransitionOption = TransitionMode | TransitionModeConfig
+
+export function useLightboxContext(
+  photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
+  transitionOption?: LightboxTransitionOption,
+) {
+  if (process.env.NODE_ENV !== 'production' && !getCurrentInstance()) {
+    console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
+  }
+
   const photos = computed(() => {
     const value = toValue(photosInput)
     return Array.isArray(value) ? value : [value]
@@ -24,6 +36,26 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
 
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
+
+  // Apply user-provided transition option
+  if (transitionOption) {
+    if (typeof transitionOption === 'string') {
+      transitionConfig.mode = transitionOption
+    } else {
+      transitionConfig.mode = transitionOption.mode
+      transitionConfig.autoThreshold = transitionOption.autoThreshold
+    }
+  }
+
+  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
+  if (
+    typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    && transitionConfig.mode !== 'none'
+  ) {
+    transitionConfig.mode = 'fade'
+  }
 
   if (typeof window !== 'undefined') {
     ;(window as any).__NUXT_PHOTO_DEBUG__ = debug.flags
@@ -110,21 +142,38 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
 
   let skipActiveIndexWatch = false
 
+  // Track whether the keyboard listener is currently attached
+  let keydownAttached = false
+
+  function attachKeydown() {
+    if (typeof window === 'undefined' || keydownAttached) return
+    window.addEventListener('keydown', gestures.onKeydown)
+    keydownAttached = true
+  }
+
+  function detachKeydown() {
+    if (typeof window === 'undefined' || !keydownAttached) return
+    window.removeEventListener('keydown', gestures.onKeydown)
+    keydownAttached = false
+  }
+
   async function open(photoOrIndex: PhotoItem | number = 0) {
     const index = typeof photoOrIndex === 'number'
       ? photoOrIndex
-      : photos.value.findIndex(photo => photo === photoOrIndex || photo.id === photoOrIndex.id)
+      : photos.value.findIndex(photo => photoId(photo) === photoId(photoOrIndex as PhotoItem))
 
     skipActiveIndexWatch = true
-    ghost.closeDragY.value = 0
+    ghost.setCloseDragY(0)
     carousel.goTo(index >= 0 ? index : 0, true)
+    attachKeydown()
     await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
     skipActiveIndexWatch = false
   }
 
   async function close() {
     await ghost.close(closeCallbacks)
-    ghost.closeDragY.value = 0
+    ghost.setCloseDragY(0)
+    detachKeydown()
   }
 
   function next() {
@@ -149,7 +198,7 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
     uiVisible: ghost.uiVisible,
     panState: panzoom.panState,
     zoomState: panzoom.zoomState,
-    closeDragY: ghost.closeDragY,
+    setCloseDragY: ghost.setCloseDragY,
     transitionInProgress: ghost.transitionInProgress,
 
     panzoomMotion: panzoom.panzoomMotion,
@@ -175,11 +224,33 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
     lockBodyScroll(mounted)
   })
 
-  watch(photos, async () => {
-    if (ghost.lightboxMounted.value) {
-      await close()
+  // Watch photos array — only close if the active photo was removed; otherwise maintain position
+  watch(photos, (newPhotos, oldPhotos) => {
+    if (!newPhotos || !oldPhotos) return
+
+    const newIds = new Set(newPhotos.map(photoId))
+    const oldIds = new Set(oldPhotos.map(photoId))
+
+    // No change in IDs
+    if (newIds.size === oldIds.size && [...newIds].every(id => oldIds.has(id))) return
+
+    const activePhoto = carousel.currentPhoto.value
+    const activeId = activePhoto ? photoId(activePhoto) : null
+
+    if (!activeId || !newIds.has(activeId)) {
+      // Active photo was removed or array is empty — close
+      if (ghost.lightboxMounted.value) {
+        void close()
+      }
+      carousel.goTo(0, true)
+      return
     }
-    carousel.goTo(0, true)
+
+    // Active photo still exists — jump to its new index
+    const newIndex = newPhotos.findIndex(p => photoId(p) === activeId)
+    if (newIndex !== -1 && newIndex !== carousel.activeIndex.value) {
+      carousel.goTo(newIndex, true)
+    }
   })
 
   watch(carousel.activeIndex, async (newIndex) => {
@@ -198,7 +269,6 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
 
   onMounted(() => {
     if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', gestures.onKeydown)
       window.addEventListener('resize', onResize)
 
       for (const photo of photos.value) {
@@ -209,9 +279,9 @@ export function useLightboxContext(photosInput: MaybeRef<PhotoItem | PhotoItem[]
 
   onBeforeUnmount(() => {
     gestures.cancelTapTimer()
+    detachKeydown()
 
     if (typeof window !== 'undefined') {
-      window.removeEventListener('keydown', gestures.onKeydown)
       window.removeEventListener('resize', onResize)
     }
 

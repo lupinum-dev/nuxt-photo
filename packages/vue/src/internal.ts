@@ -1,4 +1,4 @@
-export { useLightboxContext } from './composables/useLightboxContext'
+export { useLightboxContext, type LightboxTransitionOption } from './composables/useLightboxContext'
 export { provideLightboxContexts } from './provide/lightbox'
 export {
   type LightboxCaptionContext,
@@ -23,4 +23,5 @@ export {
   ImageAdapterKey,
   PhotoGroupContextKey,
   type PhotoGroupContext,
+  LightboxComponentKey,
 } from './provide/keys'

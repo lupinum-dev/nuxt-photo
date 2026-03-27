@@ -1,4 +1,4 @@
-import type { CSSProperties, ComputedRef, InjectionKey, Ref } from 'vue'
+import type { Component, CSSProperties, ComputedRef, InjectionKey, Ref } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import type { useLightboxContext } from '../composables/useLightboxContext'
 
@@ -23,7 +23,7 @@ export type LightboxStageContext = Pick<
 >
 export type LightboxSlidesContext = Pick<
   LightboxContext,
-  'getSlideEffectStyle' | 'getSlideFrameStyle' | 'setSlideZoomRef'
+  'activeIndex' | 'getSlideEffectStyle' | 'getSlideFrameStyle' | 'setSlideZoomRef'
 >
 export type LightboxCaptionContext = Pick<LightboxContext, 'activeIndex' | 'activePhoto'>
 
@@ -41,6 +41,8 @@ export const LightboxSlideRendererKey: InjectionKey<(photo: PhotoItem) => Lightb
 export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
 
 export interface PhotoGroupContext {
+  /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
+  mode: 'auto' | 'explicit'
   register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
   unregister(id: symbol): void
   open(photoOrIndex: PhotoItem | number): Promise<void>
@@ -49,3 +51,13 @@ export interface PhotoGroupContext {
 }
 
 export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol('nuxt-photo:photo-group')
+
+/**
+ * Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
+ * use it by default without requiring per-instance :lightbox props.
+ *
+ * Usage in app.vue:
+ *   import MyLightbox from '~/components/Lightbox.vue'
+ *   provide(LightboxComponentKey, MyLightbox)
+ */
+export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')

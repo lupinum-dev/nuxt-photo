@@ -97,7 +97,11 @@ describe('nuxt-photo module', () => {
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
-    expect(nuxt.options.css).toEqual(['@nuxt-photo/recipes/styles/lightbox.css'])
+    expect(nuxt.options.css).toEqual([
+      '@nuxt-photo/recipes/styles/lightbox-structure.css',
+      '@nuxt-photo/recipes/styles/lightbox-theme.css',
+      '@nuxt-photo/recipes/styles/album.css',
+    ])
   })
 
   it('skips component registration when disabled', () => {
@@ -117,7 +121,7 @@ describe('nuxt-photo module', () => {
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'NuxtPhotoPhoto',
+      name: 'NuxtPhotoImage',
       export: 'Photo',
       filePath: '@nuxt-photo/recipes',
     }))

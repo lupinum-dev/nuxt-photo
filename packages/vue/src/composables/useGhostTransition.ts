@@ -582,6 +582,10 @@ export function useGhostTransition(
     void closeFn()
   }
 
+  function setCloseDragY(val: number) {
+    closeDragY.value = val
+  }
+
   return {
     lightboxMounted,
     animating,
@@ -601,6 +605,7 @@ export function useGhostTransition(
     lightboxUiStyle,
 
     setThumbRef,
+    setCloseDragY,
     open,
     close,
     animateCloseDragTo,

@@ -6,15 +6,17 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { ref, computed, provide, type Component, type ComponentPublicInstance } from 'vue'
+import { ref, computed, inject, provide, type Component } from 'vue'
 import {
   provideLightboxContexts,
   PhotoGroupContextKey,
+  LightboxComponentKey,
   type LightboxSlideRenderer,
   type PhotoGroupContext,
   useLightboxContext,
+  type LightboxTransitionOption,
 } from '@nuxt-photo/vue/internal'
-import type { PhotoItem } from '@nuxt-photo/core'
+import { photoId, type PhotoItem } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
 
 const props = withDefaults(defineProps<{
@@ -22,32 +24,41 @@ const props = withDefaults(defineProps<{
   photos?: PhotoItem[]
   /** Lightbox to render: true = default, false = none, Component = custom */
   lightbox?: boolean | Component
+  /** Transition mode for open/close animations */
+  transition?: LightboxTransitionOption
 }>(), {
   lightbox: true,
 })
 
-// Registration storage: ordered insertion via array + map
+// Global lightbox override (set via provide(LightboxComponentKey, MyLightbox) in app.vue)
+const injectedLightbox = inject(LightboxComponentKey, null)
+
+// Registration storage: Map preserves insertion order (O(1) register/unregister)
 type Registration = {
   photo: PhotoItem
   getThumbEl: () => HTMLElement | null
   renderSlide?: LightboxSlideRenderer | null
 }
 
-const registrationOrder: symbol[] = []
 const registrationMap = new Map<symbol, Registration>()
 const registrationVersion = ref(0)
 
+// 'explicit' when :photos prop is provided; 'auto' when collecting from children
+const groupMode = computed<'auto' | 'explicit'>(() => props.photos !== undefined ? 'explicit' : 'auto')
+
 function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null) {
-  if (!registrationMap.has(id)) {
-    registrationOrder.push(id)
+  if (process.env.NODE_ENV !== 'production') {
+    for (const [existingId, entry] of registrationMap) {
+      if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
+        console.warn(`[nuxt-photo] Duplicate photo id "${photo.id}" registered in PhotoGroup`)
+      }
+    }
   }
   registrationMap.set(id, { photo, getThumbEl, renderSlide })
   registrationVersion.value++
 }
 
 function unregister(id: symbol) {
-  const idx = registrationOrder.indexOf(id)
-  if (idx !== -1) registrationOrder.splice(idx, 1)
   registrationMap.delete(id)
   registrationVersion.value++
 }
@@ -55,12 +66,12 @@ function unregister(id: symbol) {
 // Collected photos (reactive) — either from :photos prop or auto-registered children
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
-  if (props.photos) return props.photos
-  return registrationOrder.map(id => registrationMap.get(id)!.photo)
+  if (props.photos !== undefined) return props.photos
+  return Array.from(registrationMap.values()).map(r => r.photo)
 })
 
 // Full internal lightbox context
-const ctx = useLightboxContext(collectedPhotos)
+const ctx = useLightboxContext(collectedPhotos, props.transition)
 
 // Which photo's thumb is currently hidden during transitions
 const hiddenPhoto = computed<PhotoItem | null>(() => {
@@ -77,14 +88,13 @@ async function open(photoOrIndex: PhotoItem | number = 0) {
   if (typeof photoOrIndex === 'number') {
     index = photoOrIndex
   } else {
-    index = photos.findIndex(p => p === photoOrIndex || p.id === photoOrIndex.id)
+    index = photos.findIndex(p => photoId(p) === photoId(photoOrIndex))
     if (index === -1) index = 0
   }
 
-  // Wire current thumb elements from registrations
-  if (!props.photos) {
-    registrationOrder.forEach((id, i) => {
-      const reg = registrationMap.get(id)!
+  // Wire current thumb elements from registrations (auto mode only)
+  if (props.photos === undefined) {
+    Array.from(registrationMap.values()).forEach((reg, i) => {
       ctx.setThumbRef(i)(reg.getThumbEl())
     })
   }
@@ -94,6 +104,7 @@ async function open(photoOrIndex: PhotoItem | number = 0) {
 
 // Group context for child Photo/PhotoAlbum components
 const groupContext: PhotoGroupContext = {
+  mode: groupMode.value,
   register,
   unregister,
   open,
@@ -101,21 +112,28 @@ const groupContext: PhotoGroupContext = {
   hiddenPhoto,
 }
 
+// Keep mode reactive for children that check it after mount
+Object.defineProperty(groupContext, 'mode', {
+  get: () => groupMode.value,
+  enumerable: true,
+})
+
 provide(PhotoGroupContextKey, groupContext)
 provideLightboxContexts(ctx, {
   resolveSlide: photo => {
-    const registration = registrationOrder
-      .map(id => registrationMap.get(id))
-      .find(entry => entry?.photo === photo || entry?.photo.id === photo.id)
-
-    return registration?.renderSlide ?? null
+    for (const entry of registrationMap.values()) {
+      if (photoId(entry.photo) === photoId(photo)) {
+        return entry.renderSlide ?? null
+      }
+    }
+    return null
   },
 })
 
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
-  if (props.lightbox === true) return InternalLightbox
+  if (props.lightbox === true) return injectedLightbox ?? InternalLightbox
   return props.lightbox as Component
 })
 

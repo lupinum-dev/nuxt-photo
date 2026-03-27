@@ -76,6 +76,7 @@ export function provideLightboxContexts(
   })
 
   provide(LightboxSlidesKey, {
+    activeIndex: ctx.activeIndex,
     getSlideEffectStyle: ctx.getSlideEffectStyle,
     getSlideFrameStyle: ctx.getSlideFrameStyle,
     setSlideZoomRef: ctx.setSlideZoomRef,

@@ -10,7 +10,6 @@
     :bento-sizing="bentoSizing"
     :bento-pattern-interval="bentoPatternInterval"
     :adapter="adapter"
-    :lightbox="resolvedLightbox"
     v-bind="$attrs"
   >
     <template v-if="$slots.thumbnail" #thumbnail="slotProps">
@@ -20,14 +19,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
 import type { BentoSizing, ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 
 defineOptions({ inheritAttrs: false })
 import { PhotoAlbum as RecipePhotoAlbum } from '@nuxt-photo/recipes'
-import Lightbox from './Lightbox.vue'
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   photos: PhotoItem[]
   layout?: 'rows' | 'columns' | 'masonry' | 'bento'
   columns?: number
@@ -38,7 +35,6 @@ const props = withDefaults(defineProps<{
   bentoSizing?: BentoSizing
   bentoPatternInterval?: number
   adapter?: ImageAdapter
-  lightbox?: boolean | Component
 }>(), {
   layout: 'rows',
   columns: 3,
@@ -48,12 +44,5 @@ const props = withDefaults(defineProps<{
   bentoRowHeight: 280,
   bentoSizing: 'auto',
   bentoPatternInterval: 5,
-  lightbox: true,
-})
-
-const resolvedLightbox = computed(() => {
-  if (props.lightbox === false) return false
-  if (props.lightbox === true) return Lightbox
-  return props.lightbox
 })
 </script>

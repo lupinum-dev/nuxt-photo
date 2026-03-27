@@ -9,7 +9,13 @@ export interface NuxtPhotoOptions {
   }
 }
 
-const RECIPE_COMPONENTS = ['Photo', 'PhotoGroup', 'PhotoAlbum'] as const
+// Maps export name → component name suffix (drops redundant "Photo" prefix from recipes)
+const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
+  { export: 'Photo', name: 'Image' },
+  { export: 'PhotoGroup', name: 'Group' },
+  { export: 'PhotoAlbum', name: 'Album' },
+  { export: 'PhotoGallery', name: 'Gallery' },
+]
 const PRIMITIVE_COMPONENTS = [
   'LightboxRoot',
   'LightboxOverlay',
@@ -63,8 +69,8 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
-          name: `${prefix}${component}`,
-          export: component,
+          name: `${prefix}${component.name}`,
+          export: component.export,
           filePath: '@nuxt-photo/recipes',
         })
       }
@@ -83,8 +89,14 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     if (options.css === 'default') {
-      if (!nuxt.options.css.includes('@nuxt-photo/recipes/styles/lightbox.css')) {
-        nuxt.options.css.push('@nuxt-photo/recipes/styles/lightbox.css')
+      for (const css of [
+        '@nuxt-photo/recipes/styles/lightbox-structure.css',
+        '@nuxt-photo/recipes/styles/lightbox-theme.css',
+        '@nuxt-photo/recipes/styles/album.css',
+      ]) {
+        if (!nuxt.options.css.includes(css)) {
+          nuxt.options.css.push(css)
+        }
       }
     }
   },
