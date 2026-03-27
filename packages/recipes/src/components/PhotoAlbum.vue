@@ -15,7 +15,7 @@
           v-for="item in rowItems"
           :key="photoId(item.photo)"
           class="np-album__item"
-          :class="containerQueriesActive ? `np-item-${item.index}` : undefined"
+          :class="[containerQueriesActive ? `np-item-${item.index}` : undefined, itemClass]"
           :style="item.style"
           v-bind="hasLightbox ? {
             ref: setItemRef(item.index),
@@ -43,6 +43,7 @@
               loading="lazy"
               :sizes="item.computedSizes"
               class="np-album__img"
+              :class="imgClass"
               :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${item.photo.width} / ${item.photo.height}` }"
             />
           </div>
@@ -60,6 +61,7 @@
             v-for="(photo, index) in photos"
             :key="photoId(photo)"
             class="np-album__item"
+            :class="itemClass"
             :style="ssrItemStyle(photo)"
             v-bind="hasLightbox ? {
               ref: setItemRef(index),
@@ -86,6 +88,7 @@
                 :adapter="adapter"
                 loading="lazy"
                 class="np-album__img"
+                :class="imgClass"
                 :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${photo.width} / ${photo.height}` }"
               />
             </div>
@@ -109,6 +112,7 @@
               v-for="entry in group.entries"
               :key="entry.photo.id"
               class="np-album__item"
+              :class="itemClass"
               :style="itemStyle(entry, group)"
               v-bind="hasLightbox ? {
                 ref: setItemRef(entry.index),
@@ -138,6 +142,7 @@
                   :adapter="adapter"
                   loading="lazy"
                   class="np-album__img"
+                  :class="imgClass"
                   :style="group.type === 'grid'
                     ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
                     : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
@@ -221,6 +226,10 @@ const props = withDefaults(defineProps<{
   lightbox?: boolean | Component
   /** Transition mode for lightbox open/close */
   transition?: LightboxTransitionOption
+  /** Extra classes for each album item wrapper */
+  itemClass?: string
+  /** Extra classes for each album img element */
+  imgClass?: string
 }>(), {
   layout: 'rows',
   columns: 3,

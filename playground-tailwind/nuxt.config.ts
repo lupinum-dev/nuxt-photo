@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt-photo/nuxt'],
 
   nuxtPhoto: {
-    css: 'default',
+    css: 'structure',
   },
 
   css: ['./assets/css/main.css'],

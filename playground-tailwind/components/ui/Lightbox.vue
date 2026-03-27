@@ -56,6 +56,7 @@
                 :photo="photo"
                 :index="i"
                 class="min-w-0 flex-[0_0_100%]"
+                imgClass="rounded-2xl"
               />
             </div>
           </div>

@@ -3,7 +3,7 @@ import { addComponent, addImports, addPlugin, createResolver, defineNuxtModule, 
 export interface NuxtPhotoOptions {
   autoImports?: boolean
   components?: boolean | { prefix?: string }
-  css?: 'none' | 'default'
+  css?: 'none' | 'structure' | 'all'
   image?: {
     provider?: 'nuxt-image' | 'native' | 'custom'
   }
@@ -56,7 +56,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     components: {
       prefix: 'NuxtPhoto',
     },
-    css: 'default',
+    css: 'structure',
     image: {
       provider: 'native',
     },
@@ -118,16 +118,24 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       addImports(AUTO_IMPORTS.map(name => ({ name, from: '@nuxt-photo/vue' })))
     }
 
-    if (options.css === 'default') {
-      for (const css of [
-        '@nuxt-photo/recipes/styles/lightbox-structure.css',
-        '@nuxt-photo/recipes/styles/lightbox-theme.css',
-        '@nuxt-photo/recipes/styles/album.css',
-        '@nuxt-photo/recipes/styles/photo.css',
-      ]) {
-        if (!nuxt.options.css.includes(css)) {
-          nuxt.options.css.push(css)
-        }
+    const structureCSS = [
+      '@nuxt-photo/recipes/styles/lightbox-structure.css',
+      '@nuxt-photo/recipes/styles/album.css',
+      '@nuxt-photo/recipes/styles/photo-structure.css',
+    ]
+    const themeCSS = [
+      '@nuxt-photo/recipes/styles/lightbox-theme.css',
+      '@nuxt-photo/recipes/styles/photo.css',
+    ]
+
+    const cssFiles
+      = options.css === 'all' ? [...structureCSS, ...themeCSS]
+        : options.css === 'structure' ? structureCSS
+          : []
+
+    for (const css of cssFiles) {
+      if (!nuxt.options.css.includes(css)) {
+        nuxt.options.css.push(css)
       }
     }
   },

@@ -5,8 +5,8 @@
     v-bind="{ ...$attrs, ...interactiveAttrs }"
     :style="figureStyle"
   >
-    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
-    <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
+    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" :class="imgClass" />
+    <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">{{ photo.caption }}</figcaption>
   </figure>
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
 </template>
@@ -31,6 +31,10 @@ const props = defineProps<{
   lightboxIgnore?: boolean
   adapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
+  /** Extra classes for the inner img element */
+  imgClass?: string
+  /** Extra classes for the caption element */
+  captionClass?: string
 }>()
 const slots = useSlots()
 

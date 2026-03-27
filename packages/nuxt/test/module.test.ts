@@ -114,7 +114,7 @@ describe('nuxt-photo module', () => {
     }, nuxt)).toThrow(/requires `@nuxt\/image`/)
   })
 
-  it('injects the default stylesheet once', () => {
+  it('injects structure-only CSS by default (no theme)', () => {
     const nuxt = createNuxt()
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
@@ -122,8 +122,21 @@ describe('nuxt-photo module', () => {
 
     expect(nuxt.options.css).toEqual([
       '@nuxt-photo/recipes/styles/lightbox-structure.css',
-      '@nuxt-photo/recipes/styles/lightbox-theme.css',
       '@nuxt-photo/recipes/styles/album.css',
+      '@nuxt-photo/recipes/styles/photo-structure.css',
+    ])
+  })
+
+  it('injects all CSS (structure + theme) with css: "all"', () => {
+    const nuxt = createNuxt()
+
+    nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css: 'all' }, nuxt)
+
+    expect(nuxt.options.css).toEqual([
+      '@nuxt-photo/recipes/styles/lightbox-structure.css',
+      '@nuxt-photo/recipes/styles/album.css',
+      '@nuxt-photo/recipes/styles/photo-structure.css',
+      '@nuxt-photo/recipes/styles/lightbox-theme.css',
       '@nuxt-photo/recipes/styles/photo.css',
     ])
   })

@@ -1,8 +1,8 @@
 <template>
   <div v-bind="$attrs">
-    <div class="np-lightbox__effect" :style="ctx.getSlideEffectStyle(index)">
-      <div class="np-lightbox__frame" :style="frameStyle">
-        <div class="np-lightbox__zoom" :ref="ctx.setSlideZoomRef(index)">
+    <div data-np-slide-effect :class="effectClass" :style="ctx.getSlideEffectStyle(index)">
+      <div data-np-slide-frame :class="frameClass" :style="frameStyle">
+        <div data-np-slide-zoom :class="zoomClass" :ref="ctx.setSlideZoomRef(index)">
           <slot v-if="$slots.default" :photo="photo" :index="index" :width="frameWidth" :height="frameHeight" />
           <CustomSlideRenderer v-else-if="slideRenderer" :renderer="slideRenderer" :photo="photo" :index="index" />
           <PhotoImage
@@ -10,7 +10,8 @@
             :photo="photo"
             context="slide"
             :loading="isActive ? 'eager' : 'lazy'"
-            class="np-lightbox__img"
+            data-np-slide-img
+            :class="imgClass"
           />
         </div>
       </div>
@@ -29,6 +30,10 @@ import PhotoImage from './PhotoImage.vue'
 const props = defineProps<{
   photo: PhotoItem
   index: number
+  effectClass?: string
+  frameClass?: string
+  zoomClass?: string
+  imgClass?: string
 }>()
 
 const ctx = requireInjection(LightboxContextKey, 'LightboxSlide', 'an active lightbox context')

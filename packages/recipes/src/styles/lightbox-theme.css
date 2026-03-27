@@ -12,6 +12,7 @@
 }
 
 .np-lightbox__btn {
+  border-radius: 999px;
   color: white;
   background: rgba(255, 255, 255, 0.1);
   box-shadow:
@@ -28,7 +29,7 @@
   opacity: 0.45;
 }
 
-.np-lightbox__img {
+[data-np-slide-img] {
   border-radius: 16px;
 }
 

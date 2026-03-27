@@ -1,25 +1,10 @@
-/* Structural styles for Photo recipe */
-
-.np-photo {
-  position: relative;
-  display: inline-block;
-}
-
-.np-photo__img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
+/* Theme styles for Photo recipe — visual appearance */
+/* Requires photo-structure.css for layout */
 
 .np-photo__caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   padding: 24px 16px 12px;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
   color: #fff;
   font-size: 14px;
   line-height: 1.4;
-  pointer-events: none;
 }
