@@ -5,8 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxContextKey } from '../provide/keys'
-import { requireInjection } from '../internal/requireInjection'
+import { useLightboxInject } from '../composables/useLightboxInject'
 
-const ctx = requireInjection(LightboxContextKey, 'LightboxOverlay', 'an active lightbox context')
+const ctx = useLightboxInject('LightboxOverlay')
 </script>

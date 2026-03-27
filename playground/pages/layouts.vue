@@ -64,12 +64,8 @@
     <div class="album-section">
       <PhotoAlbum
         :photos="photos"
-        :layout="layout"
-        :columns="columns"
+        :layout="albumLayout"
         :spacing="spacing"
-        :target-row-height="targetRowHeight"
-        :bento-row-height="bentoRowHeight"
-        :bento-sizing="bentoSizing"
       />
     </div>
 
@@ -81,7 +77,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import type { AlbumLayout } from '@nuxt-photo/core'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'Layouts — nuxt-photo' })
@@ -94,6 +91,15 @@ const targetRowHeight = ref(280)
 const bentoRowHeight = ref(280)
 const bentoSizings = ['auto', 'pattern', 'manual'] as const
 const bentoSizing = ref<'auto' | 'pattern' | 'manual'>('auto')
+
+const albumLayout = computed<AlbumLayout>(() => {
+  switch (layout.value) {
+    case 'rows': return { type: 'rows', targetRowHeight: targetRowHeight.value }
+    case 'columns': return { type: 'columns', columns: columns.value }
+    case 'masonry': return { type: 'masonry', columns: columns.value }
+    case 'bento': return { type: 'bento', columns: columns.value, rowHeight: bentoRowHeight.value, sizing: bentoSizing.value }
+  }
+})
 
 const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 <PhotoAlbum

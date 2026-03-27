@@ -143,7 +143,7 @@ describe('SSR', () => {
 
     it('does not apply container queries to non-rows layouts', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'columns', lightbox: false, breakpoints: [600] }),
+        render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false, breakpoints: [600] }),
       })
       const html = await renderToString(app)
       expect(html).not.toContain('@container')
@@ -153,7 +153,7 @@ describe('SSR', () => {
 
   it('PhotoAlbum SSR columns layout uses CSS grid', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'columns', columns: 3, lightbox: false }),
+      render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false }),
     })
 
     const html = await renderToString(app)
@@ -161,6 +161,19 @@ describe('SSR', () => {
     expect(html).toContain('ssr-1')
     expect(html).toContain('grid-template-columns')
     expect(html).not.toContain('np-album__skeleton')
+  })
+
+  it('PhotoAlbum accepts object-form layout with custom options', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, { photos, layout: { type: 'rows', targetRowHeight: 200 }, lightbox: false }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('ssr-2')
+    expect(html).toContain('ssr-3')
+    expect(html).toContain('flex-grow')
   })
 })
 

@@ -4,9 +4,10 @@
 
     <div class="np-lightbox__ui">
       <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
-        <component
+        <SlotProxy
           v-if="slots?.toolbar"
-          :is="() => slots!.toolbar!({ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled })"
+          :render="slots!.toolbar"
+          :props="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }"
         />
         <div v-else class="np-lightbox__topbar">
           <div class="np-lightbox__counter">
@@ -31,10 +32,10 @@
 
       <div class="np-lightbox__stage">
         <LightboxViewport
-          v-slot="{ photos, emblaRef, mediaOpacity }"
+          v-slot="{ photos, viewportRef, mediaOpacity }"
           class="np-lightbox__media"
         >
-          <div class="np-lightbox__viewport" :ref="emblaRef" :style="{ opacity: mediaOpacity }">
+          <div class="np-lightbox__viewport" :ref="viewportRef" :style="{ opacity: mediaOpacity }">
             <div class="np-lightbox__container">
               <LightboxSlide
                 v-for="(photo, i) in photos"
@@ -44,7 +45,7 @@
                 class="np-lightbox__slide"
               >
                 <template v-if="slots?.slide" #default="slotProps">
-                  <component :is="() => slots!.slide!(slotProps)" />
+                  <SlotProxy :render="slots!.slide!" :props="slotProps" />
                 </template>
               </LightboxSlide>
             </div>
@@ -52,7 +53,7 @@
         </LightboxViewport>
 
         <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <component v-if="slots?.caption" :is="() => slots!.caption!({ photo, index: activeIndex })" />
+          <SlotProxy v-if="slots?.caption" :render="slots!.caption" :props="{ photo, index: activeIndex }" />
           <template v-else>
             <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
             <p v-if="photo?.description">{{ photo.description }}</p>
@@ -77,6 +78,7 @@ import {
   LightboxViewport,
 } from '@nuxt-photo/vue'
 import { LightboxSlotsKey } from '@nuxt-photo/vue/extend'
+import SlotProxy from './SlotProxy'
 
 const slots = inject(LightboxSlotsKey, null)
 </script>

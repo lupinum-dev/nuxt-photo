@@ -10,7 +10,6 @@ export default defineConfig({
     alias: {
       '@nuxt-photo/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
       '@nuxt-photo/vue/extend': fileURLToPath(new URL('./packages/vue/src/extend.ts', import.meta.url)),
-      '@nuxt-photo/vue/internal': fileURLToPath(new URL('./packages/vue/src/internal.ts', import.meta.url)),
       '@nuxt-photo/vue': fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
       '@nuxt-photo/recipes': fileURLToPath(new URL('./packages/recipes/src/index.ts', import.meta.url)),
       '@nuxt-photo/nuxt': fileURLToPath(new URL('./packages/nuxt/src/module.ts', import.meta.url)),

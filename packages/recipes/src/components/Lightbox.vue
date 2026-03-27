@@ -39,8 +39,8 @@
       </LightboxControls>
 
       <div class="np-lightbox__stage">
-        <LightboxViewport v-slot="{ photos, emblaRef, mediaOpacity }" class="np-lightbox__media">
-          <div class="np-lightbox__viewport" :ref="emblaRef" :style="{ opacity: mediaOpacity }">
+        <LightboxViewport v-slot="{ photos, viewportRef, mediaOpacity }" class="np-lightbox__media">
+          <div class="np-lightbox__viewport" :ref="viewportRef" :style="{ opacity: mediaOpacity }">
             <div class="np-lightbox__container">
               <LightboxSlide
                 v-for="(photo, i) in photos"

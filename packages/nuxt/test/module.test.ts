@@ -152,25 +152,98 @@ describe('nuxt-photo module', () => {
     expect(addComponent).not.toHaveBeenCalled()
   })
 
-  it('registers prefixed components by default', () => {
+  it('registers unprefixed components by default', () => {
     const nuxt = createNuxt()
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'NuxtPhotoImage',
+      name: 'Photo',
       export: 'Photo',
       filePath: '@nuxt-photo/recipes',
     }))
     expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'NuxtPhotoImg',
+      name: 'PhotoImage',
       export: 'PhotoImage',
+      filePath: '@nuxt-photo/vue',
+    }))
+    expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'PhotoAlbum',
+      export: 'PhotoAlbum',
+      filePath: '@nuxt-photo/recipes',
+    }))
+    expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'LightboxRoot',
+      export: 'LightboxRoot',
       filePath: '@nuxt-photo/vue',
     }))
     expect(addComponent).not.toHaveBeenCalledWith(expect.objectContaining({
       export: 'Lightbox',
       filePath: '@nuxt-photo/recipes',
     }))
+  })
+
+  it('registers components with custom prefix', () => {
+    const nuxt = createNuxt()
+
+    nuxtPhotoModule.setup({
+      ...nuxtPhotoModule.defaults,
+      components: { prefix: 'Np' },
+    }, nuxt)
+
+    expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'NpPhoto',
+      export: 'Photo',
+      filePath: '@nuxt-photo/recipes',
+    }))
+    expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'NpPhotoImage',
+      export: 'PhotoImage',
+      filePath: '@nuxt-photo/vue',
+    }))
+    expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'NpLightboxRoot',
+      export: 'LightboxRoot',
+      filePath: '@nuxt-photo/vue',
+    }))
+  })
+
+  it('auto-detects @nuxt/image when provider is auto (default)', () => {
+    const nuxt = createNuxt()
+    hasNuxtModule.mockReturnValue(true)
+
+    nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+    nuxt.callHook('modules:done')
+
+    expect(addPlugin).toHaveBeenCalledWith({
+      src: '/resolved/./runtime/plugin',
+    }, {
+      append: true,
+    })
+  })
+
+  it('falls back to native when @nuxt/image is not installed (auto mode)', () => {
+    const nuxt = createNuxt()
+    hasNuxtModule.mockReturnValue(false)
+
+    nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+    nuxt.callHook('modules:done')
+
+    expect(addPlugin).not.toHaveBeenCalled()
+  })
+
+  it('skips image provider entirely when image: false', () => {
+    const nuxt = createNuxt()
+    hasNuxtModule.mockReturnValue(true)
+
+    nuxtPhotoModule.setup({
+      ...nuxtPhotoModule.defaults,
+      image: false,
+    }, nuxt)
+
+    nuxt.callHook('modules:done')
+
+    expect(addPlugin).not.toHaveBeenCalled()
   })
 
   it('only auto-imports vue composables', () => {

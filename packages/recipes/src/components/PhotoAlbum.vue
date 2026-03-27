@@ -2,13 +2,13 @@
   <div
     ref="containerRef"
     class="np-album"
-    :class="`np-album--${props.layout}`"
+    :class="`np-album--${layoutType}`"
     :style="containerStyle"
   >
     <!-- Rows: flat flex, no DOM switch = zero CLS.
          Pre-mount: CSS flex-grow approximation; post-mount: JS-computed widths on same elements.
          With breakpoints: container query rules handle all widths from first paint; JS syncs after mount. -->
-    <template v-if="props.layout === 'rows'">
+    <template v-if="layoutType === 'rows'">
       <component v-if="containerQueryCSS" :is="'style'">{{ containerQueryCSS }}</component>
       <div :style="ssrWrapperStyle">
         <div
@@ -175,7 +175,7 @@ import {
   type PhotoItem,
   type PhotoAdapter,
   type ImageAdapter,
-  type BentoSizing,
+  type AlbumLayout,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
@@ -185,19 +185,19 @@ const props = withDefaults(defineProps<{
   photos: PhotoItem[] | any[]
   /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
   photoAdapter?: PhotoAdapter
-  layout?: 'rows' | 'columns' | 'masonry' | 'bento'
-  /** Number of columns (columns/masonry/bento layouts). Accepts a responsive function. @default 3 */
-  columns?: ResponsiveParameter<number>
+  /**
+   * Layout algorithm and its options. Pass a string for defaults, or an object for full control.
+   *
+   * @example
+   * layout="rows"
+   * :layout="{ type: 'rows', targetRowHeight: 280 }"
+   * :layout="{ type: 'bento', columns: 3, rowHeight: 280, sizing: 'auto' }"
+   */
+  layout?: AlbumLayout | AlbumLayout['type']
   /** Gap between images in pixels. Accepts a responsive function. @default 8 */
   spacing?: ResponsiveParameter<number>
   /** Outer padding around each image in pixels. Accepts a responsive function. @default 0 */
   padding?: ResponsiveParameter<number>
-  /** Target row height in pixels (rows layout only). Accepts a responsive function. @default 300 */
-  targetRowHeight?: ResponsiveParameter<number>
-  /** Row height in pixels (bento layout only). Accepts a responsive function. @default 280 */
-  bentoRowHeight?: ResponsiveParameter<number>
-  bentoSizing?: BentoSizing
-  bentoPatternInterval?: number
   /**
    * Assumed container width in pixels for SSR.
    * When set, the JS row layout runs on the server so the SSR HTML matches the
@@ -232,14 +232,27 @@ const props = withDefaults(defineProps<{
   imgClass?: string
 }>(), {
   layout: 'rows',
-  columns: 3,
   spacing: 8,
   padding: 0,
-  targetRowHeight: 300,
-  bentoRowHeight: 280,
-  bentoSizing: 'auto',
-  bentoPatternInterval: 5,
   lightbox: true,
+})
+
+// Normalize layout prop: string → object with defaults
+const normalizedLayout = computed<AlbumLayout>(() => {
+  const raw = props.layout
+  if (typeof raw === 'object') return raw
+  switch (raw) {
+    case 'rows': return { type: 'rows' }
+    case 'columns': return { type: 'columns' }
+    case 'masonry': return { type: 'masonry' }
+    case 'bento': return { type: 'bento' }
+    default: {
+      if ((globalThis as any).process?.env?.NODE_ENV !== 'production') {
+        console.warn(`[nuxt-photo] Unknown layout type "${raw}", falling back to "rows"`)
+      }
+      return { type: 'rows' }
+    }
+  }
 })
 
 if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production' && props.defaultContainerWidth === 0) {
@@ -256,6 +269,31 @@ const photos = computed<PhotoItem[]>(() =>
 
 const hasLightbox = computed(() => props.lightbox !== false)
 
+const layoutType = computed(() => normalizedLayout.value.type)
+const layoutColumns = computed(() => {
+  const l = normalizedLayout.value
+  if (l.type === 'columns' || l.type === 'masonry' || l.type === 'bento') {
+    return l.columns ?? 3
+  }
+  return 3
+})
+const layoutTargetRowHeight = computed(() => {
+  const l = normalizedLayout.value
+  return l.type === 'rows' ? (l.targetRowHeight ?? 300) : 300
+})
+const layoutBentoRowHeight = computed(() => {
+  const l = normalizedLayout.value
+  return l.type === 'bento' ? (l.rowHeight ?? 280) : 280
+})
+const layoutBentoSizing = computed(() => {
+  const l = normalizedLayout.value
+  return l.type === 'bento' ? (l.sizing ?? 'auto') : 'auto'
+})
+const layoutBentoPatternInterval = computed(() => {
+  const l = normalizedLayout.value
+  return l.type === 'bento' ? (l.patternInterval ?? 5) : 5
+})
+
 const {
   containerRef, isMounted, containerStyle,
   containerQueryCSS, containerQueriesActive,
@@ -264,14 +302,14 @@ const {
   groupStyle, itemStyle,
 } = usePhotoLayout({
   photos,
-  layout: computed(() => props.layout),
-  columns: computed(() => props.columns),
+  layout: layoutType,
+  columns: layoutColumns,
   spacing: computed(() => props.spacing),
   padding: computed(() => props.padding),
-  targetRowHeight: computed(() => props.targetRowHeight),
-  bentoRowHeight: computed(() => props.bentoRowHeight),
-  bentoSizing: computed(() => props.bentoSizing),
-  bentoPatternInterval: computed(() => props.bentoPatternInterval),
+  targetRowHeight: layoutTargetRowHeight,
+  bentoRowHeight: layoutBentoRowHeight,
+  bentoSizing: layoutBentoSizing,
+  bentoPatternInterval: layoutBentoPatternInterval,
   defaultContainerWidth: props.defaultContainerWidth,
   breakpoints: props.breakpoints,
   sizes: props.sizes,

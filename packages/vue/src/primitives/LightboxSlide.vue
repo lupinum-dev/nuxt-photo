@@ -22,9 +22,9 @@
 <script setup lang="ts">
 import { computed, defineComponent, inject, type FunctionalComponent } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { LightboxContextKey, LightboxSlideRendererKey } from '../provide/keys'
+import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
-import { requireInjection } from '../internal/requireInjection'
+import { useLightboxInject } from '../composables/useLightboxInject'
 import PhotoImage from './PhotoImage.vue'
 
 const props = defineProps<{
@@ -36,7 +36,7 @@ const props = defineProps<{
   imgClass?: string
 }>()
 
-const ctx = requireInjection(LightboxContextKey, 'LightboxSlide', 'an active lightbox context')
+const ctx = useLightboxInject('LightboxSlide')
 const resolveSlide = inject(LightboxSlideRendererKey, () => null)
 
 const slideRenderer = computed(() => resolveSlide(props.photo))

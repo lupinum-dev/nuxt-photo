@@ -4,8 +4,8 @@ export interface NuxtPhotoOptions {
   autoImports?: boolean
   components?: boolean | { prefix?: string }
   css?: 'none' | 'structure' | 'all'
-  image?: {
-    provider?: 'nuxt-image' | 'native' | 'custom'
+  image?: false | {
+    provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
   }
   lightbox?: {
     minZoom?: number
@@ -20,15 +20,14 @@ type NuxtPhotoAppConfig = {
   }
 }
 
-// Maps export name → component name suffix (drops redundant "Photo" prefix from recipes)
+// Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
-  { export: 'Photo', name: 'Image' },
-  { export: 'PhotoGroup', name: 'Group' },
-  { export: 'PhotoAlbum', name: 'Album' },
-  { export: 'PhotoGallery', name: 'Gallery' },
+  { export: 'Photo', name: 'Photo' },
+  { export: 'PhotoGroup', name: 'PhotoGroup' },
+  { export: 'PhotoAlbum', name: 'PhotoAlbum' },
+  { export: 'PhotoGallery', name: 'PhotoGallery' },
 ]
-// Maps export name → component name suffix (strips "Photo" prefix to avoid stutter like NuxtPhotoPhotoTrigger)
-// PhotoImage → Img (not Image, to avoid collision with recipe Photo → Image)
+// Primitive components — registered as `{prefix}{name}`
 const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxRoot', name: 'LightboxRoot' },
   { export: 'LightboxOverlay', name: 'LightboxOverlay' },
@@ -37,8 +36,8 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxControls', name: 'LightboxControls' },
   { export: 'LightboxCaption', name: 'LightboxCaption' },
   { export: 'LightboxPortal', name: 'LightboxPortal' },
-  { export: 'PhotoTrigger', name: 'Trigger' },
-  { export: 'PhotoImage', name: 'Img' },
+  { export: 'PhotoTrigger', name: 'PhotoTrigger' },
+  { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
 const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
@@ -54,28 +53,34 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   defaults: {
     autoImports: true,
     components: {
-      prefix: 'NuxtPhoto',
+      prefix: '',
     },
     css: 'structure',
     image: {
-      provider: 'native',
+      provider: 'auto',
     },
   },
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
-    const imageProvider = options.image?.provider ?? 'native'
     const minZoom = options.lightbox?.minZoom
 
-    if (imageProvider === 'nuxt-image') {
-      if (!hasNuxtModule('@nuxt/image')) {
-        throw new Error('[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.')
-      }
+    if (options.image !== false) {
+      const explicit = options.image?.provider ?? 'auto'
+      const imageProvider = explicit === 'auto'
+        ? (hasNuxtModule('@nuxt/image') ? 'nuxt-image' : 'native')
+        : explicit
 
-      nuxt.hook('modules:done', () => {
-        addPlugin({
-          src: resolve('./runtime/plugin'),
-        }, { append: true })
-      })
+      if (imageProvider === 'nuxt-image') {
+        if (!hasNuxtModule('@nuxt/image')) {
+          throw new Error('[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.')
+        }
+
+        nuxt.hook('modules:done', () => {
+          addPlugin({
+            src: resolve('./runtime/plugin'),
+          }, { append: true })
+        })
+      }
     }
 
     if (minZoom != null) {
@@ -95,7 +100,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     if (options.components !== false) {
-      const prefix = typeof options.components === 'object' ? options.components.prefix || 'NuxtPhoto' : 'NuxtPhoto'
+      const prefix = typeof options.components === 'object' ? (options.components.prefix ?? '') : ''
 
       for (const component of RECIPE_COMPONENTS) {
         addComponent({

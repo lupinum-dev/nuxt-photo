@@ -14,6 +14,9 @@
 // Full engine composable (returns 50+ properties)
 export { useLightboxContext, type LightboxTransitionOption } from './composables/useLightboxContext'
 
+// Typed inject helper — use inside primitive components instead of raw inject()
+export { useLightboxInject } from './composables/useLightboxInject'
+
 // Provider function (for manual context wiring)
 export { provideLightboxContexts } from './provide/lightbox'
 
@@ -33,22 +36,3 @@ export {
   type LightboxSlotOverrides,
 } from './provide/keys'
 
-// Deprecated individual keys — kept for backward compatibility
-export {
-  type LightboxCaptionContext,
-  LightboxCaptionKey,
-  type LightboxChromeContext,
-  LightboxChromeKey,
-  type LightboxControllerContext,
-  LightboxControllerKey,
-  type LightboxOverlayContext,
-  LightboxOverlayKey,
-  type LightboxPortalContext,
-  LightboxPortalKey,
-  type LightboxSlidesContext,
-  LightboxSlidesKey,
-  type LightboxStageContext,
-  LightboxStageKey,
-  type LightboxTriggerContext,
-  LightboxTriggerKey,
-} from './provide/keys'

@@ -181,6 +181,41 @@ export type LayoutGroup = {
   columnsRatios?: number[]
 }
 
+// ─── Album layout (discriminated union for PhotoAlbum) ───
+
+export type RowsAlbumLayout = {
+  type: 'rows'
+  targetRowHeight?: ResponsiveParameter<number>
+}
+
+export type ColumnsAlbumLayout = {
+  type: 'columns'
+  columns?: ResponsiveParameter<number>
+}
+
+export type MasonryAlbumLayout = {
+  type: 'masonry'
+  columns?: ResponsiveParameter<number>
+}
+
+export type BentoAlbumLayout = {
+  type: 'bento'
+  columns?: ResponsiveParameter<number>
+  rowHeight?: ResponsiveParameter<number>
+  sizing?: BentoSizing
+  patternInterval?: number
+}
+
+/**
+ * Discriminated layout config for `PhotoAlbum`.
+ * Each variant only accepts the props relevant to that layout type.
+ *
+ * @example
+ * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
+ * <PhotoAlbum :photos="photos" :layout="{ type: 'bento', columns: 3, rowHeight: 280 }" />
+ */
+export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout | BentoAlbumLayout
+
 // ─── Image adapter ───
 
 export type ImageSource = {
@@ -205,15 +240,19 @@ export type ImageAdapter = (photo: PhotoItem<any>, context: ImageContext) => Ima
 // ─── Responsive parameters ───
 
 /**
- * A prop value that can be a plain number or a function that receives the current
- * container width and returns a number. Allows per-breakpoint customisation without
- * needing explicit breakpoint arrays.
+ * A prop value that can be a plain value or a function that receives the current
+ * container width and returns a value. Allows per-breakpoint customisation without
+ * needing explicit breakpoint arrays. Defaults to `number` but can be parameterized.
  *
  * @example
- * // static
- * spacing={8}
- * // responsive
- * spacing={(w) => w < 600 ? 4 : 8}
+ * // Static value — same at every container width
+ * :spacing="8"
+ *
+ * // Inline function — full control
+ * :spacing="(w) => w < 600 ? 4 : 8"
+ *
+ * // Breakpoint map via responsive() helper — declarative shorthand
+ * :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
  */
 export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
 
@@ -233,11 +272,18 @@ export function resolveResponsiveParameter<T>(
 /**
  * Create a responsive parameter from a breakpoint map.
  * Keys are minimum container widths (px); values are the parameter at that width.
- * The largest matching breakpoint wins.
+ * The largest matching breakpoint wins (mobile-first).
  *
  * @example
  * // 2 columns below 600px, 3 at 600-899px, 4 at 900px+
  * responsive({ 0: 2, 600: 3, 900: 4 })
+ *
+ * @example
+ * // Use with PhotoAlbum
+ * <PhotoAlbum
+ *   :layout="{ type: 'columns', columns: responsive({ 0: 2, 768: 3, 1200: 4 }) }"
+ *   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
+ * />
  */
 export function responsive<T>(breakpoints: Record<number, T>): (containerWidth: number) => T {
   const sorted = Object.entries(breakpoints)

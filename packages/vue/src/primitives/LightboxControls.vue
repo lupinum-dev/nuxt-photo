@@ -22,8 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxContextKey } from '../provide/keys'
-import { requireInjection } from '../internal/requireInjection'
+import { useLightboxInject } from '../composables/useLightboxInject'
 
-const ctx = requireInjection(LightboxContextKey, 'LightboxControls', 'an active lightbox context')
+const ctx = useLightboxInject('LightboxControls')
 </script>

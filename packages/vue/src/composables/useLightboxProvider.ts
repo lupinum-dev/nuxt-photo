@@ -17,7 +17,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * <template>
  *   <LightboxRoot>
  *     <LightboxOverlay />
- *     <LightboxViewport v-slot="{ photos, emblaRef }">
+ *     <LightboxViewport v-slot="{ photos, viewportRef }">
  *       <!-- custom slide rendering -->
  *     </LightboxViewport>
  *   </LightboxRoot>

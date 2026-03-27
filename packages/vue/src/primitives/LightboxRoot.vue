@@ -9,8 +9,7 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { LightboxContextKey } from '../provide/keys'
-import { requireInjection } from '../internal/requireInjection'
+import { useLightboxInject } from '../composables/useLightboxInject'
 
-const ctx = requireInjection(LightboxContextKey, 'LightboxRoot', 'an active lightbox context')
+const ctx = useLightboxInject('LightboxRoot')
 </script>

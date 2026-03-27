@@ -1,46 +1,12 @@
-import type { Component, CSSProperties, ComputedRef, InjectionKey, Ref } from 'vue'
+import type { Component, ComputedRef, InjectionKey, Ref } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import type { useLightboxContext } from '../composables/useLightboxContext'
 
 export type LightboxContext = ReturnType<typeof useLightboxContext>
 
-export type LightboxControllerContext = Pick<
-  LightboxContext,
-  'count' | 'activeIndex' | 'activePhoto' | 'isOpen' | 'open' | 'close' | 'next' | 'prev'
->
-
-export type LightboxChromeContext = Pick<
-  LightboxContext,
-  'photos' | 'count' | 'activeIndex' | 'activePhoto' | 'isZoomedIn' | 'zoomAllowed' | 'transitionInProgress' | 'chromeStyle' | 'close' | 'next' | 'prev' | 'toggleZoom'
->
-
-export type LightboxOverlayContext = Pick<LightboxContext, 'backdropStyle' | 'handleBackdropClick'>
-export type LightboxPortalContext = Pick<LightboxContext, 'ghostVisible' | 'ghostSrc' | 'ghostStyle'>
-export type LightboxTriggerContext = Pick<LightboxContext, 'open' | 'setThumbRef' | 'hiddenThumbIndex'>
-export type LightboxStageContext = Pick<
-  LightboxContext,
-  'photos' | 'mediaAreaRef' | 'emblaRef' | 'mediaOpacity' | 'isZoomedIn' | 'gesturePhase' | 'onMediaPointerDown' | 'onMediaPointerMove' | 'onMediaPointerUp' | 'onMediaPointerCancel' | 'onWheel'
->
-export type LightboxSlidesContext = Pick<
-  LightboxContext,
-  'activeIndex' | 'getSlideEffectStyle' | 'getSlideFrameStyle' | 'setSlideZoomRef'
->
-export type LightboxCaptionContext = Pick<LightboxContext, 'activeIndex' | 'activePhoto'>
-
 export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => unknown
 
-/** Unified lightbox context key — primitives inject from this single key. */
 export const LightboxContextKey: InjectionKey<LightboxContext> = Symbol('nuxt-photo:lightbox')
-
-/** @deprecated Use LightboxContextKey instead */
-export const LightboxControllerKey: InjectionKey<LightboxControllerContext> = Symbol('nuxt-photo:lightbox-controller')
-export const LightboxChromeKey: InjectionKey<LightboxChromeContext> = Symbol('nuxt-photo:lightbox-chrome')
-export const LightboxOverlayKey: InjectionKey<LightboxOverlayContext> = Symbol('nuxt-photo:lightbox-overlay')
-export const LightboxPortalKey: InjectionKey<LightboxPortalContext> = Symbol('nuxt-photo:lightbox-portal')
-export const LightboxTriggerKey: InjectionKey<LightboxTriggerContext> = Symbol('nuxt-photo:lightbox-trigger')
-export const LightboxStageKey: InjectionKey<LightboxStageContext> = Symbol('nuxt-photo:lightbox-stage')
-export const LightboxSlidesKey: InjectionKey<LightboxSlidesContext> = Symbol('nuxt-photo:lightbox-slides')
-export const LightboxCaptionKey: InjectionKey<LightboxCaptionContext> = Symbol('nuxt-photo:lightbox-caption')
 export const LightboxSlideRendererKey: InjectionKey<(photo: PhotoItem) => LightboxSlideRenderer | null> = Symbol('nuxt-photo:lightbox-slide-renderer')
 export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
 

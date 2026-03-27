@@ -26,4 +26,9 @@ export type {
   LayoutEntry,
   LayoutGroup,
   ResponsiveParameter,
+  AlbumLayout,
+  RowsAlbumLayout,
+  ColumnsAlbumLayout,
+  MasonryAlbumLayout,
+  BentoAlbumLayout,
 } from '@nuxt-photo/core'

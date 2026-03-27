@@ -1,47 +1,62 @@
 /* Theme styles for Lightbox recipe — visual appearance, colors, blur, typography */
-/* Import this file manually if using lightbox-structure.css on its own */
+/* Override any --np-* variable on .np-lightbox to customize the theme */
+.np-lightbox {
+  --np-backdrop-bg: rgba(0, 0, 0, 0.85);
+  --np-backdrop-blur: 16px;
+  --np-btn-radius: 999px;
+  --np-btn-bg: rgba(255, 255, 255, 0.1);
+  --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
+  --np-btn-color: white;
+  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
+  --np-btn-blur: 8px;
+  --np-btn-disabled-opacity: 0.45;
+  --np-counter-color: rgba(255, 255, 255, 0.72);
+  --np-img-radius: 16px;
+  --np-caption-color: white;
+  --np-caption-heading-size: 22px;
+  --np-caption-secondary: rgba(255, 255, 255, 0.72);
+}
+
 .np-lightbox__backdrop {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(16px);
+  background: var(--np-backdrop-bg);
+  backdrop-filter: blur(var(--np-backdrop-blur));
 }
 
 .np-lightbox__counter {
   font-size: 13px;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--np-counter-color);
 }
 
 .np-lightbox__btn {
-  border-radius: 999px;
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 16px 40px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(8px);
+  border-radius: var(--np-btn-radius);
+  color: var(--np-btn-color);
+  background: var(--np-btn-bg);
+  box-shadow: var(--np-btn-shadow);
+  backdrop-filter: blur(var(--np-btn-blur));
 }
 
 .np-lightbox__btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--np-btn-hover-bg);
 }
 
 .np-lightbox__btn:disabled {
-  opacity: 0.45;
+  opacity: var(--np-btn-disabled-opacity);
 }
 
 [data-np-slide-img] {
-  border-radius: 16px;
+  border-radius: var(--np-img-radius);
 }
 
 .np-lightbox__caption {
-  color: white;
+  color: var(--np-caption-color);
 }
 
 .np-lightbox__caption h2 {
-  font-size: 22px;
+  font-size: var(--np-caption-heading-size);
   letter-spacing: -0.03em;
 }
 
 .np-lightbox__caption p {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--np-caption-secondary);
 }

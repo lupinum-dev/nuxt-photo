@@ -47,8 +47,8 @@
       </LightboxControls>
 
       <div class="flex flex-1 flex-col items-center justify-center overflow-hidden">
-        <LightboxViewport v-slot="{ photos, emblaRef, mediaOpacity }" class="w-full flex-1">
-          <div class="h-full" :ref="emblaRef" :style="{ opacity: mediaOpacity }">
+        <LightboxViewport v-slot="{ photos, viewportRef, mediaOpacity }" class="w-full flex-1">
+          <div class="h-full" :ref="viewportRef" :style="{ opacity: mediaOpacity }">
             <div class="flex h-full">
               <LightboxSlide
                 v-for="(photo, i) in photos"

@@ -12,15 +12,14 @@
   >
     <slot
       :photos="ctx.photos.value"
-      :embla-ref="ctx.emblaRef"
+      :viewport-ref="ctx.emblaRef"
       :media-opacity="ctx.mediaOpacity.value"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { LightboxContextKey } from '../provide/keys'
-import { requireInjection } from '../internal/requireInjection'
+import { useLightboxInject } from '../composables/useLightboxInject'
 
-const ctx = requireInjection(LightboxContextKey, 'LightboxViewport', 'an active lightbox context')
+const ctx = useLightboxInject('LightboxViewport')
 </script>
