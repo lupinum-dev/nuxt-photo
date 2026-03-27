@@ -26,9 +26,11 @@
     </div>
 
     <footer class="footer">
-      <p>
-        Built with <strong>@nuxt-photo/core</strong>, <strong>@nuxt-photo/vue</strong>,
-        <strong>@nuxt-photo/recipes</strong>, and <strong>@nuxt-photo/nuxt</strong>.
+      <p class="footer__line">
+        Built with <span class="footer__pkg">@nuxt-photo/core</span>,
+        <span class="footer__pkg">@nuxt-photo/vue</span>,
+        <span class="footer__pkg">@nuxt-photo/recipes</span>, and
+        <span class="footer__pkg">@nuxt-photo/nuxt</span>.
       </p>
       <p class="footer__sub">
         Carousel powered by Embla. Images from Lorem Picsum.
@@ -64,31 +66,36 @@ const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 }
 
 .hero__eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: #c8956c;
 }
 
 .hero__title {
   margin: 0;
-  font-size: clamp(34px, 5vw, 64px);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 400;
   line-height: 0.96;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
+  color: #ede8e3;
 }
 
 .hero__lede {
   max-width: 580px;
-  margin: 20px 0 0;
-  font-size: 18px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
+  margin: 24px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(237, 232, 227, 0.55);
 }
 
 .gallery-section {
   margin-bottom: 80px;
+  padding-top: 48px;
+  border-top: 1px solid rgba(200, 149, 108, 0.12);
 }
 
 .code-section {
@@ -97,26 +104,35 @@ const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 
 .code-section__title {
   margin: 0 0 16px;
-  font-size: 22px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 
 .footer {
+  padding-top: 32px;
+  border-top: 1px solid rgba(200, 149, 108, 0.1);
   text-align: left;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
-.footer strong {
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 500;
+.footer__line {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 18px;
+  color: rgba(237, 232, 227, 0.6);
+}
+
+.footer__pkg {
+  color: #c8956c;
 }
 
 .footer__sub {
-  margin-top: 4px;
+  margin: 8px 0 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.32);
+  color: rgba(237, 232, 227, 0.3);
 }
 
 @media (max-width: 700px) {

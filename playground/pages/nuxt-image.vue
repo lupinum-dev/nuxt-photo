@@ -128,57 +128,64 @@ const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
 }
 
 .hero__eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: #c8956c;
 }
 
 .hero__title {
   margin: 0;
-  font-size: clamp(34px, 5vw, 64px);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 400;
   line-height: 0.96;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
+  color: #ede8e3;
 }
 
 .hero__lede {
   max-width: 600px;
-  margin: 20px 0 0;
-  font-size: 18px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
+  margin: 24px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(237, 232, 227, 0.55);
 }
 
 .hero__lede code {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.88em;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(237, 232, 227, 0.8);
 }
 
 .section {
   margin-bottom: 96px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(200, 149, 108, 0.1);
 }
 
 .section__title {
   margin: 0 0 8px;
-  font-size: 26px;
-  letter-spacing: -0.025em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 
 .section__desc {
   margin: 0 0 32px;
   font-size: 15px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(237, 232, 227, 0.5);
   max-width: 560px;
 }
 
 .section__desc code {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.9em;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(237, 232, 227, 0.75);
 }
 
 .gallery-wrap {
@@ -193,9 +200,10 @@ const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
 
 .single-photo {
   width: 100%;
-  border-radius: 12px;
+  border-radius: 2px;
   overflow: hidden;
   cursor: pointer;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 :deep(.single-photo .np-photo__img) {
@@ -210,7 +218,7 @@ const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
 .custom-thumb {
   position: relative;
   width: 100%;
-  border-radius: 6px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -231,7 +239,7 @@ const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
   inset: 0;
   display: flex;
   align-items: flex-end;
-  background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.65));
+  background: linear-gradient(transparent 50%, rgba(26, 24, 22, 0.75));
   opacity: 0;
   transition: opacity 200ms ease;
 }

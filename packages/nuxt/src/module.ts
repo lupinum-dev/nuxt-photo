@@ -95,6 +95,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         '@nuxt-photo/recipes/styles/lightbox-structure.css',
         '@nuxt-photo/recipes/styles/lightbox-theme.css',
         '@nuxt-photo/recipes/styles/album.css',
+        '@nuxt-photo/recipes/styles/photo.css',
       ]) {
         if (!nuxt.options.css.includes(css)) {
           nuxt.options.css.push(css)

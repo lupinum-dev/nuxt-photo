@@ -124,24 +124,26 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 
 .header__title {
   margin: 0;
-  font-size: clamp(28px, 4vw, 48px);
-  letter-spacing: -0.03em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 
 .header__desc {
-  margin: 12px 0 0;
+  margin: 16px 0 0;
   font-size: 16px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  color: rgba(237, 232, 227, 0.55);
 }
 
 .header__desc code {
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  padding: 2px 7px;
+  background: rgba(200, 149, 108, 0.1);
+  border-radius: 3px;
   font-size: 13px;
-  font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Menlo, monospace;
+  color: rgba(237, 232, 227, 0.75);
 }
 
 .controls {
@@ -150,9 +152,9 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
   gap: 32px;
   margin-bottom: 48px;
   padding: 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: rgba(255, 248, 240, 0.02);
+  border: 1px solid rgba(200, 149, 108, 0.1);
+  border-radius: 6px;
 }
 
 .control-group {
@@ -162,46 +164,43 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 }
 
 .control-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(237, 232, 227, 0.45);
 }
 
 .control-tabs {
   display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 6px;
-  padding: 4px;
+  gap: 0;
 }
 
 .control-tab {
   padding: 8px 16px;
   border: 0;
-  border-radius: 4px;
+  border-bottom: 2px solid transparent;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(237, 232, 227, 0.5);
   background: transparent;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: color 200ms ease, border-color 200ms ease;
   text-transform: capitalize;
 }
 
 .control-tab:hover {
-  color: white;
+  color: #ede8e3;
 }
 
 .control-tab--active {
-  color: white;
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  color: #c8956c;
+  border-bottom-color: #c8956c;
 }
 
 .control-range {
   width: 160px;
-  accent-color: #b3b3b3;
+  accent-color: #c8956c;
 }
 
 .album-section {
@@ -214,7 +213,9 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 
 .code-section__title {
   margin: 0 0 16px;
-  font-size: 22px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 

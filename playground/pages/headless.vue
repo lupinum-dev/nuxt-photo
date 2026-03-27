@@ -16,16 +16,10 @@
         No <code>:photos</code> array, no index tracking, no ctx wiring.
       </p>
       <PhotoGroup class="scattered">
-        <div class="scattered__layout">
-          <div class="scattered__main">
-            <Photo :photo="photos[0]" class="scattered__img scattered__img--main" />
-          </div>
-          <div class="scattered__side">
-            <Photo :photo="photos[1]" class="scattered__img" />
-            <Photo :photo="photos[2]" class="scattered__img" />
-          </div>
-        </div>
-        <div class="scattered__row">
+        <div class="scattered__grid">
+          <Photo :photo="photos[0]" class="scattered__img scattered__img--wide" />
+          <Photo :photo="photos[1]" class="scattered__img" />
+          <Photo :photo="photos[2]" class="scattered__img" />
           <Photo :photo="photos[3]" class="scattered__img" />
           <Photo :photo="photos[4]" lightbox-ignore class="scattered__img scattered__img--ignored" />
           <Photo :photo="photos[5]" class="scattered__img" />
@@ -162,65 +156,76 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
 
 .header__title {
   margin: 0;
-  font-size: clamp(28px, 4vw, 48px);
-  letter-spacing: -0.03em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 
 .header__desc {
-  margin: 12px 0 0;
+  margin: 16px 0 0;
   font-size: 16px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  color: rgba(237, 232, 227, 0.55);
 }
 
 .header__desc code {
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  padding: 2px 7px;
+  background: rgba(200, 149, 108, 0.1);
+  border-radius: 3px;
   font-size: 13px;
-  font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(255, 255, 255, 0.7);
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Menlo, monospace;
+  color: rgba(237, 232, 227, 0.75);
 }
 
 .section {
   margin-bottom: 96px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(200, 149, 108, 0.1);
+}
+
+.section:first-of-type {
+  border-top: none;
+  padding-top: 0;
 }
 
 .section__title {
   margin: 0 0 8px;
-  font-size: 26px;
-  letter-spacing: -0.025em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 
 .section__desc {
   margin: 0 0 24px;
   font-size: 15px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(237, 232, 227, 0.5);
 }
 
 .section__desc code {
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  padding: 2px 7px;
+  background: rgba(200, 149, 108, 0.1);
+  border-radius: 3px;
   font-size: 13px;
-  font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(255, 255, 255, 0.75);
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Menlo, monospace;
+  color: rgba(237, 232, 227, 0.75);
 }
 
 .note {
   margin: 12px 0 24px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(237, 232, 227, 0.4);
 }
 
 .note code {
   padding: 1px 5px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(200, 149, 108, 0.08);
   border-radius: 3px;
   font-size: 12px;
-  font-family: 'SF Mono', Monaco, Menlo, monospace;
-  color: rgba(255, 255, 255, 0.65);
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Menlo, monospace;
+  color: rgba(237, 232, 227, 0.6);
 }
 
 /* Scattered layout */
@@ -228,20 +233,7 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
   margin-bottom: 16px;
 }
 
-.scattered__layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.scattered__side {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.scattered__row {
+.scattered__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
@@ -249,20 +241,13 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
 
 .scattered__img {
   width: 100%;
-  height: 200px;
   display: block;
-  border-radius: 6px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
-.scattered__main {
-  position: relative;
-}
-
-.scattered__img--main {
-  position: absolute;
-  inset: 0;
-  height: auto;
+.scattered__img--wide {
+  grid-column: span 2;
 }
 
 .scattered__img--ignored {
@@ -270,11 +255,19 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
   filter: grayscale(1);
 }
 
-/* Style the np-photo__img inside */
-:deep(.np-photo__img) {
+:deep(.scattered__img .np-photo__img) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+:deep(.scattered__grid .np-photo) {
+  display: block;
+  height: 100%;
+}
+
+:deep(.scattered__grid .np-photo__img) {
+  height: 100%;
 }
 
 /* Two albums */
@@ -287,11 +280,11 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
 
 .two-albums__label {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(237, 232, 227, 0.4);
 }
 
 /* Programmatic open */
@@ -304,18 +297,18 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
 
 .open-btn {
   padding: 10px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
+  border: 1px solid rgba(200, 149, 108, 0.3);
+  border-radius: 4px;
+  background: transparent;
+  color: #c8956c;
   font-size: 14px;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: all 200ms ease;
 }
 
 .open-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(200, 149, 108, 0.08);
+  border-color: rgba(200, 149, 108, 0.5);
 }
 
 /* Hex grid */
@@ -328,14 +321,15 @@ const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }
 
 .hex-grid__item {
   aspect-ratio: 4/3;
-  border-radius: 6px;
+  border-radius: 2px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 180ms ease;
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
 .hex-grid__item:hover {
   transform: scale(1.02);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .hex-grid__img {
