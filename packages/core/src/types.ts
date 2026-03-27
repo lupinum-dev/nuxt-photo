@@ -230,6 +230,51 @@ export function resolveResponsiveParameter<T>(
   return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
 }
 
+/**
+ * Create a responsive parameter from a breakpoint map.
+ * Keys are minimum container widths (px); values are the parameter at that width.
+ * The largest matching breakpoint wins.
+ *
+ * @example
+ * // 2 columns below 600px, 3 at 600-899px, 4 at 900px+
+ * responsive({ 0: 2, 600: 3, 900: 4 })
+ */
+export function responsive<T>(breakpoints: Record<number, T>): (containerWidth: number) => T {
+  const sorted = Object.entries(breakpoints)
+    .map(([k, v]) => [Number(k), v] as [number, T])
+    .sort((a, b) => b[0] - a[0])
+
+  if (sorted.length === 0) {
+    throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
+  }
+
+  return (containerWidth: number) => {
+    for (const [minWidth, value] of sorted) {
+      if (containerWidth >= minWidth) return value
+    }
+    return sorted[sorted.length - 1]![1]
+  }
+}
+
+// ─── Photo adapter ───
+
+/**
+ * Transforms external data shapes into `PhotoItem`.
+ * Pass to `PhotoAlbum` or `PhotoGroup` via the `:photoAdapter` prop so you can
+ * feed CMS / API responses directly without manual mapping.
+ *
+ * @example
+ * const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
+ *   id: item.id,
+ *   src: item.urls.regular,
+ *   thumbSrc: item.urls.thumb,
+ *   width: item.width,
+ *   height: item.height,
+ *   alt: item.alt_description ?? undefined,
+ * })
+ */
+export type PhotoAdapter<T = any> = (item: T) => PhotoItem
+
 // ─── Debug ───
 
 export type DebugChannel = 'transitions' | 'gestures' | 'zoom' | 'slides' | 'geometry' | 'rects'

@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxPortalKey } from '../provide/keys'
+import { LightboxContextKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
-const ctx = requireInjection(LightboxPortalKey, 'LightboxPortal', 'an active lightbox portal context')
+const ctx = requireInjection(LightboxContextKey, 'LightboxPortal', 'an active lightbox context')
 </script>

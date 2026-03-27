@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxCaptionKey } from '../provide/keys'
+import { LightboxContextKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
-const ctx = requireInjection(LightboxCaptionKey, 'LightboxCaption', 'an active lightbox caption context')
+const ctx = requireInjection(LightboxContextKey, 'LightboxCaption', 'an active lightbox context')
 </script>

@@ -1,9 +1,10 @@
 // @nuxt-photo/vue — Vue bindings over core
 export * from './composables'
 export * from './primitives'
-export { LightboxComponentKey } from './provide/keys'
+export { LightboxComponentKey, LightboxContextKey } from './provide/keys'
 
-// Re-export core types for convenience
+// Re-export core utilities for convenience
+export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
 export type {
   PhotoItem,
   SlideItem,
@@ -18,6 +19,7 @@ export type {
   ViewerState,
   TransitionMode,
   ImageAdapter,
+  PhotoAdapter,
   ImageSource,
   LayoutInput,
   LayoutEntry,

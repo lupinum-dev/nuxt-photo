@@ -41,7 +41,7 @@ describe('primitive injection guards', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => mountExpectingError(LightboxRoot)).toThrow(
-      /\[nuxt-photo\] `LightboxRoot` requires an active lightbox controller context/,
+      /\[nuxt-photo\] `LightboxRoot` requires an active lightbox context/,
     )
   })
 
@@ -52,7 +52,7 @@ describe('primitive injection guards', () => {
       photo: makePhoto({ id: 'guarded-trigger' }),
       index: 0,
     })).toThrow(
-      /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox trigger context/,
+      /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
     )
   })
 })

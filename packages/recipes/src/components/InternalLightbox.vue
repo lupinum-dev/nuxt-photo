@@ -4,7 +4,11 @@
 
     <div class="np-lightbox__ui">
       <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
-        <div class="np-lightbox__topbar">
+        <component
+          v-if="slots?.value.toolbar"
+          :is="() => slots!.value.toolbar!({ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled })"
+        />
+        <div v-else class="np-lightbox__topbar">
           <div class="np-lightbox__counter">
             {{ activeIndex + 1 }} / {{ count }}
           </div>
@@ -38,14 +42,21 @@
                 :photo="photo"
                 :index="i"
                 class="np-lightbox__slide"
-              />
+              >
+                <template v-if="slots?.value.slide" #default="slotProps">
+                  <component :is="() => slots!.value.slide!(slotProps)" />
+                </template>
+              </LightboxSlide>
             </div>
           </div>
         </LightboxViewport>
 
-        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo }">
-          <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
-          <p v-if="photo?.description">{{ photo.description }}</p>
+        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
+          <component v-if="slots?.value.caption" :is="() => slots!.value.caption!({ photo, index: activeIndex })" />
+          <template v-else>
+            <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
+            <p v-if="photo?.description">{{ photo.description }}</p>
+          </template>
         </LightboxCaption>
       </div>
     </div>
@@ -55,6 +66,7 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import {
   LightboxCaption,
   LightboxControls,
@@ -64,4 +76,7 @@ import {
   LightboxSlide,
   LightboxViewport,
 } from '@nuxt-photo/vue'
+import { LightboxSlotsKey } from '@nuxt-photo/vue/extend'
+
+const slots = inject(LightboxSlotsKey, null)
 </script>

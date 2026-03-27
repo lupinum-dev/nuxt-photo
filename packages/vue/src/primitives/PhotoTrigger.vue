@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { LightboxTriggerKey } from '../provide/keys'
+import { LightboxContextKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
 const props = defineProps<{
@@ -24,11 +24,7 @@ const props = defineProps<{
   index: number
 }>()
 
-const ctx = requireInjection(
-  LightboxTriggerKey,
-  'PhotoTrigger',
-  'an active lightbox trigger context (for example within a photo group or lightbox recipe)',
-)
+const ctx = requireInjection(LightboxContextKey, 'PhotoTrigger', 'an active lightbox context')
 
 const ariaLabel = computed(() => props.photo.alt || `View photo ${props.index + 1}`)
 </script>

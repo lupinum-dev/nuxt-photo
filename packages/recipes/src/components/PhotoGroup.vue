@@ -6,22 +6,25 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { ref, computed, inject, provide, type Component } from 'vue'
+import { ref, computed, inject, provide, useSlots, type Component } from 'vue'
+import { useLightboxProvider } from '@nuxt-photo/vue'
 import {
-  provideLightboxContexts,
   PhotoGroupContextKey,
   LightboxComponentKey,
+  LightboxSlotsKey,
+  type LightboxSlotOverrides,
   type LightboxSlideRenderer,
   type PhotoGroupContext,
-  useLightboxContext,
   type LightboxTransitionOption,
-} from '@nuxt-photo/vue/internal'
-import { photoId, type PhotoItem } from '@nuxt-photo/core'
+} from '@nuxt-photo/vue/extend'
+import { photoId, type PhotoItem, type PhotoAdapter } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
 
 const props = withDefaults(defineProps<{
   /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
-  photos?: PhotoItem[]
+  photos?: PhotoItem[] | any[]
+  /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
+  photoAdapter?: PhotoAdapter
   /** Lightbox to render: true = default, false = none, Component = custom */
   lightbox?: boolean | Component
   /** Transition mode for open/close animations */
@@ -48,6 +51,13 @@ const groupMode = computed<'auto' | 'explicit'>(() => props.photos !== undefined
 
 function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null) {
   if (process.env.NODE_ENV !== 'production') {
+    if (props.photos !== undefined) {
+      console.warn(
+        '[nuxt-photo] PhotoGroup has both a :photos prop and child <Photo> registrations. '
+        + 'The :photos prop takes precedence; child registrations are ignored. '
+        + 'Remove :photos to use auto-collection, or remove child <Photo> components.',
+      )
+    }
     for (const [existingId, entry] of registrationMap) {
       if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
         console.warn(`[nuxt-photo] Duplicate photo id "${photo.id}" registered in PhotoGroup`)
@@ -66,12 +76,24 @@ function unregister(id: symbol) {
 // Collected photos (reactive) — either from :photos prop or auto-registered children
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
-  if (props.photos !== undefined) return props.photos
+  if (props.photos !== undefined) {
+    return props.photoAdapter ? props.photos.map(props.photoAdapter) : props.photos as PhotoItem[]
+  }
   return Array.from(registrationMap.values()).map(r => r.photo)
 })
 
-// Full internal lightbox context
-const ctx = useLightboxContext(collectedPhotos, props.transition)
+// Full lightbox context — creates and provides to children
+const ctx = useLightboxProvider(collectedPhotos, {
+  transition: props.transition,
+  resolveSlide: photo => {
+    for (const entry of registrationMap.values()) {
+      if (photoId(entry.photo) === photoId(photo)) {
+        return entry.renderSlide ?? null
+      }
+    }
+    return null
+  },
+})
 
 // Which photo's thumb is currently hidden during transitions
 const hiddenPhoto = computed<PhotoItem | null>(() => {
@@ -119,16 +141,17 @@ Object.defineProperty(groupContext, 'mode', {
 })
 
 provide(PhotoGroupContextKey, groupContext)
-provideLightboxContexts(ctx, {
-  resolveSlide: photo => {
-    for (const entry of registrationMap.values()) {
-      if (photoId(entry.photo) === photoId(photo)) {
-        return entry.renderSlide ?? null
-      }
-    }
-    return null
-  },
+
+// Forward #toolbar, #caption, #slide slots into the lightbox via injection
+const parentSlots = useSlots()
+const slotOverrides = computed<LightboxSlotOverrides>(() => {
+  const overrides: LightboxSlotOverrides = {}
+  if (parentSlots.toolbar) overrides.toolbar = parentSlots.toolbar as LightboxSlotOverrides['toolbar']
+  if (parentSlots.caption) overrides.caption = parentSlots.caption as LightboxSlotOverrides['caption']
+  if (parentSlots.slide) overrides.slide = parentSlots.slide as LightboxSlotOverrides['slide']
+  return overrides
 })
+provide(LightboxSlotsKey, slotOverrides)
 
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {

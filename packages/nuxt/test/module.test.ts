@@ -126,7 +126,7 @@ describe('nuxt-photo module', () => {
       filePath: '@nuxt-photo/recipes',
     }))
     expect(addComponent).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'NuxtPhotoPhotoImage',
+      name: 'NuxtPhotoImg',
       export: 'PhotoImage',
       filePath: '@nuxt-photo/vue',
     }))
@@ -143,6 +143,8 @@ describe('nuxt-photo module', () => {
 
     expect(addImports).toHaveBeenCalledWith([
       { name: 'useLightbox', from: '@nuxt-photo/vue' },
+      { name: 'useLightboxProvider', from: '@nuxt-photo/vue' },
+      { name: 'responsive', from: '@nuxt-photo/vue' },
     ])
   })
 })

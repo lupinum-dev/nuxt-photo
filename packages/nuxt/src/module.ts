@@ -16,19 +16,21 @@ const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoAlbum', name: 'Album' },
   { export: 'PhotoGallery', name: 'Gallery' },
 ]
-const PRIMITIVE_COMPONENTS = [
-  'LightboxRoot',
-  'LightboxOverlay',
-  'LightboxViewport',
-  'LightboxSlide',
-  'LightboxControls',
-  'LightboxCaption',
-  'LightboxPortal',
-  'PhotoTrigger',
-  'PhotoImage',
-] as const
+// Maps export name → component name suffix (strips "Photo" prefix to avoid stutter like NuxtPhotoPhotoTrigger)
+// PhotoImage → Img (not Image, to avoid collision with recipe Photo → Image)
+const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
+  { export: 'LightboxRoot', name: 'LightboxRoot' },
+  { export: 'LightboxOverlay', name: 'LightboxOverlay' },
+  { export: 'LightboxViewport', name: 'LightboxViewport' },
+  { export: 'LightboxSlide', name: 'LightboxSlide' },
+  { export: 'LightboxControls', name: 'LightboxControls' },
+  { export: 'LightboxCaption', name: 'LightboxCaption' },
+  { export: 'LightboxPortal', name: 'LightboxPortal' },
+  { export: 'PhotoTrigger', name: 'Trigger' },
+  { export: 'PhotoImage', name: 'Img' },
+]
 
-const AUTO_IMPORTS = ['useLightbox'] as const
+const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
 
 export default defineNuxtModule<NuxtPhotoOptions>({
   meta: {
@@ -77,8 +79,8 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
       for (const component of PRIMITIVE_COMPONENTS) {
         addComponent({
-          name: `${prefix}${component}`,
-          export: component,
+          name: `${prefix}${component.name}`,
+          export: component.export,
           filePath: '@nuxt-photo/vue',
         })
       }

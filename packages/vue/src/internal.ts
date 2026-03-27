@@ -6,6 +6,7 @@ export {
   type LightboxChromeContext,
   LightboxChromeKey,
   type LightboxContext,
+  LightboxContextKey,
   type LightboxControllerContext,
   LightboxControllerKey,
   type LightboxOverlayContext,
@@ -24,4 +25,6 @@ export {
   PhotoGroupContextKey,
   type PhotoGroupContext,
   LightboxComponentKey,
+  LightboxSlotsKey,
+  type LightboxSlotOverrides,
 } from './provide/keys'

@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxChromeKey } from '../provide/keys'
+import { LightboxContextKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
-const ctx = requireInjection(LightboxChromeKey, 'LightboxControls', 'an active lightbox chrome context')
+const ctx = requireInjection(LightboxContextKey, 'LightboxControls', 'an active lightbox context')
 </script>

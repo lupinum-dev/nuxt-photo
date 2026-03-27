@@ -29,6 +29,10 @@ export type LightboxCaptionContext = Pick<LightboxContext, 'activeIndex' | 'acti
 
 export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => unknown
 
+/** Unified lightbox context key — primitives inject from this single key. */
+export const LightboxContextKey: InjectionKey<LightboxContext> = Symbol('nuxt-photo:lightbox')
+
+/** @deprecated Use LightboxContextKey instead */
 export const LightboxControllerKey: InjectionKey<LightboxControllerContext> = Symbol('nuxt-photo:lightbox-controller')
 export const LightboxChromeKey: InjectionKey<LightboxChromeContext> = Symbol('nuxt-photo:lightbox-chrome')
 export const LightboxOverlayKey: InjectionKey<LightboxOverlayContext> = Symbol('nuxt-photo:lightbox-overlay')
@@ -61,3 +65,11 @@ export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol('nux
  *   provide(LightboxComponentKey, MyLightbox)
  */
 export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
+
+/** Slot overrides injected by recipe components for customizing InternalLightbox. */
+export interface LightboxSlotOverrides {
+  toolbar?: (props: { activeIndex: number; count: number; prev: () => void; next: () => void; close: () => void; toggleZoom: () => void; isZoomedIn: boolean; zoomAllowed: boolean; controlsDisabled: boolean }) => unknown
+  caption?: (props: { photo: PhotoItem | null; index: number }) => unknown
+  slide?: (props: { photo: PhotoItem; index: number; width: number; height: number }) => unknown
+}
+export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> = Symbol('nuxt-photo:lightbox-slots')

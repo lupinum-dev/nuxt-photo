@@ -1,57 +1,25 @@
 <template>
-  <!-- Standalone photo (no parent group): wraps in its own single-photo context -->
   <figure
-    v-if="isSolo"
     ref="thumbRef"
     class="np-photo"
-    v-bind="$attrs"
-    :style="{ margin: 0, opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }"
-    role="button"
-    tabindex="0"
-    @click="soloOpen"
-    @keydown.enter="soloOpen"
-    @keydown.space.prevent="soloOpen"
+    v-bind="{ ...$attrs, ...interactiveAttrs }"
+    :style="figureStyle"
   >
     <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
     <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
   </figure>
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
-
-  <!-- Photo inside a PhotoGroup (auto mode): clickable thumb that registers with the group -->
-  <figure
-    v-else-if="group && !lightboxIgnore && group.mode === 'auto'"
-    ref="thumbRef"
-    class="np-photo"
-    v-bind="$attrs"
-    :style="{ margin: 0, opacity: isHidden ? 0 : 1, cursor: 'pointer' }"
-    role="button"
-    tabindex="0"
-    @click="group.open(photo)"
-    @keydown.enter="group.open(photo)"
-    @keydown.space.prevent="group.open(photo)"
-  >
-    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
-    <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
-  </figure>
-
-  <!-- Plain image (explicit group mode, no group, no lightbox, or lightbox-ignore) -->
-  <figure v-else class="np-photo" v-bind="$attrs" :style="{ margin: 0 }">
-    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" />
-    <figcaption v-if="photo.caption" class="np-photo__caption">{{ photo.caption }}</figcaption>
-  </figure>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Component } from 'vue'
 
 defineOptions({ inheritAttrs: false })
-import { PhotoImage } from '@nuxt-photo/vue'
+import { PhotoImage, useLightboxProvider } from '@nuxt-photo/vue'
 import {
   PhotoGroupContextKey,
   LightboxComponentKey,
-  provideLightboxContexts,
-  useLightboxContext,
-} from '@nuxt-photo/vue/internal'
+} from '@nuxt-photo/vue/extend'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
 
@@ -76,16 +44,14 @@ const injectedLightbox = inject(LightboxComponentKey, null)
 const isSolo = computed(() => !group && !!props.lightbox && !props.lightboxIgnore)
 
 // Solo lightbox context — only created when solo (outside group)
-const soloCtx = isSolo.value ? useLightboxContext(computed(() => props.photo)) : null
-
-if (soloCtx) {
-  provideLightboxContexts(soloCtx, {
+const soloCtx = isSolo.value
+  ? useLightboxProvider(computed(() => props.photo), {
     resolveSlide: photo => {
       if ((photo !== props.photo && String(photo.id) !== String(props.photo.id)) || !slots.slide) return null
       return slotProps => slots.slide?.(slotProps) ?? null
     },
   })
-}
+  : null
 
 const soloLightboxComponent = computed<Component>(() => {
   if (props.lightbox === true || props.lightbox === undefined) {
@@ -99,6 +65,37 @@ const thumbRef = ref<HTMLElement | null>(null)
 
 // Is this photo's thumb hidden during a transition?
 const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
+
+// Auto-group mode: inside a PhotoGroup with auto-collection
+const isAutoGrouped = computed(() => !!group && !props.lightboxIgnore && group.mode === 'auto')
+const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
+
+const figureStyle = computed(() => {
+  if (isSolo.value) {
+    return { margin: 0, opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }
+  }
+  if (isAutoGrouped.value) {
+    return { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
+  }
+  return { margin: 0 }
+})
+
+function handleClick() {
+  if (isSolo.value) soloOpen()
+  else if (isAutoGrouped.value) group!.open(props.photo)
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === ' ') e.preventDefault()
+    handleClick()
+  }
+}
+
+const interactiveAttrs = computed(() => {
+  if (!isInteractive.value) return {}
+  return { role: 'button' as const, tabindex: 0, onClick: handleClick, onKeydown: handleKeydown }
+})
 
 // Registration with parent group (auto mode only)
 const id = Symbol()

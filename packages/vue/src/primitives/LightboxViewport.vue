@@ -19,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { LightboxStageKey } from '../provide/keys'
+import { LightboxContextKey } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
-const ctx = requireInjection(LightboxStageKey, 'LightboxViewport', 'an active lightbox stage context')
+const ctx = requireInjection(LightboxContextKey, 'LightboxViewport', 'an active lightbox context')
 </script>

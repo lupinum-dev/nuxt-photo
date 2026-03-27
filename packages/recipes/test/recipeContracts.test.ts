@@ -14,7 +14,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LightboxControls, LightboxSlide } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { PhotoGroupContextKey, type PhotoGroupContext } from '@nuxt-photo/vue/internal'
+import { PhotoGroupContextKey, type PhotoGroupContext } from '@nuxt-photo/vue/extend'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../src/components/Photo.vue'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'

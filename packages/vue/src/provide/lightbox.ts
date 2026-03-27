@@ -3,6 +3,7 @@ import type { PhotoItem } from '@nuxt-photo/core'
 import {
   LightboxCaptionKey,
   LightboxChromeKey,
+  LightboxContextKey,
   LightboxControllerKey,
   type LightboxContext,
   LightboxOverlayKey,
@@ -18,6 +19,10 @@ export function provideLightboxContexts(
   ctx: LightboxContext,
   options?: { resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null },
 ) {
+  // Unified context key — all primitives inject from this single key
+  provide(LightboxContextKey, ctx)
+
+  // Deprecated individual keys — kept for backward compatibility
   provide(LightboxControllerKey, {
     count: ctx.count,
     activeIndex: ctx.activeIndex,
