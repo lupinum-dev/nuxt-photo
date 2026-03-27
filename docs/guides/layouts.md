@@ -151,3 +151,7 @@ type AlbumLayout =
 ```
 
 This means TypeScript will catch mistakes like passing `targetRowHeight` to a masonry layout.
+
+## Algorithm Deep Dive
+
+Want to know how the Knuth-Plass DP finds optimal row breaks, why it beats Dijkstra + heap, how the column shortest-path works, or what the masonry local search actually does? See the [Layout Algorithms deep dive](/docs/advanced/layout-algorithms).
