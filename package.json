@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm -r --filter=!nuxt-photo-playground build",
-    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground dev",
+    "build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw build",
+    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw dev",
     "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
+    "dev:playground-tw": "pnpm run build && pnpm --filter nuxt-photo-playground-tw dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "test:unit": "vitest run",
     "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",

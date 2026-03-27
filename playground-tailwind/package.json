@@ -1,0 +1,16 @@
+{
+  "name": "nuxt-photo-playground-tw",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@nuxt-photo/nuxt": "workspace:*",
+    "nuxt": "^3.21.2",
+    "tailwindcss": "^4",
+    "@tailwindcss/vite": "^4"
+  }
+}
