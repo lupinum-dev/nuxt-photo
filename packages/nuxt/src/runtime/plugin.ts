@@ -1,11 +1,11 @@
-import { defineNuxtPlugin } from '#app'
+import { defineNuxtPlugin, type NuxtApp } from '#app'
 import { useImage } from '#imports'
 import type { ImageContext, ImageSource, PhotoItem } from '@nuxt-photo/core'
 import { ImageAdapterKey } from '@nuxt-photo/vue/extend'
 
 export default defineNuxtPlugin({
   name: 'nuxt-photo:image-adapter',
-  setup(nuxtApp) {
+  setup(nuxtApp: NuxtApp) {
     const image = useImage()
 
     const adapter = (photo: PhotoItem, context: ImageContext): ImageSource => {

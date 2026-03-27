@@ -29,9 +29,14 @@ export function useLightboxProvider(
   options?: {
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
+    minZoom?: number
   },
 ) {
-  const ctx = useLightboxContext(photosInput, options?.transition)
+  const ctx = useLightboxContext(
+    photosInput,
+    options?.transition,
+    options?.minZoom,
+  )
 
   // Provide the unified context + deprecated individual keys for backward compat
   provideLightboxContexts(ctx, {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DEFAULT_MIN_ZOOM,
   clampPanToBounds,
   classifyGesture,
   computeCloseDragRatio,
@@ -37,19 +38,19 @@ describe('geometry and viewer utilities', () => {
     expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 600, y: -400 })
   })
 
-  it('limits zoom to natural resolution (floor 1), supports per-photo maxZoom override', () => {
-    // Photo displayed at near-native resolution: max zoom matches the photo/frame ratio, not forced to 2
+  it('applies the default minZoom, supports per-photo and options overrides', () => {
+    // Near-native resolution: the default minZoom raises max above natural ratio
     const nearNative = computeZoomLevels(1280, 800, 1240, 775)
-    expect(nearNative.max).toBeCloseTo(1280 / 1240, 2)
+    expect(nearNative.max).toBe(DEFAULT_MIN_ZOOM)
     expect(nearNative.fit).toBe(1)
     expect(nearNative.current).toBe(1)
 
-    // Photo smaller than display area: no meaningful zoom (floor is 1, not 2)
+    // Photo smaller than display area: the default minZoom floor still applies
     const small = computeZoomLevels(600, 400, 1200, 800)
-    expect(small.max).toBe(1)
-    expect(small.secondary).toBe(1)
+    expect(small.max).toBe(DEFAULT_MIN_ZOOM)
+    expect(small.secondary).toBe(DEFAULT_MIN_ZOOM)
 
-    // Large photo (>2x) — unchanged behavior
+    // Large photo (>2x) — unchanged, natural resolution dominates
     const large = computeZoomLevels(4000, 2000, 1200, 800)
     expect(large.max).toBeCloseTo(3.33, 1)
     expect(large.secondary).toBe(2)
@@ -58,6 +59,15 @@ describe('geometry and viewer utilities', () => {
     const custom = computeZoomLevels(600, 400, 1200, 800, { id: '1', src: '', width: 600, height: 400, meta: { maxZoom: 3 } })
     expect(custom.max).toBe(3)
     expect(custom.secondary).toBe(2)
+
+    // Per-photo minZoom via meta overrides default
+    const metaMin = computeZoomLevels(600, 400, 1200, 800, { id: '1', src: '', width: 600, height: 400, meta: { minZoom: 2.5 } })
+    expect(metaMin.max).toBe(2.5)
+
+    // Lightbox-level minZoom via options
+    const optMin = computeZoomLevels(600, 400, 1200, 800, undefined, { minZoom: 1 })
+    expect(optMin.max).toBe(1)
+    expect(optMin.secondary).toBe(1)
   })
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {

@@ -1,6 +1,6 @@
-import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type CSSProperties, type Ref, type ShallowRef } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type CSSProperties, type Ref } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
-import type { EmblaCarouselVueType } from 'embla-carousel-vue'
+import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type CarouselConfig, type PhotoItem, type RectLike, type DebugLogger } from '@nuxt-photo/core'
 
 export function useCarousel(
@@ -15,20 +15,20 @@ export function useCarousel(
   const scrollProgress = ref(0)
   const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions) as EmblaCarouselVueType
+  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
 
   const currentPhoto = computed<PhotoItem>(() => photos.value[activeIndex.value] ?? photos.value[0]!)
 
   watch(emblaApi, (api) => {
     if (!api) return
 
-    api.on('select', (_api, event) => {
-      const newIndex = event.detail.targetSnap
+    api.on('select', (_api: EmblaCarouselType) => {
+      const newIndex = _api.selectedSnap()
       debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
       activeIndex.value = newIndex
     })
 
-    api.on('scroll', (_api) => {
+    api.on('scroll', (_api: EmblaCarouselType) => {
       scrollProgress.value = _api.scrollProgress()
     })
 

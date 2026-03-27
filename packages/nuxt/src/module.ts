@@ -7,6 +7,17 @@ export interface NuxtPhotoOptions {
   image?: {
     provider?: 'nuxt-image' | 'native' | 'custom'
   }
+  lightbox?: {
+    minZoom?: number
+  }
+}
+
+type NuxtPhotoAppConfig = {
+  nuxtPhoto?: {
+    lightbox?: {
+      minZoom?: number
+    }
+  }
 }
 
 // Maps export name → component name suffix (drops redundant "Photo" prefix from recipes)
@@ -53,6 +64,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     const imageProvider = options.image?.provider ?? 'native'
+    const minZoom = options.lightbox?.minZoom
 
     if (imageProvider === 'nuxt-image') {
       if (!hasNuxtModule('@nuxt/image')) {
@@ -64,6 +76,22 @@ export default defineNuxtModule<NuxtPhotoOptions>({
           src: resolve('./runtime/plugin'),
         }, { append: true })
       })
+    }
+
+    if (minZoom != null) {
+      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+
+      appConfig.nuxtPhoto = {
+        ...appConfig.nuxtPhoto,
+        lightbox: {
+          ...appConfig.nuxtPhoto?.lightbox,
+          minZoom,
+        },
+      }
+
+      addPlugin({
+        src: resolve('./runtime/defaults-plugin'),
+      }, { append: true })
     }
 
     if (options.components !== false) {

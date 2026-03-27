@@ -233,7 +233,7 @@ const props = withDefaults(defineProps<{
   lightbox: true,
 })
 
-if (import.meta.dev && props.defaultContainerWidth === 0) {
+if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production' && props.defaultContainerWidth === 0) {
   console.warn('[nuxt-photo] defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 

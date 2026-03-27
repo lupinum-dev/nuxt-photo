@@ -30,6 +30,7 @@ function createNuxt() {
       }
     },
     options: {
+      appConfig: {} as Record<string, any>,
       css: [] as string[],
     },
   }
@@ -81,6 +82,28 @@ describe('nuxt-photo module', () => {
     })
   })
 
+  it('registers the defaults plugin when lightbox defaults are configured', () => {
+    const nuxt = createNuxt()
+
+    nuxtPhotoModule.setup({
+      ...nuxtPhotoModule.defaults,
+      lightbox: { minZoom: 2 },
+    }, nuxt)
+
+    expect(addPlugin).toHaveBeenCalledWith({
+      src: '/resolved/./runtime/defaults-plugin',
+    }, {
+      append: true,
+    })
+    expect(nuxt.options.appConfig).toEqual({
+      nuxtPhoto: {
+        lightbox: {
+          minZoom: 2,
+        },
+      },
+    })
+  })
+
   it('throws when nuxt image mode is requested without @nuxt/image', () => {
     const nuxt = createNuxt()
     hasNuxtModule.mockReturnValue(false)
@@ -101,6 +124,7 @@ describe('nuxt-photo module', () => {
       '@nuxt-photo/recipes/styles/lightbox-structure.css',
       '@nuxt-photo/recipes/styles/lightbox-theme.css',
       '@nuxt-photo/recipes/styles/album.css',
+      '@nuxt-photo/recipes/styles/photo.css',
     ])
   })
 

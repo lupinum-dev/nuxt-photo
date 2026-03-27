@@ -1,6 +1,8 @@
 import type { PanState, PhotoItem, RectLike, ZoomState } from '../types'
 import { fitRect, rubberband } from '../geometry/rect'
 
+export const DEFAULT_MIN_ZOOM = 1.5
+
 /**
  * Compute a frame rect (fitted to aspect ratio) relative to the container origin.
  */
@@ -18,7 +20,8 @@ export function computeFittedFrame(
 
 /**
  * Compute zoom levels for a photo within a given area.
- * Respects an optional `photo.meta.maxZoom` override; the hard floor is 1 (no zoom).
+ * Respects per-photo `photo.meta.maxZoom` / `photo.meta.minZoom` overrides,
+ * and accepts a lightbox-level `options.minZoom` fallback.
  */
 export function computeZoomLevels(
   photoWidth: number,
@@ -26,6 +29,7 @@ export function computeZoomLevels(
   areaWidth: number,
   areaHeight: number,
   photo?: PhotoItem,
+  options?: { minZoom?: number },
 ): ZoomState {
   const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
 
@@ -33,8 +37,12 @@ export function computeZoomLevels(
     ? (photo.meta.maxZoom as number)
     : null
 
+  const minZoom = (typeof photo?.meta?.minZoom === 'number' && (photo.meta.minZoom as number) > 0
+    ? (photo.meta.minZoom as number)
+    : null) ?? options?.minZoom ?? DEFAULT_MIN_ZOOM
+
   const naturalMax = metaMax ?? Math.max(
-    1,
+    minZoom,
     Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
   )
   const secondary = Math.min(2, naturalMax)

@@ -1,4 +1,4 @@
-import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
+import { computed, getCurrentInstance, inject, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
 import {
   ensureImageLoaded,
   lockBodyScroll,
@@ -17,14 +17,17 @@ import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
+import { LightboxDefaultsKey } from '../provide/keys'
+import { isDev } from '../utils/isDev'
 
 export type LightboxTransitionOption = TransitionMode | TransitionModeConfig
 
 export function useLightboxContext(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
+  minZoom?: number,
 ) {
-  if (process.env.NODE_ENV !== 'production' && !getCurrentInstance()) {
+  if (isDev() && !getCurrentInstance()) {
     console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
   }
 
@@ -33,6 +36,9 @@ export function useLightboxContext(
     return Array.isArray(value) ? value : [value]
   })
   const count = computed(() => photos.value.length)
+
+  const globalDefaults = inject(LightboxDefaultsKey, undefined)
+  const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
 
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
@@ -82,7 +88,7 @@ export function useLightboxContext(
     debug,
   )
 
-  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug)
+  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug, resolvedMinZoom)
 
   const ghost = useGhostTransition(
     carousel.activeIndex,

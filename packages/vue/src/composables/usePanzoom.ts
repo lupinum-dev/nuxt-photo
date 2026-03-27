@@ -19,6 +19,7 @@ export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem>,
   areaMetrics: Ref<AreaMetrics | null>,
   debug?: DebugLogger,
+  minZoom?: number,
 ) {
   const zoomState = ref<ZoomState>({ fit: 1, secondary: 1, max: 1, current: 1 })
   const panState = ref<PanState>({ x: 0, y: 0 })
@@ -39,7 +40,14 @@ export function usePanzoom(
   function computeZoomLevels(photo: PhotoItem): ZoomState {
     const area = areaMetrics.value
     if (!area) return { fit: 1, secondary: 1, max: 1, current: 1 }
-    return coreComputeZoomLevels(photo.width, photo.height, area.width, area.height, photo)
+    return coreComputeZoomLevels(
+      photo.width,
+      photo.height,
+      area.width,
+      area.height,
+      photo,
+      minZoom != null ? { minZoom } : undefined,
+    )
   }
 
   function getPanBounds(photo: PhotoItem, zoom: number) {

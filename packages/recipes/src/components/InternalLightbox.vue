@@ -5,8 +5,8 @@
     <div class="np-lightbox__ui">
       <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
         <component
-          v-if="slots?.value.toolbar"
-          :is="() => slots!.value.toolbar!({ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled })"
+          v-if="slots?.toolbar"
+          :is="() => slots!.toolbar!({ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled })"
         />
         <div v-else class="np-lightbox__topbar">
           <div class="np-lightbox__counter">
@@ -43,8 +43,8 @@
                 :index="i"
                 class="np-lightbox__slide"
               >
-                <template v-if="slots?.value.slide" #default="slotProps">
-                  <component :is="() => slots!.value.slide!(slotProps)" />
+                <template v-if="slots?.slide" #default="slotProps">
+                  <component :is="() => slots!.slide!(slotProps)" />
                 </template>
               </LightboxSlide>
             </div>
@@ -52,7 +52,7 @@
         </LightboxViewport>
 
         <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <component v-if="slots?.value.caption" :is="() => slots!.value.caption!({ photo, index: activeIndex })" />
+          <component v-if="slots?.caption" :is="() => slots!.caption!({ photo, index: activeIndex })" />
           <template v-else>
             <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
             <p v-if="photo?.description">{{ photo.description }}</p>

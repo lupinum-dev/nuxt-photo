@@ -73,3 +73,9 @@ export interface LightboxSlotOverrides {
   slide?: (props: { photo: PhotoItem; index: number; width: number; height: number }) => unknown
 }
 export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> = Symbol('nuxt-photo:lightbox-slots')
+
+/** Global defaults for lightbox behaviour, typically provided once at app level. */
+export interface LightboxDefaults {
+  minZoom?: number
+}
+export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol('nuxt-photo:lightbox-defaults')

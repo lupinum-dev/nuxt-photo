@@ -50,7 +50,7 @@ const registrationVersion = ref(0)
 const groupMode = computed<'auto' | 'explicit'>(() => props.photos !== undefined ? 'explicit' : 'auto')
 
 function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null) {
-  if (process.env.NODE_ENV !== 'production') {
+  if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
     if (props.photos !== undefined) {
       console.warn(
         '[nuxt-photo] PhotoGroup has both a :photos prop and child <Photo> registrations. '

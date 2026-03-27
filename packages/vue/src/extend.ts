@@ -27,6 +27,8 @@ export {
   PhotoGroupContextKey,
   type PhotoGroupContext,
   LightboxComponentKey,
+  LightboxDefaultsKey,
+  type LightboxDefaults,
   LightboxSlotsKey,
   type LightboxSlotOverrides,
 } from './provide/keys'

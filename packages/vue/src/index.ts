@@ -1,7 +1,8 @@
 // @nuxt-photo/vue — Vue bindings over core
 export * from './composables'
 export * from './primitives'
-export { LightboxComponentKey, LightboxContextKey } from './provide/keys'
+export { LightboxComponentKey, LightboxContextKey, LightboxDefaultsKey } from './provide/keys'
+export type { LightboxDefaults } from './provide/keys'
 
 // Re-export core utilities for convenience
 export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
