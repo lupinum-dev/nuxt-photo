@@ -22,4 +22,5 @@ export type {
   LayoutInput,
   LayoutEntry,
   LayoutGroup,
+  ResponsiveParameter,
 } from '@nuxt-photo/core'

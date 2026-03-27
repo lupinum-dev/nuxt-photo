@@ -2,7 +2,7 @@
   <img
     :src="resolved.src"
     :srcset="resolved.srcset"
-    :sizes="resolved.sizes"
+    :sizes="props.sizes ?? resolved.sizes"
     :width="resolved.width"
     :height="resolved.height"
     :alt="photo.alt || ''"
@@ -22,6 +22,8 @@ const props = withDefaults(defineProps<{
   context?: ImageContext
   adapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
+  /** Override the adapter-computed sizes attribute with a layout-computed value. */
+  sizes?: string
 }>(), {
   context: 'thumb',
   loading: 'lazy',

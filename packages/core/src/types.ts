@@ -202,6 +202,34 @@ export type ImageContext = 'thumb' | 'slide' | 'preload'
 
 export type ImageAdapter = (photo: PhotoItem<any>, context: ImageContext) => ImageSource
 
+// ─── Responsive parameters ───
+
+/**
+ * A prop value that can be a plain number or a function that receives the current
+ * container width and returns a number. Allows per-breakpoint customisation without
+ * needing explicit breakpoint arrays.
+ *
+ * @example
+ * // static
+ * spacing={8}
+ * // responsive
+ * spacing={(w) => w < 600 ? 4 : 8}
+ */
+export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
+
+/**
+ * Resolve a `ResponsiveParameter` to its concrete value.
+ * Returns `fallback` when `value` is `undefined`.
+ */
+export function resolveResponsiveParameter<T>(
+  value: ResponsiveParameter<T> | undefined,
+  containerWidth: number,
+  fallback: T,
+): T {
+  if (value === undefined) return fallback
+  return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
+}
+
 // ─── Debug ───
 
 export type DebugChannel = 'transitions' | 'gestures' | 'zoom' | 'slides' | 'geometry' | 'rects'

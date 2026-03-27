@@ -16,6 +16,7 @@
         layout="rows"
         :target-row-height="280"
         :spacing="6"
+        :breakpoints="[375, 600, 900, 1200]"
       />
     </div>
 
@@ -47,6 +48,7 @@ const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
   layout="rows"
   :target-row-height="280"
   :spacing="6"
+  :breakpoints="[375, 600, 900, 1200]"
 />`
 </script>
 
