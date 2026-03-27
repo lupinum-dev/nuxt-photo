@@ -1,8 +1,62 @@
-import type { Component, ComputedRef, InjectionKey, Ref } from 'vue'
-import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
-import type { useLightboxContext } from '../composables/useLightboxContext'
+import type { Component, ComponentPublicInstance, ComputedRef, CSSProperties, InjectionKey, Ref } from 'vue'
+import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '@nuxt-photo/core'
 
-export type LightboxContext = ReturnType<typeof useLightboxContext>
+/** Consumer API — what app code and recipe components need. */
+export interface LightboxConsumerAPI {
+  photos: ComputedRef<PhotoItem[]>
+  count: ComputedRef<number>
+  activeIndex: Ref<number>
+  activePhoto: ComputedRef<PhotoItem>
+  isOpen: ComputedRef<boolean>
+  open: (photoOrIndex?: PhotoItem | number) => Promise<void>
+  close: () => Promise<void>
+  next: () => void
+  prev: () => void
+  toggleZoom: () => void
+}
+
+/** Render state — what primitive components read for styling and visibility. */
+export interface LightboxRenderState {
+  zoomState: Ref<ZoomState>
+  panState: Ref<PanState>
+  isZoomedIn: ComputedRef<boolean>
+  zoomAllowed: ComputedRef<boolean>
+  animating: Ref<boolean>
+  ghostVisible: Ref<boolean>
+  ghostSrc: Ref<string>
+  ghostStyle: Ref<CSSProperties>
+  hiddenThumbIndex: Ref<number | null>
+  overlayOpacity: Ref<number>
+  mediaOpacity: Ref<number>
+  chromeOpacity: Ref<number>
+  uiVisible: Ref<boolean>
+  closeDragY: Ref<number>
+  transitionInProgress: ComputedRef<boolean>
+  chromeStyle: ComputedRef<CSSProperties>
+  closeDragRatio: ComputedRef<number>
+  backdropStyle: ComputedRef<CSSProperties>
+  lightboxUiStyle: ComputedRef<CSSProperties>
+  gesturePhase: Ref<GestureMode>
+  getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  getSlideEffectStyle: (index: number) => CSSProperties
+}
+
+/** DOM bindings — what primitives need to wire up event handlers and refs. */
+export interface LightboxDOMBindings {
+  mediaAreaRef: Ref<HTMLElement | null>
+  emblaRef: Ref<HTMLElement | null>
+  setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  onMediaPointerDown: (e: PointerEvent) => void
+  onMediaPointerMove: (e: PointerEvent) => void
+  onMediaPointerUp: (e: PointerEvent) => void
+  onMediaPointerCancel: (e: PointerEvent) => void
+  onWheel: (e: WheelEvent) => void
+  handleBackdropClick: () => void
+}
+
+/** Full lightbox context — the intersection of all role-specific interfaces. */
+export type LightboxContext = LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings
 
 export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => unknown
 

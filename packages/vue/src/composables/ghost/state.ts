@@ -60,8 +60,14 @@ export function setThumbRef(state: GhostState, index: number) {
 
 export function resetOpenState(state: GhostState) {
   state.ghostVisible.value = false
+  state.ghostSrc.value = ''
+  state.hiddenThumbIndex.value = null
+  state.overlayOpacity.value = 1
+  state.mediaOpacity.value = 1
   state.chromeOpacity.value = 1
   state.animating.value = false
+  state.closeDragY.value = 0
+  state.disableBackdropTransition.value = false
 }
 
 export function resetCloseState(state: GhostState, clearGuard: () => void) {

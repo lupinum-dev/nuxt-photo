@@ -8,11 +8,14 @@ export function ensureImageLoaded(src: string): Promise<void> {
   const promise = new Promise<void>((resolve) => {
     const image = new Image()
     image.onload = () => resolve()
-    image.onerror = () => resolve()
+    image.onerror = () => {
+      imageLoadCache.delete(src)
+      resolve()
+    }
     image.src = src
 
     if (image.decode) {
-      image.decode().catch(() => {}).finally(resolve)
+      image.decode().catch(() => { imageLoadCache.delete(src) }).finally(resolve)
       return
     }
 

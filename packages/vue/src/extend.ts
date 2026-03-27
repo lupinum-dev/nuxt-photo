@@ -11,7 +11,7 @@
  * - `useLightboxProvider` — building a custom lightbox component
  */
 
-// Full engine composable (returns 50+ properties)
+// Full engine composable
 export { useLightboxContext, type LightboxTransitionOption } from './composables/useLightboxContext'
 
 // Typed inject helper — use inside primitive components instead of raw inject()
@@ -23,6 +23,9 @@ export { provideLightboxContexts } from './provide/lightbox'
 // Injection keys and context types
 export {
   type LightboxContext,
+  type LightboxConsumerAPI,
+  type LightboxRenderState,
+  type LightboxDOMBindings,
   LightboxContextKey,
   type LightboxSlideRenderer,
   LightboxSlideRendererKey,

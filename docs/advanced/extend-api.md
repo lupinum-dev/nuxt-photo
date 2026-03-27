@@ -21,7 +21,13 @@ import {
   ImageAdapterKey,
   PhotoGroupContextKey,
 
-  // Types
+  // Role-based context interfaces
+  type LightboxContext,
+  type LightboxConsumerAPI,
+  type LightboxRenderState,
+  type LightboxDOMBindings,
+
+  // Other types
   type LightboxSlideRenderer,
   type PhotoGroupContext,
   type LightboxSlotOverrides,
@@ -36,7 +42,7 @@ These keys are used with Vue's `provide` / `inject`:
 
 | Key | Type | Description |
 |---|---|---|
-| `LightboxContextKey` | `LightboxContext` | The full lightbox engine context (50+ properties). Provided by `useLightboxProvider`. |
+| `LightboxContextKey` | `LightboxContext` | The full lightbox engine context — a typed intersection of `LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings`. Provided by `useLightboxProvider`. |
 | `LightboxSlideRendererKey` | `(photo) => LightboxSlideRenderer \| null` | Custom slide renderer lookup function. |
 | `LightboxComponentKey` | `Component` | Override the lightbox component globally. Provide this in `app.vue` to replace the default lightbox everywhere. |
 | `LightboxSlotsKey` | `Ref<LightboxSlotOverrides>` | Slot overrides for toolbar, caption, slide. Used internally by PhotoGroup and PhotoAlbum. |
@@ -113,44 +119,104 @@ provide(LightboxComponentKey, MyLightbox)
 </template>
 ```
 
-## useLightboxContext (Full Engine)
+## Typed Context Structure
 
-For maximum control, use `useLightboxContext` directly. It returns 50+ reactive properties:
+The `LightboxContext` type is split into three role-based interfaces. This lets you type-narrow to only the slice your component needs:
+
+### `LightboxConsumerAPI` — app code & recipe components
+
+What you use to control the lightbox from the outside.
 
 ```ts
-import { useLightboxContext } from '@nuxt-photo/vue'
+interface LightboxConsumerAPI {
+  photos: ComputedRef<PhotoItem[]>
+  count: ComputedRef<number>
+  activeIndex: Ref<number>
+  activePhoto: ComputedRef<PhotoItem>
+  isOpen: ComputedRef<boolean>
+  open: (photoOrIndex?: PhotoItem | number) => Promise<void>
+  close: () => Promise<void>
+  next: () => void
+  prev: () => void
+  toggleZoom: () => void
+}
+```
+
+### `LightboxRenderState` — primitive components (styling & visibility)
+
+Reactive state that drives the visual appearance of overlays, slides, and chrome.
+
+```ts
+interface LightboxRenderState {
+  zoomState: Ref<ZoomState>
+  panState: Ref<PanState>
+  isZoomedIn: ComputedRef<boolean>
+  zoomAllowed: ComputedRef<boolean>
+  animating: Ref<boolean>
+  ghostVisible: Ref<boolean>
+  ghostSrc: Ref<string>
+  ghostStyle: Ref<CSSProperties>
+  hiddenThumbIndex: Ref<number | null>
+  overlayOpacity: Ref<number>
+  mediaOpacity: Ref<number>
+  chromeOpacity: Ref<number>
+  uiVisible: Ref<boolean>
+  closeDragY: Ref<number>
+  transitionInProgress: ComputedRef<boolean>
+  chromeStyle: ComputedRef<CSSProperties>
+  closeDragRatio: ComputedRef<number>
+  backdropStyle: ComputedRef<CSSProperties>
+  lightboxUiStyle: ComputedRef<CSSProperties>
+  gesturePhase: Ref<GestureMode>
+  getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  getSlideEffectStyle: (index: number) => CSSProperties
+}
+```
+
+### `LightboxDOMBindings` — event handlers & ref callbacks
+
+Wire these into your template to connect pointer/wheel events and DOM refs.
+
+```ts
+interface LightboxDOMBindings {
+  mediaAreaRef: Ref<HTMLElement | null>
+  emblaRef: Ref<HTMLElement | null>
+  setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  onMediaPointerDown: (e: PointerEvent) => void
+  onMediaPointerMove: (e: PointerEvent) => void
+  onMediaPointerUp: (e: PointerEvent) => void
+  onMediaPointerCancel: (e: PointerEvent) => void
+  onWheel: (e: WheelEvent) => void
+  handleBackdropClick: () => void
+}
+```
+
+### Full context
+
+`LightboxContext = LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings`
+
+When you inject or call `useLightboxContext`, you get the full intersection. But you can type-narrow for cleaner component code:
+
+```ts
+import { inject } from 'vue'
+import { LightboxContextKey, type LightboxConsumerAPI } from '@nuxt-photo/vue/extend'
+
+// Only use the consumer slice — your component doesn't touch DOM bindings or render state
+const { open, close, next, prev, activePhoto } = inject(LightboxContextKey)! as LightboxConsumerAPI
+```
+
+## useLightboxContext (Full Engine)
+
+For maximum control, use `useLightboxContext` directly:
+
+```ts
+import { useLightboxContext } from '@nuxt-photo/vue/extend'
 
 const ctx = useLightboxContext(photos, 'auto', 1)
 ```
 
-### Key properties (partial list):
-
-**Control:**
-- `open(index)`, `close()`, `next()`, `prev()`, `toggleZoom()`
-
-**State:**
-- `isOpen`, `activeIndex`, `activePhoto`, `count`, `photos`
-- `viewerState` — the full state machine (`closed | opening | open | closing`)
-
-**Zoom & Pan:**
-- `zoomState` — `{ fit, secondary, max, current }`
-- `panState` — `{ x, y }`
-- `isZoomedIn`, `zoomAllowed`
-- `panzoomMotion` — full spring animation state
-
-**Transitions:**
-- `ghostVisible`, `ghostSrc`, `ghostStyle` — ghost image for FLIP
-- `hiddenThumbIndex` — which thumbnail to hide
-- `backdropStyle`, `mediaOpacity`, `chromeStyle` — animated styles
-
-**Geometry:**
-- `mediaAreaRef` — ref to the media container element
-- `areaMetrics` — `{ left, top, width, height }` of the media area
-
-**Events:**
-- `onMediaPointerDown`, `onMediaPointerMove`, `onMediaPointerUp`, `onMediaPointerCancel`
-- `onWheel`
-- `handleBackdropClick`
+The returned object satisfies `LightboxContext` — see the three interfaces above for the full property list.
 
 ## PhotoGroupContext
 
