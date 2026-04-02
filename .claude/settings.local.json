@@ -12,7 +12,13 @@
       "Read(//tmp/**)",
       "Bash(npm test:*)",
       "Bash(pnpm:*)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(ls packages/vue/dist/*.mjs packages/recipes/dist/*.mjs)",
+      "Bash(ls /Users/matthias/Git/0_libs/nuxt-photo/packages/vue/dist/*.mjs)",
+      "Bash(ls /Users/matthias/Git/0_libs/nuxt-photo/packages/recipes/dist/*.mjs)",
+      "Bash(kill %1)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
     ]
   }
 }

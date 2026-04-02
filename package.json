@@ -7,7 +7,7 @@
     "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!docs dev",
     "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
     "dev:playground-tw": "pnpm run build && pnpm --filter nuxt-photo-playground-tw dev",
-    "dev:docs": "pnpm --filter docs dev",
+    "dev:docs": "pnpm run build && pnpm --filter docs dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "build:docs": "pnpm --filter docs build",
     "test:unit": "vitest run",

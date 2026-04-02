@@ -23,7 +23,7 @@
   },
   "peerDependencies": {
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^3.21.2"
+    "nuxt": "^3.21.2 || ^4.0.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/image": {

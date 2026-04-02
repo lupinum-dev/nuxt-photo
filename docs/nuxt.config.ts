@@ -3,12 +3,20 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
+    '@nuxt-photo/nuxt',
     '@nuxt/ui',
     '@nuxt/content',
     'nuxt-og-image',
     'nuxt-llms',
     '@nuxtjs/mcp-toolkit'
   ],
+
+  nuxtPhoto: {
+    css: 'all',
+    image: {
+      provider: 'nuxt-image',
+    },
+  },
 
   devtools: {
     enabled: true
@@ -56,12 +64,12 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    domain: 'https://docs-template.nuxt.dev/',
-    title: 'Nuxt Docs Template',
-    description: 'A template for building documentation with Nuxt UI and Nuxt Content.',
+    domain: 'https://nuxt-photo.dev/',
+    title: 'nuxt-photo',
+    description: 'A layered photo gallery and lightbox system for Vue and Nuxt.',
     full: {
-      title: 'Nuxt Docs Template - Full Documentation',
-      description: 'This is the full documentation for the Nuxt Docs Template.'
+      title: 'nuxt-photo - Full Documentation',
+      description: 'Complete documentation for nuxt-photo — layouts, lightbox, composables, and advanced guides.'
     },
     sections: [
       {
@@ -72,16 +80,37 @@ export default defineNuxtConfig({
         ]
       },
       {
-        title: 'Essentials',
+        title: 'Components',
         contentCollection: 'docs',
         contentFilters: [
-          { field: 'path', operator: 'LIKE', value: '/essentials%' }
+          { field: 'path', operator: 'LIKE', value: '/components%' }
+        ]
+      },
+      {
+        title: 'Guides',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/guides%' }
+        ]
+      },
+      {
+        title: 'Composables',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/composables%' }
+        ]
+      },
+      {
+        title: 'Advanced',
+        contentCollection: 'docs',
+        contentFilters: [
+          { field: 'path', operator: 'LIKE', value: '/advanced%' }
         ]
       }
     ]
   },
 
   mcp: {
-    name: 'Docs template'
+    name: 'nuxt-photo docs'
   }
 })

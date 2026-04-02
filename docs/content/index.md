@@ -1,7 +1,7 @@
 ---
 seo:
-  title: Nuxt Docs Template
-  description: Create stunning, fast and SEO-optimized documentation sites with Nuxt UI.
+  title: nuxt-photo
+  description: A layered photo gallery and lightbox system for Vue and Nuxt. Beautiful layouts, smooth FLIP transitions, touch gestures, and zoom.
 ---
 
 ::u-page-hero{class="dark:bg-gradient-to-b from-neutral-900 to-neutral-950"}
@@ -12,10 +12,10 @@ orientation: horizontal
 :hero-background
 
 #title
-Ship Beautiful [Documentation]{.text-primary}.
+Photo galleries for [Vue & Nuxt]{.text-primary}.
 
 #description
-Build professional documentation with Nuxt UI's powerful components, enhanced typography, and seamless Nuxt Content integration. The same system trusted by the entire [Nuxt ecosystem](https://nuxt.com).
+Beautiful layouts, smooth FLIP transitions, touch gestures, and zoom — all from a single component. Zero configuration to get started, full control when you need it.
 
 #links
   :::u-button
@@ -33,10 +33,10 @@ Build professional documentation with Nuxt UI's powerful components, enhanced ty
   color: neutral
   variant: outline
   size: xl
-  to: https://github.com/nuxt-ui-templates/docs
+  to: https://github.com/mat4m0/nuxt-photo
   target: _blank
   ---
-  Use this template
+  View on GitHub
   :::
 
 #default
@@ -44,28 +44,14 @@ Build professional documentation with Nuxt UI's powerful components, enhanced ty
   ---
   code: |
     export default defineNuxtConfig({
-      modules: [
-        '@nuxt/ui',
-        '@nuxt/content',
-        'nuxt-og-image',
-        'nuxt-llms'
-      ],
-
-      css: ['~/assets/css/main.css']
+      modules: ['@nuxt-photo/nuxt'],
     })
   filename: nuxt.config.ts
   ---
 
   ```ts [nuxt.config.ts]
   export default defineNuxtConfig({
-    modules: [
-      '@nuxt/ui',
-      '@nuxt/content',
-      'nuxt-og-image',
-      'nuxt-llms'
-    ],
-
-    css: ['~/assets/css/main.css']
+    modules: ['@nuxt-photo/nuxt'],
   })
   ```
   :::
@@ -73,42 +59,125 @@ Build professional documentation with Nuxt UI's powerful components, enhanced ty
 
 ::u-page-section{class="dark:bg-neutral-950"}
 #title
-Powered by Nuxt UI components
+Four layout algorithms
 
 #links
   :::u-button
   ---
   color: neutral
   size: lg
-  target: _blank
-  to: https://ui.nuxt.com/docs/getting-started/installation/nuxt
+  to: /guides/layouts
   trailingIcon: i-lucide-arrow-right
   variant: subtle
   ---
-  Explore Nuxt UI
+  Explore layouts
   :::
 
 #features
   :::u-page-feature
   ---
-  icon: i-lucide-palette
+  icon: i-lucide-align-justify
   ---
   #title
-  100+ UI Components
+  Rows (Justified)
 
   #description
-  Access the complete Nuxt UI component library. From badges to modals, everything styled and accessible out of the box.
+  Knuth-Plass dynamic programming fills every row to the container edge while keeping row heights close to your target. No cropping, no gaps.
   :::
 
   :::u-page-feature
   ---
-  icon: i-lucide-type
+  icon: i-lucide-columns-3
   ---
   #title
-  Beautiful Typography
+  Columns
 
   #description
-  Pre-styled prose components with perfect visual harmony. No need for @tailwindcss/typography - get precise control over every element.
+  Equal-width columns with a shortest-path algorithm that balances column heights. Photos stay in order, columns stay even.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-layout-grid
+  ---
+  #title
+  Masonry
+
+  #description
+  Classic Pinterest-style layout. Each photo goes into the shortest column, greedy-placing items to minimize wasted space.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-layout-dashboard
+  ---
+  #title
+  Bento Grid
+
+  #description
+  CSS Grid with automatic span heuristics. Wide photos get more columns, tall photos get more rows. Magazine-style without the manual work.
+  :::
+::
+
+::u-page-section{class="dark:bg-neutral-950"}
+#title
+Built for production
+
+#links
+  :::u-button
+  ---
+  color: neutral
+  size: lg
+  to: /getting-started/installation
+  trailingIcon: i-lucide-arrow-right
+  variant: subtle
+  ---
+  Installation
+  :::
+
+#features
+  :::u-page-feature
+  ---
+  icon: i-lucide-zap
+  ---
+  #title
+  Lightbox included
+
+  #description
+  FLIP transitions from thumbnail to full-screen, swipe gestures, pinch-to-zoom, keyboard navigation, and spring physics — all built in.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-monitor-smartphone
+  ---
+  #title
+  Responsive by design
+
+  #description
+  Every numeric option accepts a container-width function. Change columns, spacing, and row height at any breakpoint — no media queries needed.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-server
+  ---
+  #title
+  Zero CLS on SSR
+
+  #description
+  Server-renders a flex-grow fallback that matches the JS layout. When JS hydrates, there's no layout shift — the page looks identical before and after.
+  :::
+
+  :::u-page-feature
+  ---
+  icon: i-lucide-image
+  ---
+  #title
+  Nuxt Image ready
+
+  #description
+  Automatic @nuxt/image integration. Thumbnails get optimized srcsets for the grid, slides get full-viewport srcsets for the lightbox.
   :::
 
   :::u-page-feature
@@ -116,128 +185,21 @@ Powered by Nuxt UI components
   icon: i-lucide-layers
   ---
   #title
-  Rich Prose Components
+  Layered architecture
 
   #description
-  Accordions, cards, callouts, tabs, steps, code blocks, and more - all provided by Nuxt UI for interactive documentation.
+  Use the high-level recipe components or drop down to composables and primitives for full control. No black boxes — every layer is replaceable.
   :::
 
   :::u-page-feature
   ---
-  icon: i-lucide-search
+  icon: i-lucide-puzzle
   ---
   #title
-  Built-in Search
+  Headless mode
 
   #description
-  Full-text search with ContentSearch component. No need for Algolia - instant, relevant results with keyboard shortcuts (⌘K).
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-navigation
-  ---
-  #title
-  Smart Navigation
-
-  #description
-  Auto-generated navigation with ContentNavigation and ContentToc components. Sticky table of contents and prev/next links.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-moon
-  ---
-  #title
-  Dark Mode Ready
-
-  #description
-  Automatic theme switching with smooth transitions. Respects system preferences and remembers user choice.
-  :::
-::
-
-::u-page-section{class="dark:bg-neutral-950"}
-#title
-Enhanced with Nuxt Content
-
-#links
-  :::u-button
-  ---
-  color: neutral
-  size: lg
-  target: _blank
-  to: https://content.nuxt.com/docs/getting-started/installation
-  trailingIcon: i-lucide-arrow-right
-  variant: subtle
-  ---
-  Explore Nuxt Content
-  :::
-
-#features
-  :::u-page-feature
-  ---
-  icon: i-simple-icons-markdown
-  ---
-  #title
-  MDC Enhanced Markdown
-
-  #description
-  Write in Markdown while embedding Vue components. Seamlessly integrate interactive elements in your content.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-file-text
-  ---
-  #title
-  File-based Routing
-
-  #description
-  Organize content in folders and files. Your documentation structure automatically becomes your navigation.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-code
-  ---
-  #title
-  Syntax Highlighting
-
-  #description
-  Beautiful code blocks with language detection, line numbers, and copy buttons. Support for 100+ languages.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-database
-  ---
-  #title
-  Content Database
-
-  #description
-  Query your content with a MongoDB-like API. Filter, sort, and search through your documentation programmatically.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-file-code
-  ---
-  #title
-  Frontmatter Support
-
-  #description
-  Add metadata to your content files. Define SEO tags, navigation properties, and custom fields.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-git-branch
-  ---
-  #title
-  Version Control
-
-  #description
-  Content lives in your repository. Branch, review, and deploy documentation alongside your code.
+  Skip the recipe components entirely. Build your own grid and lightbox using the composables and primitive components with your own markup and styles.
   :::
 ::
 
@@ -245,16 +207,16 @@ Enhanced with Nuxt Content
   :::u-page-c-t-a
   ---
   links:
-    - label: Start building
+    - label: Get started
       to: '/getting-started'
       trailingIcon: i-lucide-arrow-right
     - label: View on GitHub
-      to: 'https://github.com/nuxt-ui-templates/docs'
+      to: 'https://github.com/mat4m0/nuxt-photo'
       target: _blank
       variant: subtle
       icon: i-simple-icons-github
-  title: Ready to build an amazing documentation?
-  description: Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today.
+  title: From zero to gallery in minutes.
+  description: Install the module, add your photos, render a PhotoAlbum. Everything else — lightbox, gestures, zoom, SSR — works out of the box.
   class: dark:bg-neutral-950
   ---
 

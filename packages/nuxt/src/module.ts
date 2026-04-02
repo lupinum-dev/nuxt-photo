@@ -1,4 +1,5 @@
 import { addComponent, addImports, addPlugin, createResolver, defineNuxtModule, hasNuxtModule } from '@nuxt/kit'
+import type { NuxtModule } from '@nuxt/schema'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean
@@ -47,7 +48,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     name: '@nuxt-photo/nuxt',
     configKey: 'nuxtPhoto',
     compatibility: {
-      nuxt: '^3.21.2',
+      nuxt: '^3.21.2 || ^4.0.0',
     },
   },
   defaults: {
@@ -144,4 +145,4 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       }
     }
   },
-})
+}) as NuxtModule<NuxtPhotoOptions>
