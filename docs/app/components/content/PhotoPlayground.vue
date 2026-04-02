@@ -1,259 +1,406 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { responsive, type AlbumLayout } from '@nuxt-photo/vue'
+import { docsDemoPhotos, docsHeroPhotos } from '~/composables/useDocsDemoData'
 
 type LayoutType = 'rows' | 'columns' | 'masonry' | 'bento'
-type BentoSizing = 'auto' | 'pattern' | 'manual'
+type BentoSizing = 'auto' | 'pattern'
+type ThumbnailPreset = 'default' | 'badge' | 'editorial' | 'hidden-state'
 
-// Demo photos with known dimensions (landscape, portrait, square mix)
-const demoPhotos = [
-  { id: 1, src: 'https://picsum.photos/seed/np1/1600/900', width: 1600, height: 900, alt: 'Photo 1', caption: 'Landscape #1' },
-  { id: 2, src: 'https://picsum.photos/seed/np2/900/1200', width: 900, height: 1200, alt: 'Photo 2', caption: 'Portrait #1' },
-  { id: 3, src: 'https://picsum.photos/seed/np3/1000/1000', width: 1000, height: 1000, alt: 'Photo 3', caption: 'Square #1' },
-  { id: 4, src: 'https://picsum.photos/seed/np4/1400/900', width: 1400, height: 900, alt: 'Photo 4', caption: 'Landscape #2' },
-  { id: 5, src: 'https://picsum.photos/seed/np5/800/1100', width: 800, height: 1100, alt: 'Photo 5', caption: 'Portrait #2' },
-  { id: 6, src: 'https://picsum.photos/seed/np6/1600/1000', width: 1600, height: 1000, alt: 'Photo 6', caption: 'Landscape #3' },
-  { id: 7, src: 'https://picsum.photos/seed/np7/900/900', width: 900, height: 900, alt: 'Photo 7', caption: 'Square #2' },
-  { id: 8, src: 'https://picsum.photos/seed/np8/700/1200', width: 700, height: 1200, alt: 'Photo 8', caption: 'Portrait #3' },
-  { id: 9, src: 'https://picsum.photos/seed/np9/1800/1000', width: 1800, height: 1000, alt: 'Photo 9', caption: 'Wide #1' },
-  { id: 10, src: 'https://picsum.photos/seed/np10/1200/900', width: 1200, height: 900, alt: 'Photo 10', caption: 'Landscape #4' },
-  { id: 11, src: 'https://picsum.photos/seed/np11/900/1300', width: 900, height: 1300, alt: 'Photo 11', caption: 'Portrait #4' },
-  { id: 12, src: 'https://picsum.photos/seed/np12/1100/1100', width: 1100, height: 1100, alt: 'Photo 12', caption: 'Square #3' },
-]
-
-const layoutType = ref<LayoutType>('rows')
-const config = reactive({
-  rows: { targetRowHeight: 280 },
-  columns: { columns: 3 },
-  masonry: { columns: 3 },
-  bento: { columns: 3, rowHeight: 280, sizing: 'auto' as BentoSizing },
-  spacing: 8,
-  padding: 0,
+const props = withDefaults(defineProps<{
+  mode?: 'full' | 'compact' | 'hero'
+  initialLayout?: LayoutType
+  initialThumbnail?: ThumbnailPreset
+  allowLightboxToggle?: boolean
+  allowThumbnailPicker?: boolean
+  showCode?: boolean
+}>(), {
+  mode: 'full',
+  initialLayout: 'rows',
+  initialThumbnail: 'default',
+  allowLightboxToggle: true,
+  allowThumbnailPicker: true,
 })
 
-const layoutTabs = [
-  { label: 'Rows', value: 'rows' as LayoutType },
-  { label: 'Columns', value: 'columns' as LayoutType },
-  { label: 'Masonry', value: 'masonry' as LayoutType },
-  { label: 'Bento', value: 'bento' as LayoutType },
+const compact = computed(() => props.mode !== 'full')
+const hero = computed(() => props.mode === 'hero')
+
+const previewPhotos = computed(() => hero.value ? docsHeroPhotos : docsDemoPhotos)
+
+const layoutType = ref<LayoutType>(props.initialLayout)
+const thumbnailPreset = ref<ThumbnailPreset>(props.initialThumbnail)
+const lightboxEnabled = ref(true)
+const width = ref(hero.value ? 940 : compact.value ? 760 : 980)
+const useResponsiveValues = ref(props.mode === 'full')
+
+const config = reactive({
+  rows: { targetRowHeight: compact.value ? 240 : 280 },
+  columns: { columns: compact.value ? 3 : 4 },
+  masonry: { columns: compact.value ? 3 : 4 },
+  bento: { columns: compact.value ? 3 : 4, rowHeight: compact.value ? 220 : 260, sizing: 'auto' as BentoSizing },
+  spacing: compact.value ? 8 : 12,
+  padding: compact.value ? 0 : 4,
+})
+
+const layoutTabItems = [
+  { label: 'Rows', value: 'rows' },
+  { label: 'Columns', value: 'columns' },
+  { label: 'Masonry', value: 'masonry' },
+  { label: 'Bento', value: 'bento' },
 ]
 
-const bentoSizingOptions = [
+const thumbnailTabItems = [
+  { label: 'Default', value: 'default' },
+  { label: 'Badge', value: 'badge' },
+  { label: 'Editorial', value: 'editorial' },
+  { label: 'Hidden', value: 'hidden-state' },
+]
+
+const columnsOptions = [2, 3, 4, 5]
+const bentoSizingItems = [
   { label: 'Auto', value: 'auto' },
   { label: 'Pattern', value: 'pattern' },
 ]
 
-const columnsOptions = [
-  { label: '2', value: 2 },
-  { label: '3', value: 3 },
-  { label: '4', value: 4 },
-  { label: '5', value: 5 },
-]
+function responsiveExpression(staticValue: number, mediumValue: number, wideValue: number) {
+  return `responsive({ 0: ${staticValue}, 600: ${mediumValue}, 1120: ${wideValue} })`
+}
 
-const albumLayout = computed(() => {
-  const t = layoutType.value
-  if (t === 'rows') return { type: 'rows' as const, targetRowHeight: config.rows.targetRowHeight }
-  if (t === 'columns') return { type: 'columns' as const, columns: config.columns.columns }
-  if (t === 'masonry') return { type: 'masonry' as const, columns: config.masonry.columns }
+const albumLayout = computed<AlbumLayout>(() => {
+  if (layoutType.value === 'rows') {
+    return {
+      type: 'rows',
+      targetRowHeight: useResponsiveValues.value
+        ? responsive({
+          0: Math.max(160, config.rows.targetRowHeight - 60),
+          640: config.rows.targetRowHeight,
+          1120: config.rows.targetRowHeight + 40,
+        })
+        : config.rows.targetRowHeight,
+    }
+  }
+
+  if (layoutType.value === 'columns') {
+    return {
+      type: 'columns',
+      columns: useResponsiveValues.value
+        ? responsive({
+          0: Math.max(1, config.columns.columns - 2),
+          640: Math.max(2, config.columns.columns - 1),
+          1120: config.columns.columns,
+        })
+        : config.columns.columns,
+    }
+  }
+
+  if (layoutType.value === 'masonry') {
+    return {
+      type: 'masonry',
+      columns: useResponsiveValues.value
+        ? responsive({
+          0: Math.max(1, config.masonry.columns - 2),
+          640: Math.max(2, config.masonry.columns - 1),
+          1120: config.masonry.columns,
+        })
+        : config.masonry.columns,
+    }
+  }
+
   return {
-    type: 'bento' as const,
-    columns: config.bento.columns,
-    rowHeight: config.bento.rowHeight,
+    type: 'bento',
+    columns: useResponsiveValues.value
+      ? responsive({
+        0: Math.max(1, config.bento.columns - 2),
+        720: Math.max(2, config.bento.columns - 1),
+        1120: config.bento.columns,
+      })
+      : config.bento.columns,
+    rowHeight: useResponsiveValues.value
+      ? responsive({
+        0: Math.max(160, config.bento.rowHeight - 60),
+        720: config.bento.rowHeight,
+        1120: config.bento.rowHeight + 30,
+      })
+      : config.bento.rowHeight,
     sizing: config.bento.sizing,
   }
 })
 
+const spacingValue = computed(() => useResponsiveValues.value
+  ? responsive({
+    0: Math.max(2, config.spacing - 4),
+    720: config.spacing,
+    1120: config.spacing + 4,
+  })
+  : config.spacing)
+
+const paddingValue = computed(() => useResponsiveValues.value
+  ? responsive({
+    0: Math.max(0, config.padding - 2),
+    720: config.padding,
+    1120: config.padding + 2,
+  })
+  : config.padding)
+
 const codeSnippet = computed(() => {
-  const t = layoutType.value
-  const lines: string[] = ['<PhotoAlbum']
-  lines.push('  :photos="photos"')
+  const lines: string[] = [
+    '<PhotoAlbum',
+    '  :photos="photos"',
+  ]
 
-  if (t === 'rows' && config.rows.targetRowHeight !== 280) {
-    lines.push(`  :layout="{ type: 'rows', targetRowHeight: ${config.rows.targetRowHeight} }"`)
-  }
-  else if (t === 'columns') {
-    lines.push(`  :layout="{ type: 'columns', columns: ${config.columns.columns} }"`)
-  }
-  else if (t === 'masonry') {
-    lines.push(`  :layout="{ type: 'masonry', columns: ${config.masonry.columns} }"`)
-  }
-  else if (t === 'bento') {
-    const opts = [`type: 'bento'`, `columns: ${config.bento.columns}`, `rowHeight: ${config.bento.rowHeight}`, `sizing: '${config.bento.sizing}'`]
-    lines.push(`  :layout="{ ${opts.join(', ')} }"`)
-  }
-  else {
-    lines.push(`  layout="${t}"`)
+  if (layoutType.value === 'rows') {
+    lines.push(`  :layout="{ type: 'rows', targetRowHeight: ${useResponsiveValues.value
+      ? responsiveExpression(Math.max(160, config.rows.targetRowHeight - 60), config.rows.targetRowHeight, config.rows.targetRowHeight + 40)
+      : config.rows.targetRowHeight} }"`)
+  } else if (layoutType.value === 'columns') {
+    lines.push(`  :layout="{ type: 'columns', columns: ${useResponsiveValues.value
+      ? responsiveExpression(Math.max(1, config.columns.columns - 2), Math.max(2, config.columns.columns - 1), config.columns.columns)
+      : config.columns.columns} }"`)
+  } else if (layoutType.value === 'masonry') {
+    lines.push(`  :layout="{ type: 'masonry', columns: ${useResponsiveValues.value
+      ? responsiveExpression(Math.max(1, config.masonry.columns - 2), Math.max(2, config.masonry.columns - 1), config.masonry.columns)
+      : config.masonry.columns} }"`)
+  } else {
+    lines.push(`  :layout="{ type: 'bento', columns: ${useResponsiveValues.value
+      ? responsiveExpression(Math.max(1, config.bento.columns - 2), Math.max(2, config.bento.columns - 1), config.bento.columns)
+      : config.bento.columns}, rowHeight: ${useResponsiveValues.value
+      ? responsiveExpression(Math.max(160, config.bento.rowHeight - 60), config.bento.rowHeight, config.bento.rowHeight + 30)
+      : config.bento.rowHeight}, sizing: '${config.bento.sizing}' }"`)
   }
 
-  if (config.spacing !== 8) lines.push(`  :spacing="${config.spacing}"`)
-  if (config.padding !== 0) lines.push(`  :padding="${config.padding}"`)
+  lines.push(`  :spacing="${useResponsiveValues.value
+    ? responsiveExpression(Math.max(2, config.spacing - 4), config.spacing, config.spacing + 4)
+    : config.spacing}"`)
+  lines.push(`  :padding="${useResponsiveValues.value
+    ? responsiveExpression(Math.max(0, config.padding - 2), config.padding, config.padding + 2)
+    : config.padding}"`)
+
+  if (props.allowLightboxToggle) {
+    lines.push(`  :lightbox="${lightboxEnabled.value}"`)
+  }
 
   lines.push('/>')
+
+  if (thumbnailPreset.value !== 'default') {
+    lines.push('')
+    lines.push('<!-- #thumbnail slot enabled in the live demo -->')
+  }
+
   return lines.join('\n')
 })
+
+const summary = computed(() => {
+  const fragments = [
+    layoutType.value,
+    useResponsiveValues.value ? 'responsive values' : 'static values',
+    `${Math.round(width.value)}px container`,
+  ]
+
+  if (thumbnailPreset.value !== 'default') {
+    fragments.push(`${thumbnailPreset.value} thumbnails`)
+  }
+
+  if (props.allowLightboxToggle) {
+    fragments.push(lightboxEnabled.value ? 'lightbox on' : 'lightbox off')
+  }
+
+  return fragments.join(' · ')
+})
+
+function thumbOpacity(hidden: boolean) {
+  if (thumbnailPreset.value !== 'hidden-state') return hidden ? 0 : 1
+  return hidden ? 0.28 : 1
+}
 </script>
 
 <template>
-  <div class="not-prose my-8 rounded-xl border border-default overflow-hidden bg-background">
-    <!-- Controls -->
-    <div class="p-4 border-b border-default bg-muted/40">
-      <!-- Layout type tabs -->
-      <div class="flex items-center gap-2 mb-4 flex-wrap">
-        <span class="text-sm font-medium text-muted">Layout:</span>
-        <div class="flex gap-1 rounded-lg border border-default bg-background p-1">
-          <button
-            v-for="tab in layoutTabs"
-            :key="tab.value"
-            class="px-3 py-1 text-sm rounded-md font-medium transition-colors"
-            :class="layoutType === tab.value
-              ? 'bg-primary text-white shadow-sm'
-              : 'text-muted hover:text-default hover:bg-muted'"
-            @click="layoutType = tab.value"
-          >
-            {{ tab.label }}
-          </button>
+  <div class="docs-demo not-prose my-8">
+    <div class="docs-demo__header">
+      <div class="docs-demo__headline">
+        <h3 class="docs-demo__title">{{ hero ? 'Try the gallery live' : 'Live gallery playground' }}</h3>
+        <p class="docs-demo__subtitle">{{ summary }}</p>
+      </div>
+
+      <div v-if="!hero" class="flex flex-wrap items-center gap-3">
+        <UTabs
+          :model-value="layoutType"
+          :items="layoutTabItems"
+          variant="pill"
+          size="sm"
+          :content="false"
+          value-key="value"
+          label-key="label"
+          @update:model-value="layoutType = $event as LayoutType"
+        />
+
+        <USwitch v-model="useResponsiveValues" label="Responsive values" />
+
+        <USwitch v-if="props.allowLightboxToggle" v-model="lightboxEnabled" label="Lightbox" />
+      </div>
+    </div>
+
+    <div class="docs-demo__body">
+      <div v-if="!hero" class="flex flex-wrap items-center gap-3">
+        <label class="docs-range">
+          <span class="text-muted text-sm">Container width</span>
+          <input v-model.number="width" type="range" min="320" max="1120" step="10" class="accent-primary">
+          <strong class="text-highlighted text-sm">{{ Math.round(width) }}px</strong>
+        </label>
+
+        <label v-if="layoutType === 'rows'" class="docs-range">
+          <span class="text-muted text-sm">Row height</span>
+          <input v-model.number="config.rows.targetRowHeight" type="range" min="160" max="420" step="10" class="accent-primary">
+          <strong class="text-highlighted text-sm">{{ config.rows.targetRowHeight }}px</strong>
+        </label>
+
+        <template v-if="layoutType === 'columns'">
+          <div class="flex items-center gap-2">
+            <span class="text-muted text-sm">Columns</span>
+            <UTabs
+              :model-value="config.columns.columns"
+              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
+              variant="pill"
+              size="xs"
+              :content="false"
+              value-key="value"
+              label-key="label"
+              @update:model-value="config.columns.columns = Number($event)"
+            />
+          </div>
+        </template>
+
+        <template v-if="layoutType === 'masonry'">
+          <div class="flex items-center gap-2">
+            <span class="text-muted text-sm">Columns</span>
+            <UTabs
+              :model-value="config.masonry.columns"
+              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
+              variant="pill"
+              size="xs"
+              :content="false"
+              value-key="value"
+              label-key="label"
+              @update:model-value="config.masonry.columns = Number($event)"
+            />
+          </div>
+        </template>
+
+        <template v-if="layoutType === 'bento'">
+          <div class="flex items-center gap-2">
+            <span class="text-muted text-sm">Columns</span>
+            <UTabs
+              :model-value="config.bento.columns"
+              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
+              variant="pill"
+              size="xs"
+              :content="false"
+              value-key="value"
+              label-key="label"
+              @update:model-value="config.bento.columns = Number($event)"
+            />
+          </div>
+
+          <label class="docs-range">
+            <span class="text-muted text-sm">Row height</span>
+            <input v-model.number="config.bento.rowHeight" type="range" min="160" max="360" step="10" class="accent-primary">
+            <strong class="text-highlighted text-sm">{{ config.bento.rowHeight }}px</strong>
+          </label>
+
+          <div class="flex items-center gap-2">
+            <span class="text-muted text-sm">Sizing</span>
+            <UTabs
+              :model-value="config.bento.sizing"
+              :items="bentoSizingItems"
+              variant="pill"
+              size="xs"
+              :content="false"
+              value-key="value"
+              label-key="label"
+              @update:model-value="config.bento.sizing = $event as BentoSizing"
+            />
+          </div>
+        </template>
+
+        <label class="docs-range">
+          <span class="text-muted text-sm">Spacing</span>
+          <input v-model.number="config.spacing" type="range" min="2" max="24" step="2" class="accent-primary">
+          <strong class="text-highlighted text-sm">{{ config.spacing }}px</strong>
+        </label>
+
+        <label class="docs-range">
+          <span class="text-muted text-sm">Padding</span>
+          <input v-model.number="config.padding" type="range" min="0" max="12" step="2" class="accent-primary">
+          <strong class="text-highlighted text-sm">{{ config.padding }}px</strong>
+        </label>
+
+        <div v-if="props.allowThumbnailPicker" class="flex items-center gap-2">
+          <span class="text-muted text-sm">Thumbnails</span>
+          <UTabs
+            :model-value="thumbnailPreset"
+            :items="thumbnailTabItems"
+            variant="pill"
+            size="xs"
+            :content="false"
+            value-key="value"
+            label-key="label"
+            @update:model-value="thumbnailPreset = $event as ThumbnailPreset"
+          />
         </div>
       </div>
 
-      <!-- Per-layout controls -->
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <!-- Rows: targetRowHeight -->
-        <template v-if="layoutType === 'rows'">
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-28">Row height:</span>
-            <input
-              v-model.number="config.rows.targetRowHeight"
-              type="range" min="100" max="500" step="10"
-              class="w-32 accent-primary"
-            />
-            <span class="text-xs text-muted w-12">{{ config.rows.targetRowHeight }}px</span>
-          </label>
-        </template>
-
-        <!-- Columns: columns -->
-        <template v-if="layoutType === 'columns'">
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-16">Columns:</span>
-            <div class="flex gap-1">
-              <button
-                v-for="opt in columnsOptions"
-                :key="opt.value"
-                class="w-8 h-8 text-sm rounded border transition-colors"
-                :class="config.columns.columns === opt.value
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-default text-muted hover:border-primary hover:text-default'"
-                @click="config.columns.columns = opt.value"
+      <div class="docs-demo__preview">
+        <div class="docs-preview-frame" :style="{ width: `${width}px`, maxWidth: '100%' }">
+          <PhotoAlbum
+            :photos="previewPhotos"
+            :layout="albumLayout"
+            :spacing="spacingValue"
+            :padding="paddingValue"
+            :lightbox="props.allowLightboxToggle ? lightboxEnabled : true"
+            :class="{ 'docs-demo--hero-album': hero }"
+          >
+            <template
+              v-if="thumbnailPreset !== 'default'"
+              #thumbnail="{ photo, index, hidden }"
+            >
+              <figure
+                class="docs-thumbnail"
+                :class="[
+                  `docs-thumbnail--${thumbnailPreset}`,
+                  { 'docs-thumbnail--is-hidden': hidden },
+                ]"
+                :style="{ opacity: thumbOpacity(hidden) }"
               >
-                {{ opt.label }}
-              </button>
-            </div>
-          </label>
-        </template>
-
-        <!-- Masonry: columns -->
-        <template v-if="layoutType === 'masonry'">
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-16">Columns:</span>
-            <div class="flex gap-1">
-              <button
-                v-for="opt in columnsOptions"
-                :key="opt.value"
-                class="w-8 h-8 text-sm rounded border transition-colors"
-                :class="config.masonry.columns === opt.value
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-default text-muted hover:border-primary hover:text-default'"
-                @click="config.masonry.columns = opt.value"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
-          </label>
-        </template>
-
-        <!-- Bento: columns, rowHeight, sizing -->
-        <template v-if="layoutType === 'bento'">
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-16">Columns:</span>
-            <div class="flex gap-1">
-              <button
-                v-for="opt in columnsOptions"
-                :key="opt.value"
-                class="w-8 h-8 text-sm rounded border transition-colors"
-                :class="config.bento.columns === opt.value
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-default text-muted hover:border-primary hover:text-default'"
-                @click="config.bento.columns = opt.value"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
-          </label>
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-20">Row height:</span>
-            <input
-              v-model.number="config.bento.rowHeight"
-              type="range" min="150" max="400" step="10"
-              class="w-28 accent-primary"
-            />
-            <span class="text-xs text-muted w-12">{{ config.bento.rowHeight }}px</span>
-          </label>
-          <label class="flex items-center gap-2 text-sm">
-            <span class="text-muted font-medium w-14">Sizing:</span>
-            <div class="flex gap-1">
-              <button
-                v-for="opt in bentoSizingOptions"
-                :key="opt.value"
-                class="px-2 h-7 text-xs rounded border transition-colors"
-                :class="config.bento.sizing === opt.value
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-default text-muted hover:border-primary hover:text-default'"
-                @click="config.bento.sizing = opt.value as BentoSizing"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
-          </label>
-        </template>
-
-        <!-- Shared: spacing -->
-        <label class="flex items-center gap-2 text-sm">
-          <span class="text-muted font-medium w-16">Spacing:</span>
-          <input
-            v-model.number="config.spacing"
-            type="range" min="0" max="32" step="2"
-            class="w-28 accent-primary"
-          />
-          <span class="text-xs text-muted w-8">{{ config.spacing }}px</span>
-        </label>
-
-        <!-- Shared: padding -->
-        <label class="flex items-center gap-2 text-sm">
-          <span class="text-muted font-medium w-14">Padding:</span>
-          <input
-            v-model.number="config.padding"
-            type="range" min="0" max="16" step="2"
-            class="w-28 accent-primary"
-          />
-          <span class="text-xs text-muted w-8">{{ config.padding }}px</span>
-        </label>
+                <PhotoImage
+                  :photo="photo"
+                  context="thumb"
+                  loading="lazy"
+                  class="docs-thumbnail__image"
+                />
+                <figcaption v-if="thumbnailPreset !== 'hidden-state'" class="docs-thumbnail__caption">
+                  <span>{{ photo.caption }}</span>
+                  <small>#{{ index + 1 }}</small>
+                </figcaption>
+                <div v-if="thumbnailPreset === 'badge'" class="docs-thumbnail__badge">
+                  {{ index + 1 }}
+                </div>
+                <div v-if="thumbnailPreset === 'hidden-state'" class="docs-thumbnail__hint">
+                  {{ hidden ? 'FLIP source hidden' : 'Visible thumbnail' }}
+                </div>
+              </figure>
+            </template>
+          </PhotoAlbum>
+        </div>
       </div>
-    </div>
 
-    <!-- Live preview -->
-    <div class="p-4">
-      <PhotoAlbum
-        :photos="demoPhotos"
-        :layout="albumLayout"
-        :spacing="config.spacing"
-        :padding="config.padding"
-      />
-    </div>
-
-    <!-- Generated code -->
-    <div class="border-t border-default">
-      <div class="flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-default">
-        <span class="text-xs font-medium text-muted">Generated code</span>
+      <div v-if="props.showCode ?? !hero" class="docs-demo__code">
+        <div class="docs-demo__code-header">
+          <span>Generated usage</span>
+          <UBadge variant="subtle" size="sm">
+            {{ useResponsiveValues ? 'responsive()' : 'static values' }}
+          </UBadge>
+        </div>
+        <pre><code>{{ codeSnippet }}</code></pre>
       </div>
-      <pre class="p-4 text-sm font-mono text-default overflow-x-auto bg-muted/20"><code>{{ codeSnippet }}</code></pre>
     </div>
   </div>
 </template>

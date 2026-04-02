@@ -18,7 +18,10 @@
       "Bash(ls /Users/matthias/Git/0_libs/nuxt-photo/packages/recipes/dist/*.mjs)",
       "Bash(kill %1)",
       "mcp__plugin_context7_context7__resolve-library-id",
-      "mcp__plugin_context7_context7__query-docs"
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(ls /Users/matthias/Git/0_libs/nuxt-photo/docs/node_modules/@nuxt/ui/dist/runtime/components/*.vue)",
+      "Bash(xargs -n 1 basename)",
+      "Bash(sed 's/\\\\.vue$//')"
     ]
   }
 }
