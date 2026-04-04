@@ -99,7 +99,7 @@ const features = [
         </UButton>
       </template>
 
-      <div class="mx-auto w-full max-w-[940px]">
+      <div class="mx-auto w-full max-w-[940px] rounded-2xl overflow-hidden landing-hero-shadow">
         <PhotoAlbum
           :photos="docsHeroPhotos"
           :layout="{ type: 'rows', targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }) }"
@@ -114,7 +114,9 @@ const features = [
     <UPageSection
       v-for="(section, index) in layoutSections"
       :key="section.key"
+      :icon="section.icon"
       :class="index % 2 === 0 ? 'dark:bg-neutral-950' : 'dark:bg-neutral-950/80'"
+      :headline="index === 0 ? 'Layouts' : undefined"
     >
       <template #title>
         {{ section.title }}
@@ -124,7 +126,7 @@ const features = [
         {{ section.description }}
       </template>
 
-      <template #links>
+      <template v-if="index === 0" #links>
         <UButton
           color="neutral"
           size="lg"
@@ -132,11 +134,11 @@ const features = [
           trailing-icon="i-lucide-arrow-right"
           variant="subtle"
         >
-          Explore layouts
+          Explore all layouts
         </UButton>
       </template>
 
-      <div class="mx-auto w-full max-w-[940px]">
+      <div class="mx-auto w-full max-w-[940px] rounded-2xl overflow-hidden p-4 border border-default shadow-sm transition-shadow duration-300 hover:shadow-md landing-layout-bg">
         <PhotoAlbum
           :photos="docsDemoPhotos"
           :layout="section.layout"
@@ -148,9 +150,13 @@ const features = [
     </UPageSection>
 
     <!-- Features -->
-    <UPageSection class="dark:bg-neutral-950">
+    <UPageSection headline="Features" class="dark:bg-neutral-950">
       <template #title>
         Built for production
+      </template>
+
+      <template #description>
+        Everything you need to ship a polished gallery experience.
       </template>
 
       <template #links>

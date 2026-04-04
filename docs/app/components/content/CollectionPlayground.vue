@@ -125,11 +125,11 @@ const codeSnippet = computed(() => {
 </script>
 
 <template>
-  <div class="docs-demo not-prose my-8">
-    <div class="docs-demo__header">
-      <div class="docs-demo__headline">
-        <h3 class="docs-demo__title">{{ props.scope === 'photo' ? 'Photo behaviors' : 'Collection playground' }}</h3>
-        <p class="docs-demo__subtitle">{{ summary }}</p>
+  <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
+    <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
+      <div class="min-w-0">
+        <h3 class="m-0 text-base font-bold text-highlighted">{{ props.scope === 'photo' ? 'Photo behaviors' : 'Collection playground' }}</h3>
+        <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">{{ summary }}</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -158,23 +158,23 @@ const codeSnippet = computed(() => {
       </div>
     </div>
 
-    <div class="docs-demo__body">
-      <div class="docs-demo__preview">
-        <div v-if="props.scope === 'photo' && activePhotoTab === 'solo'" class="docs-collection-surface">
-          <Photo :photo="docsDemoPhotos[0]!" lightbox class="docs-collection-surface__solo" />
+    <div class="grid gap-4 p-4">
+      <div class="grid gap-4">
+        <div v-if="props.scope === 'photo' && activePhotoTab === 'solo'" class="grid gap-4">
+          <Photo :photo="docsDemoPhotos[0]!" lightbox />
         </div>
 
-        <div v-else-if="props.scope === 'photo' && activePhotoTab === 'group'" class="docs-collection-surface">
+        <div v-else-if="props.scope === 'photo' && activePhotoTab === 'group'" class="grid gap-4">
           <PhotoGroup>
-            <div class="docs-collection-grid docs-collection-grid--three">
+            <div class="grid gap-3.5 grid-cols-3 max-sm:grid-cols-1">
               <Photo v-for="photo in docsDemoPhotos.slice(0, 3)" :key="photo.id" :photo="photo" />
             </div>
           </PhotoGroup>
         </div>
 
-        <div v-else-if="props.scope === 'photo' && activePhotoTab === 'ignore'" class="docs-collection-surface">
+        <div v-else-if="props.scope === 'photo' && activePhotoTab === 'ignore'" class="grid gap-4">
           <PhotoGroup>
-            <div class="docs-collection-grid docs-collection-grid--three">
+            <div class="grid gap-3.5 grid-cols-3 max-sm:grid-cols-1">
               <Photo :photo="docsDemoPhotos[0]!" />
               <Photo :photo="docsDemoPhotos[1]!" lightbox-ignore />
               <Photo :photo="docsDemoPhotos[2]!" />
@@ -182,72 +182,72 @@ const codeSnippet = computed(() => {
           </PhotoGroup>
         </div>
 
-        <div v-else-if="activeGroupTab === 'auto'" class="docs-collection-surface">
+        <div v-else-if="activeGroupTab === 'auto'" class="grid gap-4">
           <PhotoGroup>
-            <div class="docs-collection-grid docs-collection-grid--three">
+            <div class="grid gap-3.5 grid-cols-3 max-sm:grid-cols-1">
               <Photo v-for="photo in docsDemoPhotos.slice(0, 3)" :key="photo.id" :photo="photo" />
             </div>
           </PhotoGroup>
         </div>
 
-        <div v-else-if="activeGroupTab === 'albums'" class="docs-collection-surface docs-collection-surface--stack">
+        <div v-else-if="activeGroupTab === 'albums'" class="grid gap-4">
           <PhotoGroup>
-            <section>
-              <h4>Landscapes</h4>
+            <section class="grid gap-2.5">
+              <h4 class="m-0 text-highlighted">Landscapes</h4>
               <PhotoAlbum :photos="docsAlbumSetA" layout="rows" :spacing="8" />
             </section>
-            <section>
-              <h4>Portraits</h4>
+            <section class="grid gap-2.5">
+              <h4 class="m-0 text-highlighted">Portraits</h4>
               <PhotoAlbum :photos="docsAlbumSetB" layout="columns" :spacing="8" />
             </section>
-            <section>
-              <h4>Abstract</h4>
+            <section class="grid gap-2.5">
+              <h4 class="m-0 text-highlighted">Abstract</h4>
               <PhotoAlbum :photos="docsAlbumSetC" layout="masonry" :spacing="8" />
             </section>
           </PhotoGroup>
         </div>
 
-        <div v-else-if="activeGroupTab === 'explicit'" class="docs-collection-surface">
+        <div v-else-if="activeGroupTab === 'explicit'" class="grid gap-4">
           <PhotoGroup :photos="docsDemoPhotos.slice(0, 5)" v-slot="{ open }">
-            <div class="docs-collection-explicit">
+            <div class="grid gap-3.5">
               <UButton variant="outline" @click="open(0)">Open first</UButton>
               <UButton variant="soft" color="neutral" @click="open(2)">Jump to third</UButton>
-              <div class="docs-collection-grid docs-collection-grid--cards">
+              <div class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
                 <button
                   v-for="(photo, index) in docsDemoPhotos.slice(0, 5)"
                   :key="photo.id"
                   type="button"
-                  class="docs-collection-card"
+                  class="grid gap-1 p-3.5 border border-default rounded-2xl bg-elevated text-left text-highlighted cursor-pointer appearance-none card-hover"
                   @click="open(index)"
                 >
                   <span>{{ photo.caption }}</span>
-                  <small>{{ photo.width }} × {{ photo.height }}</small>
+                  <small class="text-muted">{{ photo.width }} × {{ photo.height }}</small>
                 </button>
               </div>
             </div>
           </PhotoGroup>
         </div>
 
-        <div v-else-if="activeGroupTab === 'headless'" class="docs-collection-surface">
+        <div v-else-if="activeGroupTab === 'headless'" class="grid gap-4">
           <PhotoGroup :photos="docsDemoPhotos.slice(0, 6)" v-slot="{ open, setThumbRef }">
-            <div class="docs-collection-grid docs-collection-grid--headless">
+            <div class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
               <button
                 v-for="(photo, index) in docsDemoPhotos.slice(0, 6)"
                 :key="photo.id"
                 :ref="setThumbRef(index)"
                 type="button"
-                class="docs-headless-tile"
+                class="grid gap-2 p-1.5 border border-default rounded-2xl bg-elevated text-left text-highlighted cursor-pointer appearance-none card-hover"
                 @click="open(index)"
               >
-                <img :src="photo.thumbSrc || photo.src" :alt="photo.alt">
+                <img :src="photo.thumbSrc || photo.src" :alt="photo.alt" class="w-full aspect-square object-cover rounded-xl">
                 <span>{{ photo.caption }}</span>
               </button>
             </div>
           </PhotoGroup>
         </div>
 
-        <div v-else class="docs-collection-surface">
-          <div class="docs-collection-explicit">
+        <div v-else class="grid gap-4">
+          <div class="grid gap-3.5">
             <UButton variant="outline" @click="groupRef?.open(0)">Open gallery</UButton>
             <UButton variant="soft" color="neutral" @click="groupRef?.open(3)">Start at fourth photo</UButton>
           </div>
@@ -257,12 +257,12 @@ const codeSnippet = computed(() => {
         </div>
       </div>
 
-      <div class="docs-demo__code">
-        <div class="docs-demo__code-header">
+      <div class="border border-default rounded-xl overflow-hidden bg-muted/40">
+        <div class="flex justify-between items-center gap-4 px-3.5 py-2.5 border-b border-default text-muted text-xs font-medium uppercase tracking-wide">
           <span>{{ props.scope === 'photo' ? 'Photo usage' : 'PhotoGroup usage' }}</span>
           <UBadge variant="subtle" size="sm">{{ activeTab }}</UBadge>
         </div>
-        <pre><code>{{ codeSnippet }}</code></pre>
+        <pre class="m-0 px-4 py-3.5 overflow-x-auto text-toned text-sm leading-relaxed font-mono"><code>{{ codeSnippet }}</code></pre>
       </div>
     </div>
   </div>

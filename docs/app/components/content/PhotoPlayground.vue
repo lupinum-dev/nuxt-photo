@@ -214,11 +214,11 @@ function thumbOpacity(hidden: boolean) {
 </script>
 
 <template>
-  <div class="docs-demo not-prose my-8">
-    <div class="docs-demo__header">
-      <div class="docs-demo__headline">
-        <h3 class="docs-demo__title">{{ hero ? 'Try the gallery live' : 'Live gallery playground' }}</h3>
-        <p class="docs-demo__subtitle">{{ summary }}</p>
+  <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
+    <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
+      <div class="min-w-0">
+        <h3 class="m-0 text-base font-bold text-highlighted">{{ hero ? 'Try the gallery live' : 'Live gallery playground' }}</h3>
+        <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">{{ summary }}</p>
       </div>
 
       <div v-if="!hero" class="flex flex-wrap items-center gap-3">
@@ -239,15 +239,15 @@ function thumbOpacity(hidden: boolean) {
       </div>
     </div>
 
-    <div class="docs-demo__body">
+    <div class="grid gap-4 p-4">
       <div v-if="!hero" class="flex flex-wrap items-center gap-3">
-        <label class="docs-range">
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
           <span class="text-muted text-sm">Container width</span>
           <input v-model.number="width" type="range" min="320" max="1120" step="10" class="accent-primary">
           <strong class="text-highlighted text-sm">{{ Math.round(width) }}px</strong>
         </label>
 
-        <label v-if="layoutType === 'rows'" class="docs-range">
+        <label v-if="layoutType === 'rows'" class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
           <span class="text-muted text-sm">Row height</span>
           <input v-model.number="config.rows.targetRowHeight" type="range" min="160" max="420" step="10" class="accent-primary">
           <strong class="text-highlighted text-sm">{{ config.rows.targetRowHeight }}px</strong>
@@ -300,7 +300,7 @@ function thumbOpacity(hidden: boolean) {
             />
           </div>
 
-          <label class="docs-range">
+          <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
             <span class="text-muted text-sm">Row height</span>
             <input v-model.number="config.bento.rowHeight" type="range" min="160" max="360" step="10" class="accent-primary">
             <strong class="text-highlighted text-sm">{{ config.bento.rowHeight }}px</strong>
@@ -321,13 +321,13 @@ function thumbOpacity(hidden: boolean) {
           </div>
         </template>
 
-        <label class="docs-range">
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
           <span class="text-muted text-sm">Spacing</span>
           <input v-model.number="config.spacing" type="range" min="2" max="24" step="2" class="accent-primary">
           <strong class="text-highlighted text-sm">{{ config.spacing }}px</strong>
         </label>
 
-        <label class="docs-range">
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
           <span class="text-muted text-sm">Padding</span>
           <input v-model.number="config.padding" type="range" min="0" max="12" step="2" class="accent-primary">
           <strong class="text-highlighted text-sm">{{ config.padding }}px</strong>
@@ -348,25 +348,24 @@ function thumbOpacity(hidden: boolean) {
         </div>
       </div>
 
-      <div class="docs-demo__preview">
-        <div class="docs-preview-frame" :style="{ width: `${width}px`, maxWidth: '100%' }">
+      <div class="grid gap-4">
+        <div class="mx-auto rounded-2xl p-4 preview-frame-bg" :style="{ width: `${width}px`, maxWidth: '100%' }">
           <PhotoAlbum
             :photos="previewPhotos"
             :layout="albumLayout"
             :spacing="spacingValue"
             :padding="paddingValue"
             :lightbox="props.allowLightboxToggle ? lightboxEnabled : true"
-            :class="{ 'docs-demo--hero-album': hero }"
           >
             <template
               v-if="thumbnailPreset !== 'default'"
               #thumbnail="{ photo, index, hidden }"
             >
               <figure
-                class="docs-thumbnail"
+                class="relative overflow-hidden min-h-full rounded-2xl bg-muted"
                 :class="[
-                  `docs-thumbnail--${thumbnailPreset}`,
-                  { 'docs-thumbnail--is-hidden': hidden },
+                  thumbnailPreset,
+                  { 'is-hidden': hidden, 'thumb-editorial': thumbnailPreset === 'editorial' },
                 ]"
                 :style="{ opacity: thumbOpacity(hidden) }"
               >
@@ -374,16 +373,16 @@ function thumbOpacity(hidden: boolean) {
                   :photo="photo"
                   context="thumb"
                   loading="lazy"
-                  class="docs-thumbnail__image"
+                  class="block w-full h-full object-cover"
                 />
-                <figcaption v-if="thumbnailPreset !== 'hidden-state'" class="docs-thumbnail__caption">
+                <figcaption v-if="thumbnailPreset !== 'hidden-state'" class="absolute inset-x-0 bottom-0 z-1 flex justify-between items-center gap-2 p-3 text-white text-xs thumb-caption-gradient" :class="{ 'pr-13': thumbnailPreset === 'badge' }">
                   <span>{{ photo.caption }}</span>
                   <small>#{{ index + 1 }}</small>
                 </figcaption>
-                <div v-if="thumbnailPreset === 'badge'" class="docs-thumbnail__badge">
+                <div v-if="thumbnailPreset === 'badge'" class="absolute top-2.5 right-2.5 z-1 inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-full font-bold text-xs thumb-badge-bg">
                   {{ index + 1 }}
                 </div>
-                <div v-if="thumbnailPreset === 'hidden-state'" class="docs-thumbnail__hint">
+                <div v-if="thumbnailPreset === 'hidden-state'" class="absolute left-2.5 bottom-2.5 z-1 px-2 py-1.5 rounded-full text-xs thumb-hint-bg">
                   {{ hidden ? 'FLIP source hidden' : 'Visible thumbnail' }}
                 </div>
               </figure>
@@ -392,14 +391,14 @@ function thumbOpacity(hidden: boolean) {
         </div>
       </div>
 
-      <div v-if="props.showCode ?? !hero" class="docs-demo__code">
-        <div class="docs-demo__code-header">
+      <div v-if="props.showCode ?? !hero" class="border border-default rounded-xl overflow-hidden bg-muted/40">
+        <div class="flex justify-between items-center gap-4 px-3.5 py-2.5 border-b border-default text-muted text-xs font-medium uppercase tracking-wide">
           <span>Generated usage</span>
           <UBadge variant="subtle" size="sm">
             {{ useResponsiveValues ? 'responsive()' : 'static values' }}
           </UBadge>
         </div>
-        <pre><code>{{ codeSnippet }}</code></pre>
+        <pre class="m-0 px-4 py-3.5 overflow-x-auto text-toned text-sm leading-relaxed font-mono"><code>{{ codeSnippet }}</code></pre>
       </div>
     </div>
   </div>

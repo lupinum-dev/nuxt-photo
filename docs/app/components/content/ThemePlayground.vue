@@ -88,11 +88,11 @@ const codeSnippet = computed(() => {
 </script>
 
 <template>
-  <div class="docs-demo not-prose my-8">
-    <div class="docs-demo__header">
-      <div class="docs-demo__headline">
-        <h3 class="docs-demo__title">Theme playground</h3>
-        <p class="docs-demo__subtitle">Switch between CSS injection modes, then layer a few variable presets on top of the real recipe components.</p>
+  <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
+    <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
+      <div class="min-w-0">
+        <h3 class="m-0 text-base font-bold text-highlighted">Theme playground</h3>
+        <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">Switch between CSS injection modes, then layer a few variable presets on top of the real recipe components.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -120,32 +120,32 @@ const codeSnippet = computed(() => {
       </div>
     </div>
 
-    <div class="docs-demo__body">
-      <div class="docs-theme-preview" :class="`docs-theme-preview--${cssMode}`" :style="presetVars">
-        <div class="docs-theme-preview__copy">
-          <h4>{{ cssMode === 'none' ? 'No built-in preview' : 'Open the lightbox to inspect the theme' }}</h4>
-          <p v-if="cssMode === 'none'">
+    <div class="grid gap-4 p-4">
+      <div class="grid gap-4 p-4 border border-default rounded-2xl bg-elevated" :class="cssMode === 'structure' ? 'theme-preview--structure' : ''" :style="presetVars">
+        <div class="grid gap-1.5">
+          <h4 class="m-0 text-highlighted">{{ cssMode === 'none' ? 'No built-in preview' : 'Open the lightbox to inspect the theme' }}</h4>
+          <p v-if="cssMode === 'none'" class="m-0 text-muted">
             The docs app already loads recipe CSS globally, so `css: 'none'` is represented as a contract: you own every class and variable, not just the colors.
           </p>
-          <p v-else-if="cssMode === 'structure'">
+          <p v-else-if="cssMode === 'structure'" class="m-0 text-muted">
             Structure mode keeps the geometry, transitions, and layout rules. The visual identity comes from your own CSS or utility classes.
           </p>
-          <p v-else>
+          <p v-else class="m-0 text-muted">
             All mode ships the default theme. The preset buttons here only override CSS custom properties, not the structural rules.
           </p>
         </div>
 
-        <div v-if="cssMode !== 'none'" class="docs-theme-preview__surface">
+        <div v-if="cssMode !== 'none'" class="rounded-2xl p-4 theme-surface-border">
           <PhotoAlbum :photos="docsDemoPhotos.slice(0, 5)" layout="rows" :spacing="8" />
         </div>
       </div>
 
-      <div class="docs-demo__code">
-        <div class="docs-demo__code-header">
+      <div class="border border-default rounded-xl overflow-hidden bg-muted/40">
+        <div class="flex justify-between items-center gap-4 px-3.5 py-2.5 border-b border-default text-muted text-xs font-medium uppercase tracking-wide">
           <span>Nuxt config + theme variables</span>
           <UBadge variant="subtle" size="sm">{{ cssMode }}</UBadge>
         </div>
-        <pre><code>{{ codeSnippet }}</code></pre>
+        <pre class="m-0 px-4 py-3.5 overflow-x-auto text-toned text-sm leading-relaxed font-mono"><code>{{ codeSnippet }}</code></pre>
       </div>
     </div>
   </div>

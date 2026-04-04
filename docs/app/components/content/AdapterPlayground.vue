@@ -45,11 +45,11 @@ const codeSnippet = computed(() => {
 </script>
 
 <template>
-  <div class="docs-demo not-prose my-8">
-    <div class="docs-demo__header">
-      <div class="docs-demo__headline">
-        <h3 class="docs-demo__title">Image adapter playground</h3>
-        <p class="docs-demo__subtitle">Inspect the exact <code>src</code>, <code>srcset</code>, and <code>sizes</code> returned for each delivery strategy.</p>
+  <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
+    <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
+      <div class="min-w-0">
+        <h3 class="m-0 text-base font-bold text-highlighted">Image adapter playground</h3>
+        <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">Inspect the exact <code>src</code>, <code>srcset</code>, and <code>sizes</code> returned for each delivery strategy.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -77,69 +77,69 @@ const codeSnippet = computed(() => {
       </div>
     </div>
 
-    <div class="docs-demo__body">
+    <div class="grid gap-4 p-4">
       <div class="flex flex-wrap items-center gap-3">
-        <label class="docs-range">
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
           <span class="text-muted text-sm">Sample photo</span>
           <input v-model.number="photoIndex" type="range" min="0" :max="docsDemoPhotos.length - 1" step="1" class="accent-primary">
           <strong class="text-highlighted text-sm">{{ currentPhoto.caption }}</strong>
         </label>
       </div>
 
-      <div class="docs-adapter-grid">
-        <div class="docs-adapter-preview">
-          <header>
+      <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+        <div class="grid gap-3.5 p-4 border border-default rounded-2xl bg-elevated card-hover-subtle">
+          <header class="flex justify-between items-center gap-3">
             <h4>Thumb context</h4>
             <UBadge variant="subtle" size="sm">{{ resolveAdapterName(mode) }}</UBadge>
           </header>
-          <div class="docs-adapter-preview__frame docs-adapter-preview__frame--thumb">
-            <PhotoImage :photo="currentPhoto" context="thumb" :adapter="currentAdapter" class="docs-adapter-preview__image" />
+          <div class="overflow-hidden rounded-2xl border border-default bg-muted max-w-xs">
+            <PhotoImage :photo="currentPhoto" context="thumb" :adapter="currentAdapter" class="w-full block" />
           </div>
-          <dl class="docs-adapter-preview__meta">
-            <dt>src</dt>
-            <dd>{{ thumbSource.src }}</dd>
-            <dt>sizes</dt>
-            <dd>{{ thumbSource.sizes }}</dd>
+          <dl class="grid gap-1">
+            <dt class="text-muted">src</dt>
+            <dd class="m-0 text-toned text-sm break-all">{{ thumbSource.src }}</dd>
+            <dt class="text-muted">sizes</dt>
+            <dd class="m-0 text-toned text-sm break-all">{{ thumbSource.sizes }}</dd>
           </dl>
         </div>
 
-        <div class="docs-adapter-preview">
-          <header>
+        <div class="grid gap-3.5 p-4 border border-default rounded-2xl bg-elevated card-hover-subtle">
+          <header class="flex justify-between items-center gap-3">
             <h4>Slide context</h4>
             <UBadge variant="subtle" size="sm">{{ resolveAdapterName(mode) }}</UBadge>
           </header>
-          <div class="docs-adapter-preview__frame docs-adapter-preview__frame--slide">
-            <PhotoImage :photo="currentPhoto" context="slide" :adapter="currentAdapter" class="docs-adapter-preview__image docs-adapter-preview__image--slide" />
+          <div class="overflow-hidden rounded-2xl border border-default bg-muted min-h-60 grid place-items-center p-3">
+            <PhotoImage :photo="currentPhoto" context="slide" :adapter="currentAdapter" class="w-full block max-h-70 w-auto max-w-full" />
           </div>
-          <dl class="docs-adapter-preview__meta">
-            <dt>src</dt>
-            <dd>{{ slideSource.src }}</dd>
-            <dt>sizes</dt>
-            <dd>{{ slideSource.sizes }}</dd>
+          <dl class="grid gap-1">
+            <dt class="text-muted">src</dt>
+            <dd class="m-0 text-toned text-sm break-all">{{ slideSource.src }}</dd>
+            <dt class="text-muted">sizes</dt>
+            <dd class="m-0 text-toned text-sm break-all">{{ slideSource.sizes }}</dd>
           </dl>
         </div>
       </div>
 
-      <div class="docs-demo__code">
-        <div class="docs-demo__code-header">
+      <div class="border border-default rounded-xl overflow-hidden bg-muted/40">
+        <div class="flex justify-between items-center gap-4 px-3.5 py-2.5 border-b border-default text-muted text-xs font-medium uppercase tracking-wide">
           <span>Resolved {{ context }} source</span>
           <UBadge variant="subtle" size="sm">{{ resolveAdapterName(mode) }}</UBadge>
         </div>
-        <pre><code>{{ codeSnippet }}</code></pre>
+        <pre class="m-0 px-4 py-3.5 overflow-x-auto text-toned text-sm leading-relaxed font-mono"><code>{{ codeSnippet }}</code></pre>
       </div>
 
-      <div class="docs-adapter-details">
+      <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(0,1fr))]">
         <div>
           <strong>Active src</strong>
-          <p>{{ activeSource.src }}</p>
+          <p class="m-0 text-toned text-sm break-all">{{ activeSource.src }}</p>
         </div>
         <div>
           <strong>Active srcset</strong>
-          <p>{{ activeSource.srcset }}</p>
+          <p class="m-0 text-toned text-sm break-all">{{ activeSource.srcset }}</p>
         </div>
         <div>
           <strong>Active sizes</strong>
-          <p>{{ activeSource.sizes }}</p>
+          <p class="m-0 text-toned text-sm break-all">{{ activeSource.sizes }}</p>
         </div>
       </div>
     </div>

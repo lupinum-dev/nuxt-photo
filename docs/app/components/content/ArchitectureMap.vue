@@ -62,52 +62,52 @@ const currentLayer = computed(() => layers.find(layer => layer.id === activeLaye
 </script>
 
 <template>
-  <div class="docs-demo not-prose my-8">
-    <div class="docs-demo__header">
-      <div class="docs-demo__headline">
-        <h3 class="docs-demo__title">{{ props.mode === 'extend' ? 'Extend surfaces' : 'Layer map' }}</h3>
-        <p class="docs-demo__subtitle">
+  <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
+    <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
+      <div class="min-w-0">
+        <h3 class="m-0 text-base font-bold text-highlighted">{{ props.mode === 'extend' ? 'Extend surfaces' : 'Layer map' }}</h3>
+        <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">
           <template v-if="props.mode === 'extend'">The extension API sits beside the public recipes, not underneath them. Pick the lowest layer that still solves the job.</template>
           <template v-else>Every package builds on the layer below it. Click a layer to see what it owns and what it should not do.</template>
         </p>
       </div>
     </div>
 
-    <div class="docs-demo__body">
-      <div v-if="props.mode === 'layers'" class="docs-architecture-map">
-        <div class="docs-architecture-map__layers">
+    <div class="grid gap-4 p-4">
+      <div v-if="props.mode === 'layers'" class="grid gap-4">
+        <div class="grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
           <button
             v-for="layer in layers"
             :key="layer.id"
             type="button"
-            class="docs-architecture-map__layer"
-            :class="{ 'docs-architecture-map__layer--active': activeLayer === layer.id }"
+            class="p-4 border border-default rounded-2xl bg-elevated text-left cursor-pointer appearance-none card-hover"
+            :class="{ 'arch-layer--active': activeLayer === layer.id }"
             @click="activeLayer = layer.id"
           >
-            <span>{{ layer.label }}</span>
-            <strong>{{ layer.packageName }}</strong>
-            <small>{{ layer.title }}</small>
+            <span class="block text-muted text-xs uppercase tracking-widest">{{ layer.label }}</span>
+            <strong class="block mt-1.5 text-highlighted">{{ layer.packageName }}</strong>
+            <small class="block mt-0.5 text-muted">{{ layer.title }}</small>
           </button>
         </div>
 
-        <div class="docs-architecture-map__detail">
+        <div class="p-4 border border-default rounded-2xl bg-elevated text-left">
           <UBadge variant="subtle" size="sm">{{ currentLayer.label }}</UBadge>
-          <h4>{{ currentLayer.packageName }}</h4>
-          <p>{{ currentLayer.title }}</p>
-          <ul>
+          <h4 class="m-0 text-highlighted">{{ currentLayer.packageName }}</h4>
+          <p class="m-0 text-muted">{{ currentLayer.title }}</p>
+          <ul class="mt-3 pl-4 text-toned">
             <li v-for="bullet in currentLayer.bullets" :key="bullet">{{ bullet }}</li>
           </ul>
         </div>
       </div>
 
-      <div v-else class="docs-architecture-map docs-architecture-map--extend">
+      <div v-else class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         <div
           v-for="area in extendAreas"
           :key="area.title"
-          class="docs-architecture-map__detail"
+          class="p-4 border border-default rounded-2xl bg-elevated text-left"
         >
-          <h4>{{ area.title }}</h4>
-          <ul>
+          <h4 class="m-0 text-highlighted">{{ area.title }}</h4>
+          <ul class="mt-3 pl-4 text-toned">
             <li v-for="bullet in area.bullets" :key="bullet">{{ bullet }}</li>
           </ul>
         </div>

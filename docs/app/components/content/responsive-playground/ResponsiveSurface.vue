@@ -79,31 +79,31 @@ const codeSnippet = computed(() => {
 </script>
 
 <template>
-  <div class="docs-responsive-surface">
-    <div class="docs-responsive-surface__stats">
-      <div class="docs-responsive-surface__stat">
-        <span>Actual width</span>
-        <strong>{{ Math.round(props.width) }}px</strong>
+  <div class="grid gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3">
+      <div class="px-3.5 py-3 border border-default rounded-2xl bg-elevated card-hover-subtle">
+        <span class="text-muted">Actual width</span>
+        <strong class="text-highlighted">{{ Math.round(props.width) }}px</strong>
       </div>
-      <div class="docs-responsive-surface__stat">
-        <span>Observed width</span>
-        <strong>{{ Math.round(containerWidth) }}px</strong>
+      <div class="px-3.5 py-3 border border-default rounded-2xl bg-elevated card-hover-subtle">
+        <span class="text-muted">Observed width</span>
+        <strong class="text-highlighted">{{ Math.round(containerWidth) }}px</strong>
       </div>
-      <div class="docs-responsive-surface__stat">
-        <span>{{ props.layout === 'rows' ? 'Row height' : 'Columns' }}</span>
-        <strong>{{ props.layout === 'rows' ? `${resolvedRowHeight}px` : resolvedColumns }}</strong>
+      <div class="px-3.5 py-3 border border-default rounded-2xl bg-elevated card-hover-subtle">
+        <span class="text-muted">{{ props.layout === 'rows' ? 'Row height' : 'Columns' }}</span>
+        <strong class="text-highlighted">{{ props.layout === 'rows' ? `${resolvedRowHeight}px` : resolvedColumns }}</strong>
       </div>
-      <div class="docs-responsive-surface__stat">
-        <span>Spacing / Padding</span>
-        <strong>{{ resolvedSpacing }} / {{ resolvedPadding }}</strong>
+      <div class="px-3.5 py-3 border border-default rounded-2xl bg-elevated card-hover-subtle">
+        <span class="text-muted">Spacing / Padding</span>
+        <strong class="text-highlighted">{{ resolvedSpacing }} / {{ resolvedPadding }}</strong>
       </div>
-      <div v-if="props.mode === 'ssr'" class="docs-responsive-surface__stat">
-        <span>SSR match</span>
-        <strong>{{ serverMatch ? 'matched' : 'reflow expected' }}</strong>
+      <div v-if="props.mode === 'ssr'" class="px-3.5 py-3 border border-default rounded-2xl bg-elevated card-hover-subtle">
+        <span class="text-muted">SSR match</span>
+        <strong class="text-highlighted">{{ serverMatch ? 'matched' : 'reflow expected' }}</strong>
       </div>
     </div>
 
-    <div ref="containerRef" class="docs-preview-frame" :style="{ width: `${props.width}px`, maxWidth: '100%' }">
+    <div ref="containerRef" class="mx-auto rounded-2xl p-4 preview-frame-bg" :style="{ width: `${props.width}px`, maxWidth: '100%' }">
       <PhotoAlbum
         :photos="docsDemoPhotos"
         :layout="layoutConfig"
@@ -114,12 +114,12 @@ const codeSnippet = computed(() => {
       />
     </div>
 
-    <div class="docs-demo__code">
-      <div class="docs-demo__code-header">
+    <div class="border border-default rounded-xl overflow-hidden bg-muted/40">
+      <div class="flex justify-between items-center gap-4 px-3.5 py-2.5 border-b border-default text-muted text-xs font-medium uppercase tracking-wide">
         <span>Responsive config</span>
         <span>{{ props.snapping ? 'snapped' : 'raw' }}</span>
       </div>
-      <pre><code>{{ codeSnippet }}</code></pre>
+      <pre class="m-0 px-4 py-3.5 overflow-x-auto text-toned text-sm leading-relaxed font-mono"><code>{{ codeSnippet }}</code></pre>
     </div>
   </div>
 </template>
