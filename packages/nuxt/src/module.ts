@@ -48,7 +48,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     name: '@nuxt-photo/nuxt',
     configKey: 'nuxtPhoto',
     compatibility: {
-      nuxt: '^3.21.2 || ^4.0.0',
+      nuxt: '^4.0.0',
     },
   },
   defaults: {

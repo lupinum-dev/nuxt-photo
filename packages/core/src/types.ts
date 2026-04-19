@@ -339,7 +339,7 @@ export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolve
 
 /**
  * Transforms external data shapes into `PhotoItem`.
- * Pass to `PhotoAlbum` or `PhotoGroup` via the `:photoAdapter` prop so you can
+ * Pass to `PhotoAlbum` or `PhotoGroup` via the `:itemAdapter` prop so you can
  * feed CMS / API responses directly without manual mapping.
  *
  * @example

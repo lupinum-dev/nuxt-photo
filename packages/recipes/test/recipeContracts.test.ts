@@ -12,7 +12,7 @@ import {
   type InjectionKey,
 } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { LightboxControls, LightboxSlide } from '@nuxt-photo/vue'
+import { LightboxControls, LightboxSlide, useLightbox } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { PhotoGroupContextKey, type PhotoGroupContext } from '@nuxt-photo/vue/extend'
 import { makePhoto } from '@test-fixtures/photos'
@@ -104,6 +104,20 @@ describe('recipe contracts', () => {
       disconnect() {}
       unobserve() {}
     })
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+      takeRecords() { return [] }
+    })
+    vi.stubGlobal('matchMedia', vi.fn().mockImplementation(() => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+      dispatchEvent() { return false },
+    })))
     vi.stubGlobal('Image', createImmediateImage())
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
       window.setTimeout(() => callback(performance.now() + 1000), 0),
@@ -118,20 +132,20 @@ describe('recipe contracts', () => {
 
   it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
     const photo = makePhoto({ id: 'plain-photo' })
-    const adapter = vi.fn((item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
+    const imageAdapter = vi.fn((item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
       src: `/${context}/${item.id}.jpg`,
       width: item.width,
       height: item.height,
     }))
 
     const mounted = await mountComponent(Photo, {
-      props: { photo, adapter },
+      props: { photo, imageAdapter },
     })
 
     const img = mounted.container.querySelector('img')
 
     expect(img?.getAttribute('src')).toBe('/thumb/plain-photo.jpg')
-    expect(new Set(adapter.mock.calls.map(([, context]) => context))).toEqual(new Set(['thumb']))
+    expect(new Set(imageAdapter.mock.calls.map(([, context]) => context))).toEqual(new Set(['thumb']))
 
     mounted.unmount()
   })
@@ -149,6 +163,8 @@ describe('recipe contracts', () => {
       register,
       unregister,
       open: vi.fn(async () => {}),
+      openPhoto: vi.fn(async () => {}),
+      openById: vi.fn(async () => {}),
       photos: computed(() => photos.value),
       hiddenPhoto: computed(() => null),
     }
@@ -228,6 +244,94 @@ describe('recipe contracts', () => {
     await flushUi()
 
     expect(mounted.container.querySelector('[data-testid="grouped-custom-slide"]')?.textContent).toContain('grouped-slide')
+
+    mounted.unmount()
+  })
+
+  it('exposes the documented headless PhotoGroup slot helpers and methods', async () => {
+    const photos = [
+      makePhoto({ id: 'headless-a' }),
+      makePhoto({ id: 'headless-b' }),
+    ]
+
+    let slotProps: Record<string, any> | null = null
+    let groupApi: any = null
+    let lightboxApi: ReturnType<typeof useLightbox> | null = null
+
+    const Probe = defineComponent({
+      setup() {
+        lightboxApi = useLightbox()
+        return () => null
+      },
+    })
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () => h(PhotoGroup, {
+          ref: groupRef,
+          photos,
+          lightbox: false,
+        }, {
+          default: (props: Record<string, any>) => {
+            slotProps = props
+            return [h(Probe)]
+          },
+        })
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    expect(slotProps).toBeTruthy()
+    expect(slotProps?.photos).toHaveLength(2)
+    expect(typeof slotProps?.open).toBe('function')
+    expect(typeof slotProps?.openPhoto).toBe('function')
+    expect(typeof slotProps?.openById).toBe('function')
+    expect(typeof slotProps?.setThumbRef).toBe('function')
+    expect(typeof slotProps?.trigger).toBe('function')
+    expect(typeof groupApi?.value?.open).toBe('function')
+    expect(typeof groupApi?.value?.openPhoto).toBe('function')
+    expect(typeof groupApi?.value?.openById).toBe('function')
+
+    await groupApi.value.openById('headless-b')
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(true)
+    expect(lightboxApi?.activeIndex.value).toBe(1)
+
+    await groupApi.value.openPhoto(photos[0]!)
+    await flushUi()
+    expect(lightboxApi?.activeIndex.value).toBe(0)
+
+    mounted.unmount()
+  })
+
+  it('moves focus into the lightbox and restores it to the trigger on close', async () => {
+    const photo = makePhoto({ id: 'focus-photo' })
+
+    const mounted = await mountComponent(Photo, {
+      props: { photo, lightbox: true },
+    })
+
+    const trigger = mounted.container.querySelector('figure') as HTMLElement | null
+    expect(trigger).toBeTruthy()
+
+    trigger?.focus()
+    trigger?.click()
+    await flushUi()
+
+    const dialog = document.body.querySelector('.np-lightbox[tabindex="-1"]') as HTMLElement | null
+    expect(dialog).toBeTruthy()
+    expect(dialog?.contains(document.activeElement)).toBe(true)
+
+    const closeButton = document.body.querySelector('.np-lightbox__btn--close') as HTMLButtonElement | null
+    expect(closeButton).toBeTruthy()
+    closeButton?.click()
+    await flushUi()
+
+    expect(document.activeElement).toBe(trigger)
 
     mounted.unmount()
   })

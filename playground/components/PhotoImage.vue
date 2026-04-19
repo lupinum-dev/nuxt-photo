@@ -9,7 +9,7 @@ import { PhotoImage as PrimitivePhotoImage } from '@nuxt-photo/vue'
 const props = defineProps<{
   photo: PhotoItem
   context?: ImageContext
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
 }>()
 </script>

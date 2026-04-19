@@ -20,7 +20,7 @@ import { ImageAdapterKey } from '../provide/keys'
 const props = withDefaults(defineProps<{
   photo: PhotoItem
   context?: ImageContext
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
   /** Override the adapter-computed sizes attribute with a layout-computed value. */
   sizes?: string
@@ -32,7 +32,7 @@ const props = withDefaults(defineProps<{
 const injectedAdapter = inject(ImageAdapterKey, null)
 
 const resolveImage = computed((): ImageAdapter =>
-  props.adapter ?? injectedAdapter ?? createNativeImageAdapter()
+  props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter()
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))

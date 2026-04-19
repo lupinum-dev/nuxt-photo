@@ -45,6 +45,14 @@ describe('primitive injection guards', () => {
     )
   })
 
+  it('acts as a provider root when photos are passed directly', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    expect(() => mountExpectingError(LightboxRoot, {
+      photos: [makePhoto({ id: 'root-provider' })],
+    })).not.toThrow()
+  })
+
   it('throws an actionable error when PhotoTrigger is used without a provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 

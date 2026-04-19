@@ -51,6 +51,12 @@ describe('nuxt-photo module', () => {
     hasNuxtModule.mockReset()
   })
 
+  it('declares Nuxt 4 compatibility only', () => {
+    expect(nuxtPhotoModule.meta.compatibility).toEqual({
+      nuxt: '^4.0.0',
+    })
+  })
+
   it('does not register the image plugin in native mode', () => {
     const nuxt = createNuxt()
 

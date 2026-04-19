@@ -30,7 +30,7 @@
               v-else
               :photo="item.photo"
               context="thumb"
-              :adapter="adapter"
+              :image-adapter="imageAdapter"
               loading="lazy"
               :sizes="item.computedSizes"
               class="np-album__img"
@@ -82,7 +82,7 @@
                   v-else
                   :photo="entry.photo"
                   context="thumb"
-                  :adapter="adapter"
+                  :image-adapter="imageAdapter"
                   loading="lazy"
                   class="np-album__img"
                   :class="imgClass"
@@ -119,7 +119,7 @@
                 v-else
                 :photo="photo"
                 context="thumb"
-                :adapter="adapter"
+                :image-adapter="imageAdapter"
                 loading="lazy"
                 class="np-album__img"
                 :class="imgClass"
@@ -167,7 +167,7 @@
                   v-else
                   :photo="entry.photo"
                   context="thumb"
-                  :adapter="adapter"
+                  :image-adapter="imageAdapter"
                   loading="lazy"
                   class="np-album__img"
                   :class="imgClass"
@@ -210,7 +210,7 @@ import { usePhotoLayout } from '../composables/usePhotoLayout'
 const props = withDefaults(defineProps<{
   photos: PhotoItem[] | any[]
   /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-  photoAdapter?: PhotoAdapter
+  itemAdapter?: PhotoAdapter
   /**
    * Layout algorithm and its options. Pass a string for defaults, or an object for full control.
    *
@@ -250,7 +250,7 @@ const props = withDefaults(defineProps<{
     size: string
     sizes?: Array<{ viewport: string; size: string }>
   }
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   /** Whether to enable lightbox. @default true */
   lightbox?: boolean | Component
   /** Transition mode for lightbox open/close */
@@ -298,7 +298,7 @@ if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.
 // ─── Photos (with optional adapter) ──────────────────────────────────────────
 
 const photos = computed<PhotoItem[]>(() =>
-  props.photoAdapter ? props.photos.map(props.photoAdapter) : props.photos as PhotoItem[],
+  props.itemAdapter ? props.photos.map(props.itemAdapter) : props.photos as PhotoItem[],
 )
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -391,12 +391,12 @@ function setItemRef(index: number) {
 
 function openPhoto(photo: PhotoItem, index: number) {
   if (parentGroup) {
-    parentGroup.open(photo)
+    void parentGroup.openPhoto(photo)
   } else if (ownCtx) {
     for (const [i, el] of Object.entries(thumbElsMap)) {
       ownCtx.setThumbRef(Number(i))(el)
     }
-    ownCtx.open(index)
+    void ownCtx.open(index)
   }
 }
 
@@ -415,6 +415,7 @@ function itemBindings(photo: PhotoItem, index: number) {
     ...base,
     role: 'button',
     tabindex: '0',
+    'aria-label': photo.alt || `View photo ${index + 1}`,
     onClick: () => openPhoto(photo, index),
     onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, photo, index),
   }

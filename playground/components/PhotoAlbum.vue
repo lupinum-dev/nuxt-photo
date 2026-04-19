@@ -6,7 +6,7 @@
     :columns="columns"
     :spacing="spacing"
     :padding="padding"
-    :adapter="adapter"
+    :image-adapter="imageAdapter"
     v-bind="$attrs"
   >
     <template v-if="$slots.thumbnail" #thumbnail="slotProps">
@@ -28,7 +28,7 @@ withDefaults(defineProps<{
   columns?: ResponsiveParameter<number>
   spacing?: number
   padding?: number
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
 }>(), {
   layout: 'rows',
   spacing: 8,

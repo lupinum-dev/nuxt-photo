@@ -7,7 +7,7 @@ export interface LightboxConsumerAPI {
   photos: ComputedRef<PhotoItem[]>
   count: ComputedRef<number>
   activeIndex: Ref<number>
-  activePhoto: ComputedRef<PhotoItem>
+  activePhoto: ComputedRef<PhotoItem | null>
   isOpen: ComputedRef<boolean>
   open: (photoOrIndex?: PhotoItem | number) => Promise<void>
   close: () => Promise<void>
@@ -45,7 +45,7 @@ export interface LightboxRenderState {
 /** DOM bindings — what primitives need to wire up event handlers and refs. */
 export interface LightboxDOMBindings {
   mediaAreaRef: Ref<HTMLElement | null>
-  emblaRef: Ref<HTMLElement | null>
+  emblaRef: Ref<HTMLElement | null | undefined>
   setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
   setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
   onMediaPointerDown: (e: PointerEvent) => void
@@ -70,7 +70,9 @@ export interface PhotoGroupContext {
   mode: 'auto' | 'explicit'
   register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
   unregister(id: symbol): void
-  open(photoOrIndex: PhotoItem | number): Promise<void>
+  open(index?: number): Promise<void>
+  openPhoto(photo: PhotoItem): Promise<void>
+  openById(id: string | number): Promise<void>
   photos: ComputedRef<PhotoItem[]>
   hiddenPhoto: ComputedRef<PhotoItem | null>
 }

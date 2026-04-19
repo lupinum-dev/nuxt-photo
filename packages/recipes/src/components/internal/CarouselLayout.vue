@@ -15,11 +15,11 @@
             :ref="setSlideRef ? setSlideElRef(index) : undefined"
             style="width:100%;height:100%"
           >
-          <slot name="slide" :photo="photo" :index="index" :selected="selectedSlideSet.has(index)" :open="() => onSlideActivate?.(photo)">
+          <slot name="slide" :photo="photo" :index="index" :selected="selectedSlideSet.has(index)" :open="() => onSlideActivate?.(index)">
               <PhotoImage
                 :photo="photo"
                 context="slide"
-                :adapter="adapter"
+                :image-adapter="imageAdapter"
                 :loading="index === 0 ? 'eager' : 'lazy'"
                 class="np-carousel__media"
                 :class="imgClass"
@@ -110,7 +110,7 @@
               <PhotoImage
                 :photo="photo"
                 context="thumb"
-                :adapter="adapter"
+                :image-adapter="imageAdapter"
                 loading="lazy"
                 class="np-carousel__thumb-img"
               />
@@ -150,7 +150,7 @@ defineSlots<{
 
 const props = defineProps<{
   photos: PhotoItem[]
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   options: EmblaOptionsType
   plugins: EmblaPluginType[]
   thumbsOptions: EmblaOptionsType
@@ -172,7 +172,7 @@ const props = defineProps<{
   controlsClass?: string
 
   // Lightbox integration (only provided when wrapped in <PhotoGroup>)
-  onSlideActivate?: (photo: PhotoItem) => void
+  onSlideActivate?: (index: number) => void
   setSlideRef?: ((index: number) => (el: Element | ComponentPublicInstance | null) => void)
 }>()
 
@@ -351,17 +351,18 @@ function setSlideElRef(index: number) {
   }
 }
 
-function interactiveAttrs(photo: PhotoItem, index: number) {
+function interactiveAttrs(_photo: PhotoItem, index: number) {
   if (!props.onSlideActivate) return {}
   return {
     role: 'button',
     tabindex: 0,
     style: { cursor: 'pointer' },
-    onClick: () => props.onSlideActivate?.(photo),
+    'aria-label': `Open slide ${index + 1}`,
+    onClick: () => props.onSlideActivate?.(index),
     onKeydown: (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        props.onSlideActivate?.(photo)
+        props.onSlideActivate?.(index)
       }
     },
     'data-index': index,

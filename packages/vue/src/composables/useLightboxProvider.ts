@@ -1,5 +1,5 @@
 import { provide, type MaybeRef } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
+import { photoId, type PhotoItem } from '@nuxt-photo/core'
 import { useLightboxContext, type LightboxTransitionOption } from './useLightboxContext'
 import { LightboxContextKey, LightboxSlideRendererKey, type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -43,8 +43,23 @@ export function useLightboxProvider(
     resolveSlide: options?.resolveSlide,
   })
 
+  function open(index = 0) {
+    return ctx.open(index)
+  }
+
+  function openPhoto(photo: PhotoItem) {
+    return ctx.open(photo)
+  }
+
+  function openById(id: string | number) {
+    const index = ctx.photos.value.findIndex(photo => photoId(photo) === String(id))
+    return ctx.open(index >= 0 ? index : 0)
+  }
+
   return {
-    open: ctx.open,
+    open,
+    openPhoto,
+    openById,
     close: ctx.close,
     next: ctx.next,
     prev: ctx.prev,

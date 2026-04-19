@@ -1,12 +1,26 @@
-import type { MaybeRef } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
-import { useLightboxContext } from './useLightboxContext'
+import { photoId, type PhotoItem } from '@nuxt-photo/core'
+import { useLightboxInject } from './useLightboxInject'
 
-export function useLightbox(photosInput: MaybeRef<PhotoItem | PhotoItem[]>) {
-  const context = useLightboxContext(photosInput)
+export function useLightbox() {
+  const context = useLightboxInject('useLightbox')
+
+  function open(index = 0) {
+    return context.open(index)
+  }
+
+  function openPhoto(photo: PhotoItem) {
+    return context.open(photo)
+  }
+
+  function openById(id: string | number) {
+    const index = context.photos.value.findIndex(photo => photoId(photo) === String(id))
+    return context.open(index >= 0 ? index : 0)
+  }
 
   return {
-    open: context.open,
+    open,
+    openPhoto,
+    openById,
     close: context.close,
     next: context.next,
     prev: context.prev,

@@ -5,7 +5,7 @@
     v-bind="{ ...$attrs, ...interactiveAttrs }"
     :style="figureStyle"
   >
-    <PhotoImage :photo="photo" context="thumb" :adapter="adapter" :loading="loading ?? 'lazy'" class="np-photo__img" :class="imgClass" />
+    <PhotoImage :photo="photo" context="thumb" :image-adapter="imageAdapter" :loading="loading ?? 'lazy'" class="np-photo__img" :class="imgClass" />
     <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">{{ photo.caption }}</figcaption>
   </figure>
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
@@ -29,7 +29,7 @@ const props = defineProps<{
   lightbox?: boolean | Component
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
   /** Extra classes for the inner img element */
   imgClass?: string
@@ -86,7 +86,7 @@ const figureStyle = computed(() => {
 
 function handleClick() {
   if (isSolo.value) soloOpen()
-  else if (isAutoGrouped.value) group!.open(props.photo)
+  else if (isAutoGrouped.value) group!.openPhoto(props.photo)
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -98,7 +98,13 @@ function handleKeydown(e: KeyboardEvent) {
 
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return { role: 'button' as const, tabindex: 0, onClick: handleClick, onKeydown: handleKeydown }
+  return {
+    role: 'button' as const,
+    tabindex: 0,
+    'aria-label': props.photo.alt || 'View photo',
+    onClick: handleClick,
+    onKeydown: handleKeydown,
+  }
 })
 
 // Registration with parent group (auto mode only)

@@ -5,7 +5,7 @@ import type { Ref } from 'vue'
 
 export interface LightboxControlsSlotProps {
   activeIndex: number
-  activePhoto: PhotoItem
+  activePhoto: PhotoItem | null
   photos: PhotoItem[]
   count: number
   isZoomedIn: boolean
@@ -31,7 +31,7 @@ export interface LightboxSlideSlotProps {
 
 export interface LightboxViewportSlotProps {
   photos: PhotoItem[]
-  viewportRef: Ref<HTMLElement | null>
+  viewportRef: Ref<HTMLElement | null | undefined>
   mediaOpacity: number
 }
 

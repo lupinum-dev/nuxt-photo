@@ -1,5 +1,12 @@
 <template>
-  <slot :open="open" :setThumbRef="ctx.setThumbRef" />
+  <slot
+    :open="open"
+    :open-photo="openPhoto"
+    :open-by-id="openById"
+    :photos="collectedPhotos"
+    :set-thumb-ref="ctx.setThumbRef"
+    :trigger="trigger"
+  />
   <component :is="LightboxComponent" v-if="LightboxComponent" />
 </template>
 
@@ -24,7 +31,7 @@ const props = withDefaults(defineProps<{
   /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
   photos?: PhotoItem[] | any[]
   /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-  photoAdapter?: PhotoAdapter
+  itemAdapter?: PhotoAdapter
   /** Lightbox to render: true = default, false = none, Component = custom */
   lightbox?: boolean | Component
   /** Transition mode for open/close animations */
@@ -77,7 +84,7 @@ function unregister(id: symbol) {
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
   if (props.photos !== undefined) {
-    return props.photoAdapter ? props.photos.map(props.photoAdapter) : props.photos as PhotoItem[]
+    return props.itemAdapter ? props.photos.map(props.itemAdapter) : props.photos as PhotoItem[]
   }
   return Array.from(registrationMap.values()).map(r => r.photo)
 })
@@ -102,26 +109,56 @@ const hiddenPhoto = computed<PhotoItem | null>(() => {
   return collectedPhotos.value[idx] ?? null
 })
 
-// Wire thumb refs from registrations, then open
-async function open(photoOrIndex: PhotoItem | number = 0) {
-  const photos = collectedPhotos.value
-  let index: number
-
-  if (typeof photoOrIndex === 'number') {
-    index = photoOrIndex
-  } else {
-    index = photos.findIndex(p => photoId(p) === photoId(photoOrIndex))
-    if (index === -1) index = 0
-  }
-
+function syncThumbRefs() {
   // Wire current thumb elements from registrations (auto mode only)
   if (props.photos === undefined) {
     Array.from(registrationMap.values()).forEach((reg, i) => {
       ctx.setThumbRef(i)(reg.getThumbEl())
     })
   }
+}
 
+async function open(index = 0) {
+  syncThumbRefs()
   await ctx.open(index)
+}
+
+async function openPhoto(photo: PhotoItem) {
+  const index = collectedPhotos.value.findIndex(p => photoId(p) === photoId(photo))
+  await open(index >= 0 ? index : 0)
+}
+
+async function openById(id: string | number) {
+  const index = collectedPhotos.value.findIndex(photo => photoId(photo) === String(id))
+  await open(index >= 0 ? index : 0)
+}
+
+function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
+  const photos = collectedPhotos.value
+  const index = typeof photoOrIndex === 'number'
+    ? photoOrIndex
+    : typeof maybeIndex === 'number'
+      ? maybeIndex
+      : photos.findIndex(photo => photoId(photo) === photoId(photoOrIndex))
+  const safeIndex = index >= 0 ? index : 0
+  const photo = typeof photoOrIndex === 'number'
+    ? photos[safeIndex]
+    : photoOrIndex
+
+  return {
+    ref: ctx.setThumbRef(safeIndex),
+    role: 'button',
+    tabindex: 0,
+    'aria-label': photo?.alt || `View photo ${safeIndex + 1}`,
+    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(safeIndex),
+    onClick: () => open(safeIndex),
+    onKeydown: (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        void open(safeIndex)
+      }
+    },
+  }
 }
 
 // Group context for child Photo/PhotoAlbum components
@@ -130,6 +167,8 @@ const groupContext: PhotoGroupContext = {
   register,
   unregister,
   open,
+  openPhoto,
+  openById,
   photos: collectedPhotos,
   hiddenPhoto,
 }
@@ -160,5 +199,5 @@ const LightboxComponent = computed<Component | null>(() => {
   return props.lightbox as Component
 })
 
-defineExpose({ open, close: ctx.close })
+defineExpose({ open, openPhoto, openById, close: ctx.close })
 </script>

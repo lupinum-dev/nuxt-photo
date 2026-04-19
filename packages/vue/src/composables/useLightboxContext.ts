@@ -162,6 +162,17 @@ export function useLightboxContext(
     keydownAttached = false
   }
 
+  function preloadAround(index: number) {
+    const candidates = [index - 1, index, index + 1]
+
+    for (const candidate of candidates) {
+      if (candidate < 0 || candidate >= photos.value.length) continue
+      const photo = photos.value[candidate]
+      if (!photo) continue
+      void ensureImageLoaded(photo.src)
+    }
+  }
+
   async function open(photoOrIndex: PhotoItem | number = 0) {
     const index = typeof photoOrIndex === 'number'
       ? photoOrIndex
@@ -172,6 +183,7 @@ export function useLightboxContext(
     carousel.goTo(index >= 0 ? index : 0, true)
     attachKeydown()
     await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
+    preloadAround(index >= 0 ? index : 0)
     skipActiveIndexWatch = false
   }
 
@@ -269,16 +281,12 @@ export function useLightboxContext(
     await nextFrame()
     syncGeometry()
     panzoom.refreshZoomState(true)
-    void ensureImageLoaded(carousel.currentPhoto.value.src)
+    preloadAround(newIndex)
   })
 
   onMounted(() => {
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', onResize)
-
-      for (const photo of photos.value) {
-        void ensureImageLoaded(photo.src)
-      }
     }
   })
 

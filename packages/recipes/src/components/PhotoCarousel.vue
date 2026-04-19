@@ -10,7 +10,7 @@
         ref="layoutRef"
         v-bind="$attrs"
         :photos="resolvedPhotos"
-        :adapter="props.adapter"
+        :image-adapter="props.imageAdapter"
         :options="mergedOptions"
         :plugins="mergedPlugins"
         :thumbs-options="mergedThumbsOptions"
@@ -27,7 +27,7 @@
         :thumb-class="props.thumbClass"
         :caption-class="props.captionClass"
         :controls-class="props.controlsClass"
-        :on-slide-activate="open"
+        :on-slide-activate="(index) => open(index)"
         :set-slide-ref="setThumbRef"
       >
         <template v-if="$slots.slide" #slide="slotProps"><slot name="slide" v-bind="slotProps" /></template>
@@ -50,7 +50,7 @@
     ref="layoutRef"
     v-bind="$attrs"
     :photos="resolvedPhotos"
-    :adapter="props.adapter"
+    :image-adapter="props.imageAdapter"
     :options="mergedOptions"
     :plugins="mergedPlugins"
     :thumbs-options="mergedThumbsOptions"
@@ -114,8 +114,8 @@ defineSlots<{
 
 const props = withDefaults(defineProps<{
   photos: PhotoItem[] | any[]
-  photoAdapter?: PhotoAdapter
-  adapter?: ImageAdapter
+  itemAdapter?: PhotoAdapter
+  imageAdapter?: ImageAdapter
 
   options?: EmblaOptionsType
   plugins?: EmblaPluginType[]
@@ -150,7 +150,7 @@ const props = withDefaults(defineProps<{
 })
 
 const resolvedPhotos = computed<PhotoItem[]>(() =>
-  props.photoAdapter ? (props.photos as any[]).map(props.photoAdapter) : (props.photos as PhotoItem[]),
+  props.itemAdapter ? (props.photos as any[]).map(props.itemAdapter) : (props.photos as PhotoItem[]),
 )
 
 const hasLightbox = computed(() => props.lightbox !== undefined && props.lightbox !== false)
