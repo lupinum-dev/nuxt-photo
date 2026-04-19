@@ -11,7 +11,7 @@
   "dependencies": {
     "@nuxt-photo/nuxt": "workspace:*",
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^3.21.2",
-    "nuxt-shiki": "^0.3.0"
+    "nuxt": "^4.4.2",
+    "nuxt-shiki": "^0.3.2"
   }
 }

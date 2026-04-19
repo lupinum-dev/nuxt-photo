@@ -18,7 +18,6 @@ import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
 import { LightboxDefaultsKey } from '../provide/keys'
-import { isDev } from '../utils/isDev'
 
 export type LightboxTransitionOption = TransitionMode | TransitionModeConfig
 
@@ -27,7 +26,7 @@ export function useLightboxContext(
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
 ) {
-  if (isDev() && !getCurrentInstance()) {
+  if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
   }
 
@@ -64,7 +63,7 @@ export function useLightboxContext(
   }
 
   if (typeof window !== 'undefined') {
-    ;(window as any).__NUXT_PHOTO_DEBUG__ = debug.flags
+    window.__NUXT_PHOTO_DEBUG__ = debug.flags
   }
 
   const carouselConfig: CarouselConfig = {

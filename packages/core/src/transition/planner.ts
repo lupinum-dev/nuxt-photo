@@ -1,6 +1,7 @@
 import type { TransitionMode, CloseTransitionPlan, RectLike } from '../types'
 import type { DebugLogger } from '../debug/logger'
 import { isUsableRect } from '../geometry/rect'
+import { getWindowDimensions } from '../utils/dom'
 
 export type TransitionModeConfig = {
   mode: TransitionMode
@@ -16,14 +17,20 @@ export function createTransitionMode(): TransitionModeConfig {
   }
 }
 
-export function getVisibilityRatio(rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } | null): number {
+type ViewportRect = { left: number; top: number; right: number; bottom: number; width: number; height: number }
+
+function getVisibleDimensions(rect: ViewportRect, vw: number, vh: number): { width: number; height: number } {
+  return {
+    width: Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0)),
+    height: Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0)),
+  }
+}
+
+export function getVisibilityRatio(rect: ViewportRect | null): number {
   if (!rect || rect.width <= 0 || rect.height <= 0) return 0
 
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 0
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 0
-
-  const visibleWidth = Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0))
-  const visibleHeight = Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0))
+  const { width: vw, height: vh } = getWindowDimensions()
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
   const visibleArea = visibleWidth * visibleHeight
   const totalArea = rect.width * rect.height
 
@@ -31,7 +38,7 @@ export function getVisibilityRatio(rect: { left: number; top: number; right: num
 }
 
 export function shouldUseFlip(
-  rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } | null,
+  rect: ViewportRect | null,
   config: TransitionModeConfig,
   debug?: DebugLogger,
 ): boolean {
@@ -56,11 +63,8 @@ export function shouldUseFlip(
     return false
   }
 
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 0
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 0
-
-  const visibleWidth = Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0))
-  const visibleHeight = Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0))
+  const { width: vw, height: vh } = getWindowDimensions()
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
 
   if (visibleWidth < MIN_VISIBLE_DIMENSION || visibleHeight < MIN_VISIBLE_DIMENSION) {
     debug?.log('transitions',

@@ -17,3 +17,4 @@ dist
 playwright-report
 test-results
 .content
+.data

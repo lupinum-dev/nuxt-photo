@@ -20,12 +20,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, inject, type FunctionalComponent } from 'vue'
+import { computed, defineComponent, inject, type PropType, type VNodeChild } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
+import type { LightboxSlideSlotProps } from '../types/slots'
 import { useLightboxInject } from '../composables/useLightboxInject'
 import PhotoImage from './PhotoImage.vue'
+
+defineSlots<{ default?: (props: LightboxSlideSlotProps) => unknown }>()
 
 const props = defineProps<{
   photo: PhotoItem
@@ -52,12 +55,12 @@ const frameHeight = computed(() => Number.parseInt(frameStyle.value.height as st
 const CustomSlideRenderer = defineComponent({
   name: 'NuxtPhotoCustomSlide',
   props: {
-    renderer: { type: Function as unknown as () => LightboxSlideRenderer, required: true },
-    photo: { type: Object as unknown as () => PhotoItem, required: true },
+    renderer: { type: Function as PropType<LightboxSlideRenderer>, required: true },
+    photo: { type: Object as PropType<PhotoItem>, required: true },
     index: { type: Number, required: true },
   },
   setup(p) {
-    return () => (p.renderer as LightboxSlideRenderer)({ photo: p.photo, index: p.index }) as any
+    return () => p.renderer({ photo: p.photo, index: p.index }) as VNodeChild
   },
 })
 </script>

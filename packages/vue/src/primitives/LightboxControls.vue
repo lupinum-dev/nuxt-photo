@@ -23,6 +23,9 @@
 
 <script setup lang="ts">
 import { useLightboxInject } from '../composables/useLightboxInject'
+import type { LightboxControlsSlotProps } from '../types/slots'
+
+defineSlots<{ default?: (props: LightboxControlsSlotProps) => unknown }>()
 
 const ctx = useLightboxInject('LightboxControls')
 </script>

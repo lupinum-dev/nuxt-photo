@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!docs build",
-    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!docs dev",
+    "build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs build",
+    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs dev",
     "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
     "dev:playground-tw": "pnpm run build && pnpm --filter nuxt-photo-playground-tw dev",
-    "dev:docs": "pnpm run build && pnpm --filter docs dev",
+    "dev:docs": "pnpm run build && pnpm --filter nuxt-photo-docs dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
-    "build:docs": "pnpm --filter docs build",
+    "build:docs": "pnpm --filter nuxt-photo-docs build",
     "test:unit": "vitest run",
     "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
     "test:e2e": "pnpm run build:playground && playwright test",
@@ -19,6 +19,11 @@
   "engines": {
     "node": ">=18"
   },
+  "browserslist": [
+    "last 2 versions",
+    "not dead",
+    "> 0.5%"
+  ],
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@vitejs/plugin-vue": "^6.0.5",

@@ -56,7 +56,7 @@ This package has two export paths:
 - **Photo** — Single photo with optional solo lightbox
 - **PhotoAlbum** — Photo grid with layout algorithms and integrated lightbox
 - **PhotoGroup** — Shared lightbox context for multiple albums/photos
-- **PhotoGallery** — Deprecated convenience wrapper
+- **PhotoCarousel** — Embla-based carousel with thumbnails and integrated lightbox
 - **Lightbox / InternalLightbox** — The default lightbox UI with controls, counter, zoom button, and caption
 
 It also contains all CSS files (structure and theme).

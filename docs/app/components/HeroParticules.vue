@@ -8,7 +8,11 @@ defineProps({
 </script>
 
 <template>
-  <div class="stars w-screen h-screen absolute pointer-events-none inset-x-0 -top-[--header-height] bottom-0 opacity-75" :class="{ accelerate: accelerate }">
+  <div
+    class="stars w-screen h-screen absolute pointer-events-none inset-x-0 bottom-0 opacity-75"
+    :style="{ top: 'calc(var(--header-height) * -1)' }"
+    :class="{ accelerate: accelerate }"
+  >
     <div class="rounded-full bg-transparent" />
     <div class="rounded-full bg-transparent" />
     <div class="rounded-full bg-transparent" />

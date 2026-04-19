@@ -7,7 +7,6 @@ import { makePhoto } from '@test-fixtures/photos'
 import { computeBreakpointStyles, responsive } from '@nuxt-photo/core'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import Photo from '../src/components/Photo.vue'
-import PhotoGallery from '../src/components/PhotoGallery.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 
 const photos = [
@@ -368,19 +367,6 @@ describe('SSR', () => {
     const html = await renderToString(app)
 
     expect(html).toContain('np-photo')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
-  })
-
-  it('PhotoGallery renders on the server with shared lightbox composition intact', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoGallery, { photos, layout: 'rows', lightbox: true }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('np-album')
     expect(html).toContain('teleport start')
     expect(html).toContain('teleport end')
   })

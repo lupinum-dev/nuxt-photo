@@ -26,7 +26,6 @@ const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'Photo', name: 'Photo' },
   { export: 'PhotoGroup', name: 'PhotoGroup' },
   { export: 'PhotoAlbum', name: 'PhotoAlbum' },
-  { export: 'PhotoGallery', name: 'PhotoGallery' },
   { export: 'PhotoCarousel', name: 'PhotoCarousel' },
 ]
 // Primitive components — registered as `{prefix}{name}`

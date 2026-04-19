@@ -3,17 +3,38 @@
 import { computed, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { createGhostState, resetOpenState, resetCloseState, setThumbRef } from '../src/composables/ghost/state'
-import type { GhostState } from '../src/composables/ghost/types'
+import { openTransition } from '../src/composables/ghost/openTransition'
+import { createCloseTransition } from '../src/composables/ghost/closeTransition'
+import type { CloseCallbacks, GhostState, TransitionCallbacks } from '../src/composables/ghost/types'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function makeGhostState(): GhostState {
+function makeGhostState(
+  getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'] = () => null,
+): GhostState {
   const photos = createPhotoSet()
   return createGhostState(
     ref(0),
     computed(() => photos[0]!),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
-    () => null,
+    getAbsoluteFrameRect,
   )
+}
+
+function makeTransitionCallbacks(): TransitionCallbacks {
+  return {
+    syncGeometry: () => {},
+    refreshZoomState: () => {},
+    resetGestureState: () => {},
+    cancelTapTimer: () => {},
+  }
+}
+
+function makeCloseCallbacks(): CloseCallbacks {
+  return {
+    ...makeTransitionCallbacks(),
+    setPanzoomImmediate: () => {},
+    isZoomedIn: computed(() => false),
+  }
 }
 
 describe('resetOpenState', () => {
@@ -125,5 +146,39 @@ describe('setThumbRef', () => {
     setThumbRef(state, 3)(svgEl)
 
     expect(state.thumbRefs.has(3)).toBe(false)
+  })
+})
+
+describe('error propagation', () => {
+  it('openTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
+    const boom = new Error('geometry-failure')
+    const state = makeGhostState(() => { throw boom })
+
+    await expect(openTransition(state, 0, makeTransitionCallbacks())).rejects.toBe(boom)
+
+    expect(state.animating.value).toBe(false)
+    expect(state.ghostVisible.value).toBe(false)
+    expect(state.ghostSrc.value).toBe('')
+    expect(state.hiddenThumbIndex.value).toBeNull()
+    expect(state.overlayOpacity.value).toBe(1)
+    expect(state.mediaOpacity.value).toBe(1)
+  })
+
+  it('closeTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
+    const boom = new Error('geometry-failure')
+    const state = makeGhostState(() => { throw boom })
+    state.lightboxMounted.value = true
+
+    const { close } = createCloseTransition(state)
+
+    await expect(close(makeCloseCallbacks())).rejects.toBe(boom)
+
+    expect(state.animating.value).toBe(false)
+    expect(state.lightboxMounted.value).toBe(false)
+    expect(state.ghostVisible.value).toBe(false)
+    expect(state.ghostSrc.value).toBe('')
+    expect(state.hiddenThumbIndex.value).toBeNull()
+    expect(state.overlayOpacity.value).toBe(0)
+    expect(state.mediaOpacity.value).toBe(0)
   })
 })

@@ -29,3 +29,6 @@ export * from './viewer'
 
 // Transition
 export * from './transition'
+
+// Utilities
+export * from './utils'

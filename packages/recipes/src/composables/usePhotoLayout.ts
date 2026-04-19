@@ -10,13 +10,14 @@ import {
   computeBreakpointVisibilityCSS,
   computePhotoSizes,
   resolveResponsiveParameter,
+  round,
   type PhotoItem,
   type LayoutGroup,
   type LayoutEntry,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 
-export type BreakpointSnapshot = {
+type BreakpointSnapshot = {
   spanKey: string
   condition: string
   containerWidth: number
@@ -27,12 +28,7 @@ export type BreakpointSnapshot = {
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
-function round(value: number, digits = 0) {
-  const factor = 10 ** digits
-  return Math.round((value + Number.EPSILON) * factor) / factor
-}
-
-export type RowItem = {
+type RowItem = {
   photo: PhotoItem
   index: number
   width: number
@@ -41,7 +37,7 @@ export type RowItem = {
   computedSizes?: string
 }
 
-export interface PhotoLayoutOptions {
+interface PhotoLayoutOptions {
   photos: Ref<PhotoItem[]>
   layout: Ref<'rows' | 'columns' | 'masonry'>
   columns: Ref<ResponsiveParameter<number>>

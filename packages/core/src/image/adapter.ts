@@ -1,9 +1,5 @@
 import type { ImageAdapter, ImageSource, PhotoItem } from '../types'
-
-function round(value: number, digits = 0): number {
-  const factor = 10 ** digits
-  return Math.round((value + Number.EPSILON) * factor) / factor
-}
+import { round } from '../utils/math'
 
 /**
  * Default native image adapter — uses photo src/thumbSrc directly.

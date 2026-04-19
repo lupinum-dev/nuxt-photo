@@ -245,7 +245,7 @@ export function createCloseTransition(s: GhostState) {
 
         if (isUsableRect(retriedRect) && shouldUseFlip(retriedRect, s.transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 }, s.debug)) {
           s.debug?.log('transitions', 'close: scroll recovery succeeded → upgrading to FLIP')
-          plan = { mode: 'flip', durationMs: closeDurationMs, fromRect: fromRect!, toRect: retriedRect as unknown as DOMRect, reason: 'scrolled-into-view' }
+          plan = { mode: 'flip', durationMs: closeDurationMs, fromRect: fromRect!, toRect: retriedRect, reason: 'scrolled-into-view' }
         } else {
           s.debug?.log('transitions', 'close: scroll recovery failed → staying with FADE')
         }
@@ -260,11 +260,13 @@ export function createCloseTransition(s: GhostState) {
       }
 
       s.debug?.log('transitions', 'close: complete')
-    } catch (err) {
-      s.debug?.warn('transitions', 'close: error, forcing recovery', err)
-    } finally {
       s.debug?.groupEnd('transitions')
       resetCloseState(s, clearAnimationGuard)
+    } catch (err) {
+      s.debug?.warn('transitions', 'close: error, forcing recovery', err)
+      s.debug?.groupEnd('transitions')
+      resetCloseState(s, clearAnimationGuard)
+      throw err
     }
   }
 

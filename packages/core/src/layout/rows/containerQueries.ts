@@ -1,5 +1,5 @@
 import { computeRowsLayout } from './index'
-import { round } from '../round'
+import { round } from '../../utils/math'
 import { resolveResponsiveParameter } from '../../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 

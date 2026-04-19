@@ -18,12 +18,12 @@
     "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/vue": "workspace:*",
     "@nuxt-photo/recipes": "workspace:*",
-    "@nuxt/kit": "^3.21.2",
-    "@nuxt/schema": "^3.21.2"
+    "@nuxt/kit": "^4.4.2",
+    "@nuxt/schema": "^4.4.2"
   },
   "peerDependencies": {
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^3.21.2 || ^4.0.0"
+    "nuxt": "^4.0.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/image": {
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
-    "nuxt": "^3.21.2",
+    "nuxt": "^4.4.2",
     "typescript": "^5.9.2"
   }
 }

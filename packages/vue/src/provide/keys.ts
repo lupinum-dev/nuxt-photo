@@ -1,5 +1,6 @@
 import type { Component, ComponentPublicInstance, ComputedRef, CSSProperties, InjectionKey, Ref } from 'vue'
 import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '@nuxt-photo/core'
+import type { LightboxCaptionSlotProps, LightboxControlsSlotProps, LightboxSlideSlotProps } from '../types/slots'
 
 /** Consumer API — what app code and recipe components need. */
 export interface LightboxConsumerAPI {
@@ -88,9 +89,9 @@ export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:
 
 /** Slot overrides injected by recipe components for customizing InternalLightbox. */
 export interface LightboxSlotOverrides {
-  toolbar?: (props: { activeIndex: number; count: number; prev: () => void; next: () => void; close: () => void; toggleZoom: () => void; isZoomedIn: boolean; zoomAllowed: boolean; controlsDisabled: boolean }) => unknown
-  caption?: (props: { photo: PhotoItem | null; index: number }) => unknown
-  slide?: (props: { photo: PhotoItem; index: number; width: number; height: number }) => unknown
+  toolbar?: (props: LightboxControlsSlotProps) => unknown
+  caption?: (props: LightboxCaptionSlotProps) => unknown
+  slide?: (props: LightboxSlideSlotProps) => unknown
 }
 export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> = Symbol('nuxt-photo:lightbox-slots')
 

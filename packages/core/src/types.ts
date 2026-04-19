@@ -135,7 +135,7 @@ export type CloseTransitionPlan = {
 // ─── Layout ───
 
 export type LayoutInput = {
-  photos: PhotoItem<any>[]
+  photos: PhotoItem[]
   containerWidth: number
   spacing?: number
   padding?: number
@@ -215,7 +215,7 @@ export type ImageSource = {
  */
 export type ImageContext = 'thumb' | 'slide' | 'preload'
 
-export type ImageAdapter = (photo: PhotoItem<any>, context: ImageContext) => ImageSource
+export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
 
 // ─── Responsive parameters ───
 

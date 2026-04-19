@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@nuxt-photo/nuxt": "workspace:*",
-    "nuxt": "^3.21.2",
+    "nuxt": "^4.4.2",
     "tailwindcss": "^4",
     "@tailwindcss/vite": "^4"
   }

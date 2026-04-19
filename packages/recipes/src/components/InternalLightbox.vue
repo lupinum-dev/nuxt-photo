@@ -3,11 +3,11 @@
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">
-      <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
+      <LightboxControls v-slot="{ activeIndex, activePhoto, photos, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
         <SlotProxy
           v-if="slots?.toolbar"
           :render="slots!.toolbar"
-          :props="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }"
+          :props="{ activeIndex, activePhoto, photos, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }"
         />
         <div v-else class="np-lightbox__topbar">
           <div class="np-lightbox__counter">
@@ -53,7 +53,7 @@
         </LightboxViewport>
 
         <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <SlotProxy v-if="slots?.caption" :render="slots!.caption" :props="{ photo, index: activeIndex }" />
+          <SlotProxy v-if="slots?.caption" :render="slots!.caption" :props="{ photo, activeIndex }" />
           <template v-else>
             <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
             <p v-if="photo?.description">{{ photo.description }}</p>

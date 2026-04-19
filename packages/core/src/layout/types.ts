@@ -3,7 +3,7 @@ import type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayou
 export type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup }
 
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
-export function validatePhotoDimensions(photos: PhotoItem<any>[]): PhotoItem<any>[] {
+export function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
   return photos.map((p) => {
     if (p.width > 0 && p.height > 0) return p
     if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {

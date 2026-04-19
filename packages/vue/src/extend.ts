@@ -39,3 +39,6 @@ export {
   type LightboxSlotOverrides,
 } from './provide/keys'
 
+// Slot prop types
+export * from './types'
+

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["package.json"],
+      "ignoreDependencies": ["@vue/server-renderer"]
+    },
+    "packages/core": {
+      "entry": "src/index.ts",
+      "project": "src/**/*.ts"
+    },
+    "packages/vue": {
+      "entry": ["src/index.ts", "src/extend.ts", "src/globals.d.ts"],
+      "project": "src/**/*.{ts,vue}"
+    },
+    "packages/recipes": {
+      "entry": ["src/index.ts", "src/components/index.ts"],
+      "project": "src/**/*.{ts,vue}"
+    },
+    "packages/nuxt": {
+      "entry": ["src/module.ts", "src/runtime/*.ts"],
+      "project": "src/**/*.ts"
+    },
+    "docs": {
+      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}", "content.config.ts"],
+      "project": ["app/**/*.{vue,ts}", "*.ts"],
+      "ignore": ["app/components/content/**"]
+    },
+    "playground": {
+      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}"],
+      "project": ["app/**/*.{vue,ts}", "*.ts"]
+    },
+    "playground-tailwind": {
+      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}"],
+      "project": ["app/**/*.{vue,ts}", "*.ts"]
+    }
+  }
+}

@@ -39,7 +39,7 @@ export function useContainerWidth(
   let prevWidth = 0
 
   onMounted(() => {
-    if (!containerRef.value || typeof ResizeObserver === 'undefined') return
+    if (!containerRef.value) return
 
     const initial = resolveWidth(containerRef.value.getBoundingClientRect().width)
     if (initial > 0) {

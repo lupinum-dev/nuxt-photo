@@ -172,5 +172,6 @@ export async function openTransition(s: GhostState, index: number, callbacks: Tr
     s.overlayOpacity.value = 1
     s.mediaOpacity.value = 1
     resetOpenState(s)
+    throw err
   }
 }

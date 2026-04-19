@@ -1,5 +1,5 @@
 import type { PhotoItem } from '../../types'
-import { round } from '../round'
+import { round } from '../../utils/math'
 
 export function ratio(item: PhotoItem) {
   return item.width / item.height
