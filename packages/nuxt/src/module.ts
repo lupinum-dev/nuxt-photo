@@ -27,6 +27,7 @@ const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoGroup', name: 'PhotoGroup' },
   { export: 'PhotoAlbum', name: 'PhotoAlbum' },
   { export: 'PhotoGallery', name: 'PhotoGallery' },
+  { export: 'PhotoCarousel', name: 'PhotoCarousel' },
 ]
 // Primitive components — registered as `{prefix}{name}`
 const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
@@ -128,10 +129,12 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       '@nuxt-photo/recipes/styles/lightbox-structure.css',
       '@nuxt-photo/recipes/styles/album.css',
       '@nuxt-photo/recipes/styles/photo-structure.css',
+      '@nuxt-photo/recipes/styles/carousel-structure.css',
     ]
     const themeCSS = [
       '@nuxt-photo/recipes/styles/lightbox-theme.css',
       '@nuxt-photo/recipes/styles/photo.css',
+      '@nuxt-photo/recipes/styles/carousel-theme.css',
     ]
 
     const cssFiles

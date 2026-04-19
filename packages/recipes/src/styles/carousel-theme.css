@@ -1,0 +1,84 @@
+/* Theme styles for PhotoCarousel recipe — visual appearance */
+/* Requires carousel-structure.css for layout */
+
+.np-carousel {
+  --np-carousel-radius: 0.5rem;
+  --np-carousel-surface: rgba(0, 0, 0, 0.55);
+  --np-carousel-surface-fg: #fff;
+  --np-carousel-thumb-border: rgba(0, 0, 0, 0.1);
+}
+
+.np-carousel__viewport {
+  border-radius: var(--np-carousel-radius);
+  background: #f4f4f5;
+}
+
+.np-carousel__arrow {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 0;
+  background: var(--np-carousel-surface);
+  color: var(--np-carousel-surface-fg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font: inherit;
+  font-size: 1rem;
+  transition: opacity 0.15s;
+}
+
+.np-carousel__arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.np-carousel__counter {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: var(--np-carousel-surface);
+  color: var(--np-carousel-surface-fg);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.np-carousel__caption {
+  color: inherit;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  opacity: 0.8;
+}
+
+.np-carousel__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+}
+
+.np-carousel__dot--selected {
+  opacity: 1;
+}
+
+.np-carousel__thumb {
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  border-radius: calc(var(--np-carousel-radius) * 0.6);
+}
+
+.np-carousel__thumb--selected {
+  opacity: 1;
+}
+
+.np-carousel__thumb:hover {
+  opacity: 0.85;
+}
+
+.np-carousel__thumb-img {
+  border-radius: calc(var(--np-carousel-radius) * 0.6);
+  border: 1px solid var(--np-carousel-thumb-border);
+}

@@ -1,0 +1,108 @@
+/* Structural styles for PhotoCarousel recipe
+   Layout/sizing only — no colours, radii or shadows.
+   See carousel-theme.css for the opt-in visual layer. */
+
+.np-carousel {
+  --np-carousel-gap: 0.75rem;
+  --np-carousel-slide-size: 100%;
+  --np-carousel-slide-aspect: 16 / 10;
+  --np-carousel-thumb-size: 5.5rem;
+  --np-carousel-thumb-gap: 0.5rem;
+
+  position: relative;
+  width: 100%;
+}
+
+.np-carousel__viewport {
+  position: relative;
+  overflow: hidden;
+}
+
+.np-carousel__container {
+  display: flex;
+  touch-action: pan-y pinch-zoom;
+  margin-left: calc(var(--np-carousel-gap) * -1);
+}
+
+.np-carousel__slide {
+  flex: 0 0 var(--np-carousel-slide-size);
+  min-width: 0;
+  padding-left: var(--np-carousel-gap);
+  aspect-ratio: var(--np-carousel-slide-aspect);
+  position: relative;
+}
+
+.np-carousel__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.np-carousel__controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.np-carousel__arrow {
+  pointer-events: auto;
+}
+
+.np-carousel__counter {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  pointer-events: none;
+}
+
+.np-carousel__caption {
+  margin-top: 0.5rem;
+}
+
+.np-carousel__dots {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.np-carousel__dot {
+  cursor: pointer;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.np-carousel__thumbs {
+  margin-top: var(--np-carousel-thumb-gap);
+}
+
+.np-carousel__thumbs-viewport {
+  overflow: hidden;
+}
+
+.np-carousel__thumbs-container {
+  display: flex;
+  margin-left: calc(var(--np-carousel-thumb-gap) * -1);
+}
+
+.np-carousel__thumb {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-left: var(--np-carousel-thumb-gap);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.np-carousel__thumb-img {
+  display: block;
+  height: var(--np-carousel-thumb-size);
+  width: auto;
+  object-fit: cover;
+}

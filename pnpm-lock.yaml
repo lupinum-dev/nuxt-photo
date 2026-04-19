@@ -154,6 +154,15 @@ importers:
       '@nuxt-photo/vue':
         specifier: workspace:*
         version: link:../vue
+      embla-carousel:
+        specifier: 9.0.0-rc01
+        version: 9.0.0-rc01
+      embla-carousel-autoplay:
+        specifier: 9.0.0-rc01
+        version: 9.0.0-rc01(embla-carousel@9.0.0-rc01)
+      embla-carousel-vue:
+        specifier: 9.0.0-rc01
+        version: 9.0.0-rc01(vue@3.5.31(typescript@5.9.3))
     devDependencies:
       typescript:
         specifier: ^5.9.2
@@ -3732,6 +3741,11 @@ packages:
     resolution: {integrity: sha512-OBu5G3nwaSXkZCo1A6LTaFMZ8EpkYbwIaH+bPqdBnDGQ2fh4+NbzjXjs2SktoPNKCtflfVMc75njaDHOYXcrsA==}
     peerDependencies:
       embla-carousel: 8.6.0
+
+  embla-carousel-autoplay@9.0.0-rc01:
+    resolution: {integrity: sha512-gl7jUe0X9xd5v7IiyFF2FCR+KTBesnutM0gQ3S75oo9EizZi5tJMNdVaFwvzepz6kGzDkkSbKMWitQvAbFVfdQ==}
+    peerDependencies:
+      embla-carousel: 9.0.0-rc01
 
   embla-carousel-class-names@8.6.0:
     resolution: {integrity: sha512-l1hm1+7GxQ+zwdU2sea/LhD946on7XO2qk3Xq2XWSwBaWfdgchXdK567yzLtYSHn4sWYdiX+x4nnaj+saKnJkw==}
@@ -11270,6 +11284,10 @@ snapshots:
   embla-carousel-autoplay@8.6.0(embla-carousel@8.6.0):
     dependencies:
       embla-carousel: 8.6.0
+
+  embla-carousel-autoplay@9.0.0-rc01(embla-carousel@9.0.0-rc01):
+    dependencies:
+      embla-carousel: 9.0.0-rc01
 
   embla-carousel-class-names@8.6.0(embla-carousel@8.6.0):
     dependencies:

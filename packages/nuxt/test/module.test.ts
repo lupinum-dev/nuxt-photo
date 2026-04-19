@@ -124,6 +124,7 @@ describe('nuxt-photo module', () => {
       '@nuxt-photo/recipes/styles/lightbox-structure.css',
       '@nuxt-photo/recipes/styles/album.css',
       '@nuxt-photo/recipes/styles/photo-structure.css',
+      '@nuxt-photo/recipes/styles/carousel-structure.css',
     ])
   })
 
@@ -136,8 +137,10 @@ describe('nuxt-photo module', () => {
       '@nuxt-photo/recipes/styles/lightbox-structure.css',
       '@nuxt-photo/recipes/styles/album.css',
       '@nuxt-photo/recipes/styles/photo-structure.css',
+      '@nuxt-photo/recipes/styles/carousel-structure.css',
       '@nuxt-photo/recipes/styles/lightbox-theme.css',
       '@nuxt-photo/recipes/styles/photo.css',
+      '@nuxt-photo/recipes/styles/carousel-theme.css',
     ])
   })
 

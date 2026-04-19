@@ -13,6 +13,7 @@ provide(LightboxComponentKey, Lightbox)
       <div class="nav__links">
         <NuxtLink to="/" class="nav__link">Gallery</NuxtLink>
         <NuxtLink to="/layouts" class="nav__link">Layouts</NuxtLink>
+        <NuxtLink to="/carousel" class="nav__link">Carousel</NuxtLink>
         <NuxtLink to="/headless" class="nav__link">Headless</NuxtLink>
         <NuxtLink to="/nuxt-image" class="nav__link">NuxtImage</NuxtLink>
       </div>
