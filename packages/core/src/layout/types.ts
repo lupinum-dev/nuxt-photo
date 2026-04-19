@@ -1,6 +1,6 @@
-import type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, BentoSizing, BentoLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
 
-export type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, BentoSizing, BentoLayoutOptions, LayoutEntry, LayoutGroup }
+export type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup }
 
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
 export function validatePhotoDimensions(photos: PhotoItem<any>[]): PhotoItem<any>[] {

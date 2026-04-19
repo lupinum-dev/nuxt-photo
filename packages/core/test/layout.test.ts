@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
-  computeBentoLayout,
   computeColumnsLayout,
   computeMasonryLayout,
   computeRowsLayout,
 } from '@nuxt-photo/core'
-import { createPhotoSet, createPlainPhotoSet } from '@test-fixtures/photos'
+import { createPhotoSet } from '@test-fixtures/photos'
 
 function totalGroupHeight(
   group: { entries: Array<{ height: number }> },
@@ -104,52 +103,5 @@ describe('layout algorithms', () => {
     const finalDelta = Math.max(...heights) - Math.min(...heights)
 
     expect(finalDelta).toBeLessThanOrEqual(greedyDelta)
-  })
-
-  it('honors bento metadata, pattern sizing, and manual-only spans', () => {
-    const photos = createPhotoSet()
-    const auto = computeBentoLayout({
-      photos: createPlainPhotoSet(),
-      containerWidth: 1000,
-      spacing: 8,
-      columns: 3,
-      rowHeight: 220,
-      sizing: 'auto',
-    })[0]!
-    const manual = computeBentoLayout({
-      photos,
-      containerWidth: 1000,
-      spacing: 8,
-      columns: 3,
-      rowHeight: 220,
-      sizing: 'manual',
-    })[0]!
-    const pattern = computeBentoLayout({
-      photos: createPlainPhotoSet(),
-      containerWidth: 1000,
-      spacing: 8,
-      columns: 3,
-      rowHeight: 220,
-      sizing: 'pattern',
-      patternInterval: 3,
-    })[0]!
-
-    const manualSpanned = manual.entries.filter(entry => (entry.colSpan ?? 1) > 1 || (entry.rowSpan ?? 1) > 1)
-
-    const autoSpanned = auto.entries.filter(entry => (entry.colSpan ?? 1) > 1 || (entry.rowSpan ?? 1) > 1)
-    expect(autoSpanned.length).toBeGreaterThanOrEqual(3)
-    for (const entry of autoSpanned) {
-      const ratio = entry.photo.width / entry.photo.height
-      if (ratio >= 1.4) expect(entry).toMatchObject({ colSpan: 2, rowSpan: 1 })
-      else if (ratio <= 0.85) expect(entry).toMatchObject({ colSpan: 1, rowSpan: 2 })
-      else expect(entry).toMatchObject({ colSpan: 2, rowSpan: 2 })
-    }
-
-    expect(pattern.entries[0]).toMatchObject({ colSpan: 2, rowSpan: 1 })
-    expect(pattern.entries[3]).toMatchObject({ colSpan: 2, rowSpan: 2 })
-    expect(pattern.entries[6]).toMatchObject({ colSpan: 1, rowSpan: 2 })
-
-    expect(manual.entries.find(entry => entry.photo.id === 'amber')).toMatchObject({ colSpan: 2, rowSpan: 2 })
-    expect(manual.entries.filter(entry => !entry.photo.meta).every(entry => entry.colSpan === 1 && entry.rowSpan === 1)).toBe(true)
   })
 })

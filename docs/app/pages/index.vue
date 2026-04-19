@@ -43,18 +43,6 @@ const layoutSections = [
       columns: responsive({ 0: 2, 640: 3, 1120: 4 }),
     },
   },
-  {
-    key: 'bento',
-    title: 'Bento Grid',
-    icon: 'i-lucide-layout-dashboard',
-    description: 'CSS Grid with automatic span heuristics. Wide photos get more columns, tall photos get more rows. Magazine-style without the manual work.',
-    layout: {
-      type: 'bento' as const,
-      columns: responsive({ 0: 2, 720: 3, 1120: 4 }),
-      rowHeight: responsive({ 0: 180, 720: 220, 1120: 260 }),
-      sizing: 'auto' as const,
-    },
-  },
 ]
 
 const features = [

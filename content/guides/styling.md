@@ -17,7 +17,7 @@ The styles are split into five files across two layers:
 | File | What it styles |
 |---|---|
 | `lightbox-structure.css` | Lightbox fixed positioning, viewport grid, button layout, media containers, touch interactions |
-| `album.css` | Album grid, row/column/masonry/bento layout structures |
+| `album.css` | Album grid, row/column/masonry layout structures |
 | `photo-structure.css` | Photo figure layout, image sizing |
 
 ### Theme (visual appearance)
@@ -111,7 +111,7 @@ The theme is built on CSS custom properties. Override them to customize the appe
 | Class | Element |
 |---|---|
 | `.np-album` | Root container |
-| `.np-album--rows` / `--columns` / `--masonry` / `--bento` | Layout modifier |
+| `.np-album--rows` / `--columns` / `--masonry` | Layout modifier |
 | `.np-album__item` | Photo wrapper |
 | `.np-album__img` | Photo `<img>` |
 | `.np-album__row` / `__column` / `__grid` | Group wrappers |

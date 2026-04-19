@@ -30,5 +30,4 @@ export type {
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
-  BentoAlbumLayout,
 } from '@nuxt-photo/core'

@@ -1,6 +1,6 @@
 ---
 title: "Layout Algorithms: A Deep Dive"
-description: "The complete guide to every layout algorithm in nuxt-photo — from Knuth-Plass dynamic programming and shortest-path column distribution, to greedy masonry with local search, bento auto-span heuristics, container query generation, responsive image sizing, and the zero-CLS SSR rendering strategy."
+description: "The complete guide to every layout algorithm in nuxt-photo — from Knuth-Plass dynamic programming and shortest-path column distribution, to greedy masonry with local search, container query generation, responsive image sizing, and the zero-CLS SSR rendering strategy."
 navigation: true
 ---
 
@@ -22,7 +22,7 @@ Before diving into any specific algorithm, let's be clear about what we're actua
 
 You have N rectangles. Each has a fixed aspect ratio (width ÷ height) that you can't change — cropping a photo to fit a grid defeats the purpose of a photo gallery. You have a container of some width, and you need to arrange these rectangles into something that looks intentional. No awkward gaps. No photos stretched beyond recognition. A consistent visual rhythm that makes the eye happy.
 
-This isn't a CSS problem. Flexbox can wrap items, and CSS Grid can place them, but neither can solve the *assignment* problem: which photos go together in the same row? How many photos per column? Which ones get featured spans in a bento grid? These are combinatorial decisions. The container width changes the answer. The photo aspect ratios change the answer. The spacing and padding change the answer. There's no declarative CSS solution — you need an algorithm.
+This isn't a CSS problem. Flexbox can wrap items, and CSS Grid can place them, but neither can solve the *assignment* problem: which photos go together in the same row? How many photos per column? These are combinatorial decisions. The container width changes the answer. The photo aspect ratios change the answer. The spacing and padding change the answer. There's no declarative CSS solution — you need an algorithm.
 
 ### The shared abstraction
 
@@ -40,8 +40,6 @@ type LayoutEntry = {
   height: number         // computed pixel height
   positionIndex: number  // position within this group
   itemsCount: number     // total items in this group
-  colSpan?: number       // bento only
-  rowSpan?: number       // bento only
 }
 
 type LayoutGroup = {
@@ -447,7 +445,7 @@ When both `breakpoints` and `defaultContainerWidth` are provided, the SSR output
 
 **A breakpoint produces zero groups.** This happens if the container is too narrow for any valid row at that breakpoint. The entry is silently skipped, and the remaining breakpoints still generate rules.
 
-**Non-rows layouts.** Container queries only apply to the rows layout. For columns, masonry, and bento, the `containerQueriesActive` flag stays `false` and items get regular inline styles.
+**Non-rows layouts.** Container queries only apply to the rows layout. For columns and masonry, the `containerQueriesActive` flag stays `false` and items get regular inline styles.
 
 **Responsive parameters at breakpoints.** If `spacing` is a function like `(w) => w < 600 ? 4 : 8`, the DP runs with `spacing=4` at the 375px breakpoint and `spacing=8` at the 900px breakpoint. The gap values in the `calc()` expressions are different per rule, reflecting the resolved spacing at each breakpoint's width. This means the deduplication might *not* collapse two breakpoints that would otherwise have the same row breaks — because the gap values differ.
 
@@ -818,165 +816,6 @@ Before optimization:    After optimization:
 ---
 
 
-## Chapter 5: Bento — Span Assignment Heuristics
-
-The bento layout uses CSS Grid with variable column/row spans. Each photo gets a grid area — 1×1 by default, but some photos get 2×1 (wide), 1×2 (tall), or 2×2 (featured) spans. The algorithmic challenge is deciding *which* photos get larger spans.
-
-Three sizing modes are available: `auto`, `pattern`, and `manual`.
-
-### Auto sizing
-
-The most interesting mode. It picks which photos to feature based on their aspect ratios, with three steps:
-
-**Step 1: Apply meta overrides.** If a photo has explicit span hints in its `meta` object, those always win:
-
-```ts
-function getMetaSpan(photo: PhotoItem, maxCols: number): Span | undefined {
-  const meta = photo.meta
-  if (!meta) return undefined
-  if (meta.span === '2x2' || meta.featured === true) return { colSpan: Math.min(2, maxCols), rowSpan: 2 }
-  if (meta.span === 'wide') return { colSpan: Math.min(2, maxCols), rowSpan: 1 }
-  if (meta.span === 'tall') return { colSpan: 1, rowSpan: 2 }
-  return undefined
-}
-```
-
-The `Math.min(2, maxCols)` guard prevents a 2-column span in a 1-column layout — that would overflow the grid.
-
-**Step 2: Score remaining photos by aspect ratio deviation.** Each unassigned photo gets a score based on how far it deviates from square:
-
-```ts
-const candidates = []
-for (let i = 0; i < n; i++) {
-  if (metaIndices.has(i)) continue
-  const r = ratio(photos[i])
-  candidates.push({ index: i, score: Math.abs(Math.log(r)), ratio: r })
-}
-candidates.sort((a, b) => b.score - a.score)
-```
-
-**Why `Math.log(r)`?** The logarithm makes scoring symmetric around 1:1. A 2:1 landscape and a 1:2 portrait get the same score (`|ln(2)| = |ln(0.5)| ≈ 0.693`). Without the log, raw aspect ratios would bias toward landscapes: a 4:1 photo scores 4.0, but a 1:4 photo scores 0.25. With the log, both score `|ln(4)| = |ln(0.25)| ≈ 1.386`. The log normalizes the scale so "extremeness" is judged symmetrically.
-
-**Step 3: Assign spans to the top ~30%.** The algorithm picks the most extreme-aspect-ratio photos, with an adjacency constraint — no two spanned items next to each other in the source order:
-
-```ts
-const targetSpanned = Math.max(2, Math.ceil(n * 0.3))
-const remainingSlots = Math.max(0, targetSpanned - metaIndices.size)
-
-const spannedIndices = new Set(metaIndices)
-let assigned = 0
-
-for (const cand of candidates) {
-  if (assigned >= remainingSlots) break
-  if (spannedIndices.has(cand.index - 1) || spannedIndices.has(cand.index + 1)) continue
-
-  spans[cand.index] = spanForRatio(cand.ratio, maxCols)
-  spannedIndices.add(cand.index)
-  assigned++
-}
-```
-
-**Why 30%?** This is a design heuristic from visual testing. Below ~20% spanned, grids look monotonous — every tile is the same size. Above ~40%, the grid loses its grid-like character — it starts looking like a collage. 30% hits the sweet spot for most photo sets.
-
-**The adjacency constraint.** Two featured tiles side by side in the source order looks broken in a CSS grid — they compete for space and create awkward gaps. The first pass enforces `no two spanned items adjacent`. If that's too strict (e.g., 6 photos where 4 have extreme ratios but every other one is a candidate), a second pass relaxes the constraint:
-
-```ts
-if (assigned < remainingSlots) {
-  for (const cand of candidates) {
-    if (assigned >= remainingSlots) break
-    if (spannedIndices.has(cand.index)) continue
-    spans[cand.index] = spanForRatio(cand.ratio, maxCols)
-    spannedIndices.add(cand.index)
-    assigned++
-  }
-}
-```
-
-### The span assignment rules
-
-Once a photo is selected for a larger span, its aspect ratio determines the span type:
-
-| Aspect ratio | Span | Why |
-|---|---|---|
-| ≥ 1.4 (wide) | 2 columns × 1 row | Landscape photos look best stretched wide |
-| ≤ 0.85 (tall) | 1 column × 2 rows | Portrait photos need vertical space |
-| 0.85 – 1.4 (near-square) | 2 columns × 2 rows | Near-square photos can fill a featured tile |
-
-The remaining photos get 1×1.
-
-### Pattern sizing
-
-Instead of heuristics, applies a repeating cycle at fixed intervals:
-
-```ts
-const PATTERN_CYCLE: Array<'wide' | '2x2' | 'tall' | '2x2'> = ['wide', '2x2', 'tall', '2x2']
-let cycleIndex = 0
-
-spans = photos.map((photo, index) => {
-  const meta = getMetaSpan(photo, columns)
-  if (meta) return meta  // meta overrides always win
-
-  if (index % patternInterval === 0) {
-    const type = PATTERN_CYCLE[cycleIndex % PATTERN_CYCLE.length]
-    cycleIndex++
-    // ... map type to span ...
-  }
-
-  return { colSpan: 1, rowSpan: 1 }
-})
-```
-
-With the default `patternInterval: 5`, every 5th photo gets a featured tile, cycling through wide → featured → tall → featured. This produces a predictable visual rhythm. The cycle repeats every 20 photos (4 pattern elements × 5 interval).
-
-### Manual sizing
-
-The simplest mode — reads spans directly from `photo.meta`, no heuristics:
-
-```ts
-spans = photos.map(photo => getMetaSpan(photo, columns) ?? { colSpan: 1, rowSpan: 1 })
-```
-
-If a photo has no meta, it's 1×1. Full control, zero magic.
-
-### The cell width calculation
-
-The bento layout uses fixed-height rows (unlike rows or masonry where heights flex). Each cell's pixel dimensions come from the grid parameters:
-
-```ts
-const cellWidth = (containerWidth - (columns - 1) * spacing - 2 * padding * columns) / columns
-
-// For each photo:
-const width = cellWidth * colSpan + spacing * (colSpan - 1) + 2 * padding * colSpan
-const height = rowHeight * rowSpan + spacing * (rowSpan - 1) + 2 * padding * rowSpan
-```
-
-A 2-column span covers 2 cells plus the gap between them plus padding on both sides of both cells. Mathematically: `cellWidth × 2 + spacing × 1 + padding × 2 × 2`. The same pattern applies to row spans.
-
-### CSS Grid interaction
-
-The computed spans map directly to CSS Grid properties:
-
-```css
-grid-column: span 2;  /* colSpan: 2 */
-grid-row: span 2;     /* rowSpan: 2 */
-```
-
-The grid itself uses `grid-auto-flow: dense`, which tells the browser to fill holes. When a 2×2 item creates gaps in the grid, smaller 1×1 items flow into those gaps. This is a trade-off: dense packing can reorder items visually compared to their source order. A 1×1 item might appear before a 2×2 item in the DOM but render after it in the grid if there's a gap to fill.
-
-### Complexity
-
-| Phase | Time |
-|---|---|
-| Meta override scan | O(N) |
-| Score computation + sort | O(N log N) |
-| Span assignment (first pass) | O(N) |
-| Span assignment (relaxed pass) | O(N) worst case |
-| Total | O(N log N) — dominated by the sort |
-
-
----
-
-
 ## Chapter 6: The `computePhotoSizes` Algorithm
 
 This function generates the `<img sizes>` attribute for responsive image loading in the rows layout. Browsers need a `sizes` attribute to choose the right source from a `srcset` *before layout is complete* — before the browser knows the actual rendered width of the image. The `sizes` attribute tells it "this image will be about this wide."
@@ -1201,7 +1040,7 @@ The filler span has `flex-grow: 9999`, which dominates the flex distribution. It
 
 ### SSR for non-rows layouts
 
-For columns, masonry, and bento, the server renders a CSS Grid fallback:
+For columns and masonry, the server renders a CSS Grid fallback:
 
 ```ts
 ssrWrapperStyle = {
@@ -1486,13 +1325,13 @@ Here's how the algorithms scale with real inputs.
 
 All measurements are rough estimates for a modern device (M1 Mac, Chrome):
 
-| N photos | Rows (K≈10) | Columns (C=3) | Masonry (C=3) | Bento |
-|---|---|---|---|---|
-| 12 | < 0.05ms | < 0.05ms | < 0.05ms | < 0.05ms |
-| 50 | ~0.1ms | ~0.2ms | ~0.1ms | ~0.05ms |
-| 100 | ~0.2ms | ~0.5ms | ~0.2ms | ~0.1ms |
-| 500 | ~1ms | ~3ms | ~1ms | ~0.5ms |
-| 1,000 | ~2ms | ~8ms | ~3ms | ~1ms |
+| N photos | Rows (K≈10) | Columns (C=3) | Masonry (C=3) |
+|---|---|---|---|
+| 12 | < 0.05ms | < 0.05ms | < 0.05ms |
+| 50 | ~0.1ms | ~0.2ms | ~0.1ms |
+| 100 | ~0.2ms | ~0.5ms | ~0.2ms |
+| 500 | ~1ms | ~3ms | ~1ms |
+| 1,000 | ~2ms | ~8ms | ~3ms |
 
 Container query generation for 4 breakpoints: approximately 4× the rows cost (since the DP runs at each breakpoint). The deduplication and CSS string building add negligible overhead.
 
@@ -1503,7 +1342,6 @@ Container query generation for 4 breakpoints: approximately 4× the rows cost (s
 | Rows DP | Two typed arrays of size N+1 (< 16KB for 1000 photos) |
 | Columns shortest-path | A `Map<number, Array>` — sparse, typically < 50KB |
 | Masonry | Two arrays of size C, one array of size N (< 16KB for 1000 photos) |
-| Bento | One array of size N (< 8KB for 1000 photos) |
 
 None of these are worth worrying about. A single high-res JPEG is 2–10MB.
 
@@ -1525,7 +1363,6 @@ With breakpoints: the layout only recomputes when the width crosses a breakpoint
 | **Container queries** | Breakpoint deduplication | O(B·N·K) | Exact — CSS calc() is container-width-independent |
 | **Columns** | Shortest path (length C) | O(C·N·K) | Globally optimal |
 | **Masonry** | Greedy + local search | O(N·C) | Approximate (NP-hard optimal) |
-| **Bento** | Aspect-ratio scoring + span assignment | O(N log N) | Heuristic |
 | **Photo sizes** | Calc() divisor computation | O(1) per photo | Exact |
 | **Responsive params** | Linear scan of sorted breakpoints | O(B) per resolution | Exact |
 | **SSR strategy** | Flex-grow approximation or server-side DP | O(N·K) or O(1) | Approximate (flex) or exact (DP) |
@@ -1533,6 +1370,6 @@ With breakpoints: the layout only recomputes when the width crosses a breakpoint
 | **Physics** | Tension-friction spring integration | O(frames) per animation | N/A |
 | **Gestures** | Threshold + directional classifier | O(1) per event | N/A |
 
-Each algorithm was chosen for a specific reason. Knuth-Plass because it's optimal and O(N). Shortest-path-of-length-C because columns need a fixed group count. Greedy+local-search because optimal masonry is NP-hard. Scoring+thresholds because bento spanning is fundamentally a design decision, not a mathematical optimization.
+Each algorithm was chosen for a specific reason. Knuth-Plass because it's optimal and O(N). Shortest-path-of-length-C because columns need a fixed group count. Greedy+local-search because optimal masonry is NP-hard.
 
 The common thread is pragmatism — globally optimal where it's tractable, good-enough heuristics where it isn't, and always fast enough to run in a `ResizeObserver` callback.

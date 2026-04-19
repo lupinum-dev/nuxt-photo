@@ -153,15 +153,6 @@ export type MasonryLayoutOptions = LayoutInput & {
   columns?: number
 }
 
-export type BentoSizing = 'auto' | 'pattern' | 'manual'
-
-export type BentoLayoutOptions = LayoutInput & {
-  columns?: number
-  rowHeight?: number
-  sizing?: BentoSizing
-  patternInterval?: number
-}
-
 export type LayoutEntry = {
   index: number
   photo: PhotoItem
@@ -169,12 +160,10 @@ export type LayoutEntry = {
   height: number
   positionIndex: number
   itemsCount: number
-  colSpan?: number
-  rowSpan?: number
 }
 
 export type LayoutGroup = {
-  type: 'row' | 'column' | 'grid'
+  type: 'row' | 'column'
   index: number
   entries: LayoutEntry[]
   columnsGaps?: number[]
@@ -198,23 +187,14 @@ export type MasonryAlbumLayout = {
   columns?: ResponsiveParameter<number>
 }
 
-export type BentoAlbumLayout = {
-  type: 'bento'
-  columns?: ResponsiveParameter<number>
-  rowHeight?: ResponsiveParameter<number>
-  sizing?: BentoSizing
-  patternInterval?: number
-}
-
 /**
  * Discriminated layout config for `PhotoAlbum`.
  * Each variant only accepts the props relevant to that layout type.
  *
  * @example
  * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
- * <PhotoAlbum :photos="photos" :layout="{ type: 'bento', columns: 3, rowHeight: 280 }" />
  */
-export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout | BentoAlbumLayout
+export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
 
 // ─── Image adapter ───
 
@@ -256,6 +236,12 @@ export type ImageAdapter = (photo: PhotoItem<any>, context: ImageContext) => Ima
  */
 export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
 
+const responsiveBreakpointsKey = Symbol('nuxt-photo:responsive-breakpoints')
+
+export type ResponsiveResolver<T> = ((containerWidth: number) => T) & {
+  readonly [responsiveBreakpointsKey]?: readonly number[]
+}
+
 /**
  * Resolve a `ResponsiveParameter` to its concrete value.
  * Returns `fallback` when `value` is `undefined`.
@@ -267,6 +253,44 @@ export function resolveResponsiveParameter<T>(
 ): T {
   if (value === undefined) return fallback
   return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
+}
+
+export function getResponsiveBreakpoints<T>(
+  value: ResponsiveParameter<T> | undefined,
+): readonly number[] | undefined {
+  if (typeof value !== 'function') return undefined
+
+  const breakpoints = (value as ResponsiveResolver<T>)[responsiveBreakpointsKey]
+  return Array.isArray(breakpoints) && breakpoints.length > 0 ? breakpoints : undefined
+}
+
+export function mergeResponsiveBreakpoints(
+  values: Array<ResponsiveParameter<any> | undefined>,
+): readonly number[] | undefined {
+  const positive = new Set<number>()
+  let sawZeroBreakpoint = false
+
+  for (const value of values) {
+    const breakpoints = getResponsiveBreakpoints(value)
+    if (!breakpoints) continue
+
+    for (const breakpoint of breakpoints) {
+      if (!Number.isFinite(breakpoint) || breakpoint < 0) continue
+      if (breakpoint === 0) {
+        sawZeroBreakpoint = true
+        continue
+      }
+      positive.add(breakpoint)
+    }
+  }
+
+  if (positive.size === 0) return undefined
+
+  const merged = [...positive].sort((a, b) => a - b)
+  if (!sawZeroBreakpoint) return merged
+
+  const floor = Math.max(1, Math.floor(merged[0]! / 2))
+  return merged[0] === floor ? merged : [floor, ...merged]
 }
 
 /**
@@ -285,7 +309,7 @@ export function resolveResponsiveParameter<T>(
  *   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
  * />
  */
-export function responsive<T>(breakpoints: Record<number, T>): (containerWidth: number) => T {
+export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T> {
   const sorted = Object.entries(breakpoints)
     .map(([k, v]) => [Number(k), v] as [number, T])
     .sort((a, b) => b[0] - a[0])
@@ -294,12 +318,21 @@ export function responsive<T>(breakpoints: Record<number, T>): (containerWidth: 
     throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
   }
 
-  return (containerWidth: number) => {
+  const resolver = ((containerWidth: number) => {
     for (const [minWidth, value] of sorted) {
       if (containerWidth >= minWidth) return value
     }
     return sorted[sorted.length - 1]![1]
-  }
+  }) as ResponsiveResolver<T>
+
+  Object.defineProperty(resolver, responsiveBreakpointsKey, {
+    value: [...new Set(sorted.map(([minWidth]) => minWidth).filter(width => Number.isFinite(width) && width >= 0))].sort((a, b) => a - b),
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  })
+
+  return resolver
 }
 
 // ─── Photo adapter ───

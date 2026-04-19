@@ -1,6 +1,6 @@
 ---
 title: Layout Algorithms
-description: Deep dive into the layout algorithms — Knuth-Plass DP, shortest-path column distribution, greedy masonry with local search, and bento auto-span heuristics.
+description: Deep dive into the layout algorithms — Knuth-Plass DP, shortest-path column distribution, and greedy masonry with local search.
 navigation: true
 ---
 
@@ -331,112 +331,6 @@ An optimal masonry layout (minimizing max column height) is NP-hard — it reduc
 
 ---
 
-## Bento: Auto-Span Heuristics
-
-The bento layout uses CSS Grid with variable column/row spans. The hard part is deciding which photos get larger spans.
-
-### Auto Sizing
-
-The algorithm assigns spans in three steps:
-
-**Step 1: Meta overrides.** If a photo has `meta.featured`, `meta.span = '2x2'`, `meta.span = 'wide'`, or `meta.span = 'tall'`, those spans are used directly.
-
-**Step 2: Score remaining photos.** Each photo gets a score based on how far its aspect ratio is from square:
-
-```ts
-// Score by deviation from square — more extreme aspect ratios get higher scores
-const candidates = []
-for (let i = 0; i < N; i++) {
-  if (hasMetaOverride(i)) continue
-  const r = photos[i].width / photos[i].height
-  candidates.push({ index: i, score: Math.abs(Math.log(r)), ratio: r })
-}
-
-// Sort by score descending — most extreme aspect ratios first
-candidates.sort((a, b) => b.score - a.score)
-```
-
-A 2:1 landscape scores `ln(2) ≈ 0.69`. A 1:2 portrait scores `ln(0.5) ≈ 0.69`. A 1:1 square scores 0. The most extreme aspect ratios get the highest scores — these are the most "interesting" to give larger spans.
-
-**Step 3: Assign spans to top ~30% of photos.**
-
-```ts
-// Target ~30% spanned (including meta overrides), minimum 2
-const targetSpanned = Math.max(2, Math.ceil(N * 0.3))
-const remainingSlots = Math.max(0, targetSpanned - metaOverrideCount)
-
-// Pick top candidates, no two adjacent
-const spannedIndices = new Set(metaIndices)
-let assigned = 0
-
-for (const cand of candidates) {
-  if (assigned >= remainingSlots) break
-  // Adjacency constraint: no two spanned items next to each other
-  if (spannedIndices.has(cand.index - 1) || spannedIndices.has(cand.index + 1)) continue
-
-  // Assign span based on aspect ratio
-  if (cand.ratio >= 1.4)       spans[cand.index] = { colSpan: 2, rowSpan: 1 }  // wide
-  else if (cand.ratio <= 0.85) spans[cand.index] = { colSpan: 1, rowSpan: 2 }  // tall
-  else                         spans[cand.index] = { colSpan: 2, rowSpan: 2 }  // featured
-
-  spannedIndices.add(cand.index)
-  assigned++
-}
-
-// Remaining photos get 1×1
-for (let i = 0; i < N; i++) {
-  if (!spans[i]) spans[i] = { colSpan: 1, rowSpan: 1 }
-}
-```
-
-| Aspect ratio | Span |
-|---|---|
-| ≥ 1.4 (wide) | 2 columns × 1 row |
-| ≤ 0.85 (tall) | 1 column × 2 rows |
-| Otherwise | 2 columns × 2 rows |
-
-If the adjacency constraint is too strict (not enough non-adjacent candidates), the algorithm relaxes it and fills remaining slots ignoring adjacency.
-
-### Pattern Sizing
-
-Instead of heuristics, applies a repeating cycle. Every `patternInterval`-th photo gets the next element from the pattern:
-
-```ts
-const PATTERN_CYCLE = ['wide', '2x2', 'tall', '2x2']
-let cycleIndex = 0
-
-spans = photos.map((photo, index) => {
-  const meta = getMetaSpan(photo)
-  if (meta) return meta  // meta overrides always win
-
-  if (index % patternInterval === 0) {
-    const type = PATTERN_CYCLE[cycleIndex % PATTERN_CYCLE.length]
-    cycleIndex++
-    if (type === 'wide') return { colSpan: 2, rowSpan: 1 }
-    if (type === 'tall') return { colSpan: 1, rowSpan: 2 }
-    return { colSpan: 2, rowSpan: 2 }  // '2x2'
-  }
-
-  return { colSpan: 1, rowSpan: 1 }  // default
-})
-```
-
-This produces a predictable visual rhythm: every 5th photo (by default) gets a larger tile, cycling through wide → featured → tall → featured.
-
-### Manual Sizing
-
-Reads `colSpan` and `rowSpan` from `photo.meta`. Full control, no heuristics:
-
-```ts
-spans = photos.map(photo => {
-  const meta = photo.meta
-  return {
-    colSpan: meta?.colSpan ?? 1,
-    rowSpan: meta?.rowSpan ?? 1,
-  }
-})
-```
-
 ---
 
 ## Summary Table
@@ -446,4 +340,3 @@ spans = photos.map(photo => {
 | **Rows** | Knuth-Plass DP | O(N·K) | Globally optimal | Every row is close to target height |
 | **Columns** | Shortest path (length C) | O(C·N·K) | Globally optimal | Balanced column heights |
 | **Masonry** | Greedy + local search | O(N·C) | Approximate | Shortest-column first, then balance |
-| **Bento** | Heuristic span assignment | O(N log N) | Heuristic | Aspect-ratio-aware auto-span |

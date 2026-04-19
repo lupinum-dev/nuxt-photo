@@ -53,7 +53,7 @@
       </div>
     </template>
 
-    <!-- columns / masonry / bento: CSS grid until mounted, then JS-computed layout -->
+    <!-- columns / masonry: CSS grid until mounted, then JS-computed layout -->
     <template v-else>
       <template v-if="!isMounted">
         <div :style="ssrWrapperStyle">
@@ -105,7 +105,7 @@
           <div
             v-for="group in groups"
             :key="`${group.type}-${group.index}`"
-            :class="group.type === 'grid' ? 'np-album__grid' : group.type === 'row' ? 'np-album__row' : 'np-album__column'"
+            :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
             :style="groupStyle(group)"
           >
             <div
@@ -143,10 +143,7 @@
                   loading="lazy"
                   class="np-album__img"
                   :class="imgClass"
-                  :style="group.type === 'grid'
-                    ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
-                    : { display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }
-                  "
+                  :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }"
                 />
               </div>
             </div>
@@ -171,6 +168,7 @@ import {
   type LightboxTransitionOption,
 } from '@nuxt-photo/vue/extend'
 import {
+  mergeResponsiveBreakpoints,
   photoId,
   type PhotoItem,
   type PhotoAdapter,
@@ -191,7 +189,6 @@ const props = withDefaults(defineProps<{
    * @example
    * layout="rows"
    * :layout="{ type: 'rows', targetRowHeight: 280 }"
-   * :layout="{ type: 'bento', columns: 3, rowHeight: 280, sizing: 'auto' }"
    */
   layout?: AlbumLayout | AlbumLayout['type']
   /** Gap between images in pixels. Accepts a responsive function. @default 8 */
@@ -245,7 +242,6 @@ const normalizedLayout = computed<AlbumLayout>(() => {
     case 'rows': return { type: 'rows' }
     case 'columns': return { type: 'columns' }
     case 'masonry': return { type: 'masonry' }
-    case 'bento': return { type: 'bento' }
     default: {
       if ((globalThis as any).process?.env?.NODE_ENV !== 'production') {
         console.warn(`[nuxt-photo] Unknown layout type "${raw}", falling back to "rows"`)
@@ -272,7 +268,7 @@ const hasLightbox = computed(() => props.lightbox !== false)
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
   const l = normalizedLayout.value
-  if (l.type === 'columns' || l.type === 'masonry' || l.type === 'bento') {
+  if (l.type === 'columns' || l.type === 'masonry') {
     return l.columns ?? 3
   }
   return 3
@@ -281,17 +277,16 @@ const layoutTargetRowHeight = computed(() => {
   const l = normalizedLayout.value
   return l.type === 'rows' ? (l.targetRowHeight ?? 300) : 300
 })
-const layoutBentoRowHeight = computed(() => {
-  const l = normalizedLayout.value
-  return l.type === 'bento' ? (l.rowHeight ?? 280) : 280
-})
-const layoutBentoSizing = computed(() => {
-  const l = normalizedLayout.value
-  return l.type === 'bento' ? (l.sizing ?? 'auto') : 'auto'
-})
-const layoutBentoPatternInterval = computed(() => {
-  const l = normalizedLayout.value
-  return l.type === 'bento' ? (l.patternInterval ?? 5) : 5
+
+const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
+  if (props.breakpoints?.length) return props.breakpoints
+
+  return mergeResponsiveBreakpoints([
+    props.spacing,
+    props.padding,
+    layoutColumns.value,
+    layoutTargetRowHeight.value,
+  ])
 })
 
 const {
@@ -307,11 +302,8 @@ const {
   spacing: computed(() => props.spacing),
   padding: computed(() => props.padding),
   targetRowHeight: layoutTargetRowHeight,
-  bentoRowHeight: layoutBentoRowHeight,
-  bentoSizing: layoutBentoSizing,
-  bentoPatternInterval: layoutBentoPatternInterval,
   defaultContainerWidth: props.defaultContainerWidth,
-  breakpoints: props.breakpoints,
+  breakpoints: effectiveBreakpoints.value,
   sizes: props.sizes,
   interactive: hasLightbox,
 })

@@ -62,8 +62,6 @@ Switch the layout with a single prop:
 <!-- Masonry (Pinterest-style) -->
 <PhotoAlbum :photos="photos" layout="masonry" />
 
-<!-- Bento grid -->
-<PhotoAlbum :photos="photos" layout="bento" />
 ```
 
 ## 4. Customize Layout Options
@@ -120,7 +118,7 @@ Captions appear automatically in the lightbox.
 
 ## Next Steps
 
-- [Layouts guide](/docs/guides/layouts) — deep dive into all four layout algorithms
+- [Layouts guide](/docs/guides/layouts) — deep dive into rows, columns, and masonry
 - [Lightbox guide](/docs/guides/lightbox) — keyboard shortcuts, transitions, zoom
 - [Responsive guide](/docs/guides/responsive) — container-width-aware configuration
 - [PhotoAlbum API](/docs/components/photo-album) — full props and slots reference

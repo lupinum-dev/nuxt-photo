@@ -10,7 +10,7 @@ A layered photo gallery and lightbox system for Vue and Nuxt. Beautiful layouts,
 
 ## Features
 
-- **Four layout algorithms** — rows, columns, masonry, and bento grid
+- **Three layout algorithms** — rows, columns, and masonry
 - **Integrated lightbox** — FLIP transitions, swipe gestures, pinch-to-zoom
 - **Responsive** — container-width-aware spacing, columns, and row heights
 - **SSR-ready** — zero CLS with server-rendered flex-grow fallbacks
@@ -70,7 +70,7 @@ Most users only need `@nuxt-photo/nuxt`. The lower layers are there when you nee
   #title
   Layouts
   #description
-  Learn about rows, columns, masonry, and bento layouts.
+  Learn about rows, columns, and masonry layouts.
   ::
 
   ::card{to="/docs/components/photo-album"}

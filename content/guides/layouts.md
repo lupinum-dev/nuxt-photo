@@ -1,12 +1,12 @@
 ---
 title: Layouts
-description: The four layout algorithms — rows, columns, masonry, and bento.
+description: The three layout algorithms — rows, columns, and masonry.
 navigation: true
 ---
 
 # Layouts
 
-`PhotoAlbum` supports four layout algorithms. Each produces a different visual arrangement of your photos.
+`PhotoAlbum` supports three layout algorithms. Each produces a different visual arrangement of your photos.
 
 ## Rows (Justified)
 
@@ -68,39 +68,6 @@ Similar to columns, but photos are placed into the shortest column one at a time
 
 **Best for:** Layouts where preserving the original photo order matters less than minimizing wasted space. Masonry fills gaps more aggressively than columns.
 
-## Bento
-
-A CSS Grid-based layout where photos can span multiple columns and rows. Creates a magazine-style grid with varying tile sizes.
-
-```vue
-<PhotoAlbum :photos="photos" layout="bento" />
-
-<!-- With custom options -->
-<PhotoAlbum
-  :photos="photos"
-  :layout="{
-    type: 'bento',
-    columns: 4,
-    rowHeight: 200,
-    sizing: 'auto',
-  }"
-/>
-```
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of grid columns. |
-| `rowHeight` | `ResponsiveParameter<number>` | `280` | Height of each grid row in pixels. |
-| `sizing` | `'auto' \| 'pattern' \| 'manual'` | `'auto'` | How column/row spans are calculated. |
-| `patternInterval` | `number` | `5` | When `sizing` is `'pattern'`, photos per repeat cycle. |
-
-**Sizing modes:**
-- `'auto'` — Spans are calculated from each photo's aspect ratio. Wide photos get more columns, tall photos get more rows.
-- `'pattern'` — A repeating pattern assigns spans in a cycle.
-- `'manual'` — You control spans via `photo.meta.colSpan` and `photo.meta.rowSpan`.
-
-**Best for:** Hero sections, featured content grids, and editorial layouts where you want visual variety.
-
 ## String Shorthand vs Object Form
 
 Both are equivalent:
@@ -141,13 +108,6 @@ type AlbumLayout =
   | { type: 'rows'; targetRowHeight?: ResponsiveParameter<number> }
   | { type: 'columns'; columns?: ResponsiveParameter<number> }
   | { type: 'masonry'; columns?: ResponsiveParameter<number> }
-  | {
-      type: 'bento'
-      columns?: ResponsiveParameter<number>
-      rowHeight?: ResponsiveParameter<number>
-      sizing?: 'auto' | 'pattern' | 'manual'
-      patternInterval?: number
-    }
 ```
 
 This means TypeScript will catch mistakes like passing `targetRowHeight` to a masonry layout.

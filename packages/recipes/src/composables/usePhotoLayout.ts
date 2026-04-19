@@ -5,13 +5,11 @@ import {
   computeBreakpointStyles,
   computeColumnsLayout,
   computeMasonryLayout,
-  computeBentoLayout,
   computePhotoSizes,
   resolveResponsiveParameter,
   type PhotoItem,
   type LayoutGroup,
   type LayoutEntry,
-  type BentoSizing,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 
@@ -31,14 +29,11 @@ export type RowItem = {
 
 export interface PhotoLayoutOptions {
   photos: Ref<PhotoItem[]>
-  layout: Ref<'rows' | 'columns' | 'masonry' | 'bento'>
+  layout: Ref<'rows' | 'columns' | 'masonry'>
   columns: Ref<ResponsiveParameter<number>>
   spacing: Ref<ResponsiveParameter<number>>
   padding: Ref<ResponsiveParameter<number>>
   targetRowHeight: Ref<ResponsiveParameter<number>>
-  bentoRowHeight: Ref<ResponsiveParameter<number>>
-  bentoSizing: Ref<BentoSizing>
-  bentoPatternInterval: Ref<number>
   defaultContainerWidth?: number
   breakpoints?: readonly number[]
   sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
@@ -48,7 +43,7 @@ export interface PhotoLayoutOptions {
 export function usePhotoLayout(options: PhotoLayoutOptions) {
   const {
     photos, layout, columns, spacing, padding,
-    targetRowHeight, bentoRowHeight, bentoSizing, bentoPatternInterval,
+    targetRowHeight,
     defaultContainerWidth, breakpoints, sizes, interactive,
   } = options
 
@@ -92,7 +87,6 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const pd = resolveResponsiveParameter(padding.value, w, 0)
     const cols = resolveResponsiveParameter(columns.value, w, 3)
     const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
-    const brh = resolveResponsiveParameter(bentoRowHeight.value, w, 280)
 
     const input = { photos: photos.value, containerWidth: w, spacing: sp, padding: pd }
 
@@ -108,8 +102,6 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
         return computeColumnsLayout({ ...input, columns: cols })
       case 'masonry':
         return computeMasonryLayout({ ...input, columns: cols })
-      case 'bento':
-        return computeBentoLayout({ ...input, columns: cols, rowHeight: brh, sizing: bentoSizing.value, patternInterval: bentoPatternInterval.value })
     }
   })
 
@@ -193,18 +185,6 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const w = containerWidth.value
     const sp = resolveResponsiveParameter(spacing.value, w, 8)
     const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
-    const brh = resolveResponsiveParameter(bentoRowHeight.value, w, 280)
-
-    if (group.type === 'grid') {
-      return {
-        display: 'grid',
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gridAutoRows: `${brh}px`,
-        gridAutoFlow: 'dense',
-        gap: `${sp}px`,
-      }
-    }
 
     if (group.type === 'row') {
       return {
@@ -250,16 +230,6 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const w = containerWidth.value
     const sp = resolveResponsiveParameter(spacing.value, w, 8)
     const pd = resolveResponsiveParameter(padding.value, w, 0)
-
-    if (group.type === 'grid') {
-      return {
-        ...cursor,
-        gridColumn: (entry.colSpan ?? 1) > 1 ? `span ${entry.colSpan}` : undefined,
-        gridRow: (entry.rowSpan ?? 1) > 1 ? `span ${entry.rowSpan}` : undefined,
-        overflow: 'hidden',
-        padding: `${pd}px`,
-      }
-    }
 
     if (group.type === 'row') {
       const gaps = sp * (entry.itemsCount - 1) + 2 * pd * entry.itemsCount

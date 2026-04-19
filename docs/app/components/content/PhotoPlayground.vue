@@ -3,8 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { responsive, type AlbumLayout } from '@nuxt-photo/vue'
 import { docsDemoPhotos, docsHeroPhotos } from '~/composables/useDocsDemoData'
 
-type LayoutType = 'rows' | 'columns' | 'masonry' | 'bento'
-type BentoSizing = 'auto' | 'pattern'
+type LayoutType = 'rows' | 'columns' | 'masonry'
 type ThumbnailPreset = 'default' | 'badge' | 'editorial' | 'hidden-state'
 
 const props = withDefaults(defineProps<{
@@ -37,7 +36,6 @@ const config = reactive({
   rows: { targetRowHeight: compact.value ? 240 : 280 },
   columns: { columns: compact.value ? 3 : 4 },
   masonry: { columns: compact.value ? 3 : 4 },
-  bento: { columns: compact.value ? 3 : 4, rowHeight: compact.value ? 220 : 260, sizing: 'auto' as BentoSizing },
   spacing: compact.value ? 8 : 12,
   padding: compact.value ? 0 : 4,
 })
@@ -46,7 +44,6 @@ const layoutTabItems = [
   { label: 'Rows', value: 'rows' },
   { label: 'Columns', value: 'columns' },
   { label: 'Masonry', value: 'masonry' },
-  { label: 'Bento', value: 'bento' },
 ]
 
 const thumbnailTabItems = [
@@ -57,10 +54,6 @@ const thumbnailTabItems = [
 ]
 
 const columnsOptions = [2, 3, 4, 5]
-const bentoSizingItems = [
-  { label: 'Auto', value: 'auto' },
-  { label: 'Pattern', value: 'pattern' },
-]
 
 function responsiveExpression(staticValue: number, mediumValue: number, wideValue: number) {
   return `responsive({ 0: ${staticValue}, 600: ${mediumValue}, 1120: ${wideValue} })`
@@ -105,25 +98,6 @@ const albumLayout = computed<AlbumLayout>(() => {
         : config.masonry.columns,
     }
   }
-
-  return {
-    type: 'bento',
-    columns: useResponsiveValues.value
-      ? responsive({
-        0: Math.max(1, config.bento.columns - 2),
-        720: Math.max(2, config.bento.columns - 1),
-        1120: config.bento.columns,
-      })
-      : config.bento.columns,
-    rowHeight: useResponsiveValues.value
-      ? responsive({
-        0: Math.max(160, config.bento.rowHeight - 60),
-        720: config.bento.rowHeight,
-        1120: config.bento.rowHeight + 30,
-      })
-      : config.bento.rowHeight,
-    sizing: config.bento.sizing,
-  }
 })
 
 const spacingValue = computed(() => useResponsiveValues.value
@@ -160,12 +134,6 @@ const codeSnippet = computed(() => {
     lines.push(`  :layout="{ type: 'masonry', columns: ${useResponsiveValues.value
       ? responsiveExpression(Math.max(1, config.masonry.columns - 2), Math.max(2, config.masonry.columns - 1), config.masonry.columns)
       : config.masonry.columns} }"`)
-  } else {
-    lines.push(`  :layout="{ type: 'bento', columns: ${useResponsiveValues.value
-      ? responsiveExpression(Math.max(1, config.bento.columns - 2), Math.max(2, config.bento.columns - 1), config.bento.columns)
-      : config.bento.columns}, rowHeight: ${useResponsiveValues.value
-      ? responsiveExpression(Math.max(160, config.bento.rowHeight - 60), config.bento.rowHeight, config.bento.rowHeight + 30)
-      : config.bento.rowHeight}, sizing: '${config.bento.sizing}' }"`)
   }
 
   lines.push(`  :spacing="${useResponsiveValues.value
@@ -281,42 +249,6 @@ function thumbOpacity(hidden: boolean) {
               value-key="value"
               label-key="label"
               @update:model-value="config.masonry.columns = Number($event)"
-            />
-          </div>
-        </template>
-
-        <template v-if="layoutType === 'bento'">
-          <div class="flex items-center gap-2">
-            <span class="text-muted text-sm">Columns</span>
-            <UTabs
-              :model-value="config.bento.columns"
-              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
-              variant="pill"
-              size="xs"
-              :content="false"
-              value-key="value"
-              label-key="label"
-              @update:model-value="config.bento.columns = Number($event)"
-            />
-          </div>
-
-          <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
-            <span class="text-muted text-sm">Row height</span>
-            <input v-model.number="config.bento.rowHeight" type="range" min="160" max="360" step="10" class="accent-primary">
-            <strong class="text-highlighted text-sm">{{ config.bento.rowHeight }}px</strong>
-          </label>
-
-          <div class="flex items-center gap-2">
-            <span class="text-muted text-sm">Sizing</span>
-            <UTabs
-              :model-value="config.bento.sizing"
-              :items="bentoSizingItems"
-              variant="pill"
-              size="xs"
-              :content="false"
-              value-key="value"
-              label-key="label"
-              @update:model-value="config.bento.sizing = $event as BentoSizing"
             />
           </div>
         </template>

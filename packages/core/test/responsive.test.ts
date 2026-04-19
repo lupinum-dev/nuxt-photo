@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { responsive, resolveResponsiveParameter } from '../src/types'
+import {
+  getResponsiveBreakpoints,
+  mergeResponsiveBreakpoints,
+  responsive,
+  resolveResponsiveParameter,
+} from '../src/types'
 
 describe('responsive()', () => {
   it('returns the value for the largest matching breakpoint', () => {
@@ -34,5 +39,21 @@ describe('responsive()', () => {
     const fn = responsive({ 0: 4, 600: 8 })
     expect(resolveResponsiveParameter(fn, 300, 0)).toBe(4)
     expect(resolveResponsiveParameter(fn, 700, 0)).toBe(8)
+  })
+
+  it('exposes breakpoint metadata for responsive() resolvers', () => {
+    const fn = responsive({ 0: 4, 600: 8, 900: 12 })
+    expect(getResponsiveBreakpoints(fn)).toEqual([0, 600, 900])
+  })
+
+  it('merges responsive breakpoint metadata across multiple parameters', () => {
+    const spacing = responsive({ 0: 4, 600: 8 })
+    const columns = responsive({ 0: 1, 840: 3, 1120: 4 })
+
+    expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([300, 600, 840, 1120])
+  })
+
+  it('returns undefined when no responsive metadata is available', () => {
+    expect(mergeResponsiveBreakpoints([8, undefined, (width: number) => width > 600 ? 8 : 4])).toBeUndefined()
   })
 })

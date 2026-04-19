@@ -1,12 +1,12 @@
 ---
 title: PhotoAlbum
-description: A photo grid with four layout algorithms and an integrated lightbox.
+description: A photo grid with three layout algorithms and an integrated lightbox.
 navigation: true
 ---
 
 # PhotoAlbum
 
-The `PhotoAlbum` component renders a collection of photos in a grid using one of four layout algorithms — rows, columns, masonry, or bento. It includes an integrated lightbox by default.
+The `PhotoAlbum` component renders a collection of photos in a grid using one of three layout algorithms — rows, columns, or masonry. It includes an integrated lightbox by default.
 
 ## Usage
 
@@ -101,7 +101,7 @@ const adapter: PhotoAdapter = (item) => ({
 |---|---|---|---|
 | `photos` | `PhotoItem[] \| any[]` | — | **Required.** Array of photos. When using `photoAdapter`, items can be any shape. |
 | `photoAdapter` | `PhotoAdapter` | `undefined` | Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS or API data directly. |
-| `layout` | `AlbumLayout \| AlbumLayout['type']` | `'rows'` | Layout algorithm. Pass a string (`'rows'`, `'columns'`, `'masonry'`, `'bento'`) for defaults, or an object for full control. |
+| `layout` | `AlbumLayout \| AlbumLayout['type']` | `'rows'` | Layout algorithm. Pass a string (`'rows'`, `'columns'`, or `'masonry'`) for defaults, or an object for full control. |
 | `spacing` | `ResponsiveParameter<number>` | `8` | Gap between images in pixels. Accepts a static number or a responsive function. |
 | `padding` | `ResponsiveParameter<number>` | `0` | Outer padding around each image in pixels. Accepts a static number or a responsive function. |
 | `defaultContainerWidth` | `number` | `undefined` | Assumed container width for SSR. When set, the JS layout runs server-side so the rendered HTML matches hydration — eliminating CLS. Combine with `breakpoints`. |
@@ -147,19 +147,6 @@ The `layout` prop accepts a string shorthand or an object. Each layout type has 
 |---|---|---|---|
 | `columns` | `ResponsiveParameter<number>` | `3` | Number of columns. Photos are placed in the shortest column. |
 
-### Bento
-
-```vue
-<PhotoAlbum :photos="photos" :layout="{ type: 'bento', columns: 3, rowHeight: 280 }" />
-```
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of grid columns. |
-| `rowHeight` | `ResponsiveParameter<number>` | `280` | Height of each grid row in pixels. |
-| `sizing` | `'auto' \| 'pattern' \| 'manual'` | `'auto'` | How column/row spans are determined. `'auto'` uses heuristics based on aspect ratio. |
-| `patternInterval` | `number` | `5` | When `sizing` is `'pattern'`, how many photos before the pattern repeats. |
-
 ## Slots
 
 | Slot | Props | Description |
@@ -177,9 +164,7 @@ The `layout` prop accepts a string shorthand or an object. Each layout type has 
 | `.np-album--rows` | Root when layout is rows |
 | `.np-album--columns` | Root when layout is columns |
 | `.np-album--masonry` | Root when layout is masonry |
-| `.np-album--bento` | Root when layout is bento |
 | `.np-album__item` | Individual photo wrapper |
 | `.np-album__img` | Photo `<img>` element |
 | `.np-album__row` | Row group wrapper (columns/masonry) |
 | `.np-album__column` | Column group wrapper |
-| `.np-album__grid` | Grid group wrapper (bento) |

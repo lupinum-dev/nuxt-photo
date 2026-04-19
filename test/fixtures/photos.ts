@@ -18,16 +18,16 @@ export function makePhoto(overrides: Partial<PhotoItem> = {}): PhotoItem {
 
 export function createPhotoSet(): PhotoItem[] {
   return [
-    makePhoto({ id: 'desert', width: 1600, height: 1000, alt: 'Desert', meta: { span: 'wide' } }),
+    makePhoto({ id: 'desert', width: 1600, height: 1000, alt: 'Desert' }),
     makePhoto({ id: 'ocean', width: 1200, height: 1500, alt: 'Ocean' }),
     makePhoto({ id: 'canyon', width: 1600, height: 1067, alt: 'Canyon' }),
     makePhoto({ id: 'forest', width: 1500, height: 1000, alt: 'Forest' }),
-    makePhoto({ id: 'alpine', width: 1400, height: 1750, alt: 'Alpine', meta: { span: 'tall' } }),
+    makePhoto({ id: 'alpine', width: 1400, height: 1750, alt: 'Alpine' }),
     makePhoto({ id: 'coast', width: 1600, height: 1100, alt: 'Coast' }),
-    makePhoto({ id: 'lavender', width: 1800, height: 1200, alt: 'Lavender', meta: { featured: true } }),
+    makePhoto({ id: 'lavender', width: 1800, height: 1200, alt: 'Lavender' }),
     makePhoto({ id: 'waterfall', width: 1300, height: 1700, alt: 'Waterfall' }),
     makePhoto({ id: 'city', width: 1600, height: 900, alt: 'City' }),
-    makePhoto({ id: 'amber', width: 1400, height: 1400, alt: 'Amber', meta: { span: '2x2' } }),
+    makePhoto({ id: 'amber', width: 1400, height: 1400, alt: 'Amber' }),
     makePhoto({ id: 'winter', width: 1700, height: 1100, alt: 'Winter' }),
     makePhoto({ id: 'redwoods', width: 1500, height: 1900, alt: 'Redwoods' }),
   ]

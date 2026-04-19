@@ -34,26 +34,6 @@
         <input type="range" :min="120" :max="500" :step="10" v-model.number="targetRowHeight" class="control-range" />
       </div>
 
-      <div v-if="layout === 'bento'" class="control-group">
-        <label class="control-label">Row height: {{ bentoRowHeight }}px</label>
-        <input type="range" :min="100" :max="400" :step="10" v-model.number="bentoRowHeight" class="control-range" />
-      </div>
-
-      <div v-if="layout === 'bento'" class="control-group">
-        <label class="control-label">Sizing</label>
-        <div class="control-tabs">
-          <button
-            v-for="s in bentoSizings"
-            :key="s"
-            class="control-tab"
-            :class="{ 'control-tab--active': bentoSizing === s }"
-            @click="bentoSizing = s"
-          >
-            {{ s }}
-          </button>
-        </div>
-      </div>
-
       <div class="control-group">
         <label class="control-label">Spacing: {{ spacing }}px</label>
         <input type="range" :min="0" :max="24" v-model.number="spacing" class="control-range" />
@@ -83,21 +63,17 @@ import { photos } from '~/composables/photos'
 
 useHead({ title: 'Layouts — nuxt-photo' })
 
-const layouts = ['rows', 'columns', 'masonry', 'bento'] as const
-const layout = ref<'rows' | 'columns' | 'masonry' | 'bento'>('rows')
+const layouts = ['rows', 'columns', 'masonry'] as const
+const layout = ref<'rows' | 'columns' | 'masonry'>('rows')
 const columns = ref(3)
 const spacing = ref(6)
 const targetRowHeight = ref(280)
-const bentoRowHeight = ref(280)
-const bentoSizings = ['auto', 'pattern', 'manual'] as const
-const bentoSizing = ref<'auto' | 'pattern' | 'manual'>('auto')
 
 const albumLayout = computed<AlbumLayout>(() => {
   switch (layout.value) {
     case 'rows': return { type: 'rows', targetRowHeight: targetRowHeight.value }
     case 'columns': return { type: 'columns', columns: columns.value }
     case 'masonry': return { type: 'masonry', columns: columns.value }
-    case 'bento': return { type: 'bento', columns: columns.value, rowHeight: bentoRowHeight.value, sizing: bentoSizing.value }
   }
 })
 

@@ -11,8 +11,6 @@ import { ImageAdapterKey } from '@nuxt-photo/vue/extend'
 
 type DemoMeta = {
   mood: string
-  colSpan?: number
-  rowSpan?: number
 }
 
 function seeded(seed: string, width: number, height: number) {
@@ -26,7 +24,6 @@ function createPhoto(
   caption: string,
   description: string,
   mood: string,
-  meta: Partial<DemoMeta> = {},
 ): PhotoItem<DemoMeta> {
   return {
     id,
@@ -39,20 +36,19 @@ function createPhoto(
     description,
     meta: {
       mood,
-      ...meta,
     },
   }
 }
 
 export const docsDemoPhotos: PhotoItem<DemoMeta>[] = [
-  createPhoto('alpine-frame', 1600, 900, 'Alpine Frame', 'Wide ridge light with a generous horizon.', 'calm', { mood: 'calm', colSpan: 2 }),
-  createPhoto('forest-haze', 1000, 1400, 'Forest Haze', 'Tall detail that works well in grouped or bento layouts.', 'quiet', { mood: 'quiet', rowSpan: 2 }),
+  createPhoto('alpine-frame', 1600, 900, 'Alpine Frame', 'Wide ridge light with a generous horizon.', 'calm'),
+  createPhoto('forest-haze', 1000, 1400, 'Forest Haze', 'Tall detail that works well in mixed-aspect galleries.', 'quiet'),
   createPhoto('ocean-glass', 1200, 900, 'Ocean Glass', 'Balanced landscape for row and grid comparisons.', 'cool'),
-  createPhoto('urban-glow', 1100, 1400, 'Urban Glow', 'Portrait frame with strong vertical emphasis.', 'electric', { mood: 'electric', rowSpan: 2 }),
-  createPhoto('cascade', 1800, 1100, 'Cascade', 'Hero-style image with wide aspect ratio.', 'kinetic', { mood: 'kinetic', colSpan: 2 }),
+  createPhoto('urban-glow', 1100, 1400, 'Urban Glow', 'Portrait frame with strong vertical emphasis.', 'electric'),
+  createPhoto('cascade', 1800, 1100, 'Cascade', 'Hero-style image with wide aspect ratio.', 'kinetic'),
   createPhoto('amber-detail', 900, 900, 'Amber Detail', 'Square crop for column balance and thumbnail demos.', 'warm'),
   createPhoto('winter-ridge', 1500, 1000, 'Winter Ridge', 'Classic landscape for transition and lightbox states.', 'crisp'),
-  createPhoto('lavender-dreams', 1000, 1500, 'Lavender Dreams', 'Tall frame that exaggerates zoom and pan states.', 'soft', { mood: 'soft', rowSpan: 2 }),
+  createPhoto('lavender-dreams', 1000, 1500, 'Lavender Dreams', 'Tall frame that exaggerates zoom and pan states.', 'soft'),
 ]
 
 export const docsHeroPhotos = docsDemoPhotos.slice(0, 5)

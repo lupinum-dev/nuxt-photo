@@ -4,8 +4,11 @@ import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vitest'
 import { makePhoto } from '@test-fixtures/photos'
-import { computeBreakpointStyles } from '@nuxt-photo/core'
+import { computeBreakpointStyles, responsive } from '@nuxt-photo/core'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
+import Photo from '../src/components/Photo.vue'
+import PhotoGallery from '../src/components/PhotoGallery.vue'
+import PhotoGroup from '../src/components/PhotoGroup.vue'
 
 const photos = [
   makePhoto({ id: 'ssr-1', width: 1600, height: 900 }),
@@ -174,6 +177,78 @@ describe('SSR', () => {
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
     expect(html).toContain('flex-grow')
+  })
+
+  it('PhotoAlbum renders with its own lightbox during SSR', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('role="button"')
+    expect(html).toContain('teleport start')
+    expect(html).toContain('teleport end')
+  })
+
+  it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoGroup, null, {
+        default: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+      }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('teleport start')
+    expect(html).toContain('teleport end')
+  })
+
+  it('Photo renders standalone SSR markup with solo lightbox enabled', async () => {
+    const app = createSSRApp({
+      render: () => h(Photo, { photo: photos[0], lightbox: true }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('np-photo')
+    expect(html).toContain('teleport start')
+    expect(html).toContain('teleport end')
+  })
+
+  it('PhotoGallery renders on the server with shared lightbox composition intact', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoGallery, { photos, layout: 'rows', lightbox: true }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('np-album')
+    expect(html).toContain('teleport start')
+    expect(html).toContain('teleport end')
+  })
+
+  it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, {
+        photos,
+        layout: {
+          type: 'rows',
+          targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }),
+        },
+        spacing: responsive({ 0: 4, 640: 8 }),
+        lightbox: false,
+      }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('@container')
+    expect(html).toContain('np-item-0')
+    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
+    expect(html).not.toContain('style="flex-grow:1.777')
   })
 })
 

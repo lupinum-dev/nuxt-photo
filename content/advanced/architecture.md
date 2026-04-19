@@ -26,7 +26,7 @@ Dependencies flow upward — each package only depends on the ones below it.
 
 `@nuxt-photo/core` is pure TypeScript with **zero dependencies**. No Vue, no DOM APIs (except in optional utility functions). It contains:
 
-- **Layout algorithms** — Knuth-Plass row justification, shortest-path column distribution, masonry greedy placement, bento grid with auto-span heuristics (see [Layout Algorithms deep dive](/docs/advanced/layout-algorithms))
+- **Layout algorithms** — Knuth-Plass row justification, shortest-path column distribution, and masonry greedy placement (see [Layout Algorithms deep dive](/docs/advanced/layout-algorithms))
 - **Physics engine** — Spring model for zoom/pan animations, velocity tracking, easing functions
 - **Geometry** — Rectangle operations, visibility calculations, pan bounds
 - **Viewer state machine** — The `closed → opening → open → closing → closed` lifecycle

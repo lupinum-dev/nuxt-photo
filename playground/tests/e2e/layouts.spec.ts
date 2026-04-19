@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('layout explorer switches layouts and still opens the lightbox', async ({ page }) => {
   await page.goto('/layouts')
 
-  for (const name of ['rows', 'columns', 'masonry', 'bento'] as const) {
+  for (const name of ['rows', 'columns', 'masonry'] as const) {
     await page.getByRole('button', { name }).click()
     await expect(page.locator('.np-album__item')).toHaveCount(12)
   }
