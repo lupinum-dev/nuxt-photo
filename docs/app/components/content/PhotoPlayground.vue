@@ -184,12 +184,15 @@ function thumbOpacity(hidden: boolean) {
 <template>
   <div class="not-prose my-8 border border-default rounded-2xl overflow-hidden bg-elevated shadow-xs">
     <div class="flex flex-wrap justify-between items-start gap-4 px-4 py-4 border-b border-default playground-header-bg">
-      <div class="min-w-0">
+      <div class="min-w-0 w-full sm:w-auto">
         <h3 class="m-0 text-base font-bold text-highlighted">{{ hero ? 'Try the gallery live' : 'Live gallery playground' }}</h3>
         <p class="mt-1 max-w-3xl text-muted text-sm leading-relaxed">{{ summary }}</p>
       </div>
+    </div>
 
-      <div v-if="!hero" class="flex flex-wrap items-center gap-3">
+    <div v-if="!hero" class="grid gap-3 p-4">
+      <!-- Group 1: primary — layout type and container width -->
+      <div class="flex flex-wrap items-center gap-3 min-w-0">
         <UTabs
           :model-value="layoutType"
           :items="layoutTabItems"
@@ -198,75 +201,73 @@ function thumbOpacity(hidden: boolean) {
           :content="false"
           value-key="value"
           label-key="label"
+          class="min-w-0"
           @update:model-value="layoutType = $event as LayoutType"
         />
 
-        <USwitch v-model="useResponsiveValues" label="Responsive values" />
-
-        <USwitch v-if="props.allowLightboxToggle" v-model="lightboxEnabled" label="Lightbox" />
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated min-w-0 flex-1 sm:flex-initial">
+          <span class="text-muted text-sm whitespace-nowrap">Container width</span>
+          <input v-model.number="width" type="range" min="320" max="1120" step="10" class="accent-primary min-w-0 flex-1">
+          <strong class="text-highlighted text-sm whitespace-nowrap">{{ Math.round(width) }}px</strong>
+        </label>
       </div>
-    </div>
 
-    <div class="grid gap-4 p-4">
-      <div v-if="!hero" class="flex flex-wrap items-center gap-3">
-        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
-          <span class="text-muted text-sm">Container width</span>
-          <input v-model.number="width" type="range" min="320" max="1120" step="10" class="accent-primary">
-          <strong class="text-highlighted text-sm">{{ Math.round(width) }}px</strong>
+      <!-- Group 2: size / spacing — row-height or columns, spacing, padding -->
+      <div class="flex flex-wrap items-center gap-3 min-w-0">
+        <label v-if="layoutType === 'rows'" class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated min-w-0 flex-1 sm:flex-initial">
+          <span class="text-muted text-sm whitespace-nowrap">Row height</span>
+          <input v-model.number="config.rows.targetRowHeight" type="range" min="160" max="420" step="10" class="accent-primary min-w-0 flex-1">
+          <strong class="text-highlighted text-sm whitespace-nowrap">{{ config.rows.targetRowHeight }}px</strong>
         </label>
 
-        <label v-if="layoutType === 'rows'" class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
-          <span class="text-muted text-sm">Row height</span>
-          <input v-model.number="config.rows.targetRowHeight" type="range" min="160" max="420" step="10" class="accent-primary">
-          <strong class="text-highlighted text-sm">{{ config.rows.targetRowHeight }}px</strong>
+        <div v-if="layoutType === 'columns'" class="flex items-center gap-2 min-w-0">
+          <span class="text-muted text-sm whitespace-nowrap">Columns</span>
+          <UTabs
+            :model-value="config.columns.columns"
+            :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
+            variant="pill"
+            size="xs"
+            :content="false"
+            value-key="value"
+            label-key="label"
+            @update:model-value="config.columns.columns = Number($event)"
+          />
+        </div>
+
+        <div v-if="layoutType === 'masonry'" class="flex items-center gap-2 min-w-0">
+          <span class="text-muted text-sm whitespace-nowrap">Columns</span>
+          <UTabs
+            :model-value="config.masonry.columns"
+            :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
+            variant="pill"
+            size="xs"
+            :content="false"
+            value-key="value"
+            label-key="label"
+            @update:model-value="config.masonry.columns = Number($event)"
+          />
+        </div>
+
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated min-w-0 flex-1 sm:flex-initial">
+          <span class="text-muted text-sm whitespace-nowrap">Spacing</span>
+          <input v-model.number="config.spacing" type="range" min="2" max="24" step="2" class="accent-primary min-w-0 flex-1">
+          <strong class="text-highlighted text-sm whitespace-nowrap">{{ config.spacing }}px</strong>
         </label>
 
-        <template v-if="layoutType === 'columns'">
-          <div class="flex items-center gap-2">
-            <span class="text-muted text-sm">Columns</span>
-            <UTabs
-              :model-value="config.columns.columns"
-              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
-              variant="pill"
-              size="xs"
-              :content="false"
-              value-key="value"
-              label-key="label"
-              @update:model-value="config.columns.columns = Number($event)"
-            />
-          </div>
-        </template>
-
-        <template v-if="layoutType === 'masonry'">
-          <div class="flex items-center gap-2">
-            <span class="text-muted text-sm">Columns</span>
-            <UTabs
-              :model-value="config.masonry.columns"
-              :items="columnsOptions.map(c => ({ label: String(c), value: c }))"
-              variant="pill"
-              size="xs"
-              :content="false"
-              value-key="value"
-              label-key="label"
-              @update:model-value="config.masonry.columns = Number($event)"
-            />
-          </div>
-        </template>
-
-        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
-          <span class="text-muted text-sm">Spacing</span>
-          <input v-model.number="config.spacing" type="range" min="2" max="24" step="2" class="accent-primary">
-          <strong class="text-highlighted text-sm">{{ config.spacing }}px</strong>
+        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated min-w-0 flex-1 sm:flex-initial">
+          <span class="text-muted text-sm whitespace-nowrap">Padding</span>
+          <input v-model.number="config.padding" type="range" min="0" max="12" step="2" class="accent-primary min-w-0 flex-1">
+          <strong class="text-highlighted text-sm whitespace-nowrap">{{ config.padding }}px</strong>
         </label>
+      </div>
 
-        <label class="docs-range inline-flex items-center gap-2.5 px-3 py-2 border border-default rounded-xl bg-elevated">
-          <span class="text-muted text-sm">Padding</span>
-          <input v-model.number="config.padding" type="range" min="0" max="12" step="2" class="accent-primary">
-          <strong class="text-highlighted text-sm">{{ config.padding }}px</strong>
-        </label>
+      <!-- Group 3: display — toggles and thumbnail preset -->
+      <div class="flex flex-wrap items-center gap-3 min-w-0">
+        <USwitch v-model="useResponsiveValues" label="Responsive values" />
+        <USwitch v-if="props.allowLightboxToggle" v-model="lightboxEnabled" label="Lightbox" />
 
-        <div v-if="props.allowThumbnailPicker" class="flex items-center gap-2">
-          <span class="text-muted text-sm">Thumbnails</span>
+        <div v-if="props.allowThumbnailPicker" class="flex items-center gap-2 min-w-0">
+          <span class="text-muted text-sm whitespace-nowrap">Thumbnails</span>
           <UTabs
             :model-value="thumbnailPreset"
             :items="thumbnailTabItems"
@@ -279,6 +280,10 @@ function thumbOpacity(hidden: boolean) {
           />
         </div>
       </div>
+    </div>
+
+    <div class="grid gap-4 p-4"
+      :class="{ 'pt-0': !hero }">
 
       <div class="grid gap-4">
         <div class="mx-auto rounded-2xl p-4 preview-frame-bg" :style="{ width: `${width}px`, maxWidth: '100%' }">

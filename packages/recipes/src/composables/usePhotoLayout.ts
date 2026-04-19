@@ -5,6 +5,9 @@ import {
   computeBreakpointStyles,
   computeColumnsLayout,
   computeMasonryLayout,
+  computeColumnsBreakpointSnapshots,
+  computeMasonryBreakpointSnapshots,
+  computeBreakpointVisibilityCSS,
   computePhotoSizes,
   resolveResponsiveParameter,
   type PhotoItem,
@@ -12,6 +15,17 @@ import {
   type LayoutEntry,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
+
+export type BreakpointSnapshot = {
+  spanKey: string
+  condition: string
+  containerWidth: number
+  spacing: number
+  padding: number
+  groups: LayoutGroup[]
+}
+
+const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
 function round(value: number, digits = 0) {
   const factor = 10 ** digits
@@ -53,21 +67,68 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
   // SSR-safe unique container name for CSS container queries
   const albumId = useId()
   const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
+  const scopeClass = computed(() => `np-scope-${containerName.value}`)
+  const snapshotClass = computed(() => `np-snapshot-${containerName.value}`)
 
-  const containerQueriesActive = computed(() =>
-    layout.value === 'rows' && !!breakpoints?.length,
-  )
+  const containerQueriesActive = computed(() => !!breakpoints?.length)
+
+  // ─── Per-breakpoint SSR snapshots for columns/masonry ──────────────────────
+  // Precedence:
+  //   1. breakpoint-aware (explicit or inferred breakpoints)
+  //   2. exact single-width (defaultContainerWidth)
+  //   3. approximate fallback (neither)
+  const breakpointSnapshots = computed<BreakpointSnapshot[]>(() => {
+    if (layout.value === 'rows') return []
+
+    if (breakpoints?.length) {
+      if (layout.value === 'columns') {
+        return computeColumnsBreakpointSnapshots({
+          photos: photos.value,
+          breakpoints,
+          spacing: spacing.value,
+          padding: padding.value,
+          columns: columns.value,
+        })
+      }
+      return computeMasonryBreakpointSnapshots({
+        photos: photos.value,
+        breakpoints,
+        spacing: spacing.value,
+        padding: padding.value,
+        columns: columns.value,
+      })
+    }
+
+    if (defaultContainerWidth && defaultContainerWidth > 0) {
+      const sp = resolveResponsiveParameter(spacing.value, defaultContainerWidth, 8)
+      const pd = resolveResponsiveParameter(padding.value, defaultContainerWidth, 0)
+      const cols = resolveResponsiveParameter(columns.value, defaultContainerWidth, 3)
+      const compute = layout.value === 'columns' ? computeColumnsLayout : computeMasonryLayout
+      const g = compute({ photos: photos.value, containerWidth: defaultContainerWidth, spacing: sp, padding: pd, columns: cols })
+      if (g.length === 0) return []
+      return [{ spanKey: 'all', condition: '', containerWidth: defaultContainerWidth, spacing: sp, padding: pd, groups: g }]
+    }
+
+    return []
+  })
 
   const containerQueryCSS = computed(() => {
     if (!containerQueriesActive.value) return ''
-    return computeBreakpointStyles({
-      photos: photos.value,
-      breakpoints: breakpoints!,
-      spacing: spacing.value,
-      padding: padding.value,
-      targetRowHeight: targetRowHeight.value,
-      containerName: containerName.value,
-    })
+    if (layout.value === 'rows') {
+      return computeBreakpointStyles({
+        photos: photos.value,
+        breakpoints: breakpoints!,
+        spacing: spacing.value,
+        padding: padding.value,
+        targetRowHeight: targetRowHeight.value,
+        containerName: containerName.value,
+      })
+    }
+    return computeBreakpointVisibilityCSS(
+      breakpointSnapshots.value,
+      containerName.value,
+      snapshotClass.value,
+    )
   })
 
   const { containerWidth } = useContainerWidth(containerRef, {
@@ -174,34 +235,44 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     return { ...cursor, overflow: 'hidden' }
   }
 
+  const snapshotsActive = computed(() => breakpointSnapshots.value.length > 0)
+
   const containerStyle = computed<CSSProperties>(() => {
-    if (containerQueriesActive.value) {
+    if (containerQueriesActive.value || snapshotsActive.value) {
       return { width: '100%', containerType: 'inline-size', containerName: containerName.value }
     }
     return { width: '100%' }
   })
 
-  function groupStyle(group: LayoutGroup): CSSProperties {
-    const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
+  // Warn once per layout type if columns/masonry is used without any SSR signal.
+  function maybeWarnApproximate() {
+    if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === 'production') return
+    if (layout.value === 'rows') return
+    if (breakpoints?.length || (defaultContainerWidth && defaultContainerWidth > 0)) return
+    if (warnedApproximateLayouts.has(layout.value)) return
+    warnedApproximateLayouts.add(layout.value)
+    console.warn(
+      `[nuxt-photo] ${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
+    )
+  }
 
+  type StyleContext = { containerWidth: number; spacing: number; padding: number; columnsCount: number; layoutType: 'rows' | 'columns' | 'masonry' }
+
+  function groupStyleWith(group: LayoutGroup, ctx: StyleContext): CSSProperties {
     if (group.type === 'row') {
       return {
-        marginBottom: group.index < groups.value.length - 1 ? `${sp}px` : undefined,
+        marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
       }
     }
 
-    const columnsCount = groups.value.length || 1
-
     if (
-      layout.value === 'masonry'
+      ctx.layoutType === 'masonry'
       || group.columnsGaps === undefined
       || group.columnsRatios === undefined
     ) {
       return {
-        marginLeft: group.index > 0 ? `${sp}px` : undefined,
-        width: `calc((100% - ${sp * (columnsCount - 1)}px) / ${columnsCount})`,
+        marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
+        width: `calc((100% - ${ctx.spacing * (ctx.columnsCount - 1)}px) / ${ctx.columnsCount})`,
       }
     }
 
@@ -213,33 +284,30 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     )
 
     return {
-      marginLeft: group.index > 0 ? `${sp}px` : undefined,
+      marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
       width: `calc((100% - ${round(
-        (columnsCount - 1) * sp
-        + 2 * columnsCount * pd
+        (ctx.columnsCount - 1) * ctx.spacing
+        + 2 * ctx.columnsCount * ctx.padding
         + totalAdjustedGaps,
         3,
       )}px) * ${round((group.columnsRatios[group.index] ?? 0) / totalRatio, 5)} + ${
-        2 * pd
+        2 * ctx.padding
       }px)`,
     }
   }
 
-  function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
+  function itemStyleWith(entry: LayoutEntry, group: LayoutGroup, ctx: StyleContext): CSSProperties {
     const cursor = interactive.value ? { cursor: 'pointer' } : {}
-    const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
 
     if (group.type === 'row') {
-      const gaps = sp * (entry.itemsCount - 1) + 2 * pd * entry.itemsCount
+      const gaps = ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
       return {
         ...cursor,
         boxSizing: 'content-box',
         display: 'block',
         height: 'auto',
-        padding: `${pd}px`,
-        width: `calc((100% - ${gaps}px) / ${round((w - gaps) / entry.width, 5)})`,
+        padding: `${ctx.padding}px`,
+        width: `calc((100% - ${gaps}px) / ${round((ctx.containerWidth - gaps) / entry.width, 5)})`,
       }
     }
 
@@ -249,24 +317,78 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       boxSizing: 'content-box',
       display: 'block',
       height: 'auto',
-      padding: `${pd}px`,
-      marginBottom: !isLast ? `${sp}px` : undefined,
-      width: `calc(100% - ${2 * pd}px)`,
+      padding: `${ctx.padding}px`,
+      marginBottom: !isLast ? `${ctx.spacing}px` : undefined,
+      width: `calc(100% - ${2 * ctx.padding}px)`,
     }
+  }
+
+  function liveCtx(): StyleContext {
+    const w = containerWidth.value
+    return {
+      containerWidth: w,
+      spacing: resolveResponsiveParameter(spacing.value, w, 8),
+      padding: resolveResponsiveParameter(padding.value, w, 0),
+      columnsCount: groups.value.length || 1,
+      layoutType: layout.value,
+    }
+  }
+
+  function snapCtx(snap: BreakpointSnapshot): StyleContext {
+    return {
+      containerWidth: snap.containerWidth,
+      spacing: snap.spacing,
+      padding: snap.padding,
+      columnsCount: snap.groups.length || 1,
+      layoutType: layout.value,
+    }
+  }
+
+  function groupStyle(group: LayoutGroup): CSSProperties {
+    return groupStyleWith(group, liveCtx())
+  }
+
+  function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
+    return itemStyleWith(entry, group, liveCtx())
+  }
+
+  function snapshotGroupStyle(group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+    return groupStyleWith(group, snapCtx(snap))
+  }
+
+  function snapshotItemStyle(entry: LayoutEntry, group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+    return itemStyleWith(entry, group, snapCtx(snap))
+  }
+
+  function snapshotWrapperStyle(snap: BreakpointSnapshot, multiSpan: boolean): CSSProperties {
+    // Column-layout snapshots use a row-flex wrapper (columns side-by-side). When there are
+    // multiple spans, CSS `@container` rules toggle display between flex and none; when there
+    // is only one span we skip the stylesheet and render flex inline.
+    return multiSpan
+      ? { width: '100%' }
+      : { width: '100%', display: 'flex' }
   }
 
   return {
     containerRef,
     containerWidth,
     isMounted,
+    scopeClass,
+    snapshotClass,
     containerStyle,
     containerQueryCSS,
     containerQueriesActive,
+    breakpointSnapshots,
+    snapshotsActive,
     groups,
     rowItems,
     ssrWrapperStyle,
     ssrItemStyle,
     groupStyle,
     itemStyle,
+    snapshotGroupStyle,
+    snapshotItemStyle,
+    snapshotWrapperStyle,
+    maybeWarnApproximate,
   }
 }

@@ -2,12 +2,9 @@
   <div
     ref="containerRef"
     class="np-album"
-    :class="`np-album--${layoutType}`"
+    :class="[scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
-    <!-- Rows: flat flex, no DOM switch = zero CLS.
-         Pre-mount: CSS flex-grow approximation; post-mount: JS-computed widths on same elements.
-         With breakpoints: container query rules handle all widths from first paint; JS syncs after mount. -->
     <template v-if="layoutType === 'rows'">
       <component v-if="containerQueryCSS" :is="'style'">{{ containerQueryCSS }}</component>
       <div :style="ssrWrapperStyle">
@@ -17,13 +14,7 @@
           class="np-album__item"
           :class="[containerQueriesActive ? `np-item-${item.index}` : undefined, itemClass]"
           :style="item.style"
-          v-bind="hasLightbox ? {
-            ref: setItemRef(item.index),
-            role: 'button',
-            tabindex: '0',
-            onClick: () => openPhoto(item.photo, item.index),
-            onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, item.photo, item.index),
-          } : { ref: setItemRef(item.index) }"
+          v-bind="itemBindings(item.photo, item.index)"
         >
           <div :style="isHidden(item.photo) && !$slots.thumbnail ? { opacity: 0 } : undefined" style="width:100%;height:100%">
             <slot
@@ -53,9 +44,58 @@
       </div>
     </template>
 
-    <!-- columns / masonry: CSS grid until mounted, then JS-computed layout -->
     <template v-else>
-      <template v-if="!isMounted">
+      <template v-if="!isMounted && breakpointSnapshots.length > 0">
+        <component :is="'style'" v-if="containerQueryCSS">{{ containerQueryCSS }}</component>
+        <div
+          v-for="snap in breakpointSnapshots"
+          :key="snap.spanKey"
+          :class="[snapshotClass, 'np-album__bp-snapshot']"
+          :data-bp="snap.spanKey"
+          :style="snapshotWrapperStyle(snap, breakpointSnapshots.length > 1)"
+        >
+          <div
+            v-for="group in snap.groups"
+            :key="`${snap.spanKey}-${group.type}-${group.index}`"
+            class="np-album__column"
+            :style="snapshotGroupStyle(group, snap)"
+          >
+            <div
+              v-for="entry in group.entries"
+              :key="`${snap.spanKey}-${entry.photo.id}`"
+              class="np-album__item"
+              :class="itemClass"
+              :style="snapshotItemStyle(entry, group, snap)"
+              v-bind="itemBindings(entry.photo, entry.index)"
+            >
+              <div style="width:100%;height:100%">
+                <slot
+                  v-if="$slots.thumbnail"
+                  name="thumbnail"
+                  :photo="entry.photo"
+                  :index="entry.index"
+                  :width="entry.width"
+                  :height="entry.height"
+                  :hidden="false"
+                />
+                <PhotoImage
+                  v-else
+                  :photo="entry.photo"
+                  context="thumb"
+                  :adapter="adapter"
+                  loading="lazy"
+                  class="np-album__img"
+                  :class="imgClass"
+                  :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Approximate fallback (no breakpoints, no defaultContainerWidth). -->
+      <template v-else-if="!isMounted">
         <div :style="ssrWrapperStyle">
           <div
             v-for="(photo, index) in photos"
@@ -63,13 +103,7 @@
             class="np-album__item"
             :class="itemClass"
             :style="ssrItemStyle(photo)"
-            v-bind="hasLightbox ? {
-              ref: setItemRef(index),
-              role: 'button',
-              tabindex: '0',
-              onClick: () => openPhoto(photo, index),
-              onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, photo, index),
-            } : { ref: setItemRef(index) }"
+            v-bind="itemBindings(photo, index)"
           >
             <div style="width:100%;height:100%">
               <slot
@@ -114,13 +148,7 @@
               class="np-album__item"
               :class="itemClass"
               :style="itemStyle(entry, group)"
-              v-bind="hasLightbox ? {
-                ref: setItemRef(entry.index),
-                role: 'button',
-                tabindex: '0',
-                onClick: () => openPhoto(entry.photo, entry.index),
-                onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, entry.photo, entry.index),
-              } : { ref: setItemRef(entry.index) }"
+              v-bind="itemBindings(entry.photo, entry.index)"
             >
               <div
                 :style="isHidden(entry.photo) && !$slots.thumbnail ? { opacity: 0 } : undefined"
@@ -290,11 +318,14 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
 })
 
 const {
-  containerRef, isMounted, containerStyle,
+  containerRef, isMounted, scopeClass, snapshotClass, containerStyle,
   containerQueryCSS, containerQueriesActive,
+  breakpointSnapshots,
   groups, rowItems,
   ssrWrapperStyle, ssrItemStyle,
   groupStyle, itemStyle,
+  snapshotGroupStyle, snapshotItemStyle, snapshotWrapperStyle,
+  maybeWarnApproximate,
 } = usePhotoLayout({
   photos,
   layout: layoutType,
@@ -307,6 +338,8 @@ const {
   sizes: props.sizes,
   interactive: hasLightbox,
 })
+
+maybeWarnApproximate()
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
@@ -359,6 +392,19 @@ function handleItemKeydown(e: KeyboardEvent, photo: PhotoItem, index: number) {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault()
     openPhoto(photo, index)
+  }
+}
+
+function itemBindings(photo: PhotoItem, index: number) {
+  const base = { ref: setItemRef(index) }
+  if (!hasLightbox.value) return base
+
+  return {
+    ...base,
+    role: 'button',
+    tabindex: '0',
+    onClick: () => openPhoto(photo, index),
+    onKeydown: (e: KeyboardEvent) => handleItemKeydown(e, photo, index),
   }
 }
 

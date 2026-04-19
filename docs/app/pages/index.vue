@@ -48,7 +48,7 @@ const layoutSections = [
 const features = [
   { icon: 'i-lucide-zap', title: 'Lightbox included', description: 'FLIP transitions from thumbnail to full-screen, swipe gestures, pinch-to-zoom, keyboard navigation, and spring physics — all built in.' },
   { icon: 'i-lucide-monitor-smartphone', title: 'Responsive by design', description: 'Every numeric option accepts a container-width function. Change columns, spacing, and row height at any breakpoint — no media queries needed.' },
-  { icon: 'i-lucide-server', title: 'Zero CLS on SSR', description: 'Server-renders a flex-grow fallback that matches the JS layout. When JS hydrates, there\'s no layout shift — the page looks identical before and after.' },
+  { icon: 'i-lucide-server', title: 'Zero CLS on SSR (when wired up)', description: 'Rows is zero-shift by default. Columns and masonry become zero-shift with `defaultContainerWidth` or responsive inputs — the server renders per-breakpoint snapshots that match the hydrated layout.', to: '/guides/ssr-and-performance' },
   { icon: 'i-lucide-image', title: 'Nuxt Image ready', description: 'Automatic @nuxt/image integration. Thumbnails get optimized srcsets for the grid, slides get full-viewport srcsets for the lightbox.' },
   { icon: 'i-lucide-layers', title: 'Layered architecture', description: 'Use the high-level recipe components or drop down to composables and primitives for full control. No black boxes — every layer is replaceable.' },
   { icon: 'i-lucide-puzzle', title: 'Headless mode', description: 'Skip the recipe components entirely. Build your own grid and lightbox using the composables and primitive components with your own markup and styles.' },
@@ -166,6 +166,7 @@ const features = [
           :icon="feature.icon"
           :title="feature.title"
           :description="feature.description"
+          :to="feature.to"
         />
       </template>
     </UPageSection>

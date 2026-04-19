@@ -58,6 +58,16 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-primary) 12%, transparent);
 }
 
+/* Prevents flex children (label + range input) from clipping when labels wrap.
+   Guards against Tailwind utility purging by stating the invariant in CSS. */
+.docs-range {
+  min-width: 0;
+}
+.docs-range input[type="range"] {
+  min-width: 0;
+  flex: 1;
+}
+
 /* ── Lightbox HUD (glass effect inside dark overlay) ── */
 
 .hud-card {
