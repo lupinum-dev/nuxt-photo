@@ -1,9 +1,15 @@
 <template>
   <div
-    :ref="(el) => { ctx.mediaAreaRef.value = el as HTMLElement | null }"
+    :ref="
+      (el) => {
+        ctx.mediaAreaRef.value = el as HTMLElement | null
+      }
+    "
     v-bind="$attrs"
     :data-zoomed="ctx.isZoomedIn.value || undefined"
-    :data-gesture="ctx.gesturePhase.value !== 'idle' ? ctx.gesturePhase.value : undefined"
+    :data-gesture="
+      ctx.gesturePhase.value !== 'idle' ? ctx.gesturePhase.value : undefined
+    "
     @pointerdown.capture="ctx.onMediaPointerDown"
     @pointermove.capture="ctx.onMediaPointerMove"
     @pointerup.capture="ctx.onMediaPointerUp"

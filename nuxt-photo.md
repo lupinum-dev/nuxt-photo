@@ -295,9 +295,21 @@ This is the smallest useful thing you can build.
 import type { PhotoItem } from '@nuxt-photo/core'
 
 const photos: PhotoItem[] = [
-  { id: '1', src: '/photos/desert.jpg', width: 1280, height: 800, alt: 'Desert' },
+  {
+    id: '1',
+    src: '/photos/desert.jpg',
+    width: 1280,
+    height: 800,
+    alt: 'Desert',
+  },
   { id: '2', src: '/photos/ocean.jpg', width: 960, height: 1200, alt: 'Ocean' },
-  { id: '3', src: '/photos/forest.jpg', width: 1200, height: 800, alt: 'Forest' }
+  {
+    id: '3',
+    src: '/photos/forest.jpg',
+    width: 1200,
+    height: 800,
+    alt: 'Forest',
+  },
 ]
 </script>
 
@@ -337,9 +349,12 @@ We document size by import path, not with one “the package is X kB” claim.
 :read-more{to="/docs/getting-started/installation" title="Install the module"}
 </file>
 <file name="2.installation.md" path="/docs/content/docs/1.getting-started/2.installation.md">
+
 ---
+
 title: Installation
 description: Install the module, register it, and get the auto-imports.
+
 ---
 
 Nuxt Photo is a single Nuxt module. One install, one entry in `modules`, and every component and composable is auto-imported.
@@ -360,7 +375,7 @@ Add it to your `nuxt.config`:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt']
+  modules: ['@nuxt-photo/nuxt'],
 })
 ```
 
@@ -375,10 +390,7 @@ If you want responsive images, srcset generation, and provider integrations (Clo
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/image',
-    '@nuxt-photo/nuxt'
-  ]
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
 })
 ```
 
@@ -396,7 +408,7 @@ import type { PhotoItem } from '@nuxt-photo/core'
 
 const photos: PhotoItem[] = [
   { id: '1', src: '/photos/a.jpg', width: 1280, height: 800, alt: 'Sunrise' },
-  { id: '2', src: '/photos/b.jpg', width: 960, height: 1200, alt: 'Canyon' }
+  { id: '2', src: '/photos/b.jpg', width: 960, height: 1200, alt: 'Canyon' },
 ]
 </script>
 
@@ -411,10 +423,10 @@ Start the dev server and click any photo — the lightbox opens with a FLIP tran
 
 The `@nuxt-photo/nuxt` package pulls in three sibling packages so you never have to install them separately:
 
-| Package | Purpose |
-| --- | --- |
-| `@nuxt-photo/core` | Framework-free layout, gestures, and types |
-| `@nuxt-photo/vue` | Vue bindings and primitive components |
+| Package               | Purpose                                                      |
+| --------------------- | ------------------------------------------------------------ |
+| `@nuxt-photo/core`    | Framework-free layout, gestures, and types                   |
+| `@nuxt-photo/vue`     | Vue bindings and primitive components                        |
 | `@nuxt-photo/recipes` | High-level components (`<PhotoAlbum>`, `<PhotoCarousel>`, …) |
 
 You can import advanced helpers from any of them when you need to, but the default auto-imports cover 95% of cases.
@@ -424,9 +436,12 @@ You can import advanced helpers from any of them when you need to, but the defau
 :read-more{to="/docs/getting-started/quickstart" title="Build your first gallery"}
 </file>
 <file name="3.quickstart.md" path="/docs/content/docs/1.getting-started/3.quickstart.md">
+
 ---
+
 title: Quickstart
 description: Build a real gallery with a lightbox in about 60 seconds.
+
 ---
 
 You will end up with a full gallery page: a justified-rows layout, a lightbox with pinch-to-zoom, a shared lightbox across two albums, and captions. No custom CSS.
@@ -450,7 +465,7 @@ export const gallery: PhotoItem[] = [
     width: 1280,
     height: 800,
     alt: 'Desert at golden hour',
-    caption: 'Desert Light'
+    caption: 'Desert Light',
   },
   {
     id: 'ocean',
@@ -458,7 +473,7 @@ export const gallery: PhotoItem[] = [
     width: 960,
     height: 1200,
     alt: 'Ocean waves',
-    caption: 'Ocean Glass'
+    caption: 'Ocean Glass',
   },
   {
     id: 'forest',
@@ -466,8 +481,8 @@ export const gallery: PhotoItem[] = [
     width: 1200,
     height: 800,
     alt: 'Misty forest',
-    caption: 'Forest Haze'
-  }
+    caption: 'Forest Haze',
+  },
 ]
 ```
 
@@ -541,11 +556,14 @@ You have a working gallery, lightbox, and carousel. From here:
 - [Use `@nuxt/image`](/docs/guides/nuxt-image) — responsive images with real optimization.
 - [Tune responsive layouts](/docs/guides/responsive-tuning) — column counts, spacing, breakpoints.
 - [Build a custom lightbox](/docs/guides/custom-lightbox) — when the defaults aren't enough.
-</file>
-<file name="4.configuration.md" path="/docs/content/docs/1.getting-started/4.configuration.md">
+  </file>
+  <file name="4.configuration.md" path="/docs/content/docs/1.getting-started/4.configuration.md">
+
 ---
+
 title: Configuration
 description: Every module option, with defaults and when to change them.
+
 ---
 
 Configure Nuxt Photo under the `nuxtPhoto` key in `nuxt.config`. Every option is optional — the defaults work for a typical Nuxt app.
@@ -558,8 +576,8 @@ export default defineNuxtConfig({
     components: { prefix: '' },
     css: 'structure',
     image: { provider: 'auto' },
-    lightbox: { minZoom: 1 }
-  }
+    lightbox: { minZoom: 1 },
+  },
 })
 ```
 
@@ -593,7 +611,9 @@ nuxtPhoto: {
 
 // Add a prefix to avoid collisions
 nuxtPhoto: {
-  components: { prefix: 'Np' }
+  components: {
+    prefix: 'Np'
+  }
   // <NpPhoto>, <NpPhotoAlbum>, <NpPhotoCarousel>, …
 }
 ```
@@ -607,11 +627,11 @@ Use a prefix when another module exposes components with the same names.
 
 Controls which stylesheets are loaded.
 
-| Value | What's loaded | When to use |
-| --- | --- | --- |
-| `'none'` | Nothing | You have a custom design system and style every class yourself. |
+| Value         | What's loaded              | When to use                                                                                  |
+| ------------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `'none'`      | Nothing                    | You have a custom design system and style every class yourself.                              |
 | `'structure'` | Layout + geometry CSS only | You want structural correctness but want to theme colors, transitions, and spacing yourself. |
-| `'all'` | Structure + default theme | You want the library to look good out of the box. |
+| `'all'`       | Structure + default theme  | You want the library to look good out of the box.                                            |
 
 ```ts
 nuxtPhoto: {
@@ -632,22 +652,26 @@ nuxtPhoto: {
 
 Picks the image pipeline.
 
-| Value | Behavior |
-| --- | --- |
-| `'auto'` | Uses `@nuxt/image` if it's installed, otherwise falls back to `native`. |
-| `'nuxt-image'` | Routes every image through `@nuxt/image`. Fails loudly if it isn't installed. |
-| `'native'` | Uses browser `<img>` with your `src` and optional `srcset` unchanged. |
-| `'custom'` | Disables the built-in adapter. You provide one through `provide(ImageAdapterKey, ...)`. |
+| Value          | Behavior                                                                                |
+| -------------- | --------------------------------------------------------------------------------------- |
+| `'auto'`       | Uses `@nuxt/image` if it's installed, otherwise falls back to `native`.                 |
+| `'nuxt-image'` | Routes every image through `@nuxt/image`. Fails loudly if it isn't installed.           |
+| `'native'`     | Uses browser `<img>` with your `src` and optional `srcset` unchanged.                   |
+| `'custom'`     | Disables the built-in adapter. You provide one through `provide(ImageAdapterKey, ...)`. |
 
 ```ts
 // Force @nuxt/image even if other providers are installed
 nuxtPhoto: {
-  image: { provider: 'nuxt-image' }
+  image: {
+    provider: 'nuxt-image'
+  }
 }
 
 // Keep images out of any optimization pipeline
 nuxtPhoto: {
-  image: { provider: 'native' }
+  image: {
+    provider: 'native'
+  }
 }
 
 // Disable the adapter entirely
@@ -681,21 +705,20 @@ A production-ish config with `@nuxt/image`, full theming, and a component prefix
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/image',
-    '@nuxt-photo/nuxt'
-  ],
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
   image: {
     // your @nuxt/image provider config
     provider: 'cloudinary',
-    cloudinary: { baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/' }
+    cloudinary: {
+      baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/',
+    },
   },
   nuxtPhoto: {
     css: 'all',
     image: { provider: 'nuxt-image' },
     components: { prefix: 'Np' },
-    lightbox: { minZoom: 1 }
-  }
+    lightbox: { minZoom: 1 },
+  },
 })
 ```
 
@@ -708,9 +731,12 @@ title: Concepts
 icon: i-lucide-compass
 </file>
 <file name="1.photo-item.md" path="/docs/content/docs/2.concepts/1.photo-item.md">
+
 ---
+
 title: PhotoItem
 description: The data shape every Nuxt Photo component speaks.
+
 ---
 
 Nuxt Photo doesn't care where your photos come from — a CMS, a filesystem, an Unsplash query, a static list. Everything funnels through a single shape: the `PhotoItem`.
@@ -723,17 +749,17 @@ import type { PhotoItem } from '@nuxt-photo/core'
 
 ```ts
 type PhotoItem<TMeta = Record<string, unknown>> = {
-  id: string | number        // required — stable identifier
-  src: string                // required — full-size URL
-  width: number              // required — intrinsic pixel width
-  height: number             // required — intrinsic pixel height
-  alt?: string               // accessibility + `<img alt>`
-  caption?: string           // shown under lightbox and optional album overlay
-  description?: string       // long-form text; shown below caption in lightbox
-  thumbSrc?: string          // smaller URL for the grid; falls back to `src`
-  srcset?: string            // passed through when you're managing srcset yourself
-  blurhash?: string          // reserved for future placeholder support
-  meta?: TMeta               // free-form app-specific data
+  id: string | number // required — stable identifier
+  src: string // required — full-size URL
+  width: number // required — intrinsic pixel width
+  height: number // required — intrinsic pixel height
+  alt?: string // accessibility + `<img alt>`
+  caption?: string // shown under lightbox and optional album overlay
+  description?: string // long-form text; shown below caption in lightbox
+  thumbSrc?: string // smaller URL for the grid; falls back to `src`
+  srcset?: string // passed through when you're managing srcset yourself
+  blurhash?: string // reserved for future placeholder support
+  meta?: TMeta // free-form app-specific data
 }
 ```
 
@@ -817,9 +843,9 @@ const photos: PhotoItem<MyMeta>[] = [
     meta: {
       photographer: 'Jane Doe',
       shotAt: new Date('2025-03-10'),
-      tags: ['desert', 'golden-hour']
-    }
-  }
+      tags: ['desert', 'golden-hour'],
+    },
+  },
 ]
 ```
 
@@ -848,13 +874,13 @@ type UnsplashPhoto = {
   alt_description: string | null
 }
 
-const fromUnsplash: PhotoAdapter<UnsplashPhoto> = item => ({
+const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
   id: item.id,
   src: item.urls.regular,
   thumbSrc: item.urls.thumb,
   width: item.width,
   height: item.height,
-  alt: item.alt_description ?? undefined
+  alt: item.alt_description ?? undefined,
 })
 ```
 
@@ -869,9 +895,12 @@ Pass it to `<PhotoAlbum :photo-adapter="fromUnsplash" :photos="apiResponse" />` 
 :::
 </file>
 <file name="2.layers.md" path="/docs/content/docs/2.concepts/2.layers.md">
+
 ---
+
 title: Layers
 description: Five layers of API. Pick the highest one that does the job.
+
 ---
 
 Nuxt Photo is stacked. Each layer gives you more control and asks for more work. The trick is to reach for the top of the stack and only drop down when you hit its ceiling.
@@ -1006,13 +1035,13 @@ There's no layer below this one. You've reached the bottom.
 
 A short rubric:
 
-| Question | Layer |
-| --- | --- |
-| Do I need a gallery on a page? | 1 |
-| Do I have two galleries that should share a lightbox? | 2 |
-| Do I want the default lightbox, but my own layout? | 3 |
-| Do I want a different lightbox UX? | 4 |
-| Am I not even using Vue templates for the UI? | 5 |
+| Question                                              | Layer |
+| ----------------------------------------------------- | ----- |
+| Do I need a gallery on a page?                        | 1     |
+| Do I have two galleries that should share a lightbox? | 2     |
+| Do I want the default lightbox, but my own layout?    | 3     |
+| Do I want a different lightbox UX?                    | 4     |
+| Am I not even using Vue templates for the UI?         | 5     |
 
 Most users stop at layer 1 or 2. Layer 3 is common for editorial layouts. Layer 4 is for design teams. Layer 5 is rare.
 
@@ -1031,27 +1060,32 @@ Most users stop at layer 1 or 2. Layer 3 is common for editorial layouts. Layer 
 :::
 </file>
 <file name="3.image-providers.md" path="/docs/content/docs/2.concepts/3.image-providers.md">
+
 ---
+
 title: Image providers
 description: Choose how Nuxt Photo loads your images.
+
 ---
 
 Every `<img>` Nuxt Photo renders — grid thumbnails, lightbox slides, carousel frames — goes through an **image adapter**. The adapter decides the final `src`, `srcset`, and `sizes`. You pick the adapter through one module option.
 
 ```ts [nuxt.config.ts]
 nuxtPhoto: {
-  image: { provider: 'auto' } // default
+  image: {
+    provider: 'auto'
+  } // default
 }
 ```
 
 ## The four providers
 
-| Provider | When to use |
-| --- | --- |
-| `'auto'` | Default. Uses `@nuxt/image` if installed, otherwise `native`. |
+| Provider       | When to use                                                         |
+| -------------- | ------------------------------------------------------------------- |
+| `'auto'`       | Default. Uses `@nuxt/image` if installed, otherwise `native`.       |
 | `'nuxt-image'` | You want responsive images and are sure `@nuxt/image` is installed. |
-| `'native'` | You're serving pre-optimized images and want no transformation. |
-| `'custom'` | You want full control — provide your own adapter via `provide()`. |
+| `'native'`     | You're serving pre-optimized images and want no transformation.     |
+| `'custom'`     | You want full control — provide your own adapter via `provide()`.   |
 
 ## `'auto'`
 
@@ -1090,11 +1124,13 @@ export default defineNuxtConfig({
   modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
   image: {
     provider: 'cloudinary',
-    cloudinary: { baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/' }
+    cloudinary: {
+      baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/',
+    },
   },
   nuxtPhoto: {
-    image: { provider: 'nuxt-image' }
-  }
+    image: { provider: 'nuxt-image' },
+  },
 })
 ```
 
@@ -1123,7 +1159,7 @@ const myAdapter: ImageAdapter = (photo, context) => {
     src: `/_cms/image/${photo.id}?w=${width}&fmt=webp`,
     srcset: `/_cms/image/${photo.id}?w=${width * 2}&fmt=webp 2x`,
     width: photo.width,
-    height: photo.height
+    height: photo.height,
   }
 }
 
@@ -1149,7 +1185,7 @@ The prop wins over the provided adapter, which wins over the module default.
 ```ts
 type ImageAdapter = (
   photo: PhotoItem,
-  context: 'thumb' | 'slide' | 'preload'
+  context: 'thumb' | 'slide' | 'preload',
 ) => ImageSource
 
 type ImageSource = {
@@ -1175,9 +1211,12 @@ type ImageSource = {
 :::
 </file>
 <file name="4.responsive.md" path="/docs/content/docs/2.concepts/4.responsive.md">
+
 ---
+
 title: Responsive parameters
 description: Same prop, different value per container width.
+
 ---
 
 Spacing, padding, columns, and row height can all change per viewport. Instead of media queries or `v-if`, Nuxt Photo accepts a **responsive parameter** wherever a number is expected — a plain value, a breakpoint map, or a function.
@@ -1216,7 +1255,7 @@ Reads the same way it renders: 4px below 640, 8px from 640 to 1023, 12px at 1024
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :spacing="w => w < 600 ? 4 : w < 1200 ? 8 : 12"
+  :spacing="(w) => (w < 600 ? 4 : w < 1200 ? 8 : 12)"
 />
 ```
 
@@ -1237,7 +1276,7 @@ Static props (`layout.type`, `photos`, `lightbox`) don't.
   :photos="photos"
   :layout="{
     type: 'columns',
-    columns: responsive({ 0: 2, 768: 3, 1200: 4 })
+    columns: responsive({ 0: 2, 768: 3, 1200: 4 }),
   }"
   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
   :padding="responsive({ 0: 0, 1200: 8 })"
@@ -1309,13 +1348,10 @@ responsive({ 0: 2, 640: 6, 1024: 12, 1440: 16 })
 
 ### Conditional layout
 
-`responsive()` can't switch layout *types* — it's for numeric values. For a type change, gate the whole component:
+`responsive()` can't switch layout _types_ — it's for numeric values. For a type change, gate the whole component:
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :layout="isMobile ? 'masonry' : 'rows'"
-/>
+<PhotoAlbum :photos="photos" :layout="isMobile ? 'masonry' : 'rows'" />
 ```
 
 ## See also
@@ -1327,27 +1363,30 @@ responsive({ 0: 2, 640: 6, 1024: 12, 1440: 16 })
 :::
 </file>
 <file name="5.transitions.md" path="/docs/content/docs/2.concepts/5.transitions.md">
----
-title: Transitions
-description: FLIP animations between the grid and the lightbox — when they run and when they don't.
+
 ---
 
-When a user clicks a thumbnail, Nuxt Photo animates the image from its grid position to its lightbox position. This is a **FLIP** transition (First, Last, Invert, Play) — the image doesn't teleport into the lightbox, it *moves* there.
+title: Transitions
+description: FLIP animations between the grid and the lightbox — when they run and when they don't.
+
+---
+
+When a user clicks a thumbnail, Nuxt Photo animates the image from its grid position to its lightbox position. This is a **FLIP** transition (First, Last, Invert, Play) — the image doesn't teleport into the lightbox, it _moves_ there.
 
 Four modes decide how that animation plays.
 
 ## The four modes
 
-| Mode | Behavior |
-| --- | --- |
-| `'flip'` | Always animate from the thumbnail rect to the lightbox rect. |
-| `'fade'` | Never FLIP — always cross-fade into the lightbox. |
+| Mode     | Behavior                                                              |
+| -------- | --------------------------------------------------------------------- |
+| `'flip'` | Always animate from the thumbnail rect to the lightbox rect.          |
+| `'fade'` | Never FLIP — always cross-fade into the lightbox.                     |
 | `'auto'` | FLIP if the thumbnail is visible enough, otherwise fade. **Default.** |
-| `'none'` | No transition. The lightbox appears instantly. |
+| `'none'` | No transition. The lightbox appears instantly.                        |
 
 ### `'auto'` — the smart default
 
-Most of the time you want FLIP — it's what makes a gallery feel physical. But FLIP only works if the user can *see* the thumbnail:
+Most of the time you want FLIP — it's what makes a gallery feel physical. But FLIP only works if the user can _see_ the thumbnail:
 
 - Scrolled off-screen? No source rect. FLIP would animate from nowhere.
 - Tiny thumbnail covered by an overlay? Source rect is wrong. FLIP would snap visibly.
@@ -1371,14 +1410,17 @@ Lower values mean FLIP runs more often. Raise it if your FLIPs look janky from p
 
 ```vue
 <PhotoAlbum :photos="photos" transition="flip" />
-<PhotoAlbum :photos="photos" :transition="{ mode: 'auto', autoThreshold: 0.7 }" />
+<PhotoAlbum
+  :photos="photos"
+  :transition="{ mode: 'auto', autoThreshold: 0.7 }"
+/>
 ```
 
 ### Globally via `useLightboxProvider`
 
 ```ts
 const ctx = useLightboxProvider(photos, {
-  transition: { mode: 'auto', autoThreshold: 0.6 }
+  transition: { mode: 'auto', autoThreshold: 0.6 },
 })
 ```
 
@@ -1429,9 +1471,12 @@ title: Components
 icon: i-lucide-component
 </file>
 <file name="1.photo.md" path="/docs/content/docs/3.components/1.photo.md">
+
 ---
+
 title: Photo
 description: A single photo, optionally with its own lightbox.
+
 ---
 
 `<Photo>` renders one photo as a `<figure>` with an `<img>` and optional caption. Drop it anywhere you'd normally use an `<img>` — it picks up the configured image provider, gestures, and lightbox.
@@ -1450,7 +1495,7 @@ const hero: PhotoItem = {
   width: 1280,
   height: 800,
   alt: 'Desert at golden hour',
-  caption: 'Desert Light'
+  caption: 'Desert Light',
 }
 </script>
 ```
@@ -1464,6 +1509,7 @@ const hero: PhotoItem = {
   <Photo :photo="hero" lightbox />
 </template>
 ```
+
 ::
 
 ## When to use
@@ -1476,15 +1522,15 @@ For a grid of many photos, prefer `<PhotoAlbum>`. For horizontal scrolling, pref
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `photo` | `PhotoItem` | — | **Required.** The photo to render. |
-| `lightbox` | `boolean \| Component` | `undefined` | `true` opens a solo lightbox on click. Pass a component to use a custom lightbox. Ignored when inside a `<PhotoGroup>`. |
-| `lightboxIgnore` | `boolean` | `false` | When inside a `<PhotoGroup>`, opt this photo out of auto-registration. Renders as a plain image. |
-| `adapter` | `ImageAdapter` | provided/module default | Per-instance image adapter override. |
-| `loading` | `'lazy' \| 'eager'` | `'lazy'` | Passed through to the underlying `<img>`. |
-| `imgClass` | `string` | — | Extra classes for the `<img>` element. |
-| `captionClass` | `string` | — | Extra classes for the `<figcaption>`. |
+| Prop             | Type                   | Default                 | Description                                                                                                             |
+| ---------------- | ---------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `photo`          | `PhotoItem`            | —                       | **Required.** The photo to render.                                                                                      |
+| `lightbox`       | `boolean \| Component` | `undefined`             | `true` opens a solo lightbox on click. Pass a component to use a custom lightbox. Ignored when inside a `<PhotoGroup>`. |
+| `lightboxIgnore` | `boolean`              | `false`                 | When inside a `<PhotoGroup>`, opt this photo out of auto-registration. Renders as a plain image.                        |
+| `adapter`        | `ImageAdapter`         | provided/module default | Per-instance image adapter override.                                                                                    |
+| `loading`        | `'lazy' \| 'eager'`    | `'lazy'`                | Passed through to the underlying `<img>`.                                                                               |
+| `imgClass`       | `string`               | —                       | Extra classes for the `<img>` element.                                                                                  |
+| `captionClass`   | `string`               | —                       | Extra classes for the `<figcaption>`.                                                                                   |
 
 ## Behavior
 
@@ -1496,8 +1542,8 @@ For a grid of many photos, prefer `<PhotoAlbum>`. For horizontal scrolling, pref
 
 ## Slots
 
-| Slot | Slot props | Description |
-| --- | --- | --- |
+| Slot    | Slot props                            | Description                                                           |
+| ------- | ------------------------------------- | --------------------------------------------------------------------- |
 | `slide` | `{ photo, index, close, next, prev }` | Replace the rendered slide inside the lightbox with your own content. |
 
 Use the `slide` slot when the photo's lightbox view needs to be different from its thumbnail — adding a video player, a map, or a before/after comparison.
@@ -1570,9 +1616,12 @@ The custom component receives the lightbox context through the same provide/inje
 :::
 </file>
 <file name="2.photo-album.md" path="/docs/content/docs/3.components/2.photo-album.md">
+
 ---
+
 title: PhotoAlbum
 description: A grid of photos in rows, columns, or masonry, with a lightbox baked in.
+
 ---
 
 `<PhotoAlbum>` is the workhorse. Give it a list of photos and a layout — rows, columns, or masonry — and you get a responsive grid with an integrated lightbox, gestures, and FLIP transitions.
@@ -1595,6 +1644,7 @@ description: A grid of photos in rows, columns, or masonry, with a lightbox bake
   />
 </template>
 ```
+
 ::
 
 ## Layouts
@@ -1616,10 +1666,7 @@ Options:
 ### Columns
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :layout="{ type: 'columns', columns: 3 }"
-/>
+<PhotoAlbum :photos="photos" :layout="{ type: 'columns', columns: 3 }" />
 ```
 
 Fixed-column grid. Every photo in a column is the same width; heights vary. Best when every image looks similar.
@@ -1631,10 +1678,7 @@ Options:
 ### Masonry
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :layout="{ type: 'masonry', columns: 4 }"
-/>
+<PhotoAlbum :photos="photos" :layout="{ type: 'masonry', columns: 4 }" />
 ```
 
 Fixed-column Pinterest-style layout — photos flow into the shortest column next. Best when visual density matters more than reading order.
@@ -1649,30 +1693,30 @@ You can pass `layout` as a string (`"rows"`, `"columns"`, `"masonry"`) to use th
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `photos` | `PhotoItem[]` | — | **Required.** The photos to lay out. |
-| `photoAdapter` | `PhotoAdapter` | — | Transforms each `photos` entry into a `PhotoItem` (for CMS data). |
-| `layout` | `'rows' \| 'columns' \| 'masonry' \| AlbumLayout` | `'rows'` | Layout algorithm and options. |
-| `spacing` | `ResponsiveParameter<number>` | `8` | Gap between images in px. |
-| `padding` | `ResponsiveParameter<number>` | `0` | Padding around each image in px. |
-| `defaultContainerWidth` | `number` | — | Assumed container width for SSR. Runs the JS layout on the server. |
-| `breakpoints` | `readonly number[]` | auto from `responsive()` | Snap observed width to the largest breakpoint ≤ actual. |
-| `sizes` | `{ size: string; sizes?: ... }` | — | `<img sizes>` hint for rows layout. |
-| `adapter` | `ImageAdapter` | provided/module default | Per-instance image adapter override. |
-| `lightbox` | `boolean \| Component` | `true` | Enable the built-in lightbox, disable it, or pass a custom one. |
-| `transition` | `LightboxTransitionOption` | `'auto'` | FLIP/fade mode for open/close animation. |
-| `itemClass` | `string` | — | Extra classes for each item wrapper. |
-| `imgClass` | `string` | — | Extra classes for each `<img>`. |
+| Prop                    | Type                                              | Default                  | Description                                                        |
+| ----------------------- | ------------------------------------------------- | ------------------------ | ------------------------------------------------------------------ |
+| `photos`                | `PhotoItem[]`                                     | —                        | **Required.** The photos to lay out.                               |
+| `photoAdapter`          | `PhotoAdapter`                                    | —                        | Transforms each `photos` entry into a `PhotoItem` (for CMS data).  |
+| `layout`                | `'rows' \| 'columns' \| 'masonry' \| AlbumLayout` | `'rows'`                 | Layout algorithm and options.                                      |
+| `spacing`               | `ResponsiveParameter<number>`                     | `8`                      | Gap between images in px.                                          |
+| `padding`               | `ResponsiveParameter<number>`                     | `0`                      | Padding around each image in px.                                   |
+| `defaultContainerWidth` | `number`                                          | —                        | Assumed container width for SSR. Runs the JS layout on the server. |
+| `breakpoints`           | `readonly number[]`                               | auto from `responsive()` | Snap observed width to the largest breakpoint ≤ actual.            |
+| `sizes`                 | `{ size: string; sizes?: ... }`                   | —                        | `<img sizes>` hint for rows layout.                                |
+| `adapter`               | `ImageAdapter`                                    | provided/module default  | Per-instance image adapter override.                               |
+| `lightbox`              | `boolean \| Component`                            | `true`                   | Enable the built-in lightbox, disable it, or pass a custom one.    |
+| `transition`            | `LightboxTransitionOption`                        | `'auto'`                 | FLIP/fade mode for open/close animation.                           |
+| `itemClass`             | `string`                                          | —                        | Extra classes for each item wrapper.                               |
+| `imgClass`              | `string`                                          | —                        | Extra classes for each `<img>`.                                    |
 
 ## Slots
 
-| Slot | Slot props | Description |
-| --- | --- | --- |
+| Slot        | Slot props                                | Description                                                                     |
+| ----------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
 | `thumbnail` | `{ photo, index, width, height, hidden }` | Replace the rendered thumbnail. Useful for overlays, captions-on-hover, badges. |
-| `caption` | `{ photo, index }` | Lightbox caption (forwarded to the internal lightbox). |
-| `toolbar` | `{ close, next, prev, photo, index }` | Lightbox toolbar override. |
-| `slide` | `{ photo, index, close, next, prev }` | Replace the lightbox slide content. |
+| `caption`   | `{ photo, index }`                        | Lightbox caption (forwarded to the internal lightbox).                          |
+| `toolbar`   | `{ close, next, prev, photo, index }`     | Lightbox toolbar override.                                                      |
+| `slide`     | `{ photo, index, close, next, prev }`     | Replace the lightbox slide content.                                             |
 
 The `thumbnail` slot receives a `hidden` boolean that flips to `true` during the FLIP transition — useful if you stack an overlay over the image and need to hide it while the transition animates.
 
@@ -1694,12 +1738,13 @@ import { responsive } from '@nuxt-photo/vue'
     :photos="photos"
     :layout="{
       type: 'columns',
-      columns: responsive({ 0: 2, 640: 3, 1024: 4 })
+      columns: responsive({ 0: 2, 640: 3, 1024: 4 }),
     }"
     :spacing="responsive({ 0: 4, 640: 8, 1024: 12 })"
   />
 </template>
 ```
+
 ::
 
 ### Masonry layout
@@ -1717,6 +1762,7 @@ import { responsive } from '@nuxt-photo/vue'
   />
 </template>
 ```
+
 ::
 
 ### SSR-friendly rows
@@ -1761,12 +1807,12 @@ Useful when the album sits inside another pattern (e.g. a carousel of albums, or
 ```ts
 import type { PhotoAdapter } from '@nuxt-photo/core'
 
-const fromContentful: PhotoAdapter = item => ({
+const fromContentful: PhotoAdapter = (item) => ({
   id: item.sys.id,
   src: item.fields.file.url,
   width: item.fields.file.details.image.width,
   height: item.fields.file.details.image.height,
-  alt: item.fields.title
+  alt: item.fields.title,
 })
 ```
 
@@ -1786,9 +1832,12 @@ const fromContentful: PhotoAdapter = item => ({
 :::
 </file>
 <file name="3.photo-group.md" path="/docs/content/docs/3.components/3.photo-group.md">
+
 ---
+
 title: PhotoGroup
 description: Share one lightbox across many albums — or render your own layout.
+
 ---
 
 `<PhotoGroup>` does one of two jobs:
@@ -1811,6 +1860,7 @@ description: Share one lightbox across many albums — or render your own layout
   </PhotoGroup>
 </template>
 ```
+
 ::
 
 Clicking a photo in either album opens the same lightbox — arrows flow across both.
@@ -1854,22 +1904,22 @@ The same lightbox, gestures, and FLIP transitions — but the layout is yours.
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `photos` | `PhotoItem[]` | — | Explicit photos list. Switches the group to headless mode. |
-| `photoAdapter` | `PhotoAdapter` | — | Transforms `photos` entries into `PhotoItem` objects. |
-| `lightbox` | `boolean \| Component` | `true` | Enable the built-in lightbox, disable it, or pass a custom one. |
-| `transition` | `LightboxTransitionOption` | `'auto'` | FLIP/fade mode. |
+| Prop           | Type                       | Default  | Description                                                     |
+| -------------- | -------------------------- | -------- | --------------------------------------------------------------- |
+| `photos`       | `PhotoItem[]`              | —        | Explicit photos list. Switches the group to headless mode.      |
+| `photoAdapter` | `PhotoAdapter`             | —        | Transforms `photos` entries into `PhotoItem` objects.           |
+| `lightbox`     | `boolean \| Component`     | `true`   | Enable the built-in lightbox, disable it, or pass a custom one. |
+| `transition`   | `LightboxTransitionOption` | `'auto'` | FLIP/fade mode.                                                 |
 
 ## Slots
 
-| Slot | Slot props | Description |
-| --- | --- | --- |
-| default (auto mode) | — | Child components. |
-| default (headless) | `{ trigger, setThumbRef, open, photos }` | Render your own layout. |
-| `toolbar` | `{ close, next, prev, photo, index }` | Lightbox toolbar override. |
-| `caption` | `{ photo, index }` | Lightbox caption override. |
-| `slide` | `{ photo, index, close, next, prev }` | Full lightbox slide replacement. |
+| Slot                | Slot props                               | Description                      |
+| ------------------- | ---------------------------------------- | -------------------------------- |
+| default (auto mode) | —                                        | Child components.                |
+| default (headless)  | `{ trigger, setThumbRef, open, photos }` | Render your own layout.          |
+| `toolbar`           | `{ close, next, prev, photo, index }`    | Lightbox toolbar override.       |
+| `caption`           | `{ photo, index }`                       | Lightbox caption override.       |
+| `slide`             | `{ photo, index, close, next, prev }`    | Full lightbox slide replacement. |
 
 ### Headless slot props
 
@@ -1921,7 +1971,7 @@ function openHero() {
 - You want to drive the lightbox from a button, a URL, or a search result.
 - You still want our default lightbox.
 
-If you want a custom *lightbox* too, drop one layer down to primitives — see [Build a custom lightbox](/docs/guides/custom-lightbox).
+If you want a custom _lightbox_ too, drop one layer down to primitives — see [Build a custom lightbox](/docs/guides/custom-lightbox).
 
 ## Examples
 
@@ -1996,9 +2046,12 @@ The hero image renders as a plain thumbnail — it won't land in the group's lig
 :::
 </file>
 <file name="4.photo-carousel.md" path="/docs/content/docs/3.components/4.photo-carousel.md">
+
 ---
+
 title: PhotoCarousel
 description: Horizontal, swipeable carousel with thumbnails, autoplay, and optional lightbox.
+
 ---
 
 `<PhotoCarousel>` is an [Embla](https://www.embla-carousel.com/)-powered horizontal gallery. One main rail, an optional thumbnail strip, and an optional lightbox on tap.
@@ -2024,34 +2077,35 @@ description: Horizontal, swipeable carousel with thumbnails, autoplay, and optio
   />
 </template>
 ```
+
 ::
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `photos` | `PhotoItem[]` | — | **Required.** The photos to show. |
-| `photoAdapter` | `PhotoAdapter` | — | Transforms `photos` entries into `PhotoItem` objects. |
-| `adapter` | `ImageAdapter` | provided/module default | Per-instance image adapter override. |
-| `options` | `EmblaOptionsType` | Embla defaults | Main carousel options (loop, align, dragFree, …). |
-| `plugins` | `EmblaPluginType[]` | `[]` | Additional Embla plugins. |
-| `thumbsOptions` | `EmblaOptionsType` | `{ dragFree: true }` | Thumbnail rail options. |
-| `showArrows` | `boolean` | `true` | Render prev/next arrow buttons. |
-| `showThumbnails` | `boolean` | `true` | Render the thumbnail rail below the main rail. |
-| `showCounter` | `boolean` | `true` | Render the `3 / 12` counter. |
-| `showDots` | `boolean` | `false` | Render dot indicators. |
-| `autoplay` | `boolean \| AutoplayOptionsType` | `false` | Enable Embla's Autoplay plugin. Pass an object for custom options. |
-| `slideSize` | `string` | — | CSS `flex-basis` of each slide (e.g. `'100%'`, `'80%'`). |
-| `slideAspect` | `string` | — | CSS `aspect-ratio` per slide (e.g. `'16/9'`, `'1/1'`). |
-| `gap` | `string` | — | CSS gap between slides. |
-| `thumbSize` | `string` | — | Thumbnail width. |
-| `lightbox` | `boolean \| Component` | `false` | Enable a lightbox overlay on tap/click. |
-| `transition` | `LightboxTransitionOption` | `'auto'` | Lightbox transition mode. |
-| `slideClass` | `string` | — | Extra classes for each slide. |
-| `imgClass` | `string` | — | Extra classes for each `<img>`. |
-| `thumbClass` | `string` | — | Extra classes for each thumbnail. |
-| `captionClass` | `string` | — | Extra classes for the caption. |
-| `controlsClass` | `string` | — | Extra classes for the controls wrapper. |
+| Prop             | Type                             | Default                 | Description                                                        |
+| ---------------- | -------------------------------- | ----------------------- | ------------------------------------------------------------------ |
+| `photos`         | `PhotoItem[]`                    | —                       | **Required.** The photos to show.                                  |
+| `photoAdapter`   | `PhotoAdapter`                   | —                       | Transforms `photos` entries into `PhotoItem` objects.              |
+| `adapter`        | `ImageAdapter`                   | provided/module default | Per-instance image adapter override.                               |
+| `options`        | `EmblaOptionsType`               | Embla defaults          | Main carousel options (loop, align, dragFree, …).                  |
+| `plugins`        | `EmblaPluginType[]`              | `[]`                    | Additional Embla plugins.                                          |
+| `thumbsOptions`  | `EmblaOptionsType`               | `{ dragFree: true }`    | Thumbnail rail options.                                            |
+| `showArrows`     | `boolean`                        | `true`                  | Render prev/next arrow buttons.                                    |
+| `showThumbnails` | `boolean`                        | `true`                  | Render the thumbnail rail below the main rail.                     |
+| `showCounter`    | `boolean`                        | `true`                  | Render the `3 / 12` counter.                                       |
+| `showDots`       | `boolean`                        | `false`                 | Render dot indicators.                                             |
+| `autoplay`       | `boolean \| AutoplayOptionsType` | `false`                 | Enable Embla's Autoplay plugin. Pass an object for custom options. |
+| `slideSize`      | `string`                         | —                       | CSS `flex-basis` of each slide (e.g. `'100%'`, `'80%'`).           |
+| `slideAspect`    | `string`                         | —                       | CSS `aspect-ratio` per slide (e.g. `'16/9'`, `'1/1'`).             |
+| `gap`            | `string`                         | —                       | CSS gap between slides.                                            |
+| `thumbSize`      | `string`                         | —                       | Thumbnail width.                                                   |
+| `lightbox`       | `boolean \| Component`           | `false`                 | Enable a lightbox overlay on tap/click.                            |
+| `transition`     | `LightboxTransitionOption`       | `'auto'`                | Lightbox transition mode.                                          |
+| `slideClass`     | `string`                         | —                       | Extra classes for each slide.                                      |
+| `imgClass`       | `string`                         | —                       | Extra classes for each `<img>`.                                    |
+| `thumbClass`     | `string`                         | —                       | Extra classes for each thumbnail.                                  |
+| `captionClass`   | `string`                         | —                       | Extra classes for the caption.                                     |
+| `controlsClass`  | `string`                         | —                       | Extra classes for the controls wrapper.                            |
 
 ## Embla options
 
@@ -2086,19 +2140,19 @@ const carouselRef = ref()
 </template>
 ```
 
-| Method | Description |
-| --- | --- |
-| `goTo(index, instant?)` | Jump to a slide. Set `instant` to skip animation. |
-| `goToNext(instant?)` | Next slide. |
-| `goToPrev(instant?)` | Previous slide. |
-| `selectedSnap()` | Current snap index (0-based). |
-| `reInit(options?, plugins?)` | Re-initialize Embla (e.g. after option changes). |
+| Method                       | Description                                       |
+| ---------------------------- | ------------------------------------------------- |
+| `goTo(index, instant?)`      | Jump to a slide. Set `instant` to skip animation. |
+| `goToNext(instant?)`         | Next slide.                                       |
+| `goToPrev(instant?)`         | Previous slide.                                   |
+| `selectedSnap()`             | Current snap index (0-based).                     |
+| `reInit(options?, plugins?)` | Re-initialize Embla (e.g. after option changes).  |
 
-| Reactive ref | Description |
-| --- | --- |
-| `emblaApi` | The main Embla API instance. |
-| `thumbsApi` | The thumbnail rail's Embla API. |
-| `selectedIndex` | Current slide index. |
+| Reactive ref    | Description                     |
+| --------------- | ------------------------------- |
+| `emblaApi`      | The main Embla API instance.    |
+| `thumbsApi`     | The thumbnail rail's Embla API. |
+| `selectedIndex` | Current slide index.            |
 
 ## Examples
 
@@ -2153,7 +2207,7 @@ Tap a slide — the lightbox opens at that photo. Swipe continues to work; the l
 
 ### Disable autoplay plugin conflicts
 
-If you pass your own Autoplay plugin via `plugins` *and* set `autoplay`, Nuxt Photo drops the user-supplied one and warns in dev. Pick one:
+If you pass your own Autoplay plugin via `plugins` _and_ set `autoplay`, Nuxt Photo drops the user-supplied one and warns in dev. Pick one:
 
 ```vue
 <!-- prop form -->
@@ -2179,9 +2233,12 @@ const plugins = [Autoplay({ delay: 3000 })]
 :::
 </file>
 <file name="5.photo-trigger.md" path="/docs/content/docs/3.components/5.photo-trigger.md">
+
 ---
+
 title: PhotoTrigger
 description: A headless click target that opens the lightbox at a given photo.
+
 ---
 
 `<PhotoTrigger>` is the smallest piece that bridges a thumbnail and a lightbox. Drop it inside a `<LightboxRoot>` (or any component that provides the lightbox context) and it renders an interactive, keyboard-accessible wrapper that opens the right slide on click.
@@ -2201,19 +2258,19 @@ description: A headless click target that opens the lightbox at a given photo.
 </LightboxRoot>
 ```
 
-You rarely use this directly — `<Photo>` and `<PhotoAlbum>` already wrap your thumbnails with trigger behavior. Reach for `<PhotoTrigger>` when you're building a custom layout *and* composing the lightbox from primitives.
+You rarely use this directly — `<Photo>` and `<PhotoAlbum>` already wrap your thumbnails with trigger behavior. Reach for `<PhotoTrigger>` when you're building a custom layout _and_ composing the lightbox from primitives.
 
 ## Props
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `photo` | `PhotoItem` | **Required.** The photo this trigger represents. |
-| `index` | `number` | **Required.** The photo's position in the lightbox's photo list. |
+| Prop    | Type        | Description                                                      |
+| ------- | ----------- | ---------------------------------------------------------------- |
+| `photo` | `PhotoItem` | **Required.** The photo this trigger represents.                 |
+| `index` | `number`    | **Required.** The photo's position in the lightbox's photo list. |
 
 ## Slots
 
-| Slot | Slot props | Description |
-| --- | --- | --- |
+| Slot    | Slot props                 | Description                                                            |
+| ------- | -------------------------- | ---------------------------------------------------------------------- |
 | default | `{ photo, index, hidden }` | Your thumbnail content. `hidden` is `true` during the FLIP transition. |
 
 ## Behavior
@@ -2241,7 +2298,7 @@ All HTML attributes pass through to the root `<div>`. Use this to add classes, s
 
 ## The `hidden` slot prop
 
-When the lightbox opens with a FLIP transition, the underlying thumbnail becomes invisible so the ghost image can morph in its place. Use the `hidden` slot prop to hide any *overlay* content you've stacked over the image.
+When the lightbox opens with a FLIP transition, the underlying thumbnail becomes invisible so the ghost image can morph in its place. Use the `hidden` slot prop to hide any _overlay_ content you've stacked over the image.
 
 ```vue
 <PhotoTrigger :photo="photo" :index="i" v-slot="{ photo, hidden }">
@@ -2264,7 +2321,7 @@ import {
   LightboxViewport,
   LightboxSlide,
   LightboxControls,
-  PhotoTrigger
+  PhotoTrigger,
 } from '@nuxt-photo/vue'
 </script>
 
@@ -2315,9 +2372,12 @@ import {
 :::
 </file>
 <file name="6.photo-image.md" path="/docs/content/docs/3.components/6.photo-image.md">
+
 ---
+
 title: PhotoImage
 description: The universal image renderer — routes through whichever adapter you've configured.
+
 ---
 
 `<PhotoImage>` is the `<img>` wrapper every Nuxt Photo component uses under the hood. It takes a `PhotoItem`, asks the configured image adapter for a source, and renders the result. Most apps never instantiate it directly — `<Photo>`, `<PhotoAlbum>`, and `<PhotoCarousel>` do it for you.
@@ -2330,20 +2390,24 @@ Reach for it when you're building a custom thumbnail or slide and want provider 
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `photo` | `PhotoItem` | — | **Required.** The photo to render. |
-| `context` | `'thumb' \| 'slide' \| 'preload'` | `'thumb'` | Rendering context — adapters may return different URLs per context. |
-| `adapter` | `ImageAdapter` | provided/module default | Per-instance adapter override. |
-| `loading` | `'lazy' \| 'eager'` | `'lazy'` | Passed through to the `<img>`. |
-| `sizes` | `string` | — | Override the adapter-computed `<img sizes>`. |
+| Prop      | Type                              | Default                 | Description                                                         |
+| --------- | --------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| `photo`   | `PhotoItem`                       | —                       | **Required.** The photo to render.                                  |
+| `context` | `'thumb' \| 'slide' \| 'preload'` | `'thumb'`               | Rendering context — adapters may return different URLs per context. |
+| `adapter` | `ImageAdapter`                    | provided/module default | Per-instance adapter override.                                      |
+| `loading` | `'lazy' \| 'eager'`               | `'lazy'`                | Passed through to the `<img>`.                                      |
+| `sizes`   | `string`                          | —                       | Override the adapter-computed `<img sizes>`.                        |
 
 ## Why go through an adapter?
 
 The underlying adapter is what makes switching between `@nuxt/image`, a native `<img>`, or a custom CMS transform a single-line config change:
 
 ```ts
-nuxtPhoto: { image: { provider: 'nuxt-image' } }
+nuxtPhoto: {
+  image: {
+    provider: 'nuxt-image'
+  }
+}
 ```
 
 `<PhotoImage>` asks the current adapter for this photo's `src`, `srcset`, and `sizes` — so the same component in the same template renders a native `<img>` or a `<NuxtImg>`-backed `<img>` depending on your setup.
@@ -2383,11 +2447,7 @@ Use `context="slide"` so adapters that return different sizes per context (e.g. 
 ### Custom per-album adapter
 
 ```vue
-<PhotoImage
-  :photo="photo"
-  context="thumb"
-  :adapter="myCmsAdapter"
-/>
+<PhotoImage :photo="photo" context="thumb" :adapter="myCmsAdapter" />
 ```
 
 The per-instance adapter wins over any injected or module-level default. Useful when one gallery on a page pulls from a different provider.
@@ -2401,9 +2461,12 @@ The per-instance adapter wins over any injected or module-level default. Useful 
 :::
 </file>
 <file name="7.lightbox-primitives.md" path="/docs/content/docs/3.components/7.lightbox-primitives.md">
+
 ---
+
 title: Lightbox primitives
 description: The headless building blocks behind every lightbox in Nuxt Photo.
+
 ---
 
 The built-in lightbox isn't magic — it's six small primitives composed together. Import them from `@nuxt-photo/vue` and you can build your own lightbox with any UI you want, reusing our gestures, FLIP transitions, zoom, and state machine.
@@ -2416,7 +2479,7 @@ import {
   LightboxSlide,
   LightboxControls,
   LightboxCaption,
-  LightboxPortal
+  LightboxPortal,
 } from '@nuxt-photo/vue'
 ```
 
@@ -2502,14 +2565,14 @@ Renders one slide. Handles zoom state, pan bounds, and the FLIP frame.
 
 Props:
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `photo` | `PhotoItem` | The slide's photo. |
-| `index` | `number` | Index within the photo list. |
-| `effectClass` | `string` | Classes for the effect wrapper. |
-| `frameClass` | `string` | Classes for the frame element. |
-| `zoomClass` | `string` | Classes applied when zoomed in. |
-| `imgClass` | `string` | Classes on the inner `<img>`. |
+| Prop          | Type        | Description                     |
+| ------------- | ----------- | ------------------------------- |
+| `photo`       | `PhotoItem` | The slide's photo.              |
+| `index`       | `number`    | Index within the photo list.    |
+| `effectClass` | `string`    | Classes for the effect wrapper. |
+| `frameClass`  | `string`    | Classes for the frame element.  |
+| `zoomClass`   | `string`    | Classes applied when zoomed in. |
+| `imgClass`    | `string`    | Classes on the inner `<img>`.   |
 
 If the context has a custom slide renderer (via `useLightboxProvider`'s `resolveSlide` option or a parent's `#slide` slot), `<LightboxSlide>` delegates to it.
 
@@ -2518,7 +2581,18 @@ If the context has a custom slide renderer (via `useLightboxProvider`'s `resolve
 Render any UI you want — close button, prev/next arrows, zoom toggle, counter, share button. The primitive wires up the state and hands it to the default slot.
 
 ```vue
-<LightboxControls v-slot="{ activeIndex, count, close, next, prev, toggleZoom, isZoomedIn, zoomAllowed }">
+<LightboxControls
+  v-slot="{
+    activeIndex,
+    count,
+    close,
+    next,
+    prev,
+    toggleZoom,
+    isZoomedIn,
+    zoomAllowed,
+  }"
+>
   <button @click="close" aria-label="Close">×</button>
   <div>{{ activeIndex + 1 }} / {{ count }}</div>
   <button @click="prev" aria-label="Previous">←</button>
@@ -2564,11 +2638,13 @@ import {
   LightboxControls,
   LightboxCaption,
   LightboxPortal,
-  PhotoTrigger
+  PhotoTrigger,
 } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 
-const photos: PhotoItem[] = [/* … */]
+const photos: PhotoItem[] = [
+  /* … */
+]
 </script>
 
 <template>
@@ -2586,7 +2662,9 @@ const photos: PhotoItem[] = [/* … */]
     </div>
 
     <!-- the lightbox -->
-    <LightboxOverlay class="fixed inset-0 bg-black/90 z-50 grid place-items-center">
+    <LightboxOverlay
+      class="fixed inset-0 bg-black/90 z-50 grid place-items-center"
+    >
       <LightboxPortal />
 
       <LightboxViewport v-slot="{ photos, viewportRef }" class="w-full h-full">
@@ -2643,9 +2721,12 @@ title: Composables
 icon: i-lucide-function-square
 </file>
 <file name="1.use-lightbox.md" path="/docs/content/docs/4.composables/1.use-lightbox.md">
+
 ---
+
 title: useLightbox
 description: Read lightbox state and drive it from any component.
+
 ---
 
 `useLightbox()` is the **consumer** composable. It creates a lightbox context (or reuses the one provided by a parent) and gives you the minimum surface to read state and trigger actions: open, close, navigate.
@@ -2659,9 +2740,7 @@ import { useLightbox } from '@nuxt-photo/vue'
 ## Signature
 
 ```ts
-function useLightbox(
-  photos: MaybeRef<PhotoItem | PhotoItem[]>
-): {
+function useLightbox(photos: MaybeRef<PhotoItem | PhotoItem[]>): {
   open: (index: number, sourceEl?: HTMLElement) => Promise<void>
   close: () => Promise<void>
   next: () => void
@@ -2680,7 +2759,9 @@ function useLightbox(
 import { useLightbox } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 
-const photos: PhotoItem[] = [/* … */]
+const photos: PhotoItem[] = [
+  /* … */
+]
 const lightbox = useLightbox(photos)
 </script>
 
@@ -2726,7 +2807,7 @@ const hero: PhotoItem = {
   id: 'hero',
   src: '/photos/hero.jpg',
   width: 1280,
-  height: 800
+  height: 800,
 }
 
 const lightbox = useLightbox(hero)
@@ -2740,7 +2821,9 @@ The `photos` argument is a `MaybeRef`, so it can be a plain value or a reactive 
 
 ```ts
 const filter = ref('all')
-const filtered = computed(() => photos.filter(p => filter.value === 'all' || p.meta?.tag === filter.value))
+const filtered = computed(() =>
+  photos.filter((p) => filter.value === 'all' || p.meta?.tag === filter.value),
+)
 
 const lightbox = useLightbox(filtered)
 ```
@@ -2751,13 +2834,13 @@ When `filtered` changes, the lightbox's list updates. If the active photo surviv
 
 `useLightbox` creates a new lightbox context **scoped to the calling component**. Each component that calls it gets its own lightbox.
 
-If you want multiple components to share *one* lightbox, use `useLightboxProvider` at the top and `useLightbox` (or injection) below. The convention in Nuxt Photo:
+If you want multiple components to share _one_ lightbox, use `useLightboxProvider` at the top and `useLightbox` (or injection) below. The convention in Nuxt Photo:
 
-| Where | What to call |
-| --- | --- |
-| Building a custom lightbox | `useLightboxProvider` |
-| Consuming a lightbox your parent provided | `useLightbox` |
-| Inside a primitive (`LightboxControls`, etc.) | `useLightboxInject` |
+| Where                                         | What to call          |
+| --------------------------------------------- | --------------------- |
+| Building a custom lightbox                    | `useLightboxProvider` |
+| Consuming a lightbox your parent provided     | `useLightbox`         |
+| Inside a primitive (`LightboxControls`, etc.) | `useLightboxInject`   |
 
 ## Deep-linking example
 
@@ -2774,7 +2857,7 @@ const lightbox = useLightbox(photos)
 onMounted(() => {
   const id = route.query.photo
   if (!id) return
-  const index = photos.findIndex(p => String(p.id) === String(id))
+  const index = photos.findIndex((p) => String(p.id) === String(id))
   if (index >= 0) lightbox.open(index)
 })
 
@@ -2811,9 +2894,12 @@ watch([lightbox.isOpen, lightbox.activePhoto], ([open, photo]) => {
 :::
 </file>
 <file name="2.use-lightbox-provider.md" path="/docs/content/docs/4.composables/2.use-lightbox-provider.md">
+
 ---
+
 title: useLightboxProvider
 description: Create a lightbox context and provide it to descendants. The composable behind every custom lightbox.
+
 ---
 
 `useLightboxProvider()` is the **builder** composable. Call it in the root of a custom lightbox component — it creates the full lightbox state and injects it down the tree so primitives like `<LightboxOverlay>` or `<PhotoTrigger>` can pick it up.
@@ -2833,7 +2919,7 @@ function useLightboxProvider(
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
     minZoom?: number
-  }
+  },
 ): {
   open: (index: number, sourceEl?: HTMLElement) => Promise<void>
   close: () => Promise<void>
@@ -2863,7 +2949,7 @@ Controls the FLIP transition mode — covered in [Transitions](/docs/concepts/tr
 
 ```ts
 useLightboxProvider(photos, {
-  transition: { mode: 'auto', autoThreshold: 0.7 }
+  transition: { mode: 'auto', autoThreshold: 0.7 },
 })
 ```
 
@@ -2876,7 +2962,7 @@ useLightboxProvider(photos, {
   resolveSlide: (photo) => {
     if (photo.meta?.kind === 'video') return renderVideo
     return null // default image renderer
-  }
+  },
 })
 
 function renderVideo({ photo }) {
@@ -2903,7 +2989,7 @@ import {
   LightboxSlide,
   LightboxControls,
   LightboxPortal,
-  PhotoTrigger
+  PhotoTrigger,
 } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 
@@ -2911,12 +2997,12 @@ const props = defineProps<{ photos: PhotoItem[] }>()
 
 const lightbox = useLightboxProvider(() => props.photos, {
   transition: 'auto',
-  minZoom: 1
+  minZoom: 1,
 })
 
 defineExpose({
   open: lightbox.open,
-  close: lightbox.close
+  close: lightbox.close,
 })
 </script>
 
@@ -2969,11 +3055,7 @@ Same surface as `useLightbox`, plus two extras useful for custom layouts:
 Returns a ref setter that records the thumbnail element for FLIP transitions. Attach it to the element that should animate into the lightbox.
 
 ```vue
-<div
-  v-for="(photo, i) in photos"
-  :ref="setThumbRef(i)"
-  @click="open(i)"
->
+<div v-for="(photo, i) in photos" :ref="setThumbRef(i)" @click="open(i)">
   <img :src="photo.thumbSrc" />
 </div>
 ```
@@ -3010,9 +3092,12 @@ For advanced extension, `useLightboxContext` (from `@nuxt-photo/vue/extend`) ret
 :::
 </file>
 <file name="3.responsive.md" path="/docs/content/docs/4.composables/3.responsive.md">
+
 ---
+
 title: responsive
 description: Turn a breakpoint map into a responsive parameter.
+
 ---
 
 `responsive()` converts a plain object of `{ minWidth: value }` pairs into a function that resolves the right value for the current container width. Use it anywhere a prop accepts a `ResponsiveParameter`.
@@ -3024,9 +3109,7 @@ import { responsive } from '@nuxt-photo/vue'
 ## Signature
 
 ```ts
-function responsive<T>(
-  breakpoints: Record<number, T>
-): ResponsiveResolver<T>
+function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T>
 ```
 
 Returns a function `(containerWidth: number) => T`. Nuxt Photo calls it for you whenever it re-lays-out.
@@ -3053,9 +3136,9 @@ Keys are **minimum container widths** in pixels. Values are the parameter at tha
 ```ts
 const spacing = responsive({ 0: 4, 640: 8, 1024: 12 })
 
-spacing(320)  // 4
-spacing(640)  // 8
-spacing(900)  // 8  (still under 1024)
+spacing(320) // 4
+spacing(640) // 8
+spacing(900) // 8  (still under 1024)
 spacing(1024) // 12
 spacing(9999) // 12
 ```
@@ -3067,7 +3150,7 @@ A key of `0` acts as the fallback when the container is narrower than every othe
 `responsive` is generic — it preserves your value type:
 
 ```ts
-responsive<number>({ 0: 2, 768: 3, 1200: 4 })       // ResponsiveResolver<number>
+responsive<number>({ 0: 2, 768: 3, 1200: 4 }) // ResponsiveResolver<number>
 responsive<'row' | 'col'>({ 0: 'col', 768: 'row' }) // ResponsiveResolver<'row' | 'col'>
 ```
 
@@ -3111,7 +3194,7 @@ Inline functions lose this — if you need SSR-exact breakpoints, either use `re
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :spacing="w => w < 640 ? 4 : w < 1024 ? 8 : 12"
+  :spacing="(w) => (w < 640 ? 4 : w < 1024 ? 8 : 12)"
   :breakpoints="[640, 1024]"
 />
 ```
@@ -3144,9 +3227,12 @@ title: Guides
 icon: i-lucide-book-open
 </file>
 <file name="1.nuxt-image.md" path="/docs/content/docs/5.guides/1.nuxt-image.md">
+
 ---
+
 title: Using @nuxt/image
 description: Route every thumbnail and slide through @nuxt/image for automatic responsive sizes and provider integrations.
+
 ---
 
 `@nuxt/image` gives you responsive images, on-the-fly optimization, and a pluggable provider system (Cloudinary, Vercel, IPX, Netlify, …). Nuxt Photo integrates with it automatically — install it, and every thumbnail and lightbox slide routes through it with no further configuration.
@@ -3160,10 +3246,7 @@ description: Route every thumbnail and slide through @nuxt/image for automatic r
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/image',
-    '@nuxt-photo/nuxt'
-  ]
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
 })
 ```
 
@@ -3179,9 +3262,9 @@ export default defineNuxtConfig({
   image: {
     provider: 'cloudinary',
     cloudinary: {
-      baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/'
-    }
-  }
+      baseURL: 'https://res.cloudinary.com/your-cloud/image/upload/',
+    },
+  },
 })
 ```
 
@@ -3196,7 +3279,7 @@ Drop a `<PhotoAlbum>` on a page:
 import type { PhotoItem } from '@nuxt-photo/core'
 
 const photos: PhotoItem[] = [
-  { id: '1', src: '/photos/desert.jpg', width: 1280, height: 800 }
+  { id: '1', src: '/photos/desert.jpg', width: 1280, height: 800 },
 ]
 </script>
 
@@ -3211,16 +3294,18 @@ Open DevTools → Network. The `<img>` request goes to `/_ipx/...` (or your CDN)
 
 The module option `image.provider` picks the adapter:
 
-| Value | Behavior |
-| --- | --- |
-| `'auto'` (default) | Use `@nuxt/image` if present, else `native`. |
-| `'nuxt-image'` | Force `@nuxt/image`. Error if it isn't installed. |
-| `'native'` | Use raw `<img>` — skip `@nuxt/image` even if it's installed. |
-| `'custom'` | Use your own adapter via `provide(ImageAdapterKey, …)`. |
+| Value              | Behavior                                                     |
+| ------------------ | ------------------------------------------------------------ |
+| `'auto'` (default) | Use `@nuxt/image` if present, else `native`.                 |
+| `'nuxt-image'`     | Force `@nuxt/image`. Error if it isn't installed.            |
+| `'native'`         | Use raw `<img>` — skip `@nuxt/image` even if it's installed. |
+| `'custom'`         | Use your own adapter via `provide(ImageAdapterKey, …)`.      |
 
 ```ts [nuxt.config.ts]
 nuxtPhoto: {
-  image: { provider: 'nuxt-image' } // force even in auto-detect fails
+  image: {
+    provider: 'nuxt-image'
+  } // force even in auto-detect fails
 }
 ```
 
@@ -3243,9 +3328,9 @@ const photos: PhotoItem[] = [
   {
     id: '1',
     src: '/photos/desert.jpg',
-    width: 1280,      // ← still required
-    height: 800       // ← still required
-  }
+    width: 1280, // ← still required
+    height: 800, // ← still required
+  },
 ]
 ```
 
@@ -3259,8 +3344,8 @@ const photos: PhotoItem[] = [
     id: '1',
     src: 'https://cdn.example.com/photos/desert.jpg',
     width: 1280,
-    height: 800
-  }
+    height: 800,
+  },
 ]
 ```
 
@@ -3304,9 +3389,12 @@ The IPX provider needs write access to a cache directory. On serverless hosts, s
 :::
 </file>
 <file name="2.custom-layout.md" path="/docs/content/docs/5.guides/2.custom-layout.md">
+
 ---
+
 title: Custom layout
 description: Render photos in any layout you invent — keep the default lightbox.
+
 ---
 
 `<PhotoAlbum>` covers rows, columns, and masonry. When your design needs something else — a hex grid, map pins, timeline entries, a 3D carousel — drop one layer down to `<PhotoGroup>` in **headless mode**. You write the layout; Nuxt Photo still handles the lightbox, gestures, and FLIP transitions.
@@ -3341,7 +3429,9 @@ That's it. Clicks open the default lightbox; FLIP transitions animate from your 
 <script setup lang="ts">
 import type { PhotoItem } from '@nuxt-photo/core'
 
-const photos: PhotoItem[] = [/* … */]
+const photos: PhotoItem[] = [
+  /* … */
+]
 
 function hexPosition(i: number) {
   const cols = 4
@@ -3370,7 +3460,10 @@ function hexPosition(i: number) {
 </template>
 
 <style>
-.hex-grid { position: relative; height: 500px; }
+.hex-grid {
+  position: relative;
+  height: 500px;
+}
 .hex {
   position: absolute;
   width: 120px;
@@ -3379,7 +3472,11 @@ function hexPosition(i: number) {
   overflow: hidden;
   cursor: pointer;
 }
-.hex img { width: 100%; height: 100%; object-fit: cover; }
+.hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 </style>
 ```
 
@@ -3391,7 +3488,9 @@ Clicking any hex opens the default lightbox at the right photo; arrow keys cycle
 <script setup lang="ts">
 type GeoPhoto = PhotoItem & { meta: { lat: number; lng: number } }
 
-const photos: GeoPhoto[] = [/* … */]
+const photos: GeoPhoto[] = [
+  /* … */
+]
 
 function pinPosition(photo: GeoPhoto) {
   const x = (photo.meta.lng + 180) * (100 / 360)
@@ -3509,9 +3608,12 @@ Headless mode gives you a custom **layout** but keeps the default lightbox. If y
 :::
 </file>
 <file name="3.custom-lightbox.md" path="/docs/content/docs/5.guides/3.custom-lightbox.md">
+
 ---
+
 title: Custom lightbox
 description: Replace the built-in lightbox with your own UI while keeping the gestures, zoom, and transitions.
+
 ---
 
 The default lightbox is opinionated: a dark overlay, a centered frame, arrows, a caption. When your design needs something else — a side panel, before/after comparison, inline metadata, a bespoke zoom HUD — compose the primitives yourself.
@@ -3544,7 +3646,7 @@ import {
   LightboxControls,
   LightboxCaption,
   LightboxPortal,
-  PhotoTrigger
+  PhotoTrigger,
 } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 
@@ -3554,7 +3656,7 @@ const lightbox = useLightboxProvider(() => props.photos)
 
 defineExpose({
   open: lightbox.open,
-  close: lightbox.close
+  close: lightbox.close,
 })
 </script>
 
@@ -3594,7 +3696,16 @@ defineExpose({
       </LightboxViewport>
 
       <LightboxControls
-        v-slot="{ close, next, prev, activeIndex, count, toggleZoom, isZoomedIn, zoomAllowed }"
+        v-slot="{
+          close,
+          next,
+          prev,
+          activeIndex,
+          count,
+          toggleZoom,
+          isZoomedIn,
+          zoomAllowed,
+        }"
         class="absolute inset-x-0 top-0 flex items-center gap-2 p-4 text-white"
       >
         <button @click="close" aria-label="Close">✕</button>
@@ -3612,8 +3723,12 @@ defineExpose({
         v-slot="{ photo }"
         class="absolute inset-x-0 bottom-0 p-6 text-white bg-gradient-to-t from-black/80 to-transparent"
       >
-        <h2 v-if="photo?.caption" class="text-lg font-medium">{{ photo.caption }}</h2>
-        <p v-if="photo?.description" class="text-sm opacity-80">{{ photo.description }}</p>
+        <h2 v-if="photo?.caption" class="text-lg font-medium">
+          {{ photo.caption }}
+        </h2>
+        <p v-if="photo?.description" class="text-sm opacity-80">
+          {{ photo.description }}
+        </p>
       </LightboxCaption>
     </LightboxOverlay>
   </Teleport>
@@ -3660,11 +3775,16 @@ useLightboxProvider(photos, {
     if (photo.meta?.kind === 'video') return renderVideo
     if (photo.meta?.kind === 'compare') return renderCompare
     return null // fall through to default image rendering
-  }
+  },
 })
 
 function renderVideo({ photo }) {
-  return h('video', { src: photo.src, controls: true, autoplay: true, class: 'w-full h-full object-contain' })
+  return h('video', {
+    src: photo.src,
+    controls: true,
+    autoplay: true,
+    class: 'w-full h-full object-contain',
+  })
 }
 ```
 
@@ -3753,9 +3873,12 @@ You're responsible for:
 :::
 </file>
 <file name="4.custom-adapter.md" path="/docs/content/docs/5.guides/4.custom-adapter.md">
+
 ---
+
 title: Custom image adapter
 description: Route every image through your own CMS, signing logic, or format-selection rules.
+
 ---
 
 The built-in `'native'` and `'nuxt-image'` providers cover most cases. When they don't — signed URLs with short TTLs, a bespoke image API, WebP + AVIF negotiation with your own logic — you can write a custom **image adapter**.
@@ -3765,7 +3888,7 @@ An adapter is a single function:
 ```ts
 type ImageAdapter = (
   photo: PhotoItem,
-  context: 'thumb' | 'slide' | 'preload'
+  context: 'thumb' | 'slide' | 'preload',
 ) => ImageSource
 
 type ImageSource = {
@@ -3806,7 +3929,7 @@ export const cmsAdapter: ImageAdapter = (photo, context) => {
       src: url(photo, 480),
       srcset: `${url(photo, 480)} 480w, ${url(photo, 960)} 960w`,
       width: photo.width,
-      height: photo.height
+      height: photo.height,
     }
   }
 
@@ -3814,11 +3937,11 @@ export const cmsAdapter: ImageAdapter = (photo, context) => {
   return {
     src: url(photo, 1920),
     srcset: [480, 960, 1440, 1920, 2560]
-      .map(w => `${url(photo, w)} ${w}w`)
+      .map((w) => `${url(photo, w)} ${w}w`)
       .join(', '),
     sizes: '100vw',
     width: photo.width,
-    height: photo.height
+    height: photo.height,
   }
 }
 ```
@@ -3874,7 +3997,7 @@ const signedAdapter: ImageAdapter = (photo, context) => {
   return {
     src: `/i/${photo.id}?w=${width}&exp=${expires}&sig=${signature}`,
     width: photo.width,
-    height: photo.height
+    height: photo.height,
   }
 }
 ```
@@ -3891,13 +4014,14 @@ If you don't want to depend on `@nuxt/image` but still want Cloudinary:
 const CLOUD = 'your-cloud'
 
 const cloudinaryAdapter: ImageAdapter = (photo, context) => {
-  const transform = context === 'thumb'
-    ? 'c_fill,w_480,h_360,q_auto,f_auto'
-    : 'c_limit,w_1920,q_auto,f_auto'
+  const transform =
+    context === 'thumb'
+      ? 'c_fill,w_480,h_360,q_auto,f_auto'
+      : 'c_limit,w_1920,q_auto,f_auto'
   return {
     src: `https://res.cloudinary.com/${CLOUD}/image/upload/${transform}/${photo.src}`,
     width: photo.width,
-    height: photo.height
+    height: photo.height,
   }
 }
 ```
@@ -3910,7 +4034,7 @@ const safeAdapter: ImageAdapter = (photo, context) => {
     return {
       src: '/placeholder.svg',
       width: photo.width,
-      height: photo.height
+      height: photo.height,
     }
   }
   // delegate to another adapter
@@ -3951,9 +4075,12 @@ describe('cmsAdapter', () => {
 :::
 </file>
 <file name="5.responsive-tuning.md" path="/docs/content/docs/5.guides/5.responsive-tuning.md">
+
 ---
+
 title: Tuning responsive layouts
 description: Spacing, column counts, row heights — how to pick the right values for every viewport.
+
 ---
 
 Every layout prop that accepts a number also accepts a **responsive parameter**: a breakpoint map or a function of the container width. This guide walks through how to tune them for real projects.
@@ -3971,7 +4098,7 @@ const bp = { sm: 640, md: 768, lg: 1024, xl: 1280 }
   :photos="photos"
   :layout="{
     type: 'columns',
-    columns: responsive({ 0: 2, [bp.md]: 3, [bp.lg]: 4, [bp.xl]: 5 })
+    columns: responsive({ 0: 2, [bp.md]: 3, [bp.lg]: 4, [bp.xl]: 5 }),
   }"
   :spacing="responsive({ 0: 4, [bp.md]: 8, [bp.lg]: 12 })"
 />
@@ -3999,10 +4126,10 @@ Columns are fixed-count. Raise the count gradually as the container grows:
 
 ```ts
 responsive({
-  0: 2,     // phones
-  640: 3,   // small tablets
-  1024: 4,  // desktops
-  1440: 5   // wide screens
+  0: 2, // phones
+  640: 3, // small tablets
+  1024: 4, // desktops
+  1440: 5, // wide screens
 })
 ```
 
@@ -4037,7 +4164,7 @@ Combined with a `background` on the item wrapper (via `:item-class`), you get an
 
 ## Combining props
 
-Spacing and target row height interact. A taller row with the same spacing looks *more* separated; a denser row with the same spacing looks *less*. Change them together:
+Spacing and target row height interact. A taller row with the same spacing looks _more_ separated; a denser row with the same spacing looks _less_. Change them together:
 
 ```ts
 // Sparse, roomy
@@ -4051,12 +4178,12 @@ Spacing and target row height interact. A taller row with the same spacing looks
 
 ## Using a function for smooth scaling
 
-Breakpoint maps jump. Sometimes you want smooth interpolation — spacing that *grows* with the container:
+Breakpoint maps jump. Sometimes you want smooth interpolation — spacing that _grows_ with the container:
 
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :spacing="w => Math.round(Math.max(4, Math.min(16, w / 80)))"
+  :spacing="(w) => Math.round(Math.max(4, Math.min(16, w / 80)))"
 />
 ```
 
@@ -4085,7 +4212,9 @@ If you genuinely need viewport-based breakpoints (rare — usually a smell), use
 import { useWindowSize } from '@vueuse/core'
 
 const { width } = useWindowSize()
-const columns = computed(() => width.value < 640 ? 2 : width.value < 1024 ? 3 : 4)
+const columns = computed(() =>
+  width.value < 640 ? 2 : width.value < 1024 ? 3 : 4,
+)
 </script>
 
 <template>
@@ -4134,9 +4263,12 @@ Now you can see the exact container width as you resize, and pick breakpoint key
 :::
 </file>
 <file name="6.ssr-and-cls.md" path="/docs/content/docs/5.guides/6.ssr-and-cls.md">
+
 ---
+
 title: SSR and CLS
 description: Render the right layout on the server so the page doesn't jump on hydration.
+
 ---
 
 Cumulative Layout Shift (CLS) is the web-vitals metric that punishes pages for re-arranging content after load. Image galleries are prime offenders — the server doesn't know the container width, so it can't lay photos out correctly; then the client hydrates and everything moves.
@@ -4145,10 +4277,10 @@ Nuxt Photo has three knobs for keeping SSR and the client in lockstep.
 
 ## The three tools
 
-| Tool | What it does |
-| --- | --- |
-| Photo `width` + `height` | Reserves correct aspect ratio per thumbnail. **Always required.** |
-| `:defaultContainerWidth` | Runs the JS layout on the server assuming this container width. |
+| Tool                               | What it does                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| Photo `width` + `height`           | Reserves correct aspect ratio per thumbnail. **Always required.**              |
+| `:defaultContainerWidth`           | Runs the JS layout on the server assuming this container width.                |
 | `:breakpoints` (or `responsive()`) | Snap the observed width to a discrete set so SSR and client pick the same one. |
 
 ### Why width/height matter before anything else
@@ -4172,21 +4304,18 @@ That's acceptable for pages where the gallery is below the fold. If it's above t
 ## Level 1 — assumed container width
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :default-container-width="1200"
-/>
+<PhotoAlbum :photos="photos" :default-container-width="1200" />
 ```
 
 The rows layout runs on the server at 1200px. The HTML is exact — width, height, flex-basis, flex-grow all match what the client will compute.
 
 Pick a value that matches your **common viewport**:
 
-| Target audience | Good default |
-| --- | --- |
-| Desktop-first marketing site | 1200–1280 |
-| Mobile-first consumer app | 375 |
-| Mixed | The midpoint of your most common breakpoints |
+| Target audience              | Good default                                 |
+| ---------------------------- | -------------------------------------------- |
+| Desktop-first marketing site | 1200–1280                                    |
+| Mobile-first consumer app    | 375                                          |
+| Mixed                        | The midpoint of your most common breakpoints |
 
 The trade-off is simple: clients whose actual width matches see zero CLS; clients off from the assumption see one re-layout on hydration (no worse than Level 0).
 
@@ -4233,7 +4362,7 @@ If multiple responsive props define different keys, they merge:
   :spacing="responsive({ 0: 4, 640: 8, 1024: 12 })"
   :layout="{
     type: 'columns',
-    columns: responsive({ 0: 2, 768: 3, 1200: 4 })
+    columns: responsive({ 0: 2, 768: 3, 1200: 4 }),
   }"
 />
 ```
@@ -4242,7 +4371,7 @@ Merged breakpoints: `[640, 768, 1024, 1200]`.
 
 ## Columns and masonry
 
-The columns and masonry layouts don't use `flex-grow` — they're CSS-flexbox columns where each column's width is fixed. SSR renders them correctly by default, *if* the JS layout runs.
+The columns and masonry layouts don't use `flex-grow` — they're CSS-flexbox columns where each column's width is fixed. SSR renders them correctly by default, _if_ the JS layout runs.
 
 Set `:default-container-width` so the server can pick the right column count when `columns` is responsive.
 
@@ -4293,9 +4422,12 @@ CLS scores under **0.1** are good; under **0.05** is excellent. A correctly-tune
 :::
 </file>
 <file name="7.programmatic-control.md" path="/docs/content/docs/5.guides/7.programmatic-control.md">
+
 ---
+
 title: Programmatic control
 description: Open, close, and navigate the lightbox from code — buttons, URLs, keyboard shortcuts, analytics.
+
 ---
 
 Every lightbox Nuxt Photo creates exposes the same action surface: `open`, `close`, `next`, `prev`. You can reach them from outside the gallery, which makes non-thumbnail entry points straightforward — a CTA button, a deep link, a keyboard shortcut, an analytics handler.
@@ -4308,7 +4440,9 @@ Every lightbox Nuxt Photo creates exposes the same action surface: `open`, `clos
 <script setup lang="ts">
 import type { PhotoItem } from '@nuxt-photo/core'
 
-const photos: PhotoItem[] = [/* … */]
+const photos: PhotoItem[] = [
+  /* … */
+]
 const groupRef = ref()
 
 function openFirst() {
@@ -4340,7 +4474,9 @@ function openFirst() {
 <script setup lang="ts">
 import { useLightbox } from '@nuxt-photo/vue'
 
-const photos = [/* … */]
+const photos = [
+  /* … */
+]
 const lightbox = useLightbox(photos)
 </script>
 
@@ -4363,7 +4499,7 @@ defineExpose({
   open: lightbox.open,
   close: lightbox.close,
   next: lightbox.next,
-  prev: lightbox.prev
+  prev: lightbox.prev,
 })
 ```
 
@@ -4401,7 +4537,7 @@ watch(
   () => groupRef.value?.activePhoto?.value,
   (photo) => {
     router.replace({ query: { ...route.query, photo: photo?.id } })
-  }
+  },
 )
 </script>
 ```
@@ -4451,7 +4587,7 @@ function stopSlideshow() {
   clearInterval(timer)
 }
 
-watch(lightbox.isOpen, (open) => open ? startSlideshow() : stopSlideshow())
+watch(lightbox.isOpen, (open) => (open ? startSlideshow() : stopSlideshow()))
 ```
 
 For carousels, use the built-in Autoplay plugin instead — it handles pause-on-hover and reduced-motion for you.
@@ -4472,9 +4608,9 @@ In practice this matters when the "thumbnail" for FLIP purposes isn't inside the
 ```ts
 async function tour() {
   await groupRef.value.open(0)
-  await new Promise(r => setTimeout(r, 2000))
+  await new Promise((r) => setTimeout(r, 2000))
   groupRef.value.next()
-  await new Promise(r => setTimeout(r, 2000))
+  await new Promise((r) => setTimeout(r, 2000))
   groupRef.value.next()
 }
 ```
@@ -4497,9 +4633,12 @@ title: Reference
 icon: i-lucide-library
 </file>
 <file name="1.types.md" path="/docs/content/docs/6.reference/1.types.md">
+
 ---
+
 title: Types
 description: Every public type, with its shape and where it comes from.
+
 ---
 
 All types below are exported from `@nuxt-photo/core` unless otherwise noted.
@@ -4516,14 +4655,16 @@ import type {
   ImageSource,
   ImageContext,
   TransitionMode,
-  ResponsiveParameter
+  ResponsiveParameter,
 } from '@nuxt-photo/core'
 ```
 
 ## `PhotoItem<TMeta>`
 
 ```ts
-type PhotoItem<TMeta extends Record<string, unknown> = Record<string, unknown>> = {
+type PhotoItem<
+  TMeta extends Record<string, unknown> = Record<string, unknown>,
+> = {
   id: string | number
   src: string
   width: number
@@ -4579,10 +4720,7 @@ TypeScript enforces that `targetRowHeight` is only valid on `rows` and `columns`
 ## `ImageAdapter`
 
 ```ts
-type ImageAdapter = (
-  photo: PhotoItem,
-  context: ImageContext
-) => ImageSource
+type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
 ```
 
 The contract for routing images through a provider. Receives a photo and the render context, returns the `<img>`-ready source data.
@@ -4631,10 +4769,12 @@ From `@nuxt-photo/vue`.
 ```ts
 import type { LightboxTransitionOption } from '@nuxt-photo/vue'
 
-type LightboxTransitionOption = TransitionMode | {
-  mode: TransitionMode
-  autoThreshold?: number
-}
+type LightboxTransitionOption =
+  | TransitionMode
+  | {
+      mode: TransitionMode
+      autoThreshold?: number
+    }
 ```
 
 Either a mode string or an object with a custom `autoThreshold` (the intersection ratio above which `'auto'` uses FLIP). Default `autoThreshold` is `0.55`.
@@ -4688,7 +4828,13 @@ Bounding-rect shape used throughout the gesture and transition systems.
 ## `DebugChannel`
 
 ```ts
-type DebugChannel = 'transitions' | 'gestures' | 'zoom' | 'slides' | 'geometry' | 'rects'
+type DebugChannel =
+  | 'transitions'
+  | 'gestures'
+  | 'zoom'
+  | 'slides'
+  | 'geometry'
+  | 'rects'
 ```
 
 Channels you can turn on via the `debug` option to trace specific subsystems during development.
@@ -4702,9 +4848,12 @@ Channels you can turn on via the `debug` option to trace specific subsystems dur
 :::
 </file>
 <file name="2.css.md" path="/docs/content/docs/6.reference/2.css.md">
+
 ---
+
 title: CSS reference
 description: Class hooks and CSS variables for theming the default components.
+
 ---
 
 Nuxt Photo ships three CSS strategies, controlled by the `css` module option:
@@ -4715,11 +4864,11 @@ nuxtPhoto: {
 }
 ```
 
-| Value | What's loaded |
-| --- | --- |
-| `'none'` | No stylesheets. You write every rule yourself. |
-| `'structure'` | Layout + geometry only. **Default.** |
-| `'all'` | Structure + the default theme (amber-friendly neutral palette). |
+| Value         | What's loaded                                                   |
+| ------------- | --------------------------------------------------------------- |
+| `'none'`      | No stylesheets. You write every rule yourself.                  |
+| `'structure'` | Layout + geometry only. **Default.**                            |
+| `'all'`       | Structure + the default theme (amber-friendly neutral palette). |
 
 ## Class naming
 
@@ -4770,7 +4919,8 @@ The theme CSS uses variables scoped to the relevant root. Override them globally
   --np-btn-bg: rgba(255, 255, 255, 0.1);
   --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
   --np-btn-color: white;
-  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
+  --np-btn-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
 
@@ -4870,9 +5020,12 @@ Without structure CSS the grid math breaks — photos collapse to zero-size boxe
 :::
 </file>
 <file name="3.extension-api.md" path="/docs/content/docs/6.reference/3.extension-api.md">
+
 ---
+
 title: Extension API
 description: Low-level surface for building wrappers, plugins, or alternative front-ends.
+
 ---
 
 `@nuxt-photo/vue/extend` exposes internals that aren't part of the default API — they exist for people building custom lightboxes, alternative UI toolkits, or integrations with other libraries.
@@ -4898,7 +5051,7 @@ import {
   type LightboxSlotOverrides,
   type LightboxDefaults,
   type LightboxTransitionOption,
-  type PhotoGroupContext
+  type PhotoGroupContext,
 } from '@nuxt-photo/vue/extend'
 ```
 
@@ -4912,7 +5065,7 @@ These symbols have weaker stability guarantees than the public API. We won't bre
 function useLightboxContext(
   photos: MaybeRef<PhotoItem | PhotoItem[]>,
   transition?: LightboxTransitionOption,
-  minZoom?: number
+  minZoom?: number,
 ): LightboxContext
 ```
 
@@ -4942,7 +5095,9 @@ const ctx = useLightboxInject('MyCustomPrimitive')
 ```ts
 function provideLightboxContexts(
   ctx: LightboxContext,
-  options?: { resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null }
+  options?: {
+    resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
+  },
 ): void
 ```
 
@@ -4956,7 +5111,7 @@ Provide any of these to customize behavior globally. Use in a plugin for app-wid
 import {
   ImageAdapterKey,
   LightboxComponentKey,
-  LightboxDefaultsKey
+  LightboxDefaultsKey,
 } from '@nuxt-photo/vue/extend'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -4966,15 +5121,15 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-| Key | Type | Effect |
-| --- | --- | --- |
-| `ImageAdapterKey` | `ImageAdapter` | Global image adapter. |
-| `LightboxComponentKey` | `Component` | Replaces the default internal lightbox app-wide. |
-| `LightboxDefaultsKey` | `LightboxDefaults` | Global defaults: `minZoom`, transition options, etc. |
-| `LightboxSlideRendererKey` | `(photo: PhotoItem) => LightboxSlideRenderer \| null` | Scoped custom slide renderer. |
-| `LightboxSlotsKey` | `ComputedRef<LightboxSlotOverrides>` | Forwarded `#toolbar` / `#caption` / `#slide` slots. |
-| `PhotoGroupContextKey` | `PhotoGroupContext` | Internal — used by `<PhotoGroup>` to expose its registration API. |
-| `LightboxContextKey` | `LightboxContext` | Internal — the lightbox context itself. |
+| Key                        | Type                                                  | Effect                                                            |
+| -------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `ImageAdapterKey`          | `ImageAdapter`                                        | Global image adapter.                                             |
+| `LightboxComponentKey`     | `Component`                                           | Replaces the default internal lightbox app-wide.                  |
+| `LightboxDefaultsKey`      | `LightboxDefaults`                                    | Global defaults: `minZoom`, transition options, etc.              |
+| `LightboxSlideRendererKey` | `(photo: PhotoItem) => LightboxSlideRenderer \| null` | Scoped custom slide renderer.                                     |
+| `LightboxSlotsKey`         | `ComputedRef<LightboxSlotOverrides>`                  | Forwarded `#toolbar` / `#caption` / `#slide` slots.               |
+| `PhotoGroupContextKey`     | `PhotoGroupContext`                                   | Internal — used by `<PhotoGroup>` to expose its registration API. |
+| `LightboxContextKey`       | `LightboxContext`                                     | Internal — the lightbox context itself.                           |
 
 ## Types
 
@@ -5050,11 +5205,14 @@ Reach for this API when the public surface genuinely can't express what you need
 :::
 </file>
 <file name="4.bundle-size.md" path="/docs/content/docs/6.reference/4.bundle-size.md">
+
 ---
+
 navigation:
-  title: Bundle Size
+title: Bundle Size
 title: Bundle size and tree-shaking
 description: How Nuxt Photo measures client bundle impact across core, Vue, and Nuxt usage paths.
+
 ---
 
 Nuxt Photo reports bundle size the modern way: by measuring what a consumer import adds to a production bundle.
@@ -5075,15 +5233,15 @@ This keeps the measurement aligned with how each layer is actually consumed.
 
 These numbers come from the in-repo harness and are expected to move over time. The current thresholds are stored in the repo and re-checked in CI.
 
-| Surface | Scenario | Current brotli |
-| --- | --- | ---: |
-| `@nuxt-photo/core` | `import { responsive }` | `283 B` |
-| `@nuxt-photo/core` | `import * as core` | `6.86 kB` |
-| `@nuxt-photo/vue` | `import { PhotoImage }` | `718 B` |
-| `@nuxt-photo/vue` | `import { useLightbox }` | `17.8 kB` |
-| `@nuxt-photo/vue` | `import * as NuxtPhoto` | `20.1 kB` |
+| Surface            | Scenario                 |                          Current brotli |
+| ------------------ | ------------------------ | --------------------------------------: |
+| `@nuxt-photo/core` | `import { responsive }`  |                                 `283 B` |
+| `@nuxt-photo/core` | `import * as core`       |                               `6.86 kB` |
+| `@nuxt-photo/vue`  | `import { PhotoImage }`  |                                 `718 B` |
+| `@nuxt-photo/vue`  | `import { useLightbox }` |                               `17.8 kB` |
+| `@nuxt-photo/vue`  | `import * as NuxtPhoto`  |                               `20.1 kB` |
 | `@nuxt-photo/nuxt` | module enabled, no usage | effectively flat in the current fixture |
-| `@nuxt-photo/nuxt` | one `PhotoImage` usage | `+292 B` over baseline |
+| `@nuxt-photo/nuxt` | one `PhotoImage` usage   |                  `+292 B` over baseline |
 
 ## How to interpret them
 
@@ -5125,30 +5283,39 @@ title: Docs
 icon: i-lucide-book
 </file>
 <file name="index.md" path="/docs/content/index.md">
+
 ---
+
 title: "Photo galleries for Nuxt."
 navigation: false
 description: "Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and headless primitives — auto-imported into any Nuxt 3 or 4 app."
 seo:
-  ogImage: '/social-card.png'
+ogImage: '/social-card.png'
+
 ---
 
-::u-page-hero
----
+## ::u-page-hero
+
 orientation: 'horizontal'
 ui:
-  container: 'lg:items-start'
+container: 'lg:items-start'
+
 ---
+
 #headline
-  :::u-button
-  ---
-  size: sm
-  to: /docs/getting-started/introduction
-  variant: outline
-  trailing-icon: i-lucide-arrow-right
-  ---
-  Albums, lightbox, carousel, primitives — for Nuxt
-  :::
+:::u-button
+
+---
+
+size: sm
+to: /docs/getting-started/introduction
+variant: outline
+trailing-icon: i-lucide-arrow-right
+
+---
+
+Albums, lightbox, carousel, primitives — for Nuxt
+:::
 
 #title
 Photo galleries for Nuxt, [done right]{.text-primary}.
@@ -5157,83 +5324,103 @@ Photo galleries for Nuxt, [done right]{.text-primary}.
 Nuxt Photo drops in a single module and gives you justified row layouts, shared lightbox with pinch-to-zoom, and an Embla carousel — all SSR-safe and wired to `@nuxt/image` when you need it.
 
 #links
-  :::u-button
-  ---
-  size: lg
-  to: /docs/getting-started/installation
-  trailing-icon: i-lucide-arrow-right
-  ---
-  Get started
-  :::
+:::u-button
 
-  :u-input-copy{value="npx nuxi module add @nuxt-photo/nuxt"}
+---
+
+size: lg
+to: /docs/getting-started/installation
+trailing-icon: i-lucide-arrow-right
+
+---
+
+Get started
+:::
+
+:u-input-copy{value="npx nuxi module add @nuxt-photo/nuxt"}
 
 #default
 ::tabs{class="xl:-mt-10"}
-  :::tabs-item{label="Album" icon="i-lucide-grid-3x3"}
-  ```vue
-  <script setup lang="ts">
-  import type { PhotoItem } from '@nuxt-photo/core'
+:::tabs-item{label="Album" icon="i-lucide-grid-3x3"}
 
-  const photos: PhotoItem[] = [
-    { id: '1', src: '/photos/desert.jpg', width: 1280, height: 800, alt: 'Desert' },
-    { id: '2', src: '/photos/ocean.jpg', width: 960, height: 1200, alt: 'Ocean' }
-  ]
-  </script>
+```vue
+<script setup lang="ts">
+import type { PhotoItem } from '@nuxt-photo/core'
 
-  <template>
-    <PhotoAlbum :photos="photos" layout="rows" :target-row-height="240" />
-  </template>
-  ```
-  :::
-  :::tabs-item{label="Photo" icon="i-lucide-image"}
-  ```vue
-  <template>
-    <Photo
-      :photo="{
-        id: 'hero',
-        src: '/photos/hero.jpg',
-        width: 1600,
-        height: 1000,
-        alt: 'Hero image'
-      }"
-      lightbox
-    />
-  </template>
-  ```
-  :::
-  :::tabs-item{label="Group" icon="i-lucide-layers"}
-  ```vue
-  <template>
-    <!-- One lightbox, shared across both albums -->
-    <PhotoGroup>
-      <PhotoAlbum :photos="landscape" layout="rows" />
-      <PhotoAlbum :photos="studies" layout="rows" />
-    </PhotoGroup>
-  </template>
-  ```
-  :::
-  :::tabs-item{label="Carousel" icon="i-lucide-images"}
-  ```vue
-  <template>
-    <PhotoCarousel
-      :photos="photos"
-      :options="{ loop: true }"
-      show-thumbnails
-      :lightbox="true"
-    />
-  </template>
-  ```
-  :::
+const photos: PhotoItem[] = [
+  {
+    id: '1',
+    src: '/photos/desert.jpg',
+    width: 1280,
+    height: 800,
+    alt: 'Desert',
+  },
+  { id: '2', src: '/photos/ocean.jpg', width: 960, height: 1200, alt: 'Ocean' },
+]
+</script>
+
+<template>
+  <PhotoAlbum :photos="photos" layout="rows" :target-row-height="240" />
+</template>
+```
+
+:::
+:::tabs-item{label="Photo" icon="i-lucide-image"}
+
+```vue
+<template>
+  <Photo
+    :photo="{
+      id: 'hero',
+      src: '/photos/hero.jpg',
+      width: 1600,
+      height: 1000,
+      alt: 'Hero image',
+    }"
+    lightbox
+  />
+</template>
+```
+
+:::
+:::tabs-item{label="Group" icon="i-lucide-layers"}
+
+```vue
+<template>
+  <!-- One lightbox, shared across both albums -->
+  <PhotoGroup>
+    <PhotoAlbum :photos="landscape" layout="rows" />
+    <PhotoAlbum :photos="studies" layout="rows" />
+  </PhotoGroup>
+</template>
+```
+
+:::
+:::tabs-item{label="Carousel" icon="i-lucide-images"}
+
+```vue
+<template>
+  <PhotoCarousel
+    :photos="photos"
+    :options="{ loop: true }"
+    show-thumbnails
+    :lightbox="true"
+  />
+</template>
+```
+
+:::
 ::
 ::
 
-::u-page-section
----
+## ::u-page-section
+
 ui:
-  container: pt-0
-  title: text-3xl font-semibold
+container: pt-0
+title: text-3xl font-semibold
+
 ---
+
 #title
 Justified rows, in one line
 
@@ -5245,12 +5432,14 @@ Drop `<PhotoAlbum>` with a photo array. The layout algorithm keeps rows visually
 ::
 ::
 
-::u-page-section
----
+## ::u-page-section
+
 ui:
-  container: pt-0
-  title: text-3xl font-semibold
+container: pt-0
+title: text-3xl font-semibold
+
 ---
+
 #title
 One lightbox, many albums
 
@@ -5262,12 +5451,14 @@ Wrap any number of `<PhotoAlbum>` in a `<PhotoGroup>` and they share a single li
 ::
 ::
 
-::u-page-section
----
+## ::u-page-section
+
 ui:
-  container: pt-0
-  title: text-3xl font-semibold
+container: pt-0
+title: text-3xl font-semibold
+
 ---
+
 #title
 Carousel with a lightbox on top
 
@@ -5280,56 +5471,80 @@ Carousel with a lightbox on top
 ::
 
 ::u-container
-  :::u-page-grid{class="pb-12 xl:pb-24"}
-    :::landing-feature
-    ---
-    title: Justified rows, columns, masonry
-    description: Three built-in layouts with responsive breakpoints and function-based spacing.
-    icon: i-lucide-layout-grid
-    to: /docs/components/photo-album
-    ---
-    :::
-    :::landing-feature
-    ---
-    title: Shared lightbox
-    description: One `<PhotoGroup>` lets any number of albums share a single lightbox and navigation.
-    icon: i-lucide-layers
-    to: /docs/components/photo-group
-    ---
-    :::
-    :::landing-feature
-    ---
-    title: Pinch, pan, zoom
-    description: Touch-first lightbox with spring physics, pinch-to-zoom, pan, and swipe-to-dismiss.
-    icon: i-lucide-hand
-    to: /docs/concepts/transitions
-    ---
-    :::
-    :::landing-feature
-    ---
-    title: Embla carousel
-    description: A carousel with thumbnails, counter, autoplay, and lightbox integration out of the box.
-    icon: i-lucide-images
-    to: /docs/components/photo-carousel
-    ---
-    :::
-    :::landing-feature
-    ---
-    title: @nuxt/image ready
-    description: Detects `@nuxt/image`, routes all images through it, and emits proper `srcset` and `sizes`.
-    icon: i-lucide-image
-    to: /docs/concepts/image-providers
-    ---
-    :::
-    :::landing-feature
-    ---
-    title: Headless primitives
-    description: Build your own layout or custom lightbox with the same primitives the recipes ship on.
-    icon: i-lucide-blocks
-    to: /docs/guides/custom-lightbox
-    ---
-    :::
-  :::
+:::u-page-grid{class="pb-12 xl:pb-24"}
+:::landing-feature
+
+---
+
+title: Justified rows, columns, masonry
+description: Three built-in layouts with responsive breakpoints and function-based spacing.
+icon: i-lucide-layout-grid
+to: /docs/components/photo-album
+
+---
+
+:::
+:::landing-feature
+
+---
+
+title: Shared lightbox
+description: One `<PhotoGroup>` lets any number of albums share a single lightbox and navigation.
+icon: i-lucide-layers
+to: /docs/components/photo-group
+
+---
+
+:::
+:::landing-feature
+
+---
+
+title: Pinch, pan, zoom
+description: Touch-first lightbox with spring physics, pinch-to-zoom, pan, and swipe-to-dismiss.
+icon: i-lucide-hand
+to: /docs/concepts/transitions
+
+---
+
+:::
+:::landing-feature
+
+---
+
+title: Embla carousel
+description: A carousel with thumbnails, counter, autoplay, and lightbox integration out of the box.
+icon: i-lucide-images
+to: /docs/components/photo-carousel
+
+---
+
+:::
+:::landing-feature
+
+---
+
+title: @nuxt/image ready
+description: Detects `@nuxt/image`, routes all images through it, and emits proper `srcset` and `sizes`.
+icon: i-lucide-image
+to: /docs/concepts/image-providers
+
+---
+
+:::
+:::landing-feature
+
+---
+
+title: Headless primitives
+description: Build your own layout or custom lightbox with the same primitives the recipes ship on.
+icon: i-lucide-blocks
+to: /docs/guides/custom-lightbox
+
+---
+
+:::
+:::
 ::
 
 ::page-section-cta
@@ -5341,25 +5556,25 @@ import { getLoopedIndex } from '../geometry/rect'
 export type CollectionItem = { id: string | number }
 
 export interface Collection<T extends CollectionItem> {
-  readonly items: readonly T[]
-  readonly count: number
-  getByIndex(index: number): T | undefined
-  getById(id: string | number): T | undefined
-  indexOfId(id: string | number): number
-  next(currentIndex: number, wrap?: boolean): number
-  prev(currentIndex: number, wrap?: boolean): number
-  preloadCandidates(currentIndex: number, range?: number): T[]
+readonly items: readonly T[]
+readonly count: number
+getByIndex(index: number): T | undefined
+getById(id: string | number): T | undefined
+indexOfId(id: string | number): number
+next(currentIndex: number, wrap?: boolean): number
+prev(currentIndex: number, wrap?: boolean): number
+preloadCandidates(currentIndex: number, range?: number): T[]
 }
 
 export function createCollection<T extends CollectionItem>(items: readonly T[]): Collection<T> {
-  const idToIndex = new Map<string | number, number>()
-  for (let i = 0; i < items.length; i++) {
-    idToIndex.set(items[i]!.id, i)
-  }
+const idToIndex = new Map<string | number, number>()
+for (let i = 0; i < items.length; i++) {
+idToIndex.set(items[i]!.id, i)
+}
 
-  return {
-    items,
-    count: items.length,
+return {
+items,
+count: items.length,
 
     getByIndex(index: number): T | undefined {
       return items[index]
@@ -5396,7 +5611,8 @@ export function createCollection<T extends CollectionItem>(items: readonly T[]):
       }
       return candidates
     },
-  }
+
+}
 }
 </file>
 <file name="index.ts" path="/packages/core/src/collection/index.ts">
@@ -5411,77 +5627,77 @@ import type { DebugChannel } from '../types'
 export type DebugFlags = Record<DebugChannel, boolean> & { all: boolean }
 
 export type DebugLogger = {
-  flags: DebugFlags
-  log: (channel: DebugChannel, ...args: unknown[]) => void
-  warn: (channel: DebugChannel, ...args: unknown[]) => void
-  table: (channel: DebugChannel, data: Record<string, unknown>) => void
-  group: (channel: DebugChannel, label: string) => void
-  groupEnd: (channel: DebugChannel) => void
+flags: DebugFlags
+log: (channel: DebugChannel, ...args: unknown[]) => void
+warn: (channel: DebugChannel, ...args: unknown[]) => void
+table: (channel: DebugChannel, data: Record<string, unknown>) => void
+group: (channel: DebugChannel, label: string) => void
+groupEnd: (channel: DebugChannel) => void
 }
 
 const CHANNEL_COLORS: Record<DebugChannel, string> = {
-  transitions: '#a78bfa',
-  gestures: '#34d399',
-  zoom: '#fbbf24',
-  slides: '#60a5fa',
-  geometry: '#f87171',
-  rects: '#fb923c',
+transitions: '#a78bfa',
+gestures: '#34d399',
+zoom: '#fbbf24',
+slides: '#60a5fa',
+geometry: '#f87171',
+rects: '#fb923c',
 }
 
 export function createDebug(): DebugLogger {
-  const flags: DebugFlags = {
-    transitions: false,
-    gestures: false,
-    zoom: false,
-    slides: false,
-    geometry: false,
-    rects: false,
-    all: false,
-  }
+const flags: DebugFlags = {
+transitions: false,
+gestures: false,
+zoom: false,
+slides: false,
+geometry: false,
+rects: false,
+all: false,
+}
 
-  function isEnabled(channel: DebugChannel): boolean {
-    return flags.all || flags[channel]
-  }
+function isEnabled(channel: DebugChannel): boolean {
+return flags.all || flags[channel]
+}
 
-  function prefix(channel: DebugChannel): string[] {
-    const color = CHANNEL_COLORS[channel]
-    return [
-      `%c[lightbox:${channel}]`,
-      `color: ${color}; font-weight: bold`,
-    ]
-  }
+function prefix(channel: DebugChannel): string[] {
+const color = CHANNEL_COLORS[channel]
+return [
+`%c[lightbox:${channel}]`,
+`color: ${color}; font-weight: bold`,
+]
+}
 
-  function log(channel: DebugChannel, ...args: unknown[]) {
-    if (!isEnabled(channel)) return
-    const [fmt, style] = prefix(channel)
-    console.log(fmt, style, ...args)
-  }
+function log(channel: DebugChannel, ...args: unknown[]) {
+if (!isEnabled(channel)) return
+const [fmt, style] = prefix(channel)
+console.log(fmt, style, ...args)
+}
 
-  function warn(channel: DebugChannel, ...args: unknown[]) {
-    if (!isEnabled(channel)) return
-    const [fmt, style] = prefix(channel)
-    console.warn(fmt, style, ...args)
-  }
+function warn(channel: DebugChannel, ...args: unknown[]) {
+if (!isEnabled(channel)) return
+const [fmt, style] = prefix(channel)
+console.warn(fmt, style, ...args)
+}
 
-  function table(channel: DebugChannel, data: Record<string, unknown>) {
-    if (!isEnabled(channel)) return
-    const [fmt, style] = prefix(channel)
-    console.log(fmt, style)
-    console.table(data)
-  }
+function table(channel: DebugChannel, data: Record<string, unknown>) {
+if (!isEnabled(channel)) return
+const [fmt, style] = prefix(channel)
+console.log(fmt, style)
+console.table(data)
+}
 
-  function group(channel: DebugChannel, label: string) {
-    if (!isEnabled(channel)) return
-    const [fmt, style] = prefix(channel)
-    console.groupCollapsed(`${fmt} ${label}`, style)
-  }
+function group(channel: DebugChannel, label: string) {
+if (!isEnabled(channel)) return
+const [fmt, style] = prefix(channel)
+console.groupCollapsed(`${fmt} ${label}`, style)
+}
 
-  function groupEnd(channel: DebugChannel) {
-    if (!isEnabled(channel)) return
-    console.groupEnd()
-  }
+function groupEnd(channel: DebugChannel) {
+if (!isEnabled(channel)) return
+console.groupEnd()
+}
 
-  return { flags, log, warn, table, group, groupEnd }
+return { flags, log, warn, table, group, groupEnd }
 }
 </file>
 <file name="body-scroll.ts" path="/packages/core/src/dom/body-scroll.ts">
@@ -5490,13 +5706,13 @@ let savedOverflow = ''
 let savedPaddingRight = ''
 
 export function lockBodyScroll(locked: boolean): void {
-  if (typeof document === 'undefined' || typeof window === 'undefined') return
+if (typeof document === 'undefined' || typeof window === 'undefined') return
 
-  if (locked) {
-    lockCount++
-    if (lockCount === 1) {
-      savedOverflow = document.body.style.overflow
-      savedPaddingRight = document.body.style.paddingRight
+if (locked) {
+lockCount++
+if (lockCount === 1) {
+savedOverflow = document.body.style.overflow
+savedPaddingRight = document.body.style.paddingRight
 
       const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth)
       const currentPaddingRight = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0
@@ -5505,13 +5721,14 @@ export function lockBodyScroll(locked: boolean): void {
       document.body.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
     }
     return
-  }
 
-  lockCount = Math.max(0, lockCount - 1)
-  if (lockCount === 0) {
-    document.body.style.overflow = savedOverflow
-    document.body.style.paddingRight = savedPaddingRight
-  }
+}
+
+lockCount = Math.max(0, lockCount - 1)
+if (lockCount === 0) {
+document.body.style.overflow = savedOverflow
+document.body.style.paddingRight = savedPaddingRight
+}
 }
 </file>
 <file name="index.ts" path="/packages/core/src/dom/index.ts">
@@ -5520,13 +5737,13 @@ export { lockBodyScroll } from './body-scroll'
 </file>
 <file name="timing.ts" path="/packages/core/src/dom/timing.ts">
 export function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function nextFrame(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve())
-  })
+return new Promise<void>((resolve) => {
+requestAnimationFrame(() => resolve())
+})
 }
 </file>
 <file name="index.ts" path="/packages/core/src/geometry/index.ts">
@@ -5536,130 +5753,132 @@ export { isUsableRect, getLoopedIndex, fitRect, flipTransform, makeGhostBaseStyl
 import type { RectLike } from '../types'
 
 export function isUsableRect(rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } | null): boolean {
-  if (!rect) return false
-  if (rect.width < 24 || rect.height < 24) return false
-  if (rect.bottom < 0 || rect.right < 0) return false
-  if (typeof window !== 'undefined') {
-    if (rect.top > window.innerHeight || rect.left > window.innerWidth) return false
-  }
-  return true
+if (!rect) return false
+if (rect.width < 24 || rect.height < 24) return false
+if (rect.bottom < 0 || rect.right < 0) return false
+if (typeof window !== 'undefined') {
+if (rect.top > window.innerHeight || rect.left > window.innerWidth) return false
+}
+return true
 }
 
 export function getLoopedIndex(index: number, length: number): number {
-  return (index + length) % length
+return (index + length) % length
 }
 
 export function fitRect(container: RectLike, aspect: number): RectLike {
-  let width = container.width
-  let height = width / aspect
+let width = container.width
+let height = width / aspect
 
-  if (height > container.height) {
-    height = container.height
-    width = height * aspect
-  }
+if (height > container.height) {
+height = container.height
+width = height \* aspect
+}
 
-  return {
-    left: container.left + (container.width - width) / 2,
-    top: container.top + (container.height - height) / 2,
-    width,
-    height,
-  }
+return {
+left: container.left + (container.width - width) / 2,
+top: container.top + (container.height - height) / 2,
+width,
+height,
+}
 }
 
 export function flipTransform(from: RectLike, to: RectLike): string {
-  const dx = from.left - to.left
-  const dy = from.top - to.top
-  const sx = from.width / to.width
-  const sy = from.height / to.height
-  return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`
+const dx = from.left - to.left
+const dy = from.top - to.top
+const sx = from.width / to.width
+const sy = from.height / to.height
+return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`
 }
 
 export function makeGhostBaseStyle(to: RectLike): Record<string, string> {
-  return {
-    left: `${to.left}px`,
-    top: `${to.top}px`,
-    width: `${to.width}px`,
-    height: `${to.height}px`,
-  }
+return {
+left: `${to.left}px`,
+top: `${to.top}px`,
+width: `${to.width}px`,
+height: `${to.height}px`,
+}
 }
 
 export function rubberband(value: number, min: number, max: number): number {
-  if (value < min) {
-    return min + (value - min) * 0.2
-  }
+if (value < min) {
+return min + (value - min) \* 0.2
+}
 
-  if (value > max) {
-    return max + (value - max) * 0.2
-  }
+if (value > max) {
+return max + (value - max) \* 0.2
+}
 
-  return value
+return value
 }
 </file>
 <file name="adapter.ts" path="/packages/core/src/image/adapter.ts">
 import type { ImageAdapter, ImageSource, PhotoItem } from '../types'
 import { round } from '../utils/math'
 
-/**
- * Default native image adapter — uses photo src/thumbSrc directly.
- * Returns the same singleton instance on every call.
- */
-const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource => {
+/\*\*
+
+- Default native image adapter — uses photo src/thumbSrc directly.
+- Returns the same singleton instance on every call.
+  \*/
+  const \_nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource => {
   if (context === 'thumb' && photo.thumbSrc) {
-    return {
-      src: photo.thumbSrc,
-      width: photo.width,
-      height: photo.height,
-    }
+  return {
+  src: photo.thumbSrc,
+  width: photo.width,
+  height: photo.height,
+  }
   }
 
-  return {
-    src: photo.src,
-    srcset: photo.srcset,
-    width: photo.width,
-    height: photo.height,
-  }
+return {
+src: photo.src,
+srcset: photo.srcset,
+width: photo.width,
+height: photo.height,
+}
 }
 
 export function createNativeImageAdapter(): ImageAdapter {
-  return _nativeAdapter
+return \_nativeAdapter
 }
 
-/**
- * Compute an `<img sizes>` string for a photo rendered within a justified-rows layout.
- *
- * The default size uses the photo's fraction of the container:
- * `calc((containerSize - gaps) / divisor)` where `divisor = containerWidth / photoWidth`.
- *
- * Viewport-specific overrides (e.g. `(max-width: 600px) 100vw`) are prepended in order
- * so the browser matches the first one that applies.
- *
- * Returns `undefined` when `responsiveSizes` is not provided so callers can fall back to
- * adapter-computed sizes without extra checks.
- */
-export function computePhotoSizes(
+/\*\*
+
+- Compute an `<img sizes>` string for a photo rendered within a justified-rows layout.
+-
+- The default size uses the photo's fraction of the container:
+- `calc((containerSize - gaps) / divisor)` where `divisor = containerWidth / photoWidth`.
+-
+- Viewport-specific overrides (e.g. `(max-width: 600px) 100vw`) are prepended in order
+- so the browser matches the first one that applies.
+-
+- Returns `undefined` when `responsiveSizes` is not provided so callers can fall back to
+- adapter-computed sizes without extra checks.
+  _/
+  export function computePhotoSizes(
   photoWidth: number,
   containerWidth: number,
   itemsInRow: number,
   spacing: number,
   padding: number,
   responsiveSizes?: {
-    /** CSS size of the album container, e.g. `'100vw'` or `'calc(100vw - 240px)'`. */
-    size: string
-    /** Optional viewport-specific overrides, listed from smallest to largest breakpoint. */
-    sizes?: Array<{ viewport: string; size: string }>
+  /\*\* CSS size of the album container, e.g. `'100vw'` or `'calc(100vw - 240px)'`. _/
+  size: string
+  /\*_ Optional viewport-specific overrides, listed from smallest to largest breakpoint. _/
+  sizes?: Array<{ viewport: string; size: string }>
   },
-): string | undefined {
+  ): string | undefined {
   if (!responsiveSizes) return undefined
 
-  const gaps = spacing * (itemsInRow - 1) + 2 * padding * itemsInRow
-  const divisor = round((containerWidth - gaps) / photoWidth, 5)
-  const defaultSize = `calc((${responsiveSizes.size} - ${gaps}px) / ${divisor})`
+const gaps = spacing _ (itemsInRow - 1) + 2 _ padding \* itemsInRow
+const divisor = round((containerWidth - gaps) / photoWidth, 5)
+const defaultSize = `calc((${responsiveSizes.size} - ${gaps}px) / ${divisor})`
 
-  if (!responsiveSizes.sizes?.length) return defaultSize
+if (!responsiveSizes.sizes?.length) return defaultSize
 
-  const parts = responsiveSizes.sizes.map(({ viewport, size }) => `${viewport} ${size}`)
-  parts.push(defaultSize)
-  return parts.join(', ')
+const parts = responsiveSizes.sizes.map(({ viewport, size }) => `${viewport} ${size}`)
+parts.push(defaultSize)
+return parts.join(', ')
 }
 </file>
 <file name="index.ts" path="/packages/core/src/image/index.ts">
@@ -5671,17 +5890,17 @@ const MAX_CACHE_SIZE = 500
 const imageLoadCache = new Map<string, Promise<void>>()
 
 export function ensureImageLoaded(src: string): Promise<void> {
-  const cached = imageLoadCache.get(src)
-  if (cached) return cached
+const cached = imageLoadCache.get(src)
+if (cached) return cached
 
-  const promise = new Promise<void>((resolve) => {
-    const image = new Image()
-    image.onload = () => resolve()
-    image.onerror = () => {
-      imageLoadCache.delete(src)
-      resolve()
-    }
-    image.src = src
+const promise = new Promise<void>((resolve) => {
+const image = new Image()
+image.onload = () => resolve()
+image.onerror = () => {
+imageLoadCache.delete(src)
+resolve()
+}
+image.src = src
 
     if (image.decode) {
       image.decode().catch(() => { imageLoadCache.delete(src) }).finally(resolve)
@@ -5691,13 +5910,14 @@ export function ensureImageLoaded(src: string): Promise<void> {
     if (image.complete) {
       resolve()
     }
-  })
 
-  imageLoadCache.set(src, promise)
-  if (imageLoadCache.size > MAX_CACHE_SIZE) {
-    imageLoadCache.delete(imageLoadCache.keys().next().value!)
-  }
-  return promise
+})
+
+imageLoadCache.set(src, promise)
+if (imageLoadCache.size > MAX_CACHE_SIZE) {
+imageLoadCache.delete(imageLoadCache.keys().next().value!)
+}
+return promise
 }
 </file>
 <file name="containerQueries.ts" path="/packages/core/src/layout/rows/containerQueries.ts">
@@ -5707,68 +5927,69 @@ import { resolveResponsiveParameter } from '../../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
 export interface BreakpointStylesOptions {
-  photos: PhotoItem[]
-  breakpoints: readonly number[]
-  spacing?: ResponsiveParameter<number>
-  padding?: ResponsiveParameter<number>
-  targetRowHeight?: ResponsiveParameter<number>
-  containerName: string
+photos: PhotoItem[]
+breakpoints: readonly number[]
+spacing?: ResponsiveParameter<number>
+padding?: ResponsiveParameter<number>
+targetRowHeight?: ResponsiveParameter<number>
+containerName: string
 }
 
 function rowSignature(groups: LayoutGroup[]): string {
-  return groups.map(g => g.entries[g.entries.length - 1]!.index).join(',')
+return groups.map(g => g.entries[g.entries.length - 1]!.index).join(',')
 }
 
-/**
- * Generates CSS `@container` rules for each unique Knuth-Plass row layout across the provided
- * breakpoints. Adjacent breakpoints that produce identical row assignments are deduplicated into
- * a single rule — this is mathematically valid because the `calc()` divisor equals
- * `totalAspectRatio / ratio(photo)`, which is independent of container width.
- *
- * The output is scoped to `containerName` so multiple albums on the same page never conflict.
- * Items must carry class `np-item-{index}` for the rules to apply.
- */
-export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
+/\*\*
+
+- Generates CSS `@container` rules for each unique Knuth-Plass row layout across the provided
+- breakpoints. Adjacent breakpoints that produce identical row assignments are deduplicated into
+- a single rule — this is mathematically valid because the `calc()` divisor equals
+- `totalAspectRatio / ratio(photo)`, which is independent of container width.
+-
+- The output is scoped to `containerName` so multiple albums on the same page never conflict.
+- Items must carry class `np-item-{index}` for the rules to apply.
+  \*/
+  export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   const { photos, containerName } = opts
   if (photos.length === 0 || opts.breakpoints.length === 0) return ''
 
-  const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
-  if (sorted.length === 0) return ''
+const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
+if (sorted.length === 0) return ''
 
-  // 1. Compute layout at each breakpoint
-  type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
-  const bpEntries: BpEntry[] = []
-  for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
-    const groups = computeRowsLayout({ photos, containerWidth: bp, spacing, padding, targetRowHeight })
-    if (groups.length === 0 && photos.length > 0) continue
-    bpEntries.push({ bp, sig: rowSignature(groups), groups })
-  }
-  if (bpEntries.length === 0) return ''
+// 1. Compute layout at each breakpoint
+type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
+const bpEntries: BpEntry[] = []
+for (const bp of sorted) {
+const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
+const padding = resolveResponsiveParameter(opts.padding, bp, 0)
+const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
+const groups = computeRowsLayout({ photos, containerWidth: bp, spacing, padding, targetRowHeight })
+if (groups.length === 0 && photos.length > 0) continue
+bpEntries.push({ bp, sig: rowSignature(groups), groups })
+}
+if (bpEntries.length === 0) return ''
 
-  // 2. Collapse adjacent identical layouts into spans
-  type Span = { sig: string; fromIdx: number; toIdx: number; groups: LayoutGroup[]; sampleBp: number }
-  const spans: Span[] = []
-  for (let i = 0; i < bpEntries.length; i++) {
-    const e = bpEntries[i]!
-    const last = spans[spans.length - 1]
-    if (last && last.sig === e.sig) {
-      last.toIdx = i
-    }
-    else {
-      spans.push({ sig: e.sig, fromIdx: i, toIdx: i, groups: e.groups, sampleBp: e.bp })
-    }
-  }
+// 2. Collapse adjacent identical layouts into spans
+type Span = { sig: string; fromIdx: number; toIdx: number; groups: LayoutGroup[]; sampleBp: number }
+const spans: Span[] = []
+for (let i = 0; i < bpEntries.length; i++) {
+const e = bpEntries[i]!
+const last = spans[spans.length - 1]
+if (last && last.sig === e.sig) {
+last.toIdx = i
+}
+else {
+spans.push({ sig: e.sig, fromIdx: i, toIdx: i, groups: e.groups, sampleBp: e.bp })
+}
+}
 
-  // 3. Generate CSS rules for each unique span
-  const rules: string[] = []
-  for (let s = 0; s < spans.length; s++) {
-    const span = spans[s]!
-    const isFirst = s === 0
-    const isLast = s === spans.length - 1
-    const sampleBp = span.sampleBp
+// 3. Generate CSS rules for each unique span
+const rules: string[] = []
+for (let s = 0; s < spans.length; s++) {
+const span = spans[s]!
+const isFirst = s === 0
+const isLast = s === spans.length - 1
+const sampleBp = span.sampleBp
 
     const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, 8)
     const padding = resolveResponsiveParameter(opts.padding, sampleBp, 0)
@@ -5806,9 +6027,10 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     }
 
     rules.push(`@container ${condition}{\n${itemRules.join('\n')}\n}`)
-  }
 
-  return rules.join('\n')
+}
+
+return rules.join('\n')
 }
 </file>
 <file name="helpers.ts" path="/packages/core/src/layout/rows/helpers.ts">
@@ -5816,45 +6038,45 @@ import type { PhotoItem } from '../../types'
 import { round } from '../../utils/math'
 
 export function ratio(item: PhotoItem) {
-  return item.width / item.height
+return item.width / item.height
 }
 
 export function findIdealNodeSearch(
-  items: PhotoItem[],
-  targetRowHeight: number,
-  containerWidth: number,
+items: PhotoItem[],
+targetRowHeight: number,
+containerWidth: number,
 ) {
-  const minRatio = items.reduce(
-    (acc, item) => Math.min(acc, ratio(item)),
-    Number.MAX_VALUE,
-  )
-  return round(containerWidth / targetRowHeight / minRatio) + 2
+const minRatio = items.reduce(
+(acc, item) => Math.min(acc, ratio(item)),
+Number.MAX_VALUE,
+)
+return round(containerWidth / targetRowHeight / minRatio) + 2
 }
 
 export function getCommonHeight(
-  row: PhotoItem[],
-  containerWidth: number,
-  spacing: number,
-  padding: number,
+row: PhotoItem[],
+containerWidth: number,
+spacing: number,
+padding: number,
 ) {
-  const rowWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
-  const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
-  return rowWidth / totalAspectRatio
+const rowWidth = containerWidth - (row.length - 1) _ spacing - 2 _ padding \* row.length
+const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
+return rowWidth / totalAspectRatio
 }
 
 export function cost(
-  items: PhotoItem[],
-  start: number,
-  end: number,
-  width: number,
-  targetRowHeight: number,
-  spacing: number,
-  padding: number,
+items: PhotoItem[],
+start: number,
+end: number,
+width: number,
+targetRowHeight: number,
+spacing: number,
+padding: number,
 ): number | undefined {
-  const row = items.slice(start, end)
-  const commonHeight = getCommonHeight(row, width, spacing, padding)
-  if (commonHeight <= 0) return undefined
-  return (commonHeight - targetRowHeight) ** 2 * row.length
+const row = items.slice(start, end)
+const commonHeight = getCommonHeight(row, width, spacing, padding)
+if (commonHeight <= 0) return undefined
+return (commonHeight - targetRowHeight) \*_ 2 _ row.length
 }
 </file>
 <file name="index.ts" path="/packages/core/src/layout/rows/index.ts">
@@ -5864,53 +6086,54 @@ import { findRowBreaks } from './knuthPlass'
 import { pathToGroups } from './pathToGroups'
 
 export function computeRowsLayout(options: RowsLayoutOptions): LayoutGroup[] {
-  const {
-    containerWidth,
-    spacing = 8,
-    padding = 0,
-    targetRowHeight = 300,
-  } = options
+const {
+containerWidth,
+spacing = 8,
+padding = 0,
+targetRowHeight = 300,
+} = options
 
-  const photos = validatePhotoDimensions(options.photos)
+const photos = validatePhotoDimensions(options.photos)
 
-  if (photos.length === 0) return []
+if (photos.length === 0) return []
 
-  const path = findRowBreaks(photos, containerWidth, targetRowHeight, spacing, padding)
-  if (path === undefined) return []
+const path = findRowBreaks(photos, containerWidth, targetRowHeight, spacing, padding)
+if (path === undefined) return []
 
-  return pathToGroups(path, photos, containerWidth, spacing, padding)
+return pathToGroups(path, photos, containerWidth, spacing, padding)
 }
 </file>
 <file name="knuthPlass.ts" path="/packages/core/src/layout/rows/knuthPlass.ts">
 import type { PhotoItem } from '../../types'
 import { cost, findIdealNodeSearch } from './helpers'
 
-/**
- * Knuth-Plass DP — O(N·K) with typed arrays.
- * Globally optimal like Dijkstra but with no heap or graph overhead.
- * dp[i] = minimum total cost for laying out photos[0..i-1].
- */
-export function findRowBreaks(
+/\*\*
+
+- Knuth-Plass DP — O(N·K) with typed arrays.
+- Globally optimal like Dijkstra but with no heap or graph overhead.
+- dp[i] = minimum total cost for laying out photos[0..i-1].
+  \*/
+  export function findRowBreaks(
   photos: PhotoItem[],
   containerWidth: number,
   targetRowHeight: number,
   spacing: number,
   padding: number,
-): number[] | undefined {
+  ): number[] | undefined {
   const N = photos.length
   if (N === 0) return undefined
 
-  const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
+const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
 
-  const minCost = new Float64Array(N + 1).fill(Infinity)
-  const pointers = new Int32Array(N + 1).fill(0)
-  minCost[0] = 0
+const minCost = new Float64Array(N + 1).fill(Infinity)
+const pointers = new Int32Array(N + 1).fill(0)
+minCost[0] = 0
 
-  for (let i = 1; i <= N; i++) {
-    const start = Math.max(0, i - limitNodeSearch)
-    for (let j = i - 1; j >= start; j--) {
-      const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
-      if (currentCost === undefined) continue
+for (let i = 1; i <= N; i++) {
+const start = Math.max(0, i - limitNodeSearch)
+for (let j = i - 1; j >= start; j--) {
+const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
+if (currentCost === undefined) continue
 
       const totalCost = minCost[j]! + currentCost
       if (totalCost < minCost[i]!) {
@@ -5918,21 +6141,22 @@ export function findRowBreaks(
         pointers[i] = j
       }
     }
-  }
 
-  if (minCost[N] === Infinity) return undefined
+}
 
-  // Reconstruct path by walking backwards
-  const path: number[] = []
-  let curr = N
-  while (curr > 0) {
-    path.push(curr)
-    curr = pointers[curr]!
-  }
-  path.push(0)
-  path.reverse()
+if (minCost[N] === Infinity) return undefined
 
-  return path
+// Reconstruct path by walking backwards
+const path: number[] = []
+let curr = N
+while (curr > 0) {
+path.push(curr)
+curr = pointers[curr]!
+}
+path.push(0)
+path.reverse()
+
+return path
 }
 </file>
 <file name="pathToGroups.ts" path="/packages/core/src/layout/rows/pathToGroups.ts">
@@ -5940,18 +6164,18 @@ import type { LayoutGroup, PhotoItem } from '../../types'
 import { getCommonHeight, ratio } from './helpers'
 
 export function pathToGroups(
-  path: number[],
-  photos: PhotoItem[],
-  containerWidth: number,
-  spacing: number,
-  padding: number,
+path: number[],
+photos: PhotoItem[],
+containerWidth: number,
+spacing: number,
+padding: number,
 ): LayoutGroup[] {
-  const groups: LayoutGroup[] = []
+const groups: LayoutGroup[] = []
 
-  for (let rowIndex = 1; rowIndex < path.length; rowIndex += 1) {
-    const rowItems = photos
-      .map((photo, index) => ({ photo, index }))
-      .slice(path[rowIndex - 1], path[rowIndex])
+for (let rowIndex = 1; rowIndex < path.length; rowIndex += 1) {
+const rowItems = photos
+.map((photo, index) => ({ photo, index }))
+.slice(path[rowIndex - 1], path[rowIndex])
 
     const height = getCommonHeight(
       rowItems.map(({ photo }) => photo),
@@ -5972,9 +6196,10 @@ export function pathToGroups(
         itemsCount: rowItems.length,
       })),
     })
-  }
 
-  return groups
+}
+
+return groups
 }
 </file>
 <file name="columns.ts" path="/packages/core/src/layout/columns.ts">
@@ -5983,27 +6208,27 @@ import { validatePhotoDimensions } from './types'
 import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
 function ratio(item: PhotoItem) {
-  return item.width / item.height
+return item.width / item.height
 }
 
 function makeGetColumnNeighbors({
-  items,
-  spacing,
-  padding,
-  targetColumnWidth,
-  targetColumnHeight,
+items,
+spacing,
+padding,
+targetColumnWidth,
+targetColumnHeight,
 }: {
-  items: PhotoItem[]
-  spacing: number
-  padding: number
-  targetColumnWidth: number
-  targetColumnHeight: number
+items: PhotoItem[]
+spacing: number
+padding: number
+targetColumnWidth: number
+targetColumnHeight: number
 }): GraphFunction<number> {
-  return (node: number) => {
-    const results: Array<{ neighbor: number; weight: number }> = []
-    const cutOffHeight = targetColumnHeight * 1.5
-    const firstItem = items[node]
-    if (!firstItem) return results
+return (node: number) => {
+const results: Array<{ neighbor: number; weight: number }> = []
+const cutOffHeight = targetColumnHeight \* 1.5
+const firstItem = items[node]
+if (!firstItem) return results
 
     let height = targetColumnWidth / ratio(firstItem) + 2 * padding
 
@@ -6022,24 +6247,25 @@ function makeGetColumnNeighbors({
     }
 
     return results
-  }
+
+}
 }
 
 function computeColumnsModel(
-  items: PhotoItem[],
-  columns: number,
-  containerWidth: number,
-  spacing: number,
-  padding: number,
-  targetColumnWidth: number,
+items: PhotoItem[],
+columns: number,
+containerWidth: number,
+spacing: number,
+padding: number,
+targetColumnWidth: number,
 ): { columnsGaps: number[]; columnsRatios: number[]; columnGroups: { photo: PhotoItem; index: number }[][] } | undefined {
-  const columnsGaps: number[] = []
-  const columnsRatios: number[] = []
+const columnsGaps: number[] = []
+const columnsRatios: number[] = []
 
-  if (items.length <= columns) {
-    const averageRatio = items.length > 0
-      ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
-      : 1
+if (items.length <= columns) {
+const averageRatio = items.length > 0
+? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
+: 1
 
     for (let col = 0; col < columns; col++) {
       columnsGaps[col] = 2 * padding
@@ -6049,65 +6275,65 @@ function computeColumnsModel(
     const path = Array.from({ length: columns + 1 }, (_, i) => Math.min(i, items.length))
     const columnGroups = buildColumnGroups(path, items)
     return { columnsGaps, columnsRatios, columnGroups }
-  }
 
-  const targetColumnHeight = (
-    items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0)
-    + spacing * (items.length - columns)
-    + 2 * padding * items.length
-  ) / columns
+}
 
-  const path = findShortestPathLengthN(
-    makeGetColumnNeighbors({ items, targetColumnWidth, targetColumnHeight, spacing, padding }),
-    columns,
-    0,
-    items.length,
-  )
+const targetColumnHeight = (
+items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0) + spacing _ (items.length - columns) + 2 _ padding \* items.length
+) / columns
 
-  for (let col = 0; col < path.length - 1; col++) {
-    const columnItems = items.slice(path[col], path[col + 1])
-    columnsGaps[col] = spacing * (columnItems.length - 1) + 2 * padding * columnItems.length
-    columnsRatios[col] = 1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
-  }
+const path = findShortestPathLengthN(
+makeGetColumnNeighbors({ items, targetColumnWidth, targetColumnHeight, spacing, padding }),
+columns,
+0,
+items.length,
+)
 
-  const columnGroups = buildColumnGroups(path, items)
-  return { columnsGaps, columnsRatios, columnGroups }
+for (let col = 0; col < path.length - 1; col++) {
+const columnItems = items.slice(path[col], path[col + 1])
+columnsGaps[col] = spacing _ (columnItems.length - 1) + 2 _ padding \* columnItems.length
+columnsRatios[col] = 1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
+}
+
+const columnGroups = buildColumnGroups(path, items)
+return { columnsGaps, columnsRatios, columnGroups }
 }
 
 function buildColumnGroups(path: number[], items: PhotoItem[]) {
-  const groups: { photo: PhotoItem; index: number }[][] = []
-  for (let col = 0; col < path.length - 1; col++) {
-    groups.push(
-      items.slice(path[col], path[col + 1]).map((photo, i) => ({
-        photo,
-        index: path[col]! + i,
-      })),
-    )
-  }
-  return groups
+const groups: { photo: PhotoItem; index: number }[][] = []
+for (let col = 0; col < path.length - 1; col++) {
+groups.push(
+items.slice(path[col], path[col + 1]).map((photo, i) => ({
+photo,
+index: path[col]! + i,
+})),
+)
+}
+return groups
 }
 
-/**
- * Columns layout — distributes photos into balanced columns using
- * shortest-path algorithm for optimal distribution. Returns LayoutGroup[]
- * with columnsGaps and columnsRatios metadata for CSS calc() widths.
- */
-export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
+/\*\*
+
+- Columns layout — distributes photos into balanced columns using
+- shortest-path algorithm for optimal distribution. Returns LayoutGroup[]
+- with columnsGaps and columnsRatios metadata for CSS calc() widths.
+  \*/
+  export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
   const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
-  const targetColumnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+const targetColumnWidth = (containerWidth - spacing _ (columns - 1) - 2 _ padding \* columns) / columns
 
-  const result = computeColumnsModel(photos, columns, containerWidth, spacing, padding, targetColumnWidth)
-  if (!result) return []
+const result = computeColumnsModel(photos, columns, containerWidth, spacing, padding, targetColumnWidth)
+if (!result) return []
 
-  const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
+const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 
-  const groups: LayoutGroup[] = []
-  for (let col = 0; col < result.columnGroups.length; col++) {
-    const columnItems = result.columnGroups[col]!
-    if (columnItems.length === 0) continue
+const groups: LayoutGroup[] = []
+for (let col = 0; col < result.columnGroups.length; col++) {
+const columnItems = result.columnGroups[col]!
+if (columnItems.length === 0) continue
 
     const totalAdjustedGaps = result.columnsRatios.reduce(
       (acc, colRatio, ratioIndex) =>
@@ -6143,9 +6369,10 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
       columnsGaps: result.columnsGaps,
       columnsRatios: result.columnsRatios,
     })
-  }
 
-  return groups
+}
+
+return groups
 }
 </file>
 <file name="columnsContainerQueries.ts" path="/packages/core/src/layout/columnsContainerQueries.ts">
@@ -6154,74 +6381,75 @@ import { resolveResponsiveParameter } from '../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../types'
 
 export interface ColumnsBreakpointSnapshot {
-  /** Stable key used as `data-bp` attribute, e.g. "320-639", "1120-inf" */
-  spanKey: string
-  /** `@container` condition text without the "@container <name>" prefix, e.g. "(min-width: 600px) and (max-width: 1119px)" */
-  condition: string
-  /** Sample breakpoint width used when computing this snapshot */
-  containerWidth: number
-  /** Resolved spacing at this breakpoint */
-  spacing: number
-  /** Resolved padding at this breakpoint */
-  padding: number
-  /** Layout groups produced by `computeColumnsLayout` at `containerWidth` */
-  groups: LayoutGroup[]
+/** Stable key used as `data-bp` attribute, e.g. "320-639", "1120-inf" \*/
+spanKey: string
+/** `@container` condition text without the "@container <name>" prefix, e.g. "(min-width: 600px) and (max-width: 1119px)" _/
+condition: string
+/\*\* Sample breakpoint width used when computing this snapshot _/
+containerWidth: number
+/** Resolved spacing at this breakpoint \*/
+spacing: number
+/** Resolved padding at this breakpoint _/
+padding: number
+/\*\* Layout groups produced by `computeColumnsLayout` at `containerWidth` _/
+groups: LayoutGroup[]
 }
 
 export interface ColumnsBreakpointSnapshotsOptions {
-  photos: PhotoItem[]
-  breakpoints: readonly number[]
-  spacing?: ResponsiveParameter<number>
-  padding?: ResponsiveParameter<number>
-  columns?: ResponsiveParameter<number>
+photos: PhotoItem[]
+breakpoints: readonly number[]
+spacing?: ResponsiveParameter<number>
+padding?: ResponsiveParameter<number>
+columns?: ResponsiveParameter<number>
 }
 
 function groupSignature(groups: LayoutGroup[]): string {
-  return groups.map(g => g.entries.map(e => e.index).join('.')).join('|')
+return groups.map(g => g.entries.map(e => e.index).join('.')).join('|')
 }
 
-/**
- * Computes per-breakpoint `columns` layout snapshots for SSR.
- * Adjacent breakpoints are merged only when group assignment, spacing, and padding all match.
- */
-export function computeColumnsBreakpointSnapshots(
+/\*\*
+
+- Computes per-breakpoint `columns` layout snapshots for SSR.
+- Adjacent breakpoints are merged only when group assignment, spacing, and padding all match.
+  \*/
+  export function computeColumnsBreakpointSnapshots(
   opts: ColumnsBreakpointSnapshotsOptions,
-): ColumnsBreakpointSnapshot[] {
+  ): ColumnsBreakpointSnapshot[] {
   if (opts.photos.length === 0 || opts.breakpoints.length === 0) return []
 
-  const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
-  if (sorted.length === 0) return []
+const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
+if (sorted.length === 0) return []
 
-  type Entry = { bp: number; sig: string; groups: LayoutGroup[]; spacing: number; padding: number }
-  const entries: Entry[] = []
-  for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const columns = resolveResponsiveParameter(opts.columns, bp, 3)
-    const groups = computeColumnsLayout({ photos: opts.photos, containerWidth: bp, spacing, padding, columns })
-    if (groups.length === 0) continue
-    entries.push({ bp, sig: groupSignature(groups), groups, spacing, padding })
-  }
-  if (entries.length === 0) return []
+type Entry = { bp: number; sig: string; groups: LayoutGroup[]; spacing: number; padding: number }
+const entries: Entry[] = []
+for (const bp of sorted) {
+const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
+const padding = resolveResponsiveParameter(opts.padding, bp, 0)
+const columns = resolveResponsiveParameter(opts.columns, bp, 3)
+const groups = computeColumnsLayout({ photos: opts.photos, containerWidth: bp, spacing, padding, columns })
+if (groups.length === 0) continue
+entries.push({ bp, sig: groupSignature(groups), groups, spacing, padding })
+}
+if (entries.length === 0) return []
 
-  type Span = { fromIdx: number; toIdx: number; sig: string; spacing: number; padding: number; groups: LayoutGroup[] }
-  const spans: Span[] = []
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i]!
-    const last = spans[spans.length - 1]
-    if (last && last.sig === e.sig && last.spacing === e.spacing && last.padding === e.padding) {
-      last.toIdx = i
-    }
-    else {
-      spans.push({ fromIdx: i, toIdx: i, sig: e.sig, spacing: e.spacing, padding: e.padding, groups: e.groups })
-    }
-  }
+type Span = { fromIdx: number; toIdx: number; sig: string; spacing: number; padding: number; groups: LayoutGroup[] }
+const spans: Span[] = []
+for (let i = 0; i < entries.length; i++) {
+const e = entries[i]!
+const last = spans[spans.length - 1]
+if (last && last.sig === e.sig && last.spacing === e.spacing && last.padding === e.padding) {
+last.toIdx = i
+}
+else {
+spans.push({ fromIdx: i, toIdx: i, sig: e.sig, spacing: e.spacing, padding: e.padding, groups: e.groups })
+}
+}
 
-  return spans.map((span, s) => {
-    const isFirst = s === 0
-    const isLast = s === spans.length - 1
-    const fromBp = entries[span.fromIdx]!.bp
-    const nextBp = !isLast ? entries[spans[s + 1]!.fromIdx]!.bp : null
+return spans.map((span, s) => {
+const isFirst = s === 0
+const isLast = s === spans.length - 1
+const fromBp = entries[span.fromIdx]!.bp
+const nextBp = !isLast ? entries[spans[s + 1]!.fromIdx]!.bp : null
 
     let spanKey: string
     let condition: string
@@ -6250,7 +6478,8 @@ export function computeColumnsBreakpointSnapshots(
       padding: span.padding,
       groups: span.groups,
     }
-  })
+
+})
 }
 </file>
 <file name="index.ts" path="/packages/core/src/layout/index.ts">
@@ -6261,13 +6490,13 @@ export { computeColumnsLayout } from './columns'
 export { computeMasonryLayout } from './masonry'
 export { computeColumnsBreakpointSnapshots } from './columnsContainerQueries'
 export type {
-  ColumnsBreakpointSnapshot,
-  ColumnsBreakpointSnapshotsOptions,
+ColumnsBreakpointSnapshot,
+ColumnsBreakpointSnapshotsOptions,
 } from './columnsContainerQueries'
 export { computeMasonryBreakpointSnapshots } from './masonryContainerQueries'
 export type {
-  MasonryBreakpointSnapshot,
-  MasonryBreakpointSnapshotsOptions,
+MasonryBreakpointSnapshot,
+MasonryBreakpointSnapshotsOptions,
 } from './masonryContainerQueries'
 export { computeBreakpointVisibilityCSS } from './snapshotVisibility'
 export type { SnapshotVisibilityInput } from './snapshotVisibility'
@@ -6276,46 +6505,47 @@ export type { SnapshotVisibilityInput } from './snapshotVisibility'
 import type { LayoutEntry, LayoutGroup, MasonryLayoutOptions } from '../types'
 import { validatePhotoDimensions } from './types'
 
-/**
- * Masonry layout — places photos into equal-width columns using greedy
- * shortest-column assignment with local search optimization to flatten
- * the bottom edge. Chronological order is preserved within each column.
- * Returns LayoutGroup[] for flexbox rendering.
- */
-export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup[] {
+/\*\*
+
+- Masonry layout — places photos into equal-width columns using greedy
+- shortest-column assignment with local search optimization to flatten
+- the bottom edge. Chronological order is preserved within each column.
+- Returns LayoutGroup[] for flexbox rendering.
+  \*/
+  export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup[] {
   const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
-  const columnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
-  const photoHeights = photos.map(p => columnWidth / (p.width / p.height))
+const columnWidth = (containerWidth - spacing _ (columns - 1) - 2 _ padding \* columns) / columns
+const photoHeights = photos.map(p => columnWidth / (p.width / p.height))
 
-  const colItems: number[][] = Array.from({ length: columns }, () => [])
-  const colHeights: number[] = new Array(columns).fill(0)
+const colItems: number[][] = Array.from({ length: columns }, () => [])
+const colHeights: number[] = new Array(columns).fill(0)
 
-  for (let i = 0; i < photos.length; i++) {
-    let shortest = 0
-    for (let c = 1; c < columns; c++) {
-      if (colHeights[c]! < colHeights[shortest]!) shortest = c
-    }
-    colItems[shortest]!.push(i)
-    colHeights[shortest]! += photoHeights[i]! + spacing
-  }
+for (let i = 0; i < photos.length; i++) {
+let shortest = 0
+for (let c = 1; c < columns; c++) {
+if (colHeights[c]! < colHeights[shortest]!) shortest = c
+}
+colItems[shortest]!.push(i)
+colHeights[shortest]! += photoHeights[i]! + spacing
+}
 
-  // Local search optimization — minimize max-min column height delta
-  let improved = true
-  let iterations = 0
-  while (improved && iterations < 50) {
-    improved = false
-    iterations++
-    let tallest = 0
-    let shortest = 0
-    for (let c = 1; c < columns; c++) {
-      if (colHeights[c]! > colHeights[tallest]!) tallest = c
-      if (colHeights[c]! < colHeights[shortest]!) shortest = c
-    }
-    const currentDelta = colHeights[tallest]! - colHeights[shortest]!
-    if (currentDelta <= 2) break
+// Local search optimization — minimize max-min column height delta
+let improved = true
+let iterations = 0
+while (improved && iterations < 50) {
+improved = false
+iterations++
+let tallest = 0
+let shortest = 0
+for (let c = 1; c < columns; c++) {
+if (colHeights[c]! > colHeights[tallest]!) tallest = c
+if (colHeights[c]! < colHeights[shortest]!) shortest = c
+}
+const currentDelta = colHeights[tallest]! - colHeights[shortest]!
+if (currentDelta <= 2) break
 
     let bestMove: { type: 'transfer'; idx: number; pos: number } | { type: 'swap'; tPos: number; sPos: number } | null = null
     let bestReduction = 0
@@ -6380,23 +6610,24 @@ export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup
       }
       improved = true
     }
-  }
 
-  const groups: LayoutGroup[] = []
-  for (let c = 0; c < columns; c++) {
-    colItems[c]!.sort((a, b) => a - b)
-    const entries: LayoutEntry[] = colItems[c]!.map((idx, positionIndex) => ({
-      index: idx,
-      photo: photos[idx]!,
-      width: columnWidth,
-      height: photoHeights[idx]!,
-      positionIndex,
-      itemsCount: colItems[c]!.length,
-    }))
-    groups.push({ type: 'column', index: c, entries })
-  }
+}
 
-  return groups
+const groups: LayoutGroup[] = []
+for (let c = 0; c < columns; c++) {
+colItems[c]!.sort((a, b) => a - b)
+const entries: LayoutEntry[] = colItems[c]!.map((idx, positionIndex) => ({
+index: idx,
+photo: photos[idx]!,
+width: columnWidth,
+height: photoHeights[idx]!,
+positionIndex,
+itemsCount: colItems[c]!.length,
+}))
+groups.push({ type: 'column', index: c, entries })
+}
+
+return groups
 }
 </file>
 <file name="masonryContainerQueries.ts" path="/packages/core/src/layout/masonryContainerQueries.ts">
@@ -6405,68 +6636,69 @@ import { resolveResponsiveParameter } from '../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../types'
 
 export interface MasonryBreakpointSnapshot {
-  spanKey: string
-  condition: string
-  containerWidth: number
-  spacing: number
-  padding: number
-  groups: LayoutGroup[]
+spanKey: string
+condition: string
+containerWidth: number
+spacing: number
+padding: number
+groups: LayoutGroup[]
 }
 
 export interface MasonryBreakpointSnapshotsOptions {
-  photos: PhotoItem[]
-  breakpoints: readonly number[]
-  spacing?: ResponsiveParameter<number>
-  padding?: ResponsiveParameter<number>
-  columns?: ResponsiveParameter<number>
+photos: PhotoItem[]
+breakpoints: readonly number[]
+spacing?: ResponsiveParameter<number>
+padding?: ResponsiveParameter<number>
+columns?: ResponsiveParameter<number>
 }
 
 function groupSignature(groups: LayoutGroup[]): string {
-  return groups.map(g => g.entries.map(e => e.index).join('.')).join('|')
+return groups.map(g => g.entries.map(e => e.index).join('.')).join('|')
 }
 
-/**
- * Computes per-breakpoint `masonry` layout snapshots for SSR.
- * Adjacent breakpoints are merged only when group assignment, spacing, and padding all match.
- */
-export function computeMasonryBreakpointSnapshots(
+/\*\*
+
+- Computes per-breakpoint `masonry` layout snapshots for SSR.
+- Adjacent breakpoints are merged only when group assignment, spacing, and padding all match.
+  \*/
+  export function computeMasonryBreakpointSnapshots(
   opts: MasonryBreakpointSnapshotsOptions,
-): MasonryBreakpointSnapshot[] {
+  ): MasonryBreakpointSnapshot[] {
   if (opts.photos.length === 0 || opts.breakpoints.length === 0) return []
 
-  const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
-  if (sorted.length === 0) return []
+const sorted = [...opts.breakpoints].filter(bp => bp > 0).sort((a, b) => a - b)
+if (sorted.length === 0) return []
 
-  type Entry = { bp: number; sig: string; groups: LayoutGroup[]; spacing: number; padding: number }
-  const entries: Entry[] = []
-  for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const columns = resolveResponsiveParameter(opts.columns, bp, 3)
-    const groups = computeMasonryLayout({ photos: opts.photos, containerWidth: bp, spacing, padding, columns })
-    if (groups.length === 0) continue
-    entries.push({ bp, sig: groupSignature(groups), groups, spacing, padding })
-  }
-  if (entries.length === 0) return []
+type Entry = { bp: number; sig: string; groups: LayoutGroup[]; spacing: number; padding: number }
+const entries: Entry[] = []
+for (const bp of sorted) {
+const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
+const padding = resolveResponsiveParameter(opts.padding, bp, 0)
+const columns = resolveResponsiveParameter(opts.columns, bp, 3)
+const groups = computeMasonryLayout({ photos: opts.photos, containerWidth: bp, spacing, padding, columns })
+if (groups.length === 0) continue
+entries.push({ bp, sig: groupSignature(groups), groups, spacing, padding })
+}
+if (entries.length === 0) return []
 
-  type Span = { fromIdx: number; toIdx: number; sig: string; spacing: number; padding: number; groups: LayoutGroup[] }
-  const spans: Span[] = []
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i]!
-    const last = spans[spans.length - 1]
-    if (last && last.sig === e.sig && last.spacing === e.spacing && last.padding === e.padding) {
-      last.toIdx = i
-    }
-    else {
-      spans.push({ fromIdx: i, toIdx: i, sig: e.sig, spacing: e.spacing, padding: e.padding, groups: e.groups })
-    }
-  }
+type Span = { fromIdx: number; toIdx: number; sig: string; spacing: number; padding: number; groups: LayoutGroup[] }
+const spans: Span[] = []
+for (let i = 0; i < entries.length; i++) {
+const e = entries[i]!
+const last = spans[spans.length - 1]
+if (last && last.sig === e.sig && last.spacing === e.spacing && last.padding === e.padding) {
+last.toIdx = i
+}
+else {
+spans.push({ fromIdx: i, toIdx: i, sig: e.sig, spacing: e.spacing, padding: e.padding, groups: e.groups })
+}
+}
 
-  return spans.map((span, s) => {
-    const isFirst = s === 0
-    const isLast = s === spans.length - 1
-    const fromBp = entries[span.fromIdx]!.bp
-    const nextBp = !isLast ? entries[spans[s + 1]!.fromIdx]!.bp : null
+return spans.map((span, s) => {
+const isFirst = s === 0
+const isLast = s === spans.length - 1
+const fromBp = entries[span.fromIdx]!.bp
+const nextBp = !isLast ? entries[spans[s + 1]!.fromIdx]!.bp : null
 
     let spanKey: string
     let condition: string
@@ -6495,29 +6727,30 @@ export function computeMasonryBreakpointSnapshots(
       padding: span.padding,
       groups: span.groups,
     }
-  })
+
+})
 }
 </file>
 <file name="shortestPath.ts" path="/packages/core/src/layout/shortestPath.ts">
 export type GraphFunction<T> = (
-  node: T,
+node: T,
 ) => Array<{ neighbor: T; weight: number }>
 
 type Matrix<T> = Map<T, Array<{ node: T; weight: number }>>
 
 function computeShortestPath<T>(
-  graph: GraphFunction<T>,
-  pathLength: number,
-  startNode: T,
-  endNode: T,
+graph: GraphFunction<T>,
+pathLength: number,
+startNode: T,
+endNode: T,
 ) {
-  const matrix: Matrix<T> = new Map()
+const matrix: Matrix<T> = new Map()
 
-  const queue = new Set<T>()
-  queue.add(startNode)
+const queue = new Set<T>()
+queue.add(startNode)
 
-  for (let length = 0; length < pathLength; length += 1) {
-    const currentQueue = [...queue.keys()]
+for (let length = 0; length < pathLength; length += 1) {
+const currentQueue = [...queue.keys()]
 
     queue.clear()
     currentQueue.forEach((node) => {
@@ -6546,115 +6779,118 @@ function computeShortestPath<T>(
         }
       })
     })
-  }
 
-  return matrix
+}
+
+return matrix
 }
 
 function reconstructShortestPath<T>(
-  matrix: Matrix<T>,
-  pathLength: number,
-  endNode: T,
+matrix: Matrix<T>,
+pathLength: number,
+endNode: T,
 ) {
-  const path = [endNode]
-  for (let node = endNode, length = pathLength; length > 0; length -= 1) {
-    const previousNode = matrix.get(node)?.[length]?.node
-    if (previousNode === undefined) {
-      break
-    }
+const path = [endNode]
+for (let node = endNode, length = pathLength; length > 0; length -= 1) {
+const previousNode = matrix.get(node)?.[length]?.node
+if (previousNode === undefined) {
+break
+}
 
     node = previousNode
     path.push(node)
-  }
-  return path.reverse()
+
+}
+return path.reverse()
 }
 
 export function findShortestPathLengthN<T>(
-  graph: GraphFunction<T>,
-  pathLength: number,
-  startNode: T,
-  endNode: T,
+graph: GraphFunction<T>,
+pathLength: number,
+startNode: T,
+endNode: T,
 ) {
-  return reconstructShortestPath(
-    computeShortestPath(graph, pathLength, startNode, endNode),
-    pathLength,
-    endNode,
-  )
+return reconstructShortestPath(
+computeShortestPath(graph, pathLength, startNode, endNode),
+pathLength,
+endNode,
+)
 }
 </file>
 <file name="snapshotVisibility.ts" path="/packages/core/src/layout/snapshotVisibility.ts">
 export interface SnapshotVisibilityInput {
-  spanKey: string
-  condition: string
+spanKey: string
+condition: string
 }
 
-/**
- * Emits `@container` hide/show CSS for per-breakpoint SSR snapshots.
- *
- * Strategy:
- *   - A base rule inside `@container <name> (min-width: 0)` hides every snapshot in the container.
- *   - One rule per span inside the span's own `@container <name> <condition>` shows the matching
- *     snapshot via attribute selector, which has higher specificity than the base class rule.
- *
- * Scoping is handled entirely by `@container <name>` — no root-class selector is needed.
- * Single-span input returns an empty string; the caller should just render the snapshot with
- * no `display:none` and skip the stylesheet.
- */
-export function computeBreakpointVisibilityCSS(
+/\*\*
+
+- Emits `@container` hide/show CSS for per-breakpoint SSR snapshots.
+-
+- Strategy:
+- - A base rule inside `@container <name> (min-width: 0)` hides every snapshot in the container.
+- - One rule per span inside the span's own `@container <name> <condition>` shows the matching
+-     snapshot via attribute selector, which has higher specificity than the base class rule.
+-
+- Scoping is handled entirely by `@container <name>` — no root-class selector is needed.
+- Single-span input returns an empty string; the caller should just render the snapshot with
+- no `display:none` and skip the stylesheet.
+  \*/
+  export function computeBreakpointVisibilityCSS(
   snapshots: readonly SnapshotVisibilityInput[],
   containerName: string,
   snapshotClass: string,
-): string {
+  ): string {
   if (snapshots.length <= 1) return ''
 
-  const selector = `.${snapshotClass}`
-  const rules: string[] = [
-    `@container ${containerName} (min-width: 0){${selector}{display:none}}`,
-  ]
-  for (const snap of snapshots) {
-    if (!snap.condition) continue
-    rules.push(
-      `@container ${containerName} ${snap.condition}{${selector}[data-bp=${snap.spanKey}]{display:flex}}`,
-    )
-  }
-  return rules.join('\n')
+const selector = `.${snapshotClass}`
+const rules: string[] = [
+`@container ${containerName} (min-width: 0){${selector}{display:none}}`,
+]
+for (const snap of snapshots) {
+if (!snap.condition) continue
+rules.push(
+`@container ${containerName} ${snap.condition}{${selector}[data-bp=${snap.spanKey}]{display:flex}}`,
+)
+}
+return rules.join('\n')
 }
 </file>
 <file name="types.ts" path="/packages/core/src/layout/types.ts">
 import type { LayoutInput, RowsLayoutOptions, ColumnsLayoutOptions, MasonryLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
 
-/** Guard against photos with invalid dimensions that would produce NaN layout values. */
+/\*_ Guard against photos with invalid dimensions that would produce NaN layout values. _/
 export function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
-  return photos.map((p) => {
-    if (p.width > 0 && p.height > 0) return p
-    if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
-      console.warn(`[nuxt-photo] Photo "${p.id}" has invalid dimensions (${p.width}x${p.height}), using 1:1 fallback`)
-    }
-    return { ...p, width: 1, height: 1 }
-  })
+return photos.map((p) => {
+if (p.width > 0 && p.height > 0) return p
+if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
+console.warn(`[nuxt-photo] Photo "${p.id}" has invalid dimensions (${p.width}x${p.height}), using 1:1 fallback`)
+}
+return { ...p, width: 1, height: 1 }
+})
 }
 </file>
 <file name="animation.ts" path="/packages/core/src/physics/animation.ts">
 import { easeInOutCubic } from './easing'
 
 export async function animateNumber(
-  from: number,
-  to: number,
-  duration: number,
-  onUpdate: (value: number) => void,
-  easing = easeInOutCubic,
+from: number,
+to: number,
+duration: number,
+onUpdate: (value: number) => void,
+easing = easeInOutCubic,
 ): Promise<void> {
-  if (duration <= 0 || from === to) {
-    onUpdate(to)
-    return
-  }
+if (duration <= 0 || from === to) {
+onUpdate(to)
+return
+}
 
-  const start = performance.now()
+const start = performance.now()
 
-  await new Promise<void>((resolve) => {
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration)
-      onUpdate(from + (to - from) * easing(progress))
+await new Promise<void>((resolve) => {
+const tick = (now: number) => {
+const progress = Math.min(1, (now - start) / duration)
+onUpdate(from + (to - from) \* easing(progress))
 
       if (progress < 1) {
         requestAnimationFrame(tick)
@@ -6664,18 +6900,19 @@ export async function animateNumber(
     }
 
     requestAnimationFrame(tick)
-  })
+
+})
 }
 </file>
 <file name="easing.ts" path="/packages/core/src/physics/easing.ts">
 export function easeOutCubic(value: number): number {
-  return 1 - (1 - value) ** 3
+return 1 - (1 - value) \*\* 3
 }
 
 export function easeInOutCubic(value: number): number {
-  return value < 0.5
-    ? 4 * value * value * value
-    : 1 - ((-2 * value + 2) ** 3) / 2
+return value < 0.5
+? 4 _ value _ value _ value
+: 1 - ((-2 _ value + 2) \*\* 3) / 2
 }
 </file>
 <file name="index.ts" path="/packages/core/src/physics/index.ts">
@@ -6686,51 +6923,51 @@ export { easeOutCubic, easeInOutCubic } from './easing'
 </file>
 <file name="spring.ts" path="/packages/core/src/physics/spring.ts">
 export type Spring1D = {
-  value: number
-  target: number
-  velocity: number
-  tension: number
-  friction: number
-  rafId: number
+value: number
+target: number
+velocity: number
+tension: number
+friction: number
+rafId: number
 }
 
 export function createSpring1D(tension = 260, friction = 22): Spring1D {
-  return { value: 0, target: 0, velocity: 0, tension, friction, rafId: 0 }
+return { value: 0, target: 0, velocity: 0, tension, friction, rafId: 0 }
 }
 
 export function stopSpring(spring: Spring1D) {
-  if (spring.rafId) {
-    cancelAnimationFrame(spring.rafId)
-    spring.rafId = 0
-  }
+if (spring.rafId) {
+cancelAnimationFrame(spring.rafId)
+spring.rafId = 0
+}
 }
 
 export function springStep(
-  current: number,
-  target: number,
-  velocity: number,
-  tension: number,
-  friction: number,
-  dt: number,
+current: number,
+target: number,
+velocity: number,
+tension: number,
+friction: number,
+dt: number,
 ): { value: number; velocity: number } {
-  const distance = target - current
-  const newVelocity = velocity + (distance * tension - velocity * friction) * dt
-  return { value: current + newVelocity * dt, velocity: newVelocity }
+const distance = target - current
+const newVelocity = velocity + (distance _ tension - velocity _ friction) _ dt
+return { value: current + newVelocity _ dt, velocity: newVelocity }
 }
 
 export function runSpring(
-  spring: Spring1D,
-  onUpdate: (value: number) => void,
-  onComplete?: () => void,
-  positionThreshold = 0.5,
-  velocityThreshold = 0.1,
+spring: Spring1D,
+onUpdate: (value: number) => void,
+onComplete?: () => void,
+positionThreshold = 0.5,
+velocityThreshold = 0.1,
 ) {
-  stopSpring(spring)
-  let lastTime = performance.now()
+stopSpring(spring)
+let lastTime = performance.now()
 
-  const step = (now: number) => {
-    const dt = Math.min(0.064, (now - lastTime) / 1000)
-    lastTime = now
+const step = (now: number) => {
+const dt = Math.min(0.064, (now - lastTime) / 1000)
+lastTime = now
 
     const result = springStep(spring.value, spring.target, spring.velocity, spring.tension, spring.friction, dt)
     spring.value = result.value
@@ -6751,9 +6988,10 @@ export function runSpring(
     }
 
     spring.rafId = requestAnimationFrame(step)
-  }
 
-  spring.rafId = requestAnimationFrame(step)
+}
+
+spring.rafId = requestAnimationFrame(step)
 }
 </file>
 <file name="velocity.ts" path="/packages/core/src/physics/velocity.ts">
@@ -6762,28 +7000,28 @@ const CAPACITY = 32
 type Sample = { x: number; y: number; time: number }
 
 export class VelocityTracker {
-  private readonly buffer: (Sample | undefined)[] = new Array(CAPACITY)
-  private head = 0
-  private count = 0
-  private readonly windowMs: number
+private readonly buffer: (Sample | undefined)[] = new Array(CAPACITY)
+private head = 0
+private count = 0
+private readonly windowMs: number
 
-  constructor(windowMs = 100) {
-    this.windowMs = windowMs
-  }
+constructor(windowMs = 100) {
+this.windowMs = windowMs
+}
 
-  reset() {
-    this.head = 0
-    this.count = 0
-  }
+reset() {
+this.head = 0
+this.count = 0
+}
 
-  addSample(x: number, y: number, time: number) {
-    this.buffer[this.head] = { x, y, time }
-    this.head = (this.head + 1) % CAPACITY
-    if (this.count < CAPACITY) this.count++
-  }
+addSample(x: number, y: number, time: number) {
+this.buffer[this.head] = { x, y, time }
+this.head = (this.head + 1) % CAPACITY
+if (this.count < CAPACITY) this.count++
+}
 
-  getVelocity(): { vx: number; vy: number } {
-    if (this.count < 2) return { vx: 0, vy: 0 }
+getVelocity(): { vx: number; vy: number } {
+if (this.count < 2) return { vx: 0, vy: 0 }
 
     const newestSlot = (this.head - 1 + CAPACITY) % CAPACITY
     const newest = this.buffer[newestSlot]!
@@ -6808,7 +7046,8 @@ export class VelocityTracker {
       vx: (newest.x - oldest.x) / elapsed,
       vy: (newest.y - oldest.y) / elapsed,
     }
-  }
+
+}
 }
 </file>
 <file name="index.ts" path="/packages/core/src/transition/index.ts">
@@ -6821,136 +7060,136 @@ import { isUsableRect } from '../geometry/rect'
 import { getWindowDimensions } from '../utils/dom'
 
 export type TransitionModeConfig = {
-  mode: TransitionMode
-  autoThreshold: number
+mode: TransitionMode
+autoThreshold: number
 }
 
 const MIN_VISIBLE_DIMENSION = 80
 
 export function createTransitionMode(): TransitionModeConfig {
-  return {
-    mode: 'auto',
-    autoThreshold: 0.55,
-  }
+return {
+mode: 'auto',
+autoThreshold: 0.55,
+}
 }
 
 type ViewportRect = { left: number; top: number; right: number; bottom: number; width: number; height: number }
 
 function getVisibleDimensions(rect: ViewportRect, vw: number, vh: number): { width: number; height: number } {
-  return {
-    width: Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0)),
-    height: Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0)),
-  }
+return {
+width: Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0)),
+height: Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0)),
+}
 }
 
 export function getVisibilityRatio(rect: ViewportRect | null): number {
-  if (!rect || rect.width <= 0 || rect.height <= 0) return 0
+if (!rect || rect.width <= 0 || rect.height <= 0) return 0
 
-  const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
-  const visibleArea = visibleWidth * visibleHeight
-  const totalArea = rect.width * rect.height
+const { width: vw, height: vh } = getWindowDimensions()
+const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
+const visibleArea = visibleWidth _ visibleHeight
+const totalArea = rect.width _ rect.height
 
-  return totalArea > 0 ? visibleArea / totalArea : 0
+return totalArea > 0 ? visibleArea / totalArea : 0
 }
 
 export function shouldUseFlip(
-  rect: ViewportRect | null,
-  config: TransitionModeConfig,
-  debug?: DebugLogger,
+rect: ViewportRect | null,
+config: TransitionModeConfig,
+debug?: DebugLogger,
 ): boolean {
-  if (config.mode === 'none') {
-    debug?.log('transitions', 'mode=none → skip FLIP (instant)')
-    return false
-  }
+if (config.mode === 'none') {
+debug?.log('transitions', 'mode=none → skip FLIP (instant)')
+return false
+}
 
-  if (config.mode === 'fade') {
-    debug?.log('transitions', 'mode=fade → skip FLIP')
-    return false
-  }
+if (config.mode === 'fade') {
+debug?.log('transitions', 'mode=fade → skip FLIP')
+return false
+}
 
-  if (config.mode === 'flip') {
-    debug?.log('transitions', 'mode=flip → force FLIP')
-    return true
-  }
+if (config.mode === 'flip') {
+debug?.log('transitions', 'mode=flip → force FLIP')
+return true
+}
 
-  // auto mode — check visibility ratio AND minimum visible dimensions
-  if (!rect) {
-    debug?.log('transitions', 'mode=auto → no rect → FADE')
-    return false
-  }
+// auto mode — check visibility ratio AND minimum visible dimensions
+if (!rect) {
+debug?.log('transitions', 'mode=auto → no rect → FADE')
+return false
+}
 
-  const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
+const { width: vw, height: vh } = getWindowDimensions()
+const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
 
-  if (visibleWidth < MIN_VISIBLE_DIMENSION || visibleHeight < MIN_VISIBLE_DIMENSION) {
-    debug?.log('transitions',
-      `mode=auto → visible size ${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px < ${MIN_VISIBLE_DIMENSION}px min → FADE`,
-    )
-    return false
-  }
+if (visibleWidth < MIN_VISIBLE_DIMENSION || visibleHeight < MIN_VISIBLE_DIMENSION) {
+debug?.log('transitions',
+`mode=auto → visible size ${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px < ${MIN_VISIBLE_DIMENSION}px min → FADE`,
+)
+return false
+}
 
-  const ratio = getVisibilityRatio(rect)
-  const useFlip = ratio >= config.autoThreshold
+const ratio = getVisibilityRatio(rect)
+const useFlip = ratio >= config.autoThreshold
 
-  debug?.log('transitions',
-    `mode=auto → visibility=${(ratio * 100).toFixed(1)}% (${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px) threshold=${(config.autoThreshold * 100).toFixed(0)}% → ${useFlip ? 'FLIP' : 'FADE'}`,
-  )
+debug?.log('transitions',
+`mode=auto → visibility=${(ratio * 100).toFixed(1)}% (${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px) threshold=${(config.autoThreshold * 100).toFixed(0)}% → ${useFlip ? 'FLIP' : 'FADE'}`,
+)
 
-  return useFlip
+return useFlip
 }
 
 const CLOSE_FLIP_DURATION_MS = 380
 const CLOSE_FADE_DURATION_MS = 200
 
 export function planCloseTransition(opts: {
-  fromRect: RectLike | null
-  toRect: DOMRect | null
-  thumbRefExists: boolean
-  config: TransitionModeConfig
-  debug?: DebugLogger
+fromRect: RectLike | null
+toRect: DOMRect | null
+thumbRefExists: boolean
+config: TransitionModeConfig
+debug?: DebugLogger
 }): CloseTransitionPlan {
-  const { fromRect, toRect, thumbRefExists, config, debug } = opts
+const { fromRect, toRect, thumbRefExists, config, debug } = opts
 
-  if (config.mode === 'none') {
-    debug?.log('transitions', 'planClose: mode=none → INSTANT')
-    return { mode: 'instant', durationMs: 0, reason: 'mode-forced-none' }
-  }
+if (config.mode === 'none') {
+debug?.log('transitions', 'planClose: mode=none → INSTANT')
+return { mode: 'instant', durationMs: 0, reason: 'mode-forced-none' }
+}
 
-  if (config.mode === 'fade') {
-    debug?.log('transitions', 'planClose: mode=fade → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'mode-forced-fade' }
-  }
+if (config.mode === 'fade') {
+debug?.log('transitions', 'planClose: mode=fade → FADE')
+return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'mode-forced-fade' }
+}
 
-  if (!fromRect) {
-    debug?.log('transitions', 'planClose: no fromRect (lightbox frame) → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-frame-rect' }
-  }
+if (!fromRect) {
+debug?.log('transitions', 'planClose: no fromRect (lightbox frame) → FADE')
+return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-frame-rect' }
+}
 
-  if (!thumbRefExists) {
-    debug?.log('transitions', 'planClose: no thumb ref registered → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-thumb-ref' }
-  }
+if (!thumbRefExists) {
+debug?.log('transitions', 'planClose: no thumb ref registered → FADE')
+return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-thumb-ref' }
+}
 
-  if (!toRect || !isUsableRect(toRect)) {
-    debug?.log('transitions', `planClose: thumb rect unusable (${toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} at ${toRect.left.toFixed(0)},${toRect.top.toFixed(0)}` : 'null'}) → FADE`)
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'thumb-off-screen', fromRect }
-  }
+if (!toRect || !isUsableRect(toRect)) {
+debug?.log('transitions', `planClose: thumb rect unusable (${toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} at ${toRect.left.toFixed(0)},${toRect.top.toFixed(0)}` : 'null'}) → FADE`)
+return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'thumb-off-screen', fromRect }
+}
 
-  if (config.mode === 'auto') {
-    if (!shouldUseFlip(toRect, config, debug)) {
-      return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'visibility-below-threshold', fromRect }
-    }
-  }
+if (config.mode === 'auto') {
+if (!shouldUseFlip(toRect, config, debug)) {
+return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'visibility-below-threshold', fromRect }
+}
+}
 
-  debug?.log('transitions', 'planClose: all checks passed → FLIP')
-  return { mode: 'flip', durationMs: CLOSE_FLIP_DURATION_MS, fromRect, toRect, reason: 'ok' }
+debug?.log('transitions', 'planClose: all checks passed → FLIP')
+return { mode: 'flip', durationMs: CLOSE\*FLIP_DURATION_MS, fromRect, toRect, reason: 'ok' }
 }
 </file>
 <file name="dom.ts" path="/packages/core/src/utils/dom.ts">
 export function getWindowDimensions(): { width: number; height: number } {
-  if (typeof window === 'undefined') return { width: 0, height: 0 }
-  return { width: window.innerWidth, height: window.innerHeight }
+if (typeof window === 'undefined') return { width: 0, height: 0 }
+return { width: window.innerWidth, height: window.innerHeight }
 }
 </file>
 <file name="index.ts" path="/packages/core/src/utils/index.ts">
@@ -6959,80 +7198,84 @@ export { getWindowDimensions } from './dom'
 </file>
 <file name="math.ts" path="/packages/core/src/utils/math.ts">
 export function round(value: number, digits = 0): number {
-  const factor = 10 ** digits
-  return Math.round((value + Number.EPSILON) * factor) / factor
+const factor = 10 \*\* digits
+return Math.round((value + Number.EPSILON) \_ factor) / factor
 }
 </file>
 <file name="gestures.ts" path="/packages/core/src/viewer/gestures.ts">
 import type { GestureMode, PanState } from '../types'
 
-/**
- * Classify a gesture based on pointer movement delta.
- * Returns the gesture mode: idle, slide, pan, or close.
- */
-export function classifyGesture(
+/\*\*
+
+- Classify a gesture based on pointer movement delta.
+- Returns the gesture mode: idle, slide, pan, or close.
+  \*/
+  export function classifyGesture(
   deltaX: number,
   deltaY: number,
   pointerType: string,
   isZoomedIn: boolean,
   panBounds: { x: number; y: number },
   currentPan: PanState,
-): GestureMode {
+  ): GestureMode {
   const absX = Math.abs(deltaX)
   const absY = Math.abs(deltaY)
   const threshold = pointerType === 'touch' ? 10 : 6
 
-  if (absX < threshold && absY < threshold) return 'idle'
+if (absX < threshold && absY < threshold) return 'idle'
 
-  const horizontalIntent = absX > absY * 1.1
-  const verticalIntent = absY > absX * 1.1
+const horizontalIntent = absX > absY _ 1.1
+const verticalIntent = absY > absX _ 1.1
 
-  if (isZoomedIn) {
-    const canPanX = panBounds.x > 0.5
-    const canPanY = panBounds.y > 0.5
-    const atLeftEdge = currentPan.x >= panBounds.x - 1
-    const atRightEdge = currentPan.x <= -panBounds.x + 1
-    const wantsOutwardSlide = horizontalIntent
-      && (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
+if (isZoomedIn) {
+const canPanX = panBounds.x > 0.5
+const canPanY = panBounds.y > 0.5
+const atLeftEdge = currentPan.x >= panBounds.x - 1
+const atRightEdge = currentPan.x <= -panBounds.x + 1
+const wantsOutwardSlide = horizontalIntent
+&& (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
 
     if (!wantsOutwardSlide && (canPanX || canPanY)) return 'pan'
     if (horizontalIntent) return 'slide'
     return 'pan'
-  }
 
-  if (horizontalIntent) return 'slide'
-  if (verticalIntent) return 'close'
-  return absX >= absY ? 'slide' : 'close'
 }
 
-/**
- * Detect a double-tap based on timing and proximity.
- */
-export function isDoubleTap(
+if (horizontalIntent) return 'slide'
+if (verticalIntent) return 'close'
+return absX >= absY ? 'slide' : 'close'
+}
+
+/\*\*
+
+- Detect a double-tap based on timing and proximity.
+  \*/
+  export function isDoubleTap(
   now: number,
   lastTap: { time: number; clientX: number; clientY: number } | null,
   clientX: number,
   clientY: number,
   maxInterval = 260,
   maxDistance = 24,
-): boolean {
+  ): boolean {
   if (!lastTap) return false
   return (
-    now - lastTap.time < maxInterval
-    && Math.abs(clientX - lastTap.clientX) < maxDistance
-    && Math.abs(clientY - lastTap.clientY) < maxDistance
+  now - lastTap.time < maxInterval
+  && Math.abs(clientX - lastTap.clientX) < maxDistance
+  && Math.abs(clientY - lastTap.clientY) < maxDistance
   )
-}
+  }
 
-/**
- * Compute the close-drag ratio (0 to 0.75) from vertical drag distance.
- */
-export function computeCloseDragRatio(closeDragY: number, areaHeight: number): number {
-  return Math.min(0.75, Math.abs(closeDragY) / Math.max(240, areaHeight * 0.85))
-}
-</file>
-<file name="index.ts" path="/packages/core/src/viewer/index.ts">
-export {
+/\*\*
+
+- Compute the close-drag ratio (0 to 0.75) from vertical drag distance.
+  _/
+  export function computeCloseDragRatio(closeDragY: number, areaHeight: number): number {
+  return Math.min(0.75, Math.abs(closeDragY) / Math.max(240, areaHeight _ 0.85))
+  }
+  </file>
+  <file name="index.ts" path="/packages/core/src/viewer/index.ts">
+  export {
   DEFAULT_MIN_ZOOM,
   computeFittedFrame,
   computeZoomLevels,
@@ -7041,88 +7284,90 @@ export {
   clampPanWithResistance,
   clientToAreaPoint,
   computeTargetPanForZoom,
-} from './zoom'
+  } from './zoom'
 
 export {
-  classifyGesture,
-  isDoubleTap,
-  computeCloseDragRatio,
+classifyGesture,
+isDoubleTap,
+computeCloseDragRatio,
 } from './gestures'
 
 export {
-  viewerTransition,
-  createViewerState,
-  isViewerOpen,
-  getActiveId,
-  type ViewerAction,
+viewerTransition,
+createViewerState,
+isViewerOpen,
+getActiveId,
+type ViewerAction,
 } from './state-machine'
 </file>
 <file name="state-machine.ts" path="/packages/core/src/viewer/state-machine.ts">
 import type { ViewerState } from '../types'
 
 export type ViewerAction =
-  | { type: 'open'; activeId: string | number }
-  | { type: 'opened' }
-  | { type: 'close' }
-  | { type: 'closed' }
-  | { type: 'setActive'; activeId: string | number }
+| { type: 'open'; activeId: string | number }
+| { type: 'opened' }
+| { type: 'close' }
+| { type: 'closed' }
+| { type: 'setActive'; activeId: string | number }
 
-/**
- * Pure state machine for the viewer lifecycle.
- * Returns the next state given a current state and action.
- */
-export function viewerTransition(state: ViewerState, action: ViewerAction): ViewerState {
+/\*\*
+
+- Pure state machine for the viewer lifecycle.
+- Returns the next state given a current state and action.
+  \*/
+  export function viewerTransition(state: ViewerState, action: ViewerAction): ViewerState {
   switch (action.type) {
-    case 'open':
-      if (state.status === 'closed') {
-        return { status: 'opening', activeId: action.activeId }
-      }
-      // Allow re-open if already open (switch to different item)
-      if (state.status === 'open') {
-        return { status: 'open', activeId: action.activeId }
-      }
-      return state
-
-    case 'opened':
-      if (state.status === 'opening') {
-        return { status: 'open', activeId: state.activeId }
-      }
-      return state
-
-    case 'close':
-      if (state.status === 'open' || state.status === 'opening') {
-        return { status: 'closing', activeId: state.activeId }
-      }
-      return state
-
-    case 'closed':
-      if (state.status === 'closing') {
-        return { status: 'closed' }
-      }
-      return state
-
-    case 'setActive':
-      if (state.status === 'open') {
-        return { status: 'open', activeId: action.activeId }
-      }
-      return state
-
-    default:
-      return state
+  case 'open':
+  if (state.status === 'closed') {
+  return { status: 'opening', activeId: action.activeId }
   }
-}
+  // Allow re-open if already open (switch to different item)
+  if (state.status === 'open') {
+  return { status: 'open', activeId: action.activeId }
+  }
+  return state
+
+      case 'opened':
+        if (state.status === 'opening') {
+          return { status: 'open', activeId: state.activeId }
+        }
+        return state
+
+      case 'close':
+        if (state.status === 'open' || state.status === 'opening') {
+          return { status: 'closing', activeId: state.activeId }
+        }
+        return state
+
+      case 'closed':
+        if (state.status === 'closing') {
+          return { status: 'closed' }
+        }
+        return state
+
+      case 'setActive':
+        if (state.status === 'open') {
+          return { status: 'open', activeId: action.activeId }
+        }
+        return state
+
+      default:
+        return state
+
+  }
+  }
 
 export function createViewerState(): ViewerState {
-  return { status: 'closed' }
+return { status: 'closed' }
 }
 
 export function isViewerOpen(state: ViewerState): boolean {
-  return state.status === 'open' || state.status === 'opening'
+return state.status === 'open' || state.status === 'opening'
 }
 
 export function getActiveId(state: ViewerState): (string | number) | undefined {
-  if ('activeId' in state) return state.activeId
-  return undefined
+if ('activeId' in state) return state.activeId
+return undefined
 }
 </file>
 <file name="zoom.ts" path="/packages/core/src/viewer/zoom.ts">
@@ -7131,229 +7376,236 @@ import { fitRect, rubberband } from '../geometry/rect'
 
 export const DEFAULT_MIN_ZOOM = 1.5
 
-/**
- * Compute a frame rect (fitted to aspect ratio) relative to the container origin.
- */
-export function computeFittedFrame(
+/\*\*
+
+- Compute a frame rect (fitted to aspect ratio) relative to the container origin.
+  \*/
+  export function computeFittedFrame(
   containerWidth: number,
   containerHeight: number,
   photoWidth: number,
   photoHeight: number,
-): RectLike {
+  ): RectLike {
   return fitRect(
-    { left: 0, top: 0, width: containerWidth, height: containerHeight },
-    photoWidth / photoHeight,
+  { left: 0, top: 0, width: containerWidth, height: containerHeight },
+  photoWidth / photoHeight,
   )
-}
+  }
 
-/**
- * Compute zoom levels for a photo within a given area.
- * Respects per-photo `photo.meta.maxZoom` / `photo.meta.minZoom` overrides,
- * and accepts a lightbox-level `options.minZoom` fallback.
- */
-export function computeZoomLevels(
+/\*\*
+
+- Compute zoom levels for a photo within a given area.
+- Respects per-photo `photo.meta.maxZoom` / `photo.meta.minZoom` overrides,
+- and accepts a lightbox-level `options.minZoom` fallback.
+  \*/
+  export function computeZoomLevels(
   photoWidth: number,
   photoHeight: number,
   areaWidth: number,
   areaHeight: number,
   photo?: PhotoItem,
   options?: { minZoom?: number },
-): ZoomState {
+  ): ZoomState {
   const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
 
-  const metaMax = typeof photo?.meta?.maxZoom === 'number' && (photo.meta.maxZoom as number) > 0
-    ? (photo.meta.maxZoom as number)
-    : null
+const metaMax = typeof photo?.meta?.maxZoom === 'number' && (photo.meta.maxZoom as number) > 0
+? (photo.meta.maxZoom as number)
+: null
 
-  const minZoom = (typeof photo?.meta?.minZoom === 'number' && (photo.meta.minZoom as number) > 0
-    ? (photo.meta.minZoom as number)
-    : null) ?? options?.minZoom ?? DEFAULT_MIN_ZOOM
+const minZoom = (typeof photo?.meta?.minZoom === 'number' && (photo.meta.minZoom as number) > 0
+? (photo.meta.minZoom as number)
+: null) ?? options?.minZoom ?? DEFAULT_MIN_ZOOM
 
-  const naturalMax = metaMax ?? Math.max(
-    minZoom,
-    Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
-  )
-  const secondary = Math.min(2, naturalMax)
+const naturalMax = metaMax ?? Math.max(
+minZoom,
+Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
+)
+const secondary = Math.min(2, naturalMax)
 
-  return {
-    fit: 1,
-    secondary,
-    max: Math.max(secondary, naturalMax),
-    current: 1,
-  }
+return {
+fit: 1,
+secondary,
+max: Math.max(secondary, naturalMax),
+current: 1,
+}
 }
 
-/**
- * Compute pan bounds for a given zoom level.
- * Returns the maximum absolute pan offset in each axis.
- */
-export function computePanBounds(
+/\*\*
+
+- Compute pan bounds for a given zoom level.
+- Returns the maximum absolute pan offset in each axis.
+  _/
+  export function computePanBounds(
   photoWidth: number,
   photoHeight: number,
   areaWidth: number,
   areaHeight: number,
   zoom: number,
-): { x: number; y: number } {
+  ): { x: number; y: number } {
   const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
   return {
-    x: Math.max(0, (frame.width * zoom - areaWidth) / 2),
-    y: Math.max(0, (frame.height * zoom - areaHeight) / 2),
+  x: Math.max(0, (frame.width _ zoom - areaWidth) / 2),
+  y: Math.max(0, (frame.height \* zoom - areaHeight) / 2),
   }
-}
+  }
 
-/**
- * Clamp pan position to bounds (hard clamp).
- */
-export function clampPanToBounds(pan: PanState, bounds: { x: number; y: number }): PanState {
+/\*\*
+
+- Clamp pan position to bounds (hard clamp).
+  \*/
+  export function clampPanToBounds(pan: PanState, bounds: { x: number; y: number }): PanState {
   return {
-    x: Math.min(bounds.x, Math.max(-bounds.x, pan.x)),
-    y: Math.min(bounds.y, Math.max(-bounds.y, pan.y)),
+  x: Math.min(bounds.x, Math.max(-bounds.x, pan.x)),
+  y: Math.min(bounds.y, Math.max(-bounds.y, pan.y)),
   }
-}
+  }
 
-/**
- * Clamp pan position to bounds with rubber-band resistance beyond edges.
- */
-export function clampPanWithResistance(pan: PanState, bounds: { x: number; y: number }): PanState {
+/\*\*
+
+- Clamp pan position to bounds with rubber-band resistance beyond edges.
+  \*/
+  export function clampPanWithResistance(pan: PanState, bounds: { x: number; y: number }): PanState {
   return {
-    x: rubberband(pan.x, -bounds.x, bounds.x),
-    y: rubberband(pan.y, -bounds.y, bounds.y),
+  x: rubberband(pan.x, -bounds.x, bounds.x),
+  y: rubberband(pan.y, -bounds.y, bounds.y),
   }
-}
+  }
 
-/**
- * Convert client (screen) coordinates to a point relative to area center.
- */
-export function clientToAreaPoint(
+/\*\*
+
+- Convert client (screen) coordinates to a point relative to area center.
+  \*/
+  export function clientToAreaPoint(
   clientX: number,
   clientY: number,
   areaLeft: number,
   areaTop: number,
   areaWidth: number,
   areaHeight: number,
-): { x: number; y: number } {
+  ): { x: number; y: number } {
   return {
-    x: clientX - areaLeft - areaWidth / 2,
-    y: clientY - areaTop - areaHeight / 2,
+  x: clientX - areaLeft - areaWidth / 2,
+  y: clientY - areaTop - areaHeight / 2,
   }
-}
+  }
 
-/**
- * Compute the target pan position when zooming to a specific level,
- * keeping the given point stable on screen.
- */
-export function computeTargetPanForZoom(
+/\*\*
+
+- Compute the target pan position when zooming to a specific level,
+- keeping the given point stable on screen.
+  \*/
+  export function computeTargetPanForZoom(
   targetZoom: number,
   currentZoom: number,
   currentPan: PanState,
   point: { x: number; y: number },
   fitZoom: number,
   panBounds: { x: number; y: number },
-): PanState {
+  ): PanState {
   if (targetZoom <= fitZoom + 0.01) {
-    return { x: 0, y: 0 }
+  return { x: 0, y: 0 }
   }
 
-  const targetPan = {
-    x: point.x - ((point.x - currentPan.x) / currentZoom) * targetZoom,
-    y: point.y - ((point.y - currentPan.y) / currentZoom) * targetZoom,
-  }
+const targetPan = {
+x: point.x - ((point.x - currentPan.x) / currentZoom) _ targetZoom,
+y: point.y - ((point.y - currentPan.y) / currentZoom) _ targetZoom,
+}
 
-  return clampPanToBounds(targetPan, panBounds)
+return clampPanToBounds(targetPan, panBounds)
 }
 </file>
 <file name="index.ts" path="/packages/core/src/index.ts">
 // @nuxt-photo/core — Framework-free TypeScript
 
 // Types
-export * from './types'
+export \* from './types'
 
 // Collection
-export * from './collection'
+export \* from './collection'
 
 // Layout
-export * from './layout'
+export \* from './layout'
 
 // Geometry
-export * from './geometry'
+export \* from './geometry'
 
 // Physics
-export * from './physics'
+export \* from './physics'
 
 // Image
-export * from './image'
+export \* from './image'
 
 // DOM utilities
-export * from './dom'
+export \* from './dom'
 
 // Debug
-export * from './debug'
+export \* from './debug'
 
 // Viewer
-export * from './viewer'
+export \* from './viewer'
 
 // Transition
-export * from './transition'
+export \* from './transition'
 
 // Utilities
-export * from './utils'
+export \* from './utils'
 </file>
 <file name="types.ts" path="/packages/core/src/types.ts">
 // ─── Item types ───
 
 export type PhotoItem<TMeta extends Record<string, unknown> = Record<string, unknown>> = {
-  id: string | number
-  src: string
-  thumbSrc?: string
-  width: number
-  height: number
-  alt?: string
-  caption?: string
-  description?: string
-  blurhash?: string
-  srcset?: string
-  meta?: TMeta
+id: string | number
+src: string
+thumbSrc?: string
+width: number
+height: number
+alt?: string
+caption?: string
+description?: string
+blurhash?: string
+srcset?: string
+meta?: TMeta
 }
 
-/** Normalize photo id to string for reliable comparison across string/number types. */
+/\*_ Normalize photo id to string for reliable comparison across string/number types. _/
 export function photoId(photo: PhotoItem): string {
-  return String(photo.id)
+return String(photo.id)
 }
 
 export type SlideItem =
-  | { type: 'image'; photo: PhotoItem }
-  | { type: 'custom'; id: string; data?: unknown; width?: number; height?: number }
+| { type: 'image'; photo: PhotoItem }
+| { type: 'custom'; id: string; data?: unknown; width?: number; height?: number }
 
 // ─── Geometry ───
 
 export type RectLike = {
-  left: number
-  top: number
-  width: number
-  height: number
+left: number
+top: number
+width: number
+height: number
 }
 
 export type AreaMetrics = RectLike
 
 export type PanState = {
-  x: number
-  y: number
+x: number
+y: number
 }
 
 export type PanBounds = {
-  minX: number
-  maxX: number
-  minY: number
-  maxY: number
+minX: number
+maxX: number
+minY: number
+maxY: number
 }
 
 // ─── Zoom ───
 
 export type ZoomState = {
-  fit: number
-  secondary: number
-  max: number
-  current: number
+fit: number
+secondary: number
+max: number
+current: number
 }
 
 // ─── Gestures ───
@@ -7363,18 +7615,18 @@ export type GestureMode = 'idle' | 'slide' | 'pan' | 'close'
 // ─── Panzoom motion ───
 
 export type PanzoomMotion = {
-  x: number
-  y: number
-  scale: number
-  targetX: number
-  targetY: number
-  targetScale: number
-  velocityX: number
-  velocityY: number
-  velocityScale: number
-  tension: number
-  friction: number
-  rafId: number
+x: number
+y: number
+scale: number
+targetX: number
+targetY: number
+targetScale: number
+velocityX: number
+velocityY: number
+velocityScale: number
+tension: number
+friction: number
+rafId: number
 }
 
 // ─── Carousel ───
@@ -7382,198 +7634,202 @@ export type PanzoomMotion = {
 export type CarouselStyle = 'classic' | 'parallax' | 'fade'
 
 export type CarouselConfig = {
-  style: CarouselStyle
-  parallax: { amount: number; scale: number; opacity: number }
-  fade: { minOpacity: number }
+style: CarouselStyle
+parallax: { amount: number; scale: number; opacity: number }
+fade: { minOpacity: number }
 }
 
 // ─── Viewer state machine ───
 
 export type ViewerState =
-  | { status: 'closed' }
-  | { status: 'opening'; activeId: string | number }
-  | { status: 'open'; activeId: string | number }
-  | { status: 'closing'; activeId: string | number }
+| { status: 'closed' }
+| { status: 'opening'; activeId: string | number }
+| { status: 'open'; activeId: string | number }
+| { status: 'closing'; activeId: string | number }
 
 // ─── Transition ───
 
 export type TransitionMode = 'flip' | 'fade' | 'auto' | 'none'
 
 export type OpenTransitionPlan = {
-  mode: 'connected' | 'fade' | 'scale-fade'
-  sourceRect?: RectLike
-  targetRect?: RectLike
-  sourceAspectRatio?: number
-  targetAspectRatio?: number
-  durationMs: number
-  easing: string
-  reason?:
-    | 'ok'
-    | 'missing-source'
-    | 'not-visible'
-    | 'bad-geometry'
-    | 'aspect-ratio-too-far'
-    | 'decode-timeout'
-    | 'reduced-motion'
+mode: 'connected' | 'fade' | 'scale-fade'
+sourceRect?: RectLike
+targetRect?: RectLike
+sourceAspectRatio?: number
+targetAspectRatio?: number
+durationMs: number
+easing: string
+reason?:
+| 'ok'
+| 'missing-source'
+| 'not-visible'
+| 'bad-geometry'
+| 'aspect-ratio-too-far'
+| 'decode-timeout'
+| 'reduced-motion'
 }
 
 export type CloseTransitionPlan = {
-  mode: 'flip' | 'fade' | 'instant'
-  fromRect?: RectLike
-  toRect?: RectLike
-  durationMs: number
-  reason:
-    | 'ok'
-    | 'missing-thumb-ref'
-    | 'thumb-off-screen'
-    | 'missing-frame-rect'
-    | 'mode-forced-fade'
-    | 'mode-forced-none'
-    | 'visibility-below-threshold'
-    | 'scrolled-into-view'
+mode: 'flip' | 'fade' | 'instant'
+fromRect?: RectLike
+toRect?: RectLike
+durationMs: number
+reason:
+| 'ok'
+| 'missing-thumb-ref'
+| 'thumb-off-screen'
+| 'missing-frame-rect'
+| 'mode-forced-fade'
+| 'mode-forced-none'
+| 'visibility-below-threshold'
+| 'scrolled-into-view'
 }
 
 // ─── Layout ───
 
 export type LayoutInput = {
-  photos: PhotoItem[]
-  containerWidth: number
-  spacing?: number
-  padding?: number
+photos: PhotoItem[]
+containerWidth: number
+spacing?: number
+padding?: number
 }
 
 export type RowsLayoutOptions = LayoutInput & {
-  targetRowHeight?: number
+targetRowHeight?: number
 }
 
 export type ColumnsLayoutOptions = LayoutInput & {
-  columns?: number
+columns?: number
 }
 
 export type MasonryLayoutOptions = LayoutInput & {
-  columns?: number
+columns?: number
 }
 
 export type LayoutEntry = {
-  index: number
-  photo: PhotoItem
-  width: number
-  height: number
-  positionIndex: number
-  itemsCount: number
+index: number
+photo: PhotoItem
+width: number
+height: number
+positionIndex: number
+itemsCount: number
 }
 
 export type LayoutGroup = {
-  type: 'row' | 'column'
-  index: number
-  entries: LayoutEntry[]
-  columnsGaps?: number[]
-  columnsRatios?: number[]
+type: 'row' | 'column'
+index: number
+entries: LayoutEntry[]
+columnsGaps?: number[]
+columnsRatios?: number[]
 }
 
 // ─── Album layout (discriminated union for PhotoAlbum) ───
 
 export type RowsAlbumLayout = {
-  type: 'rows'
-  targetRowHeight?: ResponsiveParameter<number>
+type: 'rows'
+targetRowHeight?: ResponsiveParameter<number>
 }
 
 export type ColumnsAlbumLayout = {
-  type: 'columns'
-  columns?: ResponsiveParameter<number>
+type: 'columns'
+columns?: ResponsiveParameter<number>
 }
 
 export type MasonryAlbumLayout = {
-  type: 'masonry'
-  columns?: ResponsiveParameter<number>
+type: 'masonry'
+columns?: ResponsiveParameter<number>
 }
 
-/**
- * Discriminated layout config for `PhotoAlbum`.
- * Each variant only accepts the props relevant to that layout type.
- *
- * @example
- * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
- */
-export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
+/\*\*
+
+- Discriminated layout config for `PhotoAlbum`.
+- Each variant only accepts the props relevant to that layout type.
+-
+- @example
+- <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
+   */
+  export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
 
 // ─── Image adapter ───
 
 export type ImageSource = {
-  src: string
-  srcset?: string
-  sizes?: string
-  width?: number
-  height?: number
+src: string
+srcset?: string
+sizes?: string
+width?: number
+height?: number
 }
 
-/**
- * Context in which an image is being rendered.
- * - `'thumb'` — grid thumbnail (smaller, responsive srcset)
- * - `'slide'` — lightbox slide (full-viewport srcset)
- * - `'preload'` — reserved for future preloading support; adapters may return a
- *   single low-res URL here. The native adapter treats it the same as `'slide'`.
- */
-export type ImageContext = 'thumb' | 'slide' | 'preload'
+/\*\*
+
+- Context in which an image is being rendered.
+- - `'thumb'` — grid thumbnail (smaller, responsive srcset)
+- - `'slide'` — lightbox slide (full-viewport srcset)
+- - `'preload'` — reserved for future preloading support; adapters may return a
+- single low-res URL here. The native adapter treats it the same as `'slide'`.
+  \*/
+  export type ImageContext = 'thumb' | 'slide' | 'preload'
 
 export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
 
 // ─── Responsive parameters ───
 
-/**
- * A prop value that can be a plain value or a function that receives the current
- * container width and returns a value. Allows per-breakpoint customisation without
- * needing explicit breakpoint arrays. Defaults to `number` but can be parameterized.
- *
- * @example
- * // Static value — same at every container width
- * :spacing="8"
- *
- * // Inline function — full control
- * :spacing="(w) => w < 600 ? 4 : 8"
- *
- * // Breakpoint map via responsive() helper — declarative shorthand
- * :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
- */
-export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
+/\*\*
+
+- A prop value that can be a plain value or a function that receives the current
+- container width and returns a value. Allows per-breakpoint customisation without
+- needing explicit breakpoint arrays. Defaults to `number` but can be parameterized.
+-
+- @example
+- // Static value — same at every container width
+- :spacing="8"
+-
+- // Inline function — full control
+- :spacing="(w) => w < 600 ? 4 : 8"
+-
+- // Breakpoint map via responsive() helper — declarative shorthand
+- :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
+  \*/
+  export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
 
 const responsiveBreakpointsKey = Symbol('nuxt-photo:responsive-breakpoints')
 
 export type ResponsiveResolver<T> = ((containerWidth: number) => T) & {
-  readonly [responsiveBreakpointsKey]?: readonly number[]
+readonly [responsiveBreakpointsKey]?: readonly number[]
 }
 
-/**
- * Resolve a `ResponsiveParameter` to its concrete value.
- * Returns `fallback` when `value` is `undefined`.
- */
-export function resolveResponsiveParameter<T>(
+/\*\*
+
+- Resolve a `ResponsiveParameter` to its concrete value.
+- Returns `fallback` when `value` is `undefined`.
+  \*/
+  export function resolveResponsiveParameter<T>(
   value: ResponsiveParameter<T> | undefined,
   containerWidth: number,
   fallback: T,
-): T {
+  ): T {
   if (value === undefined) return fallback
   return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
-}
+  }
 
 export function getResponsiveBreakpoints<T>(
-  value: ResponsiveParameter<T> | undefined,
+value: ResponsiveParameter<T> | undefined,
 ): readonly number[] | undefined {
-  if (typeof value !== 'function') return undefined
+if (typeof value !== 'function') return undefined
 
-  const breakpoints = (value as ResponsiveResolver<T>)[responsiveBreakpointsKey]
-  return Array.isArray(breakpoints) && breakpoints.length > 0 ? breakpoints : undefined
+const breakpoints = (value as ResponsiveResolver<T>)[responsiveBreakpointsKey]
+return Array.isArray(breakpoints) && breakpoints.length > 0 ? breakpoints : undefined
 }
 
 export function mergeResponsiveBreakpoints(
-  values: Array<ResponsiveParameter<any> | undefined>,
+values: Array<ResponsiveParameter<any> | undefined>,
 ): readonly number[] | undefined {
-  const positive = new Set<number>()
-  let sawZeroBreakpoint = false
+const positive = new Set<number>()
+let sawZeroBreakpoint = false
 
-  for (const value of values) {
-    const breakpoints = getResponsiveBreakpoints(value)
-    if (!breakpoints) continue
+for (const value of values) {
+const breakpoints = getResponsiveBreakpoints(value)
+if (!breakpoints) continue
 
     for (const breakpoint of breakpoints) {
       if (!Number.isFinite(breakpoint) || breakpoint < 0) continue
@@ -7583,77 +7839,80 @@ export function mergeResponsiveBreakpoints(
       }
       positive.add(breakpoint)
     }
-  }
 
-  if (positive.size === 0) return undefined
-
-  const merged = [...positive].sort((a, b) => a - b)
-  if (!sawZeroBreakpoint) return merged
-
-  const floor = Math.max(1, Math.floor(merged[0]! / 2))
-  return merged[0] === floor ? merged : [floor, ...merged]
 }
 
-/**
- * Create a responsive parameter from a breakpoint map.
- * Keys are minimum container widths (px); values are the parameter at that width.
- * The largest matching breakpoint wins (mobile-first).
- *
- * @example
- * // 2 columns below 600px, 3 at 600-899px, 4 at 900px+
- * responsive({ 0: 2, 600: 3, 900: 4 })
- *
- * @example
- * // Use with PhotoAlbum
- * <PhotoAlbum
- *   :layout="{ type: 'columns', columns: responsive({ 0: 2, 768: 3, 1200: 4 }) }"
- *   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
- * />
- */
-export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T> {
+if (positive.size === 0) return undefined
+
+const merged = [...positive].sort((a, b) => a - b)
+if (!sawZeroBreakpoint) return merged
+
+const floor = Math.max(1, Math.floor(merged[0]! / 2))
+return merged[0] === floor ? merged : [floor, ...merged]
+}
+
+/\*\*
+
+- Create a responsive parameter from a breakpoint map.
+- Keys are minimum container widths (px); values are the parameter at that width.
+- The largest matching breakpoint wins (mobile-first).
+-
+- @example
+- // 2 columns below 600px, 3 at 600-899px, 4 at 900px+
+- responsive({ 0: 2, 600: 3, 900: 4 })
+-
+- @example
+- // Use with PhotoAlbum
+- <PhotoAlbum
+- :layout="{ type: 'columns', columns: responsive({ 0: 2, 768: 3, 1200: 4 }) }"
+- :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
+- />
+  \*/
+  export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T> {
   const sorted = Object.entries(breakpoints)
-    .map(([k, v]) => [Number(k), v] as [number, T])
-    .sort((a, b) => b[0] - a[0])
+  .map(([k, v]) => [Number(k), v] as [number, T])
+  .sort((a, b) => b[0] - a[0])
 
-  if (sorted.length === 0) {
-    throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
-  }
+if (sorted.length === 0) {
+throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
+}
 
-  const resolver = ((containerWidth: number) => {
-    for (const [minWidth, value] of sorted) {
-      if (containerWidth >= minWidth) return value
-    }
-    return sorted[sorted.length - 1]![1]
-  }) as ResponsiveResolver<T>
+const resolver = ((containerWidth: number) => {
+for (const [minWidth, value] of sorted) {
+if (containerWidth >= minWidth) return value
+}
+return sorted[sorted.length - 1]![1]
+}) as ResponsiveResolver<T>
 
-  Object.defineProperty(resolver, responsiveBreakpointsKey, {
-    value: [...new Set(sorted.map(([minWidth]) => minWidth).filter(width => Number.isFinite(width) && width >= 0))].sort((a, b) => a - b),
-    enumerable: false,
-    configurable: false,
-    writable: false,
-  })
+Object.defineProperty(resolver, responsiveBreakpointsKey, {
+value: [...new Set(sorted.map(([minWidth]) => minWidth).filter(width => Number.isFinite(width) && width >= 0))].sort((a, b) => a - b),
+enumerable: false,
+configurable: false,
+writable: false,
+})
 
-  return resolver
+return resolver
 }
 
 // ─── Photo adapter ───
 
-/**
- * Transforms external data shapes into `PhotoItem`.
- * Pass to `PhotoAlbum` or `PhotoGroup` via the `:photoAdapter` prop so you can
- * feed CMS / API responses directly without manual mapping.
- *
- * @example
- * const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
- *   id: item.id,
- *   src: item.urls.regular,
- *   thumbSrc: item.urls.thumb,
- *   width: item.width,
- *   height: item.height,
- *   alt: item.alt_description ?? undefined,
- * })
- */
-export type PhotoAdapter<T = any> = (item: T) => PhotoItem
+/\*\*
+
+- Transforms external data shapes into `PhotoItem`.
+- Pass to `PhotoAlbum` or `PhotoGroup` via the `:photoAdapter` prop so you can
+- feed CMS / API responses directly without manual mapping.
+-
+- @example
+- const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
+- id: item.id,
+- src: item.urls.regular,
+- thumbSrc: item.urls.thumb,
+- width: item.width,
+- height: item.height,
+- alt: item.alt_description ?? undefined,
+- })
+  \*/
+  export type PhotoAdapter<T = any> = (item: T) => PhotoItem
 
 // ─── Debug ───
 
@@ -7664,13 +7923,13 @@ import { describe, expect, it } from 'vitest'
 import { createCollection } from '@nuxt-photo/core'
 
 describe('collection contract', () => {
-  it('supports lookup, wraparound navigation, and preload candidates', () => {
-    const collection = createCollection([
-      { id: 'a' },
-      { id: 'b' },
-      { id: 'c' },
-      { id: 'd' },
-    ])
+it('supports lookup, wraparound navigation, and preload candidates', () => {
+const collection = createCollection([
+{ id: 'a' },
+{ id: 'b' },
+{ id: 'c' },
+{ id: 'd' },
+])
 
     expect(collection.getById('c')).toEqual({ id: 'c' })
     expect(collection.indexOfId('b')).toBe(1)
@@ -7681,53 +7940,54 @@ describe('collection contract', () => {
       { id: 'a' },
       { id: 'd' },
     ])
-  })
+
+})
 })
 </file>
 <file name="layout.test.ts" path="/packages/core/test/layout.test.ts">
 import { describe, expect, it } from 'vitest'
 import {
-  computeColumnsLayout,
-  computeMasonryLayout,
-  computeRowsLayout,
+computeColumnsLayout,
+computeMasonryLayout,
+computeRowsLayout,
 } from '@nuxt-photo/core'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function totalGroupHeight(
-  group: { entries: Array<{ height: number }> },
-  spacing: number,
+group: { entries: Array<{ height: number }> },
+spacing: number,
 ) {
-  return group.entries.reduce((sum, entry) => sum + entry.height, 0) + spacing * Math.max(0, group.entries.length - 1)
+return group.entries.reduce((sum, entry) => sum + entry.height, 0) + spacing \* Math.max(0, group.entries.length - 1)
 }
 
 function masonryGreedyDelta(
-  widths: Array<{ width: number; height: number }>,
-  columns: number,
-  spacing: number,
+widths: Array<{ width: number; height: number }>,
+columns: number,
+spacing: number,
 ) {
-  const heights = new Array(columns).fill(0)
+const heights = new Array(columns).fill(0)
 
-  for (const photo of widths) {
-    let shortest = 0
-    for (let index = 1; index < heights.length; index++) {
-      if (heights[index]! < heights[shortest]!) shortest = index
-    }
-    heights[shortest] += photo.height + spacing
-  }
+for (const photo of widths) {
+let shortest = 0
+for (let index = 1; index < heights.length; index++) {
+if (heights[index]! < heights[shortest]!) shortest = index
+}
+heights[shortest] += photo.height + spacing
+}
 
-  return Math.max(...heights) - Math.min(...heights)
+return Math.max(...heights) - Math.min(...heights)
 }
 
 describe('layout algorithms', () => {
-  it('justifies rows to the container width and returns no invalid entries', () => {
-    const containerWidth = 1000
-    const spacing = 8
-    const rows = computeRowsLayout({
-      photos: createPhotoSet(),
-      containerWidth,
-      spacing,
-      targetRowHeight: 280,
-    })
+it('justifies rows to the container width and returns no invalid entries', () => {
+const containerWidth = 1000
+const spacing = 8
+const rows = computeRowsLayout({
+photos: createPhotoSet(),
+containerWidth,
+spacing,
+targetRowHeight: 280,
+})
 
     expect(computeRowsLayout({ photos: [], containerWidth })).toEqual([])
     expect(rows.length).toBeGreaterThan(0)
@@ -7737,16 +7997,17 @@ describe('layout algorithms', () => {
       expect(totalWidth).toBeCloseTo(containerWidth, 4)
       expect(row.entries.every(entry => entry.width > 0 && entry.height > 0)).toBe(true)
     }
-  })
 
-  it('balances columns while keeping per-column order and valid dimensions', () => {
-    const spacing = 8
-    const columns = computeColumnsLayout({
-      photos: createPhotoSet(),
-      containerWidth: 1000,
-      spacing,
-      columns: 3,
-    })
+})
+
+it('balances columns while keeping per-column order and valid dimensions', () => {
+const spacing = 8
+const columns = computeColumnsLayout({
+photos: createPhotoSet(),
+containerWidth: 1000,
+spacing,
+columns: 3,
+})
 
     expect(columns).toHaveLength(3)
 
@@ -7757,22 +8018,23 @@ describe('layout algorithms', () => {
 
     const heights = columns.map(column => totalGroupHeight(column, spacing))
     expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(60)
-  })
 
-  it('keeps masonry columns ordered and does not worsen the greedy baseline', () => {
-    const photos = createPhotoSet()
-    const containerWidth = 1000
-    const columnsCount = 3
-    const spacing = 8
-    const columnWidth = (containerWidth - spacing * (columnsCount - 1)) / columnsCount
-    const greedyDelta = masonryGreedyDelta(
-      photos.map(photo => ({
-        width: columnWidth,
-        height: columnWidth / (photo.width / photo.height),
-      })),
-      columnsCount,
-      spacing,
-    )
+})
+
+it('keeps masonry columns ordered and does not worsen the greedy baseline', () => {
+const photos = createPhotoSet()
+const containerWidth = 1000
+const columnsCount = 3
+const spacing = 8
+const columnWidth = (containerWidth - spacing \* (columnsCount - 1)) / columnsCount
+const greedyDelta = masonryGreedyDelta(
+photos.map(photo => ({
+width: columnWidth,
+height: columnWidth / (photo.width / photo.height),
+})),
+columnsCount,
+spacing,
+)
 
     const masonry = computeMasonryLayout({
       photos,
@@ -7790,7 +8052,8 @@ describe('layout algorithms', () => {
     const finalDelta = Math.max(...heights) - Math.min(...heights)
 
     expect(finalDelta).toBeLessThanOrEqual(greedyDelta)
-  })
+
+})
 })
 </file>
 <file name="loader.test.ts" path="/packages/core/test/loader.test.ts">
@@ -7799,47 +8062,47 @@ import { ensureImageLoaded } from '../src/image/loader'
 
 // Mock Image constructor
 class MockImage {
-  onload: (() => void) | null = null
-  onerror: (() => void) | null = null
-  decode?: () => Promise<void>
-  complete = false
-  private _src = ''
+onload: (() => void) | null = null
+onerror: (() => void) | null = null
+decode?: () => Promise<void>
+complete = false
+private \_src = ''
 
-  get src() {
-    return this._src
-  }
+get src() {
+return this.\_src
+}
 
-  set src(value: string) {
-    this._src = value
-    // Simulate async load
-    queueMicrotask(() => {
-      if (value.includes('broken')) {
-        this.onerror?.()
-      } else {
-        this.complete = true
-        this.onload?.()
-      }
-    })
-  }
+set src(value: string) {
+this.\_src = value
+// Simulate async load
+queueMicrotask(() => {
+if (value.includes('broken')) {
+this.onerror?.()
+} else {
+this.complete = true
+this.onload?.()
+}
+})
+}
 }
 
 beforeEach(() => {
-  vi.stubGlobal('Image', MockImage)
-  // We can't clear the module-level cache between tests,
-  // so each test uses a unique URL via Date.now() to avoid cache collisions
+vi.stubGlobal('Image', MockImage)
+// We can't clear the module-level cache between tests,
+// so each test uses a unique URL via Date.now() to avoid cache collisions
 })
 
 describe('ensureImageLoaded', () => {
-  it('resolves for a valid image', async () => {
-    await expect(ensureImageLoaded(`/valid-${Date.now()}.jpg`)).resolves.toBeUndefined()
-  })
+it('resolves for a valid image', async () => {
+await expect(ensureImageLoaded(`/valid-${Date.now()}.jpg`)).resolves.toBeUndefined()
+})
 
-  it('resolves (does not reject) for a broken image', async () => {
-    await expect(ensureImageLoaded(`/broken-${Date.now()}.jpg`)).resolves.toBeUndefined()
-  })
+it('resolves (does not reject) for a broken image', async () => {
+await expect(ensureImageLoaded(`/broken-${Date.now()}.jpg`)).resolves.toBeUndefined()
+})
 
-  it('does not cache failed loads so retries can succeed', async () => {
-    const src = `/broken-retry-${Date.now()}.jpg`
+it('does not cache failed loads so retries can succeed', async () => {
+const src = `/broken-retry-${Date.now()}.jpg`
 
     // First call: broken image
     await ensureImageLoaded(src)
@@ -7857,19 +8120,20 @@ describe('ensureImageLoaded', () => {
 
     await ensureImageLoaded(src)
     expect(imageCreated).toBe(true)
-  })
 
-  it('resolves when image.decode() succeeds', async () => {
-    vi.stubGlobal('Image', class extends MockImage {
-      decode = () => Promise.resolve()
-    })
-    await expect(ensureImageLoaded(`/decode-ok-${Date.now()}.jpg`)).resolves.toBeUndefined()
-  })
+})
 
-  it('resolves when image.decode() rejects and evicts from cache', async () => {
-    vi.stubGlobal('Image', class extends MockImage {
-      decode = () => Promise.reject(new Error('decode failed'))
-    })
+it('resolves when image.decode() succeeds', async () => {
+vi.stubGlobal('Image', class extends MockImage {
+decode = () => Promise.resolve()
+})
+await expect(ensureImageLoaded(`/decode-ok-${Date.now()}.jpg`)).resolves.toBeUndefined()
+})
+
+it('resolves when image.decode() rejects and evicts from cache', async () => {
+vi.stubGlobal('Image', class extends MockImage {
+decode = () => Promise.reject(new Error('decode failed'))
+})
 
     const src = `/decode-fail-${Date.now()}.jpg`
     await ensureImageLoaded(src)
@@ -7886,16 +8150,17 @@ describe('ensureImageLoaded', () => {
 
     await ensureImageLoaded(src)
     expect(imageCreated).toBe(true)
-  })
 
-  it('deduplicates concurrent loads for the same src', async () => {
-    let imageCount = 0
-    vi.stubGlobal('Image', class extends MockImage {
-      constructor() {
-        super()
-        imageCount++
-      }
-    })
+})
+
+it('deduplicates concurrent loads for the same src', async () => {
+let imageCount = 0
+vi.stubGlobal('Image', class extends MockImage {
+constructor() {
+super()
+imageCount++
+}
+})
 
     const src = `/dedup-${Date.now()}.jpg`
     const p1 = ensureImageLoaded(src)
@@ -7906,7 +8171,8 @@ describe('ensureImageLoaded', () => {
     expect(imageCount).toBe(1)
 
     await Promise.all([p1, p2])
-  })
+
+})
 })
 </file>
 <file name="photoAdapter.test.ts" path="/packages/core/test/photoAdapter.test.ts">
@@ -7914,14 +8180,14 @@ import { describe, expect, it } from 'vitest'
 import type { PhotoAdapter, PhotoItem } from '../src/types'
 
 describe('PhotoAdapter type', () => {
-  it('transforms external data into PhotoItem', () => {
-    type UnsplashPhoto = {
-      id: string
-      urls: { regular: string; thumb: string }
-      width: number
-      height: number
-      alt_description: string | null
-    }
+it('transforms external data into PhotoItem', () => {
+type UnsplashPhoto = {
+id: string
+urls: { regular: string; thumb: string }
+width: number
+height: number
+alt_description: string | null
+}
 
     const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
       id: item.id,
@@ -7950,15 +8216,16 @@ describe('PhotoAdapter type', () => {
       height: 1080,
       alt: 'A sunset',
     })
-  })
 
-  it('works with array mapping', () => {
-    const adapter: PhotoAdapter<{ url: string; w: number; h: number }> = (item) => ({
-      id: item.url,
-      src: item.url,
-      width: item.w,
-      height: item.h,
-    })
+})
+
+it('works with array mapping', () => {
+const adapter: PhotoAdapter<{ url: string; w: number; h: number }> = (item) => ({
+id: item.url,
+src: item.url,
+width: item.w,
+height: item.h,
+})
 
     const items = [
       { url: '/a.jpg', w: 800, h: 600 },
@@ -7970,124 +8237,128 @@ describe('PhotoAdapter type', () => {
     expect(photos).toHaveLength(2)
     expect(photos[0]!.id).toBe('/a.jpg')
     expect(photos[1]!.width).toBe(1200)
-  })
+
+})
 })
 </file>
 <file name="responsive.test.ts" path="/packages/core/test/responsive.test.ts">
 import { describe, expect, it } from 'vitest'
 import {
-  getResponsiveBreakpoints,
-  mergeResponsiveBreakpoints,
-  responsive,
-  resolveResponsiveParameter,
+getResponsiveBreakpoints,
+mergeResponsiveBreakpoints,
+responsive,
+resolveResponsiveParameter,
 } from '../src/types'
 
 describe('responsive()', () => {
-  it('returns the value for the largest matching breakpoint', () => {
-    const fn = responsive({ 0: 2, 600: 3, 900: 4 })
-    expect(fn(0)).toBe(2)
-    expect(fn(599)).toBe(2)
-    expect(fn(600)).toBe(3)
-    expect(fn(899)).toBe(3)
-    expect(fn(900)).toBe(4)
-    expect(fn(1200)).toBe(4)
-  })
+it('returns the value for the largest matching breakpoint', () => {
+const fn = responsive({ 0: 2, 600: 3, 900: 4 })
+expect(fn(0)).toBe(2)
+expect(fn(599)).toBe(2)
+expect(fn(600)).toBe(3)
+expect(fn(899)).toBe(3)
+expect(fn(900)).toBe(4)
+expect(fn(1200)).toBe(4)
+})
 
-  it('works with a single breakpoint', () => {
-    const fn = responsive({ 0: 8 })
-    expect(fn(0)).toBe(8)
-    expect(fn(1000)).toBe(8)
-  })
+it('works with a single breakpoint', () => {
+const fn = responsive({ 0: 8 })
+expect(fn(0)).toBe(8)
+expect(fn(1000)).toBe(8)
+})
 
-  it('works with non-zero minimum breakpoint', () => {
-    const fn = responsive({ 400: 'small', 800: 'large' })
-    // Below smallest breakpoint falls back to smallest value
-    expect(fn(200)).toBe('small')
-    expect(fn(400)).toBe('small')
-    expect(fn(800)).toBe('large')
-  })
+it('works with non-zero minimum breakpoint', () => {
+const fn = responsive({ 400: 'small', 800: 'large' })
+// Below smallest breakpoint falls back to smallest value
+expect(fn(200)).toBe('small')
+expect(fn(400)).toBe('small')
+expect(fn(800)).toBe('large')
+})
 
-  it('throws on empty breakpoints', () => {
-    expect(() => responsive({})).toThrow('at least one breakpoint')
-  })
+it('throws on empty breakpoints', () => {
+expect(() => responsive({})).toThrow('at least one breakpoint')
+})
 
-  it('integrates with resolveResponsiveParameter', () => {
-    const fn = responsive({ 0: 4, 600: 8 })
-    expect(resolveResponsiveParameter(fn, 300, 0)).toBe(4)
-    expect(resolveResponsiveParameter(fn, 700, 0)).toBe(8)
-  })
+it('integrates with resolveResponsiveParameter', () => {
+const fn = responsive({ 0: 4, 600: 8 })
+expect(resolveResponsiveParameter(fn, 300, 0)).toBe(4)
+expect(resolveResponsiveParameter(fn, 700, 0)).toBe(8)
+})
 
-  it('exposes breakpoint metadata for responsive() resolvers', () => {
-    const fn = responsive({ 0: 4, 600: 8, 900: 12 })
-    expect(getResponsiveBreakpoints(fn)).toEqual([0, 600, 900])
-  })
+it('exposes breakpoint metadata for responsive() resolvers', () => {
+const fn = responsive({ 0: 4, 600: 8, 900: 12 })
+expect(getResponsiveBreakpoints(fn)).toEqual([0, 600, 900])
+})
 
-  it('merges responsive breakpoint metadata across multiple parameters', () => {
-    const spacing = responsive({ 0: 4, 600: 8 })
-    const columns = responsive({ 0: 1, 840: 3, 1120: 4 })
+it('merges responsive breakpoint metadata across multiple parameters', () => {
+const spacing = responsive({ 0: 4, 600: 8 })
+const columns = responsive({ 0: 1, 840: 3, 1120: 4 })
 
     expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([300, 600, 840, 1120])
-  })
 
-  it('returns undefined when no responsive metadata is available', () => {
-    expect(mergeResponsiveBreakpoints([8, undefined, (width: number) => width > 600 ? 8 : 4])).toBeUndefined()
-  })
+})
+
+it('returns undefined when no responsive metadata is available', () => {
+expect(mergeResponsiveBreakpoints([8, undefined, (width: number) => width > 600 ? 8 : 4])).toBeUndefined()
+})
 })
 </file>
 <file name="transition.test.ts" path="/packages/core/test/transition.test.ts">
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  createTransitionMode,
-  getVisibilityRatio,
-  planCloseTransition,
-  shouldUseFlip,
+createTransitionMode,
+getVisibilityRatio,
+planCloseTransition,
+shouldUseFlip,
 } from '@nuxt-photo/core'
 
 function rect({
-  left,
-  top,
-  width,
-  height,
+left,
+top,
+width,
+height,
 }: {
-  left: number
-  top: number
-  width: number
-  height: number
+left: number
+top: number
+width: number
+height: number
 }) {
-  return {
-    left,
-    top,
-    width,
-    height,
-    right: left + width,
-    bottom: top + height,
-  }
+return {
+left,
+top,
+width,
+height,
+right: left + width,
+bottom: top + height,
+}
 }
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+vi.unstubAllGlobals()
 })
 
 describe('transition planning', () => {
-  it('computes visibility ratios against the viewport', () => {
-    vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
+it('computes visibility ratios against the viewport', () => {
+vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
 
     expect(getVisibilityRatio(rect({ left: 0, top: 0, width: 200, height: 100 }))).toBe(1)
     expect(getVisibilityRatio(rect({ left: -100, top: 0, width: 200, height: 100 }))).toBe(0.5)
-  })
 
-  it('uses transition mode rules for FLIP eligibility', () => {
-    vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
+})
+
+it('uses transition mode rules for FLIP eligibility', () => {
+vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
 
     expect(shouldUseFlip(rect({ left: 0, top: 0, width: 300, height: 200 }), { mode: 'none', autoThreshold: 0.55 })).toBe(false)
     expect(shouldUseFlip(rect({ left: 0, top: 0, width: 300, height: 200 }), { mode: 'fade', autoThreshold: 0.55 })).toBe(false)
     expect(shouldUseFlip(rect({ left: 0, top: 0, width: 300, height: 200 }), { mode: 'flip', autoThreshold: 0.55 })).toBe(true)
     expect(shouldUseFlip(rect({ left: -220, top: 100, width: 400, height: 400 }), { mode: 'auto', autoThreshold: 0.55 })).toBe(false)
     expect(shouldUseFlip(rect({ left: 40, top: 40, width: 300, height: 220 }), { mode: 'auto', autoThreshold: 0.55 })).toBe(true)
-  })
 
-  it('plans close transitions for forced modes, unusable thumbs, low visibility, and good geometry', () => {
-    vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
+})
+
+it('plans close transitions for forced modes, unusable thumbs, low visibility, and good geometry', () => {
+vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
 
     const fromRect = { left: 100, top: 120, width: 900, height: 500 }
 
@@ -8125,56 +8396,58 @@ describe('transition planning', () => {
       thumbRefExists: true,
       config: createTransitionMode(),
     })).toMatchObject({ mode: 'flip', reason: 'ok' })
-  })
+
+})
 })
 </file>
 <file name="viewer-and-geometry.test.ts" path="/packages/core/test/viewer-and-geometry.test.ts">
 import { describe, expect, it } from 'vitest'
 import {
-  DEFAULT_MIN_ZOOM,
-  clampPanToBounds,
-  classifyGesture,
-  computeCloseDragRatio,
-  computePanBounds,
-  computeTargetPanForZoom,
-  computeZoomLevels,
-  fitRect,
-  getActiveId,
-  getLoopedIndex,
-  isDoubleTap,
-  isViewerOpen,
-  rubberband,
-  viewerTransition,
+DEFAULT_MIN_ZOOM,
+clampPanToBounds,
+classifyGesture,
+computeCloseDragRatio,
+computePanBounds,
+computeTargetPanForZoom,
+computeZoomLevels,
+fitRect,
+getActiveId,
+getLoopedIndex,
+isDoubleTap,
+isViewerOpen,
+rubberband,
+viewerTransition,
 } from '@nuxt-photo/core'
 
 describe('geometry and viewer utilities', () => {
-  it('fits rectangles and loops indexes predictably', () => {
-    expect(fitRect({ left: 0, top: 0, width: 100, height: 100 }, 2)).toEqual({
-      left: 0,
-      top: 25,
-      width: 100,
-      height: 50,
-    })
-    expect(getLoopedIndex(-1, 5)).toBe(4)
-    expect(getLoopedIndex(5, 5)).toBe(0)
-  })
+it('fits rectangles and loops indexes predictably', () => {
+expect(fitRect({ left: 0, top: 0, width: 100, height: 100 }, 2)).toEqual({
+left: 0,
+top: 25,
+width: 100,
+height: 50,
+})
+expect(getLoopedIndex(-1, 5)).toBe(4)
+expect(getLoopedIndex(5, 5)).toBe(0)
+})
 
-  it('applies rubberbanding and zoom math correctly', () => {
-    const zoom = computeZoomLevels(2400, 1600, 1200, 800)
-    const bounds = computePanBounds(2400, 1600, 1200, 800, 2)
+it('applies rubberbanding and zoom math correctly', () => {
+const zoom = computeZoomLevels(2400, 1600, 1200, 800)
+const bounds = computePanBounds(2400, 1600, 1200, 800, 2)
 
     expect(rubberband(-20, 0, 100)).toBe(-4)
     expect(zoom).toEqual({ fit: 1, secondary: 2, max: 2, current: 1 })
     expect(bounds).toEqual({ x: 600, y: 400 })
     expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 600, y: -400 })
-  })
 
-  it('applies the default minZoom, supports per-photo and options overrides', () => {
-    // Near-native resolution: the default minZoom raises max above natural ratio
-    const nearNative = computeZoomLevels(1280, 800, 1240, 775)
-    expect(nearNative.max).toBe(DEFAULT_MIN_ZOOM)
-    expect(nearNative.fit).toBe(1)
-    expect(nearNative.current).toBe(1)
+})
+
+it('applies the default minZoom, supports per-photo and options overrides', () => {
+// Near-native resolution: the default minZoom raises max above natural ratio
+const nearNative = computeZoomLevels(1280, 800, 1240, 775)
+expect(nearNative.max).toBe(DEFAULT_MIN_ZOOM)
+expect(nearNative.fit).toBe(1)
+expect(nearNative.current).toBe(1)
 
     // Photo smaller than display area: the default minZoom floor still applies
     const small = computeZoomLevels(600, 400, 1200, 800)
@@ -8199,24 +8472,26 @@ describe('geometry and viewer utilities', () => {
     const optMin = computeZoomLevels(600, 400, 1200, 800, undefined, { minZoom: 1 })
     expect(optMin.max).toBe(1)
     expect(optMin.secondary).toBe(1)
-  })
 
-  it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
-    expect(
-      computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, { x: 600, y: 400 }),
-    ).toEqual({ x: 0, y: 0 })
+})
+
+it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
+expect(
+computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, { x: 600, y: 400 }),
+).toEqual({ x: 0, y: 0 })
 
     expect(
       computeTargetPanForZoom(2, 1, { x: 0, y: 0 }, { x: 500, y: -500 }, 1, { x: 300, y: 200 }),
     ).toEqual({ x: -300, y: 200 })
-  })
 
-  it('transitions viewer state through open, active change, and close', () => {
-    const opening = viewerTransition({ status: 'closed' }, { type: 'open', activeId: 'one' })
-    const opened = viewerTransition(opening, { type: 'opened' })
-    const changed = viewerTransition(opened, { type: 'setActive', activeId: 'two' })
-    const closing = viewerTransition(changed, { type: 'close' })
-    const closed = viewerTransition(closing, { type: 'closed' })
+})
+
+it('transitions viewer state through open, active change, and close', () => {
+const opening = viewerTransition({ status: 'closed' }, { type: 'open', activeId: 'one' })
+const opened = viewerTransition(opening, { type: 'opened' })
+const changed = viewerTransition(opened, { type: 'setActive', activeId: 'two' })
+const closing = viewerTransition(changed, { type: 'close' })
+const closed = viewerTransition(closing, { type: 'closed' })
 
     expect(opening).toEqual({ status: 'opening', activeId: 'one' })
     expect(isViewerOpen(opening)).toBe(true)
@@ -8225,71 +8500,72 @@ describe('geometry and viewer utilities', () => {
     expect(closed).toEqual({ status: 'closed' })
     expect(isViewerOpen(closed)).toBe(false)
     expect(getActiveId(closed)).toBeUndefined()
-  })
+
+})
 })
 
 describe('gesture helpers', () => {
-  it('classifies idle, slide, close, pan, and edge-slide gestures', () => {
-    expect(classifyGesture(4, 4, 'mouse', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('idle')
-    expect(classifyGesture(40, 5, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('slide')
-    expect(classifyGesture(6, 40, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('close')
-    expect(classifyGesture(15, 12, 'touch', true, { x: 80, y: 40 }, { x: 0, y: 0 })).toBe('pan')
-    expect(classifyGesture(24, 2, 'touch', true, { x: 80, y: 40 }, { x: 79, y: 0 })).toBe('slide')
-  })
+it('classifies idle, slide, close, pan, and edge-slide gestures', () => {
+expect(classifyGesture(4, 4, 'mouse', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('idle')
+expect(classifyGesture(40, 5, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('slide')
+expect(classifyGesture(6, 40, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('close')
+expect(classifyGesture(15, 12, 'touch', true, { x: 80, y: 40 }, { x: 0, y: 0 })).toBe('pan')
+expect(classifyGesture(24, 2, 'touch', true, { x: 80, y: 40 }, { x: 79, y: 0 })).toBe('slide')
+})
 
-  it('detects double taps and close-drag ratios', () => {
-    expect(isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14)).toBe(true)
-    expect(isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60)).toBe(false)
-    expect(computeCloseDragRatio(100, 1000)).toBeCloseTo(100 / 850, 6)
-    expect(computeCloseDragRatio(1000, 300)).toBe(0.75)
-  })
+it('detects double taps and close-drag ratios', () => {
+expect(isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14)).toBe(true)
+expect(isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60)).toBe(false)
+expect(computeCloseDragRatio(100, 1000)).toBeCloseTo(100 / 850, 6)
+expect(computeCloseDragRatio(1000, 300)).toBe(0.75)
+})
 })
 </file>
 <file name="build.config.ts" path="/packages/core/build.config.ts">
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  entries: ['src/index'],
-  declaration: true,
-  clean: true,
-  rollup: {
-    emitCJS: false,
-  },
+entries: ['src/index'],
+declaration: true,
+clean: true,
+rollup: {
+emitCJS: false,
+},
 })
 </file>
 <file name="package.json" path="/packages/core/package.json">
 {
-  "name": "@nuxt-photo/core",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "files": ["dist"],
-  "scripts": {
-    "build": "unbuild",
-    "dev": "unbuild --stub"
-  },
-  "devDependencies": {
-    "unbuild": "^3.5.0",
-    "typescript": "^5.9.2"
-  }
+"name": "@nuxt-photo/core",
+"version": "0.0.1",
+"type": "module",
+"exports": {
+".": {
+"import": "./dist/index.mjs",
+"types": "./dist/index.d.ts"
+}
+},
+"main": "./dist/index.mjs",
+"types": "./dist/index.d.ts",
+"sideEffects": false,
+"files": ["dist"],
+"scripts": {
+"build": "unbuild",
+"dev": "unbuild --stub"
+},
+"devDependencies": {
+"unbuild": "^3.5.0",
+"typescript": "^5.9.2"
+}
 }
 </file>
 <file name="tsconfig.json" path="/packages/core/tsconfig.json">
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+"extends": "../../tsconfig.base.json",
+"compilerOptions": {
+"outDir": "dist",
+"rootDir": "src"
+},
+"include": ["src"]
 }
 </file>
 <file name="defaults-plugin.ts" path="/packages/nuxt/src/runtime/defaults-plugin.ts">
@@ -8297,21 +8573,22 @@ import { defineNuxtPlugin, type NuxtApp, useAppConfig } from '#app'
 import { LightboxDefaultsKey } from '@nuxt-photo/vue'
 
 export default defineNuxtPlugin({
-  name: 'nuxt-photo:defaults',
-  setup(nuxtApp: NuxtApp) {
-    const config = useAppConfig() as {
-      nuxtPhoto?: {
-        lightbox?: {
-          minZoom?: number
-        }
-      }
-    }
-    const lightbox = config.nuxtPhoto?.lightbox
+name: 'nuxt-photo:defaults',
+setup(nuxtApp: NuxtApp) {
+const config = useAppConfig() as {
+nuxtPhoto?: {
+lightbox?: {
+minZoom?: number
+}
+}
+}
+const lightbox = config.nuxtPhoto?.lightbox
 
     if (lightbox?.minZoom != null) {
       nuxtApp.vueApp.provide(LightboxDefaultsKey, { minZoom: lightbox.minZoom })
     }
-  },
+
+},
 })
 </file>
 <file name="plugin.ts" path="/packages/nuxt/src/runtime/plugin.ts">
@@ -8321,9 +8598,9 @@ import type { ImageContext, ImageSource, PhotoItem } from '@nuxt-photo/core'
 import { ImageAdapterKey } from '@nuxt-photo/vue/extend'
 
 export default defineNuxtPlugin({
-  name: 'nuxt-photo:image-adapter',
-  setup(nuxtApp: NuxtApp) {
-    const image = useImage()
+name: 'nuxt-photo:image-adapter',
+setup(nuxtApp: NuxtApp) {
+const image = useImage()
 
     const adapter = (photo: PhotoItem, context: ImageContext): ImageSource => {
       const src = context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
@@ -8371,7 +8648,8 @@ export default defineNuxtPlugin({
     }
 
     nuxtApp.vueApp.provide(ImageAdapterKey, adapter)
-  },
+
+},
 })
 </file>
 <file name="module.ts" path="/packages/nuxt/src/module.ts">
@@ -8379,68 +8657,68 @@ import { addComponent, addImports, addPlugin, createResolver, defineNuxtModule, 
 import type { NuxtModule } from '@nuxt/schema'
 
 export interface NuxtPhotoOptions {
-  autoImports?: boolean
-  components?: boolean | { prefix?: string }
-  css?: 'none' | 'structure' | 'all'
-  image?: false | {
-    provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
-  }
-  lightbox?: {
-    minZoom?: number
-  }
+autoImports?: boolean
+components?: boolean | { prefix?: string }
+css?: 'none' | 'structure' | 'all'
+image?: false | {
+provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
+}
+lightbox?: {
+minZoom?: number
+}
 }
 
 type NuxtPhotoAppConfig = {
-  nuxtPhoto?: {
-    lightbox?: {
-      minZoom?: number
-    }
-  }
+nuxtPhoto?: {
+lightbox?: {
+minZoom?: number
+}
+}
 }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
-  { export: 'Photo', name: 'Photo' },
-  { export: 'PhotoGroup', name: 'PhotoGroup' },
-  { export: 'PhotoAlbum', name: 'PhotoAlbum' },
-  { export: 'PhotoCarousel', name: 'PhotoCarousel' },
+{ export: 'Photo', name: 'Photo' },
+{ export: 'PhotoGroup', name: 'PhotoGroup' },
+{ export: 'PhotoAlbum', name: 'PhotoAlbum' },
+{ export: 'PhotoCarousel', name: 'PhotoCarousel' },
 ]
 // Primitive components — registered as `{prefix}{name}`
 const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
-  { export: 'LightboxRoot', name: 'LightboxRoot' },
-  { export: 'LightboxOverlay', name: 'LightboxOverlay' },
-  { export: 'LightboxViewport', name: 'LightboxViewport' },
-  { export: 'LightboxSlide', name: 'LightboxSlide' },
-  { export: 'LightboxControls', name: 'LightboxControls' },
-  { export: 'LightboxCaption', name: 'LightboxCaption' },
-  { export: 'LightboxPortal', name: 'LightboxPortal' },
-  { export: 'PhotoTrigger', name: 'PhotoTrigger' },
-  { export: 'PhotoImage', name: 'PhotoImage' },
+{ export: 'LightboxRoot', name: 'LightboxRoot' },
+{ export: 'LightboxOverlay', name: 'LightboxOverlay' },
+{ export: 'LightboxViewport', name: 'LightboxViewport' },
+{ export: 'LightboxSlide', name: 'LightboxSlide' },
+{ export: 'LightboxControls', name: 'LightboxControls' },
+{ export: 'LightboxCaption', name: 'LightboxCaption' },
+{ export: 'LightboxPortal', name: 'LightboxPortal' },
+{ export: 'PhotoTrigger', name: 'PhotoTrigger' },
+{ export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
 const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
 
 export default defineNuxtModule<NuxtPhotoOptions>({
-  meta: {
-    name: '@nuxt-photo/nuxt',
-    configKey: 'nuxtPhoto',
-    compatibility: {
-      nuxt: '^3.21.2 || ^4.0.0',
-    },
-  },
-  defaults: {
-    autoImports: true,
-    components: {
-      prefix: '',
-    },
-    css: 'structure',
-    image: {
-      provider: 'auto',
-    },
-  },
-  setup(options, nuxt) {
-    const { resolve } = createResolver(import.meta.url)
-    const minZoom = options.lightbox?.minZoom
+meta: {
+name: '@nuxt-photo/nuxt',
+configKey: 'nuxtPhoto',
+compatibility: {
+nuxt: '^3.21.2 || ^4.0.0',
+},
+},
+defaults: {
+autoImports: true,
+components: {
+prefix: '',
+},
+css: 'structure',
+image: {
+provider: 'auto',
+},
+},
+setup(options, nuxt) {
+const { resolve } = createResolver(import.meta.url)
+const minZoom = options.lightbox?.minZoom
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
@@ -8523,7 +8801,8 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         nuxt.options.css.push(css)
       }
     }
-  },
+
+},
 }) as NuxtModule<NuxtPhotoOptions>
 </file>
 <file name="module.test.ts" path="/packages/nuxt/test/module.test.ts">
@@ -8536,52 +8815,52 @@ const createResolver = vi.fn(() => ({ resolve: (path: string) => `/resolved/${pa
 const hasNuxtModule = vi.fn()
 
 vi.mock('@nuxt/kit', () => ({
-  addComponent,
-  addImports,
-  addPlugin,
-  createResolver,
-  defineNuxtModule: (definition: unknown) => definition,
-  hasNuxtModule,
+addComponent,
+addImports,
+addPlugin,
+createResolver,
+defineNuxtModule: (definition: unknown) => definition,
+hasNuxtModule,
 }))
 
 function createNuxt() {
-  const hooks = new Map<string, Array<() => void>>()
+const hooks = new Map<string, Array<() => void>>()
 
-  return {
-    hook(name: string, callback: () => void) {
-      const callbacks = hooks.get(name) ?? []
-      callbacks.push(callback)
-      hooks.set(name, callbacks)
-    },
-    callHook(name: string) {
-      for (const callback of hooks.get(name) ?? []) {
-        callback()
-      }
-    },
-    options: {
-      appConfig: {} as Record<string, any>,
-      css: [] as string[],
-    },
-  }
+return {
+hook(name: string, callback: () => void) {
+const callbacks = hooks.get(name) ?? []
+callbacks.push(callback)
+hooks.set(name, callbacks)
+},
+callHook(name: string) {
+for (const callback of hooks.get(name) ?? []) {
+callback()
+}
+},
+options: {
+appConfig: {} as Record<string, any>,
+css: [] as string[],
+},
+}
 }
 
 let nuxtPhotoModule: Awaited<typeof import('../src/module')>['default']
 
 describe('nuxt-photo module', () => {
-  beforeAll(async () => {
-    nuxtPhotoModule = (await import('../src/module')).default
-  })
+beforeAll(async () => {
+nuxtPhotoModule = (await import('../src/module')).default
+})
 
-  beforeEach(() => {
-    addComponent.mockReset()
-    addImports.mockReset()
-    addPlugin.mockReset()
-    createResolver.mockClear()
-    hasNuxtModule.mockReset()
-  })
+beforeEach(() => {
+addComponent.mockReset()
+addImports.mockReset()
+addPlugin.mockReset()
+createResolver.mockClear()
+hasNuxtModule.mockReset()
+})
 
-  it('does not register the image plugin in native mode', () => {
-    const nuxt = createNuxt()
+it('does not register the image plugin in native mode', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8591,11 +8870,12 @@ describe('nuxt-photo module', () => {
     nuxt.callHook('modules:done')
 
     expect(addPlugin).not.toHaveBeenCalled()
-  })
 
-  it('registers the nuxt image plugin when explicitly enabled', () => {
-    const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(true)
+})
+
+it('registers the nuxt image plugin when explicitly enabled', () => {
+const nuxt = createNuxt()
+hasNuxtModule.mockReturnValue(true)
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8609,10 +8889,11 @@ describe('nuxt-photo module', () => {
     }, {
       append: true,
     })
-  })
 
-  it('registers the defaults plugin when lightbox defaults are configured', () => {
-    const nuxt = createNuxt()
+})
+
+it('registers the defaults plugin when lightbox defaults are configured', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8631,20 +8912,22 @@ describe('nuxt-photo module', () => {
         },
       },
     })
-  })
 
-  it('throws when nuxt image mode is requested without @nuxt/image', () => {
-    const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(false)
+})
+
+it('throws when nuxt image mode is requested without @nuxt/image', () => {
+const nuxt = createNuxt()
+hasNuxtModule.mockReturnValue(false)
 
     expect(() => nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
       image: { provider: 'nuxt-image' },
     }, nuxt)).toThrow(/requires `@nuxt\/image`/)
-  })
 
-  it('injects structure-only CSS by default (no theme)', () => {
-    const nuxt = createNuxt()
+})
+
+it('injects structure-only CSS by default (no theme)', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
@@ -8655,10 +8938,11 @@ describe('nuxt-photo module', () => {
       '@nuxt-photo/recipes/styles/photo-structure.css',
       '@nuxt-photo/recipes/styles/carousel-structure.css',
     ])
-  })
 
-  it('injects all CSS (structure + theme) with css: "all"', () => {
-    const nuxt = createNuxt()
+})
+
+it('injects all CSS (structure + theme) with css: "all"', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css: 'all' }, nuxt)
 
@@ -8671,10 +8955,11 @@ describe('nuxt-photo module', () => {
       '@nuxt-photo/recipes/styles/photo.css',
       '@nuxt-photo/recipes/styles/carousel-theme.css',
     ])
-  })
 
-  it('skips component registration when disabled', () => {
-    const nuxt = createNuxt()
+})
+
+it('skips component registration when disabled', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8682,10 +8967,11 @@ describe('nuxt-photo module', () => {
     }, nuxt)
 
     expect(addComponent).not.toHaveBeenCalled()
-  })
 
-  it('registers unprefixed components by default', () => {
-    const nuxt = createNuxt()
+})
+
+it('registers unprefixed components by default', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
@@ -8713,10 +8999,11 @@ describe('nuxt-photo module', () => {
       export: 'Lightbox',
       filePath: '@nuxt-photo/recipes',
     }))
-  })
 
-  it('registers components with custom prefix', () => {
-    const nuxt = createNuxt()
+})
+
+it('registers components with custom prefix', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8738,11 +9025,12 @@ describe('nuxt-photo module', () => {
       export: 'LightboxRoot',
       filePath: '@nuxt-photo/vue',
     }))
-  })
 
-  it('auto-detects @nuxt/image when provider is auto (default)', () => {
-    const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(true)
+})
+
+it('auto-detects @nuxt/image when provider is auto (default)', () => {
+const nuxt = createNuxt()
+hasNuxtModule.mockReturnValue(true)
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
     nuxt.callHook('modules:done')
@@ -8752,21 +9040,23 @@ describe('nuxt-photo module', () => {
     }, {
       append: true,
     })
-  })
 
-  it('falls back to native when @nuxt/image is not installed (auto mode)', () => {
-    const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(false)
+})
+
+it('falls back to native when @nuxt/image is not installed (auto mode)', () => {
+const nuxt = createNuxt()
+hasNuxtModule.mockReturnValue(false)
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
     nuxt.callHook('modules:done')
 
     expect(addPlugin).not.toHaveBeenCalled()
-  })
 
-  it('skips image provider entirely when image: false', () => {
-    const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(true)
+})
+
+it('skips image provider entirely when image: false', () => {
+const nuxt = createNuxt()
+hasNuxtModule.mockReturnValue(true)
 
     nuxtPhotoModule.setup({
       ...nuxtPhotoModule.defaults,
@@ -8776,10 +9066,11 @@ describe('nuxt-photo module', () => {
     nuxt.callHook('modules:done')
 
     expect(addPlugin).not.toHaveBeenCalled()
-  })
 
-  it('only auto-imports vue composables', () => {
-    const nuxt = createNuxt()
+})
+
+it('only auto-imports vue composables', () => {
+const nuxt = createNuxt()
 
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
@@ -8788,61 +9079,63 @@ describe('nuxt-photo module', () => {
       { name: 'useLightboxProvider', from: '@nuxt-photo/vue' },
       { name: 'responsive', from: '@nuxt-photo/vue' },
     ])
-  })
+
+})
 })
 </file>
 <file name="package.json" path="/packages/nuxt/package.json">
 {
-  "name": "@nuxt-photo/nuxt",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/module.mjs",
-      "types": "./dist/module.d.mts"
-    }
-  },
-  "main": "./dist/module.mjs",
-  "files": ["dist"],
-  "scripts": {
-    "build": "nuxt-module-build build",
-    "dev": "nuxt-module-build build --stub"
-  },
-  "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
-    "@nuxt-photo/vue": "workspace:*",
-    "@nuxt-photo/recipes": "workspace:*",
-    "@nuxt/kit": "^4.4.2",
-    "@nuxt/schema": "^4.4.2"
-  },
-  "peerDependencies": {
-    "@nuxt/image": "^2.0.0",
-    "nuxt": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@nuxt/image": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@nuxt/module-builder": "^1.0.2",
-    "nuxt": "^4.4.2",
-    "typescript": "^5.9.2"
-  }
+"name": "@nuxt-photo/nuxt",
+"version": "0.0.1",
+"type": "module",
+"exports": {
+".": {
+"import": "./dist/module.mjs",
+"types": "./dist/module.d.mts"
+}
+},
+"main": "./dist/module.mjs",
+"files": ["dist"],
+"scripts": {
+"build": "nuxt-module-build build",
+"dev": "nuxt-module-build build --stub"
+},
+"dependencies": {
+"@nuxt-photo/core": "workspace:_",
+"@nuxt-photo/vue": "workspace:_",
+"@nuxt-photo/recipes": "workspace:\*",
+"@nuxt/kit": "^4.4.2",
+"@nuxt/schema": "^4.4.2"
+},
+"peerDependencies": {
+"@nuxt/image": "^2.0.0",
+"nuxt": "^4.0.0"
+},
+"peerDependenciesMeta": {
+"@nuxt/image": {
+"optional": true
+}
+},
+"devDependencies": {
+"@nuxt/module-builder": "^1.0.2",
+"nuxt": "^4.4.2",
+"typescript": "^5.9.2"
+}
 }
 </file>
 <file name="tsconfig.json" path="/packages/nuxt/tsconfig.json">
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
+"extends": "../../tsconfig.base.json",
+"compilerOptions": {
+"outDir": "dist",
+"rootDir": "src"
+},
+"include": ["src"]
 }
 </file>
 <file name="CarouselLayout.vue" path="/packages/recipes/src/components/internal/CarouselLayout.vue">
 <template>
+
   <div v-if="photos.length === 0" class="np-carousel np-carousel--empty" v-bind="$attrs" />
 
   <div v-else class="np-carousel" :style="cssVarStyle" v-bind="$attrs">
@@ -8963,6 +9256,7 @@ describe('nuxt-photo module', () => {
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -9310,6 +9604,7 @@ export { default as Lightbox } from './Lightbox.vue'
     </div>
 
     <LightboxPortal class="np-lightbox__ghost" />
+
   </LightboxRoot>
 </template>
 
@@ -9400,6 +9695,7 @@ const slots = inject(LightboxSlotsKey, null)
     </div>
 
     <LightboxPortal class="np-lightbox__ghost" />
+
   </LightboxRoot>
 </template>
 
@@ -9751,6 +10047,7 @@ async function soloOpen() {
         </template>
       </template>
     </template>
+
   </div>
 
   <!-- Own lightbox — only rendered when not inside a parent PhotoGroup -->
@@ -10092,31 +10389,34 @@ if (parentGroup) {
     <template v-if="$slots['lightbox-slide']" #slide="slotProps"><slot name="lightbox-slide" v-bind="slotProps" /></template>
     <template v-if="$slots['lightbox-caption']" #caption="slotProps"><slot name="lightbox-caption" v-bind="slotProps" /></template>
     <template v-if="$slots['lightbox-toolbar']" #toolbar="slotProps"><slot name="lightbox-toolbar" v-bind="slotProps" /></template>
+
   </PhotoGroup>
 
-  <CarouselLayout
-    v-else
-    ref="layoutRef"
-    v-bind="$attrs"
-    :photos="resolvedPhotos"
-    :adapter="props.adapter"
-    :options="mergedOptions"
-    :plugins="mergedPlugins"
-    :thumbs-options="mergedThumbsOptions"
-    :show-arrows="props.showArrows"
-    :show-thumbnails="props.showThumbnails"
-    :show-counter="props.showCounter"
-    :show-dots="props.showDots"
-    :slide-size="props.slideSize"
-    :slide-aspect="props.slideAspect"
-    :gap="props.gap"
-    :thumb-size="props.thumbSize"
-    :slide-class="props.slideClass"
-    :img-class="props.imgClass"
-    :thumb-class="props.thumbClass"
-    :caption-class="props.captionClass"
-    :controls-class="props.controlsClass"
-  >
+<CarouselLayout
+v-else
+ref="layoutRef"
+v-bind="$attrs"
+:photos="resolvedPhotos"
+:adapter="props.adapter"
+:options="mergedOptions"
+:plugins="mergedPlugins"
+:thumbs-options="mergedThumbsOptions"
+:show-arrows="props.showArrows"
+:show-thumbnails="props.showThumbnails"
+:show-counter="props.showCounter"
+:show-dots="props.showDots"
+:slide-size="props.slideSize"
+:slide-aspect="props.slideAspect"
+:gap="props.gap"
+:thumb-size="props.thumbSize"
+:slide-class="props.slideClass"
+:img-class="props.imgClass"
+:thumb-class="props.thumbClass"
+:caption-class="props.captionClass"
+:controls-class="props.controlsClass"
+
+>
+
     <template v-if="$slots.slide" #slide="slotProps"><slot name="slide" v-bind="slotProps" /></template>
     <template v-if="$slots.thumb" #thumb="slotProps"><slot name="thumb" v-bind="slotProps" /></template>
     <template v-if="$slots.caption" #caption="slotProps"><slot name="caption" v-bind="slotProps" /></template>
@@ -10124,6 +10424,7 @@ if (parentGroup) {
     <template v-if="$slots.prev" #prev><slot name="prev" /></template>
     <template v-if="$slots.next" #next><slot name="next" /></template>
     <template v-if="$slots.dots" #dots="slotProps"><slot name="dots" v-bind="slotProps" /></template>
+
   </CarouselLayout>
 </template>
 
@@ -10442,98 +10743,98 @@ defineExpose({ open, close: ctx.close })
 <file name="SlotProxy.ts" path="/packages/recipes/src/components/SlotProxy.ts">
 import { defineComponent, type PropType } from 'vue'
 
-/** Internal helper to render injected slot functions without cryptic `<component :is="() => ...">` patterns. */
+/\*_ Internal helper to render injected slot functions without cryptic `<component :is="() => ...">` patterns. _/
 export default defineComponent({
-  name: 'SlotProxy',
-  props: {
-    // `any` on the parameter is required so callers can pass specifically-typed
-    // renderers (e.g. `(p: LightboxControlsSlotProps) => VNode`) without contravariance errors.
-    render: { type: Function as PropType<(props: any) => unknown>, required: true },
-    props: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
-  },
-  setup(props) {
-    return () => typeof props.render === 'function' ? props.render(props.props) : null
-  },
+name: 'SlotProxy',
+props: {
+// `any` on the parameter is required so callers can pass specifically-typed
+// renderers (e.g. `(p: LightboxControlsSlotProps) => VNode`) without contravariance errors.
+render: { type: Function as PropType<(props: any) => unknown>, required: true },
+props: { type: Object as PropType<Record<string, unknown>>, default: () => ({}) },
+},
+setup(props) {
+return () => typeof props.render === 'function' ? props.render(props.props) : null
+},
 })
 </file>
 <file name="usePhotoLayout.ts" path="/packages/recipes/src/composables/usePhotoLayout.ts">
 import { ref, computed, onMounted, useId, type CSSProperties, type Ref } from 'vue'
 import { useContainerWidth } from '@nuxt-photo/vue'
 import {
-  computeRowsLayout,
-  computeBreakpointStyles,
-  computeColumnsLayout,
-  computeMasonryLayout,
-  computeColumnsBreakpointSnapshots,
-  computeMasonryBreakpointSnapshots,
-  computeBreakpointVisibilityCSS,
-  computePhotoSizes,
-  resolveResponsiveParameter,
-  round,
-  type PhotoItem,
-  type LayoutGroup,
-  type LayoutEntry,
-  type ResponsiveParameter,
+computeRowsLayout,
+computeBreakpointStyles,
+computeColumnsLayout,
+computeMasonryLayout,
+computeColumnsBreakpointSnapshots,
+computeMasonryBreakpointSnapshots,
+computeBreakpointVisibilityCSS,
+computePhotoSizes,
+resolveResponsiveParameter,
+round,
+type PhotoItem,
+type LayoutGroup,
+type LayoutEntry,
+type ResponsiveParameter,
 } from '@nuxt-photo/core'
 
 type BreakpointSnapshot = {
-  spanKey: string
-  condition: string
-  containerWidth: number
-  spacing: number
-  padding: number
-  groups: LayoutGroup[]
+spanKey: string
+condition: string
+containerWidth: number
+spacing: number
+padding: number
+groups: LayoutGroup[]
 }
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
 type RowItem = {
-  photo: PhotoItem
-  index: number
-  width: number
-  height: number
-  style: CSSProperties
-  computedSizes?: string
+photo: PhotoItem
+index: number
+width: number
+height: number
+style: CSSProperties
+computedSizes?: string
 }
 
 interface PhotoLayoutOptions {
-  photos: Ref<PhotoItem[]>
-  layout: Ref<'rows' | 'columns' | 'masonry'>
-  columns: Ref<ResponsiveParameter<number>>
-  spacing: Ref<ResponsiveParameter<number>>
-  padding: Ref<ResponsiveParameter<number>>
-  targetRowHeight: Ref<ResponsiveParameter<number>>
-  defaultContainerWidth?: number
-  breakpoints?: readonly number[]
-  sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
-  interactive: Ref<boolean>
+photos: Ref<PhotoItem[]>
+layout: Ref<'rows' | 'columns' | 'masonry'>
+columns: Ref<ResponsiveParameter<number>>
+spacing: Ref<ResponsiveParameter<number>>
+padding: Ref<ResponsiveParameter<number>>
+targetRowHeight: Ref<ResponsiveParameter<number>>
+defaultContainerWidth?: number
+breakpoints?: readonly number[]
+sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
+interactive: Ref<boolean>
 }
 
 export function usePhotoLayout(options: PhotoLayoutOptions) {
-  const {
-    photos, layout, columns, spacing, padding,
-    targetRowHeight,
-    defaultContainerWidth, breakpoints, sizes, interactive,
-  } = options
+const {
+photos, layout, columns, spacing, padding,
+targetRowHeight,
+defaultContainerWidth, breakpoints, sizes, interactive,
+} = options
 
-  const containerRef = ref<HTMLElement | null>(null)
-  const isMounted = ref(false)
+const containerRef = ref<HTMLElement | null>(null)
+const isMounted = ref(false)
 
-  // SSR-safe unique container name for CSS container queries
-  const albumId = useId()
-  const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
-  const scopeClass = computed(() => `np-scope-${containerName.value}`)
-  const snapshotClass = computed(() => `np-snapshot-${containerName.value}`)
+// SSR-safe unique container name for CSS container queries
+const albumId = useId()
+const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
+const scopeClass = computed(() => `np-scope-${containerName.value}`)
+const snapshotClass = computed(() => `np-snapshot-${containerName.value}`)
 
-  const containerQueriesActive = computed(() => !!breakpoints?.length)
+const containerQueriesActive = computed(() => !!breakpoints?.length)
 
-  // ─── Per-breakpoint SSR snapshots for columns/masonry ──────────────────────
-  // Precedence:
-  //   1. breakpoint-aware (explicit or inferred breakpoints)
-  //   2. exact single-width (defaultContainerWidth)
-  //   3. approximate fallback (neither)
-  const breakpointSnapshots = computed<BreakpointSnapshot[]>(() => {
-    if (layout.value === 'rows') return []
+// ─── Per-breakpoint SSR snapshots for columns/masonry ──────────────────────
+// Precedence:
+// 1. breakpoint-aware (explicit or inferred breakpoints)
+// 2. exact single-width (defaultContainerWidth)
+// 3. approximate fallback (neither)
+const breakpointSnapshots = computed<BreakpointSnapshot[]>(() => {
+if (layout.value === 'rows') return []
 
     if (breakpoints?.length) {
       if (layout.value === 'columns') {
@@ -10565,38 +10866,39 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     }
 
     return []
-  })
 
-  const containerQueryCSS = computed(() => {
-    if (!containerQueriesActive.value) return ''
-    if (layout.value === 'rows') {
-      return computeBreakpointStyles({
-        photos: photos.value,
-        breakpoints: breakpoints!,
-        spacing: spacing.value,
-        padding: padding.value,
-        targetRowHeight: targetRowHeight.value,
-        containerName: containerName.value,
-      })
-    }
-    return computeBreakpointVisibilityCSS(
-      breakpointSnapshots.value,
-      containerName.value,
-      snapshotClass.value,
-    )
-  })
+})
 
-  const { containerWidth } = useContainerWidth(containerRef, {
-    defaultContainerWidth,
-    breakpoints,
-  })
+const containerQueryCSS = computed(() => {
+if (!containerQueriesActive.value) return ''
+if (layout.value === 'rows') {
+return computeBreakpointStyles({
+photos: photos.value,
+breakpoints: breakpoints!,
+spacing: spacing.value,
+padding: padding.value,
+targetRowHeight: targetRowHeight.value,
+containerName: containerName.value,
+})
+}
+return computeBreakpointVisibilityCSS(
+breakpointSnapshots.value,
+containerName.value,
+snapshotClass.value,
+)
+})
 
-  onMounted(() => {
-    isMounted.value = true
-  })
+const { containerWidth } = useContainerWidth(containerRef, {
+defaultContainerWidth,
+breakpoints,
+})
 
-  const groups = computed<LayoutGroup[]>(() => {
-    if (containerWidth.value <= 0) return []
+onMounted(() => {
+isMounted.value = true
+})
+
+const groups = computed<LayoutGroup[]>(() => {
+if (containerWidth.value <= 0) return []
 
     const w = containerWidth.value
     const sp = resolveResponsiveParameter(spacing.value, w, 8)
@@ -10619,14 +10921,15 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       case 'masonry':
         return computeMasonryLayout({ ...input, columns: cols })
     }
-  })
 
-  const rowItems = computed<RowItem[]>(() => {
-    const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
-    const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+})
+
+const rowItems = computed<RowItem[]>(() => {
+const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
+const w = containerWidth.value
+const sp = resolveResponsiveParameter(spacing.value, w, 8)
+const pd = resolveResponsiveParameter(padding.value, w, 0)
+const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
 
     if (containerQueriesActive.value && !defaultContainerWidth) {
       return photos.value.map((photo, index) => ({
@@ -10667,58 +10970,59 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
         }
       })
     )
-  })
 
-  const ssrWrapperStyle = computed<CSSProperties>(() => {
-    const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
-    if (layout.value === 'rows') {
-      return { display: 'flex', flexWrap: 'wrap', gap: `${sp}px`, width: '100%' }
-    }
-    return { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: `${sp}px`, width: '100%' }
-  })
+})
 
-  function ssrItemStyle(photo: PhotoItem): CSSProperties {
-    const cursor = interactive.value ? { cursor: 'pointer' } : {}
-    if (layout.value === 'rows') {
-      const w = containerWidth.value
-      const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
-      const ar = photo.width / photo.height
-      return { ...cursor, flexGrow: ar, flexBasis: `${trh * ar}px`, overflow: 'hidden' }
-    }
-    return { ...cursor, overflow: 'hidden' }
-  }
+const ssrWrapperStyle = computed<CSSProperties>(() => {
+const w = containerWidth.value
+const sp = resolveResponsiveParameter(spacing.value, w, 8)
+const cols = resolveResponsiveParameter(columns.value, w, 3)
+if (layout.value === 'rows') {
+return { display: 'flex', flexWrap: 'wrap', gap: `${sp}px`, width: '100%' }
+}
+return { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: `${sp}px`, width: '100%' }
+})
 
-  const snapshotsActive = computed(() => breakpointSnapshots.value.length > 0)
+function ssrItemStyle(photo: PhotoItem): CSSProperties {
+const cursor = interactive.value ? { cursor: 'pointer' } : {}
+if (layout.value === 'rows') {
+const w = containerWidth.value
+const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+const ar = photo.width / photo.height
+return { ...cursor, flexGrow: ar, flexBasis: `${trh * ar}px`, overflow: 'hidden' }
+}
+return { ...cursor, overflow: 'hidden' }
+}
 
-  const containerStyle = computed<CSSProperties>(() => {
-    if (containerQueriesActive.value || snapshotsActive.value) {
-      return { width: '100%', containerType: 'inline-size', containerName: containerName.value }
-    }
-    return { width: '100%' }
-  })
+const snapshotsActive = computed(() => breakpointSnapshots.value.length > 0)
 
-  // Warn once per layout type if columns/masonry is used without any SSR signal.
-  function maybeWarnApproximate() {
-    if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === 'production') return
-    if (layout.value === 'rows') return
-    if (breakpoints?.length || (defaultContainerWidth && defaultContainerWidth > 0)) return
-    if (warnedApproximateLayouts.has(layout.value)) return
-    warnedApproximateLayouts.add(layout.value)
-    console.warn(
-      `[nuxt-photo] ${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
-    )
-  }
+const containerStyle = computed<CSSProperties>(() => {
+if (containerQueriesActive.value || snapshotsActive.value) {
+return { width: '100%', containerType: 'inline-size', containerName: containerName.value }
+}
+return { width: '100%' }
+})
 
-  type StyleContext = { containerWidth: number; spacing: number; padding: number; columnsCount: number; layoutType: 'rows' | 'columns' | 'masonry' }
+// Warn once per layout type if columns/masonry is used without any SSR signal.
+function maybeWarnApproximate() {
+if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === 'production') return
+if (layout.value === 'rows') return
+if (breakpoints?.length || (defaultContainerWidth && defaultContainerWidth > 0)) return
+if (warnedApproximateLayouts.has(layout.value)) return
+warnedApproximateLayouts.add(layout.value)
+console.warn(
+`[nuxt-photo] ${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
+)
+}
 
-  function groupStyleWith(group: LayoutGroup, ctx: StyleContext): CSSProperties {
-    if (group.type === 'row') {
-      return {
-        marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
-      }
-    }
+type StyleContext = { containerWidth: number; spacing: number; padding: number; columnsCount: number; layoutType: 'rows' | 'columns' | 'masonry' }
+
+function groupStyleWith(group: LayoutGroup, ctx: StyleContext): CSSProperties {
+if (group.type === 'row') {
+return {
+marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
+}
+}
 
     if (
       ctx.layoutType === 'masonry'
@@ -10749,10 +11053,11 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
         2 * ctx.padding
       }px)`,
     }
-  }
 
-  function itemStyleWith(entry: LayoutEntry, group: LayoutGroup, ctx: StyleContext): CSSProperties {
-    const cursor = interactive.value ? { cursor: 'pointer' } : {}
+}
+
+function itemStyleWith(entry: LayoutEntry, group: LayoutGroup, ctx: StyleContext): CSSProperties {
+const cursor = interactive.value ? { cursor: 'pointer' } : {}
 
     if (group.type === 'row') {
       const gaps = ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
@@ -10776,651 +11081,652 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       marginBottom: !isLast ? `${ctx.spacing}px` : undefined,
       width: `calc(100% - ${2 * ctx.padding}px)`,
     }
-  }
 
-  function liveCtx(): StyleContext {
-    const w = containerWidth.value
-    return {
-      containerWidth: w,
-      spacing: resolveResponsiveParameter(spacing.value, w, 8),
-      padding: resolveResponsiveParameter(padding.value, w, 0),
-      columnsCount: groups.value.length || 1,
-      layoutType: layout.value,
-    }
-  }
+}
 
-  function snapCtx(snap: BreakpointSnapshot): StyleContext {
-    return {
-      containerWidth: snap.containerWidth,
-      spacing: snap.spacing,
-      padding: snap.padding,
-      columnsCount: snap.groups.length || 1,
-      layoutType: layout.value,
-    }
-  }
+function liveCtx(): StyleContext {
+const w = containerWidth.value
+return {
+containerWidth: w,
+spacing: resolveResponsiveParameter(spacing.value, w, 8),
+padding: resolveResponsiveParameter(padding.value, w, 0),
+columnsCount: groups.value.length || 1,
+layoutType: layout.value,
+}
+}
 
-  function groupStyle(group: LayoutGroup): CSSProperties {
-    return groupStyleWith(group, liveCtx())
-  }
+function snapCtx(snap: BreakpointSnapshot): StyleContext {
+return {
+containerWidth: snap.containerWidth,
+spacing: snap.spacing,
+padding: snap.padding,
+columnsCount: snap.groups.length || 1,
+layoutType: layout.value,
+}
+}
 
-  function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
-    return itemStyleWith(entry, group, liveCtx())
-  }
+function groupStyle(group: LayoutGroup): CSSProperties {
+return groupStyleWith(group, liveCtx())
+}
 
-  function snapshotGroupStyle(group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
-    return groupStyleWith(group, snapCtx(snap))
-  }
+function itemStyle(entry: LayoutEntry, group: LayoutGroup): CSSProperties {
+return itemStyleWith(entry, group, liveCtx())
+}
 
-  function snapshotItemStyle(entry: LayoutEntry, group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
-    return itemStyleWith(entry, group, snapCtx(snap))
-  }
+function snapshotGroupStyle(group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+return groupStyleWith(group, snapCtx(snap))
+}
 
-  function snapshotWrapperStyle(snap: BreakpointSnapshot, multiSpan: boolean): CSSProperties {
-    // Column-layout snapshots use a row-flex wrapper (columns side-by-side). When there are
-    // multiple spans, CSS `@container` rules toggle display between flex and none; when there
-    // is only one span we skip the stylesheet and render flex inline.
-    return multiSpan
-      ? { width: '100%' }
-      : { width: '100%', display: 'flex' }
-  }
+function snapshotItemStyle(entry: LayoutEntry, group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+return itemStyleWith(entry, group, snapCtx(snap))
+}
 
-  return {
-    containerRef,
-    containerWidth,
-    isMounted,
-    scopeClass,
-    snapshotClass,
-    containerStyle,
-    containerQueryCSS,
-    containerQueriesActive,
-    breakpointSnapshots,
-    snapshotsActive,
-    groups,
-    rowItems,
-    ssrWrapperStyle,
-    ssrItemStyle,
-    groupStyle,
-    itemStyle,
-    snapshotGroupStyle,
-    snapshotItemStyle,
-    snapshotWrapperStyle,
-    maybeWarnApproximate,
-  }
+function snapshotWrapperStyle(snap: BreakpointSnapshot, multiSpan: boolean): CSSProperties {
+// Column-layout snapshots use a row-flex wrapper (columns side-by-side). When there are
+// multiple spans, CSS `@container` rules toggle display between flex and none; when there
+// is only one span we skip the stylesheet and render flex inline.
+return multiSpan
+? { width: '100%' }
+: { width: '100%', display: 'flex' }
+}
+
+return {
+containerRef,
+containerWidth,
+isMounted,
+scopeClass,
+snapshotClass,
+containerStyle,
+containerQueryCSS,
+containerQueriesActive,
+breakpointSnapshots,
+snapshotsActive,
+groups,
+rowItems,
+ssrWrapperStyle,
+ssrItemStyle,
+groupStyle,
+itemStyle,
+snapshotGroupStyle,
+snapshotItemStyle,
+snapshotWrapperStyle,
+maybeWarnApproximate,
+}
 }
 </file>
 <file name="album.css" path="/packages/recipes/src/styles/album.css">
-/* Structural styles for PhotoAlbum recipe */
+/_ Structural styles for PhotoAlbum recipe _/
 
 .np-album {
-  width: 100%;
-  position: relative;
+width: 100%;
+position: relative;
 }
 
-/* Container direction for row/column/masonry layouts */
+/_ Container direction for row/column/masonry layouts _/
 .np-album--rows,
 .np-album--columns,
 .np-album--masonry {
-  display: flex;
-  flex-wrap: nowrap;
+display: flex;
+flex-wrap: nowrap;
 }
 
 .np-album--rows {
-  flex-direction: column;
+flex-direction: column;
 }
 
 .np-album--columns,
 .np-album--masonry {
-  flex-direction: row;
-  justify-content: space-between;
+flex-direction: row;
+justify-content: space-between;
 }
 
-/* Row group */
-.np-album__row {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: flex-start;
+/_ Row group _/
+.np-album\_\_row {
+display: flex;
+flex-flow: row nowrap;
+justify-content: space-between;
+align-items: flex-start;
 }
 
-/* Column group */
-.np-album__column {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: flex-start;
+/_ Column group _/
+.np-album\_\_column {
+display: flex;
+flex-flow: column nowrap;
+align-items: flex-start;
 }
 
-/* Columns layout aligns column groups to space-between */
-.np-album--columns .np-album__column {
-  justify-content: space-between;
+/_ Columns layout aligns column groups to space-between _/
+.np-album--columns .np-album\_\_column {
+justify-content: space-between;
 }
 
-/* Masonry columns start from top */
-.np-album--masonry .np-album__column {
-  justify-content: flex-start;
+/_ Masonry columns start from top _/
+.np-album--masonry .np-album\_\_column {
+justify-content: flex-start;
 }
 
-/* Item — no extra static styles needed; dimensions come from inline styles */
-.np-album__item {
-  position: relative;
-  overflow: hidden;
+/_ Item — no extra static styles needed; dimensions come from inline styles _/
+.np-album\_\_item {
+position: relative;
+overflow: hidden;
 }
 
-/* Image fills its item */
-.np-album__img {
-  display: block;
+/_ Image fills its item _/
+.np-album\_\_img {
+display: block;
 }
 
-/* Skeleton placeholder shown before ResizeObserver measures width */
-.np-album__skeleton {
-  width: 100%;
-  min-height: 200px;
+/_ Skeleton placeholder shown before ResizeObserver measures width _/
+.np-album\_\_skeleton {
+width: 100%;
+min-height: 200px;
 }
 </file>
 <file name="carousel-structure.css" path="/packages/recipes/src/styles/carousel-structure.css">
-/* Structural styles for PhotoCarousel recipe
-   Layout/sizing only — no colours, radii or shadows.
-   See carousel-theme.css for the opt-in visual layer. */
+/_ Structural styles for PhotoCarousel recipe
+Layout/sizing only — no colours, radii or shadows.
+See carousel-theme.css for the opt-in visual layer. _/
 
 .np-carousel {
-  --np-carousel-gap: 0.75rem;
-  --np-carousel-slide-size: 100%;
-  --np-carousel-slide-aspect: 16 / 10;
-  --np-carousel-thumb-size: 5.5rem;
-  --np-carousel-thumb-gap: 0.5rem;
+--np-carousel-gap: 0.75rem;
+--np-carousel-slide-size: 100%;
+--np-carousel-slide-aspect: 16 / 10;
+--np-carousel-thumb-size: 5.5rem;
+--np-carousel-thumb-gap: 0.5rem;
 
-  position: relative;
-  width: 100%;
+position: relative;
+width: 100%;
 }
 
-.np-carousel__viewport {
-  position: relative;
-  overflow: hidden;
+.np-carousel\_\_viewport {
+position: relative;
+overflow: hidden;
 }
 
-.np-carousel__container {
-  display: flex;
-  touch-action: pan-y pinch-zoom;
-  margin-left: calc(var(--np-carousel-gap) * -1);
+.np-carousel\_\_container {
+display: flex;
+touch-action: pan-y pinch-zoom;
+margin-left: calc(var(--np-carousel-gap) \* -1);
 }
 
-.np-carousel__slide {
-  flex: 0 0 var(--np-carousel-slide-size);
-  min-width: 0;
-  padding-left: var(--np-carousel-gap);
-  aspect-ratio: var(--np-carousel-slide-aspect);
-  position: relative;
+.np-carousel\_\_slide {
+flex: 0 0 var(--np-carousel-slide-size);
+min-width: 0;
+padding-left: var(--np-carousel-gap);
+aspect-ratio: var(--np-carousel-slide-aspect);
+position: relative;
 }
 
-.np-carousel__media {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.np-carousel\_\_media {
+display: block;
+width: 100%;
+height: 100%;
+object-fit: cover;
 }
 
-.np-carousel__controls {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 0.5rem;
+.np-carousel\_\_controls {
+position: absolute;
+inset: 0;
+pointer-events: none;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0 0.5rem;
 }
 
-.np-carousel__arrow {
-  pointer-events: auto;
+.np-carousel\_\_arrow {
+pointer-events: auto;
 }
 
-.np-carousel__counter {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  pointer-events: none;
+.np-carousel\_\_counter {
+position: absolute;
+right: 0.75rem;
+bottom: 0.75rem;
+pointer-events: none;
 }
 
-.np-carousel__caption {
-  margin-top: 0.5rem;
+.np-carousel\_\_caption {
+margin-top: 0.5rem;
 }
 
-.np-carousel__dots {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-top: 0.75rem;
+.np-carousel\_\_dots {
+display: flex;
+gap: 0.5rem;
+justify-content: center;
+margin-top: 0.75rem;
 }
 
-.np-carousel__dot {
-  cursor: pointer;
-  padding: 0;
-  border: 0;
-  background: transparent;
+.np-carousel\_\_dot {
+cursor: pointer;
+padding: 0;
+border: 0;
+background: transparent;
 }
 
-.np-carousel__thumbs {
-  margin-top: var(--np-carousel-thumb-gap);
+.np-carousel\_\_thumbs {
+margin-top: var(--np-carousel-thumb-gap);
 }
 
-.np-carousel__thumbs-viewport {
-  overflow: hidden;
+.np-carousel\_\_thumbs-viewport {
+overflow: hidden;
 }
 
-.np-carousel__thumbs-container {
-  display: flex;
-  margin-left: calc(var(--np-carousel-thumb-gap) * -1);
+.np-carousel\_\_thumbs-container {
+display: flex;
+margin-left: calc(var(--np-carousel-thumb-gap) \* -1);
 }
 
-.np-carousel__thumb {
-  flex: 0 0 auto;
-  min-width: 0;
-  padding-left: var(--np-carousel-thumb-gap);
-  cursor: pointer;
-  background: transparent;
-  border: 0;
+.np-carousel\_\_thumb {
+flex: 0 0 auto;
+min-width: 0;
+padding-left: var(--np-carousel-thumb-gap);
+cursor: pointer;
+background: transparent;
+border: 0;
 }
 
-.np-carousel__thumb-img {
-  display: block;
-  height: var(--np-carousel-thumb-size);
-  width: auto;
-  object-fit: cover;
+.np-carousel\_\_thumb-img {
+display: block;
+height: var(--np-carousel-thumb-size);
+width: auto;
+object-fit: cover;
 }
 </file>
 <file name="carousel-theme.css" path="/packages/recipes/src/styles/carousel-theme.css">
-/* Theme styles for PhotoCarousel recipe — visual appearance */
-/* Requires carousel-structure.css for layout */
+/_ Theme styles for PhotoCarousel recipe — visual appearance _/
+/_ Requires carousel-structure.css for layout _/
 
 .np-carousel {
-  --np-carousel-radius: 0.5rem;
-  --np-carousel-surface: rgba(0, 0, 0, 0.55);
-  --np-carousel-surface-fg: #fff;
-  --np-carousel-thumb-border: rgba(0, 0, 0, 0.1);
+--np-carousel-radius: 0.5rem;
+--np-carousel-surface: rgba(0, 0, 0, 0.55);
+--np-carousel-surface-fg: #fff;
+--np-carousel-thumb-border: rgba(0, 0, 0, 0.1);
 }
 
-.np-carousel__viewport {
-  border-radius: var(--np-carousel-radius);
-  background: #f4f4f5;
+.np-carousel\_\_viewport {
+border-radius: var(--np-carousel-radius);
+background: #f4f4f5;
 }
 
-.np-carousel__arrow {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: 0;
-  background: var(--np-carousel-surface);
-  color: var(--np-carousel-surface-fg);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font: inherit;
-  font-size: 1rem;
-  transition: opacity 0.15s;
+.np-carousel\_\_arrow {
+width: 2.5rem;
+height: 2.5rem;
+border-radius: 50%;
+border: 0;
+background: var(--np-carousel-surface);
+color: var(--np-carousel-surface-fg);
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+line-height: 1;
+font: inherit;
+font-size: 1rem;
+transition: opacity 0.15s;
 }
 
-.np-carousel__arrow:disabled {
-  opacity: 0.35;
-  cursor: default;
+.np-carousel\_\_arrow:disabled {
+opacity: 0.35;
+cursor: default;
 }
 
-.np-carousel__counter {
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  background: var(--np-carousel-surface);
-  color: var(--np-carousel-surface-fg);
-  font-size: 0.75rem;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
+.np-carousel\_\_counter {
+padding: 0.25rem 0.6rem;
+border-radius: 999px;
+background: var(--np-carousel-surface);
+color: var(--np-carousel-surface-fg);
+font-size: 0.75rem;
+line-height: 1.2;
+font-variant-numeric: tabular-nums;
 }
 
-.np-carousel__caption {
-  color: inherit;
-  font-size: 0.875rem;
-  line-height: 1.45;
-  opacity: 0.8;
+.np-carousel\_\_caption {
+color: inherit;
+font-size: 0.875rem;
+line-height: 1.45;
+opacity: 0.8;
 }
 
-.np-carousel__dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.3;
+.np-carousel\_\_dot {
+width: 0.5rem;
+height: 0.5rem;
+border-radius: 50%;
+background: currentColor;
+opacity: 0.3;
 }
 
-.np-carousel__dot--selected {
-  opacity: 1;
+.np-carousel\_\_dot--selected {
+opacity: 1;
 }
 
-.np-carousel__thumb {
-  opacity: 0.5;
-  transition: opacity 0.15s;
-  border-radius: calc(var(--np-carousel-radius) * 0.6);
+.np-carousel\_\_thumb {
+opacity: 0.5;
+transition: opacity 0.15s;
+border-radius: calc(var(--np-carousel-radius) \* 0.6);
 }
 
-.np-carousel__thumb--selected {
-  opacity: 1;
+.np-carousel\_\_thumb--selected {
+opacity: 1;
 }
 
-.np-carousel__thumb:hover {
-  opacity: 0.85;
+.np-carousel\_\_thumb:hover {
+opacity: 0.85;
 }
 
-.np-carousel__thumb-img {
-  border-radius: calc(var(--np-carousel-radius) * 0.6);
-  border: 1px solid var(--np-carousel-thumb-border);
+.np-carousel\_\_thumb-img {
+border-radius: calc(var(--np-carousel-radius) _ 0.6);
+border: 1px solid var(--np-carousel-thumb-border);
 }
 </file>
 <file name="lightbox-structure.css" path="/packages/recipes/src/styles/lightbox-structure.css">
-/* Structural / layout styles for Lightbox recipe — no colors, no visual theme */
+/_ Structural / layout styles for Lightbox recipe — no colors, no visual theme \*/
 .np-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
+position: fixed;
+inset: 0;
+z-index: 50;
 }
 
-.np-lightbox__backdrop {
-  position: absolute;
-  inset: 0;
-  transition: opacity 260ms ease;
+.np-lightbox\_\_backdrop {
+position: absolute;
+inset: 0;
+transition: opacity 260ms ease;
 }
 
-.np-lightbox__ui {
-  position: absolute;
-  inset: 0;
-  transform-origin: center 28%;
+.np-lightbox\_\_ui {
+position: absolute;
+inset: 0;
+transform-origin: center 28%;
 }
 
-.np-lightbox__topbar {
-  position: absolute;
-  top: 18px;
-  left: 20px;
-  right: 20px;
-  z-index: 55;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: opacity 160ms ease;
+.np-lightbox\_\_topbar {
+position: absolute;
+top: 18px;
+left: 20px;
+right: 20px;
+z-index: 55;
+display: flex;
+align-items: center;
+justify-content: space-between;
+transition: opacity 160ms ease;
 }
 
-.np-lightbox__actions {
-  display: flex;
-  gap: 10px;
+.np-lightbox\_\_actions {
+display: flex;
+gap: 10px;
 }
 
-.np-lightbox__btn {
-  height: 42px;
-  min-width: 42px;
-  border: 0;
-  padding: 0 14px;
-  cursor: pointer;
-  font-size: 16px;
-  transition:
-    transform 160ms ease,
-    background 160ms ease,
-    opacity 160ms ease;
+.np-lightbox\_\_btn {
+height: 42px;
+min-width: 42px;
+border: 0;
+padding: 0 14px;
+cursor: pointer;
+font-size: 16px;
+transition:
+transform 160ms ease,
+background 160ms ease,
+opacity 160ms ease;
 }
 
-.np-lightbox__btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+.np-lightbox\_\_btn:hover:not(:disabled) {
+transform: translateY(-1px);
 }
 
-.np-lightbox__btn:disabled {
-  cursor: default;
+.np-lightbox\_\_btn:disabled {
+cursor: default;
 }
 
-.np-lightbox__btn--close {
-  min-width: 48px;
+.np-lightbox\_\_btn--close {
+min-width: 48px;
 }
 
-.np-lightbox__stage {
-  position: absolute;
-  inset: 64px 28px 24px;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 18px;
-  justify-items: center;
+.np-lightbox\_\_stage {
+position: absolute;
+inset: 64px 28px 24px;
+display: grid;
+grid-template-rows: minmax(0, 1fr) auto;
+gap: 18px;
+justify-items: center;
 }
 
-.np-lightbox__media {
-  position: relative;
-  width: min(1240px, calc(100vw - 72px));
-  height: min(78vh, calc(100vh - 150px));
-  overflow: hidden;
+.np-lightbox\_\_media {
+position: relative;
+width: min(1240px, calc(100vw - 72px));
+height: min(78vh, calc(100vh - 150px));
+overflow: hidden;
 }
 
-.np-lightbox__media[data-zoomed] {
-  cursor: grab;
+.np-lightbox\_\_media[data-zoomed] {
+cursor: grab;
 }
 
-.np-lightbox__media[data-gesture][data-zoomed] {
-  cursor: grabbing;
+.np-lightbox\_\_media[data-gesture][data-zoomed] {
+cursor: grabbing;
 }
 
-.np-lightbox__viewport {
-  overflow: hidden;
-  position: absolute;
-  inset: 0;
+.np-lightbox\_\_viewport {
+overflow: hidden;
+position: absolute;
+inset: 0;
 }
 
-.np-lightbox__container {
-  display: flex;
-  height: 100%;
-  touch-action: pan-y pinch-zoom;
+.np-lightbox\_\_container {
+display: flex;
+height: 100%;
+touch-action: pan-y pinch-zoom;
 }
 
-.np-lightbox__slide {
-  flex: 0 0 100%;
-  min-width: 0;
-  display: grid;
-  place-items: center;
+.np-lightbox\_\_slide {
+flex: 0 0 100%;
+min-width: 0;
+display: grid;
+place-items: center;
 }
 
 [data-np-slide-effect] {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  transform-origin: center center;
+width: 100%;
+height: 100%;
+display: grid;
+place-items: center;
+transform-origin: center center;
 }
 
 [data-np-slide-effect][data-animating] {
-  will-change: transform, opacity;
+will-change: transform, opacity;
 }
 
 [data-np-slide-frame] {
-  position: relative;
-  overflow: visible;
+position: relative;
+overflow: visible;
 }
 
 [data-np-slide-zoom] {
-  width: 100%;
-  height: 100%;
-  transform-origin: center center;
+width: 100%;
+height: 100%;
+transform-origin: center center;
 }
 
 [data-np-slide-zoom][data-animating] {
-  will-change: transform;
+will-change: transform;
 }
 
 [data-np-slide-img] {
-  display: block;
-  width: 100%;
-  height: 100%;
-  user-select: none;
-  -webkit-user-drag: none;
-  object-fit: contain;
+display: block;
+width: 100%;
+height: 100%;
+user-select: none;
+-webkit-user-drag: none;
+object-fit: contain;
 }
 
-.np-lightbox__caption {
-  width: min(1240px, calc(100vw - 72px));
-  text-align: left;
-  transition: opacity 160ms ease;
+.np-lightbox\_\_caption {
+width: min(1240px, calc(100vw - 72px));
+text-align: left;
+transition: opacity 160ms ease;
 }
 
-.np-lightbox__caption h2 {
-  margin: 0;
+.np-lightbox\_\_caption h2 {
+margin: 0;
 }
 
-.np-lightbox__caption p {
-  margin: 6px 0 0;
+.np-lightbox\_\_caption p {
+margin: 6px 0 0;
 }
 
-.np-lightbox__ghost {
-  display: block;
-  width: 100%;
-  height: 100%;
-  user-select: none;
-  -webkit-user-drag: none;
+.np-lightbox\_\_ghost {
+display: block;
+width: 100%;
+height: 100%;
+user-select: none;
+-webkit-user-drag: none;
 }
 
-/* Screen reader only — used for aria-live announcements */
+/_ Screen reader only — used for aria-live announcements _/
 [data-np-sr-only] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0, 0, 0, 0);
+white-space: nowrap;
+border: 0;
 }
 
 @media (max-width: 700px) {
-  .np-lightbox__stage {
-    inset: 64px 12px 16px;
-  }
+.np-lightbox\_\_stage {
+inset: 64px 12px 16px;
+}
 
-  .np-lightbox__media,
-  .np-lightbox__caption {
-    width: min(100vw - 24px, 1240px);
-  }
+.np-lightbox**media,
+.np-lightbox**caption {
+width: min(100vw - 24px, 1240px);
+}
 
-  .np-lightbox__topbar {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-  }
+.np-lightbox\_\_topbar {
+top: 12px;
+left: 12px;
+right: 12px;
+}
 
-  .np-lightbox__actions {
-    gap: 8px;
-  }
+.np-lightbox\_\_actions {
+gap: 8px;
+}
 
-  .np-lightbox__btn {
-    min-width: 40px;
-    padding-inline: 12px;
-  }
+.np-lightbox\_\_btn {
+min-width: 40px;
+padding-inline: 12px;
+}
 }
 </file>
 <file name="lightbox-theme.css" path="/packages/recipes/src/styles/lightbox-theme.css">
-/* Theme styles for Lightbox recipe — visual appearance, colors, blur, typography */
-/* Override any --np-* variable on .np-lightbox to customize the theme */
+/_ Theme styles for Lightbox recipe — visual appearance, colors, blur, typography _/
+/_ Override any --np-_ variable on .np-lightbox to customize the theme \*/
 .np-lightbox {
-  --np-backdrop-bg: rgba(0, 0, 0, 0.85);
-  --np-backdrop-blur: 16px;
-  --np-btn-radius: 999px;
-  --np-btn-bg: rgba(255, 255, 255, 0.1);
-  --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
-  --np-btn-color: white;
-  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
-  --np-btn-blur: 8px;
-  --np-btn-disabled-opacity: 0.45;
-  --np-counter-color: rgba(255, 255, 255, 0.72);
-  --np-img-radius: 16px;
-  --np-caption-color: white;
-  --np-caption-heading-size: 22px;
-  --np-caption-secondary: rgba(255, 255, 255, 0.72);
+--np-backdrop-bg: rgba(0, 0, 0, 0.85);
+--np-backdrop-blur: 16px;
+--np-btn-radius: 999px;
+--np-btn-bg: rgba(255, 255, 255, 0.1);
+--np-btn-hover-bg: rgba(255, 255, 255, 0.16);
+--np-btn-color: white;
+--np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
+--np-btn-blur: 8px;
+--np-btn-disabled-opacity: 0.45;
+--np-counter-color: rgba(255, 255, 255, 0.72);
+--np-img-radius: 16px;
+--np-caption-color: white;
+--np-caption-heading-size: 22px;
+--np-caption-secondary: rgba(255, 255, 255, 0.72);
 }
 
-.np-lightbox__backdrop {
-  background: var(--np-backdrop-bg);
-  backdrop-filter: blur(var(--np-backdrop-blur));
+.np-lightbox\_\_backdrop {
+background: var(--np-backdrop-bg);
+backdrop-filter: blur(var(--np-backdrop-blur));
 }
 
-.np-lightbox__counter {
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  color: var(--np-counter-color);
+.np-lightbox\_\_counter {
+font-size: 13px;
+letter-spacing: 0.04em;
+color: var(--np-counter-color);
 }
 
-.np-lightbox__btn {
-  border-radius: var(--np-btn-radius);
-  color: var(--np-btn-color);
-  background: var(--np-btn-bg);
-  box-shadow: var(--np-btn-shadow);
-  backdrop-filter: blur(var(--np-btn-blur));
+.np-lightbox\_\_btn {
+border-radius: var(--np-btn-radius);
+color: var(--np-btn-color);
+background: var(--np-btn-bg);
+box-shadow: var(--np-btn-shadow);
+backdrop-filter: blur(var(--np-btn-blur));
 }
 
-.np-lightbox__btn:hover:not(:disabled) {
-  background: var(--np-btn-hover-bg);
+.np-lightbox\_\_btn:hover:not(:disabled) {
+background: var(--np-btn-hover-bg);
 }
 
-.np-lightbox__btn:disabled {
-  opacity: var(--np-btn-disabled-opacity);
+.np-lightbox\_\_btn:disabled {
+opacity: var(--np-btn-disabled-opacity);
 }
 
 [data-np-slide-img] {
-  border-radius: var(--np-img-radius);
+border-radius: var(--np-img-radius);
 }
 
-.np-lightbox__caption {
-  color: var(--np-caption-color);
+.np-lightbox\_\_caption {
+color: var(--np-caption-color);
 }
 
-.np-lightbox__caption h2 {
-  font-size: var(--np-caption-heading-size);
-  letter-spacing: -0.03em;
+.np-lightbox\_\_caption h2 {
+font-size: var(--np-caption-heading-size);
+letter-spacing: -0.03em;
 }
 
-.np-lightbox__caption p {
-  color: var(--np-caption-secondary);
+.np-lightbox\_\_caption p {
+color: var(--np-caption-secondary);
 }
 </file>
 <file name="lightbox.css" path="/packages/recipes/src/styles/lightbox.css">
-/* Convenience re-export: includes both structure and theme.
-   For fine-grained control, import lightbox-structure.css and/or lightbox-theme.css directly. */
+/_ Convenience re-export: includes both structure and theme.
+For fine-grained control, import lightbox-structure.css and/or lightbox-theme.css directly. _/
 @import './lightbox-structure.css';
 @import './lightbox-theme.css';
 </file>
 <file name="photo-structure.css" path="/packages/recipes/src/styles/photo-structure.css">
-/* Structural styles for Photo recipe — layout only */
+/_ Structural styles for Photo recipe — layout only _/
 
 .np-photo {
-  position: relative;
-  display: inline-block;
+position: relative;
+display: inline-block;
 }
 
-.np-photo__img {
-  display: block;
-  max-width: 100%;
-  height: auto;
+.np-photo\_\_img {
+display: block;
+max-width: 100%;
+height: auto;
 }
 
-.np-photo__caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
+.np-photo\_\_caption {
+position: absolute;
+bottom: 0;
+left: 0;
+right: 0;
+pointer-events: none;
 }
 </file>
 <file name="photo.css" path="/packages/recipes/src/styles/photo.css">
-/* Theme styles for Photo recipe — visual appearance */
-/* Requires photo-structure.css for layout */
+/_ Theme styles for Photo recipe — visual appearance _/
+/_ Requires photo-structure.css for layout _/
 
-.np-photo__caption {
-  padding: 24px 16px 12px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.4;
+.np-photo\_\_caption {
+padding: 24px 16px 12px;
+background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+color: #fff;
+font-size: 14px;
+line-height: 1.4;
 }
 </file>
 <file name="index.ts" path="/packages/recipes/src/index.ts">
 // @nuxt-photo/recipes — Opinionated components
-export * from './components'
+export \* from './components'
 </file>
 <file name="carousel.test.ts" path="/packages/recipes/test/carousel.test.ts">
 // @vitest-environment jsdom
@@ -11433,138 +11739,138 @@ import type { PhotoItem } from '@nuxt-photo/core'
 import PhotoCarousel from '../src/components/PhotoCarousel.vue'
 
 const photos = [
-  makePhoto({ id: 'c-1' }),
-  makePhoto({ id: 'c-2' }),
-  makePhoto({ id: 'c-3' }),
-  makePhoto({ id: 'c-4' }),
+makePhoto({ id: 'c-1' }),
+makePhoto({ id: 'c-2' }),
+makePhoto({ id: 'c-3' }),
+makePhoto({ id: 'c-4' }),
 ]
 
 async function flushUi(iterations = 6) {
-  for (let i = 0; i < iterations; i++) {
-    await Promise.resolve()
-    await nextTick()
-    await new Promise(r => setTimeout(r, 0))
-  }
+for (let i = 0; i < iterations; i++) {
+await Promise.resolve()
+await nextTick()
+await new Promise(r => setTimeout(r, 0))
+}
 }
 
 function mount(component: any, props: Record<string, any> = {}, slots: Record<string, any> = {}) {
-  const container = document.createElement('div')
-  document.body.appendChild(container)
+const container = document.createElement('div')
+document.body.appendChild(container)
 
-  const handleRef = ref<any>(null)
-  const Wrapper = defineComponent({
-    setup() {
-      return () => h(component, { ...props, ref: handleRef }, slots)
-    },
-  })
+const handleRef = ref<any>(null)
+const Wrapper = defineComponent({
+setup() {
+return () => h(component, { ...props, ref: handleRef }, slots)
+},
+})
 
-  const app = createApp(Wrapper)
-  app.mount(container)
+const app = createApp(Wrapper)
+app.mount(container)
 
-  return {
-    app,
-    container,
-    get handle() { return handleRef.value },
-    unmount() {
-      app.unmount()
-      container.remove()
-    },
-  }
+return {
+app,
+container,
+get handle() { return handleRef.value },
+unmount() {
+app.unmount()
+container.remove()
+},
+}
 }
 
 describe('PhotoCarousel — DOM', () => {
-  beforeEach(() => {
-    class NoopObserver {
-      observe() {}
-      disconnect() {}
-      unobserve() {}
-      takeRecords() { return [] }
-    }
-    vi.stubGlobal('ResizeObserver', NoopObserver)
-    // Embla looks these up on the element's ownerWindow — jsdom needs them installed there too.
-    window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
-    window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
-    if (!window.matchMedia) {
-      window.matchMedia = ((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        addListener: () => {},
-        removeListener: () => {},
-        dispatchEvent: () => false,
-      })) as unknown as typeof window.matchMedia
-    }
-  })
+beforeEach(() => {
+class NoopObserver {
+observe() {}
+disconnect() {}
+unobserve() {}
+takeRecords() { return [] }
+}
+vi.stubGlobal('ResizeObserver', NoopObserver)
+// Embla looks these up on the element's ownerWindow — jsdom needs them installed there too.
+window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
+window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
+if (!window.matchMedia) {
+window.matchMedia = ((query: string) => ({
+matches: false,
+media: query,
+onchange: null,
+addEventListener: () => {},
+removeEventListener: () => {},
+addListener: () => {},
+removeListener: () => {},
+dispatchEvent: () => false,
+})) as unknown as typeof window.matchMedia
+}
+})
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    for (const node of Array.from(document.body.childNodes)) node.remove()
-  })
+afterEach(() => {
+vi.unstubAllGlobals()
+for (const node of Array.from(document.body.childNodes)) node.remove()
+})
 
-  it('renders one slide element per photo', async () => {
-    const m = mount(PhotoCarousel, { photos })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(photos.length)
-    m.unmount()
-  })
+it('renders one slide element per photo', async () => {
+const m = mount(PhotoCarousel, { photos })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel\_\_slide').length).toBe(photos.length)
+m.unmount()
+})
 
-  it('renders thumbnails by default', async () => {
-    const m = mount(PhotoCarousel, { photos })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(photos.length)
-    m.unmount()
-  })
+it('renders thumbnails by default', async () => {
+const m = mount(PhotoCarousel, { photos })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel\_\_thumb').length).toBe(photos.length)
+m.unmount()
+})
 
-  it('renders nothing meaningful when photos is empty', async () => {
-    const m = mount(PhotoCarousel, { photos: [] })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(0)
-    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(0)
-    expect(m.container.querySelectorAll('.np-carousel__arrow').length).toBe(0)
-    m.unmount()
-  })
+it('renders nothing meaningful when photos is empty', async () => {
+const m = mount(PhotoCarousel, { photos: [] })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel**slide').length).toBe(0)
+expect(m.container.querySelectorAll('.np-carousel**thumb').length).toBe(0)
+expect(m.container.querySelectorAll('.np-carousel\_\_arrow').length).toBe(0)
+m.unmount()
+})
 
-  it('suppresses arrows, counter, thumbnails, and dots when only one photo', async () => {
-    const m = mount(PhotoCarousel, { photos: [photos[0]], showDots: true })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(1)
-    expect(m.container.querySelectorAll('.np-carousel__arrow').length).toBe(0)
-    expect(m.container.querySelector('.np-carousel__counter')).toBeNull()
-    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(0)
-    expect(m.container.querySelector('.np-carousel__dots')).toBeNull()
-    m.unmount()
-  })
+it('suppresses arrows, counter, thumbnails, and dots when only one photo', async () => {
+const m = mount(PhotoCarousel, { photos: [photos[0]], showDots: true })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel**slide').length).toBe(1)
+expect(m.container.querySelectorAll('.np-carousel**arrow').length).toBe(0)
+expect(m.container.querySelector('.np-carousel**counter')).toBeNull()
+expect(m.container.querySelectorAll('.np-carousel**thumb').length).toBe(0)
+expect(m.container.querySelector('.np-carousel\_\_dots')).toBeNull()
+m.unmount()
+})
 
-  it('custom #slide slot replaces default PhotoImage', async () => {
-    const m = mount(PhotoCarousel, { photos }, {
-      slide: ({ photo }: { photo: PhotoItem }) =>
-        h('div', { class: 'custom-slide', 'data-id': photo.id }, photo.id),
-    })
-    await flushUi()
-    const custom = m.container.querySelectorAll('.custom-slide')
-    expect(custom.length).toBe(photos.length)
-    expect(m.container.querySelector('.np-carousel__media')).toBeNull()
-    m.unmount()
-  })
+it('custom #slide slot replaces default PhotoImage', async () => {
+const m = mount(PhotoCarousel, { photos }, {
+slide: ({ photo }: { photo: PhotoItem }) =>
+h('div', { class: 'custom-slide', 'data-id': photo.id }, photo.id),
+})
+await flushUi()
+const custom = m.container.querySelectorAll('.custom-slide')
+expect(custom.length).toBe(photos.length)
+expect(m.container.querySelector('.np-carousel\_\_media')).toBeNull()
+m.unmount()
+})
 
-  it('custom #thumb slot replaces default thumbnail', async () => {
-    const m = mount(PhotoCarousel, { photos }, {
-      thumb: ({ photo }: { photo: PhotoItem }) =>
-        h('span', { class: 'custom-thumb' }, photo.id),
-    })
-    await flushUi()
-    expect(m.container.querySelectorAll('.custom-thumb').length).toBe(photos.length)
-    m.unmount()
-  })
+it('custom #thumb slot replaces default thumbnail', async () => {
+const m = mount(PhotoCarousel, { photos }, {
+thumb: ({ photo }: { photo: PhotoItem }) =>
+h('span', { class: 'custom-thumb' }, photo.id),
+})
+await flushUi()
+expect(m.container.querySelectorAll('.custom-thumb').length).toBe(photos.length)
+m.unmount()
+})
 
-  it('exposes imperative goTo/goToNext/goToPrev and updates selectedIndex', async () => {
-    const m = mount(PhotoCarousel, { photos })
-    await flushUi()
-    const handle = m.handle
-    expect(handle).toBeTruthy()
-    expect(handle.selectedIndex).toBe(0)
+it('exposes imperative goTo/goToNext/goToPrev and updates selectedIndex', async () => {
+const m = mount(PhotoCarousel, { photos })
+await flushUi()
+const handle = m.handle
+expect(handle).toBeTruthy()
+expect(handle.selectedIndex).toBe(0)
 
     handle.goTo(2, true)
     await flushUi()
@@ -11579,65 +11885,66 @@ describe('PhotoCarousel — DOM', () => {
     expect(handle.selectedIndex).toBe(2)
 
     m.unmount()
-  })
 
-  it('hides arrows when showArrows is false', async () => {
-    const m = mount(PhotoCarousel, { photos, showArrows: false })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__arrow').length).toBe(0)
-    m.unmount()
-  })
+})
 
-  it('shows dots when showDots is true', async () => {
-    const m = mount(PhotoCarousel, { photos, showDots: true, showThumbnails: false })
-    await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(photos.length)
-    m.unmount()
-  })
+it('hides arrows when showArrows is false', async () => {
+const m = mount(PhotoCarousel, { photos, showArrows: false })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel\_\_arrow').length).toBe(0)
+m.unmount()
+})
 
-  it('applies layout CSS variables from props', async () => {
-    const m = mount(PhotoCarousel, {
-      photos,
-      slideSize: '80%',
-      slideAspect: '4 / 3',
-      gap: '2rem',
-      thumbSize: '8rem',
-    })
-    await flushUi()
-    const root = m.container.querySelector('.np-carousel') as HTMLElement
-    expect(root.style.getPropertyValue('--np-carousel-slide-size')).toBe('80%')
-    expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe('4 / 3')
-    expect(root.style.getPropertyValue('--np-carousel-gap')).toBe('2rem')
-    expect(root.style.getPropertyValue('--np-carousel-thumb-size')).toBe('8rem')
-    m.unmount()
-  })
+it('shows dots when showDots is true', async () => {
+const m = mount(PhotoCarousel, { photos, showDots: true, showThumbnails: false })
+await flushUi()
+expect(m.container.querySelectorAll('.np-carousel\_\_dot').length).toBe(photos.length)
+m.unmount()
+})
 
-  it('warns in dev when autoplay prop and user Autoplay plugin are both supplied', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fakeAutoplayPlugin = { name: 'autoplay', options: {}, init() {}, destroy() {}, play() {}, stop() {}, reset() {}, isPlaying: () => false, timeUntilNext: () => null } as any
-    const m = mount(PhotoCarousel, { photos, autoplay: { delay: 3000 }, plugins: [fakeAutoplayPlugin] })
-    await flushUi()
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('PhotoCarousel'))
-    warn.mockRestore()
-    m.unmount()
-  })
+it('applies layout CSS variables from props', async () => {
+const m = mount(PhotoCarousel, {
+photos,
+slideSize: '80%',
+slideAspect: '4 / 3',
+gap: '2rem',
+thumbSize: '8rem',
+})
+await flushUi()
+const root = m.container.querySelector('.np-carousel') as HTMLElement
+expect(root.style.getPropertyValue('--np-carousel-slide-size')).toBe('80%')
+expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe('4 / 3')
+expect(root.style.getPropertyValue('--np-carousel-gap')).toBe('2rem')
+expect(root.style.getPropertyValue('--np-carousel-thumb-size')).toBe('8rem')
+m.unmount()
+})
 
-  it('forwards root attrs to the rendered carousel root', async () => {
-    const m = mount(PhotoCarousel, {
-      photos,
-      id: 'reviewed-carousel',
-      'data-test-id': 'carousel-root',
-    })
-    await flushUi()
-    const root = m.container.querySelector('.np-carousel') as HTMLElement
-    expect(root.id).toBe('reviewed-carousel')
-    expect(root.getAttribute('data-test-id')).toBe('carousel-root')
-    m.unmount()
-  })
+it('warns in dev when autoplay prop and user Autoplay plugin are both supplied', async () => {
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+const fakeAutoplayPlugin = { name: 'autoplay', options: {}, init() {}, destroy() {}, play() {}, stop() {}, reset() {}, isPlaying: () => false, timeUntilNext: () => null } as any
+const m = mount(PhotoCarousel, { photos, autoplay: { delay: 3000 }, plugins: [fakeAutoplayPlugin] })
+await flushUi()
+expect(warn).toHaveBeenCalledWith(expect.stringContaining('PhotoCarousel'))
+warn.mockRestore()
+m.unmount()
+})
 
-  it('reacts to updated Embla options after mount', async () => {
-    const container = document.createElement('div')
-    document.body.appendChild(container)
+it('forwards root attrs to the rendered carousel root', async () => {
+const m = mount(PhotoCarousel, {
+photos,
+id: 'reviewed-carousel',
+'data-test-id': 'carousel-root',
+})
+await flushUi()
+const root = m.container.querySelector('.np-carousel') as HTMLElement
+expect(root.id).toBe('reviewed-carousel')
+expect(root.getAttribute('data-test-id')).toBe('carousel-root')
+m.unmount()
+})
+
+it('reacts to updated Embla options after mount', async () => {
+const container = document.createElement('div')
+document.body.appendChild(container)
 
     const loop = ref(false)
     const handleRef = ref<any>(null)
@@ -11667,14 +11974,15 @@ describe('PhotoCarousel — DOM', () => {
 
     app.unmount()
     container.remove()
-  })
 
-  it('maps multi-slide navigation from photo index to the containing snap', async () => {
-    const m = mount(PhotoCarousel, {
-      photos,
-      options: { slidesToScroll: 2 },
-    })
-    await flushUi()
+})
+
+it('maps multi-slide navigation from photo index to the containing snap', async () => {
+const m = mount(PhotoCarousel, {
+photos,
+options: { slidesToScroll: 2 },
+})
+await flushUi()
 
     m.handle.goTo(3, true)
     await flushUi()
@@ -11684,54 +11992,55 @@ describe('PhotoCarousel — DOM', () => {
     expect(m.container.querySelectorAll('.np-carousel__thumb--selected').length).toBe(2)
 
     m.unmount()
-  })
+
+})
 })
 
 describe('PhotoCarousel — SSR', () => {
-  it('renders slide markup without throwing', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoCarousel, { photos }),
-    })
-    const html = await renderToString(app)
-    expect(html).toContain('np-carousel')
-    expect(html).toContain('c-1')
-    expect(html).toContain('c-2')
-  })
+it('renders slide markup without throwing', async () => {
+const app = createSSRApp({
+render: () => h(PhotoCarousel, { photos }),
+})
+const html = await renderToString(app)
+expect(html).toContain('np-carousel')
+expect(html).toContain('c-1')
+expect(html).toContain('c-2')
+})
 
-  it('SSR with single photo suppresses navigation chrome', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoCarousel, { photos: [photos[0]] }),
-    })
-    const html = await renderToString(app)
-    expect(html).toContain('np-carousel__slide')
-    expect(html).not.toContain('np-carousel__arrow')
-    expect(html).not.toContain('np-carousel__thumb ')
-  })
+it('SSR with single photo suppresses navigation chrome', async () => {
+const app = createSSRApp({
+render: () => h(PhotoCarousel, { photos: [photos[0]] }),
+})
+const html = await renderToString(app)
+expect(html).toContain('np-carousel**slide')
+expect(html).not.toContain('np-carousel**arrow')
+expect(html).not.toContain('np-carousel\_\_thumb ')
+})
 
-  it('SSR with lightbox enabled includes PhotoGroup teleport markers', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoCarousel, { photos, lightbox: true }),
-    })
-    const html = await renderToString(app)
-    expect(html).toContain('np-carousel')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
-  })
+it('SSR with lightbox enabled includes PhotoGroup teleport markers', async () => {
+const app = createSSRApp({
+render: () => h(PhotoCarousel, { photos, lightbox: true }),
+})
+const html = await renderToString(app)
+expect(html).toContain('np-carousel')
+expect(html).toContain('teleport start')
+expect(html).toContain('teleport end')
+})
 })
 </file>
 <file name="recipeContracts.test.ts" path="/packages/recipes/test/recipeContracts.test.ts">
 // @vitest-environment jsdom
 
 import {
-  computed,
-  createApp,
-  defineComponent,
-  h,
-  nextTick,
-  provide,
-  ref,
-  type Component,
-  type InjectionKey,
+computed,
+createApp,
+defineComponent,
+h,
+nextTick,
+provide,
+ref,
+type Component,
+type InjectionKey,
 } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LightboxControls, LightboxSlide } from '@nuxt-photo/vue'
@@ -11743,10 +12052,10 @@ import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 
 function createImmediateImage() {
-  return class ImmediateImage {
-    onload: null | (() => void) = null
-    onerror: null | (() => void) = null
-    complete = true
+return class ImmediateImage {
+onload: null | (() => void) = null
+onerror: null | (() => void) = null
+complete = true
 
     decode() {
       return Promise.resolve()
@@ -11757,94 +12066,96 @@ function createImmediateImage() {
         this.onload?.()
       })
     }
-  }
+
+}
 }
 
 const TestLightbox = defineComponent({
-  name: 'TestLightbox',
-  setup() {
-    return () => h(LightboxControls, null, {
-      default: ({ photos }: { photos: PhotoItem[] }) => h(
-        'div',
-        { 'data-testid': 'test-lightbox' },
-        photos.map((photo, index) => h(LightboxSlide, {
-          key: photo.id,
-          photo,
-          index,
-        })),
-      ),
-    })
-  },
+name: 'TestLightbox',
+setup() {
+return () => h(LightboxControls, null, {
+default: ({ photos }: { photos: PhotoItem[] }) => h(
+'div',
+{ 'data-testid': 'test-lightbox' },
+photos.map((photo, index) => h(LightboxSlide, {
+key: photo.id,
+photo,
+index,
+})),
+),
+})
+},
 })
 
 async function flushUi(iterations = 6) {
-  for (let i = 0; i < iterations; i++) {
-    await Promise.resolve()
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 0))
-  }
+for (let i = 0; i < iterations; i++) {
+await Promise.resolve()
+await nextTick()
+await new Promise(resolve => setTimeout(resolve, 0))
+}
 }
 
 async function mountComponent(
-  component: Component,
-  options?: {
-    props?: Record<string, unknown>
-    slots?: Record<string, (...args: any[]) => any>
-    provideValues?: Array<[InjectionKey<any> | string, unknown]>
-  },
+component: Component,
+options?: {
+props?: Record<string, unknown>
+slots?: Record<string, (...args: any[]) => any>
+provideValues?: Array<[InjectionKey<any> | string, unknown]>
+},
 ) {
-  const container = document.createElement('div')
-  document.body.appendChild(container)
+const container = document.createElement('div')
+document.body.appendChild(container)
 
-  const app = createApp({
-    setup() {
-      for (const [key, value] of options?.provideValues ?? []) {
-        provide(key as any, value)
-      }
+const app = createApp({
+setup() {
+for (const [key, value] of options?.provideValues ?? []) {
+provide(key as any, value)
+}
 
       return () => h(component, options?.props ?? {}, options?.slots ?? {})
     },
-  })
 
-  app.mount(container)
-  await flushUi(2)
+})
 
-  return {
-    app,
-    container,
-    unmount() {
-      app.unmount()
-      container.remove()
-    },
-  }
+app.mount(container)
+await flushUi(2)
+
+return {
+app,
+container,
+unmount() {
+app.unmount()
+container.remove()
+},
+}
 }
 
 describe('recipe contracts', () => {
-  beforeEach(() => {
-    vi.stubGlobal('ResizeObserver', class {
-      observe() {}
-      disconnect() {}
-      unobserve() {}
-    })
-    vi.stubGlobal('Image', createImmediateImage())
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-      window.setTimeout(() => callback(performance.now() + 1000), 0),
-    )
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id))
-  })
+beforeEach(() => {
+vi.stubGlobal('ResizeObserver', class {
+observe() {}
+disconnect() {}
+unobserve() {}
+})
+vi.stubGlobal('Image', createImmediateImage())
+vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+window.setTimeout(() => callback(performance.now() + 1000), 0),
+)
+vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id))
+})
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    document.body.innerHTML = ''
-  })
+afterEach(() => {
+vi.unstubAllGlobals()
+document.body.innerHTML = ''
+})
 
-  it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
-    const photo = makePhoto({ id: 'plain-photo' })
-    const adapter = vi.fn((item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
-      src: `/${context}/${item.id}.jpg`,
-      width: item.width,
-      height: item.height,
-    }))
+it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
+const photo = makePhoto({ id: 'plain-photo' })
+const adapter = vi.fn((item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
+src: `/${context}/${item.id}.jpg`,
+width: item.width,
+height: item.height,
+}))
 
     const mounted = await mountComponent(Photo, {
       props: { photo, adapter },
@@ -11856,15 +12167,16 @@ describe('recipe contracts', () => {
     expect(new Set(adapter.mock.calls.map(([, context]) => context))).toEqual(new Set(['thumb']))
 
     mounted.unmount()
-  })
 
-  it('refreshes PhotoAlbum parent-group registrations when photos reorder, insert, or remove', async () => {
-    const a = makePhoto({ id: 'a' })
-    const b = makePhoto({ id: 'b' })
-    const c = makePhoto({ id: 'c' })
-    const photos = ref<PhotoItem[]>([a, b])
-    const register = vi.fn()
-    const unregister = vi.fn()
+})
+
+it('refreshes PhotoAlbum parent-group registrations when photos reorder, insert, or remove', async () => {
+const a = makePhoto({ id: 'a' })
+const b = makePhoto({ id: 'b' })
+const c = makePhoto({ id: 'c' })
+const photos = ref<PhotoItem[]>([a, b])
+const register = vi.fn()
+const unregister = vi.fn()
 
     const parentGroup: PhotoGroupContext = {
       mode: 'explicit',
@@ -11906,10 +12218,11 @@ describe('recipe contracts', () => {
     // Unmount: remaining registrations (c, a) cleaned up
     mounted.unmount()
     expect(unregister).toHaveBeenCalledTimes(3) // b + c + a
-  })
 
-  it('renders custom solo slide content through a custom lightbox recipe', async () => {
-    const photo = makePhoto({ id: 'solo-slide' })
+})
+
+it('renders custom solo slide content through a custom lightbox recipe', async () => {
+const photo = makePhoto({ id: 'solo-slide' })
 
     const mounted = await mountComponent(Photo, {
       props: {
@@ -11928,10 +12241,11 @@ describe('recipe contracts', () => {
     expect(mounted.container.textContent ?? '').toContain('solo-slide')
 
     mounted.unmount()
-  })
 
-  it('renders custom grouped slide content through a custom lightbox recipe', async () => {
-    const photo = makePhoto({ id: 'grouped-slide' })
+})
+
+it('renders custom grouped slide content through a custom lightbox recipe', async () => {
+const photo = makePhoto({ id: 'grouped-slide' })
 
     const mounted = await mountComponent(PhotoGroup, {
       props: {
@@ -11952,7 +12266,8 @@ describe('recipe contracts', () => {
     expect(mounted.container.querySelector('[data-testid="grouped-custom-slide"]')?.textContent).toContain('grouped-slide')
 
     mounted.unmount()
-  })
+
+})
 })
 </file>
 <file name="ssr.test.ts" path="/packages/recipes/test/ssr.test.ts">
@@ -11968,16 +12283,16 @@ import Photo from '../src/components/Photo.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 
 const photos = [
-  makePhoto({ id: 'ssr-1', width: 1600, height: 900 }),
-  makePhoto({ id: 'ssr-2', width: 1200, height: 1500 }),
-  makePhoto({ id: 'ssr-3', width: 1500, height: 1000 }),
+makePhoto({ id: 'ssr-1', width: 1600, height: 900 }),
+makePhoto({ id: 'ssr-2', width: 1200, height: 1500 }),
+makePhoto({ id: 'ssr-3', width: 1500, height: 1000 }),
 ]
 
 describe('SSR', () => {
-  it('PhotoAlbum renders photo items on the server without needing a fixed width', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
+it('PhotoAlbum renders photo items on the server without needing a fixed width', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+})
 
     const html = await renderToString(app)
 
@@ -11986,12 +12301,13 @@ describe('SSR', () => {
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
     expect(html).not.toContain('np-album__skeleton')
-  })
 
-  it('PhotoAlbum SSR rows layout uses CSS flex-grow with aspect ratios (no fixed width)', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
+})
+
+it('PhotoAlbum SSR rows layout uses CSS flex-grow with aspect ratios (no fixed width)', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+})
 
     const html = await renderToString(app)
 
@@ -12001,12 +12317,13 @@ describe('SSR', () => {
     expect(html).toContain('aspect-ratio')
     // flex-grow based on photo aspect ratio
     expect(html).toContain('flex-grow')
-  })
 
-  it('PhotoAlbum rows layout never switches to JS row groups (zero CLS)', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
+})
+
+it('PhotoAlbum rows layout never switches to JS row groups (zero CLS)', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+})
 
     const html = await renderToString(app)
 
@@ -12014,12 +12331,13 @@ describe('SSR', () => {
     expect(html).not.toContain('np-album__row')
     // Filler span is present to prevent last-row stretch
     expect(html).toContain('flex-grow:9999')
-  })
 
-  it('PhotoAlbum with defaultContainerWidth uses JS layout on server (no flex-grow)', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
-    })
+})
+
+it('PhotoAlbum with defaultContainerWidth uses JS layout on server (no flex-grow)', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
+})
 
     const html = await renderToString(app)
 
@@ -12034,12 +12352,13 @@ describe('SSR', () => {
     expect(html).not.toContain('flex-grow:0.8')
     // No skeleton (layout was computed)
     expect(html).not.toContain('np-album__skeleton')
-  })
 
-  it('PhotoAlbum without defaultContainerWidth still uses CSS flex-grow fallback', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
+})
+
+it('PhotoAlbum without defaultContainerWidth still uses CSS flex-grow fallback', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+})
 
     const html = await renderToString(app)
 
@@ -12047,31 +12366,33 @@ describe('SSR', () => {
     expect(html).toContain('flex-grow')
     // No JS-computed calc widths for individual items
     expect(html).not.toContain('flex:0 0 auto')
-  })
 
-  it('PhotoAlbum with defaultContainerWidth includes filler span', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
-    })
+})
+
+it('PhotoAlbum with defaultContainerWidth includes filler span', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
+})
 
     const html = await renderToString(app)
 
     // Filler span must always be present regardless of layout mode
     expect(html).toContain('flex-grow:9999')
-  })
 
-  describe('with breakpoints (container query mode)', () => {
-    it('emits @container style block with np-item-N rules', async () => {
-      const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [375, 600, 900] }),
-      })
-      const html = await renderToString(app)
-      expect(html).toContain('@container')
-      expect(html).toContain('np-item-0')
-      expect(html).toContain('np-item-1')
-      expect(html).toContain('np-item-2')
-      expect(html).toContain('calc(')
-    })
+})
+
+describe('with breakpoints (container query mode)', () => {
+it('emits @container style block with np-item-N rules', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [375, 600, 900] }),
+})
+const html = await renderToString(app)
+expect(html).toContain('@container')
+expect(html).toContain('np-item-0')
+expect(html).toContain('np-item-1')
+expect(html).toContain('np-item-2')
+expect(html).toContain('calc(')
+})
 
     it('sets container-type: inline-size on the album wrapper', async () => {
       const app = createSSRApp({
@@ -12114,27 +12435,28 @@ describe('SSR', () => {
       // Container query context is still set up on the wrapper so post-mount queries could attach
       expect(html).toContain('container-type')
     })
-  })
 
-  describe('columns/masonry breakpoint-aware SSR', () => {
-    it('columns with defaultContainerWidth emits one snapshot with column structure and no flat grid', async () => {
-      const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: { type: 'columns', columns: 3 },
-          lightbox: false,
-          defaultContainerWidth: 900,
-        }),
-      })
-      const html = await renderToString(app)
-      expect(html).toContain('np-album__bp-snapshot')
-      expect(html).toContain('np-album__column')
-      // No @container CSS for a single snapshot
-      expect(html).not.toContain('@container')
-      // No hardcoded approximate-grid fallback
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
-      expect(html).toContain('ssr-1')
-    })
+})
+
+describe('columns/masonry breakpoint-aware SSR', () => {
+it('columns with defaultContainerWidth emits one snapshot with column structure and no flat grid', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, {
+photos,
+layout: { type: 'columns', columns: 3 },
+lightbox: false,
+defaultContainerWidth: 900,
+}),
+})
+const html = await renderToString(app)
+expect(html).toContain('np-album**bp-snapshot')
+expect(html).toContain('np-album**column')
+// No @container CSS for a single snapshot
+expect(html).not.toContain('@container')
+// No hardcoded approximate-grid fallback
+expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
+expect(html).toContain('ssr-1')
+})
 
     it('masonry with defaultContainerWidth emits one snapshot with column structure', async () => {
       const app = createSSRApp({
@@ -12264,37 +12586,26 @@ describe('SSR', () => {
       expect(html).toContain('grid-template-columns')
       expect(html).toContain('ssr-1')
     })
-  })
 
-  it('PhotoAlbum SSR columns layout uses CSS grid', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false }),
-    })
+})
+
+it('PhotoAlbum SSR columns layout uses CSS grid', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false }),
+})
 
     const html = await renderToString(app)
 
     expect(html).toContain('ssr-1')
     expect(html).toContain('grid-template-columns')
     expect(html).not.toContain('np-album__skeleton')
-  })
 
-  it('PhotoAlbum accepts object-form layout with custom options', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: { type: 'rows', targetRowHeight: 200 }, lightbox: false }),
-    })
+})
 
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('ssr-2')
-    expect(html).toContain('ssr-3')
-    expect(html).toContain('flex-grow')
-  })
-
-  it('PhotoAlbum accepts top-level targetRowHeight shorthand', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', targetRowHeight: 200, lightbox: false }),
-    })
+it('PhotoAlbum accepts object-form layout with custom options', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: { type: 'rows', targetRowHeight: 200 }, lightbox: false }),
+})
 
     const html = await renderToString(app)
 
@@ -12302,70 +12613,89 @@ describe('SSR', () => {
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
     expect(html).toContain('flex-grow')
-  })
 
-  it('PhotoAlbum accepts top-level columns shorthand', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'columns', columns: 2, lightbox: false }),
-    })
+})
+
+it('PhotoAlbum accepts top-level targetRowHeight shorthand', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', targetRowHeight: 200, lightbox: false }),
+})
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('ssr-2')
+    expect(html).toContain('ssr-3')
+    expect(html).toContain('flex-grow')
+
+})
+
+it('PhotoAlbum accepts top-level columns shorthand', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'columns', columns: 2, lightbox: false }),
+})
 
     const html = await renderToString(app)
 
     expect(html).toContain('ssr-1')
     expect(html).toContain('grid-template-columns:repeat(2')
     expect(html).not.toContain('np-album__skeleton')
-  })
 
-  it('PhotoAlbum renders with its own lightbox during SSR', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
-    })
+})
+
+it('PhotoAlbum renders with its own lightbox during SSR', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
+})
 
     const html = await renderToString(app)
 
     expect(html).toContain('role="button"')
     expect(html).toContain('teleport start')
     expect(html).toContain('teleport end')
-  })
 
-  it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoGroup, null, {
-        default: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-      }),
-    })
+})
+
+it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
+const app = createSSRApp({
+render: () => h(PhotoGroup, null, {
+default: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+}),
+})
 
     const html = await renderToString(app)
 
     expect(html).toContain('ssr-1')
     expect(html).toContain('teleport start')
     expect(html).toContain('teleport end')
-  })
 
-  it('Photo renders standalone SSR markup with solo lightbox enabled', async () => {
-    const app = createSSRApp({
-      render: () => h(Photo, { photo: photos[0], lightbox: true }),
-    })
+})
+
+it('Photo renders standalone SSR markup with solo lightbox enabled', async () => {
+const app = createSSRApp({
+render: () => h(Photo, { photo: photos[0], lightbox: true }),
+})
 
     const html = await renderToString(app)
 
     expect(html).toContain('np-photo')
     expect(html).toContain('teleport start')
     expect(html).toContain('teleport end')
-  })
 
-  it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, {
-        photos,
-        layout: {
-          type: 'rows',
-          targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }),
-        },
-        spacing: responsive({ 0: 4, 640: 8 }),
-        lightbox: false,
-      }),
-    })
+})
+
+it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
+const app = createSSRApp({
+render: () => h(PhotoAlbum, {
+photos,
+layout: {
+type: 'rows',
+targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }),
+},
+spacing: responsive({ 0: 4, 640: 8 }),
+lightbox: false,
+}),
+})
 
     const html = await renderToString(app)
 
@@ -12373,65 +12703,66 @@ describe('SSR', () => {
     expect(html).toContain('np-item-0')
     expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
     expect(html).not.toContain('style="flex-grow:1.777')
-  })
+
+})
 })
 
 describe('computeBreakpointStyles', () => {
-  const twoPhotos = [
-    makePhoto({ id: 'a', width: 1600, height: 900 }),
-    makePhoto({ id: 'b', width: 1200, height: 1500 }),
-  ]
+const twoPhotos = [
+makePhoto({ id: 'a', width: 1600, height: 900 }),
+makePhoto({ id: 'b', width: 1200, height: 1500 }),
+]
 
-  it('returns empty string for empty photos', () => {
-    expect(computeBreakpointStyles({ photos: [], breakpoints: [600], containerName: 'test' })).toBe('')
-  })
+it('returns empty string for empty photos', () => {
+expect(computeBreakpointStyles({ photos: [], breakpoints: [600], containerName: 'test' })).toBe('')
+})
 
-  it('returns empty string for empty breakpoints', () => {
-    expect(computeBreakpointStyles({ photos: twoPhotos, breakpoints: [], containerName: 'test' })).toBe('')
-  })
+it('returns empty string for empty breakpoints', () => {
+expect(computeBreakpointStyles({ photos: twoPhotos, breakpoints: [], containerName: 'test' })).toBe('')
+})
 
-  it('deduplicates identical layouts across adjacent breakpoints', () => {
-    // Use breakpoints that are close together — likely produce identical row breaks
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [900, 1200],
-      containerName: 'test',
-    })
-    const ruleCount = (css.match(/@container/g) ?? []).length
-    // Both widths may produce identical row assignments → deduplicated to 1 rule
-    expect(ruleCount).toBeGreaterThan(0)
-    expect(ruleCount).toBeLessThanOrEqual(2)
-  })
+it('deduplicates identical layouts across adjacent breakpoints', () => {
+// Use breakpoints that are close together — likely produce identical row breaks
+const css = computeBreakpointStyles({
+photos: twoPhotos,
+breakpoints: [900, 1200],
+containerName: 'test',
+})
+const ruleCount = (css.match(/@container/g) ?? []).length
+// Both widths may produce identical row assignments → deduplicated to 1 rule
+expect(ruleCount).toBeGreaterThan(0)
+expect(ruleCount).toBeLessThanOrEqual(2)
+})
 
-  it('scopes rules to the provided containerName', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600, 900],
-      containerName: 'my-album',
-    })
-    expect(css).toContain('my-album')
-    expect(css).toContain('@container my-album')
-  })
+it('scopes rules to the provided containerName', () => {
+const css = computeBreakpointStyles({
+photos: twoPhotos,
+breakpoints: [600, 900],
+containerName: 'my-album',
+})
+expect(css).toContain('my-album')
+expect(css).toContain('@container my-album')
+})
 
-  it('generates np-item-N class rules for each photo', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600],
-      containerName: 'test',
-    })
-    expect(css).toContain('.np-item-0')
-    expect(css).toContain('.np-item-1')
-  })
+it('generates np-item-N class rules for each photo', () => {
+const css = computeBreakpointStyles({
+photos: twoPhotos,
+breakpoints: [600],
+containerName: 'test',
+})
+expect(css).toContain('.np-item-0')
+expect(css).toContain('.np-item-1')
+})
 
-  it('includes calc() width expressions', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600, 900],
-      containerName: 'test',
-    })
-    expect(css).toContain('calc(')
-    expect(css).toContain('flex:0 0 auto')
-  })
+it('includes calc() width expressions', () => {
+const css = computeBreakpointStyles({
+photos: twoPhotos,
+breakpoints: [600, 900],
+containerName: 'test',
+})
+expect(css).toContain('calc(')
+expect(css).toContain('flex:0 0 auto')
+})
 })
 </file>
 <file name="ssrHydration.test.ts" path="/packages/recipes/test/ssrHydration.test.ts">
@@ -12445,75 +12776,75 @@ import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 
 const photos = [
-  makePhoto({ id: 'hydrate-1', width: 1600, height: 900 }),
-  makePhoto({ id: 'hydrate-2', width: 1200, height: 1500 }),
-  makePhoto({ id: 'hydrate-3', width: 1500, height: 1000 }),
+makePhoto({ id: 'hydrate-1', width: 1600, height: 900 }),
+makePhoto({ id: 'hydrate-2', width: 1200, height: 1500 }),
+makePhoto({ id: 'hydrate-3', width: 1500, height: 1000 }),
 ]
 
 class ResizeObserverMock {
-  observe() {}
-  disconnect() {}
+observe() {}
+disconnect() {}
 }
 
 function stringifyConsoleArgs(calls: unknown[][]) {
-  return calls
-    .flatMap(args => args)
-    .map((arg) => {
-      if (typeof arg === 'symbol') return arg.toString()
-      if (typeof arg === 'string') return arg
-      if (arg instanceof Error) return arg.message
-      try {
-        return JSON.stringify(arg)
-      } catch {
-        return String(arg)
-      }
-    })
-    .join('\n')
+return calls
+.flatMap(args => args)
+.map((arg) => {
+if (typeof arg === 'symbol') return arg.toString()
+if (typeof arg === 'string') return arg
+if (arg instanceof Error) return arg.message
+try {
+return JSON.stringify(arg)
+} catch {
+return String(arg)
+}
+})
+.join('\n')
 }
 
 async function hydrateAlbum(props: Record<string, unknown>) {
-  const ssrApp = createSSRApp({
-    render: () => h(PhotoAlbum, props),
-  })
-  const html = await renderToString(ssrApp)
+const ssrApp = createSSRApp({
+render: () => h(PhotoAlbum, props),
+})
+const html = await renderToString(ssrApp)
 
-  const host = document.createElement('div')
-  host.innerHTML = html
-  document.body.appendChild(host)
+const host = document.createElement('div')
+host.innerHTML = html
+document.body.appendChild(host)
 
-  const app = createSSRApp({
-    render: () => h(PhotoAlbum, props),
-  })
-  app.mount(host)
-  await nextTick()
+const app = createSSRApp({
+render: () => h(PhotoAlbum, props),
+})
+app.mount(host)
+await nextTick()
 
-  return { host, app }
+return { host, app }
 }
 
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', ResizeObserverMock)
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
-    x: 0,
-    y: 0,
-    top: 0,
-    left: 0,
-    right: 900,
-    bottom: 600,
-    width: 900,
-    height: 600,
-    toJSON: () => ({}),
-  }))
+vi.stubGlobal('ResizeObserver', ResizeObserverMock)
+vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+x: 0,
+y: 0,
+top: 0,
+left: 0,
+right: 900,
+bottom: 600,
+width: 900,
+height: 600,
+toJSON: () => ({}),
+}))
 })
 
 afterEach(() => {
-  vi.restoreAllMocks()
-  document.body.innerHTML = ''
+vi.restoreAllMocks()
+document.body.innerHTML = ''
 })
 
 describe('SSR hydration', () => {
-  it('hydrates columns snapshot SSR without Vue hydration mismatch warnings', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+it('hydrates columns snapshot SSR without Vue hydration mismatch warnings', async () => {
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const { host, app } = await hydrateAlbum({
       photos,
@@ -12533,11 +12864,12 @@ describe('SSR hydration', () => {
     expect(messages).not.toContain('Hydration completed but contains mismatches')
 
     app.unmount()
-  })
 
-  it('hydrates masonry snapshot SSR without Vue hydration mismatch warnings', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+it('hydrates masonry snapshot SSR without Vue hydration mismatch warnings', async () => {
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const { host, app } = await hydrateAlbum({
       photos,
@@ -12557,11 +12889,12 @@ describe('SSR hydration', () => {
     expect(messages).not.toContain('Hydration completed but contains mismatches')
 
     app.unmount()
-  })
 
-  it('accepts shorthand layout props without extraneous-attr warnings', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+it('accepts shorthand layout props without extraneous-attr warnings', async () => {
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const { app } = await hydrateAlbum({
       photos,
@@ -12576,82 +12909,83 @@ describe('SSR hydration', () => {
     expect(messages).not.toContain('target-row-height')
 
     app.unmount()
-  })
+
+})
 })
 </file>
 <file name="build.config.ts" path="/packages/recipes/build.config.ts">
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  entries: [
-    { input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
-  ],
-  clean: true,
-  externals: ['vue', '@nuxt-photo/core', '@nuxt-photo/vue'],
-  failOnWarn: false,
+entries: [
+{ input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
+],
+clean: true,
+externals: ['vue', '@nuxt-photo/core', '@nuxt-photo/vue'],
+failOnWarn: false,
 })
 </file>
 <file name="package.json" path="/packages/recipes/package.json">
 {
-  "name": "@nuxt-photo/recipes",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
-    },
-    "./styles/*": "./dist/styles/*"
-  },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "files": ["dist"],
-  "scripts": {
-    "build": "unbuild",
-    "dev": "unbuild --stub"
-  },
-  "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
-    "@nuxt-photo/vue": "workspace:*",
-    "embla-carousel": "9.0.0-rc01",
-    "embla-carousel-autoplay": "9.0.0-rc01",
-    "embla-carousel-vue": "9.0.0-rc01"
-  },
-  "peerDependencies": {
-    "vue": "^3.5.0"
-  },
-  "devDependencies": {
-    "unbuild": "^3.5.0",
-    "typescript": "^5.9.2",
-    "vue": "^3.5.13",
-    "vue-tsc": "^2.2.8"
-  }
+"name": "@nuxt-photo/recipes",
+"version": "0.0.1",
+"type": "module",
+"exports": {
+".": {
+"import": "./dist/index.mjs",
+"types": "./dist/index.d.ts"
+},
+"./styles/_": "./dist/styles/_"
+},
+"main": "./dist/index.mjs",
+"types": "./dist/index.d.ts",
+"files": ["dist"],
+"scripts": {
+"build": "unbuild",
+"dev": "unbuild --stub"
+},
+"dependencies": {
+"@nuxt-photo/core": "workspace:_",
+"@nuxt-photo/vue": "workspace:_",
+"embla-carousel": "9.0.0-rc01",
+"embla-carousel-autoplay": "9.0.0-rc01",
+"embla-carousel-vue": "9.0.0-rc01"
+},
+"peerDependencies": {
+"vue": "^3.5.0"
+},
+"devDependencies": {
+"unbuild": "^3.5.0",
+"typescript": "^5.9.2",
+"vue": "^3.5.13",
+"vue-tsc": "^2.2.8"
+}
 }
 </file>
 <file name="tsconfig.json" path="/packages/recipes/tsconfig.json">
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "jsx": "preserve"
-  },
-  "include": ["src"]
+"extends": "../../tsconfig.base.json",
+"compilerOptions": {
+"outDir": "dist",
+"rootDir": "src",
+"jsx": "preserve"
+},
+"include": ["src"]
 }
 </file>
 <file name="closeTransition.ts" path="/packages/vue/src/composables/ghost/closeTransition.ts">
 import {
-  flipTransform,
-  isUsableRect,
-  makeGhostBaseStyle,
-  nextFrame,
-  wait,
-  animateNumber,
-  easeOutCubic,
-  shouldUseFlip,
-  planCloseTransition,
-  type PhotoItem,
-  type RectLike,
+flipTransform,
+isUsableRect,
+makeGhostBaseStyle,
+nextFrame,
+wait,
+animateNumber,
+easeOutCubic,
+shouldUseFlip,
+planCloseTransition,
+type PhotoItem,
+type RectLike,
 } from '@nuxt-photo/core'
 import { closeDurationMs, fadeDurationMs, type CloseCallbacks, type GhostState } from './types'
 import { resetCloseState } from './state'
@@ -12659,22 +12993,22 @@ import { resetCloseState } from './state'
 const MAX_ANIMATION_MS = 2000
 
 async function doInstantClose(s: GhostState) {
-  s.debug?.log('transitions', 'close: INSTANT (mode=none)')
-  s.mediaOpacity.value = 0
-  s.chromeOpacity.value = 0
-  s.overlayOpacity.value = 0
+s.debug?.log('transitions', 'close: INSTANT (mode=none)')
+s.mediaOpacity.value = 0
+s.chromeOpacity.value = 0
+s.overlayOpacity.value = 0
 }
 
 async function doFadeClose(s: GhostState, photo: PhotoItem, frameRect: RectLike | null) {
-  const fadeCloseDuration = 300
-  const backdropDelayRatio = 0.2
+const fadeCloseDuration = 300
+const backdropDelayRatio = 0.2
 
-  s.animating.value = true
-  s.chromeOpacity.value = 0
-  s.disableBackdropTransition.value = true
+s.animating.value = true
+s.chromeOpacity.value = 0
+s.disableBackdropTransition.value = true
 
-  if (frameRect) {
-    s.debug?.log('transitions', `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`)
+if (frameRect) {
+s.debug?.log('transitions', `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`)
 
     s.ghostSrc.value = photo.src
     s.ghostVisible.value = true
@@ -12708,122 +13042,124 @@ async function doFadeClose(s: GhostState, photo: PhotoItem, frameRect: RectLike 
       const backdropT = Math.max(0, (t - backdropDelayRatio) / (1 - backdropDelayRatio))
       s.overlayOpacity.value = overlayStart * (1 - backdropT)
     }, easeOutCubic)
-  } else {
-    s.debug?.log('transitions', 'close FADE: no frame rect, simple overlay fade')
-    s.mediaOpacity.value = 0
+
+} else {
+s.debug?.log('transitions', 'close FADE: no frame rect, simple overlay fade')
+s.mediaOpacity.value = 0
 
     await animateNumber(s.overlayOpacity.value, 0, fadeDurationMs, (v) => {
       s.overlayOpacity.value = v
     }, easeOutCubic)
-  }
 
-  s.debug?.log('transitions', 'close FADE: animation complete')
+}
+
+s.debug?.log('transitions', 'close FADE: animation complete')
 }
 
 async function doFlipClose(
-  s: GhostState,
-  photo: PhotoItem,
-  fromRect: RectLike,
-  toRect: DOMRect,
-  dragOffsetY: number,
-  dragScale: number,
+s: GhostState,
+photo: PhotoItem,
+fromRect: RectLike,
+toRect: DOMRect,
+dragOffsetY: number,
+dragScale: number,
 ) {
-  s.debug?.log('transitions', 'close FLIP: starting')
+s.debug?.log('transitions', 'close FLIP: starting')
 
-  s.animating.value = true
-  s.disableBackdropTransition.value = true
-  s.hiddenThumbIndex.value = s.activeIndex.value
-  s.chromeOpacity.value = 0
+s.animating.value = true
+s.disableBackdropTransition.value = true
+s.hiddenThumbIndex.value = s.activeIndex.value
+s.chromeOpacity.value = 0
 
-  s.ghostSrc.value = photo.src
-  s.debug?.log('transitions', `close FLIP: ghostSrc=${photo.src}`)
+s.ghostSrc.value = photo.src
+s.debug?.log('transitions', `close FLIP: ghostSrc=${photo.src}`)
 
-  const adjustedFromRect: RectLike = (dragOffsetY !== 0 || dragScale !== 1)
-    ? {
-        left: fromRect.left + (fromRect.width * (1 - dragScale)) / 2,
-        top: fromRect.top + dragOffsetY + (fromRect.height * (1 - dragScale)) / 2,
-        width: fromRect.width * dragScale,
-        height: fromRect.height * dragScale,
-      }
-    : fromRect
+const adjustedFromRect: RectLike = (dragOffsetY !== 0 || dragScale !== 1)
+? {
+left: fromRect.left + (fromRect.width _ (1 - dragScale)) / 2,
+top: fromRect.top + dragOffsetY + (fromRect.height _ (1 - dragScale)) / 2,
+width: fromRect.width _ dragScale,
+height: fromRect.height _ dragScale,
+}
+: fromRect
 
-  if (dragOffsetY !== 0 || dragScale !== 1) {
-    s.debug?.log('transitions', `close FLIP: drag-adjusted fromRect — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`, adjustedFromRect)
-  }
+if (dragOffsetY !== 0 || dragScale !== 1) {
+s.debug?.log('transitions', `close FLIP: drag-adjusted fromRect — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`, adjustedFromRect)
+}
 
-  const initialTransform = flipTransform(adjustedFromRect, toRect)
-  s.debug?.log('transitions', `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`)
-  s.debug?.log('transitions', `close FLIP: initial transform: ${initialTransform}`)
+const initialTransform = flipTransform(adjustedFromRect, toRect)
+s.debug?.log('transitions', `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`)
+s.debug?.log('transitions', `close FLIP: initial transform: ${initialTransform}`)
 
-  s.ghostVisible.value = true
-  s.ghostStyle.value = {
-    position: 'fixed',
-    zIndex: '60',
-    objectFit: 'cover',
-    transformOrigin: 'top left',
-    pointerEvents: 'none',
-    willChange: 'transform',
-    borderRadius: '24px',
-    boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
-    transition:
-      `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-    ...makeGhostBaseStyle(toRect),
-    transform: initialTransform,
-  }
+s.ghostVisible.value = true
+s.ghostStyle.value = {
+position: 'fixed',
+zIndex: '60',
+objectFit: 'cover',
+transformOrigin: 'top left',
+pointerEvents: 'none',
+willChange: 'transform',
+borderRadius: '24px',
+boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+transition:
+`transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+...makeGhostBaseStyle(toRect),
+transform: initialTransform,
+}
 
-  s.debug?.log('transitions', 'close FLIP: ghost visible, waiting for next frame')
-  await nextFrame()
+s.debug?.log('transitions', 'close FLIP: ghost visible, waiting for next frame')
+await nextFrame()
 
-  s.mediaOpacity.value = 0
-  await nextFrame()
+s.mediaOpacity.value = 0
+await nextFrame()
 
-  s.debug?.log('transitions', 'close FLIP: animating to identity (thumbnail position)')
-  s.overlayOpacity.value = 0
-  s.ghostStyle.value = {
-    ...s.ghostStyle.value,
-    transform: 'translate(0px, 0px) scale(1, 1)',
-    borderRadius: '18px',
-    boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
-  }
+s.debug?.log('transitions', 'close FLIP: animating to identity (thumbnail position)')
+s.overlayOpacity.value = 0
+s.ghostStyle.value = {
+...s.ghostStyle.value,
+transform: 'translate(0px, 0px) scale(1, 1)',
+borderRadius: '18px',
+boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+}
 
-  await wait(closeDurationMs)
+await wait(closeDurationMs)
 
-  s.hiddenThumbIndex.value = null
-  s.ghostStyle.value = {
-    ...s.ghostStyle.value,
-    transition: 'opacity 180ms ease',
-    opacity: '0',
-  }
-  await wait(180)
+s.hiddenThumbIndex.value = null
+s.ghostStyle.value = {
+...s.ghostStyle.value,
+transition: 'opacity 180ms ease',
+opacity: '0',
+}
+await wait(180)
 
-  s.debug?.log('transitions', `close FLIP: animation complete (${closeDurationMs}ms)`)
+s.debug?.log('transitions', `close FLIP: animation complete (${closeDurationMs}ms)`)
 }
 
 export function createCloseTransition(s: GhostState) {
-  let animationGuardId: ReturnType<typeof setTimeout> | null = null
+let animationGuardId: ReturnType<typeof setTimeout> | null = null
 
-  function clearAnimationGuard() {
-    if (animationGuardId) {
-      clearTimeout(animationGuardId)
-      animationGuardId = null
-    }
-  }
+function clearAnimationGuard() {
+if (animationGuardId) {
+clearTimeout(animationGuardId)
+animationGuardId = null
+}
+}
 
-  function startAnimationGuard() {
-    clearAnimationGuard()
-    animationGuardId = setTimeout(() => {
-      if (s.animating.value) {
-        s.debug?.warn('transitions', `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`)
-        resetCloseState(s, clearAnimationGuard)
-      }
-    }, MAX_ANIMATION_MS)
-  }
+function startAnimationGuard() {
+clearAnimationGuard()
+animationGuardId = setTimeout(() => {
+if (s.animating.value) {
+s.debug?.warn('transitions', `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`)
+resetCloseState(s, clearAnimationGuard)
+}
+}, MAX_ANIMATION_MS)
+}
 
-  async function close(callbacks: CloseCallbacks) {
-    if (!s.lightboxMounted.value || s.animating.value) {
-      s.debug?.warn('transitions', `close: BLOCKED — lightboxMounted=${s.lightboxMounted.value} animating=${s.animating.value}`)
-      return
-    }
+async function close(callbacks: CloseCallbacks) {
+if (!s.lightboxMounted.value || s.animating.value) {
+s.debug?.warn('transitions', `close: BLOCKED — lightboxMounted=${s.lightboxMounted.value} animating=${s.animating.value}`)
+return
+}
 
     s.debug?.group('transitions', `close(activeIndex=${s.activeIndex.value})`)
     s.debug?.log('transitions', `close: pre-state — isZoomedIn=${callbacks.isZoomedIn.value} closeDragY=${s.closeDragY.value.toFixed(1)} ghostVisible=${s.ghostVisible.value} mediaOpacity=${s.mediaOpacity.value.toFixed(2)}`)
@@ -12910,17 +13246,18 @@ export function createCloseTransition(s: GhostState) {
       resetCloseState(s, clearAnimationGuard)
       throw err
     }
-  }
 
-  async function animateCloseDragTo(target: number, duration = 220) {
-    const start = s.closeDragY.value
-    await animateNumber(start, target, duration, (value) => {
-      s.closeDragY.value = value
-    })
-  }
+}
 
-  async function handleCloseGesture(deltaY: number, velocityY: number, closeFn: () => Promise<void>) {
-    const threshold = Math.min(180, (s.areaMetrics.value?.height ?? 600) * 0.2)
+async function animateCloseDragTo(target: number, duration = 220) {
+const start = s.closeDragY.value
+await animateNumber(start, target, duration, (value) => {
+s.closeDragY.value = value
+})
+}
+
+async function handleCloseGesture(deltaY: number, velocityY: number, closeFn: () => Promise<void>) {
+const threshold = Math.min(180, (s.areaMetrics.value?.height ?? 600) \* 0.2)
 
     s.debug?.log('gestures', `closeGesture: deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)} threshold=${threshold.toFixed(0)}`)
 
@@ -12938,51 +13275,52 @@ export function createCloseTransition(s: GhostState) {
     } finally {
       s.animating.value = false
     }
-  }
 
-  function handleBackdropClick(closeFn: () => Promise<void>) {
-    if (s.animating.value) return
-    s.debug?.log('transitions', 'backdrop click → closing')
-    void closeFn()
-  }
+}
 
-  return { close, animateCloseDragTo, handleCloseGesture, handleBackdropClick }
+function handleBackdropClick(closeFn: () => Promise<void>) {
+if (s.animating.value) return
+s.debug?.log('transitions', 'backdrop click → closing')
+void closeFn()
+}
+
+return { close, animateCloseDragTo, handleCloseGesture, handleBackdropClick }
 }
 </file>
 <file name="openTransition.ts" path="/packages/vue/src/composables/ghost/openTransition.ts">
 import { nextTick } from 'vue'
 import {
-  flipTransform,
-  isUsableRect,
-  makeGhostBaseStyle,
-  ensureImageLoaded,
-  nextFrame,
-  wait,
-  animateNumber,
-  easeOutCubic,
-  shouldUseFlip,
-  type PhotoItem,
-  type RectLike,
+flipTransform,
+isUsableRect,
+makeGhostBaseStyle,
+ensureImageLoaded,
+nextFrame,
+wait,
+animateNumber,
+easeOutCubic,
+shouldUseFlip,
+type PhotoItem,
+type RectLike,
 } from '@nuxt-photo/core'
 import { openDurationMs, type GhostState, type TransitionCallbacks } from './types'
 import { resetOpenState } from './state'
 
 async function doInstantOpen(s: GhostState, photo: PhotoItem) {
-  s.debug?.log('transitions', 'open: INSTANT (mode=none)')
-  s.overlayOpacity.value = 1
-  await ensureImageLoaded(photo.src)
-  s.mediaOpacity.value = 1
-  s.chromeOpacity.value = 1
+s.debug?.log('transitions', 'open: INSTANT (mode=none)')
+s.overlayOpacity.value = 1
+await ensureImageLoaded(photo.src)
+s.mediaOpacity.value = 1
+s.chromeOpacity.value = 1
 }
 
 async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike | null) {
-  const fadeOpenDuration = 300
+const fadeOpenDuration = 300
 
-  s.animating.value = true
-  const imgSrc = photo.thumbSrc || photo.src
+s.animating.value = true
+const imgSrc = photo.thumbSrc || photo.src
 
-  if (targetRect) {
-    s.debug?.log('transitions', `open FADE: ghost scale-in at ${targetRect.width.toFixed(0)}x${targetRect.height.toFixed(0)} @ (${targetRect.left.toFixed(0)},${targetRect.top.toFixed(0)})`)
+if (targetRect) {
+s.debug?.log('transitions', `open FADE: ghost scale-in at ${targetRect.width.toFixed(0)}x${targetRect.height.toFixed(0)} @ (${targetRect.left.toFixed(0)},${targetRect.top.toFixed(0)})`)
 
     s.ghostSrc.value = imgSrc
     s.ghostVisible.value = true
@@ -13015,8 +13353,9 @@ async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike 
     s.mediaOpacity.value = 1
     s.ghostVisible.value = false
     s.chromeOpacity.value = 1
-  } else {
-    s.debug?.log('transitions', 'open FADE: no target rect, simple overlay fade')
+
+} else {
+s.debug?.log('transitions', 'open FADE: no target rect, simple overlay fade')
 
     await animateNumber(0, 1, fadeOpenDuration, (v) => {
       s.overlayOpacity.value = v
@@ -13025,83 +13364,84 @@ async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike 
     await ensureImageLoaded(photo.src)
     s.mediaOpacity.value = 1
     s.chromeOpacity.value = 1
-  }
 
-  s.animating.value = false
+}
+
+s.animating.value = false
 }
 
 async function doFlipOpen(s: GhostState, index: number, photo: PhotoItem, fromRect: DOMRect, toRect: RectLike) {
-  s.debug?.log('transitions', 'open: using FLIP animation')
+s.debug?.log('transitions', 'open: using FLIP animation')
 
-  s.animating.value = true
-  s.hiddenThumbIndex.value = index
+s.animating.value = true
+s.hiddenThumbIndex.value = index
 
-  const thumbSrc = photo.thumbSrc || photo.src
-  s.ghostSrc.value = thumbSrc
-  s.ghostVisible.value = true
-  s.ghostStyle.value = {
-    position: 'fixed',
-    zIndex: '60',
-    objectFit: 'cover',
-    transformOrigin: 'top left',
-    pointerEvents: 'none',
-    willChange: 'transform',
-    borderRadius: '18px',
-    boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
-    transition:
-      `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-    ...makeGhostBaseStyle(toRect),
-    transform: flipTransform(fromRect, toRect),
-  }
+const thumbSrc = photo.thumbSrc || photo.src
+s.ghostSrc.value = thumbSrc
+s.ghostVisible.value = true
+s.ghostStyle.value = {
+position: 'fixed',
+zIndex: '60',
+objectFit: 'cover',
+transformOrigin: 'top left',
+pointerEvents: 'none',
+willChange: 'transform',
+borderRadius: '18px',
+boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
+transition:
+`transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+...makeGhostBaseStyle(toRect),
+transform: flipTransform(fromRect, toRect),
+}
 
-  await nextFrame()
+await nextFrame()
 
-  s.overlayOpacity.value = 1
-  s.ghostStyle.value = {
-    ...s.ghostStyle.value,
-    transform: 'translate(0px, 0px) scale(1, 1)',
-    borderRadius: '24px',
-    boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
-  }
+s.overlayOpacity.value = 1
+s.ghostStyle.value = {
+...s.ghostStyle.value,
+transform: 'translate(0px, 0px) scale(1, 1)',
+borderRadius: '24px',
+boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
+}
 
-  await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.src)])
+await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.src)])
 
-  s.mediaOpacity.value = 1
-  await nextFrame()
-  resetOpenState(s)
+s.mediaOpacity.value = 1
+await nextFrame()
+resetOpenState(s)
 }
 
 export async function openTransition(s: GhostState, index: number, callbacks: TransitionCallbacks) {
-  if (s.animating.value) return
+if (s.animating.value) return
 
-  s.debug?.group('transitions', `open(index=${index})`)
+s.debug?.group('transitions', `open(index=${index})`)
 
-  callbacks.resetGestureState()
-  callbacks.cancelTapTimer()
+callbacks.resetGestureState()
+callbacks.cancelTapTimer()
 
-  s.activeIndex.value = index
-  s.uiVisible.value = true
+s.activeIndex.value = index
+s.uiVisible.value = true
 
-  s.lightboxMounted.value = true
-  s.overlayOpacity.value = 0
-  s.mediaOpacity.value = 0
-  s.chromeOpacity.value = 0
+s.lightboxMounted.value = true
+s.overlayOpacity.value = 0
+s.mediaOpacity.value = 0
+s.chromeOpacity.value = 0
 
-  await nextTick()
-  await nextFrame()
+await nextTick()
+await nextFrame()
 
-  callbacks.syncGeometry()
-  callbacks.refreshZoomState(true)
+callbacks.syncGeometry()
+callbacks.refreshZoomState(true)
 
-  const photo = s.currentPhoto.value
+const photo = s.currentPhoto.value
 
-  try {
-    if (s.transitionConfig?.mode === 'none') {
-      await doInstantOpen(s, photo)
-      s.debug?.log('transitions', 'open: complete')
-      s.debug?.groupEnd('transitions')
-      return
-    }
+try {
+if (s.transitionConfig?.mode === 'none') {
+await doInstantOpen(s, photo)
+s.debug?.log('transitions', 'open: complete')
+s.debug?.groupEnd('transitions')
+return
+}
 
     const thumbEl = s.thumbRefs.get(index)
     const fromRect = thumbEl?.getBoundingClientRect() ?? null
@@ -13118,14 +13458,15 @@ export async function openTransition(s: GhostState, index: number, callbacks: Tr
 
     s.debug?.log('transitions', 'open: complete')
     s.debug?.groupEnd('transitions')
-  } catch (err) {
-    s.debug?.warn('transitions', 'open: error, forcing recovery', err)
-    s.debug?.groupEnd('transitions')
-    s.overlayOpacity.value = 1
-    s.mediaOpacity.value = 1
-    resetOpenState(s)
-    throw err
-  }
+
+} catch (err) {
+s.debug?.warn('transitions', 'open: error, forcing recovery', err)
+s.debug?.groupEnd('transitions')
+s.overlayOpacity.value = 1
+s.mediaOpacity.value = 1
+resetOpenState(s)
+throw err
+}
 }
 </file>
 <file name="state.ts" path="/packages/vue/src/composables/ghost/state.ts">
@@ -13134,86 +13475,87 @@ import type { AreaMetrics, DebugLogger, PhotoItem, TransitionModeConfig } from '
 import type { GhostState } from './types'
 
 export function createGhostState(
-  activeIndex: Ref<number>,
-  currentPhoto: ComputedRef<PhotoItem>,
-  areaMetrics: Ref<AreaMetrics | null>,
-  getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'],
-  debug?: DebugLogger,
-  transitionConfig?: TransitionModeConfig,
+activeIndex: Ref<number>,
+currentPhoto: ComputedRef<PhotoItem>,
+areaMetrics: Ref<AreaMetrics | null>,
+getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'],
+debug?: DebugLogger,
+transitionConfig?: TransitionModeConfig,
 ): GhostState {
-  const lightboxMounted = ref(false)
-  const animating = ref(false)
-  const ghostVisible = ref(false)
-  const ghostSrc = ref('')
-  const ghostStyle = ref<CSSProperties>({})
-  const hiddenThumbIndex = ref<number | null>(null)
+const lightboxMounted = ref(false)
+const animating = ref(false)
+const ghostVisible = ref(false)
+const ghostSrc = ref('')
+const ghostStyle = ref<CSSProperties>({})
+const hiddenThumbIndex = ref<number | null>(null)
 
-  const overlayOpacity = ref(0)
-  const mediaOpacity = ref(0)
-  const chromeOpacity = ref(0)
-  const uiVisible = ref(true)
+const overlayOpacity = ref(0)
+const mediaOpacity = ref(0)
+const chromeOpacity = ref(0)
+const uiVisible = ref(true)
 
-  const closeDragY = ref(0)
-  const disableBackdropTransition = ref(false)
+const closeDragY = ref(0)
+const disableBackdropTransition = ref(false)
 
-  const closeDragRatio = computed(() => {
-    const height = areaMetrics.value?.height || 1
-    return Math.min(0.75, Math.abs(closeDragY.value) / Math.max(240, height * 0.85))
-  })
+const closeDragRatio = computed(() => {
+const height = areaMetrics.value?.height || 1
+return Math.min(0.75, Math.abs(closeDragY.value) / Math.max(240, height \* 0.85))
+})
 
-  const thumbRefs = new Map<number, HTMLElement>()
+const thumbRefs = new Map<number, HTMLElement>()
 
-  return {
-    lightboxMounted, animating, ghostVisible, ghostSrc, ghostStyle, hiddenThumbIndex,
-    overlayOpacity, mediaOpacity, chromeOpacity, uiVisible,
-    closeDragY, disableBackdropTransition, closeDragRatio,
-    thumbRefs,
-    activeIndex, currentPhoto, areaMetrics, getAbsoluteFrameRect,
-    debug, transitionConfig,
-  }
+return {
+lightboxMounted, animating, ghostVisible, ghostSrc, ghostStyle, hiddenThumbIndex,
+overlayOpacity, mediaOpacity, chromeOpacity, uiVisible,
+closeDragY, disableBackdropTransition, closeDragRatio,
+thumbRefs,
+activeIndex, currentPhoto, areaMetrics, getAbsoluteFrameRect,
+debug, transitionConfig,
+}
 }
 
 export function setThumbRef(state: GhostState, index: number) {
-  return (value: Element | ComponentPublicInstance | null) => {
-    const el = value instanceof HTMLElement
-      ? value
-      : value && '$el' in value && value.$el instanceof HTMLElement
-        ? value.$el
-        : null
+return (value: Element | ComponentPublicInstance | null) => {
+const el = value instanceof HTMLElement
+? value
+: value && '$el' in value && value.$el instanceof HTMLElement
+? value.$el
+: null
 
     if (el instanceof HTMLElement) {
       state.thumbRefs.set(index, el)
     } else {
       state.thumbRefs.delete(index)
     }
-  }
+
+}
 }
 
 export function resetOpenState(state: GhostState) {
-  state.ghostVisible.value = false
-  state.ghostSrc.value = ''
-  state.hiddenThumbIndex.value = null
-  state.overlayOpacity.value = 1
-  state.mediaOpacity.value = 1
-  state.chromeOpacity.value = 1
-  state.animating.value = false
-  state.closeDragY.value = 0
-  state.disableBackdropTransition.value = false
+state.ghostVisible.value = false
+state.ghostSrc.value = ''
+state.hiddenThumbIndex.value = null
+state.overlayOpacity.value = 1
+state.mediaOpacity.value = 1
+state.chromeOpacity.value = 1
+state.animating.value = false
+state.closeDragY.value = 0
+state.disableBackdropTransition.value = false
 }
 
 export function resetCloseState(state: GhostState, clearGuard: () => void) {
-  state.debug?.log('transitions', 'resetCloseState: unmounting lightbox')
-  clearGuard()
-  state.ghostVisible.value = false
-  state.ghostSrc.value = ''
-  state.hiddenThumbIndex.value = null
-  state.closeDragY.value = 0
-  state.disableBackdropTransition.value = false
-  state.overlayOpacity.value = 0
-  state.mediaOpacity.value = 0
-  state.chromeOpacity.value = 0
-  state.animating.value = false
-  state.lightboxMounted.value = false
+state.debug?.log('transitions', 'resetCloseState: unmounting lightbox')
+clearGuard()
+state.ghostVisible.value = false
+state.ghostSrc.value = ''
+state.hiddenThumbIndex.value = null
+state.closeDragY.value = 0
+state.disableBackdropTransition.value = false
+state.overlayOpacity.value = 0
+state.mediaOpacity.value = 0
+state.chromeOpacity.value = 0
+state.animating.value = false
+state.lightboxMounted.value = false
 }
 </file>
 <file name="types.ts" path="/packages/vue/src/composables/ghost/types.ts">
@@ -13225,50 +13567,50 @@ export const closeDurationMs = 380
 export const fadeDurationMs = 200
 
 export type TransitionCallbacks = {
-  syncGeometry: () => void
-  refreshZoomState: (reset: boolean) => void
-  resetGestureState: () => void
-  cancelTapTimer: () => void
+syncGeometry: () => void
+refreshZoomState: (reset: boolean) => void
+resetGestureState: () => void
+cancelTapTimer: () => void
 }
 
 export type CloseCallbacks = TransitionCallbacks & {
-  setPanzoomImmediate: (scale: number, pan: PanState) => void
-  isZoomedIn: ComputedRef<boolean>
+setPanzoomImmediate: (scale: number, pan: PanState) => void
+isZoomedIn: ComputedRef<boolean>
 }
 
-/** Shared reactive state passed between ghost transition submodules. */
+/\*_ Shared reactive state passed between ghost transition submodules. _/
 export interface GhostState {
-  // Core state
-  lightboxMounted: Ref<boolean>
-  animating: Ref<boolean>
-  ghostVisible: Ref<boolean>
-  ghostSrc: Ref<string>
-  ghostStyle: Ref<CSSProperties>
-  hiddenThumbIndex: Ref<number | null>
+// Core state
+lightboxMounted: Ref<boolean>
+animating: Ref<boolean>
+ghostVisible: Ref<boolean>
+ghostSrc: Ref<string>
+ghostStyle: Ref<CSSProperties>
+hiddenThumbIndex: Ref<number | null>
 
-  // Opacity layers
-  overlayOpacity: Ref<number>
-  mediaOpacity: Ref<number>
-  chromeOpacity: Ref<number>
-  uiVisible: Ref<boolean>
+// Opacity layers
+overlayOpacity: Ref<number>
+mediaOpacity: Ref<number>
+chromeOpacity: Ref<number>
+uiVisible: Ref<boolean>
 
-  // Drag-to-close
-  closeDragY: Ref<number>
-  disableBackdropTransition: Ref<boolean>
+// Drag-to-close
+closeDragY: Ref<number>
+disableBackdropTransition: Ref<boolean>
 
-  // Computed
-  closeDragRatio: ComputedRef<number>
+// Computed
+closeDragRatio: ComputedRef<number>
 
-  // Thumb DOM references
-  thumbRefs: Map<number, HTMLElement>
+// Thumb DOM references
+thumbRefs: Map<number, HTMLElement>
 
-  // External dependencies
-  activeIndex: Ref<number>
-  currentPhoto: ComputedRef<PhotoItem>
-  areaMetrics: Ref<AreaMetrics | null>
-  getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
-  debug?: DebugLogger
-  transitionConfig?: TransitionModeConfig
+// External dependencies
+activeIndex: Ref<number>
+currentPhoto: ComputedRef<PhotoItem>
+areaMetrics: Ref<AreaMetrics | null>
+getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
+debug?: DebugLogger
+transitionConfig?: TransitionModeConfig
 }
 </file>
 <file name="index.ts" path="/packages/vue/src/composables/index.ts">
@@ -13283,23 +13625,23 @@ import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type CarouselConfig, type PhotoItem, type RectLike, type DebugLogger } from '@nuxt-photo/core'
 
 export function useCarousel(
-  photos: ComputedRef<PhotoItem[]>,
-  areaMetrics: Ref<AreaMetrics | null>,
-  config: CarouselConfig,
-  isZoomedIn: ComputedRef<boolean>,
-  animating: Ref<boolean>,
-  debug?: DebugLogger,
+photos: ComputedRef<PhotoItem[]>,
+areaMetrics: Ref<AreaMetrics | null>,
+config: CarouselConfig,
+isZoomedIn: ComputedRef<boolean>,
+animating: Ref<boolean>,
+debug?: DebugLogger,
 ) {
-  const activeIndex = ref(0)
-  const scrollProgress = ref(0)
-  const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
+const activeIndex = ref(0)
+const scrollProgress = ref(0)
+const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
+const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
 
-  const currentPhoto = computed<PhotoItem>(() => photos.value[activeIndex.value] ?? photos.value[0]!)
+const currentPhoto = computed<PhotoItem>(() => photos.value[activeIndex.value] ?? photos.value[0]!)
 
-  watch(emblaApi, (api) => {
-    if (!api) return
+watch(emblaApi, (api) => {
+if (!api) return
 
     api.on('select', (_api: EmblaCarouselType) => {
       const newIndex = _api.selectedSnap()
@@ -13317,32 +13659,33 @@ export function useCarousel(
         return false
       }
     })
-  }, { immediate: true })
 
-  function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
-    if (!area) return null
-    return fitRect(
-      { left: 0, top: 0, width: area.width, height: area.height },
-      photo.width / photo.height,
-    )
-  }
+}, { immediate: true })
 
-  function getAbsoluteFrameRect(photo: PhotoItem, area = areaMetrics.value) {
-    if (!area) return null
-    return fitRect(area, photo.width / photo.height)
-  }
+function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
+if (!area) return null
+return fitRect(
+{ left: 0, top: 0, width: area.width, height: area.height },
+photo.width / photo.height,
+)
+}
 
-  function getSlideFrameStyle(photo: PhotoItem): CSSProperties {
-    const frame = getRelativeFrameRect(photo)
-    return {
-      width: `${frame?.width ?? 0}px`,
-      height: `${frame?.height ?? 0}px`,
-    }
-  }
+function getAbsoluteFrameRect(photo: PhotoItem, area = areaMetrics.value) {
+if (!area) return null
+return fitRect(area, photo.width / photo.height)
+}
 
-  function getSlideEffectStyle(slideIndex: number): CSSProperties {
-    const api = emblaApi.value
-    if (!api) return {}
+function getSlideFrameStyle(photo: PhotoItem): CSSProperties {
+const frame = getRelativeFrameRect(photo)
+return {
+width: `${frame?.width ?? 0}px`,
+height: `${frame?.height ?? 0}px`,
+}
+}
+
+function getSlideEffectStyle(slideIndex: number): CSSProperties {
+const api = emblaApi.value
+if (!api) return {}
 
     const snaps = api.snapList()
     if (!snaps.length) return {}
@@ -13386,36 +13729,37 @@ export function useCarousel(
         }
       }
     }
-  }
 
-  function goToNext() {
-    emblaApi.value?.goToNext()
-  }
+}
 
-  function goToPrev() {
-    emblaApi.value?.goToPrev()
-  }
+function goToNext() {
+emblaApi.value?.goToNext()
+}
 
-  function goTo(index: number, instant = false) {
-    emblaOptions.value = { ...emblaOptions.value, startSnap: index }
-    activeIndex.value = index
-    emblaApi.value?.goTo(index, instant)
-  }
+function goToPrev() {
+emblaApi.value?.goToPrev()
+}
 
-  function selectedSnap(): number {
-    return emblaApi.value?.selectedSnap() ?? activeIndex.value
-  }
+function goTo(index: number, instant = false) {
+emblaOptions.value = { ...emblaOptions.value, startSnap: index }
+activeIndex.value = index
+emblaApi.value?.goTo(index, instant)
+}
 
-  onBeforeUnmount(() => {
-    emblaApi.value?.destroy()
-  })
+function selectedSnap(): number {
+return emblaApi.value?.selectedSnap() ?? activeIndex.value
+}
 
-  return {
-    emblaRef,
-    emblaApi,
-    activeIndex,
-    currentPhoto,
-    scrollProgress,
+onBeforeUnmount(() => {
+emblaApi.value?.destroy()
+})
+
+return {
+emblaRef,
+emblaApi,
+activeIndex,
+currentPhoto,
+scrollProgress,
 
     getRelativeFrameRect,
     getAbsoluteFrameRect,
@@ -13426,52 +13770,54 @@ export function useCarousel(
     goToPrev,
     goTo,
     selectedSnap,
-  }
+
+}
 }
 </file>
 <file name="useContainerWidth.ts" path="/packages/vue/src/composables/useContainerWidth.ts">
 import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
 
-/** Max width delta considered a scrollbar oscillation. */
+/\*_ Max width delta considered a scrollbar oscillation. _/
 const MAX_SCROLLBAR_WIDTH = 20
 
 function snapToBreakpoint(width: number, breakpoints: readonly number[]): number {
-  const sorted = [...breakpoints].filter(bp => bp > 0).sort((a, b) => b - a)
-  if (sorted.length === 0) return width
-  // Synthetic floor: half the smallest declared breakpoint
-  sorted.push(Math.floor(sorted[sorted.length - 1] / 2))
-  return sorted.find(bp => bp <= width) ?? sorted[sorted.length - 1]
+const sorted = [...breakpoints].filter(bp => bp > 0).sort((a, b) => b - a)
+if (sorted.length === 0) return width
+// Synthetic floor: half the smallest declared breakpoint
+sorted.push(Math.floor(sorted[sorted.length - 1] / 2))
+return sorted.find(bp => bp <= width) ?? sorted[sorted.length - 1]
 }
 
-/**
- * Tracks an element's width via ResizeObserver with optional breakpoint snapping and
- * scrollbar-oscillation detection. SSR-safe: initialises from `defaultContainerWidth`
- * and only starts the observer after mount.
- */
-export function useContainerWidth(
+/\*\*
+
+- Tracks an element's width via ResizeObserver with optional breakpoint snapping and
+- scrollbar-oscillation detection. SSR-safe: initialises from `defaultContainerWidth`
+- and only starts the observer after mount.
+  _/
+  export function useContainerWidth(
   containerRef: Ref<HTMLElement | null>,
   options?: {
-    /** Pre-render width so the JS layout runs on the server. Avoids CLS when it matches the breakpoint. */
-    defaultContainerWidth?: number
-    /** Snap observed width down to the largest breakpoint ≤ actual width. */
-    breakpoints?: readonly number[]
+  /\*\* Pre-render width so the JS layout runs on the server. Avoids CLS when it matches the breakpoint. _/
+  defaultContainerWidth?: number
+  /\*_ Snap observed width down to the largest breakpoint ≤ actual width. _/
+  breakpoints?: readonly number[]
   },
-): { containerWidth: Ref<number> } {
+  ): { containerWidth: Ref<number> } {
   const containerWidth = ref<number>(options?.defaultContainerWidth ?? 0)
 
-  function resolveWidth(raw: number): number {
-    if (!raw || raw <= 0) return 0
-    if (options?.breakpoints?.length) {
-      return snapToBreakpoint(raw, options.breakpoints)
-    }
-    return raw
-  }
+function resolveWidth(raw: number): number {
+if (!raw || raw <= 0) return 0
+if (options?.breakpoints?.length) {
+return snapToBreakpoint(raw, options.breakpoints)
+}
+return raw
+}
 
-  let resizeObserver: ResizeObserver | null = null
-  let prevWidth = 0
+let resizeObserver: ResizeObserver | null = null
+let prevWidth = 0
 
-  onMounted(() => {
-    if (!containerRef.value) return
+onMounted(() => {
+if (!containerRef.value) return
 
     const initial = resolveWidth(containerRef.value.getBoundingClientRect().width)
     if (initial > 0) {
@@ -13496,100 +13842,101 @@ export function useContainerWidth(
     })
 
     resizeObserver.observe(containerRef.value)
-  })
 
-  onBeforeUnmount(() => {
-    resizeObserver?.disconnect()
-  })
+})
 
-  return { containerWidth }
+onBeforeUnmount(() => {
+resizeObserver?.disconnect()
+})
+
+return { containerWidth }
 }
 </file>
 <file name="useGestures.ts" path="/packages/vue/src/composables/useGestures.ts">
 import { ref, type ComputedRef, type Ref } from 'vue'
 import {
-  classifyGesture as coreClassifyGesture,
-  isDoubleTap as coreIsDoubleTap,
-  VelocityTracker,
-  type AreaMetrics,
-  type GestureMode,
-  type PanState,
-  type PanzoomMotion,
-  type PhotoItem,
-  type ZoomState,
-  type DebugLogger,
+classifyGesture as coreClassifyGesture,
+isDoubleTap as coreIsDoubleTap,
+VelocityTracker,
+type AreaMetrics,
+type GestureMode,
+type PanState,
+type PanzoomMotion,
+type PhotoItem,
+type ZoomState,
+type DebugLogger,
 } from '@nuxt-photo/core'
 
 type GestureConfig = {
-  lightboxMounted: Ref<boolean>
-  animating: Ref<boolean>
-  ghostVisible: Ref<boolean>
-  isZoomedIn: ComputedRef<boolean>
-  zoomAllowed: ComputedRef<boolean>
-  mediaAreaRef: Ref<HTMLElement | null>
-  currentPhoto: ComputedRef<PhotoItem>
-  areaMetrics: Ref<AreaMetrics | null>
-  uiVisible: Ref<boolean>
-  panState: Ref<PanState>
-  zoomState: Ref<ZoomState>
-  setCloseDragY: (val: number) => void
-  transitionInProgress: ComputedRef<boolean>
+lightboxMounted: Ref<boolean>
+animating: Ref<boolean>
+ghostVisible: Ref<boolean>
+isZoomedIn: ComputedRef<boolean>
+zoomAllowed: ComputedRef<boolean>
+mediaAreaRef: Ref<HTMLElement | null>
+currentPhoto: ComputedRef<PhotoItem>
+areaMetrics: Ref<AreaMetrics | null>
+uiVisible: Ref<boolean>
+panState: Ref<PanState>
+zoomState: Ref<ZoomState>
+setCloseDragY: (val: number) => void
+transitionInProgress: ComputedRef<boolean>
 
-  panzoomMotion: PanzoomMotion
-  setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
-  startPanzoomSpring: (targetScale: number, targetPan: PanState, options?: { tension?: number; friction?: number }) => void
-  clampPan: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
-  clampPanWithResistance: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
-  applyWheelZoom: (event: WheelEvent) => void
-  toggleZoom: (clientPoint?: { x: number; y: number }) => void
-  getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }
+panzoomMotion: PanzoomMotion
+setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
+startPanzoomSpring: (targetScale: number, targetPan: PanState, options?: { tension?: number; friction?: number }) => void
+clampPan: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
+clampPanWithResistance: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
+applyWheelZoom: (event: WheelEvent) => void
+toggleZoom: (clientPoint?: { x: number; y: number }) => void
+getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }
 
-  goToNext: () => void
-  goToPrev: () => void
-  goTo: (index: number, instant?: boolean) => void
-  selectedSnap: () => number
+goToNext: () => void
+goToPrev: () => void
+goTo: (index: number, instant?: boolean) => void
+selectedSnap: () => number
 
-  handleCloseGesture: (deltaY: number, velocityY: number, closeFn: () => Promise<void>) => Promise<void>
-  close: () => Promise<void>
+handleCloseGesture: (deltaY: number, velocityY: number, closeFn: () => Promise<void>) => Promise<void>
+close: () => Promise<void>
 }
 
 export function useGestures(config: GestureConfig, debug?: DebugLogger) {
-  const gesturePhase = ref<GestureMode>('idle')
+const gesturePhase = ref<GestureMode>('idle')
 
-  let pointerSession: {
-    id: number
-    pointerType: string
-    startX: number
-    startY: number
-    lastX: number
-    lastY: number
-    moved: boolean
-    startPan: PanState
-  } | null = null
+let pointerSession: {
+id: number
+pointerType: string
+startX: number
+startY: number
+lastX: number
+lastY: number
+moved: boolean
+startPan: PanState
+} | null = null
 
-  let tapTimer: ReturnType<typeof setTimeout> | undefined
-  let lastTap: { time: number; clientX: number; clientY: number } | null = null
-  let lastWheelTime = 0
-  let emblaStolen = false
+let tapTimer: ReturnType<typeof setTimeout> | undefined
+let lastTap: { time: number; clientX: number; clientY: number } | null = null
+let lastWheelTime = 0
+let emblaStolen = false
 
-  const velocityTracker = new VelocityTracker(100)
+const velocityTracker = new VelocityTracker(100)
 
-  function resetGestureState() {
-    gesturePhase.value = 'idle'
-    pointerSession = null
-    emblaStolen = false
-  }
+function resetGestureState() {
+gesturePhase.value = 'idle'
+pointerSession = null
+emblaStolen = false
+}
 
-  function cancelTapTimer() {
-    if (tapTimer) {
-      clearTimeout(tapTimer)
-      tapTimer = undefined
-    }
-  }
+function cancelTapTimer() {
+if (tapTimer) {
+clearTimeout(tapTimer)
+tapTimer = undefined
+}
+}
 
-  function handleTap(clientX: number, clientY: number) {
-    const now = performance.now()
-    const doubleTap = coreIsDoubleTap(now, lastTap, clientX, clientY)
+function handleTap(clientX: number, clientY: number) {
+const now = performance.now()
+const doubleTap = coreIsDoubleTap(now, lastTap, clientX, clientY)
 
     cancelTapTimer()
 
@@ -13606,22 +13953,23 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       config.uiVisible.value = !config.uiVisible.value
       tapTimer = undefined
     }, 220)
-  }
 
-  function classifyGesture(deltaX: number, deltaY: number, pointerType: string): GestureMode {
-    const bounds = config.getPanBounds(config.currentPhoto.value, config.zoomState.value.current)
-    return coreClassifyGesture(
-      deltaX,
-      deltaY,
-      pointerType,
-      config.isZoomedIn.value,
-      bounds,
-      config.panState.value,
-    )
-  }
+}
 
-  function onMediaPointerDown(event: PointerEvent) {
-    if (!config.lightboxMounted.value || config.ghostVisible.value) return
+function classifyGesture(deltaX: number, deltaY: number, pointerType: string): GestureMode {
+const bounds = config.getPanBounds(config.currentPhoto.value, config.zoomState.value.current)
+return coreClassifyGesture(
+deltaX,
+deltaY,
+pointerType,
+config.isZoomedIn.value,
+bounds,
+config.panState.value,
+)
+}
+
+function onMediaPointerDown(event: PointerEvent) {
+if (!config.lightboxMounted.value || config.ghostVisible.value) return
 
     if (config.animating.value) {
       event.stopPropagation()
@@ -13658,10 +14006,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     if (config.isZoomedIn.value) {
       config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
     }
-  }
 
-  function onMediaPointerMove(event: PointerEvent) {
-    if (!pointerSession || event.pointerId !== pointerSession.id) return
+}
+
+function onMediaPointerMove(event: PointerEvent) {
+if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     const deltaX = event.clientX - pointerSession.startX
     const deltaY = event.clientY - pointerSession.startY
@@ -13717,10 +14066,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         false,
       )
     }
-  }
 
-  async function onMediaPointerUp(event: PointerEvent) {
-    if (!pointerSession || event.pointerId !== pointerSession.id) return
+}
+
+async function onMediaPointerUp(event: PointerEvent) {
+if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     if (config.isZoomedIn.value || emblaStolen) {
       try {
@@ -13765,10 +14115,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         friction: 17,
       })
     }
-  }
 
-  function onMediaPointerCancel(event: PointerEvent) {
-    if (!pointerSession || event.pointerId !== pointerSession.id) return
+}
+
+function onMediaPointerCancel(event: PointerEvent) {
+if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     const wasZoomed = config.isZoomedIn.value || emblaStolen
     resetGestureState()
@@ -13783,10 +14134,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       )
     }
     config.setCloseDragY(0)
-  }
 
-  function onWheel(event: WheelEvent) {
-    if (!config.lightboxMounted.value || config.animating.value) return
+}
+
+function onWheel(event: WheelEvent) {
+if (!config.lightboxMounted.value || config.animating.value) return
 
     const now = performance.now()
     const isTrackpad = Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
@@ -13801,10 +14153,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     event.preventDefault()
     debug?.log('zoom', `wheel: deltaY=${event.deltaY.toFixed(1)} isTrackpad=${isTrackpad}`)
     config.applyWheelZoom(event)
-  }
 
-  function onKeydown(event: KeyboardEvent) {
-    if (!config.lightboxMounted.value || config.animating.value) return
+}
+
+function onKeydown(event: KeyboardEvent) {
+if (!config.lightboxMounted.value || config.animating.value) return
 
     if (event.key === 'Escape') {
       debug?.log('gestures', 'key: Escape → close')
@@ -13845,19 +14198,20 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
         config.goToPrev()
       }
     }
-  }
 
-  return {
-    gesturePhase,
-    resetGestureState,
-    cancelTapTimer,
-    onMediaPointerDown,
-    onMediaPointerMove,
-    onMediaPointerUp,
-    onMediaPointerCancel,
-    onWheel,
-    onKeydown,
-  }
+}
+
+return {
+gesturePhase,
+resetGestureState,
+cancelTapTimer,
+onMediaPointerDown,
+onMediaPointerMove,
+onMediaPointerUp,
+onMediaPointerCancel,
+onWheel,
+onKeydown,
+}
 }
 </file>
 <file name="useGhostTransition.ts" path="/packages/vue/src/composables/useGhostTransition.ts">
@@ -13868,49 +14222,49 @@ import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'
 
 export function useGhostTransition(
-  activeIndex: Ref<number>,
-  currentPhoto: ComputedRef<PhotoItem>,
-  areaMetrics: Ref<AreaMetrics | null>,
-  getAbsoluteFrameRect: (photo: PhotoItem) => { left: number; top: number; width: number; height: number } | null,
-  debug?: DebugLogger,
-  transitionConfig?: TransitionModeConfig,
+activeIndex: Ref<number>,
+currentPhoto: ComputedRef<PhotoItem>,
+areaMetrics: Ref<AreaMetrics | null>,
+getAbsoluteFrameRect: (photo: PhotoItem) => { left: number; top: number; width: number; height: number } | null,
+debug?: DebugLogger,
+transitionConfig?: TransitionModeConfig,
 ) {
-  const s = createGhostState(activeIndex, currentPhoto, areaMetrics, getAbsoluteFrameRect, debug, transitionConfig)
-  const { close, animateCloseDragTo, handleCloseGesture, handleBackdropClick } = createCloseTransition(s)
+const s = createGhostState(activeIndex, currentPhoto, areaMetrics, getAbsoluteFrameRect, debug, transitionConfig)
+const { close, animateCloseDragTo, handleCloseGesture, handleBackdropClick } = createCloseTransition(s)
 
-  const transitionInProgress = computed(() => s.animating.value || s.ghostVisible.value)
+const transitionInProgress = computed(() => s.animating.value || s.ghostVisible.value)
 
-  const chromeStyle = computed<CSSProperties>(() => ({
-    opacity: String(s.uiVisible.value ? s.chromeOpacity.value : 0),
-    pointerEvents: s.uiVisible.value && s.chromeOpacity.value > 0.05 ? 'auto' : 'none',
-  }))
+const chromeStyle = computed<CSSProperties>(() => ({
+opacity: String(s.uiVisible.value ? s.chromeOpacity.value : 0),
+pointerEvents: s.uiVisible.value && s.chromeOpacity.value > 0.05 ? 'auto' : 'none',
+}))
 
-  const backdropStyle = computed<CSSProperties>(() => ({
-    opacity: String(s.overlayOpacity.value * (1 - s.closeDragRatio.value)),
-    ...(s.disableBackdropTransition.value ? { transition: 'none' } : {}),
-  }))
+const backdropStyle = computed<CSSProperties>(() => ({
+opacity: String(s.overlayOpacity.value \* (1 - s.closeDragRatio.value)),
+...(s.disableBackdropTransition.value ? { transition: 'none' } : {}),
+}))
 
-  const lightboxUiStyle = computed<CSSProperties>(() => ({
-    transform: `translate3d(0, ${s.closeDragY.value}px, 0) scale(${1 - s.closeDragRatio.value * 0.05})`,
-  }))
+const lightboxUiStyle = computed<CSSProperties>(() => ({
+transform: `translate3d(0, ${s.closeDragY.value}px, 0) scale(${1 - s.closeDragRatio.value * 0.05})`,
+}))
 
-  return {
-    lightboxMounted: s.lightboxMounted,
-    animating: s.animating,
-    ghostVisible: s.ghostVisible,
-    ghostSrc: s.ghostSrc,
-    ghostStyle: s.ghostStyle,
-    hiddenThumbIndex: s.hiddenThumbIndex,
-    overlayOpacity: s.overlayOpacity,
-    mediaOpacity: s.mediaOpacity,
-    chromeOpacity: s.chromeOpacity,
-    uiVisible: s.uiVisible,
-    closeDragY: s.closeDragY,
-    transitionInProgress,
-    chromeStyle,
-    closeDragRatio: s.closeDragRatio,
-    backdropStyle,
-    lightboxUiStyle,
+return {
+lightboxMounted: s.lightboxMounted,
+animating: s.animating,
+ghostVisible: s.ghostVisible,
+ghostSrc: s.ghostSrc,
+ghostStyle: s.ghostStyle,
+hiddenThumbIndex: s.hiddenThumbIndex,
+overlayOpacity: s.overlayOpacity,
+mediaOpacity: s.mediaOpacity,
+chromeOpacity: s.chromeOpacity,
+uiVisible: s.uiVisible,
+closeDragY: s.closeDragY,
+transitionInProgress,
+chromeStyle,
+closeDragRatio: s.closeDragRatio,
+backdropStyle,
+lightboxUiStyle,
 
     setThumbRef: (index: number) => setThumbRef(s, index),
     setCloseDragY: (val: number) => { s.closeDragY.value = val },
@@ -13919,7 +14273,8 @@ export function useGhostTransition(
     animateCloseDragTo,
     handleCloseGesture,
     handleBackdropClick,
-  }
+
+}
 }
 </file>
 <file name="useLightbox.ts" path="/packages/vue/src/composables/useLightbox.ts">
@@ -13928,35 +14283,35 @@ import type { PhotoItem } from '@nuxt-photo/core'
 import { useLightboxContext } from './useLightboxContext'
 
 export function useLightbox(photosInput: MaybeRef<PhotoItem | PhotoItem[]>) {
-  const context = useLightboxContext(photosInput)
+const context = useLightboxContext(photosInput)
 
-  return {
-    open: context.open,
-    close: context.close,
-    next: context.next,
-    prev: context.prev,
-    isOpen: context.isOpen,
-    activeIndex: context.activeIndex,
-    activePhoto: context.activePhoto,
-    count: context.count,
-  }
+return {
+open: context.open,
+close: context.close,
+next: context.next,
+prev: context.prev,
+isOpen: context.isOpen,
+activeIndex: context.activeIndex,
+activePhoto: context.activePhoto,
+count: context.count,
+}
 }
 </file>
 <file name="useLightboxContext.ts" path="/packages/vue/src/composables/useLightboxContext.ts">
 import { computed, getCurrentInstance, inject, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
 import {
-  ensureImageLoaded,
-  lockBodyScroll,
-  nextFrame,
-  createDebug,
-  createTransitionMode,
-  isUsableRect,
-  photoId,
-  type CarouselConfig,
-  type PhotoItem,
-  type AreaMetrics,
-  type TransitionMode,
-  type TransitionModeConfig,
+ensureImageLoaded,
+lockBodyScroll,
+nextFrame,
+createDebug,
+createTransitionMode,
+isUsableRect,
+photoId,
+type CarouselConfig,
+type PhotoItem,
+type AreaMetrics,
+type TransitionMode,
+type TransitionModeConfig,
 } from '@nuxt-photo/core'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
@@ -13967,91 +14322,91 @@ import { LightboxDefaultsKey } from '../provide/keys'
 export type LightboxTransitionOption = TransitionMode | TransitionModeConfig
 
 export function useLightboxContext(
-  photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
-  transitionOption?: LightboxTransitionOption,
-  minZoom?: number,
+photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
+transitionOption?: LightboxTransitionOption,
+minZoom?: number,
 ) {
-  if (import.meta.env.DEV && !getCurrentInstance()) {
-    console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
-  }
+if (import.meta.env.DEV && !getCurrentInstance()) {
+console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
+}
 
-  const photos = computed(() => {
-    const value = toValue(photosInput)
-    return Array.isArray(value) ? value : [value]
-  })
-  const count = computed(() => photos.value.length)
+const photos = computed(() => {
+const value = toValue(photosInput)
+return Array.isArray(value) ? value : [value]
+})
+const count = computed(() => photos.value.length)
 
-  const globalDefaults = inject(LightboxDefaultsKey, undefined)
-  const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
+const globalDefaults = inject(LightboxDefaultsKey, undefined)
+const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
 
-  const debug = createDebug()
-  const transitionConfig = createTransitionMode()
+const debug = createDebug()
+const transitionConfig = createTransitionMode()
 
-  // Apply user-provided transition option
-  if (transitionOption) {
-    if (typeof transitionOption === 'string') {
-      transitionConfig.mode = transitionOption
-    } else {
-      transitionConfig.mode = transitionOption.mode
-      transitionConfig.autoThreshold = transitionOption.autoThreshold
-    }
-  }
+// Apply user-provided transition option
+if (transitionOption) {
+if (typeof transitionOption === 'string') {
+transitionConfig.mode = transitionOption
+} else {
+transitionConfig.mode = transitionOption.mode
+transitionConfig.autoThreshold = transitionOption.autoThreshold
+}
+}
 
-  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
-  if (
-    typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    && transitionConfig.mode !== 'none'
-  ) {
-    transitionConfig.mode = 'fade'
-  }
+// Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
+if (
+typeof window !== 'undefined'
+&& typeof window.matchMedia === 'function'
+&& window.matchMedia('(prefers-reduced-motion: reduce)').matches
+&& transitionConfig.mode !== 'none'
+) {
+transitionConfig.mode = 'fade'
+}
 
-  if (typeof window !== 'undefined') {
-    window.__NUXT_PHOTO_DEBUG__ = debug.flags
-  }
+if (typeof window !== 'undefined') {
+window.**NUXT_PHOTO_DEBUG** = debug.flags
+}
 
-  const carouselConfig: CarouselConfig = {
-    style: 'classic',
-    parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
-    fade: { minOpacity: 0 },
-  }
+const carouselConfig: CarouselConfig = {
+style: 'classic',
+parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
+fade: { minOpacity: 0 },
+}
 
-  const mediaAreaRef = ref<HTMLElement | null>(null)
-  const areaMetrics = ref<AreaMetrics | null>(null)
+const mediaAreaRef = ref<HTMLElement | null>(null)
+const areaMetrics = ref<AreaMetrics | null>(null)
 
-  const isZoomedInProxy = ref(false)
-  const animatingProxy = ref(false)
+const isZoomedInProxy = ref(false)
+const animatingProxy = ref(false)
 
-  const carousel = useCarousel(
-    photos,
-    areaMetrics,
-    carouselConfig,
-    computed(() => isZoomedInProxy.value),
-    animatingProxy,
-    debug,
-  )
+const carousel = useCarousel(
+photos,
+areaMetrics,
+carouselConfig,
+computed(() => isZoomedInProxy.value),
+animatingProxy,
+debug,
+)
 
-  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug, resolvedMinZoom)
+const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug, resolvedMinZoom)
 
-  const ghost = useGhostTransition(
-    carousel.activeIndex,
-    carousel.currentPhoto,
-    areaMetrics,
-    carousel.getAbsoluteFrameRect,
-    debug,
-    transitionConfig,
-  )
+const ghost = useGhostTransition(
+carousel.activeIndex,
+carousel.currentPhoto,
+areaMetrics,
+carousel.getAbsoluteFrameRect,
+debug,
+transitionConfig,
+)
 
-  watch(panzoom.isZoomedIn, (value) => { isZoomedInProxy.value = value }, { immediate: true })
-  watch(ghost.animating, (value) => { animatingProxy.value = value }, { immediate: true })
+watch(panzoom.isZoomedIn, (value) => { isZoomedInProxy.value = value }, { immediate: true })
+watch(ghost.animating, (value) => { animatingProxy.value = value }, { immediate: true })
 
-  function syncGeometry() {
-    const mediaAreaEl = mediaAreaRef.value
-    if (!mediaAreaEl) {
-      debug.warn('geometry', 'syncGeometry: mediaAreaRef is null')
-      return null
-    }
+function syncGeometry() {
+const mediaAreaEl = mediaAreaRef.value
+if (!mediaAreaEl) {
+debug.warn('geometry', 'syncGeometry: mediaAreaRef is null')
+return null
+}
 
     const rect = mediaAreaEl.getBoundingClientRect()
     if (!isUsableRect(rect)) {
@@ -14073,44 +14428,45 @@ export function useLightboxContext(
 
     debug.log('geometry', 'syncGeometry:', areaMetrics.value)
     return areaMetrics.value
-  }
 
-  let gestures!: ReturnType<typeof useGestures>
+}
 
-  const transitionCallbacks = {
-    syncGeometry,
-    refreshZoomState: panzoom.refreshZoomState,
-    resetGestureState: () => gestures.resetGestureState(),
-    cancelTapTimer: () => gestures.cancelTapTimer(),
-  }
+let gestures!: ReturnType<typeof useGestures>
 
-  const closeCallbacks = {
-    ...transitionCallbacks,
-    setPanzoomImmediate: panzoom.setPanzoomImmediate,
-    isZoomedIn: panzoom.isZoomedIn,
-  }
+const transitionCallbacks = {
+syncGeometry,
+refreshZoomState: panzoom.refreshZoomState,
+resetGestureState: () => gestures.resetGestureState(),
+cancelTapTimer: () => gestures.cancelTapTimer(),
+}
 
-  let skipActiveIndexWatch = false
+const closeCallbacks = {
+...transitionCallbacks,
+setPanzoomImmediate: panzoom.setPanzoomImmediate,
+isZoomedIn: panzoom.isZoomedIn,
+}
 
-  // Track whether the keyboard listener is currently attached
-  let keydownAttached = false
+let skipActiveIndexWatch = false
 
-  function attachKeydown() {
-    if (typeof window === 'undefined' || keydownAttached) return
-    window.addEventListener('keydown', gestures.onKeydown)
-    keydownAttached = true
-  }
+// Track whether the keyboard listener is currently attached
+let keydownAttached = false
 
-  function detachKeydown() {
-    if (typeof window === 'undefined' || !keydownAttached) return
-    window.removeEventListener('keydown', gestures.onKeydown)
-    keydownAttached = false
-  }
+function attachKeydown() {
+if (typeof window === 'undefined' || keydownAttached) return
+window.addEventListener('keydown', gestures.onKeydown)
+keydownAttached = true
+}
 
-  async function open(photoOrIndex: PhotoItem | number = 0) {
-    const index = typeof photoOrIndex === 'number'
-      ? photoOrIndex
-      : photos.value.findIndex(photo => photoId(photo) === photoId(photoOrIndex as PhotoItem))
+function detachKeydown() {
+if (typeof window === 'undefined' || !keydownAttached) return
+window.removeEventListener('keydown', gestures.onKeydown)
+keydownAttached = false
+}
+
+async function open(photoOrIndex: PhotoItem | number = 0) {
+const index = typeof photoOrIndex === 'number'
+? photoOrIndex
+: photos.value.findIndex(photo => photoId(photo) === photoId(photoOrIndex as PhotoItem))
 
     skipActiveIndexWatch = true
     ghost.setCloseDragY(0)
@@ -14118,38 +14474,39 @@ export function useLightboxContext(
     attachKeydown()
     await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
     skipActiveIndexWatch = false
-  }
 
-  async function close() {
-    await ghost.close(closeCallbacks)
-    ghost.setCloseDragY(0)
-    detachKeydown()
-  }
+}
 
-  function next() {
-    if (ghost.transitionInProgress.value) return
-    carousel.goToNext()
-  }
+async function close() {
+await ghost.close(closeCallbacks)
+ghost.setCloseDragY(0)
+detachKeydown()
+}
 
-  function prev() {
-    if (ghost.transitionInProgress.value) return
-    carousel.goToPrev()
-  }
+function next() {
+if (ghost.transitionInProgress.value) return
+carousel.goToNext()
+}
 
-  gestures = useGestures({
-    lightboxMounted: ghost.lightboxMounted,
-    animating: ghost.animating,
-    ghostVisible: ghost.ghostVisible,
-    isZoomedIn: panzoom.isZoomedIn,
-    zoomAllowed: panzoom.zoomAllowed,
-    mediaAreaRef,
-    currentPhoto: carousel.currentPhoto,
-    areaMetrics,
-    uiVisible: ghost.uiVisible,
-    panState: panzoom.panState,
-    zoomState: panzoom.zoomState,
-    setCloseDragY: ghost.setCloseDragY,
-    transitionInProgress: ghost.transitionInProgress,
+function prev() {
+if (ghost.transitionInProgress.value) return
+carousel.goToPrev()
+}
+
+gestures = useGestures({
+lightboxMounted: ghost.lightboxMounted,
+animating: ghost.animating,
+ghostVisible: ghost.ghostVisible,
+isZoomedIn: panzoom.isZoomedIn,
+zoomAllowed: panzoom.zoomAllowed,
+mediaAreaRef,
+currentPhoto: carousel.currentPhoto,
+areaMetrics,
+uiVisible: ghost.uiVisible,
+panState: panzoom.panState,
+zoomState: panzoom.zoomState,
+setCloseDragY: ghost.setCloseDragY,
+transitionInProgress: ghost.transitionInProgress,
 
     panzoomMotion: panzoom.panzoomMotion,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
@@ -14167,16 +14524,17 @@ export function useLightboxContext(
 
     handleCloseGesture: ghost.handleCloseGesture,
     close,
-  }, debug)
 
-  watch(ghost.lightboxMounted, (mounted) => {
-    debug.log('transitions', `lightboxMounted → ${mounted}`)
-    lockBodyScroll(mounted)
-  })
+}, debug)
 
-  // Watch photos array — only close if the active photo was removed; otherwise maintain position
-  watch(photos, (newPhotos, oldPhotos) => {
-    if (!newPhotos || !oldPhotos) return
+watch(ghost.lightboxMounted, (mounted) => {
+debug.log('transitions', `lightboxMounted → ${mounted}`)
+lockBodyScroll(mounted)
+})
+
+// Watch photos array — only close if the active photo was removed; otherwise maintain position
+watch(photos, (newPhotos, oldPhotos) => {
+if (!newPhotos || !oldPhotos) return
 
     const newIds = new Set(newPhotos.map(photoId))
     const oldIds = new Set(oldPhotos.map(photoId))
@@ -14201,10 +14559,11 @@ export function useLightboxContext(
     if (newIndex !== -1 && newIndex !== carousel.activeIndex.value) {
       carousel.goTo(newIndex, true)
     }
-  })
 
-  watch(carousel.activeIndex, async (newIndex) => {
-    if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
+})
+
+watch(carousel.activeIndex, async (newIndex) => {
+if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
 
     debug.log('slides', `activeIndex changed → ${newIndex}`)
 
@@ -14215,21 +14574,23 @@ export function useLightboxContext(
     syncGeometry()
     panzoom.refreshZoomState(true)
     void ensureImageLoaded(carousel.currentPhoto.value.src)
-  })
 
-  onMounted(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onResize)
+})
+
+onMounted(() => {
+if (typeof window !== 'undefined') {
+window.addEventListener('resize', onResize)
 
       for (const photo of photos.value) {
         void ensureImageLoaded(photo.src)
       }
     }
-  })
 
-  onBeforeUnmount(() => {
-    gestures.cancelTapTimer()
-    detachKeydown()
+})
+
+onBeforeUnmount(() => {
+gestures.cancelTapTimer()
+detachKeydown()
 
     if (typeof window !== 'undefined') {
       window.removeEventListener('resize', onResize)
@@ -14238,21 +14599,22 @@ export function useLightboxContext(
     if (typeof document !== 'undefined') {
       lockBodyScroll(false)
     }
-  })
 
-  function onResize() {
-    if (!ghost.lightboxMounted.value) return
-    debug.log('geometry', 'window resize')
-    syncGeometry()
-    panzoom.refreshZoomState(false)
-  }
+})
 
-  return {
-    photos,
-    count,
-    activeIndex: carousel.activeIndex,
-    activePhoto: carousel.currentPhoto,
-    isOpen: computed(() => ghost.lightboxMounted.value),
+function onResize() {
+if (!ghost.lightboxMounted.value) return
+debug.log('geometry', 'window resize')
+syncGeometry()
+panzoom.refreshZoomState(false)
+}
+
+return {
+photos,
+count,
+activeIndex: carousel.activeIndex,
+activePhoto: carousel.currentPhoto,
+isOpen: computed(() => ghost.lightboxMounted.value),
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,
@@ -14297,161 +14659,168 @@ export function useLightboxContext(
     handleBackdropClick: () => ghost.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
     getSlideEffectStyle: carousel.getSlideEffectStyle,
-  }
+
+}
 }
 </file>
 <file name="useLightboxInject.ts" path="/packages/vue/src/composables/useLightboxInject.ts">
 import { LightboxContextKey, type LightboxContext } from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
-/**
- * Inject the lightbox context provided by a `LightboxRoot` ancestor.
- * Throws a descriptive error if no lightbox context is available.
- */
-export function useLightboxInject(componentName: string): LightboxContext {
+/\*\*
+
+- Inject the lightbox context provided by a `LightboxRoot` ancestor.
+- Throws a descriptive error if no lightbox context is available.
+  \*/
+  export function useLightboxInject(componentName: string): LightboxContext {
   return requireInjection(LightboxContextKey, componentName, 'an active lightbox context')
-}
-</file>
-<file name="useLightboxProvider.ts" path="/packages/vue/src/composables/useLightboxProvider.ts">
-import { provide, type MaybeRef } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
-import { useLightboxContext, type LightboxTransitionOption } from './useLightboxContext'
-import { LightboxContextKey, LightboxSlideRendererKey, type LightboxSlideRenderer } from '../provide/keys'
-import { provideLightboxContexts } from '../provide/lightbox'
-
-/**
- * Creates a full lightbox context and provides it to child components.
- * This is the composable for building custom lightbox components — the middle tier
- * between `useLightbox` (for consumers) and raw `useLightboxContext` (full engine).
- *
- * @example
- * ```vue
- * <script setup>
- * const { open, close, isOpen, activePhoto } = useLightboxProvider(photos)
- * </script>
- * <template>
- *   <LightboxRoot>
- *     <LightboxOverlay />
- *     <LightboxViewport v-slot="{ photos, viewportRef }">
- *       <!-- custom slide rendering -->
- *     </LightboxViewport>
- *   </LightboxRoot>
- * </template>
- * ```
- */
-export function useLightboxProvider(
-  photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
-  options?: {
-    transition?: LightboxTransitionOption
-    resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
-    minZoom?: number
-  },
-) {
-  const ctx = useLightboxContext(
-    photosInput,
-    options?.transition,
-    options?.minZoom,
-  )
-
-  // Provide the unified context + deprecated individual keys for backward compat
-  provideLightboxContexts(ctx, {
-    resolveSlide: options?.resolveSlide,
-  })
-
-  return {
-    open: ctx.open,
-    close: ctx.close,
-    next: ctx.next,
-    prev: ctx.prev,
-    isOpen: ctx.isOpen,
-    activeIndex: ctx.activeIndex,
-    activePhoto: ctx.activePhoto,
-    photos: ctx.photos,
-    count: ctx.count,
-    setThumbRef: ctx.setThumbRef,
-    hiddenThumbIndex: ctx.hiddenThumbIndex,
   }
+  </file>
+  <file name="useLightboxProvider.ts" path="/packages/vue/src/composables/useLightboxProvider.ts">
+  import { provide, type MaybeRef } from 'vue'
+  import type { PhotoItem } from '@nuxt-photo/core'
+  import { useLightboxContext, type LightboxTransitionOption } from './useLightboxContext'
+  import { LightboxContextKey, LightboxSlideRendererKey, type LightboxSlideRenderer } from '../provide/keys'
+  import { provideLightboxContexts } from '../provide/lightbox'
+
+/\*\*
+
+- Creates a full lightbox context and provides it to child components.
+- This is the composable for building custom lightbox components — the middle tier
+- between `useLightbox` (for consumers) and raw `useLightboxContext` (full engine).
+-
+- @example
+- ```vue
+
+  ```
+
+- <script setup>
+- const { open, close, isOpen, activePhoto } = useLightboxProvider(photos)
+- </script>
+- <template>
+- <LightboxRoot>
+-     <LightboxOverlay />
+-     <LightboxViewport v-slot="{ photos, viewportRef }">
+-       <!-- custom slide rendering -->
+-     </LightboxViewport>
+- </LightboxRoot>
+- </template>
+- ```
+   */
+  export function useLightboxProvider(
+    photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
+    options?: {
+      transition?: LightboxTransitionOption
+      resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
+      minZoom?: number
+    },
+  ) {
+    const ctx = useLightboxContext(
+      photosInput,
+      options?.transition,
+      options?.minZoom,
+    )
+  ```
+
+// Provide the unified context + deprecated individual keys for backward compat
+provideLightboxContexts(ctx, {
+resolveSlide: options?.resolveSlide,
+})
+
+return {
+open: ctx.open,
+close: ctx.close,
+next: ctx.next,
+prev: ctx.prev,
+isOpen: ctx.isOpen,
+activeIndex: ctx.activeIndex,
+activePhoto: ctx.activePhoto,
+photos: ctx.photos,
+count: ctx.count,
+setThumbRef: ctx.setThumbRef,
+hiddenThumbIndex: ctx.hiddenThumbIndex,
+}
 }
 </file>
 <file name="usePanzoom.ts" path="/packages/vue/src/composables/usePanzoom.ts">
 import { computed, type ComputedRef, type Ref, type ComponentPublicInstance, ref } from 'vue'
 import {
-  computeZoomLevels as coreComputeZoomLevels,
-  computePanBounds,
-  clampPanToBounds,
-  clampPanWithResistance as coreClampPanWithResistance,
-  clientToAreaPoint,
-  computeTargetPanForZoom,
-  computeFittedFrame,
-  type AreaMetrics,
-  type PanState,
-  type PanzoomMotion,
-  type PhotoItem,
-  type ZoomState,
-  type DebugLogger,
+computeZoomLevels as coreComputeZoomLevels,
+computePanBounds,
+clampPanToBounds,
+clampPanWithResistance as coreClampPanWithResistance,
+clientToAreaPoint,
+computeTargetPanForZoom,
+computeFittedFrame,
+type AreaMetrics,
+type PanState,
+type PanzoomMotion,
+type PhotoItem,
+type ZoomState,
+type DebugLogger,
 } from '@nuxt-photo/core'
 
 export function usePanzoom(
-  currentPhoto: ComputedRef<PhotoItem>,
-  areaMetrics: Ref<AreaMetrics | null>,
-  debug?: DebugLogger,
-  minZoom?: number,
+currentPhoto: ComputedRef<PhotoItem>,
+areaMetrics: Ref<AreaMetrics | null>,
+debug?: DebugLogger,
+minZoom?: number,
 ) {
-  const zoomState = ref<ZoomState>({ fit: 1, secondary: 1, max: 1, current: 1 })
-  const panState = ref<PanState>({ x: 0, y: 0 })
+const zoomState = ref<ZoomState>({ fit: 1, secondary: 1, max: 1, current: 1 })
+const panState = ref<PanState>({ x: 0, y: 0 })
 
-  let activeSlideIndex = 0
-  const slideZoomRefs = new Map<number, HTMLElement>()
+let activeSlideIndex = 0
+const slideZoomRefs = new Map<number, HTMLElement>()
 
-  const panzoomMotion: PanzoomMotion = {
-    x: 0, y: 0, scale: 1,
-    targetX: 0, targetY: 0, targetScale: 1,
-    velocityX: 0, velocityY: 0, velocityScale: 0,
-    tension: 170, friction: 17, rafId: 0,
-  }
+const panzoomMotion: PanzoomMotion = {
+x: 0, y: 0, scale: 1,
+targetX: 0, targetY: 0, targetScale: 1,
+velocityX: 0, velocityY: 0, velocityScale: 0,
+tension: 170, friction: 17, rafId: 0,
+}
 
-  const isZoomedIn = computed(() => zoomState.value.current > zoomState.value.fit + 0.01)
-  const zoomAllowed = computed(() => zoomState.value.max > zoomState.value.fit + 0.05)
+const isZoomedIn = computed(() => zoomState.value.current > zoomState.value.fit + 0.01)
+const zoomAllowed = computed(() => zoomState.value.max > zoomState.value.fit + 0.05)
 
-  function computeZoomLevels(photo: PhotoItem): ZoomState {
-    const area = areaMetrics.value
-    if (!area) return { fit: 1, secondary: 1, max: 1, current: 1 }
-    return coreComputeZoomLevels(
-      photo.width,
-      photo.height,
-      area.width,
-      area.height,
-      photo,
-      minZoom != null ? { minZoom } : undefined,
-    )
-  }
+function computeZoomLevels(photo: PhotoItem): ZoomState {
+const area = areaMetrics.value
+if (!area) return { fit: 1, secondary: 1, max: 1, current: 1 }
+return coreComputeZoomLevels(
+photo.width,
+photo.height,
+area.width,
+area.height,
+photo,
+minZoom != null ? { minZoom } : undefined,
+)
+}
 
-  function getPanBounds(photo: PhotoItem, zoom: number) {
-    const area = areaMetrics.value
-    if (!area) return { x: 0, y: 0 }
-    return computePanBounds(photo.width, photo.height, area.width, area.height, zoom)
-  }
+function getPanBounds(photo: PhotoItem, zoom: number) {
+const area = areaMetrics.value
+if (!area) return { x: 0, y: 0 }
+return computePanBounds(photo.width, photo.height, area.width, area.height, zoom)
+}
 
-  function clampPan(pan: PanState, zoom = zoomState.value.current, photo = currentPhoto.value): PanState {
-    const bounds = getPanBounds(photo, zoom)
-    return clampPanToBounds(pan, bounds)
-  }
+function clampPan(pan: PanState, zoom = zoomState.value.current, photo = currentPhoto.value): PanState {
+const bounds = getPanBounds(photo, zoom)
+return clampPanToBounds(pan, bounds)
+}
 
-  function clampPanWithResistance(pan: PanState, zoom = zoomState.value.current, photo = currentPhoto.value): PanState {
-    const bounds = getPanBounds(photo, zoom)
-    return coreClampPanWithResistance(pan, bounds)
-  }
+function clampPanWithResistance(pan: PanState, zoom = zoomState.value.current, photo = currentPhoto.value): PanState {
+const bounds = getPanBounds(photo, zoom)
+return coreClampPanWithResistance(pan, bounds)
+}
 
-  function getPointFromClient(clientX: number, clientY: number) {
-    const area = areaMetrics.value
-    if (!area) return { x: 0, y: 0 }
-    return clientToAreaPoint(clientX, clientY, area.left, area.top, area.width, area.height)
-  }
+function getPointFromClient(clientX: number, clientY: number) {
+const area = areaMetrics.value
+if (!area) return { x: 0, y: 0 }
+return clientToAreaPoint(clientX, clientY, area.left, area.top, area.width, area.height)
+}
 
-  function getTargetPanForZoom(targetZoom: number, clientPoint?: { x: number; y: number }) {
-    if (targetZoom <= zoomState.value.fit + 0.01) {
-      return { x: 0, y: 0 }
-    }
+function getTargetPanForZoom(targetZoom: number, clientPoint?: { x: number; y: number }) {
+if (targetZoom <= zoomState.value.fit + 0.01) {
+return { x: 0, y: 0 }
+}
 
     const point = clientPoint ? getPointFromClient(clientPoint.x, clientPoint.y) : { x: 0, y: 0 }
     const bounds = getPanBounds(currentPhoto.value, targetZoom)
@@ -14464,27 +14833,28 @@ export function usePanzoom(
       zoomState.value.fit,
       bounds,
     )
-  }
 
-  function applyActivePanzoomTransform() {
-    const activeZoomElement = slideZoomRefs.get(activeSlideIndex)
-    if (!activeZoomElement) return
-    activeZoomElement.style.transform = `translate3d(${panzoomMotion.x}px, ${panzoomMotion.y}px, 0) scale(${panzoomMotion.scale})`
-  }
+}
 
-  function stopPanzoomSpring() {
-    if (!panzoomMotion.rafId) return
-    cancelAnimationFrame(panzoomMotion.rafId)
-    panzoomMotion.rafId = 0
-  }
+function applyActivePanzoomTransform() {
+const activeZoomElement = slideZoomRefs.get(activeSlideIndex)
+if (!activeZoomElement) return
+activeZoomElement.style.transform = `translate3d(${panzoomMotion.x}px, ${panzoomMotion.y}px, 0) scale(${panzoomMotion.scale})`
+}
 
-  function syncPanzoomRefs(scale = panzoomMotion.scale, pan: PanState = { x: panzoomMotion.x, y: panzoomMotion.y }) {
-    zoomState.value = { ...zoomState.value, current: scale }
-    panState.value = { ...pan }
-  }
+function stopPanzoomSpring() {
+if (!panzoomMotion.rafId) return
+cancelAnimationFrame(panzoomMotion.rafId)
+panzoomMotion.rafId = 0
+}
 
-  function setPanzoomImmediate(scale: number, pan: PanState, syncRefs = true) {
-    stopPanzoomSpring()
+function syncPanzoomRefs(scale = panzoomMotion.scale, pan: PanState = { x: panzoomMotion.x, y: panzoomMotion.y }) {
+zoomState.value = { ...zoomState.value, current: scale }
+panState.value = { ...pan }
+}
+
+function setPanzoomImmediate(scale: number, pan: PanState, syncRefs = true) {
+stopPanzoomSpring()
 
     panzoomMotion.scale = scale
     panzoomMotion.targetScale = scale
@@ -14501,19 +14871,20 @@ export function usePanzoom(
     if (syncRefs) {
       syncPanzoomRefs(scale, pan)
     }
-  }
 
-  function startPanzoomSpring(
-    targetScale: number,
-    targetPan: PanState,
-    options?: { tension?: number; friction?: number },
-  ) {
-    debug?.log('zoom', `spring start: scale=${panzoomMotion.scale.toFixed(3)}→${targetScale.toFixed(3)} pan=(${targetPan.x.toFixed(1)},${targetPan.y.toFixed(1)})`)
-    panzoomMotion.targetScale = targetScale
-    panzoomMotion.targetX = targetPan.x
-    panzoomMotion.targetY = targetPan.y
-    panzoomMotion.tension = options?.tension ?? 170
-    panzoomMotion.friction = options?.friction ?? 17
+}
+
+function startPanzoomSpring(
+targetScale: number,
+targetPan: PanState,
+options?: { tension?: number; friction?: number },
+) {
+debug?.log('zoom', `spring start: scale=${panzoomMotion.scale.toFixed(3)}→${targetScale.toFixed(3)} pan=(${targetPan.x.toFixed(1)},${targetPan.y.toFixed(1)})`)
+panzoomMotion.targetScale = targetScale
+panzoomMotion.targetX = targetPan.x
+panzoomMotion.targetY = targetPan.y
+panzoomMotion.tension = options?.tension ?? 170
+panzoomMotion.friction = options?.friction ?? 17
 
     syncPanzoomRefs(targetScale, targetPan)
 
@@ -14564,39 +14935,42 @@ export function usePanzoom(
     }
 
     panzoomMotion.rafId = requestAnimationFrame(step)
-  }
 
-  function refreshZoomState(reset = false) {
-    const next = computeZoomLevels(currentPhoto.value)
-    const current = reset
-      ? next.fit
-      : Math.min(next.max, Math.max(next.fit, panzoomMotion.targetScale))
-    const nextPan = current <= next.fit + 0.01
-      ? { x: 0, y: 0 }
-      : clampPan(
-          { x: panzoomMotion.targetX, y: panzoomMotion.targetY },
-          current,
-          currentPhoto.value,
-        )
+}
+
+function refreshZoomState(reset = false) {
+const next = computeZoomLevels(currentPhoto.value)
+const current = reset
+? next.fit
+: Math.min(next.max, Math.max(next.fit, panzoomMotion.targetScale))
+const nextPan = current <= next.fit + 0.01
+? { x: 0, y: 0 }
+: clampPan(
+{ x: panzoomMotion.targetX, y: panzoomMotion.targetY },
+current,
+currentPhoto.value,
+)
 
     debug?.log('zoom', `refreshZoomState(reset=${reset}): fit=${next.fit.toFixed(3)} secondary=${next.secondary.toFixed(3)} max=${next.max.toFixed(3)} current=${current.toFixed(3)}`)
 
     zoomState.value = { fit: next.fit, secondary: next.secondary, max: next.max, current }
     panState.value = nextPan
     setPanzoomImmediate(current, nextPan, false)
-  }
 
-  function toggleZoom(clientPoint?: { x: number; y: number }) {
-    if (!zoomAllowed.value) return
+}
+
+function toggleZoom(clientPoint?: { x: number; y: number }) {
+if (!zoomAllowed.value) return
 
     const targetZoom = isZoomedIn.value ? zoomState.value.fit : zoomState.value.secondary
     debug?.log('zoom', `toggleZoom: ${isZoomedIn.value ? 'zoom out' : 'zoom in'} → ${targetZoom.toFixed(3)}`)
     const targetPan = getTargetPanForZoom(targetZoom, clientPoint)
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
-  }
 
-  function applyWheelZoom(event: WheelEvent) {
-    if (!zoomAllowed.value) return
+}
+
+function applyWheelZoom(event: WheelEvent) {
+if (!zoomAllowed.value) return
 
     const direction = Math.max(Math.min(-event.deltaY, 1), -1)
     if (direction === 0) return
@@ -14614,19 +14988,20 @@ export function usePanzoom(
     })
 
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
-  }
 
-  function setActiveSlideIndex(index: number) {
-    activeSlideIndex = index
-  }
+}
 
-  function setSlideZoomRef(slideIndex: number) {
-    return (value: Element | ComponentPublicInstance | null) => {
-      const element = value instanceof HTMLElement
-        ? value
-        : value && '$el' in value && value.$el instanceof HTMLElement
-          ? value.$el
-          : null
+function setActiveSlideIndex(index: number) {
+activeSlideIndex = index
+}
+
+function setSlideZoomRef(slideIndex: number) {
+return (value: Element | ComponentPublicInstance | null) => {
+const element = value instanceof HTMLElement
+? value
+: value && '$el' in value && value.$el instanceof HTMLElement
+? value.$el
+: null
 
       if (element instanceof HTMLElement) {
         slideZoomRefs.set(slideIndex, element)
@@ -14640,14 +15015,15 @@ export function usePanzoom(
 
       slideZoomRefs.delete(slideIndex)
     }
-  }
 
-  return {
-    zoomState,
-    panState,
-    isZoomedIn,
-    zoomAllowed,
-    panzoomMotion,
+}
+
+return {
+zoomState,
+panState,
+isZoomedIn,
+zoomAllowed,
+panzoomMotion,
 
     setActiveSlideIndex,
     setSlideZoomRef,
@@ -14664,20 +15040,21 @@ export function usePanzoom(
     refreshZoomState,
     toggleZoom,
     applyWheelZoom,
-  }
+
+}
 }
 </file>
 <file name="requireInjection.ts" path="/packages/vue/src/internal/requireInjection.ts">
 import { inject, type InjectionKey } from 'vue'
 
 export function requireInjection<T>(
-  key: InjectionKey<T>,
-  componentName: string,
-  providerDescription: string,
+key: InjectionKey<T>,
+componentName: string,
+providerDescription: string,
 ): T {
-  const context = inject(key, null)
-  if (context == null) {
-    const error = new Error(`[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`)
+const context = inject(key, null)
+if (context == null) {
+const error = new Error(`[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`)
 
     return new Proxy({}, {
       get() {
@@ -14687,9 +15064,10 @@ export function requireInjection<T>(
         throw error
       },
     }) as T
-  }
 
-  return context
+}
+
+return context
 }
 </file>
 <file name="index.ts" path="/packages/vue/src/primitives/index.ts">
@@ -14705,6 +15083,7 @@ export { default as PhotoImage } from './PhotoImage.vue'
 </file>
 <file name="LightboxCaption.vue" path="/packages/vue/src/primitives/LightboxCaption.vue">
 <template>
+
   <div v-bind="$attrs">
     <slot :photo="ctx.activePhoto.value" :active-index="ctx.activeIndex.value" />
   </div>
@@ -14975,61 +15354,61 @@ import type { Component, ComponentPublicInstance, ComputedRef, CSSProperties, In
 import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '@nuxt-photo/core'
 import type { LightboxCaptionSlotProps, LightboxControlsSlotProps, LightboxSlideSlotProps } from '../types/slots'
 
-/** Consumer API — what app code and recipe components need. */
+/\*_ Consumer API — what app code and recipe components need. _/
 export interface LightboxConsumerAPI {
-  photos: ComputedRef<PhotoItem[]>
-  count: ComputedRef<number>
-  activeIndex: Ref<number>
-  activePhoto: ComputedRef<PhotoItem>
-  isOpen: ComputedRef<boolean>
-  open: (photoOrIndex?: PhotoItem | number) => Promise<void>
-  close: () => Promise<void>
-  next: () => void
-  prev: () => void
-  toggleZoom: () => void
+photos: ComputedRef<PhotoItem[]>
+count: ComputedRef<number>
+activeIndex: Ref<number>
+activePhoto: ComputedRef<PhotoItem>
+isOpen: ComputedRef<boolean>
+open: (photoOrIndex?: PhotoItem | number) => Promise<void>
+close: () => Promise<void>
+next: () => void
+prev: () => void
+toggleZoom: () => void
 }
 
-/** Render state — what primitive components read for styling and visibility. */
+/\*_ Render state — what primitive components read for styling and visibility. _/
 export interface LightboxRenderState {
-  zoomState: Ref<ZoomState>
-  panState: Ref<PanState>
-  isZoomedIn: ComputedRef<boolean>
-  zoomAllowed: ComputedRef<boolean>
-  animating: Ref<boolean>
-  ghostVisible: Ref<boolean>
-  ghostSrc: Ref<string>
-  ghostStyle: Ref<CSSProperties>
-  hiddenThumbIndex: Ref<number | null>
-  overlayOpacity: Ref<number>
-  mediaOpacity: Ref<number>
-  chromeOpacity: Ref<number>
-  uiVisible: Ref<boolean>
-  closeDragY: Ref<number>
-  transitionInProgress: ComputedRef<boolean>
-  chromeStyle: ComputedRef<CSSProperties>
-  closeDragRatio: ComputedRef<number>
-  backdropStyle: ComputedRef<CSSProperties>
-  lightboxUiStyle: ComputedRef<CSSProperties>
-  gesturePhase: Ref<GestureMode>
-  getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
-  getSlideEffectStyle: (index: number) => CSSProperties
+zoomState: Ref<ZoomState>
+panState: Ref<PanState>
+isZoomedIn: ComputedRef<boolean>
+zoomAllowed: ComputedRef<boolean>
+animating: Ref<boolean>
+ghostVisible: Ref<boolean>
+ghostSrc: Ref<string>
+ghostStyle: Ref<CSSProperties>
+hiddenThumbIndex: Ref<number | null>
+overlayOpacity: Ref<number>
+mediaOpacity: Ref<number>
+chromeOpacity: Ref<number>
+uiVisible: Ref<boolean>
+closeDragY: Ref<number>
+transitionInProgress: ComputedRef<boolean>
+chromeStyle: ComputedRef<CSSProperties>
+closeDragRatio: ComputedRef<number>
+backdropStyle: ComputedRef<CSSProperties>
+lightboxUiStyle: ComputedRef<CSSProperties>
+gesturePhase: Ref<GestureMode>
+getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+getSlideEffectStyle: (index: number) => CSSProperties
 }
 
-/** DOM bindings — what primitives need to wire up event handlers and refs. */
+/\*_ DOM bindings — what primitives need to wire up event handlers and refs. _/
 export interface LightboxDOMBindings {
-  mediaAreaRef: Ref<HTMLElement | null>
-  emblaRef: Ref<HTMLElement | null>
-  setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
-  setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
-  onMediaPointerDown: (e: PointerEvent) => void
-  onMediaPointerMove: (e: PointerEvent) => void
-  onMediaPointerUp: (e: PointerEvent) => void
-  onMediaPointerCancel: (e: PointerEvent) => void
-  onWheel: (e: WheelEvent) => void
-  handleBackdropClick: () => void
+mediaAreaRef: Ref<HTMLElement | null>
+emblaRef: Ref<HTMLElement | null>
+setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+onMediaPointerDown: (e: PointerEvent) => void
+onMediaPointerMove: (e: PointerEvent) => void
+onMediaPointerUp: (e: PointerEvent) => void
+onMediaPointerCancel: (e: PointerEvent) => void
+onWheel: (e: WheelEvent) => void
+handleBackdropClick: () => void
 }
 
-/** Full lightbox context — the intersection of all role-specific interfaces. */
+/\*_ Full lightbox context — the intersection of all role-specific interfaces. _/
 export type LightboxContext = LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings
 
 export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => unknown
@@ -15039,38 +15418,39 @@ export const LightboxSlideRendererKey: InjectionKey<(photo: PhotoItem) => Lightb
 export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
 
 export interface PhotoGroupContext {
-  /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
-  mode: 'auto' | 'explicit'
-  register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
-  unregister(id: symbol): void
-  open(photoOrIndex: PhotoItem | number): Promise<void>
-  photos: ComputedRef<PhotoItem[]>
-  hiddenPhoto: ComputedRef<PhotoItem | null>
+/\*_ 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided _/
+mode: 'auto' | 'explicit'
+register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
+unregister(id: symbol): void
+open(photoOrIndex: PhotoItem | number): Promise<void>
+photos: ComputedRef<PhotoItem[]>
+hiddenPhoto: ComputedRef<PhotoItem | null>
 }
 
 export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol('nuxt-photo:photo-group')
 
-/**
- * Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
- * use it by default without requiring per-instance :lightbox props.
- *
- * Usage in app.vue:
- *   import MyLightbox from '~/components/Lightbox.vue'
- *   provide(LightboxComponentKey, MyLightbox)
- */
-export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
+/\*\*
 
-/** Slot overrides injected by recipe components for customizing InternalLightbox. */
+- Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
+- use it by default without requiring per-instance :lightbox props.
+-
+- Usage in app.vue:
+- import MyLightbox from '~/components/Lightbox.vue'
+- provide(LightboxComponentKey, MyLightbox)
+  \*/
+  export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
+
+/\*_ Slot overrides injected by recipe components for customizing InternalLightbox. _/
 export interface LightboxSlotOverrides {
-  toolbar?: (props: LightboxControlsSlotProps) => unknown
-  caption?: (props: LightboxCaptionSlotProps) => unknown
-  slide?: (props: LightboxSlideSlotProps) => unknown
+toolbar?: (props: LightboxControlsSlotProps) => unknown
+caption?: (props: LightboxCaptionSlotProps) => unknown
+slide?: (props: LightboxSlideSlotProps) => unknown
 }
 export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> = Symbol('nuxt-photo:lightbox-slots')
 
-/** Global defaults for lightbox behaviour, typically provided once at app level. */
+/\*_ Global defaults for lightbox behaviour, typically provided once at app level. _/
 export interface LightboxDefaults {
-  minZoom?: number
+minZoom?: number
 }
 export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol('nuxt-photo:lightbox-defaults')
 </file>
@@ -15078,31 +15458,31 @@ export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol('nuxt-
 import { provide } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import {
-  LightboxContextKey,
-  type LightboxContext,
-  LightboxSlideRendererKey,
-  type LightboxSlideRenderer,
+LightboxContextKey,
+type LightboxContext,
+LightboxSlideRendererKey,
+type LightboxSlideRenderer,
 } from './keys'
 
 export function provideLightboxContexts(
-  ctx: LightboxContext,
-  options?: { resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null },
+ctx: LightboxContext,
+options?: { resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null },
 ) {
-  provide(LightboxContextKey, ctx)
-  provide(LightboxSlideRendererKey, options?.resolveSlide ?? (() => null))
+provide(LightboxContextKey, ctx)
+provide(LightboxSlideRendererKey, options?.resolveSlide ?? (() => null))
 }
 </file>
 <file name="index.ts" path="/packages/vue/src/types/index.ts">
 export type {
-  LightboxControlsSlotProps,
-  LightboxCaptionSlotProps,
-  LightboxSlideSlotProps,
-  LightboxViewportSlotProps,
-  CarouselSlideSlotProps,
-  CarouselThumbSlotProps,
-  CarouselCaptionSlotProps,
-  CarouselControlsSlotProps,
-  CarouselDotsSlotProps,
+LightboxControlsSlotProps,
+LightboxCaptionSlotProps,
+LightboxSlideSlotProps,
+LightboxViewportSlotProps,
+CarouselSlideSlotProps,
+CarouselThumbSlotProps,
+CarouselCaptionSlotProps,
+CarouselControlsSlotProps,
+CarouselDotsSlotProps,
 } from './slots'
 </file>
 <file name="slots.ts" path="/packages/vue/src/types/slots.ts">
@@ -15112,88 +15492,89 @@ import type { Ref } from 'vue'
 // ─── Lightbox primitive slot props ─────────────────────────────────────────
 
 export interface LightboxControlsSlotProps {
-  activeIndex: number
-  activePhoto: PhotoItem
-  photos: PhotoItem[]
-  count: number
-  isZoomedIn: boolean
-  zoomAllowed: boolean
-  controlsDisabled: boolean
-  next: () => void
-  prev: () => void
-  close: () => Promise<void>
-  toggleZoom: () => void
+activeIndex: number
+activePhoto: PhotoItem
+photos: PhotoItem[]
+count: number
+isZoomedIn: boolean
+zoomAllowed: boolean
+controlsDisabled: boolean
+next: () => void
+prev: () => void
+close: () => Promise<void>
+toggleZoom: () => void
 }
 
 export interface LightboxCaptionSlotProps {
-  photo: PhotoItem | null
-  activeIndex: number
+photo: PhotoItem | null
+activeIndex: number
 }
 
 export interface LightboxSlideSlotProps {
-  photo: PhotoItem
-  index: number
-  width: number
-  height: number
+photo: PhotoItem
+index: number
+width: number
+height: number
 }
 
 export interface LightboxViewportSlotProps {
-  photos: PhotoItem[]
-  viewportRef: Ref<HTMLElement | null>
-  mediaOpacity: number
+photos: PhotoItem[]
+viewportRef: Ref<HTMLElement | null>
+mediaOpacity: number
 }
 
 // ─── PhotoCarousel slot props ──────────────────────────────────────────────
 
 export interface CarouselSlideSlotProps {
-  photo: PhotoItem
-  index: number
-  selected: boolean
-  open: () => void
+photo: PhotoItem
+index: number
+selected: boolean
+open: () => void
 }
 
 export interface CarouselThumbSlotProps {
-  photo: PhotoItem
-  index: number
-  selected: boolean
-  goTo: (i: number) => void
+photo: PhotoItem
+index: number
+selected: boolean
+goTo: (i: number) => void
 }
 
 export interface CarouselCaptionSlotProps {
-  photo: PhotoItem
-  index: number
-  count: number
+photo: PhotoItem
+index: number
+count: number
 }
 
 export interface CarouselControlsSlotProps {
-  goToPrev: () => void
-  goToNext: () => void
-  canGoToPrev: boolean
-  canGoToNext: boolean
-  selectedIndex: number
-  snapCount: number
-  goTo: (i: number) => void
+goToPrev: () => void
+goToNext: () => void
+canGoToPrev: boolean
+canGoToNext: boolean
+selectedIndex: number
+snapCount: number
+goTo: (i: number) => void
 }
 
 export interface CarouselDotsSlotProps {
-  snaps: number[]
-  selectedIndex: number
-  goTo: (i: number) => void
+snaps: number[]
+selectedIndex: number
+goTo: (i: number) => void
 }
 </file>
 <file name="extend.ts" path="/packages/vue/src/extend.ts">
-/**
- * Extension API for building custom lightbox implementations.
- *
- * Import from '@nuxt-photo/vue/extend' when you need:
- * - Full engine access via `useLightboxContext`
- * - Injection keys for custom provide/inject wiring
- * - PhotoGroup context for custom collection components
- *
- * For most use cases, prefer the public API:
- * - `useLightbox` — consuming a lightbox (open/close/nav)
- * - `useLightboxProvider` — building a custom lightbox component
- */
+/\*\*
+
+- Extension API for building custom lightbox implementations.
+-
+- Import from '@nuxt-photo/vue/extend' when you need:
+- - Full engine access via `useLightboxContext`
+- - Injection keys for custom provide/inject wiring
+- - PhotoGroup context for custom collection components
+-
+- For most use cases, prefer the public API:
+- - `useLightbox` — consuming a lightbox (open/close/nav)
+- - `useLightboxProvider` — building a custom lightbox component
+    \*/
 
 // Full engine composable
 export { useLightboxContext, type LightboxTransitionOption } from './composables/useLightboxContext'
@@ -15206,78 +15587,78 @@ export { provideLightboxContexts } from './provide/lightbox'
 
 // Injection keys and context types
 export {
-  type LightboxContext,
-  type LightboxConsumerAPI,
-  type LightboxRenderState,
-  type LightboxDOMBindings,
-  LightboxContextKey,
-  type LightboxSlideRenderer,
-  LightboxSlideRendererKey,
-  ImageAdapterKey,
-  PhotoGroupContextKey,
-  type PhotoGroupContext,
-  LightboxComponentKey,
-  LightboxDefaultsKey,
-  type LightboxDefaults,
-  LightboxSlotsKey,
-  type LightboxSlotOverrides,
+type LightboxContext,
+type LightboxConsumerAPI,
+type LightboxRenderState,
+type LightboxDOMBindings,
+LightboxContextKey,
+type LightboxSlideRenderer,
+LightboxSlideRendererKey,
+ImageAdapterKey,
+PhotoGroupContextKey,
+type PhotoGroupContext,
+LightboxComponentKey,
+LightboxDefaultsKey,
+type LightboxDefaults,
+LightboxSlotsKey,
+type LightboxSlotOverrides,
 } from './provide/keys'
 
 // Slot prop types
-export * from './types'
+export \* from './types'
 </file>
 <file name="globals.d.ts" path="/packages/vue/src/globals.d.ts">
 import type { DebugFlags } from '@nuxt-photo/core'
 
 declare global {
-  interface Window {
-    __NUXT_PHOTO_DEBUG__?: DebugFlags
-  }
+interface Window {
+**NUXT_PHOTO_DEBUG**?: DebugFlags
+}
 
-  interface ImportMeta {
-    env: {
-      DEV?: boolean
-      [key: string]: unknown
-    }
-  }
+interface ImportMeta {
+env: {
+DEV?: boolean
+[key: string]: unknown
+}
+}
 }
 
 export {}
 </file>
 <file name="index.ts" path="/packages/vue/src/index.ts">
 // @nuxt-photo/vue — Vue bindings over core
-export * from './composables'
-export * from './primitives'
-export * from './types'
+export _ from './composables'
+export _ from './primitives'
+export \* from './types'
 export { LightboxComponentKey, LightboxContextKey, LightboxDefaultsKey } from './provide/keys'
 export type { LightboxDefaults } from './provide/keys'
 
 // Re-export core utilities for convenience
 export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
 export type {
-  PhotoItem,
-  SlideItem,
-  AreaMetrics,
-  RectLike,
-  PanState,
-  ZoomState,
-  GestureMode,
-  PanzoomMotion,
-  CarouselStyle,
-  CarouselConfig,
-  ViewerState,
-  TransitionMode,
-  ImageAdapter,
-  PhotoAdapter,
-  ImageSource,
-  LayoutInput,
-  LayoutEntry,
-  LayoutGroup,
-  ResponsiveParameter,
-  AlbumLayout,
-  RowsAlbumLayout,
-  ColumnsAlbumLayout,
-  MasonryAlbumLayout,
+PhotoItem,
+SlideItem,
+AreaMetrics,
+RectLike,
+PanState,
+ZoomState,
+GestureMode,
+PanzoomMotion,
+CarouselStyle,
+CarouselConfig,
+ViewerState,
+TransitionMode,
+ImageAdapter,
+PhotoAdapter,
+ImageSource,
+LayoutInput,
+LayoutEntry,
+LayoutGroup,
+ResponsiveParameter,
+AlbumLayout,
+RowsAlbumLayout,
+ColumnsAlbumLayout,
+MasonryAlbumLayout,
 } from '@nuxt-photo/core'
 </file>
 <file name="ghostState.test.ts" path="/packages/vue/test/ghostState.test.ts">
@@ -15292,37 +15673,37 @@ import type { CloseCallbacks, GhostState, TransitionCallbacks } from '../src/com
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function makeGhostState(
-  getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'] = () => null,
+getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'] = () => null,
 ): GhostState {
-  const photos = createPhotoSet()
-  return createGhostState(
-    ref(0),
-    computed(() => photos[0]!),
-    ref({ left: 0, top: 0, width: 1200, height: 800 }),
-    getAbsoluteFrameRect,
-  )
+const photos = createPhotoSet()
+return createGhostState(
+ref(0),
+computed(() => photos[0]!),
+ref({ left: 0, top: 0, width: 1200, height: 800 }),
+getAbsoluteFrameRect,
+)
 }
 
 function makeTransitionCallbacks(): TransitionCallbacks {
-  return {
-    syncGeometry: () => {},
-    refreshZoomState: () => {},
-    resetGestureState: () => {},
-    cancelTapTimer: () => {},
-  }
+return {
+syncGeometry: () => {},
+refreshZoomState: () => {},
+resetGestureState: () => {},
+cancelTapTimer: () => {},
+}
 }
 
 function makeCloseCallbacks(): CloseCallbacks {
-  return {
-    ...makeTransitionCallbacks(),
-    setPanzoomImmediate: () => {},
-    isZoomedIn: computed(() => false),
-  }
+return {
+...makeTransitionCallbacks(),
+setPanzoomImmediate: () => {},
+isZoomedIn: computed(() => false),
+}
 }
 
 describe('resetOpenState', () => {
-  it('resets all properties to the "lightbox is open" state', () => {
-    const state = makeGhostState()
+it('resets all properties to the "lightbox is open" state', () => {
+const state = makeGhostState()
 
     // Simulate a partially-completed open transition
     state.ghostVisible.value = true
@@ -15346,22 +15727,24 @@ describe('resetOpenState', () => {
     expect(state.animating.value).toBe(false)
     expect(state.closeDragY.value).toBe(0)
     expect(state.disableBackdropTransition.value).toBe(false)
-  })
 
-  it('does not reset lightboxMounted (lightbox should stay open)', () => {
-    const state = makeGhostState()
-    state.lightboxMounted.value = true
+})
+
+it('does not reset lightboxMounted (lightbox should stay open)', () => {
+const state = makeGhostState()
+state.lightboxMounted.value = true
 
     resetOpenState(state)
 
     expect(state.lightboxMounted.value).toBe(true)
-  })
+
+})
 })
 
 describe('resetCloseState', () => {
-  it('resets all properties to the "lightbox is closed" state', () => {
-    const state = makeGhostState()
-    let guardCleared = false
+it('resets all properties to the "lightbox is closed" state', () => {
+const state = makeGhostState()
+let guardCleared = false
 
     // Simulate a fully-open lightbox
     state.lightboxMounted.value = true
@@ -15388,54 +15771,59 @@ describe('resetCloseState', () => {
     expect(state.chromeOpacity.value).toBe(0)
     expect(state.animating.value).toBe(false)
     expect(state.lightboxMounted.value).toBe(false)
-  })
+
+})
 })
 
 describe('setThumbRef', () => {
-  it('stores an HTMLElement in thumbRefs', () => {
-    const state = makeGhostState()
-    const el = document.createElement('div')
+it('stores an HTMLElement in thumbRefs', () => {
+const state = makeGhostState()
+const el = document.createElement('div')
 
     setThumbRef(state, 0)(el)
 
     expect(state.thumbRefs.get(0)).toBe(el)
-  })
 
-  it('unwraps $el from a ComponentPublicInstance', () => {
-    const state = makeGhostState()
-    const el = document.createElement('img')
-    const component = { $el: el } as any
+})
+
+it('unwraps $el from a ComponentPublicInstance', () => {
+const state = makeGhostState()
+const el = document.createElement('img')
+const component = { $el: el } as any
 
     setThumbRef(state, 1)(component)
 
     expect(state.thumbRefs.get(1)).toBe(el)
-  })
 
-  it('deletes the entry when passed null', () => {
-    const state = makeGhostState()
-    const el = document.createElement('div')
+})
+
+it('deletes the entry when passed null', () => {
+const state = makeGhostState()
+const el = document.createElement('div')
 
     setThumbRef(state, 2)(el)
     expect(state.thumbRefs.has(2)).toBe(true)
 
     setThumbRef(state, 2)(null)
     expect(state.thumbRefs.has(2)).toBe(false)
-  })
 
-  it('ignores non-HTMLElement values without crashing', () => {
-    const state = makeGhostState()
-    const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+})
+
+it('ignores non-HTMLElement values without crashing', () => {
+const state = makeGhostState()
+const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
 
     setThumbRef(state, 3)(svgEl)
 
     expect(state.thumbRefs.has(3)).toBe(false)
-  })
+
+})
 })
 
 describe('error propagation', () => {
-  it('openTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
-    const boom = new Error('geometry-failure')
-    const state = makeGhostState(() => { throw boom })
+it('openTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
+const boom = new Error('geometry-failure')
+const state = makeGhostState(() => { throw boom })
 
     await expect(openTransition(state, 0, makeTransitionCallbacks())).rejects.toBe(boom)
 
@@ -15445,12 +15833,13 @@ describe('error propagation', () => {
     expect(state.hiddenThumbIndex.value).toBeNull()
     expect(state.overlayOpacity.value).toBe(1)
     expect(state.mediaOpacity.value).toBe(1)
-  })
 
-  it('closeTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
-    const boom = new Error('geometry-failure')
-    const state = makeGhostState(() => { throw boom })
-    state.lightboxMounted.value = true
+})
+
+it('closeTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
+const boom = new Error('geometry-failure')
+const state = makeGhostState(() => { throw boom })
+state.lightboxMounted.value = true
 
     const { close } = createCloseTransition(state)
 
@@ -15463,7 +15852,8 @@ describe('error propagation', () => {
     expect(state.hiddenThumbIndex.value).toBeNull()
     expect(state.overlayOpacity.value).toBe(0)
     expect(state.mediaOpacity.value).toBe(0)
-  })
+
+})
 })
 </file>
 <file name="primitiveGuards.test.ts" path="/packages/vue/test/primitiveGuards.test.ts">
@@ -15475,47 +15865,48 @@ import { LightboxRoot, PhotoTrigger } from '@nuxt-photo/vue'
 import { makePhoto } from '@test-fixtures/photos'
 
 function mountExpectingError(component: any, props?: Record<string, unknown>) {
-  const container = document.createElement('div')
-  document.body.appendChild(container)
+const container = document.createElement('div')
+document.body.appendChild(container)
 
-  const app = createApp({
-    render: () => h(component, props ?? {}),
-  })
+const app = createApp({
+render: () => h(component, props ?? {}),
+})
 
-  let captured: unknown = null
-  app.config.errorHandler = (error) => {
-    captured ??= error
-  }
+let captured: unknown = null
+app.config.errorHandler = (error) => {
+captured ??= error
+}
 
-  app.mount(container)
-  app.unmount()
-  container.remove()
+app.mount(container)
+app.unmount()
+container.remove()
 
-  if (captured instanceof Error) {
-    throw captured
-  }
+if (captured instanceof Error) {
+throw captured
+}
 
-  if (captured) {
-    throw new Error(String(captured))
-  }
+if (captured) {
+throw new Error(String(captured))
+}
 }
 
 describe('primitive injection guards', () => {
-  afterEach(() => {
-    document.body.innerHTML = ''
-    vi.restoreAllMocks()
-  })
+afterEach(() => {
+document.body.innerHTML = ''
+vi.restoreAllMocks()
+})
 
-  it('throws an actionable error when LightboxRoot is used without a provider', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
+it('throws an actionable error when LightboxRoot is used without a provider', () => {
+vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => mountExpectingError(LightboxRoot)).toThrow(
       /\[nuxt-photo\] `LightboxRoot` requires an active lightbox context/,
     )
-  })
 
-  it('throws an actionable error when PhotoTrigger is used without a provider', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+it('throws an actionable error when PhotoTrigger is used without a provider', () => {
+vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => mountExpectingError(PhotoTrigger, {
       photo: makePhoto({ id: 'guarded-trigger' }),
@@ -15523,69 +15914,70 @@ describe('primitive injection guards', () => {
     })).toThrow(
       /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
     )
-  })
+
+})
 })
 </file>
 <file name="publicApi.test.ts" path="/packages/vue/test/publicApi.test.ts">
 import { describe, expect, it } from 'vitest'
-import * as api from '@nuxt-photo/vue'
-import * as extendApi from '@nuxt-photo/vue/extend'
+import _ as api from '@nuxt-photo/vue'
+import _ as extendApi from '@nuxt-photo/vue/extend'
 
 describe('@nuxt-photo/vue public API', () => {
-  it('exports the intended lightbox controller and primitives', () => {
-    expect(api).toHaveProperty('useLightbox')
-    expect(api).toHaveProperty('LightboxRoot')
-    expect(api).toHaveProperty('LightboxSlide')
-    expect(api).toHaveProperty('PhotoImage')
-  })
+it('exports the intended lightbox controller and primitives', () => {
+expect(api).toHaveProperty('useLightbox')
+expect(api).toHaveProperty('LightboxRoot')
+expect(api).toHaveProperty('LightboxSlide')
+expect(api).toHaveProperty('PhotoImage')
+})
 
-  it('exports AlbumLayout types', () => {
-    // Type re-exports are erased at runtime, but the module should not throw on import
-    // and should include the responsive helper
-    expect(api).toHaveProperty('responsive')
-    expect(api).toHaveProperty('resolveResponsiveParameter')
-  })
+it('exports AlbumLayout types', () => {
+// Type re-exports are erased at runtime, but the module should not throw on import
+// and should include the responsive helper
+expect(api).toHaveProperty('responsive')
+expect(api).toHaveProperty('resolveResponsiveParameter')
+})
 
-  it('does not expose internal lightbox engine symbols from the root entrypoint', () => {
-    expect(api).not.toHaveProperty('useLightboxContext')
-    expect(api).not.toHaveProperty('useLightboxInject')
-    expect(api).not.toHaveProperty('provideLightboxContexts')
-    expect(api).not.toHaveProperty('LightboxControllerKey')
-    expect(api).not.toHaveProperty('PhotoGroupContextKey')
-    expect(api).not.toHaveProperty('ImageAdapterKey')
-    expect(api).not.toHaveProperty('useCarousel')
-    expect(api).not.toHaveProperty('usePanzoom')
-    expect(api).not.toHaveProperty('useGestures')
-    expect(api).not.toHaveProperty('useGhostTransition')
-    expect(api).not.toHaveProperty('createTransitionMode')
-    expect(api).not.toHaveProperty('createDebug')
-  })
+it('does not expose internal lightbox engine symbols from the root entrypoint', () => {
+expect(api).not.toHaveProperty('useLightboxContext')
+expect(api).not.toHaveProperty('useLightboxInject')
+expect(api).not.toHaveProperty('provideLightboxContexts')
+expect(api).not.toHaveProperty('LightboxControllerKey')
+expect(api).not.toHaveProperty('PhotoGroupContextKey')
+expect(api).not.toHaveProperty('ImageAdapterKey')
+expect(api).not.toHaveProperty('useCarousel')
+expect(api).not.toHaveProperty('usePanzoom')
+expect(api).not.toHaveProperty('useGestures')
+expect(api).not.toHaveProperty('useGhostTransition')
+expect(api).not.toHaveProperty('createTransitionMode')
+expect(api).not.toHaveProperty('createDebug')
+})
 })
 
 describe('@nuxt-photo/vue/extend API', () => {
-  it('exports the extension composables and keys', () => {
-    expect(extendApi).toHaveProperty('useLightboxContext')
-    expect(extendApi).toHaveProperty('useLightboxInject')
-    expect(extendApi).toHaveProperty('provideLightboxContexts')
-    expect(extendApi).toHaveProperty('LightboxContextKey')
-    expect(extendApi).toHaveProperty('LightboxSlideRendererKey')
-    expect(extendApi).toHaveProperty('ImageAdapterKey')
-    expect(extendApi).toHaveProperty('PhotoGroupContextKey')
-    expect(extendApi).toHaveProperty('LightboxComponentKey')
-    expect(extendApi).toHaveProperty('LightboxSlotsKey')
-    expect(extendApi).toHaveProperty('LightboxDefaultsKey')
-  })
+it('exports the extension composables and keys', () => {
+expect(extendApi).toHaveProperty('useLightboxContext')
+expect(extendApi).toHaveProperty('useLightboxInject')
+expect(extendApi).toHaveProperty('provideLightboxContexts')
+expect(extendApi).toHaveProperty('LightboxContextKey')
+expect(extendApi).toHaveProperty('LightboxSlideRendererKey')
+expect(extendApi).toHaveProperty('ImageAdapterKey')
+expect(extendApi).toHaveProperty('PhotoGroupContextKey')
+expect(extendApi).toHaveProperty('LightboxComponentKey')
+expect(extendApi).toHaveProperty('LightboxSlotsKey')
+expect(extendApi).toHaveProperty('LightboxDefaultsKey')
+})
 
-  it('does not export deprecated individual keys', () => {
-    expect(extendApi).not.toHaveProperty('LightboxControllerKey')
-    expect(extendApi).not.toHaveProperty('LightboxChromeKey')
-    expect(extendApi).not.toHaveProperty('LightboxOverlayKey')
-    expect(extendApi).not.toHaveProperty('LightboxPortalKey')
-    expect(extendApi).not.toHaveProperty('LightboxTriggerKey')
-    expect(extendApi).not.toHaveProperty('LightboxStageKey')
-    expect(extendApi).not.toHaveProperty('LightboxSlidesKey')
-    expect(extendApi).not.toHaveProperty('LightboxCaptionKey')
-  })
+it('does not export deprecated individual keys', () => {
+expect(extendApi).not.toHaveProperty('LightboxControllerKey')
+expect(extendApi).not.toHaveProperty('LightboxChromeKey')
+expect(extendApi).not.toHaveProperty('LightboxOverlayKey')
+expect(extendApi).not.toHaveProperty('LightboxPortalKey')
+expect(extendApi).not.toHaveProperty('LightboxTriggerKey')
+expect(extendApi).not.toHaveProperty('LightboxStageKey')
+expect(extendApi).not.toHaveProperty('LightboxSlidesKey')
+expect(extendApi).not.toHaveProperty('LightboxCaptionKey')
+})
 })
 </file>
 <file name="useGestures.test.ts" path="/packages/vue/test/useGestures.test.ts">
@@ -15597,46 +15989,46 @@ import { useGestures } from '../src/composables/useGestures'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function createGestureConfig(zoomedIn = false) {
-  const isZoomedIn = ref(zoomedIn)
-  const currentScale = zoomedIn ? 2 : 1
-  const currentPan = ref({ x: 0, y: 0 })
-  const panzoomMotion = {
-    x: currentPan.value.x,
-    y: currentPan.value.y,
-    scale: currentScale,
-    targetX: currentPan.value.x,
-    targetY: currentPan.value.y,
-    targetScale: currentScale,
-    velocityX: 0,
-    velocityY: 0,
-    velocityScale: 0,
-    tension: 170,
-    friction: 17,
-    rafId: 0,
-  }
+const isZoomedIn = ref(zoomedIn)
+const currentScale = zoomedIn ? 2 : 1
+const currentPan = ref({ x: 0, y: 0 })
+const panzoomMotion = {
+x: currentPan.value.x,
+y: currentPan.value.y,
+scale: currentScale,
+targetX: currentPan.value.x,
+targetY: currentPan.value.y,
+targetScale: currentScale,
+velocityX: 0,
+velocityY: 0,
+velocityScale: 0,
+tension: 170,
+friction: 17,
+rafId: 0,
+}
 
-  const setPanzoomImmediate = vi.fn((scale: number, pan: { x: number; y: number }) => {
-    panzoomMotion.scale = scale
-    panzoomMotion.x = pan.x
-    panzoomMotion.y = pan.y
-    currentPan.value = pan
-  })
+const setPanzoomImmediate = vi.fn((scale: number, pan: { x: number; y: number }) => {
+panzoomMotion.scale = scale
+panzoomMotion.x = pan.x
+panzoomMotion.y = pan.y
+currentPan.value = pan
+})
 
-  return {
-    config: {
-      lightboxMounted: ref(true),
-      animating: ref(false),
-      ghostVisible: ref(false),
-      isZoomedIn: computed(() => isZoomedIn.value),
-      zoomAllowed: computed(() => true),
-      mediaAreaRef: ref(document.createElement('div')),
-      currentPhoto: computed(() => createPhotoSet()[0]!),
-      areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
-      uiVisible: ref(true),
-      panState: currentPan,
-      zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
-      closeDragY: ref(0),
-      controlsDisabled: computed(() => false),
+return {
+config: {
+lightboxMounted: ref(true),
+animating: ref(false),
+ghostVisible: ref(false),
+isZoomedIn: computed(() => isZoomedIn.value),
+zoomAllowed: computed(() => true),
+mediaAreaRef: ref(document.createElement('div')),
+currentPhoto: computed(() => createPhotoSet()[0]!),
+areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
+uiVisible: ref(true),
+panState: currentPan,
+zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
+closeDragY: ref(0),
+controlsDisabled: computed(() => false),
 
       panzoomMotion,
       setPanzoomImmediate,
@@ -15656,22 +16048,24 @@ function createGestureConfig(zoomedIn = false) {
       close: vi.fn(() => Promise.resolve()),
     },
     setPanzoomImmediate,
-  }
+
+}
 }
 
 describe('useGestures', () => {
-  it('closes on Escape when the lightbox is mounted and idle', () => {
-    const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+it('closes on Escape when the lightbox is mounted and idle', () => {
+const { config } = createGestureConfig(false)
+const gestures = useGestures(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }))
 
     expect(config.close).toHaveBeenCalledTimes(1)
-  })
 
-  it('navigates with arrow keys when not zoomed in', () => {
-    const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+})
+
+it('navigates with arrow keys when not zoomed in', () => {
+const { config } = createGestureConfig(false)
+const gestures = useGestures(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
@@ -15679,11 +16073,12 @@ describe('useGestures', () => {
     expect(config.goToNext).toHaveBeenCalledTimes(1)
     expect(config.goToPrev).toHaveBeenCalledTimes(1)
     expect(config.setPanzoomImmediate).not.toHaveBeenCalled()
-  })
 
-  it('pans with arrow keys instead of navigating when zoomed in', () => {
-    const { config, setPanzoomImmediate } = createGestureConfig(true)
-    const gestures = useGestures(config)
+})
+
+it('pans with arrow keys instead of navigating when zoomed in', () => {
+const { config, setPanzoomImmediate } = createGestureConfig(true)
+const gestures = useGestures(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
@@ -15692,7 +16087,8 @@ describe('useGestures', () => {
     expect(config.goToPrev).not.toHaveBeenCalled()
     expect(setPanzoomImmediate).toHaveBeenNthCalledWith(1, 2, { x: -80, y: 0 })
     expect(setPanzoomImmediate).toHaveBeenNthCalledWith(2, 2, { x: 0, y: 0 })
-  })
+
+})
 })
 </file>
 <file name="usePanzoom.test.ts" path="/packages/vue/test/usePanzoom.test.ts">
@@ -15705,32 +16101,34 @@ import { usePanzoom } from '../src/composables/usePanzoom'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 describe('usePanzoom', () => {
-  it('refreshes zoom state from the current photo and area metrics', () => {
-    const currentPhoto = computed(() => createPhotoSet()[0]!)
-    const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+it('refreshes zoom state from the current photo and area metrics', () => {
+const currentPhoto = computed(() => createPhotoSet()[0]!)
+const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
+const panzoom = usePanzoom(currentPhoto, areaMetrics)
 
     panzoom.refreshZoomState(true)
 
     expect(panzoom.zoomState.value).toEqual(computeZoomLevels(1600, 1000, 1200, 800))
     expect(panzoom.panState.value).toEqual({ x: 0, y: 0 })
-  })
 
-  it('returns a centered pan target when zooming back to fit', () => {
-    const currentPhoto = computed(() => createPhotoSet()[0]!)
-    const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+})
+
+it('returns a centered pan target when zooming back to fit', () => {
+const currentPhoto = computed(() => createPhotoSet()[0]!)
+const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
+const panzoom = usePanzoom(currentPhoto, areaMetrics)
 
     panzoom.refreshZoomState(true)
     panzoom.setPanzoomImmediate(2, { x: 180, y: -90 })
 
     expect(panzoom.getTargetPanForZoom(panzoom.zoomState.value.fit, { x: 320, y: 240 })).toEqual({ x: 0, y: 0 })
-  })
 
-  it('clamps pan after recalculating geometry at the current zoom', () => {
-    const currentPhoto = computed(() => createPhotoSet()[0]!)
-    const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+})
+
+it('clamps pan after recalculating geometry at the current zoom', () => {
+const currentPhoto = computed(() => createPhotoSet()[0]!)
+const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
+const panzoom = usePanzoom(currentPhoto, areaMetrics)
 
     panzoom.refreshZoomState(true)
     panzoom.setPanzoomImmediate(panzoom.zoomState.value.max, { x: 1000, y: -1000 })
@@ -15738,14 +16136,15 @@ describe('usePanzoom', () => {
 
     const bounds = panzoom.getPanBounds(currentPhoto.value, panzoom.zoomState.value.max)
     expect(panzoom.panState.value).toEqual({ x: bounds.x, y: -bounds.y })
-  })
 
-  it('applies transforms to the active slide ref only', () => {
-    const currentPhoto = computed(() => createPhotoSet()[0]!)
-    const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
-    const inactive = document.createElement('div')
-    const active = document.createElement('div')
+})
+
+it('applies transforms to the active slide ref only', () => {
+const currentPhoto = computed(() => createPhotoSet()[0]!)
+const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
+const panzoom = usePanzoom(currentPhoto, areaMetrics)
+const inactive = document.createElement('div')
+const active = document.createElement('div')
 
     panzoom.setActiveSlideIndex(1)
     panzoom.setPanzoomImmediate(2, { x: 30, y: -40 })
@@ -15754,109 +16153,110 @@ describe('usePanzoom', () => {
 
     expect(inactive.style.transform).toBe('translate3d(0px, 0px, 0) scale(1)')
     expect(active.style.transform).toBe('translate3d(30px, -40px, 0) scale(2)')
-  })
+
+})
 })
 </file>
 <file name="build.config.ts" path="/packages/vue/build.config.ts">
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  entries: [
-    { input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
-  ],
-  clean: true,
-  externals: ['vue', 'embla-carousel-vue', 'embla-carousel', '@nuxt-photo/core'],
-  failOnWarn: false,
+entries: [
+{ input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
+],
+clean: true,
+externals: ['vue', 'embla-carousel-vue', 'embla-carousel', '@nuxt-photo/core'],
+failOnWarn: false,
 })
 </file>
 <file name="package.json" path="/packages/vue/package.json">
 {
-  "name": "@nuxt-photo/vue",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
-    },
-    "./extend": {
-      "import": "./dist/extend.mjs",
-      "types": "./dist/extend.d.ts"
-    }
-  },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "files": ["dist"],
-  "scripts": {
-    "build": "unbuild",
-    "dev": "unbuild --stub"
-  },
-  "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
-    "embla-carousel-vue": "9.0.0-rc01"
-  },
-  "peerDependencies": {
-    "vue": "^3.5.0"
-  },
-  "devDependencies": {
-    "embla-carousel": "9.0.0-rc01",
-    "unbuild": "^3.5.0",
-    "typescript": "^5.9.2",
-    "vue": "^3.5.13",
-    "vue-tsc": "^2.2.8"
-  }
+"name": "@nuxt-photo/vue",
+"version": "0.0.1",
+"type": "module",
+"exports": {
+".": {
+"import": "./dist/index.mjs",
+"types": "./dist/index.d.ts"
+},
+"./extend": {
+"import": "./dist/extend.mjs",
+"types": "./dist/extend.d.ts"
+}
+},
+"main": "./dist/index.mjs",
+"types": "./dist/index.d.ts",
+"sideEffects": false,
+"files": ["dist"],
+"scripts": {
+"build": "unbuild",
+"dev": "unbuild --stub"
+},
+"dependencies": {
+"@nuxt-photo/core": "workspace:\*",
+"embla-carousel-vue": "9.0.0-rc01"
+},
+"peerDependencies": {
+"vue": "^3.5.0"
+},
+"devDependencies": {
+"embla-carousel": "9.0.0-rc01",
+"unbuild": "^3.5.0",
+"typescript": "^5.9.2",
+"vue": "^3.5.13",
+"vue-tsc": "^2.2.8"
+}
 }
 </file>
 <file name="tsconfig.json" path="/packages/vue/tsconfig.json">
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "jsx": "preserve"
-  },
-  "include": ["src"]
+"extends": "../../tsconfig.base.json",
+"compilerOptions": {
+"outDir": "dist",
+"rootDir": "src",
+"jsx": "preserve"
+},
+"include": ["src"]
 }
 </file>
 <file name="config.json" path="/scripts/size/config.json">
 {
-  "core": {
-    "responsive": {
-      "label": "responsive named import",
-      "sizeLimit": "450 B",
-      "brotliLimit": 450
-    },
-    "all": {
-      "label": "full namespace import",
-      "sizeLimit": "8.5 kB",
-      "brotliLimit": 8704
-    }
-  },
-  "vue": {
-    "use-lightbox": {
-      "label": "useLightbox named import",
-      "brotliLimit": 19456
-    },
-    "photo-image": {
-      "label": "PhotoImage component import",
-      "brotliLimit": 1024
-    },
-    "all": {
-      "label": "full package import",
-      "brotliLimit": 21504
-    }
-  },
-  "nuxt": {
-    "module": {
-      "label": "module enabled, no usage",
-      "brotliDeltaLimit": 1024
-    },
-    "usage": {
-      "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 1536
-    }
-  }
+"core": {
+"responsive": {
+"label": "responsive named import",
+"sizeLimit": "450 B",
+"brotliLimit": 450
+},
+"all": {
+"label": "full namespace import",
+"sizeLimit": "8.5 kB",
+"brotliLimit": 8704
+}
+},
+"vue": {
+"use-lightbox": {
+"label": "useLightbox named import",
+"brotliLimit": 19456
+},
+"photo-image": {
+"label": "PhotoImage component import",
+"brotliLimit": 1024
+},
+"all": {
+"label": "full package import",
+"brotliLimit": 21504
+}
+},
+"nuxt": {
+"module": {
+"label": "module enabled, no usage",
+"brotliDeltaLimit": 1024
+},
+"usage": {
+"label": "module enabled with PhotoImage usage",
+"brotliDeltaLimit": 1536
+}
+}
 }
 </file>
 <file name="run.mjs" path="/scripts/size/run.mjs">
@@ -15872,8 +16272,8 @@ import { fileURLToPath } from 'node:url'
 
 import limits from './config.json' with { type: 'json' }
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const root = resolve(__dirname, '..', '..')
+const **dirname = dirname(fileURLToPath(import.meta.url))
+const root = resolve(**dirname, '..', '..')
 const fixturesRoot = resolve(root, 'test', 'size')
 const resultsRoot = resolve(root, 'test-results', 'size')
 const analyzeRoot = resolve(root, 'test-results', 'size-analyze')
@@ -15885,97 +16285,97 @@ const analyze = args.includes('--analyze')
 const target = ['core', 'vue', 'nuxt'].find(arg => args.includes(arg)) ?? 'all'
 
 const coreScenarios = [
-  {
-    id: 'responsive',
-    name: 'core:responsive',
-    source: "import { responsive } from '@nuxt-photo/core'; console.log(responsive)",
-  },
-  {
-    id: 'all',
-    name: 'core:all',
-    source: "import * as core from '@nuxt-photo/core'; console.log(core)",
-  },
+{
+id: 'responsive',
+name: 'core:responsive',
+source: "import { responsive } from '@nuxt-photo/core'; console.log(responsive)",
+},
+{
+id: 'all',
+name: 'core:all',
+source: "import * as core from '@nuxt-photo/core'; console.log(core)",
+},
 ]
 
 const vueScenarios = [
-  { id: 'use-lightbox', name: 'vue:use-lightbox' },
-  { id: 'photo-image', name: 'vue:photo-image' },
-  { id: 'all', name: 'vue:all' },
+{ id: 'use-lightbox', name: 'vue:use-lightbox' },
+{ id: 'photo-image', name: 'vue:photo-image' },
+{ id: 'all', name: 'vue:all' },
 ]
 
 const nuxtScenarios = [
-  { id: 'baseline', name: 'nuxt:baseline' },
-  { id: 'module', name: 'nuxt:module' },
-  { id: 'usage', name: 'nuxt:usage' },
+{ id: 'baseline', name: 'nuxt:baseline' },
+{ id: 'module', name: 'nuxt:module' },
+{ id: 'usage', name: 'nuxt:usage' },
 ]
 
 main()
 
 async function main() {
-  prepareDir(resultsRoot)
-  if (analyze) prepareDir(analyzeRoot)
+prepareDir(resultsRoot)
+if (analyze) prepareDir(analyzeRoot)
 
-  ensureBuild(target)
+ensureBuild(target)
 
-  let sizeLimitResults = new Map()
-  if (target === 'all' || target === 'core') {
-    sizeLimitResults = runSizeLimit()
-  }
+let sizeLimitResults = new Map()
+if (target === 'all' || target === 'core') {
+sizeLimitResults = runSizeLimit()
+}
 
-  const failures = []
+const failures = []
 
-  if (target === 'all' || target === 'core') {
-    const rows = []
-    for (const scenario of coreScenarios) {
-      const result = await measureCoreScenario(scenario)
-      const sizeLimitResult = sizeLimitResults.get(scenario.name)
-      const passed = sizeLimitResult?.passed ?? result.brotli <= limits.core[scenario.id].brotliLimit
-      if (!passed) failures.push(scenario.name)
-      rows.push({
-        scenario: limits.core[scenario.id].label,
-        raw: formatBytes(result.raw),
-        gzip: formatBytes(result.gzip),
-        brotli: formatBytes(result.brotli),
-        limit: formatBytes(limits.core[scenario.id].brotliLimit),
-        status: passed ? 'PASS' : 'FAIL',
-      })
-    }
-    printTable('Core', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows.map(row => [
-      row.scenario,
-      row.raw,
-      row.gzip,
-      row.brotli,
-      row.limit,
-      row.status,
-    ]))
-  }
+if (target === 'all' || target === 'core') {
+const rows = []
+for (const scenario of coreScenarios) {
+const result = await measureCoreScenario(scenario)
+const sizeLimitResult = sizeLimitResults.get(scenario.name)
+const passed = sizeLimitResult?.passed ?? result.brotli <= limits.core[scenario.id].brotliLimit
+if (!passed) failures.push(scenario.name)
+rows.push({
+scenario: limits.core[scenario.id].label,
+raw: formatBytes(result.raw),
+gzip: formatBytes(result.gzip),
+brotli: formatBytes(result.brotli),
+limit: formatBytes(limits.core[scenario.id].brotliLimit),
+status: passed ? 'PASS' : 'FAIL',
+})
+}
+printTable('Core', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows.map(row => [
+row.scenario,
+row.raw,
+row.gzip,
+row.brotli,
+row.limit,
+row.status,
+]))
+}
 
-  if (target === 'all' || target === 'vue') {
-    const rows = []
-    for (const scenario of vueScenarios) {
-      const result = await measureViteFixture(scenario.id)
-      const passed = result.brotli <= limits.vue[scenario.id].brotliLimit
-      if (!passed) failures.push(scenario.name)
-      rows.push([
-        limits.vue[scenario.id].label,
-        formatBytes(result.raw),
-        formatBytes(result.gzip),
-        formatBytes(result.brotli),
-        formatBytes(limits.vue[scenario.id].brotliLimit),
-        passed ? 'PASS' : 'FAIL',
-      ])
-    }
-    printTable('Vue', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows)
-  }
+if (target === 'all' || target === 'vue') {
+const rows = []
+for (const scenario of vueScenarios) {
+const result = await measureViteFixture(scenario.id)
+const passed = result.brotli <= limits.vue[scenario.id].brotliLimit
+if (!passed) failures.push(scenario.name)
+rows.push([
+limits.vue[scenario.id].label,
+formatBytes(result.raw),
+formatBytes(result.gzip),
+formatBytes(result.brotli),
+formatBytes(limits.vue[scenario.id].brotliLimit),
+passed ? 'PASS' : 'FAIL',
+])
+}
+printTable('Vue', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows)
+}
 
-  if (target === 'all' || target === 'nuxt') {
-    const measured = new Map()
-    for (const scenario of nuxtScenarios) {
-      measured.set(scenario.id, runNuxtFixture(scenario.id))
-    }
-    const baseline = measured.get('baseline')
-    const moduleResult = measured.get('module')
-    const usageResult = measured.get('usage')
+if (target === 'all' || target === 'nuxt') {
+const measured = new Map()
+for (const scenario of nuxtScenarios) {
+measured.set(scenario.id, runNuxtFixture(scenario.id))
+}
+const baseline = measured.get('baseline')
+const moduleResult = measured.get('module')
+const usageResult = measured.get('usage')
 
     const moduleDelta = diffSizes(moduleResult, baseline)
     const usageDelta = diffSizes(usageResult, baseline)
@@ -16014,281 +16414,283 @@ async function main() {
         usagePassed ? 'PASS' : 'FAIL',
       ],
     ])
-  }
 
-  if (analyze) {
-    console.log(`\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`)
-  }
+}
 
-  if (failures.length > 0) {
-    console.error(`\nSize regression detected in: ${failures.join(', ')}`)
-    process.exit(1)
-  }
+if (analyze) {
+console.log(`\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`)
+}
+
+if (failures.length > 0) {
+console.error(`\nSize regression detected in: ${failures.join(', ')}`)
+process.exit(1)
+}
 }
 
 function ensureBuild(surface) {
-  if (surface === 'all') {
-    runCommand('pnpm', ['run', 'build'])
-    return
-  }
+if (surface === 'all') {
+runCommand('pnpm', ['run', 'build'])
+return
+}
 
-  const buildSets = {
-    core: ['@nuxt-photo/core'],
-    vue: ['@nuxt-photo/core', '@nuxt-photo/vue'],
-    nuxt: ['@nuxt-photo/core', '@nuxt-photo/vue', '@nuxt-photo/recipes', '@nuxt-photo/nuxt'],
-  }
+const buildSets = {
+core: ['@nuxt-photo/core'],
+vue: ['@nuxt-photo/core', '@nuxt-photo/vue'],
+nuxt: ['@nuxt-photo/core', '@nuxt-photo/vue', '@nuxt-photo/recipes', '@nuxt-photo/nuxt'],
+}
 
-  for (const pkg of buildSets[surface]) {
-    runCommand('pnpm', ['--filter', pkg, 'build'])
-  }
+for (const pkg of buildSets[surface]) {
+runCommand('pnpm', ['--filter', pkg, 'build'])
+}
 }
 
 function runSizeLimit() {
-  const stdout = execFileSync(sizeLimitBin, ['--json'], {
-    cwd: root,
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      FORCE_COLOR: '0',
-    },
-  })
+const stdout = execFileSync(sizeLimitBin, ['--json'], {
+cwd: root,
+encoding: 'utf8',
+env: {
+...process.env,
+FORCE_COLOR: '0',
+},
+})
 
-  const parsed = JSON.parse(stdout)
-  const results = new Map()
-  for (const entry of parsed) {
-    results.set(entry.name, entry)
-  }
-  return results
+const parsed = JSON.parse(stdout)
+const results = new Map()
+for (const entry of parsed) {
+results.set(entry.name, entry)
+}
+return results
 }
 
 async function measureCoreScenario(scenario) {
-  const result = await esbuildBuild({
-    stdin: {
-      contents: scenario.source,
-      resolveDir: root,
-      sourcefile: `${scenario.id}.ts`,
-      loader: 'ts',
-    },
-    bundle: true,
-    format: 'esm',
-    platform: 'browser',
-    treeShaking: true,
-    minify: true,
-    write: false,
-    metafile: analyze,
-  })
+const result = await esbuildBuild({
+stdin: {
+contents: scenario.source,
+resolveDir: root,
+sourcefile: `${scenario.id}.ts`,
+loader: 'ts',
+},
+bundle: true,
+format: 'esm',
+platform: 'browser',
+treeShaking: true,
+minify: true,
+write: false,
+metafile: analyze,
+})
 
-  const output = result.outputFiles[0].contents
+const output = result.outputFiles[0].contents
 
-  if (analyze && result.metafile) {
-    writeFileSync(resolve(analyzeRoot, `${scenario.name}.metafile.json`), JSON.stringify(result.metafile, null, 2))
-  }
+if (analyze && result.metafile) {
+writeFileSync(resolve(analyzeRoot, `${scenario.name}.metafile.json`), JSON.stringify(result.metafile, null, 2))
+}
 
-  return sizeBuffer(output)
+return sizeBuffer(output)
 }
 
 async function measureViteFixture(fixtureId) {
-  const tempDir = prepareFixture('vue', fixtureId)
-  const analyzerFile = resolve(analyzeRoot, `vite-${fixtureId}.html`)
+const tempDir = prepareFixture('vue', fixtureId)
+const analyzerFile = resolve(analyzeRoot, `vite-${fixtureId}.html`)
 
-  await viteBuild({
-    configFile: false,
-    root: tempDir,
-    logLevel: 'silent',
-    plugins: [
-      vue(),
-      analyze ? visualizer({ filename: analyzerFile, gzipSize: true, brotliSize: true, open: false, template: 'treemap' }) : null,
-    ].filter(Boolean),
-    resolve: {
-      preserveSymlinks: false,
-    },
-    build: {
-      outDir: 'dist',
-      emptyOutDir: true,
-      minify: 'esbuild',
-      reportCompressedSize: false,
-      rollupOptions: {
-        external: ['vue'],
-      },
-    },
-  })
+await viteBuild({
+configFile: false,
+root: tempDir,
+logLevel: 'silent',
+plugins: [
+vue(),
+analyze ? visualizer({ filename: analyzerFile, gzipSize: true, brotliSize: true, open: false, template: 'treemap' }) : null,
+].filter(Boolean),
+resolve: {
+preserveSymlinks: false,
+},
+build: {
+outDir: 'dist',
+emptyOutDir: true,
+minify: 'esbuild',
+reportCompressedSize: false,
+rollupOptions: {
+external: ['vue'],
+},
+},
+})
 
-  const assets = collectAssets(resolve(tempDir, 'dist', 'assets'))
-  if (analyze) {
-    writeFileSync(resolve(analyzeRoot, `vite-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
-  }
-  return assets.totals
+const assets = collectAssets(resolve(tempDir, 'dist', 'assets'))
+if (analyze) {
+writeFileSync(resolve(analyzeRoot, `vite-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
+}
+return assets.totals
 }
 
 function runNuxtFixture(fixtureId) {
-  const tempDir = prepareFixture('nuxt', fixtureId)
-  runCommand(nuxiBin, ['build'], {
-    cwd: tempDir,
-    env: {
-      ...process.env,
-      NUXT_TELEMETRY_DISABLED: '1',
-    },
-  })
-  const assets = collectAssets(resolve(tempDir, '.output', 'public', '_nuxt'))
-  if (analyze) {
-    writeFileSync(resolve(analyzeRoot, `nuxt-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
-  }
-  return assets.totals
+const tempDir = prepareFixture('nuxt', fixtureId)
+runCommand(nuxiBin, ['build'], {
+cwd: tempDir,
+env: {
+...process.env,
+NUXT_TELEMETRY_DISABLED: '1',
+},
+})
+const assets = collectAssets(resolve(tempDir, '.output', 'public', '\_nuxt'))
+if (analyze) {
+writeFileSync(resolve(analyzeRoot, `nuxt-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
+}
+return assets.totals
 }
 
 function prepareFixture(surface, fixtureId) {
-  const sourceDir = resolve(fixturesRoot, surface, fixtureId)
-  const tempDir = resolve(resultsRoot, `${surface}-${fixtureId}`)
-  rmSync(tempDir, { recursive: true, force: true })
-  mkdirSync(dirname(tempDir), { recursive: true })
-  cpSync(sourceDir, tempDir, { recursive: true })
-  return tempDir
+const sourceDir = resolve(fixturesRoot, surface, fixtureId)
+const tempDir = resolve(resultsRoot, `${surface}-${fixtureId}`)
+rmSync(tempDir, { recursive: true, force: true })
+mkdirSync(dirname(tempDir), { recursive: true })
+cpSync(sourceDir, tempDir, { recursive: true })
+return tempDir
 }
 
 function prepareDir(dir) {
-  rmSync(dir, { recursive: true, force: true })
-  mkdirSync(dir, { recursive: true })
+rmSync(dir, { recursive: true, force: true })
+mkdirSync(dir, { recursive: true })
 }
 
 function collectAssets(dir) {
-  const files = []
-  walk(dir, file => {
-    const extension = extname(file)
-    if (extension !== '.js' && extension !== '.css') return
-    const relativePath = relative(dir, file)
-    const contents = readFileSync(file)
-    files.push({
-      file: relativePath,
-      ...sizeBuffer(contents),
-    })
-  })
+const files = []
+walk(dir, file => {
+const extension = extname(file)
+if (extension !== '.js' && extension !== '.css') return
+const relativePath = relative(dir, file)
+const contents = readFileSync(file)
+files.push({
+file: relativePath,
+...sizeBuffer(contents),
+})
+})
 
-  const totals = files.reduce((sum, file) => ({
-    raw: sum.raw + file.raw,
-    gzip: sum.gzip + file.gzip,
-    brotli: sum.brotli + file.brotli,
-  }), { raw: 0, gzip: 0, brotli: 0 })
+const totals = files.reduce((sum, file) => ({
+raw: sum.raw + file.raw,
+gzip: sum.gzip + file.gzip,
+brotli: sum.brotli + file.brotli,
+}), { raw: 0, gzip: 0, brotli: 0 })
 
-  return { totals, files }
+return { totals, files }
 }
 
 function walk(dir, onFile) {
-  if (!existsSync(dir)) return
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = join(dir, entry.name)
-    if (entry.isDirectory()) {
-      walk(fullPath, onFile)
-    } else {
-      onFile(fullPath)
-    }
-  }
+if (!existsSync(dir)) return
+for (const entry of readdirSync(dir, { withFileTypes: true })) {
+const fullPath = join(dir, entry.name)
+if (entry.isDirectory()) {
+walk(fullPath, onFile)
+} else {
+onFile(fullPath)
+}
+}
 }
 
 function sizeBuffer(buffer) {
-  return {
-    raw: buffer.byteLength,
-    gzip: gzipSync(buffer).byteLength,
-    brotli: brotliCompressSync(buffer).byteLength,
-  }
+return {
+raw: buffer.byteLength,
+gzip: gzipSync(buffer).byteLength,
+brotli: brotliCompressSync(buffer).byteLength,
+}
 }
 
 function diffSizes(value, baseline) {
-  return {
-    raw: value.raw - baseline.raw,
-    gzip: value.gzip - baseline.gzip,
-    brotli: value.brotli - baseline.brotli,
-  }
+return {
+raw: value.raw - baseline.raw,
+gzip: value.gzip - baseline.gzip,
+brotli: value.brotli - baseline.brotli,
+}
 }
 
 function printTable(title, headers, rows) {
-  const widths = headers.map((header, index) =>
-    Math.max(header.length, ...rows.map(row => String(row[index]).length)))
+const widths = headers.map((header, index) =>
+Math.max(header.length, ...rows.map(row => String(row[index]).length)))
 
-  const line = (cells) => cells.map((cell, index) => String(cell).padEnd(widths[index])).join('  ')
+const line = (cells) => cells.map((cell, index) => String(cell).padEnd(widths[index])).join(' ')
 
-  console.log(`\n${title}`)
-  console.log(line(headers))
-  console.log(line(widths.map(width => '-'.repeat(width))))
-  for (const row of rows) {
-    console.log(line(row))
-  }
+console.log(`\n${title}`)
+console.log(line(headers))
+console.log(line(widths.map(width => '-'.repeat(width))))
+for (const row of rows) {
+console.log(line(row))
+}
 }
 
 function formatBytes(bytes) {
-  if (bytes < 1024) return `${bytes} B`
-  const kb = bytes / 1024
-  return `${kb.toFixed(kb >= 10 ? 1 : 2)} kB`
+if (bytes < 1024) return `${bytes} B`
+const kb = bytes / 1024
+return `${kb.toFixed(kb >= 10 ? 1 : 2)} kB`
 }
 
 function formatSignedBytes(bytes) {
-  return bytes >= 0 ? `+${formatBytes(bytes)}` : `-${formatBytes(Math.abs(bytes))}`
+return bytes >= 0 ? `+${formatBytes(bytes)}` : `-${formatBytes(Math.abs(bytes))}`
 }
 
 function runCommand(command, commandArgs, options = {}) {
-  try {
-    return execFileSync(command, commandArgs, {
-      cwd: root,
-      stdio: 'pipe',
-      encoding: 'utf8',
-      ...options,
-    })
-  } catch (error) {
-    const details = [error.stdout, error.stderr].filter(Boolean).join('\n')
-    throw new Error(details || error.message)
-  }
+try {
+return execFileSync(command, commandArgs, {
+cwd: root,
+stdio: 'pipe',
+encoding: 'utf8',
+...options,
+})
+} catch (error) {
+const details = [error.stdout, error.stderr].filter(Boolean).join('\n')
+throw new Error(details || error.message)
+}
 }
 </file>
 <file name="photos.ts" path="/test/fixtures/photos.ts">
 import type { PhotoItem } from '@nuxt-photo/core'
 
 export function makePhoto(overrides: Partial<PhotoItem> = {}): PhotoItem {
-  const id = overrides.id ?? `photo-${Math.random().toString(36).slice(2, 8)}`
+const id = overrides.id ?? `photo-${Math.random().toString(36).slice(2, 8)}`
 
-  return {
-    id,
-    src: `/photos/${id}.jpg`,
-    thumbSrc: `/photos/${id}.jpg`,
-    width: 1600,
-    height: 1000,
-    alt: `Fixture ${id}`,
-    caption: `Caption ${id}`,
-    description: `Description ${id}`,
-    ...overrides,
-  }
+return {
+id,
+src: `/photos/${id}.jpg`,
+thumbSrc: `/photos/${id}.jpg`,
+width: 1600,
+height: 1000,
+alt: `Fixture ${id}`,
+caption: `Caption ${id}`,
+description: `Description ${id}`,
+...overrides,
+}
 }
 
 export function createPhotoSet(): PhotoItem[] {
-  return [
-    makePhoto({ id: 'desert', width: 1600, height: 1000, alt: 'Desert' }),
-    makePhoto({ id: 'ocean', width: 1200, height: 1500, alt: 'Ocean' }),
-    makePhoto({ id: 'canyon', width: 1600, height: 1067, alt: 'Canyon' }),
-    makePhoto({ id: 'forest', width: 1500, height: 1000, alt: 'Forest' }),
-    makePhoto({ id: 'alpine', width: 1400, height: 1750, alt: 'Alpine' }),
-    makePhoto({ id: 'coast', width: 1600, height: 1100, alt: 'Coast' }),
-    makePhoto({ id: 'lavender', width: 1800, height: 1200, alt: 'Lavender' }),
-    makePhoto({ id: 'waterfall', width: 1300, height: 1700, alt: 'Waterfall' }),
-    makePhoto({ id: 'city', width: 1600, height: 900, alt: 'City' }),
-    makePhoto({ id: 'amber', width: 1400, height: 1400, alt: 'Amber' }),
-    makePhoto({ id: 'winter', width: 1700, height: 1100, alt: 'Winter' }),
-    makePhoto({ id: 'redwoods', width: 1500, height: 1900, alt: 'Redwoods' }),
-  ]
+return [
+makePhoto({ id: 'desert', width: 1600, height: 1000, alt: 'Desert' }),
+makePhoto({ id: 'ocean', width: 1200, height: 1500, alt: 'Ocean' }),
+makePhoto({ id: 'canyon', width: 1600, height: 1067, alt: 'Canyon' }),
+makePhoto({ id: 'forest', width: 1500, height: 1000, alt: 'Forest' }),
+makePhoto({ id: 'alpine', width: 1400, height: 1750, alt: 'Alpine' }),
+makePhoto({ id: 'coast', width: 1600, height: 1100, alt: 'Coast' }),
+makePhoto({ id: 'lavender', width: 1800, height: 1200, alt: 'Lavender' }),
+makePhoto({ id: 'waterfall', width: 1300, height: 1700, alt: 'Waterfall' }),
+makePhoto({ id: 'city', width: 1600, height: 900, alt: 'City' }),
+makePhoto({ id: 'amber', width: 1400, height: 1400, alt: 'Amber' }),
+makePhoto({ id: 'winter', width: 1700, height: 1100, alt: 'Winter' }),
+makePhoto({ id: 'redwoods', width: 1500, height: 1900, alt: 'Redwoods' }),
+]
 }
 
 export function createPlainPhotoSet(): PhotoItem[] {
-  return [
-    makePhoto({ id: 'one', width: 1600, height: 900 }),
-    makePhoto({ id: 'two', width: 1200, height: 1600 }),
-    makePhoto({ id: 'three', width: 1500, height: 1000 }),
-    makePhoto({ id: 'four', width: 1400, height: 1400 }),
-    makePhoto({ id: 'five', width: 1300, height: 1700 }),
-    makePhoto({ id: 'six', width: 1800, height: 1200 }),
-    makePhoto({ id: 'seven', width: 1600, height: 1000 }),
-    makePhoto({ id: 'eight', width: 1100, height: 1500 }),
-  ]
+return [
+makePhoto({ id: 'one', width: 1600, height: 900 }),
+makePhoto({ id: 'two', width: 1200, height: 1600 }),
+makePhoto({ id: 'three', width: 1500, height: 1000 }),
+makePhoto({ id: 'four', width: 1400, height: 1400 }),
+makePhoto({ id: 'five', width: 1300, height: 1700 }),
+makePhoto({ id: 'six', width: 1800, height: 1200 }),
+makePhoto({ id: 'seven', width: 1600, height: 1000 }),
+makePhoto({ id: 'eight', width: 1100, height: 1500 }),
+]
 }
 </file>
 <file name="app.vue" path="/test/size/nuxt/baseline/app.vue">
 <template>
+
   <div>nuxt-photo baseline fixture</div>
 </template>
 </file>
@@ -16362,6 +16764,7 @@ import * as NuxtPhoto from '@nuxt-photo/vue'
 console.log(NuxtPhoto)
 </file>
 <file name="index.html" path="/test/size/vue/photo-image/index.html">
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -16380,6 +16783,7 @@ import { PhotoImage } from '@nuxt-photo/vue'
 console.log(PhotoImage)
 </file>
 <file name="index.html" path="/test/size/vue/use-lightbox/index.html">
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -16401,112 +16805,112 @@ console.log(useLightbox)
 const config = require('./scripts/size/config.json')
 
 module.exports = [
-  {
-    name: 'core:responsive',
-    path: 'packages/core/dist/index.mjs',
-    import: '{ responsive }',
-    limit: config.core.responsive.sizeLimit,
-  },
-  {
-    name: 'core:all',
-    path: 'packages/core/dist/index.mjs',
-    import: '*',
-    limit: config.core.all.sizeLimit,
-  },
+{
+name: 'core:responsive',
+path: 'packages/core/dist/index.mjs',
+import: '{ responsive }',
+limit: config.core.responsive.sizeLimit,
+},
+{
+name: 'core:all',
+path: 'packages/core/dist/index.mjs',
+import: '*',
+limit: config.core.all.sizeLimit,
+},
 ]
 </file>
 <file name="knip.json" path="/knip.json">
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "workspaces": {
-    ".": {
-      "entry": ["package.json", "test/**/*.ts"]
-    },
-    "packages/core": {
-      "entry": ["test/**/*.ts"],
-      "project": ["src/**/*.ts", "test/**/*.ts"]
-    },
-    "packages/vue": {
-      "entry": ["test/**/*.ts"],
-      "project": ["src/**/*.ts", "test/**/*.ts"],
-      "ignoreDependencies": ["vue-tsc"]
-    },
-    "packages/recipes": {
-      "entry": ["test/**/*.ts"],
-      "project": ["src/**/*.{ts,vue}", "test/**/*.ts"],
-      "ignoreDependencies": ["vue-tsc"]
-    },
-    "packages/nuxt": {
-      "entry": ["src/runtime/*.ts"],
-      "project": ["src/**/*.ts", "test/**/*.ts"],
-      "ignoreDependencies": ["nuxt", "@nuxt-photo/recipes"],
-      "ignoreUnresolved": ["#imports"]
-    },
-    "docs": {
-      "entry": ["app/**/*.vue", "app/**/*.ts", "server/**/*.ts", "content.config.ts"],
-      "project": ["app/**/*.ts", "server/**/*.ts", "*.ts"],
-      "ignoreDependencies": [
-        "@iconify-json/lucide",
-        "@iconify-json/simple-icons",
-        "@iconify-json/vscode-icons",
-        "@nuxt/fonts"
-      ]
-    },
-    "playground": {
-      "entry": ["pages/**/*.vue", "components/**/*.vue", "composables/**/*.ts"],
-      "project": ["*.ts", "composables/**/*.ts"]
-    },
-    "playground-tailwind": {
-      "entry": ["components/**/*.vue", "composables/**/*.ts"],
-      "project": ["*.ts", "composables/**/*.ts"]
-    }
-  }
+"$schema": "https://unpkg.com/knip@5/schema.json",
+"workspaces": {
+".": {
+"entry": ["package.json", "test/**/*.ts"]
+},
+"packages/core": {
+"entry": ["test/**/*.ts"],
+"project": ["src/**/*.ts", "test/**/*.ts"]
+},
+"packages/vue": {
+"entry": ["test/**/*.ts"],
+"project": ["src/**/*.ts", "test/**/*.ts"],
+"ignoreDependencies": ["vue-tsc"]
+},
+"packages/recipes": {
+"entry": ["test/**/*.ts"],
+"project": ["src/**/*.{ts,vue}", "test/**/*.ts"],
+"ignoreDependencies": ["vue-tsc"]
+},
+"packages/nuxt": {
+"entry": ["src/runtime/*.ts"],
+"project": ["src/**/*.ts", "test/**/*.ts"],
+"ignoreDependencies": ["nuxt", "@nuxt-photo/recipes"],
+"ignoreUnresolved": ["#imports"]
+},
+"docs": {
+"entry": ["app/**/*.vue", "app/**/*.ts", "server/**/*.ts", "content.config.ts"],
+"project": ["app/**/*.ts", "server/**/*.ts", "*.ts"],
+"ignoreDependencies": [
+"@iconify-json/lucide",
+"@iconify-json/simple-icons",
+"@iconify-json/vscode-icons",
+"@nuxt/fonts"
+]
+},
+"playground": {
+"entry": ["pages/**/*.vue", "components/**/*.vue", "composables/**/*.ts"],
+"project": ["*.ts", "composables/**/*.ts"]
+},
+"playground-tailwind": {
+"entry": ["components/**/*.vue", "composables/**/*.ts"],
+"project": ["*.ts", "composables/**/*.ts"]
+}
+}
 }
 </file>
 <file name="package.json" path="/package.json">
 {
-  "name": "nuxt-photo",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs build",
-    "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs dev",
-    "dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
-    "dev:playground-tw": "pnpm run build && pnpm --filter nuxt-photo-playground-tw dev",
-    "dev:docs": "pnpm run build && pnpm --filter nuxt-photo-docs dev",
-    "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
-    "build:docs": "pnpm --filter nuxt-photo-docs build",
-    "size": "node scripts/size/run.mjs",
-    "size:core": "node scripts/size/run.mjs core",
-    "size:vue": "node scripts/size/run.mjs vue",
-    "size:nuxt": "node scripts/size/run.mjs nuxt",
-    "size:analyze": "node scripts/size/run.mjs all --analyze",
-    "test:unit": "vitest run",
-    "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
-    "test:e2e": "pnpm run build:playground && playwright test",
-    "test": "pnpm test:unit && pnpm test:module-package && pnpm test:e2e",
-    "lint": "pnpm -r lint"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "browserslist": [
-    "last 2 versions",
-    "not dead",
-    "> 0.5%"
-  ],
-  "devDependencies": {
-    "@nuxt-photo/core": "workspace:*",
-    "@playwright/test": "^1.58.2",
-    "@size-limit/preset-small-lib": "^12.1.0",
-    "@vitejs/plugin-vue": "^6.0.5",
-    "@vue/server-renderer": "^3.5.31",
-    "jsdom": "^29.0.1",
-    "rollup-plugin-visualizer": "^7.0.1",
-    "size-limit": "^12.1.0",
-    "vitest": "^4.1.2",
-    "vue": "^3.5.31"
-  }
+"name": "nuxt-photo",
+"private": true,
+"type": "module",
+"scripts": {
+"build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs build",
+"dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs dev",
+"dev:playground": "pnpm run build && pnpm --filter nuxt-photo-playground dev",
+"dev:playground-tw": "pnpm run build && pnpm --filter nuxt-photo-playground-tw dev",
+"dev:docs": "pnpm run build && pnpm --filter nuxt-photo-docs dev",
+"build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
+"build:docs": "pnpm --filter nuxt-photo-docs build",
+"size": "node scripts/size/run.mjs",
+"size:core": "node scripts/size/run.mjs core",
+"size:vue": "node scripts/size/run.mjs vue",
+"size:nuxt": "node scripts/size/run.mjs nuxt",
+"size:analyze": "node scripts/size/run.mjs all --analyze",
+"test:unit": "vitest run",
+"test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
+"test:e2e": "pnpm run build:playground && playwright test",
+"test": "pnpm test:unit && pnpm test:module-package && pnpm test:e2e",
+"lint": "pnpm -r lint"
+},
+"engines": {
+"node": ">=18"
+},
+"browserslist": [
+"last 2 versions",
+"not dead",
+"> 0.5%"
+],
+"devDependencies": {
+"@nuxt-photo/core": "workspace:\*",
+"@playwright/test": "^1.58.2",
+"@size-limit/preset-small-lib": "^12.1.0",
+"@vitejs/plugin-vue": "^6.0.5",
+"@vue/server-renderer": "^3.5.31",
+"jsdom": "^29.0.1",
+"rollup-plugin-visualizer": "^7.0.1",
+"size-limit": "^12.1.0",
+"vitest": "^4.1.2",
+"vue": "^3.5.31"
+}
 }
 </file>
 <file name="vitest.config.ts" path="/vitest.config.ts">
@@ -16517,28 +16921,28 @@ import { defineConfig } from 'vitest/config'
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@nuxt-photo/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
-      '@nuxt-photo/vue/extend': fileURLToPath(new URL('./packages/vue/src/extend.ts', import.meta.url)),
-      '@nuxt-photo/vue': fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
-      '@nuxt-photo/recipes': fileURLToPath(new URL('./packages/recipes/src/index.ts', import.meta.url)),
-      '@nuxt-photo/nuxt': fileURLToPath(new URL('./packages/nuxt/src/module.ts', import.meta.url)),
-      '@test-fixtures': fileURLToPath(new URL('./test/fixtures', import.meta.url)),
-    },
-  },
-  test: {
-    root: rootDir,
-    include: [
-      'packages/*/test/**/*.test.ts',
-    ],
-    environment: 'node',
-    environmentMatchGlobs: [
-      ['packages/vue/test/**', 'jsdom'],
-      ['packages/recipes/test/**', 'jsdom'],
-    ],
-  },
+plugins: [vue()],
+resolve: {
+alias: {
+'@nuxt-photo/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
+'@nuxt-photo/vue/extend': fileURLToPath(new URL('./packages/vue/src/extend.ts', import.meta.url)),
+'@nuxt-photo/vue': fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
+'@nuxt-photo/recipes': fileURLToPath(new URL('./packages/recipes/src/index.ts', import.meta.url)),
+'@nuxt-photo/nuxt': fileURLToPath(new URL('./packages/nuxt/src/module.ts', import.meta.url)),
+'@test-fixtures': fileURLToPath(new URL('./test/fixtures', import.meta.url)),
+},
+},
+test: {
+root: rootDir,
+include: [
+'packages/*/test/**/*.test.ts',
+],
+environment: 'node',
+environmentMatchGlobs: [
+['packages/vue/test/**', 'jsdom'],
+['packages/recipes/test/**', 'jsdom'],
+],
+},
 })
 </file>
 </project_files>

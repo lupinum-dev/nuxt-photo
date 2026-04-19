@@ -1,5 +1,9 @@
 <template>
-  <div v-if="photos.length === 0" class="np-carousel np-carousel--empty" v-bind="$attrs" />
+  <div
+    v-if="photos.length === 0"
+    class="np-carousel np-carousel--empty"
+    v-bind="$attrs"
+  />
 
   <div v-else class="np-carousel" :style="cssVarStyle" v-bind="$attrs">
     <div ref="emblaRef" class="np-carousel__viewport">
@@ -13,9 +17,15 @@
         >
           <div
             :ref="setSlideRef ? setSlideElRef(index) : undefined"
-            style="width:100%;height:100%"
+            style="width: 100%; height: 100%"
           >
-          <slot name="slide" :photo="photo" :index="index" :selected="selectedSlideSet.has(index)" :open="() => onSlideActivate?.(index)">
+            <slot
+              name="slide"
+              :photo="photo"
+              :index="index"
+              :selected="selectedSlideSet.has(index)"
+              :open="() => onSlideActivate?.(index)"
+            >
               <PhotoImage
                 :photo="photo"
                 context="slide"
@@ -29,7 +39,11 @@
         </div>
       </div>
 
-      <div v-if="showMultiControls && (showArrows || showCounter)" class="np-carousel__controls" :class="controlsClass">
+      <div
+        v-if="showMultiControls && (showArrows || showCounter)"
+        class="np-carousel__controls"
+        :class="controlsClass"
+      >
         <template v-if="showArrows">
           <slot
             name="controls"
@@ -67,19 +81,33 @@
         </template>
       </div>
 
-      <div v-if="showMultiControls && showCounter" class="np-carousel__counter" aria-live="polite">
+      <div
+        v-if="showMultiControls && showCounter"
+        class="np-carousel__counter"
+        aria-live="polite"
+      >
         {{ selectedIndex + 1 }} / {{ photos.length }}
       </div>
     </div>
 
     <div v-if="hasCaption" class="np-carousel__caption" :class="captionClass">
-      <slot name="caption" :photo="photos[selectedIndex]" :index="selectedIndex" :count="photos.length">
+      <slot
+        name="caption"
+        :photo="photos[selectedIndex]"
+        :index="selectedIndex"
+        :count="photos.length"
+      >
         {{ photos[selectedIndex]?.caption }}
       </slot>
     </div>
 
     <div v-if="showMultiControls && showDots" class="np-carousel__dots">
-      <slot name="dots" :snaps="snaps" :selected-index="selectedSnapIndex" :go-to="goTo">
+      <slot
+        name="dots"
+        :snaps="snaps"
+        :selected-index="selectedSnapIndex"
+        :go-to="goTo"
+      >
         <button
           v-for="(slideIndex, i) in snaps"
           :key="i"
@@ -101,12 +129,21 @@
             :key="photoId(photo)"
             type="button"
             class="np-carousel__thumb"
-            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
+            :class="[
+              { 'np-carousel__thumb--selected': selectedSlideSet.has(index) },
+              thumbClass,
+            ]"
             :aria-label="`Go to slide ${index + 1}`"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
           >
-            <slot name="thumb" :photo="photo" :index="index" :selected="selectedSlideSet.has(index)" :go-to="goTo">
+            <slot
+              name="thumb"
+              :photo="photo"
+              :index="index"
+              :selected="selectedSlideSet.has(index)"
+              :go-to="goTo"
+            >
               <PhotoImage
                 :photo="photo"
                 context="thumb"
@@ -123,9 +160,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, toRef, useSlots, watch, type ComponentPublicInstance } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  toRef,
+  useSlots,
+  watch,
+  type ComponentPublicInstance,
+} from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
-import type { EmblaCarouselType, EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
+import type {
+  EmblaCarouselType,
+  EmblaOptionsType,
+  EmblaPluginType,
+} from 'embla-carousel'
 import { PhotoImage } from '@nuxt-photo/vue'
 import type {
   CarouselCaptionSlotProps,
@@ -173,7 +222,9 @@ const props = defineProps<{
 
   // Lightbox integration (only provided when wrapped in <PhotoGroup>)
   onSlideActivate?: (index: number) => void
-  setSlideRef?: ((index: number) => (el: Element | ComponentPublicInstance | null) => void)
+  setSlideRef?: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
 }>()
 
 const slots = useSlots()
@@ -213,11 +264,19 @@ const cssVarStyle = computed(() => {
 
 function fallbackSlidesBySnap() {
   const slidesToScroll = props.options.slidesToScroll
-  const chunkSize = typeof slidesToScroll === 'number' && slidesToScroll > 1 ? slidesToScroll : 1
+  const chunkSize =
+    typeof slidesToScroll === 'number' && slidesToScroll > 1
+      ? slidesToScroll
+      : 1
   const groups: number[][] = []
 
   for (let start = 0; start < props.photos.length; start += chunkSize) {
-    groups.push(Array.from({ length: Math.min(chunkSize, props.photos.length - start) }, (_, offset) => start + offset))
+    groups.push(
+      Array.from(
+        { length: Math.min(chunkSize, props.photos.length - start) },
+        (_, offset) => start + offset,
+      ),
+    )
   }
 
   return groups
@@ -225,10 +284,22 @@ function fallbackSlidesBySnap() {
 
 function getSnapState(api: EmblaCarouselType) {
   const scrollSnapList = api.internalEngine().scrollSnapList
-  const slidesBySnap = scrollSnapList.slidesBySnap.length ? scrollSnapList.slidesBySnap : fallbackSlidesBySnap()
-  const snapBySlide = Object.keys(scrollSnapList.snapBySlide).length
+  const fallback = fallbackSlidesBySnap()
+  const hasUsableEmblaSnaps =
+    scrollSnapList.slidesBySnap.length > 1 ||
+    props.photos.length <= 1 ||
+    fallback.length <= 1
+
+  const slidesBySnap = hasUsableEmblaSnaps
+    ? scrollSnapList.slidesBySnap
+    : fallback
+  const snapBySlide = hasUsableEmblaSnaps
     ? scrollSnapList.snapBySlide
-    : Object.fromEntries(slidesBySnap.flatMap((slides, snapIndex) => slides.map(slideIndex => [slideIndex, snapIndex])))
+    : Object.fromEntries(
+        slidesBySnap.flatMap((slides, snapIndex) =>
+          slides.map((slideIndex) => [slideIndex, snapIndex]),
+        ),
+      )
   const snapTotal = api.snapList().length || slidesBySnap.length
 
   return {
@@ -244,7 +315,7 @@ function syncThumbs(api: EmblaCarouselType) {
 }
 
 function syncAutoplay(api: EmblaCarouselType) {
-  if (!props.plugins.some(plugin => plugin?.name === 'autoplay')) return
+  if (!props.plugins.some((plugin) => plugin?.name === 'autoplay')) return
   if (api.snapList().length <= 1) return
   api.plugins().autoplay?.play()
 }
@@ -260,9 +331,17 @@ function syncState(api: EmblaCarouselType, forcedSnap?: number) {
   selectedSlides.value = activeSlides
   selectedIndex.value = activeSlides[0] ?? 0
   snapCount.value = snapTotal
-  snapTargets.value = slidesBySnap.map(slides => slides[0] ?? 0)
-  canPrev.value = api.snapList().length ? api.canGoToPrev() : (loopEnabled ? snapTotal > 1 : selectedSnap > 0)
-  canNext.value = api.snapList().length ? api.canGoToNext() : (loopEnabled ? snapTotal > 1 : selectedSnap < maxSnapIndex)
+  snapTargets.value = slidesBySnap.map((slides) => slides[0] ?? 0)
+  canPrev.value = api.snapList().length
+    ? api.canGoToPrev()
+    : loopEnabled
+      ? snapTotal > 1
+      : selectedSnap > 0
+  canNext.value = api.snapList().length
+    ? api.canGoToNext()
+    : loopEnabled
+      ? snapTotal > 1
+      : selectedSnap < maxSnapIndex
 }
 
 function handleSelect(api: EmblaCarouselType) {
@@ -270,25 +349,33 @@ function handleSelect(api: EmblaCarouselType) {
   syncThumbs(api)
 }
 
-watch(emblaApi, (api) => {
-  if (!api) return
+watch(
+  emblaApi,
+  (api) => {
+    if (!api) return
 
-  const onSelect = (currentApi: EmblaCarouselType) => {
-    handleSelect(currentApi)
-  }
-  const onReinit = (currentApi: EmblaCarouselType) => {
-    handleSelect(currentApi)
-    syncAutoplay(currentApi)
-  }
+    const onSelect = (currentApi: EmblaCarouselType) => {
+      handleSelect(currentApi)
+    }
+    const onReinit = (currentApi: EmblaCarouselType) => {
+      handleSelect(currentApi)
+      syncAutoplay(currentApi)
+    }
 
-  onReinit(api)
-  api.on('select', onSelect)
-  api.on('reinit', onReinit)
-}, { immediate: true })
+    onReinit(api)
+    api.on('select', onSelect)
+    api.on('reinit', onReinit)
+  },
+  { immediate: true },
+)
 
-watch(() => props.photos.length, () => {
-  snapTargets.value = Array.from({ length: props.photos.length }, (_, i) => i)
-}, { immediate: true })
+watch(
+  () => props.photos.length,
+  () => {
+    snapTargets.value = Array.from({ length: props.photos.length }, (_, i) => i)
+  },
+  { immediate: true },
+)
 
 function clampIndex(i: number) {
   const max = Math.max(0, props.photos.length - 1)
@@ -305,8 +392,7 @@ function goTo(index: number, instant = false) {
       syncState(api, targetSnap)
       syncThumbs(api)
     }
-  }
-  else {
+  } else {
     selectedIndex.value = target
     selectedSnapIndex.value = target
     selectedSlides.value = [target]
@@ -333,7 +419,8 @@ function goToPrev(instant = false) {
   const api = emblaApi.value
   if (api) {
     const prevSnap = props.options.loop
-      ? (selectedSnapIndex.value - 1 + Math.max(1, snapCount.value)) % Math.max(1, snapCount.value)
+      ? (selectedSnapIndex.value - 1 + Math.max(1, snapCount.value)) %
+        Math.max(1, snapCount.value)
       : Math.max(selectedSnapIndex.value - 1, 0)
     api.goToPrev(instant)
     if (instant) {

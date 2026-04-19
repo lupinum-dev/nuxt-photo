@@ -6,7 +6,7 @@
     :columns="columns"
     :spacing="spacing"
     :padding="padding"
-    :adapter="adapter"
+    :image-adapter="imageAdapter"
     v-bind="$attrs"
   >
     <template v-if="$slots.thumbnail" #thumbnail="slotProps">
@@ -16,22 +16,30 @@
 </template>
 
 <script setup lang="ts">
-import type { AlbumLayout, ImageAdapter, PhotoItem, ResponsiveParameter } from '@nuxt-photo/core'
+import type {
+  AlbumLayout,
+  ImageAdapter,
+  PhotoItem,
+  ResponsiveParameter,
+} from '@nuxt-photo/core'
 
 defineOptions({ inheritAttrs: false })
 import { PhotoAlbum as RecipePhotoAlbum } from '@nuxt-photo/recipes'
 
-withDefaults(defineProps<{
-  photos: PhotoItem[]
-  layout?: AlbumLayout | AlbumLayout['type']
-  targetRowHeight?: ResponsiveParameter<number>
-  columns?: ResponsiveParameter<number>
-  spacing?: number
-  padding?: number
-  adapter?: ImageAdapter
-}>(), {
-  layout: 'rows',
-  spacing: 8,
-  padding: 0,
-})
+withDefaults(
+  defineProps<{
+    photos: PhotoItem[]
+    layout?: AlbumLayout | AlbumLayout['type']
+    targetRowHeight?: ResponsiveParameter<number>
+    columns?: ResponsiveParameter<number>
+    spacing?: number
+    padding?: number
+    imageAdapter?: ImageAdapter
+  }>(),
+  {
+    layout: 'rows',
+    spacing: 8,
+    padding: 0,
+  },
+)
 </script>

@@ -37,10 +37,7 @@ export function createDebug(): DebugLogger {
 
   function prefix(channel: DebugChannel): string[] {
     const color = CHANNEL_COLORS[channel]
-    return [
-      `%c[lightbox:${channel}]`,
-      `color: ${color}; font-weight: bold`,
-    ]
+    return [`%c[lightbox:${channel}]`, `color: ${color}; font-weight: bold`]
   }
 
   function log(channel: DebugChannel, ...args: unknown[]) {

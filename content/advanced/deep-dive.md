@@ -1,20 +1,18 @@
 ---
-title: "Layout Algorithms: A Deep Dive"
-description: "The complete guide to every layout algorithm in nuxt-photo — from Knuth-Plass dynamic programming and shortest-path column distribution, to greedy masonry with local search, container query generation, responsive image sizing, and the zero-CLS SSR rendering strategy."
+title: 'Layout Algorithms: A Deep Dive'
+description: 'The complete guide to every layout algorithm in nuxt-photo — from Knuth-Plass dynamic programming and shortest-path column distribution, to greedy masonry with local search, container query generation, responsive image sizing, and the zero-CLS SSR rendering strategy.'
 navigation: true
 ---
 
 # Layout Algorithms: A Deep Dive
 
-This document covers every algorithm that turns a flat array of photos into a pixel-perfect gallery. It's written for developers who want to understand *why* things work the way they do — not just *how* to use the API.
+This document covers every algorithm that turns a flat array of photos into a pixel-perfect gallery. It's written for developers who want to understand _why_ things work the way they do — not just _how_ to use the API.
 
 You don't need to read this to use nuxt-photo. But if you're curious about the math behind justified rows, or why the container query system can deduplicate breakpoints, or how the masonry optimizer decides when to stop searching... this is the place.
 
 We'll go in order of the data pipeline — from the raw `PhotoItem[]` array, through layout computation, to the CSS that actually renders on screen.
 
-
 ---
-
 
 ## Chapter 0: The Problem Space
 
@@ -22,7 +20,7 @@ Before diving into any specific algorithm, let's be clear about what we're actua
 
 You have N rectangles. Each has a fixed aspect ratio (width ÷ height) that you can't change — cropping a photo to fit a grid defeats the purpose of a photo gallery. You have a container of some width, and you need to arrange these rectangles into something that looks intentional. No awkward gaps. No photos stretched beyond recognition. A consistent visual rhythm that makes the eye happy.
 
-This isn't a CSS problem. Flexbox can wrap items, and CSS Grid can place them, but neither can solve the *assignment* problem: which photos go together in the same row? How many photos per column? These are combinatorial decisions. The container width changes the answer. The photo aspect ratios change the answer. The spacing and padding change the answer. There's no declarative CSS solution — you need an algorithm.
+This isn't a CSS problem. Flexbox can wrap items, and CSS Grid can place them, but neither can solve the _assignment_ problem: which photos go together in the same row? How many photos per column? These are combinatorial decisions. The container width changes the answer. The photo aspect ratios change the answer. The spacing and padding change the answer. There's no declarative CSS solution — you need an algorithm.
 
 ### The shared abstraction
 
@@ -34,20 +32,20 @@ Every layout algorithm in nuxt-photo follows the same contract:
 
 ```ts
 type LayoutEntry = {
-  index: number          // position in the original photos array
-  photo: PhotoItem       // the original photo
-  width: number          // computed pixel width
-  height: number         // computed pixel height
-  positionIndex: number  // position within this group
-  itemsCount: number     // total items in this group
+  index: number // position in the original photos array
+  photo: PhotoItem // the original photo
+  width: number // computed pixel width
+  height: number // computed pixel height
+  positionIndex: number // position within this group
+  itemsCount: number // total items in this group
 }
 
 type LayoutGroup = {
   type: 'row' | 'column' | 'grid'
   index: number
   entries: LayoutEntry[]
-  columnsGaps?: number[]    // columns layout metadata
-  columnsRatios?: number[]  // columns layout metadata
+  columnsGaps?: number[] // columns layout metadata
+  columnsRatios?: number[] // columns layout metadata
 }
 ```
 
@@ -62,7 +60,9 @@ function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
   return photos.map((p) => {
     if (p.width > 0 && p.height > 0) return p
     // Dev-only warning
-    console.warn(`Photo "${p.id}" has invalid dimensions (${p.width}x${p.height}), using 1:1 fallback`)
+    console.warn(
+      `Photo "${p.id}" has invalid dimensions (${p.width}x${p.height}), using 1:1 fallback`,
+    )
     return { ...p, width: 1, height: 1 }
   })
 }
@@ -84,9 +84,7 @@ function round(value: number, digits = 0) {
 
 The `Number.EPSILON` nudge exists because of floating-point arithmetic. Without it, `round(2.005, 2)` returns `2.00` instead of `2.01`. The value `2.005` is actually stored as `2.00499999999999...` in IEEE 754, so `Math.round` rounds down. Adding epsilon (`≈ 2.22e-16`) pushes it past the boundary. These rounded values end up in CSS `calc()` expressions, so a one-pixel error matters.
 
-
 ---
-
 
 ## Chapter 1: Rows — Knuth-Plass Dynamic Programming
 
@@ -125,8 +123,14 @@ The `(n-1) × spacing` term handles gaps between photos. The `2 × n × padding`
 Here's the implementation:
 
 ```ts
-function getCommonHeight(row: PhotoItem[], containerWidth: number, spacing: number, padding: number) {
-  const rowWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
+function getCommonHeight(
+  row: PhotoItem[],
+  containerWidth: number,
+  spacing: number,
+  padding: number,
+) {
+  const rowWidth =
+    containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
   const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
   return rowWidth / totalAspectRatio
 }
@@ -167,8 +171,15 @@ You could solve this with Dijkstra's algorithm and a min-heap. But consider:
 **K is bounded.** The maximum number of photos in a row is computed by `findIdealNodeSearch`:
 
 ```ts
-function findIdealNodeSearch(items: PhotoItem[], targetRowHeight: number, containerWidth: number) {
-  const minRatio = items.reduce((acc, item) => Math.min(acc, ratio(item)), Number.MAX_VALUE)
+function findIdealNodeSearch(
+  items: PhotoItem[],
+  targetRowHeight: number,
+  containerWidth: number,
+) {
+  const minRatio = items.reduce(
+    (acc, item) => Math.min(acc, ratio(item)),
+    Number.MAX_VALUE,
+  )
   return round(containerWidth / targetRowHeight / minRatio) + 2
 }
 ```
@@ -192,30 +203,42 @@ function findRowBreaks(
   const N = photos.length
   if (N === 0) return undefined
 
-  const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
+  const limitNodeSearch = findIdealNodeSearch(
+    photos,
+    targetRowHeight,
+    containerWidth,
+  )
 
   // dp[i] = minimum total cost for laying out photos[0..i-1]
   const minCost = new Float64Array(N + 1).fill(Infinity)
   const pointers = new Int32Array(N + 1).fill(0)
-  minCost[0] = 0  // base case: no photos = no cost
+  minCost[0] = 0 // base case: no photos = no cost
 
   for (let i = 1; i <= N; i++) {
     // Only look back K positions — no row can have more than K photos
     const start = Math.max(0, i - limitNodeSearch)
     for (let j = i - 1; j >= start; j--) {
       // cost of making photos[j..i-1] a single row
-      const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
-      if (currentCost === undefined) continue  // row is physically impossible
+      const currentCost = cost(
+        photos,
+        j,
+        i,
+        containerWidth,
+        targetRowHeight,
+        spacing,
+        padding,
+      )
+      if (currentCost === undefined) continue // row is physically impossible
 
       const totalCost = minCost[j] + currentCost
       if (totalCost < minCost[i]) {
         minCost[i] = totalCost
-        pointers[i] = j  // "the row ending at position i starts at position j"
+        pointers[i] = j // "the row ending at position i starts at position j"
       }
     }
   }
 
-  if (minCost[N] === Infinity) return undefined  // no valid layout exists
+  if (minCost[N] === Infinity) return undefined // no valid layout exists
 
   // Reconstruct path by walking backwards through pointers
   const path: number[] = []
@@ -243,7 +266,13 @@ After the forward pass, we reconstruct the optimal row breaks by following back-
 The `pathToGroups` function turns the raw break-position path into `LayoutGroup[]` entries with actual pixel dimensions:
 
 ```ts
-function pathToGroups(path, photos, containerWidth, spacing, padding): LayoutGroup[] {
+function pathToGroups(
+  path,
+  photos,
+  containerWidth,
+  spacing,
+  padding,
+): LayoutGroup[] {
   const groups = []
 
   for (let rowIndex = 1; rowIndex < path.length; rowIndex++) {
@@ -254,7 +283,9 @@ function pathToGroups(path, photos, containerWidth, spacing, padding): LayoutGro
     // All photos in the row share this height
     const height = getCommonHeight(
       rowItems.map(({ photo }) => photo),
-      containerWidth, spacing, padding,
+      containerWidth,
+      spacing,
+      padding,
     )
 
     groups.push({
@@ -263,7 +294,7 @@ function pathToGroups(path, photos, containerWidth, spacing, padding): LayoutGro
       entries: rowItems.map(({ photo, index }, positionIndex) => ({
         index,
         photo,
-        width: height * ratio(photo),  // ← this is the justified magic
+        width: height * ratio(photo), // ← this is the justified magic
         height,
         positionIndex,
         itemsCount: rowItems.length,
@@ -291,17 +322,15 @@ Several edge cases can cause the DP to produce no result (`undefined`):
 
 ### Complexity
 
-| Approach | Time | Space |
-|---|---|---|
-| Knuth-Plass DP | O(N·K) | O(N) — two typed arrays |
+| Approach        | Time         | Space                       |
+| --------------- | ------------ | --------------------------- |
+| Knuth-Plass DP  | O(N·K)       | O(N) — two typed arrays     |
 | Dijkstra + heap | O(N·K·log N) | O(N) — heap-allocated nodes |
-| Greedy | O(N) | O(1) |
+| Greedy          | O(N)         | O(1)                        |
 
 For typical galleries (N < 100, K ≈ 10), all three are sub-millisecond. The DP wins on quality. The greedy wins on simplicity. Dijkstra is dominated by the DP on every metric for this particular problem structure.
 
-
 ---
-
 
 ## Chapter 2: Container Queries — The Breakpoint System
 
@@ -326,8 +355,18 @@ const bpEntries = []
 for (const bp of sortedBreakpoints) {
   const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
   const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-  const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
-  const groups = computeRowsLayout({ photos, containerWidth: bp, spacing, padding, targetRowHeight })
+  const targetRowHeight = resolveResponsiveParameter(
+    opts.targetRowHeight,
+    bp,
+    300,
+  )
+  const groups = computeRowsLayout({
+    photos,
+    containerWidth: bp,
+    spacing,
+    padding,
+    targetRowHeight,
+  })
   bpEntries.push({ bp, groups, sig: rowSignature(groups) })
 }
 ```
@@ -338,7 +377,7 @@ The `rowSignature` function creates a string fingerprint of each layout:
 
 ```ts
 function rowSignature(groups: LayoutGroup[]): string {
-  return groups.map(g => g.entries[g.entries.length - 1].index).join(',')
+  return groups.map((g) => g.entries[g.entries.length - 1].index).join(',')
 }
 ```
 
@@ -407,9 +446,24 @@ Inside each rule, every photo gets a flex item rule with its computed `calc()` w
 
 ```css
 @container np-abc123 (min-width: 600px) and (max-width: 899px) {
-  .np-item-0 { flex: 0 0 auto; box-sizing: content-box; overflow: hidden; width: calc((100% - 24px) / 2.84091) }
-  .np-item-1 { flex: 0 0 auto; box-sizing: content-box; overflow: hidden; width: calc((100% - 24px) / 5.32011) }
-  .np-item-2 { flex: 0 0 auto; box-sizing: content-box; overflow: hidden; width: calc((100% - 24px) / 3.19825) }
+  .np-item-0 {
+    flex: 0 0 auto;
+    box-sizing: content-box;
+    overflow: hidden;
+    width: calc((100% - 24px) / 2.84091);
+  }
+  .np-item-1 {
+    flex: 0 0 auto;
+    box-sizing: content-box;
+    overflow: hidden;
+    width: calc((100% - 24px) / 5.32011);
+  }
+  .np-item-2 {
+    flex: 0 0 auto;
+    box-sizing: content-box;
+    overflow: hidden;
+    width: calc((100% - 24px) / 3.19825);
+  }
 }
 ```
 
@@ -422,7 +476,11 @@ For container queries to work, the album wrapper needs `container-type: inline-s
 ```ts
 const containerStyle = computed(() => {
   if (containerQueriesActive.value) {
-    return { width: '100%', containerType: 'inline-size', containerName: containerName.value }
+    return {
+      width: '100%',
+      containerType: 'inline-size',
+      containerName: containerName.value,
+    }
   }
   return { width: '100%' }
 })
@@ -434,7 +492,7 @@ And item elements need the `np-item-{index}` CSS class:
 <div
   :class="[containerQueriesActive ? `np-item-${item.index}` : undefined]"
   :style="item.style"
->
+></div>
 ```
 
 When both `breakpoints` and `defaultContainerWidth` are provided, the SSR output includes both inline `calc()` styles (from the DP at the assumed width) and the `@container` CSS block (for runtime responsiveness). The container query rules take over after mount, and the inline styles serve as the initial layout to avoid CLS.
@@ -447,11 +505,9 @@ When both `breakpoints` and `defaultContainerWidth` are provided, the SSR output
 
 **Non-rows layouts.** Container queries only apply to the rows layout. For columns and masonry, the `containerQueriesActive` flag stays `false` and items get regular inline styles.
 
-**Responsive parameters at breakpoints.** If `spacing` is a function like `(w) => w < 600 ? 4 : 8`, the DP runs with `spacing=4` at the 375px breakpoint and `spacing=8` at the 900px breakpoint. The gap values in the `calc()` expressions are different per rule, reflecting the resolved spacing at each breakpoint's width. This means the deduplication might *not* collapse two breakpoints that would otherwise have the same row breaks — because the gap values differ.
-
+**Responsive parameters at breakpoints.** If `spacing` is a function like `(w) => w < 600 ? 4 : 8`, the DP runs with `spacing=4` at the 375px breakpoint and `spacing=8` at the 900px breakpoint. The gap values in the `calc()` expressions are different per rule, reflecting the resolved spacing at each breakpoint's width. This means the deduplication might _not_ collapse two breakpoints that would otherwise have the same row breaks — because the gap values differ.
 
 ---
-
 
 ## Chapter 3: Columns — Shortest-Path Distribution
 
@@ -472,7 +528,7 @@ The optimal column assignment is the shortest path of exactly C edges from 0 to 
 
 ### Why "shortest path of length C"?
 
-A regular shortest-path algorithm finds the minimum-weight path of *any* length. But the columns layout needs exactly C groups. If you have 3 columns, the path must have exactly 3 edges. A 2-edge path (2 columns) or a 5-edge path (5 columns) isn't valid, no matter how low its cost.
+A regular shortest-path algorithm finds the minimum-weight path of _any_ length. But the columns layout needs exactly C groups. If you have 3 columns, the path must have exactly 3 edges. A 2-edge path (2 columns) or a 5-edge path (5 columns) isn't valid, no matter how low its cost.
 
 The rows layout doesn't have this constraint — the number of rows is whatever the DP decides is optimal. Columns is fundamentally different: the user specifies the column count upfront.
 
@@ -481,11 +537,11 @@ The rows layout doesn't have this constraint — the number of rows is whatever 
 The ideal column height assumes photos are distributed perfectly evenly:
 
 ```ts
-const targetColumnHeight = (
-  items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0)
-  + spacing * (items.length - columns)
-  + 2 * padding * items.length
-) / columns
+const targetColumnHeight =
+  (items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0) +
+    spacing * (items.length - columns) +
+    2 * padding * items.length) /
+  columns
 ```
 
 The numerator sums up the total height of all photos (at the column width) plus all the vertical spacing. Dividing by the column count gives the height each column would have if photos were distributed perfectly. Obviously they can't be — photos are indivisible — but this target guides the optimization.
@@ -532,7 +588,8 @@ function computeShortestPath(graph, pathLength, startNode, endNode) {
     queue.clear()
 
     for (const node of currentQueue) {
-      const accWeight = length > 0 ? (matrix.get(node)?.[length]?.weight ?? 0) : 0
+      const accWeight =
+        length > 0 ? (matrix.get(node)?.[length]?.weight ?? 0) : 0
 
       for (const { neighbor, weight } of graph(node)) {
         let paths = matrix.get(neighbor)
@@ -596,17 +653,24 @@ When the photo count is less than or equal to the column count, the shortest-pat
 
 ```ts
 if (items.length <= columns) {
-  const averageRatio = items.length > 0
-    ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
-    : 1
+  const averageRatio =
+    items.length > 0
+      ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
+      : 1
 
   for (let col = 0; col < columns; col++) {
     columnsGaps[col] = 2 * padding
     columnsRatios[col] = col < items.length ? ratio(items[col]) : averageRatio
   }
 
-  const path = Array.from({ length: columns + 1 }, (_, i) => Math.min(i, items.length))
-  return { columnsGaps, columnsRatios, columnGroups: buildColumnGroups(path, items) }
+  const path = Array.from({ length: columns + 1 }, (_, i) =>
+    Math.min(i, items.length),
+  )
+  return {
+    columnsGaps,
+    columnsRatios,
+    columnGroups: buildColumnGroups(path, items),
+  }
 }
 ```
 
@@ -619,10 +683,13 @@ After the path is found, column widths aren't simply `containerWidth / columns`.
 ```ts
 const totalRatio = columnsRatios.reduce((acc, r) => acc + r, 0)
 
-const columnWidth = (
-  (containerWidth - (columnsCount - 1) * spacing - 2 * columnsCount * padding - totalAdjustedGaps)
-  * columnsRatios[col]
-) / totalRatio
+const columnWidth =
+  ((containerWidth -
+    (columnsCount - 1) * spacing -
+    2 * columnsCount * padding -
+    totalAdjustedGaps) *
+    columnsRatios[col]) /
+  totalRatio
 ```
 
 The `columnsGaps` and `columnsRatios` arrays are passed through to the CSS rendering layer as metadata on the `LayoutGroup`. This lets the template express column widths as `calc()` percentages that respond to container width — similar to the rows approach.
@@ -632,7 +699,7 @@ The `columnsGaps` and `columnsRatios` arrays are passed through to the CSS rende
 If any column's computed width comes out negative (which can happen with extreme spacing/padding relative to a narrow container), the algorithm retries with one fewer column:
 
 ```ts
-if (entries.some(e => e.width <= 0 || e.height <= 0)) {
+if (entries.some((e) => e.width <= 0 || e.height <= 0)) {
   if (columns > 1) {
     return computeColumnsLayout({ ...options, columns: columns - 1 })
   }
@@ -646,13 +713,11 @@ This is graceful degradation. On a 300px-wide mobile screen with `spacing: 16` a
 
 The fixed-length shortest path runs in O(C·N·K) where C is columns, N is photos, and K is the maximum photos per column (bounded by the 1.5× cutoff). For typical values (C=3, N=100, K≈30), that's ~9,000 iterations — well under a millisecond.
 
-
 ---
-
 
 ## Chapter 4: Masonry — Greedy Assignment + Local Search
 
-The masonry layout places photos into equal-width columns, preserving chronological order within each column. Unlike the columns layout, photos within a column *don't* share a width with photos in other columns — every column is the same width, and each photo's height is determined by its aspect ratio.
+The masonry layout places photos into equal-width columns, preserving chronological order within each column. Unlike the columns layout, photos within a column _don't_ share a width with photos in other columns — every column is the same width, and each photo's height is determined by its aspect ratio.
 
 The challenge is distributing photos across columns to make the bottom edge as even as possible.
 
@@ -661,8 +726,9 @@ The challenge is distributing photos across columns to make the bottom edge as e
 The first pass is the classic masonry approach — place each photo in the shortest column:
 
 ```ts
-const columnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
-const photoHeights = photos.map(p => columnWidth / (p.width / p.height))
+const columnWidth =
+  (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+const photoHeights = photos.map((p) => columnWidth / (p.width / p.height))
 
 const colItems: number[][] = Array.from({ length: columns }, () => [])
 const colHeights: number[] = new Array(columns).fill(0)
@@ -698,14 +764,15 @@ while (improved && iterations < 50) {
   iterations++
 
   // Find tallest and shortest columns
-  let tallest = 0, shortest = 0
+  let tallest = 0,
+    shortest = 0
   for (let c = 1; c < columns; c++) {
     if (colHeights[c] > colHeights[tallest]) tallest = c
     if (colHeights[c] < colHeights[shortest]) shortest = c
   }
 
   const currentDelta = colHeights[tallest] - colHeights[shortest]
-  if (currentDelta <= 2) break  // close enough — 2px is invisible
+  if (currentDelta <= 2) break // close enough — 2px is invisible
 
   let bestMove = null
   let bestReduction = 0
@@ -718,7 +785,8 @@ while (improved && iterations < 50) {
     const newSH = colHeights[shortest] + h
 
     // Recompute global max and min across ALL columns
-    let newMax = newTH, newMin = newSH
+    let newMax = newTH,
+      newMin = newSH
     for (let c = 0; c < columns; c++) {
       if (c === tallest || c === shortest) continue
       if (colHeights[c] > newMax) newMax = colHeights[c]
@@ -737,7 +805,7 @@ while (improved && iterations < 50) {
     for (let j = 0; j < colItems[shortest].length; j++) {
       const hT = photoHeights[colItems[tallest][i]] + spacing
       const hS = photoHeights[colItems[shortest][j]] + spacing
-      if (hT <= hS) continue  // swap would make things worse
+      if (hT <= hS) continue // swap would make things worse
 
       const newTH = colHeights[tallest] - hT + hS
       const newSH = colHeights[shortest] - hS + hT
@@ -769,7 +837,7 @@ In this case they agree. But consider `[810, 800, 790]` vs `[795, 795, 810]`:
 - Delta: 20 vs 15 → second layout wins
 - Makespan: 810 vs 810 → tie
 
-Minimizing the delta produces the most visually balanced bottom edge, which is what matters for a gallery. The tallest column determines the gallery height in both cases, but a flat bottom edge *looks* more intentional.
+Minimizing the delta produces the most visually balanced bottom edge, which is what matters for a gallery. The tallest column determines the gallery height in both cases, but a flat bottom edge _looks_ more intentional.
 
 ### Why 50 iterations?
 
@@ -805,24 +873,23 @@ Before optimization:    After optimization:
 
 ### Complexity
 
-| Phase | Time |
-|---|---|
-| Greedy placement | O(N·C) |
-| Local search (per iteration) | O(C² · max photos per column) |
-| Order restoration | O(N log N) worst case |
-| Total | O(N·C) — iterations are bounded at 50 |
-
+| Phase                        | Time                                  |
+| ---------------------------- | ------------------------------------- |
+| Greedy placement             | O(N·C)                                |
+| Local search (per iteration) | O(C² · max photos per column)         |
+| Order restoration            | O(N log N) worst case                 |
+| Total                        | O(N·C) — iterations are bounded at 50 |
 
 ---
 
-
 ## Chapter 6: The `computePhotoSizes` Algorithm
 
-This function generates the `<img sizes>` attribute for responsive image loading in the rows layout. Browsers need a `sizes` attribute to choose the right source from a `srcset` *before layout is complete* — before the browser knows the actual rendered width of the image. The `sizes` attribute tells it "this image will be about this wide."
+This function generates the `<img sizes>` attribute for responsive image loading in the rows layout. Browsers need a `sizes` attribute to choose the right source from a `srcset` _before layout is complete_ — before the browser knows the actual rendered width of the image. The `sizes` attribute tells it "this image will be about this wide."
 
 ### The problem
 
 For a justified-rows layout, each photo's rendered width depends on:
+
 1. The container width (unknown during image preloading)
 2. Which other photos are in the same row (determined by the Knuth-Plass DP, which needs a container width)
 3. The spacing and padding values
@@ -840,7 +907,10 @@ function computePhotoSizes(
   itemsInRow: number,
   spacing: number,
   padding: number,
-  responsiveSizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> },
+  responsiveSizes?: {
+    size: string
+    sizes?: Array<{ viewport: string; size: string }>
+  },
 ): string | undefined {
   if (!responsiveSizes) return undefined
 
@@ -850,7 +920,9 @@ function computePhotoSizes(
 
   if (!responsiveSizes.sizes?.length) return defaultSize
 
-  const parts = responsiveSizes.sizes.map(({ viewport, size }) => `${viewport} ${size}`)
+  const parts = responsiveSizes.sizes.map(
+    ({ viewport, size }) => `${viewport} ${size}`,
+  )
   parts.push(defaultSize)
   return parts.join(', ')
 }
@@ -871,11 +943,11 @@ responsiveSizes = {
   sizes: [
     { viewport: '(max-width: 600px)', size: '100vw' },
     { viewport: '(max-width: 900px)', size: '50vw' },
-  ]
+  ],
 }
 
 // Output
-'(max-width: 600px) 100vw, (max-width: 900px) 50vw, calc((100vw - 24px) / 3.14)'
+;('(max-width: 600px) 100vw, (max-width: 900px) 50vw, calc((100vw - 24px) / 3.14)')
 ```
 
 The browser evaluates left to right and uses the first match. On a 500px screen, it matches the first entry (`100vw`). On an 800px screen, it matches the second (`50vw`). On anything wider, it falls through to the `calc()` default.
@@ -885,16 +957,12 @@ The browser evaluates left to right and uses the first match. On a 500px screen,
 The function returns `undefined` — not an empty string, not a default value. This lets callers use `undefined` as a signal to fall through to the image adapter's own `sizes` computation:
 
 ```html
-<img
-  :sizes="props.sizes ?? resolved.sizes"
-/>
+<img :sizes="props.sizes ?? resolved.sizes" />
 ```
 
 The `??` operator means "use the layout-computed sizes if available, otherwise use whatever the image adapter computed." This clean fallback pattern avoids double-computing sizes.
 
-
 ---
-
 
 ## Chapter 7: The Responsive Parameter System
 
@@ -905,20 +973,24 @@ Most layout parameters in nuxt-photo — spacing, padding, columns, target row h
 Takes a breakpoint map and returns a function:
 
 ```ts
-function responsive<T>(breakpoints: Record<number, T>): (containerWidth: number) => T {
+function responsive<T>(
+  breakpoints: Record<number, T>,
+): (containerWidth: number) => T {
   const sorted = Object.entries(breakpoints)
     .map(([k, v]) => [Number(k), v] as [number, T])
-    .sort((a, b) => b[0] - a[0])  // descending by breakpoint
+    .sort((a, b) => b[0] - a[0]) // descending by breakpoint
 
   if (sorted.length === 0) {
-    throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
+    throw new Error(
+      '[nuxt-photo] responsive() requires at least one breakpoint',
+    )
   }
 
   return (containerWidth: number) => {
     for (const [minWidth, value] of sorted) {
       if (containerWidth >= minWidth) return value
     }
-    return sorted[sorted.length - 1]![1]  // smallest breakpoint's value
+    return sorted[sorted.length - 1]![1] // smallest breakpoint's value
   }
 }
 ```
@@ -929,12 +1001,12 @@ Usage:
 // 2 columns below 600px, 3 at 600-899px, 4 at 900px+
 const columns = responsive({ 0: 2, 600: 3, 900: 4 })
 
-columns(400)  // → 2
-columns(750)  // → 3
+columns(400) // → 2
+columns(750) // → 3
 columns(1200) // → 4
 ```
 
-The sort is descending so the linear scan finds the *largest* matching breakpoint first. For a typical 3–5 breakpoint map, the scan is O(B) per call where B is tiny. There's no binary search because the overhead of binary search setup exceeds the savings for B < 10.
+The sort is descending so the linear scan finds the _largest_ matching breakpoint first. For a typical 3–5 breakpoint map, the scan is O(B) per call where B is tiny. There's no binary search because the overhead of binary search setup exceeds the savings for B < 10.
 
 The fallback at the bottom (`sorted[sorted.length - 1]`) handles widths below the smallest breakpoint. If you define `{ 400: 'small', 800: 'large' }` and the container is 200px wide, you still get `'small'`. This prevents gaps in the breakpoint coverage.
 
@@ -949,27 +1021,27 @@ function resolveResponsiveParameter<T>(
   fallback: T,
 ): T {
   if (value === undefined) return fallback
-  return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
+  return typeof value === 'function'
+    ? (value as (w: number) => T)(containerWidth)
+    : value
 }
 ```
 
 Three cases:
 
-| Input | Result |
-|---|---|
-| `undefined` | `fallback` (the default value) |
+| Input                   | Result                           |
+| ----------------------- | -------------------------------- |
+| `undefined`             | `fallback` (the default value)   |
 | A function `(w) => ...` | Call it with the container width |
-| A plain value | Return it directly |
+| A plain value           | Return it directly               |
 
 This is the polymorphic glue. Every layout option flows through `resolveResponsiveParameter` before reaching the algorithm. The spacing might be `8`, or it might be `(w) => w < 600 ? 4 : 8`, or it might be `responsive({ 0: 4, 600: 8, 900: 12 })`. The layout algorithm doesn't know or care — it just gets a resolved number.
 
 ### Interaction with container queries
 
-When the container query system is active, every responsive parameter is resolved at *every breakpoint* independently. This means the DP might run with `spacing=4` at 375px and `spacing=8` at 900px. The resulting CSS rules have different gap values in their `calc()` expressions, and the deduplication correctly treats these as different layouts even if the row breaks happen to be the same.
-
+When the container query system is active, every responsive parameter is resolved at _every breakpoint_ independently. This means the DP might run with `spacing=4` at 375px and `spacing=8` at 900px. The resulting CSS rules have different gap values in their `calc()` expressions, and the deduplication correctly treats these as different layouts even if the row breaks happen to be the same.
 
 ---
-
 
 ## Chapter 8: The SSR Rendering Strategy
 
@@ -1009,29 +1081,32 @@ When an assumed width is provided (e.g., `defaultContainerWidth: 1200`), the ful
 ```ts
 if (containerWidth.value > 0 && groups.value.length > 0) {
   // JS layout with calc() widths
-  return groups.value.flatMap(row =>
+  return groups.value.flatMap((row) =>
     row.entries.map((entry) => ({
       style: {
         flex: '0 0 auto',
         width: `calc((100% - ${gaps}px) / ${divisor})`,
       },
-    }))
+    })),
   )
 }
 ```
 
 The SSR output has exact `calc()` widths from the start. If the assumed width matches the real container width, there's zero CLS — the layout is pixel-perfect from the first paint.
 
-If the assumed width *doesn't* match (e.g., you assumed 1200px but the user's container is 900px), there's a one-time reflow after hydration when the `ResizeObserver` picks up the real width and the DP re-runs. This is still better than rendering nothing.
+If the assumed width _doesn't_ match (e.g., you assumed 1200px but the user's container is 900px), there's a one-time reflow after hydration when the `ResizeObserver` picks up the real width and the DP re-runs. This is still better than rendering nothing.
 
-When both `defaultContainerWidth` and `breakpoints` are provided, you get the best of both worlds: exact widths for the server-rendered state *and* container query rules for responsive runtime behavior. The container queries take over after mount.
+When both `defaultContainerWidth` and `breakpoints` are provided, you get the best of both worlds: exact widths for the server-rendered state _and_ container query rules for responsive runtime behavior. The container queries take over after mount.
 
 ### The filler span
 
 Both paths include a filler element at the end of the flex container:
 
 ```html
-<span style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0;" aria-hidden="true" />
+<span
+  style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0;"
+  aria-hidden="true"
+/>
 ```
 
 This is the "last-row fix." Without it, the final row's photos stretch to fill the container width. If the last row has 2 photos that should fill 60% of the width, flex-grow makes them fill 100% — they look bloated.
@@ -1063,17 +1138,18 @@ The width tracking mechanism deserves mention. It wraps `ResizeObserver` with tw
 
 ```ts
 // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
-if (newW === prevWidth && Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH) {
+if (
+  newW === prevWidth &&
+  Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH
+) {
   containerWidth.value = Math.min(containerWidth.value, newW)
   return
 }
 ```
 
-It takes the *smaller* of the two widths, which stabilizes the layout. The scrollbar stays visible, and the content fits within the remaining space.
-
+It takes the _smaller_ of the two widths, which stabilizes the layout. The scrollbar stays visible, and the content fits within the remaining space.
 
 ---
-
 
 ## Chapter 9: The Image Load Cache
 
@@ -1090,11 +1166,14 @@ function ensureImageLoaded(src: string): Promise<void> {
   const promise = new Promise<void>((resolve) => {
     const image = new Image()
     image.onload = () => resolve()
-    image.onerror = () => resolve()  // resolve on error too — don't block the UI
+    image.onerror = () => resolve() // resolve on error too — don't block the UI
     image.src = src
 
     if (image.decode) {
-      image.decode().catch(() => {}).finally(resolve)
+      image
+        .decode()
+        .catch(() => {})
+        .finally(resolve)
       return
     }
 
@@ -1124,13 +1203,11 @@ Key design decisions:
 
 **LRU eviction at 500 entries.** `Map` preserves insertion order, so `keys().next().value` gives the oldest entry. 500 is generous for a photo gallery — most users won't view 500 unique images in one session. The eviction prevents unbounded memory growth in apps with dynamic photo sets.
 
-
 ---
-
 
 ## Chapter 10: The Physics Engine
 
-The layout algorithms produce static dimensions, but the lightbox needs *motion* — spring-animated zoom, inertial pan, drag-to-close with rubberband resistance. This chapter covers the physics primitives.
+The layout algorithms produce static dimensions, but the lightbox needs _motion_ — spring-animated zoom, inertial pan, drag-to-close with rubberband resistance. This chapter covers the physics primitives.
 
 ### Spring model
 
@@ -1152,7 +1229,8 @@ The spring runs on `requestAnimationFrame` and stops when both the position erro
 
 ```ts
 const distance = Math.abs(spring.target - spring.value)
-const done = distance < positionThreshold && Math.abs(spring.velocity) < velocityThreshold
+const done =
+  distance < positionThreshold && Math.abs(spring.velocity) < velocityThreshold
 ```
 
 Default thresholds: position < 0.5px, velocity < 0.1px/frame. These are tuned so the spring stops before sub-pixel oscillation becomes visible.
@@ -1163,10 +1241,17 @@ The panzoom system (used for zoom and pan in the lightbox) extends the spring to
 
 ```ts
 type PanzoomMotion = {
-  x: number; y: number; scale: number
-  targetX: number; targetY: number; targetScale: number
-  velocityX: number; velocityY: number; velocityScale: number
-  tension: number; friction: number
+  x: number
+  y: number
+  scale: number
+  targetX: number
+  targetY: number
+  targetScale: number
+  velocityX: number
+  velocityY: number
+  velocityScale: number
+  tension: number
+  friction: number
   rafId: number
 }
 ```
@@ -1174,9 +1259,12 @@ type PanzoomMotion = {
 One `requestAnimationFrame` loop applies the spring equation to all three axes:
 
 ```ts
-panzoomMotion.velocityScale += (scaleDistance * spring - panzoomMotion.velocityScale * damping) * dt
-panzoomMotion.velocityX += (xDistance * spring - panzoomMotion.velocityX * damping) * dt
-panzoomMotion.velocityY += (yDistance * spring - panzoomMotion.velocityY * damping) * dt
+panzoomMotion.velocityScale +=
+  (scaleDistance * spring - panzoomMotion.velocityScale * damping) * dt
+panzoomMotion.velocityX +=
+  (xDistance * spring - panzoomMotion.velocityX * damping) * dt
+panzoomMotion.velocityY +=
+  (yDistance * spring - panzoomMotion.velocityY * damping) * dt
 ```
 
 The transform is applied directly to the DOM element — no reactive state update per frame:
@@ -1196,7 +1284,7 @@ class VelocityTracker {
   private readonly buffer: (Sample | undefined)[] = new Array(32)
   private head = 0
   private count = 0
-  private readonly windowMs: number  // default: 100ms
+  private readonly windowMs: number // default: 100ms
 
   addSample(x, y, time) {
     this.buffer[this.head] = { x, y, time }
@@ -1239,17 +1327,13 @@ function easeOutCubic(t: number): number {
 }
 
 function easeInOutCubic(t: number): number {
-  return t < 0.5
-    ? 4 * t * t * t
-    : 1 - ((-2 * t + 2) ** 3) / 2
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 ```
 
 `easeOutCubic` starts fast and decelerates — used for fade-close transitions where you want the content to disappear quickly then settle. `easeInOutCubic` is symmetric — used for the number animation utility (`animateNumber`) which interpolates between values over a fixed duration.
 
-
 ---
-
 
 ## Chapter 11: Gesture Classification
 
@@ -1281,8 +1365,9 @@ function classifyGesture(
     const atLeftEdge = currentPan.x >= panBounds.x - 1
     const atRightEdge = currentPan.x <= -panBounds.x + 1
 
-    const wantsOutwardSlide = horizontalIntent
-      && (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
+    const wantsOutwardSlide =
+      horizontalIntent &&
+      (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
 
     if (!wantsOutwardSlide && (canPanX || canPanY)) return 'pan'
     if (horizontalIntent) return 'slide'
@@ -1313,9 +1398,7 @@ function computeCloseDragRatio(closeDragY: number, areaHeight: number): number {
 
 The `Math.max(240, areaHeight * 0.85)` denominator means you need to drag at least 240px (or 85% of the viewport, whichever is larger) to reach the maximum dimming. The 0.75 cap means the backdrop never fully disappears during a drag — there's always a hint that you're still in the lightbox.
 
-
 ---
-
 
 ## Chapter 12: Performance Characteristics
 
@@ -1326,22 +1409,22 @@ Here's how the algorithms scale with real inputs.
 All measurements are rough estimates for a modern device (M1 Mac, Chrome):
 
 | N photos | Rows (K≈10) | Columns (C=3) | Masonry (C=3) |
-|---|---|---|---|
-| 12 | < 0.05ms | < 0.05ms | < 0.05ms |
-| 50 | ~0.1ms | ~0.2ms | ~0.1ms |
-| 100 | ~0.2ms | ~0.5ms | ~0.2ms |
-| 500 | ~1ms | ~3ms | ~1ms |
-| 1,000 | ~2ms | ~8ms | ~3ms |
+| -------- | ----------- | ------------- | ------------- |
+| 12       | < 0.05ms    | < 0.05ms      | < 0.05ms      |
+| 50       | ~0.1ms      | ~0.2ms        | ~0.1ms        |
+| 100      | ~0.2ms      | ~0.5ms        | ~0.2ms        |
+| 500      | ~1ms        | ~3ms          | ~1ms          |
+| 1,000    | ~2ms        | ~8ms          | ~3ms          |
 
 Container query generation for 4 breakpoints: approximately 4× the rows cost (since the DP runs at each breakpoint). The deduplication and CSS string building add negligible overhead.
 
 ### Memory
 
-| Algorithm | Allocation |
-|---|---|
-| Rows DP | Two typed arrays of size N+1 (< 16KB for 1000 photos) |
-| Columns shortest-path | A `Map<number, Array>` — sparse, typically < 50KB |
-| Masonry | Two arrays of size C, one array of size N (< 16KB for 1000 photos) |
+| Algorithm             | Allocation                                                         |
+| --------------------- | ------------------------------------------------------------------ |
+| Rows DP               | Two typed arrays of size N+1 (< 16KB for 1000 photos)              |
+| Columns shortest-path | A `Map<number, Array>` — sparse, typically < 50KB                  |
+| Masonry               | Two arrays of size C, one array of size N (< 16KB for 1000 photos) |
 
 None of these are worth worrying about. A single high-res JPEG is 2–10MB.
 
@@ -1351,24 +1434,22 @@ Without breakpoints: the layout recomputes on every `ResizeObserver` callback (d
 
 With breakpoints: the layout only recomputes when the width crosses a breakpoint boundary. Between breakpoints, the CSS `@container` rules handle everything — zero JavaScript.
 
-
 ---
-
 
 ## Summary
 
-| Chapter | Algorithm | Complexity | Optimality |
-|---|---|---|---|
-| **Rows** | Knuth-Plass DP | O(N·K) | Globally optimal |
-| **Container queries** | Breakpoint deduplication | O(B·N·K) | Exact — CSS calc() is container-width-independent |
-| **Columns** | Shortest path (length C) | O(C·N·K) | Globally optimal |
-| **Masonry** | Greedy + local search | O(N·C) | Approximate (NP-hard optimal) |
-| **Photo sizes** | Calc() divisor computation | O(1) per photo | Exact |
-| **Responsive params** | Linear scan of sorted breakpoints | O(B) per resolution | Exact |
-| **SSR strategy** | Flex-grow approximation or server-side DP | O(N·K) or O(1) | Approximate (flex) or exact (DP) |
-| **Image cache** | Map with LRU eviction | O(1) amortized | N/A |
-| **Physics** | Tension-friction spring integration | O(frames) per animation | N/A |
-| **Gestures** | Threshold + directional classifier | O(1) per event | N/A |
+| Chapter               | Algorithm                                 | Complexity              | Optimality                                        |
+| --------------------- | ----------------------------------------- | ----------------------- | ------------------------------------------------- |
+| **Rows**              | Knuth-Plass DP                            | O(N·K)                  | Globally optimal                                  |
+| **Container queries** | Breakpoint deduplication                  | O(B·N·K)                | Exact — CSS calc() is container-width-independent |
+| **Columns**           | Shortest path (length C)                  | O(C·N·K)                | Globally optimal                                  |
+| **Masonry**           | Greedy + local search                     | O(N·C)                  | Approximate (NP-hard optimal)                     |
+| **Photo sizes**       | Calc() divisor computation                | O(1) per photo          | Exact                                             |
+| **Responsive params** | Linear scan of sorted breakpoints         | O(B) per resolution     | Exact                                             |
+| **SSR strategy**      | Flex-grow approximation or server-side DP | O(N·K) or O(1)          | Approximate (flex) or exact (DP)                  |
+| **Image cache**       | Map with LRU eviction                     | O(1) amortized          | N/A                                               |
+| **Physics**           | Tension-friction spring integration       | O(frames) per animation | N/A                                               |
+| **Gestures**          | Threshold + directional classifier        | O(1) per event          | N/A                                               |
 
 Each algorithm was chosen for a specific reason. Knuth-Plass because it's optimal and O(N). Shortest-path-of-length-C because columns need a fixed group count. Greedy+local-search because optimal masonry is NP-hard.
 

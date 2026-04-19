@@ -26,8 +26,9 @@ export function classifyGesture(
     const canPanY = panBounds.y > 0.5
     const atLeftEdge = currentPan.x >= panBounds.x - 1
     const atRightEdge = currentPan.x <= -panBounds.x + 1
-    const wantsOutwardSlide = horizontalIntent
-      && (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
+    const wantsOutwardSlide =
+      horizontalIntent &&
+      (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
 
     if (!wantsOutwardSlide && (canPanX || canPanY)) return 'pan'
     if (horizontalIntent) return 'slide'
@@ -52,15 +53,18 @@ export function isDoubleTap(
 ): boolean {
   if (!lastTap) return false
   return (
-    now - lastTap.time < maxInterval
-    && Math.abs(clientX - lastTap.clientX) < maxDistance
-    && Math.abs(clientY - lastTap.clientY) < maxDistance
+    now - lastTap.time < maxInterval &&
+    Math.abs(clientX - lastTap.clientX) < maxDistance &&
+    Math.abs(clientY - lastTap.clientY) < maxDistance
   )
 }
 
 /**
  * Compute the close-drag ratio (0 to 0.75) from vertical drag distance.
  */
-export function computeCloseDragRatio(closeDragY: number, areaHeight: number): number {
+export function computeCloseDragRatio(
+  closeDragY: number,
+  areaHeight: number,
+): number {
   return Math.min(0.75, Math.abs(closeDragY) / Math.max(240, areaHeight * 0.85))
 }

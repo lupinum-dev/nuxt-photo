@@ -10,32 +10,32 @@ The lightbox supports touch gestures and mouse interactions for navigating photo
 
 ## Touch Gestures
 
-| Gesture | Action |
-|---|---|
-| Swipe left/right | Navigate to next/previous photo |
-| Swipe down (drag) | Close the lightbox |
-| Pinch | Zoom in/out |
-| Double-tap | Toggle zoom |
-| Pan (when zoomed) | Move around the zoomed image |
+| Gesture           | Action                          |
+| ----------------- | ------------------------------- |
+| Swipe left/right  | Navigate to next/previous photo |
+| Swipe down (drag) | Close the lightbox              |
+| Pinch             | Zoom in/out                     |
+| Double-tap        | Toggle zoom                     |
+| Pan (when zoomed) | Move around the zoomed image    |
 
 ## Mouse Interactions
 
-| Interaction | Action |
-|---|---|
-| Mouse wheel | Zoom in/out |
-| Double-click | Toggle zoom |
-| Click backdrop | Close the lightbox |
-| Drag (when zoomed) | Pan the image |
+| Interaction        | Action             |
+| ------------------ | ------------------ |
+| Mouse wheel        | Zoom in/out        |
+| Double-click       | Toggle zoom        |
+| Click backdrop     | Close the lightbox |
+| Drag (when zoomed) | Pan the image      |
 
 ## Gesture Classifier
 
 The lightbox uses a gesture classifier to determine the user's intent from pointer input. The classifier recognizes four modes:
 
-| Mode | Trigger | Behavior |
-|---|---|---|
-| `'idle'` | No active gesture | Default state |
-| `'slide'` | Horizontal drag | Switches to carousel navigation |
-| `'pan'` | Drag while zoomed | Pans the zoomed image within bounds |
+| Mode      | Trigger                    | Behavior                              |
+| --------- | -------------------------- | ------------------------------------- |
+| `'idle'`  | No active gesture          | Default state                         |
+| `'slide'` | Horizontal drag            | Switches to carousel navigation       |
+| `'pan'`   | Drag while zoomed          | Pans the zoomed image within bounds   |
 | `'close'` | Vertical drag (not zoomed) | Drag-to-close with rubberband physics |
 
 The mode is determined by the initial drag direction and zoom state. Once classified, it stays in that mode until the pointer is released.
@@ -46,11 +46,11 @@ The mode is determined by the initial drag direction and zoom state. Once classi
 
 The lightbox computes zoom levels relative to the "fit" scale (the scale at which the image fills the viewport while maintaining aspect ratio):
 
-| Level | Description |
-|---|---|
-| `fit` | Image fits within the viewport (no cropping). This is the default view. |
+| Level       | Description                                                                  |
+| ----------- | ---------------------------------------------------------------------------- |
+| `fit`       | Image fits within the viewport (no cropping). This is the default view.      |
 | `secondary` | Higher zoom — typically shows the image at its natural resolution or 2x fit. |
-| `max` | Maximum zoom level. |
+| `max`       | Maximum zoom level.                                                          |
 
 Double-click or double-tap toggles between `fit` and `secondary`. Pinch and mouse wheel allow continuous zooming up to `max`.
 

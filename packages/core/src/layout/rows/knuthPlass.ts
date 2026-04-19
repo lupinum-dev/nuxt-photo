@@ -16,7 +16,11 @@ export function findRowBreaks(
   const N = photos.length
   if (N === 0) return undefined
 
-  const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
+  const limitNodeSearch = findIdealNodeSearch(
+    photos,
+    targetRowHeight,
+    containerWidth,
+  )
 
   const minCost = new Float64Array(N + 1).fill(Infinity)
   const pointers = new Int32Array(N + 1).fill(0)
@@ -25,7 +29,15 @@ export function findRowBreaks(
   for (let i = 1; i <= N; i++) {
     const start = Math.max(0, i - limitNodeSearch)
     for (let j = i - 1; j >= start; j--) {
-      const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
+      const currentCost = cost(
+        photos,
+        j,
+        i,
+        containerWidth,
+        targetRowHeight,
+        spacing,
+        padding,
+      )
       if (currentCost === undefined) continue
 
       const totalCost = minCost[j]! + currentCost

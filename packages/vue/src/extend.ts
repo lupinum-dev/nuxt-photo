@@ -12,7 +12,10 @@
  */
 
 // Full engine composable
-export { useLightboxContext, type LightboxTransitionOption } from './composables/useLightboxContext'
+export {
+  useLightboxContext,
+  type LightboxTransitionOption,
+} from './composables/useLightboxContext'
 
 // Typed inject helper — use inside primitive components instead of raw inject()
 export { useLightboxInject } from './composables/useLightboxInject'
@@ -41,4 +44,3 @@ export {
 
 // Slot prop types
 export * from './types'
-

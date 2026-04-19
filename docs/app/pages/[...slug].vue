@@ -1,8 +1,19 @@
 <script setup lang="ts">
+import {
+  createError,
+  queryCollection,
+  useAsyncData,
+  useRoute,
+  useSeoMeta,
+} from '#imports'
+
 const route = useRoute()
-const { data: page } = await useAsyncData(() => route.path.replace(/\//g, '-'), () => {
-  return queryCollection('pages').path(route.path).first()
-})
+const { data: page } = await useAsyncData(
+  () => route.path.replace(/\//g, '-'),
+  () => {
+    return queryCollection('pages').path(route.path).first()
+  },
+)
 
 if (!page.value) {
   throw createError({ statusMessage: 'Page not found', statusCode: 404 })

@@ -27,18 +27,21 @@ import {
 import { photoId, type PhotoItem, type PhotoAdapter } from '@nuxt-photo/core'
 import InternalLightbox from './InternalLightbox.vue'
 
-const props = withDefaults(defineProps<{
-  /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
-  photos?: PhotoItem[] | any[]
-  /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-  itemAdapter?: PhotoAdapter
-  /** Lightbox to render: true = default, false = none, Component = custom */
-  lightbox?: boolean | Component
-  /** Transition mode for open/close animations */
-  transition?: LightboxTransitionOption
-}>(), {
-  lightbox: true,
-})
+const props = withDefaults(
+  defineProps<{
+    /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
+    photos?: PhotoItem[] | any[]
+    /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
+    itemAdapter?: PhotoAdapter
+    /** Lightbox to render: true = default, false = none, Component = custom */
+    lightbox?: boolean | Component
+    /** Transition mode for open/close animations */
+    transition?: LightboxTransitionOption
+  }>(),
+  {
+    lightbox: true,
+  },
+)
 
 // Global lightbox override (set via provide(LightboxComponentKey, MyLightbox) in app.vue)
 const injectedLightbox = inject(LightboxComponentKey, null)
@@ -54,20 +57,32 @@ const registrationMap = new Map<symbol, Registration>()
 const registrationVersion = ref(0)
 
 // 'explicit' when :photos prop is provided; 'auto' when collecting from children
-const groupMode = computed<'auto' | 'explicit'>(() => props.photos !== undefined ? 'explicit' : 'auto')
+const groupMode = computed<'auto' | 'explicit'>(() =>
+  props.photos !== undefined ? 'explicit' : 'auto',
+)
 
-function register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null) {
-  if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
+function register(
+  id: symbol,
+  photo: PhotoItem,
+  getThumbEl: () => HTMLElement | null,
+  renderSlide?: LightboxSlideRenderer | null,
+) {
+  if (
+    (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
+      ?.NODE_ENV !== 'production'
+  ) {
     if (props.photos !== undefined) {
       console.warn(
-        '[nuxt-photo] PhotoGroup has both a :photos prop and child <Photo> registrations. '
-        + 'The :photos prop takes precedence; child registrations are ignored. '
-        + 'Remove :photos to use auto-collection, or remove child <Photo> components.',
+        '[nuxt-photo] PhotoGroup has both a :photos prop and child <Photo> registrations. ' +
+          'The :photos prop takes precedence; child registrations are ignored. ' +
+          'Remove :photos to use auto-collection, or remove child <Photo> components.',
       )
     }
     for (const [existingId, entry] of registrationMap) {
       if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
-        console.warn(`[nuxt-photo] Duplicate photo id "${photo.id}" registered in PhotoGroup`)
+        console.warn(
+          `[nuxt-photo] Duplicate photo id "${photo.id}" registered in PhotoGroup`,
+        )
       }
     }
   }
@@ -84,15 +99,17 @@ function unregister(id: symbol) {
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
   if (props.photos !== undefined) {
-    return props.itemAdapter ? props.photos.map(props.itemAdapter) : props.photos as PhotoItem[]
+    return props.itemAdapter
+      ? props.photos.map(props.itemAdapter)
+      : (props.photos as PhotoItem[])
   }
-  return Array.from(registrationMap.values()).map(r => r.photo)
+  return Array.from(registrationMap.values()).map((r) => r.photo)
 })
 
 // Full lightbox context — creates and provides to children
 const ctx = useLightboxProvider(collectedPhotos, {
   transition: props.transition,
-  resolveSlide: photo => {
+  resolveSlide: (photo) => {
     for (const entry of registrationMap.values()) {
       if (photoId(entry.photo) === photoId(photo)) {
         return entry.renderSlide ?? null
@@ -124,26 +141,30 @@ async function open(index = 0) {
 }
 
 async function openPhoto(photo: PhotoItem) {
-  const index = collectedPhotos.value.findIndex(p => photoId(p) === photoId(photo))
+  const index = collectedPhotos.value.findIndex(
+    (p) => photoId(p) === photoId(photo),
+  )
   await open(index >= 0 ? index : 0)
 }
 
 async function openById(id: string | number) {
-  const index = collectedPhotos.value.findIndex(photo => photoId(photo) === String(id))
+  const index = collectedPhotos.value.findIndex(
+    (photo) => photoId(photo) === String(id),
+  )
   await open(index >= 0 ? index : 0)
 }
 
 function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
   const photos = collectedPhotos.value
-  const index = typeof photoOrIndex === 'number'
-    ? photoOrIndex
-    : typeof maybeIndex === 'number'
-      ? maybeIndex
-      : photos.findIndex(photo => photoId(photo) === photoId(photoOrIndex))
+  const index =
+    typeof photoOrIndex === 'number'
+      ? photoOrIndex
+      : typeof maybeIndex === 'number'
+        ? maybeIndex
+        : photos.findIndex((photo) => photoId(photo) === photoId(photoOrIndex))
   const safeIndex = index >= 0 ? index : 0
-  const photo = typeof photoOrIndex === 'number'
-    ? photos[safeIndex]
-    : photoOrIndex
+  const photo =
+    typeof photoOrIndex === 'number' ? photos[safeIndex] : photoOrIndex
 
   return {
     ref: ctx.setThumbRef(safeIndex),
@@ -185,9 +206,12 @@ provide(PhotoGroupContextKey, groupContext)
 const parentSlots = useSlots()
 const slotOverrides = computed<LightboxSlotOverrides>(() => {
   const overrides: LightboxSlotOverrides = {}
-  if (parentSlots.toolbar) overrides.toolbar = parentSlots.toolbar as LightboxSlotOverrides['toolbar']
-  if (parentSlots.caption) overrides.caption = parentSlots.caption as LightboxSlotOverrides['caption']
-  if (parentSlots.slide) overrides.slide = parentSlots.slide as LightboxSlotOverrides['slide']
+  if (parentSlots.toolbar)
+    overrides.toolbar = parentSlots.toolbar as LightboxSlotOverrides['toolbar']
+  if (parentSlots.caption)
+    overrides.caption = parentSlots.caption as LightboxSlotOverrides['caption']
+  if (parentSlots.slide)
+    overrides.slide = parentSlots.slide as LightboxSlotOverrides['slide']
   return overrides
 })
 provide(LightboxSlotsKey, slotOverrides)

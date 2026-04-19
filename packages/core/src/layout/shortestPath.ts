@@ -33,9 +33,9 @@ function computeShortestPath<T>(
         const newWeight = accWeight + weight
         const nextPath = paths[length + 1]
         if (
-          nextPath === undefined
-          || (nextPath.weight > newWeight
-            && (nextPath.weight / newWeight > 1.0001 || node < nextPath.node))
+          nextPath === undefined ||
+          (nextPath.weight > newWeight &&
+            (nextPath.weight / newWeight > 1.0001 || node < nextPath.node))
         ) {
           paths[length + 1] = { node, weight: newWeight }
         }

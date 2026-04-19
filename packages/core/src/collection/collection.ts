@@ -13,7 +13,9 @@ export interface Collection<T extends CollectionItem> {
   preloadCandidates(currentIndex: number, range?: number): T[]
 }
 
-export function createCollection<T extends CollectionItem>(items: readonly T[]): Collection<T> {
+export function createCollection<T extends CollectionItem>(
+  items: readonly T[],
+): Collection<T> {
   const idToIndex = new Map<string | number, number>()
   for (let i = 0; i < items.length; i++) {
     idToIndex.set(items[i]!.id, i)
@@ -54,7 +56,8 @@ export function createCollection<T extends CollectionItem>(items: readonly T[]):
         const nextIdx = getLoopedIndex(currentIndex + offset, items.length)
         const prevIdx = getLoopedIndex(currentIndex - offset, items.length)
         if (items[nextIdx]) candidates.push(items[nextIdx])
-        if (prevIdx !== nextIdx && items[prevIdx]) candidates.push(items[prevIdx])
+        if (prevIdx !== nextIdx && items[prevIdx])
+          candidates.push(items[prevIdx])
       }
       return candidates
     },

@@ -66,13 +66,21 @@ for (let i = 1; i <= N; i++) {
   // Only look back K positions — no row can have more than K photos
   const start = Math.max(0, i - limitNodeSearch)
   for (let j = i - 1; j >= start; j--) {
-    const rowCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
+    const rowCost = cost(
+      photos,
+      j,
+      i,
+      containerWidth,
+      targetRowHeight,
+      spacing,
+      padding,
+    )
     if (rowCost === undefined) continue
 
     const totalCost = minCost[j] + rowCost
     if (totalCost < minCost[i]) {
       minCost[i] = totalCost
-      pointers[i] = j  // "row ending at i starts at j"
+      pointers[i] = j // "row ending at i starts at j"
     }
   }
 }
@@ -94,11 +102,11 @@ path.reverse()
 
 ### Complexity
 
-| | Time | Space |
-|---|---|---|
-| Knuth-Plass DP | O(N·K) | O(N) — two typed arrays |
+|                 | Time         | Space                           |
+| --------------- | ------------ | ------------------------------- |
+| Knuth-Plass DP  | O(N·K)       | O(N) — two typed arrays         |
 | Dijkstra + heap | O(N·K·log N) | O(N) — but heap-allocated nodes |
-| Greedy | O(N) | O(1) |
+| Greedy          | O(N)         | O(1)                            |
 
 For 100 photos with K≈10, the DP does ~1,000 iterations. For 1,000 photos, ~10,000. Both are sub-millisecond.
 
@@ -111,6 +119,7 @@ The columns layout solves a different problem: given N photos and C columns, ass
 ### The Model
 
 This is modeled as a path problem. Given a graph where:
+
 - Node 0 represents the start (before the first photo)
 - Node N represents the end (after the last photo)
 - An edge from node `j` to node `i` means "photos[j..i-1] form one column"
@@ -127,11 +136,11 @@ Unlike rows (where the number of rows is variable), columns requires exactly C c
 The ideal column height assumes photos are distributed perfectly evenly:
 
 ```ts
-const targetColumnHeight = (
-  items.reduce((acc, item) => acc + columnWidth / ratio(item), 0)
-  + spacing * (N - columns)
-  + 2 * padding * N
-) / columns
+const targetColumnHeight =
+  (items.reduce((acc, item) => acc + columnWidth / ratio(item), 0) +
+    spacing * (N - columns) +
+    2 * padding * N) /
+  columns
 ```
 
 ### The Graph
@@ -169,7 +178,7 @@ The algorithm fills a 2D distance matrix indexed by `(node, pathLength)`. At eac
 // matrix[node][length] = { previousNode, accumulatedWeight }
 // We need exactly C edges from node 0 to node N
 
-const matrix = new Map()  // node → array of { node, weight } indexed by path length
+const matrix = new Map() // node → array of { node, weight } indexed by path length
 const queue = new Set([startNode])
 
 for (let length = 0; length < C; length++) {
@@ -177,7 +186,7 @@ for (let length = 0; length < C; length++) {
   queue.clear()
 
   for (const node of currentQueue) {
-    const accWeight = length > 0 ? matrix.get(node)?.[length]?.weight ?? 0 : 0
+    const accWeight = length > 0 ? (matrix.get(node)?.[length]?.weight ?? 0) : 0
 
     for (const { neighbor, weight } of getColumnNeighbors(node)) {
       const newWeight = accWeight + weight
@@ -210,7 +219,7 @@ This is essentially a layer-by-layer BFS through a DAG, where each layer represe
 
 ### Why Not Reuse the Rows DP?
 
-The rows DP doesn't constrain the number of groups — it finds the best partition into *any* number of rows. For columns, we need exactly C groups. The fixed-length shortest-path approach handles this naturally by tracking the path length dimension.
+The rows DP doesn't constrain the number of groups — it finds the best partition into _any_ number of rows. For columns, we need exactly C groups. The fixed-length shortest-path approach handles this naturally by tracking the path length dimension.
 
 ---
 
@@ -223,8 +232,9 @@ The masonry layout uses a two-phase approach.
 Classic masonry — iterate through photos in order, place each in the shortest column:
 
 ```ts
-const columnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
-const photoHeights = photos.map(p => columnWidth / (p.width / p.height))
+const columnWidth =
+  (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+const photoHeights = photos.map((p) => columnWidth / (p.width / p.height))
 
 const colItems: number[][] = Array.from({ length: columns }, () => [])
 const colHeights: number[] = new Array(columns).fill(0)
@@ -258,14 +268,15 @@ while (improved && iterations < 50) {
   iterations++
 
   // Find tallest and shortest columns
-  let tallest = 0, shortest = 0
+  let tallest = 0,
+    shortest = 0
   for (let c = 1; c < columns; c++) {
     if (colHeights[c] > colHeights[tallest]) tallest = c
     if (colHeights[c] < colHeights[shortest]) shortest = c
   }
 
   const currentDelta = colHeights[tallest] - colHeights[shortest]
-  if (currentDelta <= 2) break  // close enough
+  if (currentDelta <= 2) break // close enough
 
   let bestMove = null
   let bestReduction = 0
@@ -277,7 +288,13 @@ while (improved && iterations < 50) {
     // Simulate: what would the new max-min delta be?
     const newTallestH = colHeights[tallest] - h
     const newShortestH = colHeights[shortest] + h
-    const newDelta = recomputeMaxMinDelta(newTallestH, newShortestH, colHeights, tallest, shortest)
+    const newDelta = recomputeMaxMinDelta(
+      newTallestH,
+      newShortestH,
+      colHeights,
+      tallest,
+      shortest,
+    )
     const reduction = currentDelta - newDelta
     if (reduction > bestReduction) {
       bestReduction = reduction
@@ -290,7 +307,7 @@ while (improved && iterations < 50) {
     for (let j = 0; j < colItems[shortest].length; j++) {
       const hTall = photoHeights[colItems[tallest][i]] + spacing
       const hShort = photoHeights[colItems[shortest][j]] + spacing
-      if (hTall <= hShort) continue  // only swap if it helps
+      if (hTall <= hShort) continue // only swap if it helps
       // Simulate the swap and check the new delta...
       const reduction = currentDelta - newDelta
       if (reduction > bestReduction) {
@@ -335,8 +352,8 @@ An optimal masonry layout (minimizing max column height) is NP-hard — it reduc
 
 ## Summary Table
 
-| Layout | Algorithm | Complexity | Optimality | Key property |
-|---|---|---|---|---|
-| **Rows** | Knuth-Plass DP | O(N·K) | Globally optimal | Every row is close to target height |
-| **Columns** | Shortest path (length C) | O(C·N·K) | Globally optimal | Balanced column heights |
-| **Masonry** | Greedy + local search | O(N·C) | Approximate | Shortest-column first, then balance |
+| Layout      | Algorithm                | Complexity | Optimality       | Key property                        |
+| ----------- | ------------------------ | ---------- | ---------------- | ----------------------------------- |
+| **Rows**    | Knuth-Plass DP           | O(N·K)     | Globally optimal | Every row is close to target height |
+| **Columns** | Shortest path (length C) | O(C·N·K)   | Globally optimal | Balanced column heights             |
+| **Masonry** | Greedy + local search    | O(N·C)     | Approximate      | Shortest-column first, then balance |

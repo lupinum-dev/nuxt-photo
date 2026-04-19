@@ -1,9 +1,25 @@
 <template>
-  <LightboxRoot class="fixed inset-0 z-50 flex flex-col" role="dialog" aria-modal="true">
+  <LightboxRoot
+    class="fixed inset-0 z-50 flex flex-col"
+    role="dialog"
+    aria-modal="true"
+  >
     <LightboxOverlay class="absolute inset-0 bg-black/90" />
 
     <div class="relative z-10 flex flex-1 flex-col">
-      <LightboxControls v-slot="{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
+      <LightboxControls
+        v-slot="{
+          activeIndex,
+          count,
+          prev,
+          next,
+          close,
+          toggleZoom,
+          isZoomedIn,
+          zoomAllowed,
+          controlsDisabled,
+        }"
+      >
         <div class="flex items-center justify-between px-5 py-3">
           <span class="text-sm tabular-nums text-white/50">
             {{ activeIndex + 1 }} / {{ count }}
@@ -46,9 +62,18 @@
         </div>
       </LightboxControls>
 
-      <div class="flex flex-1 flex-col items-center justify-center overflow-hidden">
-        <LightboxViewport v-slot="{ photos, viewportRef, mediaOpacity }" class="w-full flex-1">
-          <div class="h-full" :ref="viewportRef" :style="{ opacity: mediaOpacity }">
+      <div
+        class="flex flex-1 flex-col items-center justify-center overflow-hidden"
+      >
+        <LightboxViewport
+          v-slot="{ photos, viewportRef, mediaOpacity }"
+          class="w-full flex-1"
+        >
+          <div
+            class="h-full"
+            :ref="viewportRef"
+            :style="{ opacity: mediaOpacity }"
+          >
             <div class="flex h-full">
               <LightboxSlide
                 v-for="(photo, i) in photos"

@@ -11,13 +11,15 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub"
   },
   "devDependencies": {
-    "unbuild": "^3.5.0",
-    "typescript": "^5.9.2"
+    "typescript": "5.9.3",
+    "unbuild": "^3.5.0"
   }
 }

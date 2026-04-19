@@ -11,7 +11,12 @@ import {
   type PhotoItem,
   type RectLike,
 } from '@nuxt-photo/core'
-import { closeDurationMs, fadeDurationMs, type CloseCallbacks, type GhostState } from './types'
+import {
+  closeDurationMs,
+  fadeDurationMs,
+  type CloseCallbacks,
+  type GhostState,
+} from './types'
 import { resetCloseState } from './state'
 
 const MAX_ANIMATION_MS = 2000
@@ -23,7 +28,11 @@ async function doInstantClose(s: GhostState) {
   s.overlayOpacity.value = 0
 }
 
-async function doFadeClose(s: GhostState, photo: PhotoItem, frameRect: RectLike | null) {
+async function doFadeClose(
+  s: GhostState,
+  photo: PhotoItem,
+  frameRect: RectLike | null,
+) {
   const fadeCloseDuration = 300
   const backdropDelayRatio = 0.2
 
@@ -32,7 +41,10 @@ async function doFadeClose(s: GhostState, photo: PhotoItem, frameRect: RectLike 
   s.disableBackdropTransition.value = true
 
   if (frameRect) {
-    s.debug?.log('transitions', `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`)
+    s.debug?.log(
+      'transitions',
+      `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`,
+    )
 
     s.ghostSrc.value = photo.src
     s.ghostVisible.value = true
@@ -55,24 +67,42 @@ async function doFadeClose(s: GhostState, photo: PhotoItem, frameRect: RectLike 
 
     const overlayStart = s.overlayOpacity.value
 
-    await animateNumber(0, 1, fadeCloseDuration, (t) => {
-      const sc = 1 - 0.12 * t
-      s.ghostStyle.value = {
-        ...s.ghostStyle.value,
-        transform: `scale(${sc})`,
-        opacity: String(1 - t),
-      }
+    await animateNumber(
+      0,
+      1,
+      fadeCloseDuration,
+      (t) => {
+        const sc = 1 - 0.12 * t
+        s.ghostStyle.value = {
+          ...s.ghostStyle.value,
+          transform: `scale(${sc})`,
+          opacity: String(1 - t),
+        }
 
-      const backdropT = Math.max(0, (t - backdropDelayRatio) / (1 - backdropDelayRatio))
-      s.overlayOpacity.value = overlayStart * (1 - backdropT)
-    }, easeOutCubic)
+        const backdropT = Math.max(
+          0,
+          (t - backdropDelayRatio) / (1 - backdropDelayRatio),
+        )
+        s.overlayOpacity.value = overlayStart * (1 - backdropT)
+      },
+      easeOutCubic,
+    )
   } else {
-    s.debug?.log('transitions', 'close FADE: no frame rect, simple overlay fade')
+    s.debug?.log(
+      'transitions',
+      'close FADE: no frame rect, simple overlay fade',
+    )
     s.mediaOpacity.value = 0
 
-    await animateNumber(s.overlayOpacity.value, 0, fadeDurationMs, (v) => {
-      s.overlayOpacity.value = v
-    }, easeOutCubic)
+    await animateNumber(
+      s.overlayOpacity.value,
+      0,
+      fadeDurationMs,
+      (v) => {
+        s.overlayOpacity.value = v
+      },
+      easeOutCubic,
+    )
   }
 
   s.debug?.log('transitions', 'close FADE: animation complete')
@@ -96,22 +126,36 @@ async function doFlipClose(
   s.ghostSrc.value = photo.src
   s.debug?.log('transitions', `close FLIP: ghostSrc=${photo.src}`)
 
-  const adjustedFromRect: RectLike = (dragOffsetY !== 0 || dragScale !== 1)
-    ? {
-        left: fromRect.left + (fromRect.width * (1 - dragScale)) / 2,
-        top: fromRect.top + dragOffsetY + (fromRect.height * (1 - dragScale)) / 2,
-        width: fromRect.width * dragScale,
-        height: fromRect.height * dragScale,
-      }
-    : fromRect
+  const adjustedFromRect: RectLike =
+    dragOffsetY !== 0 || dragScale !== 1
+      ? {
+          left: fromRect.left + (fromRect.width * (1 - dragScale)) / 2,
+          top:
+            fromRect.top +
+            dragOffsetY +
+            (fromRect.height * (1 - dragScale)) / 2,
+          width: fromRect.width * dragScale,
+          height: fromRect.height * dragScale,
+        }
+      : fromRect
 
   if (dragOffsetY !== 0 || dragScale !== 1) {
-    s.debug?.log('transitions', `close FLIP: drag-adjusted fromRect — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`, adjustedFromRect)
+    s.debug?.log(
+      'transitions',
+      `close FLIP: drag-adjusted fromRect — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`,
+      adjustedFromRect,
+    )
   }
 
   const initialTransform = flipTransform(adjustedFromRect, toRect)
-  s.debug?.log('transitions', `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`)
-  s.debug?.log('transitions', `close FLIP: initial transform: ${initialTransform}`)
+  s.debug?.log(
+    'transitions',
+    `close FLIP: ghost base at thumbnail ${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`,
+  )
+  s.debug?.log(
+    'transitions',
+    `close FLIP: initial transform: ${initialTransform}`,
+  )
 
   s.ghostVisible.value = true
   s.ghostStyle.value = {
@@ -123,19 +167,24 @@ async function doFlipClose(
     willChange: 'transform',
     borderRadius: '24px',
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
-    transition:
-      `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    transition: `transform ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${closeDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     ...makeGhostBaseStyle(toRect),
     transform: initialTransform,
   }
 
-  s.debug?.log('transitions', 'close FLIP: ghost visible, waiting for next frame')
+  s.debug?.log(
+    'transitions',
+    'close FLIP: ghost visible, waiting for next frame',
+  )
   await nextFrame()
 
   s.mediaOpacity.value = 0
   await nextFrame()
 
-  s.debug?.log('transitions', 'close FLIP: animating to identity (thumbnail position)')
+  s.debug?.log(
+    'transitions',
+    'close FLIP: animating to identity (thumbnail position)',
+  )
   s.overlayOpacity.value = 0
   s.ghostStyle.value = {
     ...s.ghostStyle.value,
@@ -154,7 +203,10 @@ async function doFlipClose(
   }
   await wait(180)
 
-  s.debug?.log('transitions', `close FLIP: animation complete (${closeDurationMs}ms)`)
+  s.debug?.log(
+    'transitions',
+    `close FLIP: animation complete (${closeDurationMs}ms)`,
+  )
 }
 
 export function createCloseTransition(s: GhostState) {
@@ -171,7 +223,10 @@ export function createCloseTransition(s: GhostState) {
     clearAnimationGuard()
     animationGuardId = setTimeout(() => {
       if (s.animating.value) {
-        s.debug?.warn('transitions', `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`)
+        s.debug?.warn(
+          'transitions',
+          `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`,
+        )
         resetCloseState(s, clearAnimationGuard)
       }
     }, MAX_ANIMATION_MS)
@@ -179,12 +234,18 @@ export function createCloseTransition(s: GhostState) {
 
   async function close(callbacks: CloseCallbacks) {
     if (!s.lightboxMounted.value || s.animating.value) {
-      s.debug?.warn('transitions', `close: BLOCKED — lightboxMounted=${s.lightboxMounted.value} animating=${s.animating.value}`)
+      s.debug?.warn(
+        'transitions',
+        `close: BLOCKED — lightboxMounted=${s.lightboxMounted.value} animating=${s.animating.value}`,
+      )
       return
     }
 
     s.debug?.group('transitions', `close(activeIndex=${s.activeIndex.value})`)
-    s.debug?.log('transitions', `close: pre-state — isZoomedIn=${callbacks.isZoomedIn.value} closeDragY=${s.closeDragY.value.toFixed(1)} ghostVisible=${s.ghostVisible.value} mediaOpacity=${s.mediaOpacity.value.toFixed(2)}`)
+    s.debug?.log(
+      'transitions',
+      `close: pre-state — isZoomedIn=${callbacks.isZoomedIn.value} closeDragY=${s.closeDragY.value.toFixed(1)} ghostVisible=${s.ghostVisible.value} mediaOpacity=${s.mediaOpacity.value.toFixed(2)}`,
+    )
 
     startAnimationGuard()
 
@@ -194,7 +255,10 @@ export function createCloseTransition(s: GhostState) {
     const dragOffsetY = s.closeDragY.value
     const dragScale = 1 - s.closeDragRatio.value * 0.05
     if (dragOffsetY !== 0) {
-      s.debug?.log('transitions', `close: captured drag state — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`)
+      s.debug?.log(
+        'transitions',
+        `close: captured drag state — dragY=${dragOffsetY.toFixed(1)} dragScale=${dragScale.toFixed(3)}`,
+      )
     }
 
     if (callbacks.isZoomedIn.value) {
@@ -210,15 +274,28 @@ export function createCloseTransition(s: GhostState) {
 
     try {
       const fromRect = s.getAbsoluteFrameRect(photo)
-      s.debug?.log('transitions', 'close: fromRect (lightbox frame)',
-        fromRect ? `${fromRect.width.toFixed(0)}x${fromRect.height.toFixed(0)} @ (${fromRect.left.toFixed(0)},${fromRect.top.toFixed(0)})` : 'NULL')
+      s.debug?.log(
+        'transitions',
+        'close: fromRect (lightbox frame)',
+        fromRect
+          ? `${fromRect.width.toFixed(0)}x${fromRect.height.toFixed(0)} @ (${fromRect.left.toFixed(0)},${fromRect.top.toFixed(0)})`
+          : 'NULL',
+      )
 
       const thumbEl = s.thumbRefs.get(s.activeIndex.value)
-      s.debug?.log('transitions', `close: thumbRef lookup index=${s.activeIndex.value} found=${!!thumbEl} registeredRefs=[${[...s.thumbRefs.keys()].join(',')}]`)
+      s.debug?.log(
+        'transitions',
+        `close: thumbRef lookup index=${s.activeIndex.value} found=${!!thumbEl} registeredRefs=[${[...s.thumbRefs.keys()].join(',')}]`,
+      )
 
       const toRect = thumbEl?.getBoundingClientRect() ?? null
-      s.debug?.log('transitions', 'close: toRect (thumbnail)',
-        toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})` : 'NULL')
+      s.debug?.log(
+        'transitions',
+        'close: toRect (thumbnail)',
+        toRect
+          ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} @ (${toRect.left.toFixed(0)},${toRect.top.toFixed(0)})`
+          : 'NULL',
+      )
 
       let plan = planCloseTransition({
         fromRect,
@@ -228,10 +305,16 @@ export function createCloseTransition(s: GhostState) {
         debug: s.debug,
       })
 
-      s.debug?.log('transitions', `close: plan=${plan.mode} reason=${plan.reason}`)
+      s.debug?.log(
+        'transitions',
+        `close: plan=${plan.mode} reason=${plan.reason}`,
+      )
 
       if (plan.reason === 'thumb-off-screen' && thumbEl) {
-        s.debug?.log('transitions', 'close: thumbnail off-screen, attempting scrollIntoView recovery')
+        s.debug?.log(
+          'transitions',
+          'close: thumbnail off-screen, attempting scrollIntoView recovery',
+        )
         try {
           thumbEl.scrollIntoView({ behavior: 'instant', block: 'nearest' })
         } catch {
@@ -240,21 +323,50 @@ export function createCloseTransition(s: GhostState) {
         await nextFrame()
 
         const retriedRect = thumbEl.getBoundingClientRect()
-        s.debug?.log('transitions', 'close: retried toRect after scroll',
-          `${retriedRect.width.toFixed(0)}x${retriedRect.height.toFixed(0)} @ (${retriedRect.left.toFixed(0)},${retriedRect.top.toFixed(0)})`)
+        s.debug?.log(
+          'transitions',
+          'close: retried toRect after scroll',
+          `${retriedRect.width.toFixed(0)}x${retriedRect.height.toFixed(0)} @ (${retriedRect.left.toFixed(0)},${retriedRect.top.toFixed(0)})`,
+        )
 
-        if (isUsableRect(retriedRect) && shouldUseFlip(retriedRect, s.transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 }, s.debug)) {
-          s.debug?.log('transitions', 'close: scroll recovery succeeded → upgrading to FLIP')
-          plan = { mode: 'flip', durationMs: closeDurationMs, fromRect: fromRect!, toRect: retriedRect, reason: 'scrolled-into-view' }
+        if (
+          isUsableRect(retriedRect) &&
+          shouldUseFlip(
+            retriedRect,
+            s.transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 },
+            s.debug,
+          )
+        ) {
+          s.debug?.log(
+            'transitions',
+            'close: scroll recovery succeeded → upgrading to FLIP',
+          )
+          plan = {
+            mode: 'flip',
+            durationMs: closeDurationMs,
+            fromRect: fromRect!,
+            toRect: retriedRect,
+            reason: 'scrolled-into-view',
+          }
         } else {
-          s.debug?.log('transitions', 'close: scroll recovery failed → staying with FADE')
+          s.debug?.log(
+            'transitions',
+            'close: scroll recovery failed → staying with FADE',
+          )
         }
       }
 
       if (plan.mode === 'instant') {
         await doInstantClose(s)
       } else if (plan.mode === 'flip' && plan.fromRect && plan.toRect) {
-        await doFlipClose(s, photo, plan.fromRect, plan.toRect as DOMRect, dragOffsetY, dragScale)
+        await doFlipClose(
+          s,
+          photo,
+          plan.fromRect,
+          plan.toRect as DOMRect,
+          dragOffsetY,
+          dragScale,
+        )
       } else {
         await doFadeClose(s, photo, fromRect)
       }
@@ -277,14 +389,24 @@ export function createCloseTransition(s: GhostState) {
     })
   }
 
-  async function handleCloseGesture(deltaY: number, velocityY: number, closeFn: () => Promise<void>) {
+  async function handleCloseGesture(
+    deltaY: number,
+    velocityY: number,
+    closeFn: () => Promise<void>,
+  ) {
     const threshold = Math.min(180, (s.areaMetrics.value?.height ?? 600) * 0.2)
 
-    s.debug?.log('gestures', `closeGesture: deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)} threshold=${threshold.toFixed(0)}`)
+    s.debug?.log(
+      'gestures',
+      `closeGesture: deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)} threshold=${threshold.toFixed(0)}`,
+    )
 
     if (Math.abs(deltaY) > threshold || Math.abs(velocityY) > 0.55) {
       s.debug?.log('gestures', 'closeGesture: threshold exceeded → closing')
-      s.debug?.log('transitions', `close: triggered by drag gesture — deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)}`)
+      s.debug?.log(
+        'transitions',
+        `close: triggered by drag gesture — deltaY=${deltaY.toFixed(1)} velocityY=${velocityY.toFixed(3)}`,
+      )
       await closeFn()
       return
     }

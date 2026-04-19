@@ -5,8 +5,8 @@
       <h1 class="hero__title">Photo galleries for Nuxt.</h1>
       <p class="hero__lede">
         Click any image. The thumbnail animates into a full lightbox with
-        carousel navigation, pinch-to-zoom, pan gestures, and spring-physics transitions.
-        Auto-imported with an explicit, prefixed module surface.
+        carousel navigation, pinch-to-zoom, pan gestures, and spring-physics
+        transitions. Auto-imported with an explicit, prefixed module surface.
       </p>
     </header>
 

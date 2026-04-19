@@ -60,7 +60,13 @@ describe('SSR', () => {
 
   it('PhotoAlbum with defaultContainerWidth uses JS layout on server (no flex-grow)', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: 'rows',
+          lightbox: false,
+          defaultContainerWidth: 800,
+        }),
     })
 
     const html = await renderToString(app)
@@ -93,7 +99,13 @@ describe('SSR', () => {
 
   it('PhotoAlbum with defaultContainerWidth includes filler span', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, defaultContainerWidth: 800 }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: 'rows',
+          lightbox: false,
+          defaultContainerWidth: 800,
+        }),
     })
 
     const html = await renderToString(app)
@@ -105,7 +117,13 @@ describe('SSR', () => {
   describe('with breakpoints (container query mode)', () => {
     it('emits @container style block with np-item-N rules', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [375, 600, 900] }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: 'rows',
+            lightbox: false,
+            breakpoints: [375, 600, 900],
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('@container')
@@ -117,7 +135,13 @@ describe('SSR', () => {
 
     it('sets container-type: inline-size on the album wrapper', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [600] }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: 'rows',
+            lightbox: false,
+            breakpoints: [600],
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('container-type')
@@ -126,7 +150,13 @@ describe('SSR', () => {
 
     it('renders no inline width on items when only breakpoints is provided', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [600] }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: 'rows',
+            lightbox: false,
+            breakpoints: [600],
+          }),
       })
       const html = await renderToString(app)
       // flex:0 0 auto appears in the @container CSS — but NOT as inline styles on item elements
@@ -136,7 +166,14 @@ describe('SSR', () => {
 
     it('with both breakpoints and defaultContainerWidth renders inline calc() AND container query CSS', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false, breakpoints: [600, 900], defaultContainerWidth: 800 }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: 'rows',
+            lightbox: false,
+            breakpoints: [600, 900],
+            defaultContainerWidth: 800,
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('calc(')
@@ -145,7 +182,13 @@ describe('SSR', () => {
 
     it('columns layout with a single breakpoint emits one snapshot and no @container visibility CSS', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false, breakpoints: [600] }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: { type: 'columns', columns: 3 },
+            lightbox: false,
+            breakpoints: [600],
+          }),
       })
       const html = await renderToString(app)
       // Single-span: no @container visibility rules are generated
@@ -161,12 +204,13 @@ describe('SSR', () => {
   describe('columns/masonry breakpoint-aware SSR', () => {
     it('columns with defaultContainerWidth emits one snapshot with column structure and no flat grid', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: { type: 'columns', columns: 3 },
-          lightbox: false,
-          defaultContainerWidth: 900,
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: { type: 'columns', columns: 3 },
+            lightbox: false,
+            defaultContainerWidth: 900,
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__bp-snapshot')
@@ -174,39 +218,45 @@ describe('SSR', () => {
       // No @container CSS for a single snapshot
       expect(html).not.toContain('@container')
       // No hardcoded approximate-grid fallback
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
+      expect(html).not.toMatch(
+        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
+      )
       expect(html).toContain('ssr-1')
     })
 
     it('masonry with defaultContainerWidth emits one snapshot with column structure', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: { type: 'masonry', columns: 3 },
-          lightbox: false,
-          defaultContainerWidth: 900,
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: { type: 'masonry', columns: 3 },
+            lightbox: false,
+            defaultContainerWidth: 900,
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__bp-snapshot')
       expect(html).toContain('np-album__column')
       expect(html).not.toContain('@container')
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
+      expect(html).not.toMatch(
+        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
+      )
       expect(html).toContain('ssr-1')
     })
 
     it('columns with explicit breakpoints and responsive spacing emits multiple snapshots and @container rules', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: {
-            type: 'columns',
-            columns: responsive({ 0: 1, 800: 3 }),
-          },
-          lightbox: false,
-          breakpoints: [320, 800, 1200],
-          spacing: responsive({ 0: 4, 640: 8, 1200: 16 }),
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: {
+              type: 'columns',
+              columns: responsive({ 0: 1, 800: 3 }),
+            },
+            lightbox: false,
+            breakpoints: [320, 800, 1200],
+            spacing: responsive({ 0: 4, 640: 8, 1200: 16 }),
+          }),
       })
       const html = await renderToString(app)
       const snapshotCount = (html.match(/np-album__bp-snapshot/g) ?? []).length
@@ -216,19 +266,22 @@ describe('SSR', () => {
       expect(html).toContain('[data-bp=bp-0-799]')
       expect(html).toContain('.np-snapshot-')
       expect(html).toContain('container-type')
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
+      expect(html).not.toMatch(
+        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
+      )
     })
 
     it('columns infers breakpoints from responsive columns input (no explicit breakpoints)', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: {
-            type: 'columns',
-            columns: responsive({ 0: 1, 640: 2, 1120: 3 }),
-          },
-          lightbox: false,
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: {
+              type: 'columns',
+              columns: responsive({ 0: 1, 640: 2, 1120: 3 }),
+            },
+            lightbox: false,
+          }),
       })
       const html = await renderToString(app)
       const snapshotCount = (html.match(/np-album__bp-snapshot/g) ?? []).length
@@ -239,12 +292,13 @@ describe('SSR', () => {
 
     it('masonry infers breakpoints from responsive spacing', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: { type: 'masonry', columns: 3 },
-          lightbox: false,
-          spacing: responsive({ 0: 4, 640: 12, 1200: 20 }),
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: { type: 'masonry', columns: 3 },
+            lightbox: false,
+            spacing: responsive({ 0: 4, 640: 12, 1200: 20 }),
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__bp-snapshot')
@@ -253,38 +307,48 @@ describe('SSR', () => {
 
     it('scopes each snapshot visibility stylesheet to its own album root', async () => {
       const app = createSSRApp({
-        render: () => h('div', null, [
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'columns', columns: responsive({ 0: 1, 800: 3 }) },
-            lightbox: false,
-            breakpoints: [320, 800],
-          }),
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'masonry', columns: responsive({ 0: 1, 800: 3 }) },
-            lightbox: false,
-            breakpoints: [320, 800],
-          }),
-        ]),
+        render: () =>
+          h('div', null, [
+            h(PhotoAlbum, {
+              photos,
+              layout: {
+                type: 'columns',
+                columns: responsive({ 0: 1, 800: 3 }),
+              },
+              lightbox: false,
+              breakpoints: [320, 800],
+            }),
+            h(PhotoAlbum, {
+              photos,
+              layout: {
+                type: 'masonry',
+                columns: responsive({ 0: 1, 800: 3 }),
+              },
+              lightbox: false,
+              breakpoints: [320, 800],
+            }),
+          ]),
       })
       const html = await renderToString(app)
-      const snapshotMatches = [...html.matchAll(/np-snapshot-np-[a-z0-9]+/g)].map(match => match[0])
+      const snapshotMatches = [
+        ...html.matchAll(/np-snapshot-np-[a-z0-9]+/g),
+      ].map((match) => match[0])
       expect(new Set(snapshotMatches).size).toBeGreaterThanOrEqual(2)
       expect(html).toMatch(/\.np-snapshot-np-[a-z0-9]+\[data-bp=bp-/)
     })
 
     it('snapshot SSR branch keeps button semantics when lightbox is enabled', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: {
-            type: 'columns',
-            columns: responsive({ 0: 1, 800: 3 }),
-          },
-          lightbox: true,
-          breakpoints: [320, 800],
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: {
+              type: 'columns',
+              columns: responsive({ 0: 1, 800: 3 }),
+            },
+            lightbox: true,
+            breakpoints: [320, 800],
+          }),
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__bp-snapshot')
@@ -294,11 +358,12 @@ describe('SSR', () => {
 
     it('columns without any SSR signal falls back to the approximate flat grid', async () => {
       const app = createSSRApp({
-        render: () => h(PhotoAlbum, {
-          photos,
-          layout: { type: 'columns', columns: 3 },
-          lightbox: false,
-        }),
+        render: () =>
+          h(PhotoAlbum, {
+            photos,
+            layout: { type: 'columns', columns: 3 },
+            lightbox: false,
+          }),
       })
       const html = await renderToString(app)
       // Approximate fallback — no snapshot structure
@@ -310,7 +375,12 @@ describe('SSR', () => {
 
   it('PhotoAlbum SSR columns layout uses CSS grid', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: { type: 'columns', columns: 3 }, lightbox: false }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: { type: 'columns', columns: 3 },
+          lightbox: false,
+        }),
     })
 
     const html = await renderToString(app)
@@ -322,7 +392,12 @@ describe('SSR', () => {
 
   it('PhotoAlbum accepts object-form layout with custom options', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: { type: 'rows', targetRowHeight: 200 }, lightbox: false }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: { type: 'rows', targetRowHeight: 200 },
+          lightbox: false,
+        }),
     })
 
     const html = await renderToString(app)
@@ -335,7 +410,13 @@ describe('SSR', () => {
 
   it('PhotoAlbum accepts top-level targetRowHeight shorthand', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', targetRowHeight: 200, lightbox: false }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: 'rows',
+          targetRowHeight: 200,
+          lightbox: false,
+        }),
     })
 
     const html = await renderToString(app)
@@ -348,7 +429,13 @@ describe('SSR', () => {
 
   it('PhotoAlbum accepts top-level columns shorthand', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'columns', columns: 2, lightbox: false }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: 'columns',
+          columns: 2,
+          lightbox: false,
+        }),
     })
 
     const html = await renderToString(app)
@@ -372,9 +459,11 @@ describe('SSR', () => {
 
   it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoGroup, null, {
-        default: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-      }),
+      render: () =>
+        h(PhotoGroup, null, {
+          default: () =>
+            h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+        }),
     })
 
     const html = await renderToString(app)
@@ -398,22 +487,25 @@ describe('SSR', () => {
 
   it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
     const app = createSSRApp({
-      render: () => h(PhotoAlbum, {
-        photos,
-        layout: {
-          type: 'rows',
-          targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }),
-        },
-        spacing: responsive({ 0: 4, 640: 8 }),
-        lightbox: false,
-      }),
+      render: () =>
+        h(PhotoAlbum, {
+          photos,
+          layout: {
+            type: 'rows',
+            targetRowHeight: responsive({ 0: 180, 640: 240, 1120: 280 }),
+          },
+          spacing: responsive({ 0: 4, 640: 8 }),
+          lightbox: false,
+        }),
     })
 
     const html = await renderToString(app)
 
     expect(html).toContain('@container')
     expect(html).toContain('np-item-0')
-    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
+    expect(html).toContain(
+      'class="np-album__item np-item-0" style="overflow:hidden;"',
+    )
     expect(html).not.toContain('style="flex-grow:1.777')
   })
 })
@@ -425,11 +517,23 @@ describe('computeBreakpointStyles', () => {
   ]
 
   it('returns empty string for empty photos', () => {
-    expect(computeBreakpointStyles({ photos: [], breakpoints: [600], containerName: 'test' })).toBe('')
+    expect(
+      computeBreakpointStyles({
+        photos: [],
+        breakpoints: [600],
+        containerName: 'test',
+      }),
+    ).toBe('')
   })
 
   it('returns empty string for empty breakpoints', () => {
-    expect(computeBreakpointStyles({ photos: twoPhotos, breakpoints: [], containerName: 'test' })).toBe('')
+    expect(
+      computeBreakpointStyles({
+        photos: twoPhotos,
+        breakpoints: [],
+        containerName: 'test',
+      }),
+    ).toBe('')
   })
 
   it('deduplicates identical layouts across adjacent breakpoints', () => {

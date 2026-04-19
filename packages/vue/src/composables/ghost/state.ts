@@ -1,5 +1,17 @@
-import { computed, ref, type ComponentPublicInstance, type ComputedRef, type CSSProperties, type Ref } from 'vue'
-import type { AreaMetrics, DebugLogger, PhotoItem, TransitionModeConfig } from '@nuxt-photo/core'
+import {
+  computed,
+  ref,
+  type ComponentPublicInstance,
+  type ComputedRef,
+  type CSSProperties,
+  type Ref,
+} from 'vue'
+import type {
+  AreaMetrics,
+  DebugLogger,
+  PhotoItem,
+  TransitionModeConfig,
+} from '@nuxt-photo/core'
 import type { GhostState } from './types'
 
 export function createGhostState(
@@ -27,28 +39,46 @@ export function createGhostState(
 
   const closeDragRatio = computed(() => {
     const height = areaMetrics.value?.height || 1
-    return Math.min(0.75, Math.abs(closeDragY.value) / Math.max(240, height * 0.85))
+    return Math.min(
+      0.75,
+      Math.abs(closeDragY.value) / Math.max(240, height * 0.85),
+    )
   })
 
   const thumbRefs = new Map<number, HTMLElement>()
 
   return {
-    lightboxMounted, animating, ghostVisible, ghostSrc, ghostStyle, hiddenThumbIndex,
-    overlayOpacity, mediaOpacity, chromeOpacity, uiVisible,
-    closeDragY, disableBackdropTransition, closeDragRatio,
+    lightboxMounted,
+    animating,
+    ghostVisible,
+    ghostSrc,
+    ghostStyle,
+    hiddenThumbIndex,
+    overlayOpacity,
+    mediaOpacity,
+    chromeOpacity,
+    uiVisible,
+    closeDragY,
+    disableBackdropTransition,
+    closeDragRatio,
     thumbRefs,
-    activeIndex, currentPhoto, areaMetrics, getAbsoluteFrameRect,
-    debug, transitionConfig,
+    activeIndex,
+    currentPhoto,
+    areaMetrics,
+    getAbsoluteFrameRect,
+    debug,
+    transitionConfig,
   }
 }
 
 export function setThumbRef(state: GhostState, index: number) {
   return (value: Element | ComponentPublicInstance | null) => {
-    const el = value instanceof HTMLElement
-      ? value
-      : value && '$el' in value && value.$el instanceof HTMLElement
-        ? value.$el
-        : null
+    const el =
+      value instanceof HTMLElement
+        ? value
+        : value && '$el' in value && value.$el instanceof HTMLElement
+          ? value.$el
+          : null
 
     if (el instanceof HTMLElement) {
       state.thumbRefs.set(index, el)

@@ -31,20 +31,33 @@ export function computeZoomLevels(
   photo?: PhotoItem,
   options?: { minZoom?: number },
 ): ZoomState {
-  const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
-
-  const metaMax = typeof photo?.meta?.maxZoom === 'number' && (photo.meta.maxZoom as number) > 0
-    ? (photo.meta.maxZoom as number)
-    : null
-
-  const minZoom = (typeof photo?.meta?.minZoom === 'number' && (photo.meta.minZoom as number) > 0
-    ? (photo.meta.minZoom as number)
-    : null) ?? options?.minZoom ?? DEFAULT_MIN_ZOOM
-
-  const naturalMax = metaMax ?? Math.max(
-    minZoom,
-    Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
+  const frame = computeFittedFrame(
+    areaWidth,
+    areaHeight,
+    photoWidth,
+    photoHeight,
   )
+
+  const metaMax =
+    typeof photo?.meta?.maxZoom === 'number' &&
+    (photo.meta.maxZoom as number) > 0
+      ? (photo.meta.maxZoom as number)
+      : null
+
+  const minZoom =
+    (typeof photo?.meta?.minZoom === 'number' &&
+    (photo.meta.minZoom as number) > 0
+      ? (photo.meta.minZoom as number)
+      : null) ??
+    options?.minZoom ??
+    DEFAULT_MIN_ZOOM
+
+  const naturalMax =
+    metaMax ??
+    Math.max(
+      minZoom,
+      Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
+    )
   const secondary = Math.min(2, naturalMax)
 
   return {
@@ -66,7 +79,12 @@ export function computePanBounds(
   areaHeight: number,
   zoom: number,
 ): { x: number; y: number } {
-  const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
+  const frame = computeFittedFrame(
+    areaWidth,
+    areaHeight,
+    photoWidth,
+    photoHeight,
+  )
   return {
     x: Math.max(0, (frame.width * zoom - areaWidth) / 2),
     y: Math.max(0, (frame.height * zoom - areaHeight) / 2),
@@ -76,7 +94,10 @@ export function computePanBounds(
 /**
  * Clamp pan position to bounds (hard clamp).
  */
-export function clampPanToBounds(pan: PanState, bounds: { x: number; y: number }): PanState {
+export function clampPanToBounds(
+  pan: PanState,
+  bounds: { x: number; y: number },
+): PanState {
   return {
     x: Math.min(bounds.x, Math.max(-bounds.x, pan.x)),
     y: Math.min(bounds.y, Math.max(-bounds.y, pan.y)),
@@ -86,7 +107,10 @@ export function clampPanToBounds(pan: PanState, bounds: { x: number; y: number }
 /**
  * Clamp pan position to bounds with rubber-band resistance beyond edges.
  */
-export function clampPanWithResistance(pan: PanState, bounds: { x: number; y: number }): PanState {
+export function clampPanWithResistance(
+  pan: PanState,
+  bounds: { x: number; y: number },
+): PanState {
   return {
     x: rubberband(pan.x, -bounds.x, bounds.x),
     y: rubberband(pan.y, -bounds.y, bounds.y),

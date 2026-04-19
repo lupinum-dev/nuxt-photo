@@ -10,12 +10,12 @@ nuxt-photo uses animated transitions when opening and closing the lightbox. The 
 
 ## Transition Modes
 
-| Mode | Description |
-|---|---|
-| `'auto'` | Uses FLIP when the thumbnail is visible above a threshold, fades otherwise. This is the default. |
+| Mode     | Description                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `'auto'` | Uses FLIP when the thumbnail is visible above a threshold, fades otherwise. This is the default.                                      |
 | `'flip'` | Always attempts a FLIP (connected) transition from thumbnail to lightbox. Falls back to fade if the thumbnail rect can't be captured. |
-| `'fade'` | Simple fade-in transition. No thumbnail position tracking. |
-| `'none'` | Instant open/close with no animation. |
+| `'fade'` | Simple fade-in transition. No thumbnail position tracking.                                                                            |
+| `'none'` | Instant open/close with no animation.                                                                                                 |
 
 Set the transition mode on `PhotoAlbum`, `PhotoGroup`, or `useLightboxProvider`:
 
@@ -38,10 +38,10 @@ For fine-grained control, pass an object:
 />
 ```
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `mode` | `TransitionMode` | `'auto'` | The transition mode. |
-| `autoThreshold` | `number` | `0.5` | In `'auto'` mode, the minimum visibility ratio (0–1) of the thumbnail for a FLIP transition. Below this, fade is used instead. |
+| Property        | Type             | Default  | Description                                                                                                                    |
+| --------------- | ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `mode`          | `TransitionMode` | `'auto'` | The transition mode.                                                                                                           |
+| `autoThreshold` | `number`         | `0.5`    | In `'auto'` mode, the minimum visibility ratio (0–1) of the thumbnail for a FLIP transition. Below this, fade is used instead. |
 
 ## How FLIP Transitions Work
 
@@ -58,21 +58,21 @@ The ghost image is rendered by the [`LightboxPortal`](/docs/components/primitive
 
 The system produces an `OpenTransitionPlan` describing the chosen animation:
 
-| Mode | When | Description |
-|---|---|---|
-| `'connected'` | Thumbnail visible, geometry valid | Full FLIP from thumbnail to slide |
-| `'fade'` | Thumbnail not visible or mode is `'fade'` | Fade in the lightbox |
-| `'scale-fade'` | Thumbnail visible but geometry issues | Scale-fade from approximate position |
+| Mode           | When                                      | Description                          |
+| -------------- | ----------------------------------------- | ------------------------------------ |
+| `'connected'`  | Thumbnail visible, geometry valid         | Full FLIP from thumbnail to slide    |
+| `'fade'`       | Thumbnail not visible or mode is `'fade'` | Fade in the lightbox                 |
+| `'scale-fade'` | Thumbnail visible but geometry issues     | Scale-fade from approximate position |
 
 ### Close Transition Plan
 
 On close, the system plans a `CloseTransitionPlan`:
 
-| Mode | When | Description |
-|---|---|---|
-| `'flip'` | Thumbnail ref exists and is visible | Animate back to thumbnail position |
-| `'fade'` | Thumbnail not visible or mode forced | Fade out |
-| `'instant'` | Mode is `'none'` | Immediate close |
+| Mode        | When                                 | Description                        |
+| ----------- | ------------------------------------ | ---------------------------------- |
+| `'flip'`    | Thumbnail ref exists and is visible  | Animate back to thumbnail position |
+| `'fade'`    | Thumbnail not visible or mode forced | Fade out                           |
+| `'instant'` | Mode is `'none'`                     | Immediate close                    |
 
 If the thumbnail has scrolled off-screen during viewing, the system may first scroll it into view before playing the flip animation.
 

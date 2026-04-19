@@ -45,14 +45,23 @@ export function runSpring(
     const dt = Math.min(0.064, (now - lastTime) / 1000)
     lastTime = now
 
-    const result = springStep(spring.value, spring.target, spring.velocity, spring.tension, spring.friction, dt)
+    const result = springStep(
+      spring.value,
+      spring.target,
+      spring.velocity,
+      spring.tension,
+      spring.friction,
+      dt,
+    )
     spring.value = result.value
     spring.velocity = result.velocity
 
     onUpdate(spring.value)
 
     const distance = Math.abs(spring.target - spring.value)
-    const done = distance < positionThreshold && Math.abs(spring.velocity) < velocityThreshold
+    const done =
+      distance < positionThreshold &&
+      Math.abs(spring.velocity) < velocityThreshold
 
     if (done) {
       spring.value = spring.target

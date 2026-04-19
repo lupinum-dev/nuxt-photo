@@ -28,10 +28,22 @@ type GestureConfig = {
   transitionInProgress: ComputedRef<boolean>
 
   panzoomMotion: PanzoomMotion
-  setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
-  startPanzoomSpring: (targetScale: number, targetPan: PanState, options?: { tension?: number; friction?: number }) => void
+  setPanzoomImmediate: (
+    scale: number,
+    pan: PanState,
+    syncRefs?: boolean,
+  ) => void
+  startPanzoomSpring: (
+    targetScale: number,
+    targetPan: PanState,
+    options?: { tension?: number; friction?: number },
+  ) => void
   clampPan: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
-  clampPanWithResistance: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
+  clampPanWithResistance: (
+    pan: PanState,
+    zoom?: number,
+    photo?: PhotoItem,
+  ) => PanState
   applyWheelZoom: (event: WheelEvent) => void
   toggleZoom: (clientPoint?: { x: number; y: number }) => void
   getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }
@@ -41,7 +53,11 @@ type GestureConfig = {
   goTo: (index: number, instant?: boolean) => void
   selectedSnap: () => number
 
-  handleCloseGesture: (deltaY: number, velocityY: number, closeFn: () => Promise<void>) => Promise<void>
+  handleCloseGesture: (
+    deltaY: number,
+    velocityY: number,
+    closeFn: () => Promise<void>,
+  ) => Promise<void>
   close: () => Promise<void>
 }
 
@@ -87,7 +103,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
     if (doubleTap) {
       lastTap = null
-      debug?.log('gestures', 'double-tap → toggleZoom at', { x: clientX, y: clientY })
+      debug?.log('gestures', 'double-tap → toggleZoom at', {
+        x: clientX,
+        y: clientY,
+      })
       config.toggleZoom({ x: clientX, y: clientY })
       return
     }
@@ -100,8 +119,15 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     }, 220)
   }
 
-  function classifyGesture(deltaX: number, deltaY: number, pointerType: string): GestureMode {
-    const bounds = config.getPanBounds(config.currentPhoto.value, config.zoomState.value.current)
+  function classifyGesture(
+    deltaX: number,
+    deltaY: number,
+    pointerType: string,
+  ): GestureMode {
+    const bounds = config.getPanBounds(
+      config.currentPhoto.value,
+      config.zoomState.value.current,
+    )
     return coreClassifyGesture(
       deltaX,
       deltaY,
@@ -162,12 +188,16 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
     pointerSession.lastX = event.clientX
     pointerSession.lastY = event.clientY
-    pointerSession.moved = pointerSession.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
+    pointerSession.moved =
+      pointerSession.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
 
     if (gesturePhase.value === 'idle') {
       const mode = classifyGesture(deltaX, deltaY, pointerSession.pointerType)
       if (mode !== 'idle') {
-        debug?.log('gestures', `classified: ${mode} (deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} pointer=${pointerSession.pointerType})`)
+        debug?.log(
+          'gestures',
+          `classified: ${mode} (deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} pointer=${pointerSession.pointerType})`,
+        )
         gesturePhase.value = mode
 
         if (mode === 'close') {
@@ -235,7 +265,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       event.stopPropagation()
     }
 
-    debug?.log('gestures', `pointerUp: mode=${mode} moved=${session.moved} deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} vX=${velocityX.toFixed(3)} vY=${velocityY.toFixed(3)}`)
+    debug?.log(
+      'gestures',
+      `pointerUp: mode=${mode} moved=${session.moved} deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} vX=${velocityX.toFixed(3)} vY=${velocityY.toFixed(3)}`,
+    )
 
     if (!session.moved || mode === 'idle') {
       handleTap(event.clientX, event.clientY)
@@ -281,7 +314,8 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     if (!config.lightboxMounted.value || config.animating.value) return
 
     const now = performance.now()
-    const isTrackpad = Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
+    const isTrackpad =
+      Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
     const throttleMs = isTrackpad ? 200 : 45
 
     if (now - lastWheelTime < throttleMs) {
@@ -291,7 +325,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
 
     lastWheelTime = now
     event.preventDefault()
-    debug?.log('zoom', `wheel: deltaY=${event.deltaY.toFixed(1)} isTrackpad=${isTrackpad}`)
+    debug?.log(
+      'zoom',
+      `wheel: deltaY=${event.deltaY.toFixed(1)} isTrackpad=${isTrackpad}`,
+    )
     config.applyWheelZoom(event)
   }
 

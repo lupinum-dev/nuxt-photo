@@ -3,14 +3,21 @@
     <div v-if="title" class="code-example__header">
       <span class="code-example__title">{{ title }}</span>
     </div>
-    <Shiki :code="code" :lang="lang || 'vue'" theme="vitesse-dark" class="code-example__block" />
+    <Shiki
+      :code="code"
+      :lang="lang || 'vue'"
+      theme="vitesse-dark"
+      class="code-example__block"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import type { BundledLanguage } from 'shiki'
+
 defineProps<{
   code: string
-  lang?: string
+  lang?: BundledLanguage | 'text'
   title?: string
 }>()
 </script>

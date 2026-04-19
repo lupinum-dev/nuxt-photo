@@ -26,27 +26,42 @@
 
       <div v-if="layout !== 'rows'" class="control-group">
         <label class="control-label">Columns: {{ columns }}</label>
-        <input type="range" :min="2" :max="6" v-model.number="columns" class="control-range" />
+        <input
+          type="range"
+          :min="2"
+          :max="6"
+          v-model.number="columns"
+          class="control-range"
+        />
       </div>
 
       <div v-if="layout === 'rows'" class="control-group">
         <label class="control-label">Row height: {{ targetRowHeight }}px</label>
-        <input type="range" :min="120" :max="500" :step="10" v-model.number="targetRowHeight" class="control-range" />
+        <input
+          type="range"
+          :min="120"
+          :max="500"
+          :step="10"
+          v-model.number="targetRowHeight"
+          class="control-range"
+        />
       </div>
 
       <div class="control-group">
         <label class="control-label">Spacing: {{ spacing }}px</label>
-        <input type="range" :min="0" :max="24" v-model.number="spacing" class="control-range" />
+        <input
+          type="range"
+          :min="0"
+          :max="24"
+          v-model.number="spacing"
+          class="control-range"
+        />
       </div>
     </div>
 
     <!-- PhotoAlbum handles the lightbox automatically — no manual wiring needed -->
     <div class="album-section">
-      <PhotoAlbum
-        :photos="photos"
-        :layout="albumLayout"
-        :spacing="spacing"
-      />
+      <PhotoAlbum :photos="photos" :layout="albumLayout" :spacing="spacing" />
     </div>
 
     <div class="code-section">
@@ -71,10 +86,15 @@ const targetRowHeight = ref(280)
 
 const albumLayout = computed<AlbumLayout>(() => {
   switch (layout.value) {
-    case 'rows': return { type: 'rows', targetRowHeight: targetRowHeight.value }
-    case 'columns': return { type: 'columns', columns: columns.value }
-    case 'masonry': return { type: 'masonry', columns: columns.value }
+    case 'rows':
+      return { type: 'rows', targetRowHeight: targetRowHeight.value }
+    case 'columns':
+      return { type: 'columns', columns: columns.value }
+    case 'masonry':
+      return { type: 'masonry', columns: columns.value }
   }
+
+  return { type: 'rows', targetRowHeight: targetRowHeight.value }
 })
 
 const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
@@ -167,7 +187,9 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
   color: rgba(237, 232, 227, 0.5);
   background: transparent;
   cursor: pointer;
-  transition: color 200ms ease, border-color 200ms ease;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
   text-transform: capitalize;
 }
 

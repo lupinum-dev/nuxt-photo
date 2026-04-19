@@ -6,5 +6,9 @@ import { requireInjection } from '../internal/requireInjection'
  * Throws a descriptive error if no lightbox context is available.
  */
 export function useLightboxInject(componentName: string): LightboxContext {
-  return requireInjection(LightboxContextKey, componentName, 'an active lightbox context')
+  return requireInjection(
+    LightboxContextKey,
+    componentName,
+    'an active lightbox context',
+  )
 }

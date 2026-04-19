@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test('headless playground wiring works through useLightbox', async ({ page }) => {
+test('headless playground wiring works through useLightbox', async ({
+  page,
+}) => {
   await page.goto('/headless')
 
   await page.locator('.hex-grid__item').first().click()

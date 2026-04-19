@@ -16,7 +16,7 @@ function useContainerWidth(
   options?: {
     defaultContainerWidth?: number
     breakpoints?: readonly number[]
-  }
+  },
 ): {
   containerWidth: Ref<number>
 }
@@ -24,23 +24,23 @@ function useContainerWidth(
 
 ## Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
-| `containerRef` | `Ref<HTMLElement \| null>` | Ref to the DOM element to observe. |
-| `options.defaultContainerWidth` | `number` | Pre-render width for SSR. The composable uses this value before mount so the layout can run server-side. |
-| `options.breakpoints` | `readonly number[]` | Snap the observed width to the largest breakpoint ≤ actual width. Prevents re-layout on sub-pixel changes. |
+| Parameter                       | Type                       | Description                                                                                                |
+| ------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `containerRef`                  | `Ref<HTMLElement \| null>` | Ref to the DOM element to observe.                                                                         |
+| `options.defaultContainerWidth` | `number`                   | Pre-render width for SSR. The composable uses this value before mount so the layout can run server-side.   |
+| `options.breakpoints`           | `readonly number[]`        | Snap the observed width to the largest breakpoint ≤ actual width. Prevents re-layout on sub-pixel changes. |
 
 ## Return Value
 
-| Property | Type | Description |
-|---|---|---|
+| Property         | Type          | Description                                                                                      |
+| ---------------- | ------------- | ------------------------------------------------------------------------------------------------ |
 | `containerWidth` | `Ref<number>` | The current (possibly snapped) container width in pixels. `0` before mount if no default is set. |
 
 ## Usage
 
 ```vue
 <script setup>
-const containerRef = ref<HTMLElement | null>(null)
+const containerRef = (ref < HTMLElement) | (null > null)
 
 const { containerWidth } = useContainerWidth(containerRef, {
   defaultContainerWidth: 1200,
@@ -64,14 +64,14 @@ When `breakpoints` are provided, the observed width is snapped **down** to the l
 
 For example, with breakpoints `[375, 600, 900, 1200]`:
 
-| Actual width | Snapped width |
-|---|---|
-| 1440px | 1200px |
-| 1200px | 1200px |
-| 1150px | 900px |
-| 620px | 600px |
-| 400px | 375px |
-| 200px | 187px (half of 375, synthetic floor) |
+| Actual width | Snapped width                        |
+| ------------ | ------------------------------------ |
+| 1440px       | 1200px                               |
+| 1200px       | 1200px                               |
+| 1150px       | 900px                                |
+| 620px        | 600px                                |
+| 400px        | 375px                                |
+| 200px        | 187px (half of 375, synthetic floor) |
 
 ## SSR Behavior
 

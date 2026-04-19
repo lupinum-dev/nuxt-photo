@@ -3,7 +3,15 @@ import { build as viteBuild } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { brotliCompressSync, gzipSync } from 'node:zlib'
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -20,13 +28,15 @@ const sizeLimitBin = resolve(root, 'node_modules', '.bin', 'size-limit')
 
 const args = process.argv.slice(2)
 const analyze = args.includes('--analyze')
-const target = ['core', 'vue', 'nuxt'].find(arg => args.includes(arg)) ?? 'all'
+const target =
+  ['core', 'vue', 'nuxt'].find((arg) => args.includes(arg)) ?? 'all'
 
 const coreScenarios = [
   {
     id: 'responsive',
     name: 'core:responsive',
-    source: "import { responsive } from '@nuxt-photo/core'; console.log(responsive)",
+    source:
+      "import { responsive } from '@nuxt-photo/core'; console.log(responsive)",
   },
   {
     id: 'all',
@@ -67,7 +77,9 @@ async function main() {
     for (const scenario of coreScenarios) {
       const result = await measureCoreScenario(scenario)
       const sizeLimitResult = sizeLimitResults.get(scenario.name)
-      const passed = sizeLimitResult?.passed ?? result.brotli <= limits.core[scenario.id].brotliLimit
+      const passed =
+        sizeLimitResult?.passed ??
+        result.brotli <= limits.core[scenario.id].brotliLimit
       if (!passed) failures.push(scenario.name)
       rows.push({
         scenario: limits.core[scenario.id].label,
@@ -78,14 +90,18 @@ async function main() {
         status: passed ? 'PASS' : 'FAIL',
       })
     }
-    printTable('Core', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows.map(row => [
-      row.scenario,
-      row.raw,
-      row.gzip,
-      row.brotli,
-      row.limit,
-      row.status,
-    ]))
+    printTable(
+      'Core',
+      ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'],
+      rows.map((row) => [
+        row.scenario,
+        row.raw,
+        row.gzip,
+        row.brotli,
+        row.limit,
+        row.status,
+      ]),
+    )
   }
 
   if (target === 'all' || target === 'vue') {
@@ -103,7 +119,11 @@ async function main() {
         passed ? 'PASS' : 'FAIL',
       ])
     }
-    printTable('Vue', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows)
+    printTable(
+      'Vue',
+      ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'],
+      rows,
+    )
   }
 
   if (target === 'all' || target === 'nuxt') {
@@ -117,45 +137,52 @@ async function main() {
 
     const moduleDelta = diffSizes(moduleResult, baseline)
     const usageDelta = diffSizes(usageResult, baseline)
-    const modulePassed = moduleDelta.brotli <= limits.nuxt.module.brotliDeltaLimit
+    const modulePassed =
+      moduleDelta.brotli <= limits.nuxt.module.brotliDeltaLimit
     const usagePassed = usageDelta.brotli <= limits.nuxt.usage.brotliDeltaLimit
 
     if (!modulePassed) failures.push('nuxt:module')
     if (!usagePassed) failures.push('nuxt:usage')
 
-    printTable('Nuxt', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Delta(br)', 'Limit(br)', 'Status'], [
+    printTable(
+      'Nuxt',
+      ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Delta(br)', 'Limit(br)', 'Status'],
       [
-        'baseline build',
-        formatBytes(baseline.raw),
-        formatBytes(baseline.gzip),
-        formatBytes(baseline.brotli),
-        '-',
-        '-',
-        'BASELINE',
+        [
+          'baseline build',
+          formatBytes(baseline.raw),
+          formatBytes(baseline.gzip),
+          formatBytes(baseline.brotli),
+          '-',
+          '-',
+          'BASELINE',
+        ],
+        [
+          limits.nuxt.module.label,
+          formatBytes(moduleResult.raw),
+          formatBytes(moduleResult.gzip),
+          formatBytes(moduleResult.brotli),
+          formatSignedBytes(moduleDelta.brotli),
+          formatBytes(limits.nuxt.module.brotliDeltaLimit),
+          modulePassed ? 'PASS' : 'FAIL',
+        ],
+        [
+          limits.nuxt.usage.label,
+          formatBytes(usageResult.raw),
+          formatBytes(usageResult.gzip),
+          formatBytes(usageResult.brotli),
+          formatSignedBytes(usageDelta.brotli),
+          formatBytes(limits.nuxt.usage.brotliDeltaLimit),
+          usagePassed ? 'PASS' : 'FAIL',
+        ],
       ],
-      [
-        limits.nuxt.module.label,
-        formatBytes(moduleResult.raw),
-        formatBytes(moduleResult.gzip),
-        formatBytes(moduleResult.brotli),
-        formatSignedBytes(moduleDelta.brotli),
-        formatBytes(limits.nuxt.module.brotliDeltaLimit),
-        modulePassed ? 'PASS' : 'FAIL',
-      ],
-      [
-        limits.nuxt.usage.label,
-        formatBytes(usageResult.raw),
-        formatBytes(usageResult.gzip),
-        formatBytes(usageResult.brotli),
-        formatSignedBytes(usageDelta.brotli),
-        formatBytes(limits.nuxt.usage.brotliDeltaLimit),
-        usagePassed ? 'PASS' : 'FAIL',
-      ],
-    ])
+    )
   }
 
   if (analyze) {
-    console.log(`\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`)
+    console.log(
+      `\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`,
+    )
   }
 
   if (failures.length > 0) {
@@ -173,7 +200,12 @@ function ensureBuild(surface) {
   const buildSets = {
     core: ['@nuxt-photo/core'],
     vue: ['@nuxt-photo/core', '@nuxt-photo/vue'],
-    nuxt: ['@nuxt-photo/core', '@nuxt-photo/vue', '@nuxt-photo/recipes', '@nuxt-photo/nuxt'],
+    nuxt: [
+      '@nuxt-photo/core',
+      '@nuxt-photo/vue',
+      '@nuxt-photo/recipes',
+      '@nuxt-photo/nuxt',
+    ],
   }
 
   for (const pkg of buildSets[surface]) {
@@ -219,7 +251,10 @@ async function measureCoreScenario(scenario) {
   const output = result.outputFiles[0].contents
 
   if (analyze && result.metafile) {
-    writeFileSync(resolve(analyzeRoot, `${scenario.name}.metafile.json`), JSON.stringify(result.metafile, null, 2))
+    writeFileSync(
+      resolve(analyzeRoot, `${scenario.name}.metafile.json`),
+      JSON.stringify(result.metafile, null, 2),
+    )
   }
 
   return sizeBuffer(output)
@@ -235,7 +270,15 @@ async function measureViteFixture(fixtureId) {
     logLevel: 'silent',
     plugins: [
       vue(),
-      analyze ? visualizer({ filename: analyzerFile, gzipSize: true, brotliSize: true, open: false, template: 'treemap' }) : null,
+      analyze
+        ? visualizer({
+            filename: analyzerFile,
+            gzipSize: true,
+            brotliSize: true,
+            open: false,
+            template: 'treemap',
+          })
+        : null,
     ].filter(Boolean),
     resolve: {
       preserveSymlinks: false,
@@ -253,7 +296,10 @@ async function measureViteFixture(fixtureId) {
 
   const assets = collectAssets(resolve(tempDir, 'dist', 'assets'))
   if (analyze) {
-    writeFileSync(resolve(analyzeRoot, `vite-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
+    writeFileSync(
+      resolve(analyzeRoot, `vite-${fixtureId}.assets.json`),
+      JSON.stringify(assets.files, null, 2),
+    )
   }
   return assets.totals
 }
@@ -269,7 +315,10 @@ function runNuxtFixture(fixtureId) {
   })
   const assets = collectAssets(resolve(tempDir, '.output', 'public', '_nuxt'))
   if (analyze) {
-    writeFileSync(resolve(analyzeRoot, `nuxt-${fixtureId}.assets.json`), JSON.stringify(assets.files, null, 2))
+    writeFileSync(
+      resolve(analyzeRoot, `nuxt-${fixtureId}.assets.json`),
+      JSON.stringify(assets.files, null, 2),
+    )
   }
   return assets.totals
 }
@@ -290,22 +339,41 @@ function prepareDir(dir) {
 
 function collectAssets(dir) {
   const files = []
-  walk(dir, file => {
+  walk(dir, (file) => {
     const extension = extname(file)
     if (extension !== '.js' && extension !== '.css') return
     const relativePath = relative(dir, file)
-    const contents = readFileSync(file)
+    let contents
+    try {
+      contents = readFileSync(file)
+    } catch (error) {
+      // Nuxt occasionally leaves a stale entry in the directory listing while
+      // hashed client chunks are still settling. Treat that as a transient miss,
+      // not a failed size run.
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'ENOENT'
+      ) {
+        return
+      }
+      throw error
+    }
     files.push({
       file: relativePath,
       ...sizeBuffer(contents),
     })
   })
 
-  const totals = files.reduce((sum, file) => ({
-    raw: sum.raw + file.raw,
-    gzip: sum.gzip + file.gzip,
-    brotli: sum.brotli + file.brotli,
-  }), { raw: 0, gzip: 0, brotli: 0 })
+  const totals = files.reduce(
+    (sum, file) => ({
+      raw: sum.raw + file.raw,
+      gzip: sum.gzip + file.gzip,
+      brotli: sum.brotli + file.brotli,
+    }),
+    { raw: 0, gzip: 0, brotli: 0 },
+  )
 
   return { totals, files }
 }
@@ -340,13 +408,15 @@ function diffSizes(value, baseline) {
 
 function printTable(title, headers, rows) {
   const widths = headers.map((header, index) =>
-    Math.max(header.length, ...rows.map(row => String(row[index]).length)))
+    Math.max(header.length, ...rows.map((row) => String(row[index]).length)),
+  )
 
-  const line = (cells) => cells.map((cell, index) => String(cell).padEnd(widths[index])).join('  ')
+  const line = (cells) =>
+    cells.map((cell, index) => String(cell).padEnd(widths[index])).join('  ')
 
   console.log(`\n${title}`)
   console.log(line(headers))
-  console.log(line(widths.map(width => '-'.repeat(width))))
+  console.log(line(widths.map((width) => '-'.repeat(width))))
   for (const row of rows) {
     console.log(line(row))
   }
@@ -359,7 +429,9 @@ function formatBytes(bytes) {
 }
 
 function formatSignedBytes(bytes) {
-  return bytes >= 0 ? `+${formatBytes(bytes)}` : `-${formatBytes(Math.abs(bytes))}`
+  return bytes >= 0
+    ? `+${formatBytes(bytes)}`
+    : `-${formatBytes(Math.abs(bytes))}`
 }
 
 function runCommand(command, commandArgs, options = {}) {

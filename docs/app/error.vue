@@ -1,21 +1,31 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
+import type { PropType } from 'vue'
+import { computed, provide } from 'vue'
+import {
+  queryCollectionNavigation,
+  queryCollectionSearchSections,
+  useAsyncData,
+  useHead,
+  useLazyAsyncData,
+  useSeoMeta,
+} from '#imports'
 
 useSeoMeta({
   title: 'Page not found',
-  description: 'We are sorry but this page could not be found.'
+  description: 'We are sorry but this page could not be found.',
 })
 
 defineProps({
   error: {
     type: Object as PropType<NuxtError>,
-    required: true
-  }
+    required: true,
+  },
 })
 useHead({
   htmlAttrs: {
-    lang: 'en'
-  }
+    lang: 'en',
+  },
 })
 
 const { data: navigation } = await useAsyncData('navigation', () => {
@@ -23,24 +33,29 @@ const { data: navigation } = await useAsyncData('navigation', () => {
 })
 provide('navigation', navigation)
 
-const { data: files } = useLazyAsyncData('search', () => {
-  return queryCollectionSearchSections('docs')
-}, {
-  server: false
-})
+const { data: files } = useLazyAsyncData(
+  'search',
+  () => {
+    return queryCollectionSearchSections('docs')
+  },
+  {
+    server: false,
+  },
+)
 
 const links = computed(() => [
-  ...(navigation.value || []).map(item => ({
+  ...(navigation.value || []).map((item) => ({
     label: item.title,
     icon: item.icon,
-    to: item.path === '/docs' ? '/docs/getting-started/introduction' : item.path
+    to:
+      item.path === '/docs' ? '/docs/getting-started/introduction' : item.path,
   })),
   {
     label: 'lupinum-dev/nuxt-photo',
     to: 'https://github.com/lupinum-dev/nuxt-photo',
     target: '_blank',
-    icon: 'i-simple-icons-github'
-  }
+    icon: 'i-simple-icons-github',
+  },
 ])
 </script>
 
@@ -51,7 +66,11 @@ const links = computed(() => [
     <AppFooter />
 
     <ClientOnly>
-      <LazyUContentSearch :files="files || []" :navigation="navigation || []" :links="links" />
+      <LazyUContentSearch
+        :files="files || []"
+        :navigation="navigation || []"
+        :links="links"
+      />
     </ClientOnly>
   </UApp>
 </template>

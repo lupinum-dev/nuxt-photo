@@ -38,7 +38,13 @@ html {
 body {
   margin: 0;
   background: #1a1816;
-  font-family: 'Source Sans 3', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Source Sans 3',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   color: #ede8e3;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -99,7 +105,9 @@ a {
   text-transform: uppercase;
   color: rgba(237, 232, 227, 0.45);
   border-bottom: 2px solid transparent;
-  transition: color 200ms ease, border-color 200ms ease;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
 }
 
 .nav__link:hover {

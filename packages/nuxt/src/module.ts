@@ -1,13 +1,22 @@
-import { addComponent, addImports, addPlugin, createResolver, defineNuxtModule, hasNuxtModule } from '@nuxt/kit'
+import {
+  addComponent,
+  addImports,
+  addPlugin,
+  createResolver,
+  defineNuxtModule,
+  hasNuxtModule,
+} from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean
   components?: boolean | { prefix?: string }
   css?: 'none' | 'structure' | 'all'
-  image?: false | {
-    provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
-  }
+  image?:
+    | false
+    | {
+        provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
+      }
   lightbox?: {
     minZoom?: number
   }
@@ -41,7 +50,11 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
+const AUTO_IMPORTS = [
+  'useLightbox',
+  'useLightboxProvider',
+  'responsive',
+] as const
 
 export default defineNuxtModule<NuxtPhotoOptions>({
   meta: {
@@ -67,19 +80,27 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
-      const imageProvider = explicit === 'auto'
-        ? (hasNuxtModule('@nuxt/image') ? 'nuxt-image' : 'native')
-        : explicit
+      const imageProvider =
+        explicit === 'auto'
+          ? hasNuxtModule('@nuxt/image')
+            ? 'nuxt-image'
+            : 'native'
+          : explicit
 
       if (imageProvider === 'nuxt-image') {
         if (!hasNuxtModule('@nuxt/image')) {
-          throw new Error('[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.')
+          throw new Error(
+            '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
+          )
         }
 
         nuxt.hook('modules:done', () => {
-          addPlugin({
-            src: resolve('./runtime/plugin'),
-          }, { append: true })
+          addPlugin(
+            {
+              src: resolve('./runtime/plugin'),
+            },
+            { append: true },
+          )
         })
       }
     }
@@ -95,13 +116,19 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         },
       }
 
-      addPlugin({
-        src: resolve('./runtime/defaults-plugin'),
-      }, { append: true })
+      addPlugin(
+        {
+          src: resolve('./runtime/defaults-plugin'),
+        },
+        { append: true },
+      )
     }
 
     if (options.components !== false) {
-      const prefix = typeof options.components === 'object' ? (options.components.prefix ?? '') : ''
+      const prefix =
+        typeof options.components === 'object'
+          ? (options.components.prefix ?? '')
+          : ''
 
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
@@ -121,7 +148,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     if (options.autoImports) {
-      addImports(AUTO_IMPORTS.map(name => ({ name, from: '@nuxt-photo/vue' })))
+      addImports(
+        AUTO_IMPORTS.map((name) => ({ name, from: '@nuxt-photo/vue' })),
+      )
     }
 
     const structureCSS = [
@@ -136,9 +165,11 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       '@nuxt-photo/recipes/styles/carousel-theme.css',
     ]
 
-    const cssFiles
-      = options.css === 'all' ? [...structureCSS, ...themeCSS]
-        : options.css === 'structure' ? structureCSS
+    const cssFiles =
+      options.css === 'all'
+        ? [...structureCSS, ...themeCSS]
+        : options.css === 'structure'
+          ? structureCSS
           : []
 
     for (const css of cssFiles) {

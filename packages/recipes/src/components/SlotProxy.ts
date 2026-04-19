@@ -6,10 +6,14 @@ export default defineComponent({
   props: {
     // `any` on the parameter is required so callers can pass specifically-typed
     // renderers (e.g. `(p: LightboxControlsSlotProps) => VNode`) without contravariance errors.
-    render: { type: Function as PropType<(props: any) => unknown>, required: true },
+    render: {
+      type: Function as PropType<(props: any) => unknown>,
+      required: true,
+    },
     props: { type: Object as PropType<any>, default: () => ({}) },
   },
   setup(props) {
-    return () => typeof props.render === 'function' ? props.render(props.props) : null
+    return () =>
+      typeof props.render === 'function' ? props.render(props.props) : null
   },
 })

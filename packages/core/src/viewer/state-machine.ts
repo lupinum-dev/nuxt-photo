@@ -11,7 +11,10 @@ export type ViewerAction =
  * Pure state machine for the viewer lifecycle.
  * Returns the next state given a current state and action.
  */
-export function viewerTransition(state: ViewerState, action: ViewerAction): ViewerState {
+export function viewerTransition(
+  state: ViewerState,
+  action: ViewerAction,
+): ViewerState {
   switch (action.type) {
     case 'open':
       if (state.status === 'closed') {

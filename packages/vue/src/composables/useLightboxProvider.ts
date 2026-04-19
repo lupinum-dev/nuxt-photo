@@ -1,7 +1,10 @@
-import { provide, type MaybeRef } from 'vue'
+import type { MaybeRef } from 'vue'
 import { photoId, type PhotoItem } from '@nuxt-photo/core'
-import { useLightboxContext, type LightboxTransitionOption } from './useLightboxContext'
-import { LightboxContextKey, LightboxSlideRendererKey, type LightboxSlideRenderer } from '../provide/keys'
+import {
+  useLightboxContext,
+  type LightboxTransitionOption,
+} from './useLightboxContext'
+import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
 
 /**
@@ -52,7 +55,9 @@ export function useLightboxProvider(
   }
 
   function openById(id: string | number) {
-    const index = ctx.photos.value.findIndex(photo => photoId(photo) === String(id))
+    const index = ctx.photos.value.findIndex(
+      (photo) => photoId(photo) === String(id),
+    )
     return ctx.open(index >= 0 ? index : 0)
   }
 

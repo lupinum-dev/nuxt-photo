@@ -12,7 +12,11 @@ import {
   type PhotoItem,
   type RectLike,
 } from '@nuxt-photo/core'
-import { openDurationMs, type GhostState, type TransitionCallbacks } from './types'
+import {
+  openDurationMs,
+  type GhostState,
+  type TransitionCallbacks,
+} from './types'
 import { resetOpenState } from './state'
 
 async function doInstantOpen(s: GhostState, photo: PhotoItem) {
@@ -23,14 +27,21 @@ async function doInstantOpen(s: GhostState, photo: PhotoItem) {
   s.chromeOpacity.value = 1
 }
 
-async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike | null) {
+async function doFadeOpen(
+  s: GhostState,
+  photo: PhotoItem,
+  targetRect: RectLike | null,
+) {
   const fadeOpenDuration = 300
 
   s.animating.value = true
   const imgSrc = photo.thumbSrc || photo.src
 
   if (targetRect) {
-    s.debug?.log('transitions', `open FADE: ghost scale-in at ${targetRect.width.toFixed(0)}x${targetRect.height.toFixed(0)} @ (${targetRect.left.toFixed(0)},${targetRect.top.toFixed(0)})`)
+    s.debug?.log(
+      'transitions',
+      `open FADE: ghost scale-in at ${targetRect.width.toFixed(0)}x${targetRect.height.toFixed(0)} @ (${targetRect.left.toFixed(0)},${targetRect.top.toFixed(0)})`,
+    )
 
     s.ghostSrc.value = imgSrc
     s.ghostVisible.value = true
@@ -49,26 +60,41 @@ async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike 
 
     await nextFrame()
 
-    await animateNumber(0, 1, fadeOpenDuration, (t) => {
-      const sc = 0.92 + 0.08 * t
-      s.ghostStyle.value = {
-        ...s.ghostStyle.value,
-        transform: `scale(${sc})`,
-        opacity: String(t),
-      }
-      s.overlayOpacity.value = t
-    }, easeOutCubic)
+    await animateNumber(
+      0,
+      1,
+      fadeOpenDuration,
+      (t) => {
+        const sc = 0.92 + 0.08 * t
+        s.ghostStyle.value = {
+          ...s.ghostStyle.value,
+          transform: `scale(${sc})`,
+          opacity: String(t),
+        }
+        s.overlayOpacity.value = t
+      },
+      easeOutCubic,
+    )
 
     await ensureImageLoaded(photo.src)
     s.mediaOpacity.value = 1
     s.ghostVisible.value = false
     s.chromeOpacity.value = 1
   } else {
-    s.debug?.log('transitions', 'open FADE: no target rect, simple overlay fade')
+    s.debug?.log(
+      'transitions',
+      'open FADE: no target rect, simple overlay fade',
+    )
 
-    await animateNumber(0, 1, fadeOpenDuration, (v) => {
-      s.overlayOpacity.value = v
-    }, easeOutCubic)
+    await animateNumber(
+      0,
+      1,
+      fadeOpenDuration,
+      (v) => {
+        s.overlayOpacity.value = v
+      },
+      easeOutCubic,
+    )
 
     await ensureImageLoaded(photo.src)
     s.mediaOpacity.value = 1
@@ -78,7 +104,13 @@ async function doFadeOpen(s: GhostState, photo: PhotoItem, targetRect: RectLike 
   s.animating.value = false
 }
 
-async function doFlipOpen(s: GhostState, index: number, photo: PhotoItem, fromRect: DOMRect, toRect: RectLike) {
+async function doFlipOpen(
+  s: GhostState,
+  index: number,
+  photo: PhotoItem,
+  fromRect: DOMRect,
+  toRect: RectLike,
+) {
   s.debug?.log('transitions', 'open: using FLIP animation')
 
   s.animating.value = true
@@ -96,8 +128,7 @@ async function doFlipOpen(s: GhostState, index: number, photo: PhotoItem, fromRe
     willChange: 'transform',
     borderRadius: '18px',
     boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
-    transition:
-      `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    transition: `transform ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), border-radius ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${openDurationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     ...makeGhostBaseStyle(toRect),
     transform: flipTransform(fromRect, toRect),
   }
@@ -119,7 +150,11 @@ async function doFlipOpen(s: GhostState, index: number, photo: PhotoItem, fromRe
   resetOpenState(s)
 }
 
-export async function openTransition(s: GhostState, index: number, callbacks: TransitionCallbacks) {
+export async function openTransition(
+  s: GhostState,
+  index: number,
+  callbacks: TransitionCallbacks,
+) {
   if (s.animating.value) return
 
   s.debug?.group('transitions', `open(index=${index})`)
@@ -155,8 +190,12 @@ export async function openTransition(s: GhostState, index: number, callbacks: Tr
     const fromRect = thumbEl?.getBoundingClientRect() ?? null
     const toRect = s.getAbsoluteFrameRect(photo)
 
-    const useFlip = fromRect && toRect && isUsableRect(fromRect)
-      && (!s.transitionConfig || shouldUseFlip(fromRect, s.transitionConfig, s.debug))
+    const useFlip =
+      fromRect &&
+      toRect &&
+      isUsableRect(fromRect) &&
+      (!s.transitionConfig ||
+        shouldUseFlip(fromRect, s.transitionConfig, s.debug))
 
     if (useFlip) {
       await doFlipOpen(s, index, photo, fromRect, toRect)

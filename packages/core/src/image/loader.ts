@@ -15,7 +15,12 @@ export function ensureImageLoaded(src: string): Promise<void> {
     image.src = src
 
     if (image.decode) {
-      image.decode().catch(() => { imageLoadCache.delete(src) }).finally(resolve)
+      image
+        .decode()
+        .catch(() => {
+          imageLoadCache.delete(src)
+        })
+        .finally(resolve)
       return
     }
 

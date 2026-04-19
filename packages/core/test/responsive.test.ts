@@ -50,10 +50,18 @@ describe('responsive()', () => {
     const spacing = responsive({ 0: 4, 600: 8 })
     const columns = responsive({ 0: 1, 840: 3, 1120: 4 })
 
-    expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([300, 600, 840, 1120])
+    expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([
+      300, 600, 840, 1120,
+    ])
   })
 
   it('returns undefined when no responsive metadata is available', () => {
-    expect(mergeResponsiveBreakpoints([8, undefined, (width: number) => width > 600 ? 8 : 4])).toBeUndefined()
+    expect(
+      mergeResponsiveBreakpoints([
+        8,
+        undefined,
+        (width: number) => (width > 600 ? 8 : 4),
+      ]),
+    ).toBeUndefined()
   })
 })

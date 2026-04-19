@@ -17,9 +17,20 @@ export function createTransitionMode(): TransitionModeConfig {
   }
 }
 
-type ViewportRect = { left: number; top: number; right: number; bottom: number; width: number; height: number }
+type ViewportRect = {
+  left: number
+  top: number
+  right: number
+  bottom: number
+  width: number
+  height: number
+}
 
-function getVisibleDimensions(rect: ViewportRect, vw: number, vh: number): { width: number; height: number } {
+function getVisibleDimensions(
+  rect: ViewportRect,
+  vw: number,
+  vh: number,
+): { width: number; height: number } {
   return {
     width: Math.max(0, Math.min(rect.right, vw) - Math.max(rect.left, 0)),
     height: Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0)),
@@ -30,7 +41,11 @@ export function getVisibilityRatio(rect: ViewportRect | null): number {
   if (!rect || rect.width <= 0 || rect.height <= 0) return 0
 
   const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(
+    rect,
+    vw,
+    vh,
+  )
   const visibleArea = visibleWidth * visibleHeight
   const totalArea = rect.width * rect.height
 
@@ -64,10 +79,18 @@ export function shouldUseFlip(
   }
 
   const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(
+    rect,
+    vw,
+    vh,
+  )
 
-  if (visibleWidth < MIN_VISIBLE_DIMENSION || visibleHeight < MIN_VISIBLE_DIMENSION) {
-    debug?.log('transitions',
+  if (
+    visibleWidth < MIN_VISIBLE_DIMENSION ||
+    visibleHeight < MIN_VISIBLE_DIMENSION
+  ) {
+    debug?.log(
+      'transitions',
       `mode=auto → visible size ${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px < ${MIN_VISIBLE_DIMENSION}px min → FADE`,
     )
     return false
@@ -76,7 +99,8 @@ export function shouldUseFlip(
   const ratio = getVisibilityRatio(rect)
   const useFlip = ratio >= config.autoThreshold
 
-  debug?.log('transitions',
+  debug?.log(
+    'transitions',
     `mode=auto → visibility=${(ratio * 100).toFixed(1)}% (${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px) threshold=${(config.autoThreshold * 100).toFixed(0)}% → ${useFlip ? 'FLIP' : 'FADE'}`,
   )
 
@@ -102,30 +126,61 @@ export function planCloseTransition(opts: {
 
   if (config.mode === 'fade') {
     debug?.log('transitions', 'planClose: mode=fade → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'mode-forced-fade' }
+    return {
+      mode: 'fade',
+      durationMs: CLOSE_FADE_DURATION_MS,
+      reason: 'mode-forced-fade',
+    }
   }
 
   if (!fromRect) {
     debug?.log('transitions', 'planClose: no fromRect (lightbox frame) → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-frame-rect' }
+    return {
+      mode: 'fade',
+      durationMs: CLOSE_FADE_DURATION_MS,
+      reason: 'missing-frame-rect',
+    }
   }
 
   if (!thumbRefExists) {
     debug?.log('transitions', 'planClose: no thumb ref registered → FADE')
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'missing-thumb-ref' }
+    return {
+      mode: 'fade',
+      durationMs: CLOSE_FADE_DURATION_MS,
+      reason: 'missing-thumb-ref',
+    }
   }
 
   if (!toRect || !isUsableRect(toRect)) {
-    debug?.log('transitions', `planClose: thumb rect unusable (${toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} at ${toRect.left.toFixed(0)},${toRect.top.toFixed(0)}` : 'null'}) → FADE`)
-    return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'thumb-off-screen', fromRect }
+    debug?.log(
+      'transitions',
+      `planClose: thumb rect unusable (${toRect ? `${toRect.width.toFixed(0)}x${toRect.height.toFixed(0)} at ${toRect.left.toFixed(0)},${toRect.top.toFixed(0)}` : 'null'}) → FADE`,
+    )
+    return {
+      mode: 'fade',
+      durationMs: CLOSE_FADE_DURATION_MS,
+      reason: 'thumb-off-screen',
+      fromRect,
+    }
   }
 
   if (config.mode === 'auto') {
     if (!shouldUseFlip(toRect, config, debug)) {
-      return { mode: 'fade', durationMs: CLOSE_FADE_DURATION_MS, reason: 'visibility-below-threshold', fromRect }
+      return {
+        mode: 'fade',
+        durationMs: CLOSE_FADE_DURATION_MS,
+        reason: 'visibility-below-threshold',
+        fromRect,
+      }
     }
   }
 
   debug?.log('transitions', 'planClose: all checks passed → FLIP')
-  return { mode: 'flip', durationMs: CLOSE_FLIP_DURATION_MS, fromRect, toRect, reason: 'ok' }
+  return {
+    mode: 'flip',
+    durationMs: CLOSE_FLIP_DURATION_MS,
+    fromRect,
+    toRect,
+    reason: 'ok',
+  }
 }

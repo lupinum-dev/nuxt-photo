@@ -15,6 +15,7 @@ type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
 ```
 
 A `ResponsiveParameter` is either:
+
 - A **static value** — same at every container width
 - A **function** that receives the container width and returns a value
 
@@ -29,19 +30,13 @@ A `ResponsiveParameter` is either:
 ### 2. Inline function
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :spacing="(w) => w < 600 ? 4 : 8"
-/>
+<PhotoAlbum :photos="photos" :spacing="(w) => (w < 600 ? 4 : 8)" />
 ```
 
 ### 3. Breakpoint map with `responsive()`
 
 ```vue
-<PhotoAlbum
-  :photos="photos"
-  :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
-/>
+<PhotoAlbum :photos="photos" :spacing="responsive({ 0: 4, 600: 8, 900: 12 })" />
 ```
 
 ## The responsive() Helper
@@ -55,11 +50,11 @@ import { responsive } from '@nuxt-photo/core'
 // 2 columns below 600px, 3 at 600–899px, 4 at 900px+
 const columns = responsive({ 0: 2, 600: 3, 900: 4 })
 
-columns(400)   // → 2
-columns(600)   // → 3
-columns(750)   // → 3
-columns(900)   // → 4
-columns(1400)  // → 4
+columns(400) // → 2
+columns(600) // → 3
+columns(750) // → 3
+columns(900) // → 4
+columns(1400) // → 4
 ```
 
 ::callout{type="info"}
@@ -68,13 +63,13 @@ The breakpoints refer to the **album container width**, not the viewport width. 
 
 ## Props That Accept ResponsiveParameter
 
-| Component | Prop | Type |
-|---|---|---|
-| `PhotoAlbum` | `spacing` | `ResponsiveParameter<number>` |
-| `PhotoAlbum` | `padding` | `ResponsiveParameter<number>` |
-| Rows layout | `targetRowHeight` | `ResponsiveParameter<number>` |
-| Columns layout | `columns` | `ResponsiveParameter<number>` |
-| Masonry layout | `columns` | `ResponsiveParameter<number>` |
+| Component      | Prop              | Type                          |
+| -------------- | ----------------- | ----------------------------- |
+| `PhotoAlbum`   | `spacing`         | `ResponsiveParameter<number>` |
+| `PhotoAlbum`   | `padding`         | `ResponsiveParameter<number>` |
+| Rows layout    | `targetRowHeight` | `ResponsiveParameter<number>` |
+| Columns layout | `columns`         | `ResponsiveParameter<number>` |
+| Masonry layout | `columns`         | `ResponsiveParameter<number>` |
 
 ## Full Example
 
@@ -91,6 +86,7 @@ The breakpoints refer to the **album container width**, not the viewport width. 
 ```
 
 This produces:
+
 - **< 480px:** 1 column, 4px spacing, no padding
 - **480–767px:** 2 columns, 6px spacing, no padding
 - **768–1199px:** 3 columns, 8px spacing, 4px padding

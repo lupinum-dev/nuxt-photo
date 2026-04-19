@@ -6,7 +6,10 @@ import { responsive } from '@nuxt-photo/core'
 <template>
   <PhotoAlbum
     :photos="demoPhotos"
-    :layout="{ type: 'columns', columns: responsive({ 0: 2, 640: 3, 1024: 4 }) }"
+    :layout="{
+      type: 'columns',
+      columns: responsive({ 0: 2, 640: 3, 1024: 4 }),
+    }"
     :spacing="6"
     :breakpoints="[375, 640, 1024, 1280]"
   />

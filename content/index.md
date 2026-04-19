@@ -40,12 +40,12 @@ That's it. The album renders a justified rows layout, and clicking any photo ope
 
 nuxt-photo is built as four packages, each adding a layer:
 
-| Package | Layer | Description |
-|---|---|---|
-| `@nuxt-photo/core` | 0 | Framework-free layout algorithms, physics, geometry, and state machine |
-| `@nuxt-photo/vue` | 1 | Vue composables and primitive components |
-| `@nuxt-photo/recipes` | 2 | Ready-to-use Photo, PhotoAlbum, PhotoGroup components |
-| `@nuxt-photo/nuxt` | 3 | Nuxt module with auto-imports, CSS injection, and `@nuxt/image` integration |
+| Package               | Layer | Description                                                                 |
+| --------------------- | ----- | --------------------------------------------------------------------------- |
+| `@nuxt-photo/core`    | 0     | Framework-free layout algorithms, physics, geometry, and state machine      |
+| `@nuxt-photo/vue`     | 1     | Vue composables and primitive components                                    |
+| `@nuxt-photo/recipes` | 2     | Ready-to-use Photo, PhotoAlbum, PhotoGroup components                       |
+| `@nuxt-photo/nuxt`    | 3     | Nuxt module with auto-imports, CSS injection, and `@nuxt/image` integration |
 
 Most users only need `@nuxt-photo/nuxt`. The lower layers are there when you need full control.
 
@@ -65,38 +65,38 @@ All numbers come from the in-repo size harness and are re-measured with `pnpm si
 
 ::card-grid
 #default
-  ::card{to="/docs/getting-started/installation"}
-  #title
-  Installation
-  #description
-  Install the package and configure the Nuxt module.
-  ::
+::card{to="/docs/getting-started/installation"}
+#title
+Installation
+#description
+Install the package and configure the Nuxt module.
+::
 
-  ::card{to="/docs/getting-started/quick-start"}
-  #title
-  Quick Start
-  #description
-  Get a working gallery with lightbox in 5 minutes.
-  ::
+::card{to="/docs/getting-started/quick-start"}
+#title
+Quick Start
+#description
+Get a working gallery with lightbox in 5 minutes.
+::
 
-  ::card{to="/docs/guides/layouts"}
-  #title
-  Layouts
-  #description
-  Learn about rows, columns, and masonry layouts.
-  ::
+::card{to="/docs/guides/layouts"}
+#title
+Layouts
+#description
+Learn about rows, columns, and masonry layouts.
+::
 
-  ::card{to="/docs/components/photo-album"}
-  #title
-  PhotoAlbum API
-  #description
-  Full props, slots, and usage reference.
-  ::
+::card{to="/docs/components/photo-album"}
+#title
+PhotoAlbum API
+#description
+Full props, slots, and usage reference.
+::
 
-  ::card{to="/docs/reference/bundle-size"}
-  #title
-  Bundle Size
-  #description
-  See how tree-shaking and client bundle impact are measured.
-  ::
+::card{to="/docs/reference/bundle-size"}
+#title
+Bundle Size
+#description
+See how tree-shaking and client bundle impact are measured.
+::
 ::

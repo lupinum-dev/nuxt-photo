@@ -16,15 +16,12 @@ The default layout. Photos are arranged in horizontal rows with justified widths
 <PhotoAlbum :photos="photos" layout="rows" />
 
 <!-- With custom target height -->
-<PhotoAlbum
-  :photos="photos"
-  :layout="{ type: 'rows', targetRowHeight: 250 }"
-/>
+<PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 250 }" />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `targetRowHeight` | `ResponsiveParameter<number>` | `300` | Ideal row height. Rows may be taller or shorter depending on photo aspect ratios. |
+| Option            | Type                          | Default | Description                                                                       |
+| ----------------- | ----------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `targetRowHeight` | `ResponsiveParameter<number>` | `300`   | Ideal row height. Rows may be taller or shorter depending on photo aspect ratios. |
 
 **Best for:** Photo galleries where you want every image to be fully visible with no cropping. The justified layout handles mixed aspect ratios gracefully.
 
@@ -36,15 +33,12 @@ Photos are distributed across equal-width columns. Each photo maintains its orig
 <PhotoAlbum :photos="photos" layout="columns" />
 
 <!-- With custom column count -->
-<PhotoAlbum
-  :photos="photos"
-  :layout="{ type: 'columns', columns: 4 }"
-/>
+<PhotoAlbum :photos="photos" :layout="{ type: 'columns', columns: 4 }" />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of columns. |
+| Option    | Type                          | Default | Description        |
+| --------- | ----------------------------- | ------- | ------------------ |
+| `columns` | `ResponsiveParameter<number>` | `3`     | Number of columns. |
 
 **Best for:** Uniform grids where you want consistent column widths. Photos are assigned to columns using a shortest-path algorithm that balances column heights.
 
@@ -62,9 +56,9 @@ Similar to columns, but photos are placed into the shortest column one at a time
 />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of columns. |
+| Option    | Type                          | Default | Description        |
+| --------- | ----------------------------- | ------- | ------------------ |
+| `columns` | `ResponsiveParameter<number>` | `3`     | Number of columns. |
 
 **Best for:** Layouts where preserving the original photo order matters less than minimizing wasted space. Masonry fills gaps more aggressively than columns.
 

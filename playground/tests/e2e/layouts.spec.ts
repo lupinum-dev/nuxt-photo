@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test('layout explorer switches layouts and still opens the lightbox', async ({ page }) => {
+test('layout explorer switches layouts and still opens the lightbox', async ({
+  page,
+}) => {
   await page.goto('/layouts')
 
   for (const name of ['rows', 'columns', 'masonry'] as const) {

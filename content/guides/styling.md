@@ -14,18 +14,18 @@ The styles are split into five files across two layers:
 
 ### Structure (layout and positioning)
 
-| File | What it styles |
-|---|---|
+| File                     | What it styles                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
 | `lightbox-structure.css` | Lightbox fixed positioning, viewport grid, button layout, media containers, touch interactions |
-| `album.css` | Album grid, row/column/masonry layout structures |
-| `photo-structure.css` | Photo figure layout, image sizing |
+| `album.css`              | Album grid, row/column/masonry layout structures                                               |
+| `photo-structure.css`    | Photo figure layout, image sizing                                                              |
 
 ### Theme (visual appearance)
 
-| File | What it styles |
-|---|---|
+| File                 | What it styles                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------- |
 | `lightbox-theme.css` | Backdrop blur, button glass-morphism, counter, caption colors, image border-radius |
-| `photo.css` | Photo gradient placeholder, caption styling |
+| `photo.css`          | Photo gradient placeholder, caption styling                                        |
 
 ## CSS Options in Nuxt
 
@@ -39,11 +39,11 @@ export default defineNuxtConfig({
 })
 ```
 
-| Value | Includes |
-|---|---|
-| `'none'` | Nothing. You must provide all CSS. |
-| `'structure'` | Structure files only. You provide the visual theme. |
-| `'all'` | Structure + theme. The default look works out of the box. |
+| Value         | Includes                                                  |
+| ------------- | --------------------------------------------------------- |
+| `'none'`      | Nothing. You must provide all CSS.                        |
+| `'structure'` | Structure files only. You provide the visual theme.       |
+| `'all'`       | Structure + theme. The default look works out of the box. |
 
 ## CSS Custom Properties
 
@@ -60,7 +60,8 @@ The theme is built on CSS custom properties. Override them to customize the appe
   --np-btn-bg: rgba(255, 255, 255, 0.1);
   --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
   --np-btn-color: white;
-  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
+  --np-btn-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
 
@@ -108,32 +109,32 @@ The theme is built on CSS custom properties. Override them to customize the appe
 
 ### Album
 
-| Class | Element |
-|---|---|
-| `.np-album` | Root container |
+| Class                                         | Element         |
+| --------------------------------------------- | --------------- |
+| `.np-album`                                   | Root container  |
 | `.np-album--rows` / `--columns` / `--masonry` | Layout modifier |
-| `.np-album__item` | Photo wrapper |
-| `.np-album__img` | Photo `<img>` |
-| `.np-album__row` / `__column` / `__grid` | Group wrappers |
+| `.np-album__item`                             | Photo wrapper   |
+| `.np-album__img`                              | Photo `<img>`   |
+| `.np-album__row` / `__column` / `__grid`      | Group wrappers  |
 
 ### Photo
 
-| Class | Element |
-|---|---|
-| `.np-photo` | Root `<figure>` |
-| `.np-photo__img` | Image |
-| `.np-photo__caption` | Caption |
+| Class                | Element         |
+| -------------------- | --------------- |
+| `.np-photo`          | Root `<figure>` |
+| `.np-photo__img`     | Image           |
+| `.np-photo__caption` | Caption         |
 
 ### Lightbox
 
-| Class | Element |
-|---|---|
-| `.np-lightbox` | Root |
-| `.np-lightbox__backdrop` | Overlay |
-| `.np-lightbox__viewport` | Media area |
-| `.np-lightbox__btn` | Button (prev, next, close, zoom) |
-| `.np-lightbox__counter` | Photo counter |
-| `.np-lightbox__caption` | Caption area |
+| Class                    | Element                          |
+| ------------------------ | -------------------------------- |
+| `.np-lightbox`           | Root                             |
+| `.np-lightbox__backdrop` | Overlay                          |
+| `.np-lightbox__viewport` | Media area                       |
+| `.np-lightbox__btn`      | Button (prev, next, close, zoom) |
+| `.np-lightbox__counter`  | Photo counter                    |
+| `.np-lightbox__caption`  | Caption area                     |
 
 ## Tailwind Integration
 

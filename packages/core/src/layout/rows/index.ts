@@ -15,7 +15,13 @@ export function computeRowsLayout(options: RowsLayoutOptions): LayoutGroup[] {
 
   if (photos.length === 0) return []
 
-  const path = findRowBreaks(photos, containerWidth, targetRowHeight, spacing, padding)
+  const path = findRowBreaks(
+    photos,
+    containerWidth,
+    targetRowHeight,
+    spacing,
+    padding,
+  )
   if (path === undefined) return []
 
   return pathToGroups(path, photos, containerWidth, spacing, padding)

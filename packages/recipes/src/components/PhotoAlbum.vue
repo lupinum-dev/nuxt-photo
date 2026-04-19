@@ -6,17 +6,29 @@
     :style="containerStyle"
   >
     <template v-if="layoutType === 'rows'">
-      <component v-if="containerQueryCSS" :is="'style'">{{ containerQueryCSS }}</component>
+      <component v-if="containerQueryCSS" :is="'style'">{{
+        containerQueryCSS
+      }}</component>
       <div :style="ssrWrapperStyle">
         <div
           v-for="item in rowItems"
           :key="photoId(item.photo)"
           class="np-album__item"
-          :class="[containerQueriesActive ? `np-item-${item.index}` : undefined, itemClass]"
+          :class="[
+            containerQueriesActive ? `np-item-${item.index}` : undefined,
+            itemClass,
+          ]"
           :style="item.style"
           v-bind="itemBindings(item.photo, item.index)"
         >
-          <div :style="isHidden(item.photo) && !$slots.thumbnail ? { opacity: 0 } : undefined" style="width:100%;height:100%">
+          <div
+            :style="
+              isHidden(item.photo) && !$slots.thumbnail
+                ? { opacity: 0 }
+                : undefined
+            "
+            style="width: 100%; height: 100%"
+          >
             <slot
               v-if="$slots.thumbnail"
               name="thumbnail"
@@ -35,18 +47,34 @@
               :sizes="item.computedSizes"
               class="np-album__img"
               :class="imgClass"
-              :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${item.photo.width} / ${item.photo.height}` }"
+              :style="{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                aspectRatio: `${item.photo.width} / ${item.photo.height}`,
+              }"
             />
           </div>
         </div>
         <!-- Absorbs remaining space in the last row so photos don't stretch to fill it -->
-        <span style="flex-grow:9999;flex-basis:0;height:0;margin:0;padding:0" aria-hidden="true" />
+        <span
+          style="
+            flex-grow: 9999;
+            flex-basis: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+          "
+          aria-hidden="true"
+        />
       </div>
     </template>
 
     <template v-else>
       <template v-if="!isMounted && breakpointSnapshots.length > 0">
-        <component :is="'style'" v-if="containerQueryCSS">{{ containerQueryCSS }}</component>
+        <component :is="'style'" v-if="containerQueryCSS">{{
+          containerQueryCSS
+        }}</component>
         <div
           v-for="snap in breakpointSnapshots"
           :key="snap.spanKey"
@@ -68,7 +96,7 @@
               :style="snapshotItemStyle(entry, group, snap)"
               v-bind="itemBindings(entry.photo, entry.index)"
             >
-              <div style="width:100%;height:100%">
+              <div style="width: 100%; height: 100%">
                 <slot
                   v-if="$slots.thumbnail"
                   name="thumbnail"
@@ -86,7 +114,12 @@
                   loading="lazy"
                   class="np-album__img"
                   :class="imgClass"
-                  :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }"
+                  :style="{
+                    display: 'block',
+                    width: '100%',
+                    height: 'auto',
+                    aspectRatio: `${entry.photo.width} / ${entry.photo.height}`,
+                  }"
                 />
               </div>
             </div>
@@ -105,7 +138,7 @@
             :style="ssrItemStyle(photo)"
             v-bind="itemBindings(photo, index)"
           >
-            <div style="width:100%;height:100%">
+            <div style="width: 100%; height: 100%">
               <slot
                 v-if="$slots.thumbnail"
                 name="thumbnail"
@@ -123,7 +156,12 @@
                 loading="lazy"
                 class="np-album__img"
                 :class="imgClass"
-                :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${photo.width} / ${photo.height}` }"
+                :style="{
+                  display: 'block',
+                  width: '100%',
+                  height: 'auto',
+                  aspectRatio: `${photo.width} / ${photo.height}`,
+                }"
               />
             </div>
           </div>
@@ -151,8 +189,12 @@
               v-bind="itemBindings(entry.photo, entry.index)"
             >
               <div
-                :style="isHidden(entry.photo) && !$slots.thumbnail ? { opacity: 0 } : undefined"
-                style="width:100%;height:100%"
+                :style="
+                  isHidden(entry.photo) && !$slots.thumbnail
+                    ? { opacity: 0 }
+                    : undefined
+                "
+                style="width: 100%; height: 100%"
               >
                 <slot
                   v-if="$slots.thumbnail"
@@ -171,7 +213,12 @@
                   loading="lazy"
                   class="np-album__img"
                   :class="imgClass"
-                  :style="{ display: 'block', width: '100%', height: 'auto', aspectRatio: `${entry.photo.width} / ${entry.photo.height}` }"
+                  :style="{
+                    display: 'block',
+                    width: '100%',
+                    height: 'auto',
+                    aspectRatio: `${entry.photo.width} / ${entry.photo.height}`,
+                  }"
                 />
               </div>
             </div>
@@ -182,11 +229,23 @@
   </div>
 
   <!-- Own lightbox — only rendered when not inside a parent PhotoGroup -->
-  <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
+  <component
+    :is="LightboxComponent"
+    v-if="hasOwnLightbox && LightboxComponent"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, inject, provide, watch, onBeforeUnmount, useSlots, type Component, type ComponentPublicInstance } from 'vue'
+import {
+  computed,
+  inject,
+  provide,
+  watch,
+  onBeforeUnmount,
+  useSlots,
+  type Component,
+  type ComponentPublicInstance,
+} from 'vue'
 import { PhotoImage, useLightboxProvider } from '@nuxt-photo/vue'
 import {
   PhotoGroupContextKey,
@@ -207,64 +266,67 @@ import {
 import InternalLightbox from './InternalLightbox.vue'
 import { usePhotoLayout } from '../composables/usePhotoLayout'
 
-const props = withDefaults(defineProps<{
-  photos: PhotoItem[] | any[]
-  /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-  itemAdapter?: PhotoAdapter
-  /**
-   * Layout algorithm and its options. Pass a string for defaults, or an object for full control.
-   *
-   * @example
-   * layout="rows"
-   * :layout="{ type: 'rows', targetRowHeight: 280 }"
-   */
-  layout?: AlbumLayout | AlbumLayout['type']
-  /** Shorthand for rows layout. Ignored unless `layout` resolves to `rows`. */
-  targetRowHeight?: ResponsiveParameter<number>
-  /** Shorthand for columns/masonry layouts. Ignored unless `layout` resolves to `columns` or `masonry`. */
-  columns?: ResponsiveParameter<number>
-  /** Gap between images in pixels. Accepts a responsive function. @default 8 */
-  spacing?: ResponsiveParameter<number>
-  /** Outer padding around each image in pixels. Accepts a responsive function. @default 0 */
-  padding?: ResponsiveParameter<number>
-  /**
-   * Assumed container width in pixels for SSR.
-   * When set, the JS row layout runs on the server so the SSR HTML matches the
-   * client-hydrated layout — eliminating CLS.
-   * Combine with `breakpoints` so both server and client snap to the same width.
-   * A value of `0` has no effect; omit the prop to keep the CSS flex-grow fallback.
-   */
-  defaultContainerWidth?: number
-  /**
-   * Snap the observed container width down to the largest breakpoint ≤ actual width.
-   * Prevents re-layout on sub-pixel fluctuations and scrollbar oscillation.
-   * When used without `defaultContainerWidth`, snapping only applies after mount.
-   */
-  breakpoints?: readonly number[]
-  /**
-   * `<img sizes>` hint for the rows layout.
-   * `size` describes the album container width (e.g. `'100vw'`).
-   * `sizes` adds viewport-specific overrides prepended to the default.
-   */
-  sizes?: {
-    size: string
-    sizes?: Array<{ viewport: string; size: string }>
-  }
-  imageAdapter?: ImageAdapter
-  /** Whether to enable lightbox. @default true */
-  lightbox?: boolean | Component
-  /** Transition mode for lightbox open/close */
-  transition?: LightboxTransitionOption
-  /** Extra classes for each album item wrapper */
-  itemClass?: string
-  /** Extra classes for each album img element */
-  imgClass?: string
-}>(), {
-  layout: 'rows',
-  spacing: 8,
-  padding: 0,
-  lightbox: true,
-})
+const props = withDefaults(
+  defineProps<{
+    photos: PhotoItem[] | any[]
+    /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
+    itemAdapter?: PhotoAdapter
+    /**
+     * Layout algorithm and its options. Pass a string for defaults, or an object for full control.
+     *
+     * @example
+     * layout="rows"
+     * :layout="{ type: 'rows', targetRowHeight: 280 }"
+     */
+    layout?: AlbumLayout | AlbumLayout['type']
+    /** Shorthand for rows layout. Ignored unless `layout` resolves to `rows`. */
+    targetRowHeight?: ResponsiveParameter<number>
+    /** Shorthand for columns/masonry layouts. Ignored unless `layout` resolves to `columns` or `masonry`. */
+    columns?: ResponsiveParameter<number>
+    /** Gap between images in pixels. Accepts a responsive function. @default 8 */
+    spacing?: ResponsiveParameter<number>
+    /** Outer padding around each image in pixels. Accepts a responsive function. @default 0 */
+    padding?: ResponsiveParameter<number>
+    /**
+     * Assumed container width in pixels for SSR.
+     * When set, the JS row layout runs on the server so the SSR HTML matches the
+     * client-hydrated layout — eliminating CLS.
+     * Combine with `breakpoints` so both server and client snap to the same width.
+     * A value of `0` has no effect; omit the prop to keep the CSS flex-grow fallback.
+     */
+    defaultContainerWidth?: number
+    /**
+     * Snap the observed container width down to the largest breakpoint ≤ actual width.
+     * Prevents re-layout on sub-pixel fluctuations and scrollbar oscillation.
+     * When used without `defaultContainerWidth`, snapping only applies after mount.
+     */
+    breakpoints?: readonly number[]
+    /**
+     * `<img sizes>` hint for the rows layout.
+     * `size` describes the album container width (e.g. `'100vw'`).
+     * `sizes` adds viewport-specific overrides prepended to the default.
+     */
+    sizes?: {
+      size: string
+      sizes?: Array<{ viewport: string; size: string }>
+    }
+    imageAdapter?: ImageAdapter
+    /** Whether to enable lightbox. @default true */
+    lightbox?: boolean | Component
+    /** Transition mode for lightbox open/close */
+    transition?: LightboxTransitionOption
+    /** Extra classes for each album item wrapper */
+    itemClass?: string
+    /** Extra classes for each album img element */
+    imgClass?: string
+  }>(),
+  {
+    layout: 'rows',
+    spacing: 8,
+    padding: 0,
+    lightbox: true,
+  },
+)
 
 // Normalize layout prop: string → object with defaults
 const normalizedLayout = computed<AlbumLayout>(() => {
@@ -272,33 +334,49 @@ const normalizedLayout = computed<AlbumLayout>(() => {
   if (typeof raw === 'object') {
     switch (raw.type) {
       case 'rows':
-        return { ...raw, targetRowHeight: raw.targetRowHeight ?? props.targetRowHeight }
+        return {
+          ...raw,
+          targetRowHeight: raw.targetRowHeight ?? props.targetRowHeight,
+        }
       case 'columns':
       case 'masonry':
         return { ...raw, columns: raw.columns ?? props.columns }
     }
   }
   switch (raw) {
-    case 'rows': return { type: 'rows', targetRowHeight: props.targetRowHeight }
-    case 'columns': return { type: 'columns', columns: props.columns }
-    case 'masonry': return { type: 'masonry', columns: props.columns }
+    case 'rows':
+      return { type: 'rows', targetRowHeight: props.targetRowHeight }
+    case 'columns':
+      return { type: 'columns', columns: props.columns }
+    case 'masonry':
+      return { type: 'masonry', columns: props.columns }
     default: {
       if ((globalThis as any).process?.env?.NODE_ENV !== 'production') {
-        console.warn(`[nuxt-photo] Unknown layout type "${raw}", falling back to "rows"`)
+        console.warn(
+          `[nuxt-photo] Unknown layout type "${raw}", falling back to "rows"`,
+        )
       }
       return { type: 'rows', targetRowHeight: props.targetRowHeight }
     }
   }
 })
 
-if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production' && props.defaultContainerWidth === 0) {
-  console.warn('[nuxt-photo] defaultContainerWidth=0 has no effect; omit it or use a positive value')
+if (
+  (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
+    ?.NODE_ENV !== 'production' &&
+  props.defaultContainerWidth === 0
+) {
+  console.warn(
+    '[nuxt-photo] defaultContainerWidth=0 has no effect; omit it or use a positive value',
+  )
 }
 
 // ─── Photos (with optional adapter) ──────────────────────────────────────────
 
 const photos = computed<PhotoItem[]>(() =>
-  props.itemAdapter ? props.photos.map(props.itemAdapter) : props.photos as PhotoItem[],
+  props.itemAdapter
+    ? props.photos.map(props.itemAdapter)
+    : (props.photos as PhotoItem[]),
 )
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
@@ -330,13 +408,23 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
 })
 
 const {
-  containerRef, isMounted, scopeClass, snapshotClass, containerStyle,
-  containerQueryCSS, containerQueriesActive,
+  containerRef,
+  isMounted,
+  scopeClass,
+  snapshotClass,
+  containerStyle,
+  containerQueryCSS,
+  containerQueriesActive,
   breakpointSnapshots,
-  groups, rowItems,
-  ssrWrapperStyle, ssrItemStyle,
-  groupStyle, itemStyle,
-  snapshotGroupStyle, snapshotItemStyle, snapshotWrapperStyle,
+  groups,
+  rowItems,
+  ssrWrapperStyle,
+  ssrItemStyle,
+  groupStyle,
+  itemStyle,
+  snapshotGroupStyle,
+  snapshotItemStyle,
+  snapshotWrapperStyle,
   maybeWarnApproximate,
 } = usePhotoLayout({
   photos,
@@ -365,16 +453,21 @@ const LightboxComponent = computed<Component | null>(() => {
   return props.lightbox as Component
 })
 
-const ownCtx = !parentGroup ? useLightboxProvider(photos, { transition: props.transition }) : null
+const ownCtx = !parentGroup
+  ? useLightboxProvider(photos, { transition: props.transition })
+  : null
 
 // Forward #toolbar, #caption, #slide slots into the lightbox via injection
 const albumSlots = useSlots()
 if (hasOwnLightbox) {
   const slotOverrides = computed<LightboxSlotOverrides>(() => {
     const overrides: LightboxSlotOverrides = {}
-    if (albumSlots.toolbar) overrides.toolbar = albumSlots.toolbar as LightboxSlotOverrides['toolbar']
-    if (albumSlots.caption) overrides.caption = albumSlots.caption as LightboxSlotOverrides['caption']
-    if (albumSlots.slide) overrides.slide = albumSlots.slide as LightboxSlotOverrides['slide']
+    if (albumSlots.toolbar)
+      overrides.toolbar = albumSlots.toolbar as LightboxSlotOverrides['toolbar']
+    if (albumSlots.caption)
+      overrides.caption = albumSlots.caption as LightboxSlotOverrides['caption']
+    if (albumSlots.slide)
+      overrides.slide = albumSlots.slide as LightboxSlotOverrides['slide']
     return overrides
   })
   provide(LightboxSlotsKey, slotOverrides)
@@ -455,15 +548,24 @@ if (parentGroup) {
       if (!sym) {
         sym = Symbol()
         idToSymbol.set(pid, sym)
-        parentGroup!.register(sym, photo, () => thumbElsMap[index] ?? null, null)
+        parentGroup!.register(
+          sym,
+          photo,
+          () => thumbElsMap[index] ?? null,
+          null,
+        )
       }
       return sym
     })
   }
 
-  watch(photos, (p) => {
-    syncRegistrations(p)
-  }, { immediate: true })
+  watch(
+    photos,
+    (p) => {
+      syncRegistrations(p)
+    },
+    { immediate: true },
+  )
 
   onBeforeUnmount(() => {
     for (const sym of registrationIds) {

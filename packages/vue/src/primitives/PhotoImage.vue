@@ -14,25 +14,34 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { createNativeImageAdapter, type PhotoItem, type ImageAdapter, type ImageContext } from '@nuxt-photo/core'
+import {
+  createNativeImageAdapter,
+  type PhotoItem,
+  type ImageAdapter,
+  type ImageContext,
+} from '@nuxt-photo/core'
 import { ImageAdapterKey } from '../provide/keys'
 
-const props = withDefaults(defineProps<{
-  photo: PhotoItem
-  context?: ImageContext
-  imageAdapter?: ImageAdapter
-  loading?: 'lazy' | 'eager'
-  /** Override the adapter-computed sizes attribute with a layout-computed value. */
-  sizes?: string
-}>(), {
-  context: 'thumb',
-  loading: 'lazy',
-})
+const props = withDefaults(
+  defineProps<{
+    photo: PhotoItem
+    context?: ImageContext
+    imageAdapter?: ImageAdapter
+    loading?: 'lazy' | 'eager'
+    /** Override the adapter-computed sizes attribute with a layout-computed value. */
+    sizes?: string
+  }>(),
+  {
+    context: 'thumb',
+    loading: 'lazy',
+  },
+)
 
 const injectedAdapter = inject(ImageAdapterKey, null)
 
-const resolveImage = computed((): ImageAdapter =>
-  props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter()
+const resolveImage = computed(
+  (): ImageAdapter =>
+    props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter(),
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))

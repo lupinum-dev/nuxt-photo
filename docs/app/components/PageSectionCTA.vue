@@ -2,8 +2,8 @@
 defineProps({
   loose: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 </script>
 
@@ -11,21 +11,21 @@ defineProps({
   <UPageSection
     :ui="{
       container: 'gap-8 sm:gap-y-8' + (!loose ? ' py-12 sm:py-12' : ''),
-      title: 'lg:text-4xl font-semibold'
+      title: 'lg:text-4xl font-semibold',
     }"
     :links="[
       {
         label: 'Get started',
         to: '/docs/getting-started/installation',
-        trailingIcon: 'i-lucide-arrow-right'
+        trailingIcon: 'i-lucide-arrow-right',
       },
       {
         label: 'View on GitHub',
         to: 'https://github.com/lupinum-dev/nuxt-photo',
         target: '_blank',
         variant: 'outline',
-        color: 'neutral'
-      }
+        color: 'neutral',
+      },
     ]"
   >
     <svg
@@ -38,8 +38,16 @@ defineProps({
         <mask id="path-1-inside-1_846_160841" fill="white">
           <path d="M0 0H1017V181H0V0Z" />
         </mask>
-        <path d="M0 0H1017V181H0V0Z" fill="url(#paint0_radial_846_160841)" fill-opacity="0.22" />
-        <path d="M0 2H1017V-2H0V2Z" fill="url(#paint1_linear_846_160841)" mask="url(#path-1-inside-1_846_160841)" />
+        <path
+          d="M0 0H1017V181H0V0Z"
+          fill="url(#paint0_radial_846_160841)"
+          fill-opacity="0.22"
+        />
+        <path
+          d="M0 2H1017V-2H0V2Z"
+          fill="url(#paint1_linear_846_160841)"
+          mask="url(#path-1-inside-1_846_160841)"
+        />
       </g>
       <defs>
         <radialGradient
@@ -75,10 +83,15 @@ defineProps({
     </ClientOnly>
 
     <template #title>
-      <span>Build photo galleries in <span class="text-primary">minutes</span></span>
+      <span
+        >Build photo galleries in
+        <span class="text-primary">minutes</span></span
+      >
     </template>
     <template #description>
-      Install the module, drop in a <code>&lt;PhotoAlbum&gt;</code>, and you have layouts, lightbox, zoom, and transitions — wired to @nuxt/image when you need it.
+      Install the module, drop in a <code>&lt;PhotoAlbum&gt;</code>, and you
+      have layouts, lightbox, zoom, and transitions — wired to @nuxt/image when
+      you need it.
     </template>
   </UPageSection>
 </template>

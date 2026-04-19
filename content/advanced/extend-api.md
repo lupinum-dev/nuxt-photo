@@ -40,15 +40,15 @@ import {
 
 These keys are used with Vue's `provide` / `inject`:
 
-| Key | Type | Description |
-|---|---|---|
-| `LightboxContextKey` | `LightboxContext` | The full lightbox engine context — a typed intersection of `LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings`. Provided by `useLightboxProvider`. |
-| `LightboxSlideRendererKey` | `(photo) => LightboxSlideRenderer \| null` | Custom slide renderer lookup function. |
-| `LightboxComponentKey` | `Component` | Override the lightbox component globally. Provide this in `app.vue` to replace the default lightbox everywhere. |
-| `LightboxSlotsKey` | `Ref<LightboxSlotOverrides>` | Slot overrides for toolbar, caption, slide. Used internally by PhotoGroup and PhotoAlbum. |
-| `LightboxDefaultsKey` | `LightboxDefaults` | Global defaults (e.g., `minZoom`). Provided by the Nuxt module's defaults plugin. |
-| `ImageAdapterKey` | `ImageAdapter` | Default image adapter. Provided by the `@nuxt/image` integration plugin. |
-| `PhotoGroupContextKey` | `PhotoGroupContext` | Group context for auto-collection. Provided by PhotoGroup. |
+| Key                        | Type                                       | Description                                                                                                                                                      |
+| -------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LightboxContextKey`       | `LightboxContext`                          | The full lightbox engine context — a typed intersection of `LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings`. Provided by `useLightboxProvider`. |
+| `LightboxSlideRendererKey` | `(photo) => LightboxSlideRenderer \| null` | Custom slide renderer lookup function.                                                                                                                           |
+| `LightboxComponentKey`     | `Component`                                | Override the lightbox component globally. Provide this in `app.vue` to replace the default lightbox everywhere.                                                  |
+| `LightboxSlotsKey`         | `Ref<LightboxSlotOverrides>`               | Slot overrides for toolbar, caption, slide. Used internally by PhotoGroup and PhotoAlbum.                                                                        |
+| `LightboxDefaultsKey`      | `LightboxDefaults`                         | Global defaults (e.g., `minZoom`). Provided by the Nuxt module's defaults plugin.                                                                                |
+| `ImageAdapterKey`          | `ImageAdapter`                             | Default image adapter. Provided by the `@nuxt/image` integration plugin.                                                                                         |
+| `PhotoGroupContextKey`     | `PhotoGroupContext`                        | Group context for auto-collection. Provided by PhotoGroup.                                                                                                       |
 
 ## Building a Custom Lightbox
 
@@ -76,7 +76,9 @@ const ctx = useLightboxInject('MyLightbox')
       />
     </LightboxViewport>
 
-    <LightboxControls v-slot="{ prev, next, close, activeIndex, count, isZoomedIn, toggleZoom }">
+    <LightboxControls
+      v-slot="{ prev, next, close, activeIndex, count, isZoomedIn, toggleZoom }"
+    >
       <div class="my-controls">
         <button @click="prev">←</button>
         <span>{{ activeIndex + 1 }} / {{ count }}</span>
@@ -181,8 +183,12 @@ Wire these into your template to connect pointer/wheel events and DOM refs.
 interface LightboxDOMBindings {
   mediaAreaRef: Ref<HTMLElement | null>
   emblaRef: Ref<HTMLElement | null>
-  setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
-  setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  setThumbRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideZoomRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
   onMediaPointerDown: (e: PointerEvent) => void
   onMediaPointerMove: (e: PointerEvent) => void
   onMediaPointerUp: (e: PointerEvent) => void
@@ -200,10 +206,15 @@ When you inject or call `useLightboxContext`, you get the full intersection. But
 
 ```ts
 import { inject } from 'vue'
-import { LightboxContextKey, type LightboxConsumerAPI } from '@nuxt-photo/vue/extend'
+import {
+  LightboxContextKey,
+  type LightboxConsumerAPI,
+} from '@nuxt-photo/vue/extend'
 
 // Only use the consumer slice — your component doesn't touch DOM bindings or render state
-const { open, close, next, prev, activePhoto } = inject(LightboxContextKey)! as LightboxConsumerAPI
+const { open, close, next, prev, activePhoto } = inject(
+  LightboxContextKey,
+)! as LightboxConsumerAPI
 ```
 
 ## useLightboxContext (Full Engine)
@@ -225,7 +236,12 @@ If you need to interact with the photo group system programmatically:
 ```ts
 type PhotoGroupContext = {
   mode: 'auto' | 'explicit'
-  register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
+  register(
+    id: symbol,
+    photo: PhotoItem,
+    getThumbEl: () => HTMLElement | null,
+    renderSlide?: LightboxSlideRenderer | null,
+  ): void
   unregister(id: symbol): void
   open(photoOrIndex: PhotoItem | number): Promise<void>
   photos: ComputedRef<PhotoItem[]>

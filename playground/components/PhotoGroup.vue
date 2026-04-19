@@ -17,10 +17,14 @@ defineProps<{
   photos?: PhotoItem[]
 }>()
 
-const innerGroup = ref<{ open: (photoOrIndex: PhotoItem | number) => void; close: () => void } | null>(null)
+const innerGroup = ref<{
+  open: (photoOrIndex: PhotoItem | number) => void
+  close: () => void
+} | null>(null)
 
 defineExpose({
-  open: (photoOrIndex: PhotoItem | number) => innerGroup.value?.open(photoOrIndex),
+  open: (photoOrIndex: PhotoItem | number) =>
+    innerGroup.value?.open(photoOrIndex),
   close: () => innerGroup.value?.close(),
 })
 </script>

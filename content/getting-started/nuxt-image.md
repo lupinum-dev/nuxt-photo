@@ -18,10 +18,7 @@ pnpm add @nuxt/image
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/image',
-    '@nuxt-photo/nuxt',
-  ],
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
 })
 ```
 
@@ -37,11 +34,11 @@ When `@nuxt/image` is detected, the Nuxt module installs a plugin that provides 
 
 The adapter receives one of three contexts, which tell it what kind of image to produce:
 
-| Context | Where | What it generates |
-|---|---|---|
-| `'thumb'` | Grid thumbnails | Smaller srcset for the album grid. Sizes based on container width and items per row. |
-| `'slide'` | Lightbox slides | Full-viewport srcset for the lightbox view. |
-| `'preload'` | Preloading | Reserved for future use. Currently treated the same as `'slide'`. |
+| Context     | Where           | What it generates                                                                    |
+| ----------- | --------------- | ------------------------------------------------------------------------------------ |
+| `'thumb'`   | Grid thumbnails | Smaller srcset for the album grid. Sizes based on container width and items per row. |
+| `'slide'`   | Lightbox slides | Full-viewport srcset for the lightbox view.                                          |
+| `'preload'` | Preloading      | Reserved for future use. Currently treated the same as `'slide'`.                    |
 
 Think of it this way: when you see a photo gallery, you see small thumbnails in a grid — those are `'thumb'` images and they don't need to be full resolution. When you click a photo and it opens full-screen in the lightbox, that's a `'slide'` image and it needs to be sharp at the full viewport size. The adapter knows which situation it's in, so it can request the right size from your image CDN — small and fast for the grid, large and crisp for the lightbox.
 
@@ -49,10 +46,7 @@ Think of it this way: when you see a photo gallery, you see small thumbnails in 
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/image',
-    '@nuxt-photo/nuxt',
-  ],
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
   nuxtPhoto: {
     image: {
       // 'auto' — use @nuxt/image if installed, fall back to native <img>
@@ -76,7 +70,8 @@ const photos = [
     src: '/photos/landscape.jpg',
     width: 1600,
     height: 900,
-    srcset: '/photos/landscape-400.jpg 400w, /photos/landscape-800.jpg 800w, /photos/landscape-1600.jpg 1600w',
+    srcset:
+      '/photos/landscape-400.jpg 400w, /photos/landscape-800.jpg 800w, /photos/landscape-1600.jpg 1600w',
   },
 ]
 ```
@@ -105,7 +100,7 @@ const myAdapter: ImageAdapter = (photo, context) => {
 Pass it to `PhotoAlbum` or `Photo`:
 
 ```vue
-<PhotoAlbum :photos="photos" :adapter="myAdapter" />
+<PhotoAlbum :photos="photos" :image-adapter="myAdapter" />
 ```
 
 See the [Image Adapters guide](/docs/guides/image-adapters) for more details.

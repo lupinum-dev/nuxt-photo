@@ -3,13 +3,13 @@ const links = [
   {
     label: 'Report a bug',
     to: 'https://github.com/lupinum-dev/nuxt-photo/issues/new/choose',
-    target: '_blank'
+    target: '_blank',
   },
   {
     label: 'Star on GitHub',
     to: 'https://github.com/lupinum-dev/nuxt-photo',
-    target: '_blank'
-  }
+    target: '_blank',
+  },
 ]
 </script>
 
@@ -22,7 +22,8 @@ const links = [
           href="https://github.com/lupinum-dev/nuxt-photo/tree/main/LICENSE"
           target="_blank"
           class="text-highlighted hover:underline underline-offset-4"
-        >MIT license</a>
+          >MIT license</a
+        >
       </span>
     </template>
 

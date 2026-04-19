@@ -4,42 +4,42 @@ export default defineAppConfig({
       primary: 'amber',
       neutral: 'slate',
       warning: 'amber',
-      important: 'violet'
+      important: 'violet',
     },
     commandPalette: {
       slots: {
-        itemLeadingIcon: 'size-4'
-      }
+        itemLeadingIcon: 'size-4',
+      },
     },
     contentNavigation: {
       slots: {
         linkLeadingIcon: 'size-4',
-        listWithChildren: 'ms-4.5'
-      }
+        listWithChildren: 'ms-4.5',
+      },
     },
     prose: {
       codeIcon: {
         deno: 'vscode-icons:file-type-deno',
         auto: 'vscode-icons:file-type-js',
-        jsonc: 'i-vscode-icons-file-type-json'
+        jsonc: 'i-vscode-icons-file-type-json',
       },
       tabs: {
         slots: {
-          root: 'rounded border border-default gap-0'
-        }
+          root: 'rounded border border-default gap-0',
+        },
       },
       tabsItem: {
-        base: 'p-4'
-      }
-    }
+        base: 'p-4',
+      },
+    },
   },
   seo: {
-    siteName: 'Nuxt Photo'
+    siteName: 'Nuxt Photo',
   },
   toc: {
     title: 'On this page',
     bottom: {
-      edit: 'https://github.com/lupinum-dev/nuxt-photo/edit/main/docs/content'
-    }
-  }
+      edit: 'https://github.com/lupinum-dev/nuxt-photo/edit/main/docs/content',
+    },
+  },
 })

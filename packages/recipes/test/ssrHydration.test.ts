@@ -20,7 +20,7 @@ class ResizeObserverMock {
 
 function stringifyConsoleArgs(calls: unknown[][]) {
   return calls
-    .flatMap(args => args)
+    .flatMap((args) => args)
     .map((arg) => {
       if (typeof arg === 'symbol') return arg.toString()
       if (typeof arg === 'string') return arg
@@ -55,17 +55,19 @@ async function hydrateAlbum(props: Record<string, unknown>) {
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock)
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
-    x: 0,
-    y: 0,
-    top: 0,
-    left: 0,
-    right: 900,
-    bottom: 600,
-    width: 900,
-    height: 600,
-    toJSON: () => ({}),
-  }))
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+    () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 900,
+      bottom: 600,
+      width: 900,
+      height: 600,
+      toJSON: () => ({}),
+    }),
+  )
 })
 
 afterEach(() => {
@@ -91,9 +93,14 @@ describe('SSR hydration', () => {
     const firstItem = host.querySelector('.np-album__item')
     expect(firstItem).not.toBeNull()
 
-    const messages = stringifyConsoleArgs([...warn.mock.calls, ...error.mock.calls])
+    const messages = stringifyConsoleArgs([
+      ...warn.mock.calls,
+      ...error.mock.calls,
+    ])
     expect(messages).not.toContain('Hydration text mismatch')
-    expect(messages).not.toContain('Hydration completed but contains mismatches')
+    expect(messages).not.toContain(
+      'Hydration completed but contains mismatches',
+    )
 
     app.unmount()
   })
@@ -115,9 +122,14 @@ describe('SSR hydration', () => {
     const firstItem = host.querySelector('.np-album__item')
     expect(firstItem).not.toBeNull()
 
-    const messages = stringifyConsoleArgs([...warn.mock.calls, ...error.mock.calls])
+    const messages = stringifyConsoleArgs([
+      ...warn.mock.calls,
+      ...error.mock.calls,
+    ])
     expect(messages).not.toContain('Hydration text mismatch')
-    expect(messages).not.toContain('Hydration completed but contains mismatches')
+    expect(messages).not.toContain(
+      'Hydration completed but contains mismatches',
+    )
 
     app.unmount()
   })
@@ -134,7 +146,10 @@ describe('SSR hydration', () => {
       lightbox: false,
     })
 
-    const messages = stringifyConsoleArgs([...warn.mock.calls, ...error.mock.calls])
+    const messages = stringifyConsoleArgs([
+      ...warn.mock.calls,
+      ...error.mock.calls,
+    ])
     expect(messages).not.toContain('Extraneous non-props attributes')
     expect(messages).not.toContain('target-row-height')
 

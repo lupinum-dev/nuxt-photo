@@ -10,7 +10,10 @@ function totalGroupHeight(
   group: { entries: Array<{ height: number }> },
   spacing: number,
 ) {
-  return group.entries.reduce((sum, entry) => sum + entry.height, 0) + spacing * Math.max(0, group.entries.length - 1)
+  return (
+    group.entries.reduce((sum, entry) => sum + entry.height, 0) +
+    spacing * Math.max(0, group.entries.length - 1)
+  )
 }
 
 function masonryGreedyDelta(
@@ -46,9 +49,13 @@ describe('layout algorithms', () => {
     expect(rows.length).toBeGreaterThan(0)
 
     for (const row of rows) {
-      const totalWidth = row.entries.reduce((sum, entry) => sum + entry.width, 0) + spacing * (row.entries.length - 1)
+      const totalWidth =
+        row.entries.reduce((sum, entry) => sum + entry.width, 0) +
+        spacing * (row.entries.length - 1)
       expect(totalWidth).toBeCloseTo(containerWidth, 4)
-      expect(row.entries.every(entry => entry.width > 0 && entry.height > 0)).toBe(true)
+      expect(
+        row.entries.every((entry) => entry.width > 0 && entry.height > 0),
+      ).toBe(true)
     }
   })
 
@@ -64,11 +71,15 @@ describe('layout algorithms', () => {
     expect(columns).toHaveLength(3)
 
     for (const column of columns) {
-      expect(column.entries.every(entry => entry.width > 0 && entry.height > 0)).toBe(true)
-      expect(column.entries.map(entry => entry.index)).toEqual([...column.entries.map(entry => entry.index)].sort((a, b) => a - b))
+      expect(
+        column.entries.every((entry) => entry.width > 0 && entry.height > 0),
+      ).toBe(true)
+      expect(column.entries.map((entry) => entry.index)).toEqual(
+        [...column.entries.map((entry) => entry.index)].sort((a, b) => a - b),
+      )
     }
 
-    const heights = columns.map(column => totalGroupHeight(column, spacing))
+    const heights = columns.map((column) => totalGroupHeight(column, spacing))
     expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(60)
   })
 
@@ -77,9 +88,10 @@ describe('layout algorithms', () => {
     const containerWidth = 1000
     const columnsCount = 3
     const spacing = 8
-    const columnWidth = (containerWidth - spacing * (columnsCount - 1)) / columnsCount
+    const columnWidth =
+      (containerWidth - spacing * (columnsCount - 1)) / columnsCount
     const greedyDelta = masonryGreedyDelta(
-      photos.map(photo => ({
+      photos.map((photo) => ({
         width: columnWidth,
         height: columnWidth / (photo.width / photo.height),
       })),
@@ -95,11 +107,15 @@ describe('layout algorithms', () => {
     })
 
     for (const column of masonry) {
-      expect(column.entries.every(entry => entry.width > 0 && entry.height > 0)).toBe(true)
-      expect(column.entries.map(entry => entry.index)).toEqual([...column.entries.map(entry => entry.index)].sort((a, b) => a - b))
+      expect(
+        column.entries.every((entry) => entry.width > 0 && entry.height > 0),
+      ).toBe(true)
+      expect(column.entries.map((entry) => entry.index)).toEqual(
+        [...column.entries.map((entry) => entry.index)].sort((a, b) => a - b),
+      )
     }
 
-    const heights = masonry.map(column => totalGroupHeight(column, spacing))
+    const heights = masonry.map((column) => totalGroupHeight(column, spacing))
     const finalDelta = Math.max(...heights) - Math.min(...heights)
 
     expect(finalDelta).toBeLessThanOrEqual(greedyDelta)

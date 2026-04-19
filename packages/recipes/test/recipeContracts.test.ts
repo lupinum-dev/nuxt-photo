@@ -14,7 +14,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LightboxControls, LightboxSlide, useLightbox } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
-import { PhotoGroupContextKey, type PhotoGroupContext } from '@nuxt-photo/vue/extend'
+import {
+  PhotoGroupContextKey,
+  type PhotoGroupContext,
+} from '@nuxt-photo/vue/extend'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../src/components/Photo.vue'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
@@ -41,17 +44,21 @@ function createImmediateImage() {
 const TestLightbox = defineComponent({
   name: 'TestLightbox',
   setup() {
-    return () => h(LightboxControls, null, {
-      default: ({ photos }: { photos: PhotoItem[] }) => h(
-        'div',
-        { 'data-testid': 'test-lightbox' },
-        photos.map((photo, index) => h(LightboxSlide, {
-          key: photo.id,
-          photo,
-          index,
-        })),
-      ),
-    })
+    return () =>
+      h(LightboxControls, null, {
+        default: ({ photos }: { photos: PhotoItem[] }) =>
+          h(
+            'div',
+            { 'data-testid': 'test-lightbox' },
+            photos.map((photo, index) =>
+              h(LightboxSlide, {
+                key: photo.id,
+                photo,
+                index,
+              }),
+            ),
+          ),
+      })
   },
 })
 
@@ -59,7 +66,7 @@ async function flushUi(iterations = 6) {
   for (let i = 0; i < iterations; i++) {
     await Promise.resolve()
     await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 0))
   }
 }
 
@@ -99,30 +106,45 @@ async function mountComponent(
 
 describe('recipe contracts', () => {
   beforeEach(() => {
-    vi.stubGlobal('ResizeObserver', class {
-      observe() {}
-      disconnect() {}
-      unobserve() {}
-    })
-    vi.stubGlobal('IntersectionObserver', class {
-      observe() {}
-      disconnect() {}
-      unobserve() {}
-      takeRecords() { return [] }
-    })
-    vi.stubGlobal('matchMedia', vi.fn().mockImplementation(() => ({
-      matches: false,
-      addEventListener() {},
-      removeEventListener() {},
-      addListener() {},
-      removeListener() {},
-      dispatchEvent() { return false },
-    })))
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    )
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+        takeRecords() {
+          return []
+        }
+      },
+    )
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation(() => ({
+        matches: false,
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {},
+        dispatchEvent() {
+          return false
+        },
+      })),
+    )
     vi.stubGlobal('Image', createImmediateImage())
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
       window.setTimeout(() => callback(performance.now() + 1000), 0),
     )
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => window.clearTimeout(id))
+    vi.stubGlobal('cancelAnimationFrame', (id: number) =>
+      window.clearTimeout(id),
+    )
   })
 
   afterEach(() => {
@@ -132,11 +154,13 @@ describe('recipe contracts', () => {
 
   it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
     const photo = makePhoto({ id: 'plain-photo' })
-    const imageAdapter = vi.fn((item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
-      src: `/${context}/${item.id}.jpg`,
-      width: item.width,
-      height: item.height,
-    }))
+    const imageAdapter = vi.fn(
+      (item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
+        src: `/${context}/${item.id}.jpg`,
+        width: item.width,
+        height: item.height,
+      }),
+    )
 
     const mounted = await mountComponent(Photo, {
       props: { photo, imageAdapter },
@@ -145,7 +169,9 @@ describe('recipe contracts', () => {
     const img = mounted.container.querySelector('img')
 
     expect(img?.getAttribute('src')).toBe('/thumb/plain-photo.jpg')
-    expect(new Set(imageAdapter.mock.calls.map(([, context]) => context))).toEqual(new Set(['thumb']))
+    expect(
+      new Set(imageAdapter.mock.calls.map(([, context]) => context)),
+    ).toEqual(new Set(['thumb']))
 
     mounted.unmount()
   })
@@ -171,10 +197,11 @@ describe('recipe contracts', () => {
 
     const Wrapper = defineComponent({
       setup() {
-        return () => h(PhotoAlbum, {
-          photos: photos.value,
-          lightbox: false,
-        })
+        return () =>
+          h(PhotoAlbum, {
+            photos: photos.value,
+            lightbox: false,
+          })
       },
     })
 
@@ -183,12 +210,16 @@ describe('recipe contracts', () => {
     })
 
     // Initial: a and b registered
-    expect(register.mock.calls.map(call => call[1].id)).toEqual(['a', 'b'])
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual(['a', 'b'])
 
     // Reorder + insert c: only c is newly registered (diff-based — a and b preserved)
     photos.value = [b, a, c]
     await flushUi()
-    expect(register.mock.calls.map(call => call[1].id)).toEqual(['a', 'b', 'c'])
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
     expect(unregister).not.toHaveBeenCalled()
 
     // Remove b: only b gets unregistered; c and a are preserved
@@ -212,7 +243,11 @@ describe('recipe contracts', () => {
       },
       slots: {
         slide: ({ photo: slidePhoto }: { photo: PhotoItem }) =>
-          h('div', { 'data-testid': 'solo-custom-slide' }, `Solo ${slidePhoto.id}`),
+          h(
+            'div',
+            { 'data-testid': 'solo-custom-slide' },
+            `Solo ${slidePhoto.id}`,
+          ),
       },
     })
 
@@ -233,17 +268,28 @@ describe('recipe contracts', () => {
       },
       slots: {
         default: () => [
-          h(Photo, { photo }, {
-            slide: ({ photo: slidePhoto }: { photo: PhotoItem }) =>
-              h('div', { 'data-testid': 'grouped-custom-slide' }, `Grouped ${slidePhoto.id}`),
-          }),
+          h(
+            Photo,
+            { photo },
+            {
+              slide: ({ photo: slidePhoto }: { photo: PhotoItem }) =>
+                h(
+                  'div',
+                  { 'data-testid': 'grouped-custom-slide' },
+                  `Grouped ${slidePhoto.id}`,
+                ),
+            },
+          ),
         ],
       },
     })
 
     await flushUi()
 
-    expect(mounted.container.querySelector('[data-testid="grouped-custom-slide"]')?.textContent).toContain('grouped-slide')
+    expect(
+      mounted.container.querySelector('[data-testid="grouped-custom-slide"]')
+        ?.textContent,
+    ).toContain('grouped-slide')
 
     mounted.unmount()
   })
@@ -270,16 +316,21 @@ describe('recipe contracts', () => {
         const groupRef = ref()
         groupApi = groupRef
 
-        return () => h(PhotoGroup, {
-          ref: groupRef,
-          photos,
-          lightbox: false,
-        }, {
-          default: (props: Record<string, any>) => {
-            slotProps = props
-            return [h(Probe)]
-          },
-        })
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: false,
+            },
+            {
+              default: (props: Record<string, any>) => {
+                slotProps = props
+                return [h(Probe)]
+              },
+            },
+          )
       },
     })
 
@@ -315,18 +366,24 @@ describe('recipe contracts', () => {
       props: { photo, lightbox: true },
     })
 
-    const trigger = mounted.container.querySelector('figure') as HTMLElement | null
+    const trigger = mounted.container.querySelector(
+      'figure',
+    ) as HTMLElement | null
     expect(trigger).toBeTruthy()
 
     trigger?.focus()
     trigger?.click()
     await flushUi()
 
-    const dialog = document.body.querySelector('.np-lightbox[tabindex="-1"]') as HTMLElement | null
+    const dialog = document.body.querySelector(
+      '.np-lightbox[tabindex="-1"]',
+    ) as HTMLElement | null
     expect(dialog).toBeTruthy()
     expect(dialog?.contains(document.activeElement)).toBe(true)
 
-    const closeButton = document.body.querySelector('.np-lightbox__btn--close') as HTMLButtonElement | null
+    const closeButton = document.body.querySelector(
+      '.np-lightbox__btn--close',
+    ) as HTMLButtonElement | null
     expect(closeButton).toBeTruthy()
     closeButton?.click()
     await flushUi()

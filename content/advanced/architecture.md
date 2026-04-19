@@ -46,6 +46,7 @@ Dependencies flow upward — each package only depends on the ones below it.
 - **Provide/inject system** — Injection keys and context types for sharing lightbox state across the component tree
 
 This package has two export paths:
+
 - `@nuxt-photo/vue` — Public API (composables, primitives)
 - `@nuxt-photo/vue/extend` — Extension API (injection keys, context types, internal types for building custom lightboxes)
 

@@ -7,13 +7,16 @@ import { validatePhotoDimensions } from './types'
  * the bottom edge. Chronological order is preserved within each column.
  * Returns LayoutGroup[] for flexbox rendering.
  */
-export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup[] {
+export function computeMasonryLayout(
+  options: MasonryLayoutOptions,
+): LayoutGroup[] {
   const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
-  const columnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
-  const photoHeights = photos.map(p => columnWidth / (p.width / p.height))
+  const columnWidth =
+    (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+  const photoHeights = photos.map((p) => columnWidth / (p.width / p.height))
 
   const colItems: number[][] = Array.from({ length: columns }, () => [])
   const colHeights: number[] = new Array(columns).fill(0)
@@ -42,7 +45,10 @@ export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup
     const currentDelta = colHeights[tallest]! - colHeights[shortest]!
     if (currentDelta <= 2) break
 
-    let bestMove: { type: 'transfer'; idx: number; pos: number } | { type: 'swap'; tPos: number; sPos: number } | null = null
+    let bestMove:
+      | { type: 'transfer'; idx: number; pos: number }
+      | { type: 'swap'; tPos: number; sPos: number }
+      | null = null
     let bestReduction = 0
 
     for (let i = 0; i < colItems[tallest]!.length; i++) {

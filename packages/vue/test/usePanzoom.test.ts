@@ -14,7 +14,9 @@ describe('usePanzoom', () => {
 
     panzoom.refreshZoomState(true)
 
-    expect(panzoom.zoomState.value).toEqual(computeZoomLevels(1600, 1000, 1200, 800))
+    expect(panzoom.zoomState.value).toEqual(
+      computeZoomLevels(1600, 1000, 1200, 800),
+    )
     expect(panzoom.panState.value).toEqual({ x: 0, y: 0 })
   })
 
@@ -26,7 +28,12 @@ describe('usePanzoom', () => {
     panzoom.refreshZoomState(true)
     panzoom.setPanzoomImmediate(2, { x: 180, y: -90 })
 
-    expect(panzoom.getTargetPanForZoom(panzoom.zoomState.value.fit, { x: 320, y: 240 })).toEqual({ x: 0, y: 0 })
+    expect(
+      panzoom.getTargetPanForZoom(panzoom.zoomState.value.fit, {
+        x: 320,
+        y: 240,
+      }),
+    ).toEqual({ x: 0, y: 0 })
   })
 
   it('clamps pan after recalculating geometry at the current zoom', () => {
@@ -35,10 +42,16 @@ describe('usePanzoom', () => {
     const panzoom = usePanzoom(currentPhoto, areaMetrics)
 
     panzoom.refreshZoomState(true)
-    panzoom.setPanzoomImmediate(panzoom.zoomState.value.max, { x: 1000, y: -1000 })
+    panzoom.setPanzoomImmediate(panzoom.zoomState.value.max, {
+      x: 1000,
+      y: -1000,
+    })
     panzoom.refreshZoomState(false)
 
-    const bounds = panzoom.getPanBounds(currentPhoto.value, panzoom.zoomState.value.max)
+    const bounds = panzoom.getPanBounds(
+      currentPhoto.value,
+      panzoom.zoomState.value.max,
+    )
     expect(panzoom.panState.value).toEqual({ x: bounds.x, y: -bounds.y })
   })
 

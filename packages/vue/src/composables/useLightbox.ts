@@ -13,7 +13,9 @@ export function useLightbox() {
   }
 
   function openById(id: string | number) {
-    const index = context.photos.value.findIndex(photo => photoId(photo) === String(id))
+    const index = context.photos.value.findIndex(
+      (photo) => photoId(photo) === String(id),
+    )
     return context.open(index >= 0 ? index : 0)
   }
 

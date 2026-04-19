@@ -1,4 +1,9 @@
-import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import type {
+  ColumnsLayoutOptions,
+  LayoutEntry,
+  LayoutGroup,
+  PhotoItem,
+} from '../types'
 import { validatePhotoDimensions } from './types'
 import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
@@ -52,33 +57,49 @@ function computeColumnsModel(
   spacing: number,
   padding: number,
   targetColumnWidth: number,
-): { columnsGaps: number[]; columnsRatios: number[]; columnGroups: { photo: PhotoItem; index: number }[][] } | undefined {
+):
+  | {
+      columnsGaps: number[]
+      columnsRatios: number[]
+      columnGroups: { photo: PhotoItem; index: number }[][]
+    }
+  | undefined {
   const columnsGaps: number[] = []
   const columnsRatios: number[] = []
 
   if (items.length <= columns) {
-    const averageRatio = items.length > 0
-      ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
-      : 1
+    const averageRatio =
+      items.length > 0
+        ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
+        : 1
 
     for (let col = 0; col < columns; col++) {
       columnsGaps[col] = 2 * padding
-      columnsRatios[col] = col < items.length && items[col] ? ratio(items[col]!) : averageRatio
+      columnsRatios[col] =
+        col < items.length && items[col] ? ratio(items[col]!) : averageRatio
     }
 
-    const path = Array.from({ length: columns + 1 }, (_, i) => Math.min(i, items.length))
+    const path = Array.from({ length: columns + 1 }, (_, i) =>
+      Math.min(i, items.length),
+    )
     const columnGroups = buildColumnGroups(path, items)
     return { columnsGaps, columnsRatios, columnGroups }
   }
 
-  const targetColumnHeight = (
-    items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0)
-    + spacing * (items.length - columns)
-    + 2 * padding * items.length
-  ) / columns
+  const targetColumnHeight =
+    (items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0) +
+      spacing * (items.length - columns) +
+      2 * padding * items.length) /
+    columns
 
   const path = findShortestPathLengthN(
-    makeGetColumnNeighbors({ items, targetColumnWidth, targetColumnHeight, spacing, padding }),
+    makeGetColumnNeighbors({
+      items,
+      targetColumnWidth,
+      targetColumnHeight,
+      spacing,
+      padding,
+    }),
     columns,
     0,
     items.length,
@@ -86,8 +107,10 @@ function computeColumnsModel(
 
   for (let col = 0; col < path.length - 1; col++) {
     const columnItems = items.slice(path[col], path[col + 1])
-    columnsGaps[col] = spacing * (columnItems.length - 1) + 2 * padding * columnItems.length
-    columnsRatios[col] = 1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
+    columnsGaps[col] =
+      spacing * (columnItems.length - 1) + 2 * padding * columnItems.length
+    columnsRatios[col] =
+      1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
   }
 
   const columnGroups = buildColumnGroups(path, items)
@@ -112,14 +135,24 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
  * shortest-path algorithm for optimal distribution. Returns LayoutGroup[]
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
-export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
+export function computeColumnsLayout(
+  options: ColumnsLayoutOptions,
+): LayoutGroup[] {
   const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || columns < 1) return []
 
-  const targetColumnWidth = (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+  const targetColumnWidth =
+    (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
 
-  const result = computeColumnsModel(photos, columns, containerWidth, spacing, padding, targetColumnWidth)
+  const result = computeColumnsModel(
+    photos,
+    columns,
+    containerWidth,
+    spacing,
+    padding,
+    targetColumnWidth,
+  )
   if (!result) return []
 
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
@@ -131,25 +164,33 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
 
     const totalAdjustedGaps = result.columnsRatios.reduce(
       (acc, colRatio, ratioIndex) =>
-        acc + ((result.columnsGaps[col] ?? 0) - (result.columnsGaps[ratioIndex] ?? 0)) * colRatio,
+        acc +
+        ((result.columnsGaps[col] ?? 0) -
+          (result.columnsGaps[ratioIndex] ?? 0)) *
+          colRatio,
       0,
     )
 
-    const columnWidth = (
-      (containerWidth - (result.columnGroups.length - 1) * spacing - 2 * result.columnGroups.length * padding - totalAdjustedGaps)
-      * (result.columnsRatios[col] ?? 0)
-    ) / totalRatio
+    const columnWidth =
+      ((containerWidth -
+        (result.columnGroups.length - 1) * spacing -
+        2 * result.columnGroups.length * padding -
+        totalAdjustedGaps) *
+        (result.columnsRatios[col] ?? 0)) /
+      totalRatio
 
-    const entries: LayoutEntry[] = columnItems.map(({ photo, index }, positionIndex) => ({
-      index,
-      photo,
-      width: columnWidth,
-      height: columnWidth / ratio(photo),
-      positionIndex,
-      itemsCount: columnItems.length,
-    }))
+    const entries: LayoutEntry[] = columnItems.map(
+      ({ photo, index }, positionIndex) => ({
+        index,
+        photo,
+        width: columnWidth,
+        height: columnWidth / ratio(photo),
+        positionIndex,
+        itemsCount: columnItems.length,
+      }),
+    )
 
-    if (entries.some(e => e.width <= 0 || e.height <= 0)) {
+    if (entries.some((e) => e.width <= 0 || e.height <= 0)) {
       if (columns > 1) {
         return computeColumnsLayout({ ...options, columns: columns - 1 })
       }

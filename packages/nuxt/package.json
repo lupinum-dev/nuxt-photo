@@ -9,15 +9,17 @@
     }
   },
   "main": "./dist/module.mjs",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "nuxt-module-build build",
     "dev": "nuxt-module-build build --stub"
   },
   "dependencies": {
     "@nuxt-photo/core": "workspace:*",
-    "@nuxt-photo/vue": "workspace:*",
     "@nuxt-photo/recipes": "workspace:*",
+    "@nuxt-photo/vue": "workspace:*",
     "@nuxt/kit": "^4.4.2",
     "@nuxt/schema": "^4.4.2"
   },
@@ -33,6 +35,6 @@
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
     "nuxt": "^4.4.2",
-    "typescript": "^5.9.2"
+    "typescript": "5.9.3"
   }
 }

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { ContentNavigationItem } from '@nuxt/content'
+import type { Ref } from 'vue'
+import { computed, inject } from 'vue'
+import { useRoute } from '#imports'
 
 const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
@@ -9,31 +12,39 @@ const links = computed(() => [
     label: 'Docs',
     to: '/docs/getting-started/introduction',
     active: route.path.startsWith('/docs'),
-    icon: 'i-lucide-book'
-  }
+    icon: 'i-lucide-book',
+  },
 ])
 
-const navLinks = computed(() => links.value.map((link) => {
-  if (link.label === 'Docs') {
+const navLinks = computed(() =>
+  links.value.map((link) => {
+    if (link.label === 'Docs') {
+      return {
+        icon: link.icon,
+        title: link.label,
+        path: link.to,
+        children:
+          navigation.value?.find((item) => item.path === '/docs')?.children ||
+          [],
+      }
+    }
     return {
-      icon: link.icon,
       title: link.label,
       path: link.to,
-      children: navigation.value?.find(item => item.path === '/docs')?.children || []
+      icon: link.icon,
     }
-  }
-  return {
-    title: link.label,
-    path: link.to,
-    icon: link.icon
-  }
-}))
+  }),
+)
 </script>
 
 <template>
   <UHeader>
     <template #left>
-      <NuxtLink to="/" class="inline-flex items-end gap-2" aria-label="Back to home">
+      <NuxtLink
+        to="/"
+        class="inline-flex items-end gap-2"
+        aria-label="Back to home"
+      >
         <PhotoLogo />
       </NuxtLink>
     </template>
@@ -41,12 +52,18 @@ const navLinks = computed(() => links.value.map((link) => {
     <UNavigationMenu
       :items="links.map(({ icon, ...link }) => link)"
       variant="link"
-      :ui="{ link: 'text-highlighted hover:text-primary data-active:text-primary' }"
+      :ui="{
+        link: 'text-highlighted hover:text-primary data-active:text-primary',
+      }"
     />
 
     <template #right>
       <div class="flex items-center gap-2">
-        <UTooltip text="Search" :kbds="['meta', 'K']" :popper="{ strategy: 'absolute' }">
+        <UTooltip
+          text="Search"
+          :kbds="['meta', 'K']"
+          :popper="{ strategy: 'absolute' }"
+        >
           <UContentSearchButton :label="null" />
         </UTooltip>
         <UColorModeButton />

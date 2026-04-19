@@ -31,20 +31,29 @@ const props = defineProps<{
   minZoom?: number
 }>()
 
-const ctx = props.photos !== undefined
-  ? useLightboxProvider(computed(() => props.photos as PhotoItem | PhotoItem[]), {
-    transition: props.transition,
-    minZoom: props.minZoom,
-  })
-  : useLightboxInject('LightboxRoot')
+const ctx =
+  props.photos !== undefined
+    ? useLightboxProvider(
+        computed(() => props.photos as PhotoItem | PhotoItem[]),
+        {
+          transition: props.transition,
+          minZoom: props.minZoom,
+        },
+      )
+    : useLightboxInject('LightboxRoot')
 
 const rootRef = ref<HTMLElement | null>(null)
 let restoreFocusEl: HTMLElement | null = null
 
 function getFocusableElements(root: HTMLElement) {
-  return Array.from(root.querySelectorAll<HTMLElement>(
-    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )).filter(el => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true')
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter(
+    (el) =>
+      !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
+  )
 }
 
 function handleKeydownCapture(event: KeyboardEvent) {
@@ -78,25 +87,31 @@ function handleKeydownCapture(event: KeyboardEvent) {
   }
 }
 
-watch(() => ctx.isOpen.value, async (isOpen) => {
-  if (isOpen) {
-    restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    await nextTick()
-    rootRef.value?.focus()
-    if (rootRef.value && document.activeElement !== rootRef.value) {
-      const firstFocusable = getFocusableElements(rootRef.value)[0]
-      firstFocusable?.focus()
+watch(
+  () => ctx.isOpen.value,
+  async (isOpen) => {
+    if (isOpen) {
+      restoreFocusEl =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
+      await nextTick()
+      rootRef.value?.focus()
+      if (rootRef.value && document.activeElement !== rootRef.value) {
+        const firstFocusable = getFocusableElements(rootRef.value)[0]
+        firstFocusable?.focus()
+      }
+      return
     }
-    return
-  }
 
-  const target = restoreFocusEl
-  restoreFocusEl = null
-  if (!target?.isConnected) return
+    const target = restoreFocusEl
+    restoreFocusEl = null
+    if (!target?.isConnected) return
 
-  await nextTick()
-  target.focus()
-})
+    await nextTick()
+    target.focus()
+  },
+)
 
 onBeforeUnmount(() => {
   restoreFocusEl = null

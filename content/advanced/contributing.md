@@ -42,12 +42,12 @@ The playgrounds are full Nuxt applications that demonstrate all features. They'r
 
 ### Playground Pages
 
-| Page | What it demonstrates |
-|---|---|
-| `/` | Basic gallery with rows layout |
-| `/layouts` | All four layout types with parameter controls |
-| `/headless` | PhotoGroup patterns, programmatic open, headless mode |
-| `/nuxt-image` | `@nuxt/image` integration |
+| Page          | What it demonstrates                                  |
+| ------------- | ----------------------------------------------------- |
+| `/`           | Basic gallery with rows layout                        |
+| `/layouts`    | All four layout types with parameter controls         |
+| `/headless`   | PhotoGroup patterns, programmatic open, headless mode |
+| `/nuxt-image` | `@nuxt/image` integration                             |
 
 ## Project Structure
 
@@ -88,12 +88,12 @@ Unit tests use **Vitest** with environment-aware configuration:
 
 Test files are in `packages/*/test/`:
 
-| Package | Tests |
-|---|---|
-| Core | Layout algorithms, responsive helpers, geometry, transitions, photo adapters, collection |
-| Vue | Gesture handling, pan/zoom, primitive component guards, public API exports |
-| Recipes | Component contracts, SSR rendering |
-| Nuxt | Module setup and configuration |
+| Package | Tests                                                                                    |
+| ------- | ---------------------------------------------------------------------------------------- |
+| Core    | Layout algorithms, responsive helpers, geometry, transitions, photo adapters, collection |
+| Vue     | Gesture handling, pan/zoom, primitive component guards, public API exports               |
+| Recipes | Component contracts, SSR rendering                                                       |
+| Nuxt    | Module setup and configuration                                                           |
 
 ### E2E Tests
 
@@ -105,6 +105,7 @@ pnpm test:e2e
 ```
 
 Tests are in `playground/tests/e2e/` and cover:
+
 - Gallery rendering and lightbox interaction
 - Layout switching between all four types
 - Headless mode and programmatic control
@@ -115,7 +116,11 @@ Tests are in `playground/tests/e2e/` and cover:
 Shared test helpers in `test/fixtures/photos.ts`:
 
 ```ts
-import { makePhoto, createPhotoSet, createPlainPhotoSet } from '../../test/fixtures/photos'
+import {
+  makePhoto,
+  createPhotoSet,
+  createPlainPhotoSet,
+} from '../../test/fixtures/photos'
 
 // Single photo with specified dimensions
 const photo = makePhoto({ width: 1600, height: 900 })
@@ -133,12 +138,12 @@ pnpm build
 
 The build order follows the dependency graph: core → vue → recipes → nuxt.
 
-| Package | Build tool | Output |
-|---|---|---|
-| Core | Unbuild (rollup) | Single bundled `.mjs` + `.d.ts` |
-| Vue | Unbuild (mkdist) | Directory structure preserved |
-| Recipes | Unbuild (mkdist) | Directory structure preserved + CSS files |
-| Nuxt | Nuxt Module Builder | `module.mjs` + `module.d.mts` |
+| Package | Build tool          | Output                                    |
+| ------- | ------------------- | ----------------------------------------- |
+| Core    | Unbuild (rollup)    | Single bundled `.mjs` + `.d.ts`           |
+| Vue     | Unbuild (mkdist)    | Directory structure preserved             |
+| Recipes | Unbuild (mkdist)    | Directory structure preserved + CSS files |
+| Nuxt    | Nuxt Module Builder | `module.mjs` + `module.d.mts`             |
 
 ## Code Style
 
@@ -148,8 +153,10 @@ The build order follows the dependency graph: core → vue → recipes → nuxt.
 - CSS uses the `np-` prefix for all class names
 - CSS custom properties use the `--np-` prefix
 
-## Linting
+## Static Checks
 
 ```bash
 pnpm lint
+pnpm typecheck
+pnpm format:check
 ```

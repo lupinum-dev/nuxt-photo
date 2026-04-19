@@ -25,7 +25,12 @@
       "ignoreUnresolved": ["#imports"]
     },
     "docs": {
-      "entry": ["app/**/*.vue", "app/**/*.ts", "server/**/*.ts", "content.config.ts"],
+      "entry": [
+        "app/**/*.vue",
+        "app/**/*.ts",
+        "server/**/*.ts",
+        "content.config.ts"
+      ],
       "project": ["app/**/*.ts", "server/**/*.ts", "*.ts"],
       "ignoreDependencies": [
         "@iconify-json/lucide",

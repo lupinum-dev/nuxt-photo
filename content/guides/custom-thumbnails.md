@@ -27,13 +27,13 @@ The `#thumbnail` slot on `PhotoAlbum` lets you replace the default `<img>` eleme
 
 ## Slot Props
 
-| Prop | Type | Description |
-|---|---|---|
-| `photo` | `PhotoItem` | The photo data for this thumbnail. |
-| `index` | `number` | The index of this photo in the album. |
-| `width` | `number` | The computed width of the thumbnail in pixels. |
-| `height` | `number` | The computed height of the thumbnail in pixels. |
-| `hidden` | `boolean` | `true` when this thumbnail should be invisible (during FLIP transitions). Handle this by setting `opacity: 0` on your content. |
+| Prop     | Type        | Description                                                                                                                    |
+| -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `photo`  | `PhotoItem` | The photo data for this thumbnail.                                                                                             |
+| `index`  | `number`    | The index of this photo in the album.                                                                                          |
+| `width`  | `number`    | The computed width of the thumbnail in pixels.                                                                                 |
+| `height` | `number`    | The computed height of the thumbnail in pixels.                                                                                |
+| `hidden` | `boolean`   | `true` when this thumbnail should be invisible (during FLIP transitions). Handle this by setting `opacity: 0` on your content. |
 
 ## Handling the Hidden State
 

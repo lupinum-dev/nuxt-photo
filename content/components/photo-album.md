@@ -97,21 +97,21 @@ const adapter: PhotoAdapter = (item) => ({
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `photos` | `PhotoItem[] \| any[]` | — | **Required.** Array of photos. When using `photoAdapter`, items can be any shape. |
-| `photoAdapter` | `PhotoAdapter` | `undefined` | Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS or API data directly. |
-| `layout` | `AlbumLayout \| AlbumLayout['type']` | `'rows'` | Layout algorithm. Pass a string (`'rows'`, `'columns'`, or `'masonry'`) for defaults, or an object for full control. |
-| `spacing` | `ResponsiveParameter<number>` | `8` | Gap between images in pixels. Accepts a static number or a responsive function. |
-| `padding` | `ResponsiveParameter<number>` | `0` | Outer padding around each image in pixels. Accepts a static number or a responsive function. |
-| `defaultContainerWidth` | `number` | `undefined` | Assumed container width for SSR. When set, the JS layout runs server-side so the rendered HTML matches hydration — eliminating CLS. Combine with `breakpoints`. |
-| `breakpoints` | `readonly number[]` | `undefined` | Snaps the observed container width to the largest breakpoint ≤ actual width. Prevents re-layout on sub-pixel fluctuations and scrollbar oscillation. |
-| `sizes` | `{ size: string; sizes?: Array<{ viewport: string; size: string }> }` | `undefined` | `<img sizes>` hint for responsive images in the rows layout. `size` describes the container width (e.g., `'100vw'`). |
-| `adapter` | `ImageAdapter` | `undefined` | Custom image adapter for generating `src`, `srcset`, and `sizes` attributes. |
-| `lightbox` | `boolean \| Component` | `true` | Whether to enable the lightbox. Pass `false` to disable, `true` for default, or a custom component. |
-| `transition` | `LightboxTransitionOption` | `undefined` | Transition mode for lightbox open/close. See [Transitions guide](/docs/guides/transitions). |
-| `itemClass` | `string` | `undefined` | Extra CSS classes for each album item wrapper `<div>`. |
-| `imgClass` | `string` | `undefined` | Extra CSS classes for each album `<img>` element. |
+| Prop                    | Type                                                                  | Default     | Description                                                                                                                                                     |
+| ----------------------- | --------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `photos`                | `PhotoItem[] \| any[]`                                                | —           | **Required.** Array of photos. When using `itemAdapter`, items can be any shape.                                                                                |
+| `itemAdapter`           | `PhotoAdapter`                                                        | `undefined` | Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS or API data directly.                                                                 |
+| `layout`                | `AlbumLayout \| AlbumLayout['type']`                                  | `'rows'`    | Layout algorithm. Pass a string (`'rows'`, `'columns'`, or `'masonry'`) for defaults, or an object for full control.                                            |
+| `spacing`               | `ResponsiveParameter<number>`                                         | `8`         | Gap between images in pixels. Accepts a static number or a responsive function.                                                                                 |
+| `padding`               | `ResponsiveParameter<number>`                                         | `0`         | Outer padding around each image in pixels. Accepts a static number or a responsive function.                                                                    |
+| `defaultContainerWidth` | `number`                                                              | `undefined` | Assumed container width for SSR. When set, the JS layout runs server-side so the rendered HTML matches hydration — eliminating CLS. Combine with `breakpoints`. |
+| `breakpoints`           | `readonly number[]`                                                   | `undefined` | Snaps the observed container width to the largest breakpoint ≤ actual width. Prevents re-layout on sub-pixel fluctuations and scrollbar oscillation.            |
+| `sizes`                 | `{ size: string; sizes?: Array<{ viewport: string; size: string }> }` | `undefined` | `<img sizes>` hint for responsive images in the rows layout. `size` describes the container width (e.g., `'100vw'`).                                            |
+| `imageAdapter`          | `ImageAdapter`                                                        | `undefined` | Custom image adapter for generating `src`, `srcset`, and `sizes` attributes.                                                                                    |
+| `lightbox`              | `boolean \| Component`                                                | `true`      | Whether to enable the lightbox. Pass `false` to disable, `true` for default, or a custom component.                                                             |
+| `transition`            | `LightboxTransitionOption`                                            | `undefined` | Transition mode for lightbox open/close. See [Transitions guide](/docs/guides/transitions).                                                                     |
+| `itemClass`             | `string`                                                              | `undefined` | Extra CSS classes for each album item wrapper `<div>`.                                                                                                          |
+| `imgClass`              | `string`                                                              | `undefined` | Extra CSS classes for each album `<img>` element.                                                                                                               |
 
 ## Layout Options
 
@@ -123,9 +123,9 @@ The `layout` prop accepts a string shorthand or an object. Each layout type has 
 <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `targetRowHeight` | `ResponsiveParameter<number>` | `300` | Ideal row height in pixels. The algorithm adjusts photo widths to fill each row while keeping heights close to this value. |
+| Option            | Type                          | Default | Description                                                                                                                |
+| ----------------- | ----------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `targetRowHeight` | `ResponsiveParameter<number>` | `300`   | Ideal row height in pixels. The algorithm adjusts photo widths to fill each row while keeping heights close to this value. |
 
 ### Columns
 
@@ -133,9 +133,9 @@ The `layout` prop accepts a string shorthand or an object. Each layout type has 
 <PhotoAlbum :photos="photos" :layout="{ type: 'columns', columns: 3 }" />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of columns. |
+| Option    | Type                          | Default | Description        |
+| --------- | ----------------------------- | ------- | ------------------ |
+| `columns` | `ResponsiveParameter<number>` | `3`     | Number of columns. |
 
 ### Masonry
 
@@ -143,28 +143,28 @@ The `layout` prop accepts a string shorthand or an object. Each layout type has 
 <PhotoAlbum :photos="photos" :layout="{ type: 'masonry', columns: 3 }" />
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `ResponsiveParameter<number>` | `3` | Number of columns. Photos are placed in the shortest column. |
+| Option    | Type                          | Default | Description                                                  |
+| --------- | ----------------------------- | ------- | ------------------------------------------------------------ |
+| `columns` | `ResponsiveParameter<number>` | `3`     | Number of columns. Photos are placed in the shortest column. |
 
 ## Slots
 
-| Slot | Props | Description |
-|---|---|---|
+| Slot        | Props                                                                                 | Description                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `thumbnail` | `{ photo: PhotoItem, index: number, width: number, height: number, hidden: boolean }` | Custom thumbnail content. Replaces the default `<img>`. `hidden` is `true` during lightbox FLIP transitions. |
-| `toolbar` | `{ activeIndex: number, activePhoto: PhotoItem, count: number }` | Custom lightbox toolbar. Forwarded to the lightbox component. |
-| `caption` | `{ photo: PhotoItem, activeIndex: number }` | Custom lightbox caption. Forwarded to the lightbox component. |
-| `slide` | `{ photo: PhotoItem, index: number, width: number, height: number }` | Custom lightbox slide content. Forwarded to the lightbox component. |
+| `toolbar`   | `{ activeIndex: number, activePhoto: PhotoItem, count: number }`                      | Custom lightbox toolbar. Forwarded to the lightbox component.                                                |
+| `caption`   | `{ photo: PhotoItem, activeIndex: number }`                                           | Custom lightbox caption. Forwarded to the lightbox component.                                                |
+| `slide`     | `{ photo: PhotoItem, index: number, width: number, height: number }`                  | Custom lightbox slide content. Forwarded to the lightbox component.                                          |
 
 ## CSS Classes
 
-| Class | Element |
-|---|---|
-| `.np-album` | Root container |
-| `.np-album--rows` | Root when layout is rows |
-| `.np-album--columns` | Root when layout is columns |
-| `.np-album--masonry` | Root when layout is masonry |
-| `.np-album__item` | Individual photo wrapper |
-| `.np-album__img` | Photo `<img>` element |
-| `.np-album__row` | Row group wrapper (columns/masonry) |
-| `.np-album__column` | Column group wrapper |
+| Class                | Element                             |
+| -------------------- | ----------------------------------- |
+| `.np-album`          | Root container                      |
+| `.np-album--rows`    | Root when layout is rows            |
+| `.np-album--columns` | Root when layout is columns         |
+| `.np-album--masonry` | Root when layout is masonry         |
+| `.np-album__item`    | Individual photo wrapper            |
+| `.np-album__img`     | Photo `<img>` element               |
+| `.np-album__row`     | Row group wrapper (columns/masonry) |
+| `.np-album__column`  | Column group wrapper                |

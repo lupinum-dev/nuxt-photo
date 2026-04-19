@@ -1,13 +1,17 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
-  category?: string
-  title?: string
-  description?: string
-}>(), {
-  category: 'Docs',
-  title: 'Nuxt Photo',
-  description: 'Documentation for photo galleries, albums, lightbox, and carousel.'
-})
+withDefaults(
+  defineProps<{
+    category?: string
+    title?: string
+    description?: string
+  }>(),
+  {
+    category: 'Docs',
+    title: 'Nuxt Photo',
+    description:
+      'Documentation for photo galleries, albums, lightbox, and carousel.',
+  },
+)
 </script>
 
 <template>
@@ -20,7 +24,11 @@ withDefaults(defineProps<{
       justify-content: space-between;
       padding: 56px;
       background:
-        radial-gradient(circle at top right, rgba(0, 220, 130, 0.18), transparent 32%),
+        radial-gradient(
+          circle at top right,
+          rgba(0, 220, 130, 0.18),
+          transparent 32%
+        ),
         linear-gradient(135deg, #020420 0%, #071033 58%, #0e1d4d 100%);
       color: #f8fafc;
       font-family: 'Public Sans', sans-serif;
@@ -53,11 +61,22 @@ withDefaults(defineProps<{
       {{ category }}
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 20px; max-width: 960px;">
-      <h1 style="margin: 0; font-size: 74px; line-height: 1.02; font-weight: 800;">
+    <div
+      style="display: flex; flex-direction: column; gap: 20px; max-width: 960px"
+    >
+      <h1
+        style="margin: 0; font-size: 74px; line-height: 1.02; font-weight: 800"
+      >
         {{ title }}
       </h1>
-      <p style="margin: 0; font-size: 30px; line-height: 1.35; color: rgba(248, 250, 252, 0.82);">
+      <p
+        style="
+          margin: 0;
+          font-size: 30px;
+          line-height: 1.35;
+          color: rgba(248, 250, 252, 0.82);
+        "
+      >
         {{ description }}
       </p>
     </div>
@@ -73,7 +92,7 @@ withDefaults(defineProps<{
       "
     >
       <span>nuxt-photo</span>
-      <span style="color: #00dc82;">lupinum.com</span>
+      <span style="color: #00dc82">lupinum.com</span>
     </div>
   </div>
 </template>

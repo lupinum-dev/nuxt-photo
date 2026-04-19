@@ -46,7 +46,10 @@ Defaults: arrows on, thumbnails on, counter on, dots off, lightbox off, autoplay
 <PhotoCarousel :photos="photos" :autoplay="true" />
 
 <!-- explicit options -->
-<PhotoCarousel :photos="photos" :autoplay="{ delay: 4000, stopOnInteraction: true }" />
+<PhotoCarousel
+  :photos="photos"
+  :autoplay="{ delay: 4000, stopOnInteraction: true }"
+/>
 ```
 
 When `autoplay` is truthy, PhotoCarousel prepends Embla's Autoplay plugin internally. Any user-supplied plugin named `autoplay` in the `plugins` array is filtered out (the prop wins) and a dev warning is emitted.
@@ -85,25 +88,25 @@ Everything Embla accepts is passed through via `options`:
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `photos` | `PhotoItem[] \| any[]` | — | Array of photos. |
-| `photoAdapter` | `PhotoAdapter` | — | Transforms each item into a `PhotoItem`. |
-| `adapter` | `ImageAdapter` | — | Image adapter for src/srcset/sizes. |
-| `options` | `EmblaOptionsType` | `{ loop: false, align: 'start', containScroll: 'trimSnaps' }` | Main Embla options (shallow-merged). |
-| `plugins` | `EmblaPluginType[]` | `[]` | Extra Embla plugins. |
-| `thumbsOptions` | `EmblaOptionsType` | `{ containScroll: 'keepSnaps', dragFree: true }` | Thumbnail carousel Embla options. |
-| `showArrows` | `boolean` | `true` | Show prev/next buttons. |
-| `showThumbnails` | `boolean` | `true` | Show the thumbnail rail. |
-| `showCounter` | `boolean` | `true` | Show the `n / total` counter. |
-| `showDots` | `boolean` | `false` | Show dot navigation. |
-| `autoplay` | `boolean \| AutoplayOptionsType` | `false` | Enable autoplay. |
-| `slideSize` | `string` | `'100%'` | Width of each slide. |
-| `slideAspect` | `string` | `'16 / 10'` | Slide aspect ratio. |
-| `gap` | `string` | `'0.75rem'` | Gap between slides. |
-| `thumbSize` | `string` | `'5.5rem'` | Thumbnail height. |
-| `lightbox` | `boolean \| Component` | `false` | Enable lightbox on slide click. |
-| `transition` | `LightboxTransitionOption` | — | Lightbox open/close transition. |
+| Prop             | Type                             | Default                                                       | Description                              |
+| ---------------- | -------------------------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| `photos`         | `PhotoItem[] \| any[]`           | —                                                             | Array of photos.                         |
+| `itemAdapter`    | `PhotoAdapter`                   | —                                                             | Transforms each item into a `PhotoItem`. |
+| `imageAdapter`   | `ImageAdapter`                   | —                                                             | Image adapter for src/srcset/sizes.      |
+| `options`        | `EmblaOptionsType`               | `{ loop: false, align: 'start', containScroll: 'trimSnaps' }` | Main Embla options (shallow-merged).     |
+| `plugins`        | `EmblaPluginType[]`              | `[]`                                                          | Extra Embla plugins.                     |
+| `thumbsOptions`  | `EmblaOptionsType`               | `{ containScroll: 'keepSnaps', dragFree: true }`              | Thumbnail carousel Embla options.        |
+| `showArrows`     | `boolean`                        | `true`                                                        | Show prev/next buttons.                  |
+| `showThumbnails` | `boolean`                        | `true`                                                        | Show the thumbnail rail.                 |
+| `showCounter`    | `boolean`                        | `true`                                                        | Show the `n / total` counter.            |
+| `showDots`       | `boolean`                        | `false`                                                       | Show dot navigation.                     |
+| `autoplay`       | `boolean \| AutoplayOptionsType` | `false`                                                       | Enable autoplay.                         |
+| `slideSize`      | `string`                         | `'100%'`                                                      | Width of each slide.                     |
+| `slideAspect`    | `string`                         | `'16 / 10'`                                                   | Slide aspect ratio.                      |
+| `gap`            | `string`                         | `'0.75rem'`                                                   | Gap between slides.                      |
+| `thumbSize`      | `string`                         | `'5.5rem'`                                                    | Thumbnail height.                        |
+| `lightbox`       | `boolean \| Component`           | `false`                                                       | Enable lightbox on slide click.          |
+| `transition`     | `LightboxTransitionOption`       | —                                                             | Lightbox open/close transition.          |
 
 ## Slots
 
@@ -111,56 +114,41 @@ Inline slots render inside the carousel itself. Lightbox slots forward to the in
 
 ### Inline
 
-| Slot | Props | Description |
-|---|---|---|
-| `slide` | `{ photo, index, selected, open }` | Replaces the default slide. |
-| `thumb` | `{ photo, index, selected, goTo }` | Replaces the default thumbnail. |
-| `caption` | `{ photo, index, count }` | Replaces the inline caption. |
-| `controls` | `{ goToPrev, goToNext, canGoToPrev, canGoToNext, selectedIndex, snapCount, goTo }` | Full nav override. |
-| `prev` / `next` | — | Arrow button content. |
-| `dots` | `{ snaps, selectedIndex, goTo }` | Custom dot navigation. |
+| Slot            | Props                                                                              | Description                     |
+| --------------- | ---------------------------------------------------------------------------------- | ------------------------------- |
+| `slide`         | `{ photo, index, selected, open }`                                                 | Replaces the default slide.     |
+| `thumb`         | `{ photo, index, selected, goTo }`                                                 | Replaces the default thumbnail. |
+| `caption`       | `{ photo, index, count }`                                                          | Replaces the inline caption.    |
+| `controls`      | `{ goToPrev, goToNext, canGoToPrev, canGoToNext, selectedIndex, snapCount, goTo }` | Full nav override.              |
+| `prev` / `next` | —                                                                                  | Arrow button content.           |
+| `dots`          | `{ snaps, selectedIndex, goTo }`                                                   | Custom dot navigation.          |
 
 ### Lightbox
 
-| Slot | Forwards to |
-|---|---|
-| `lightbox-slide` | `PhotoGroup #slide` |
+| Slot               | Forwards to           |
+| ------------------ | --------------------- |
+| `lightbox-slide`   | `PhotoGroup #slide`   |
 | `lightbox-caption` | `PhotoGroup #caption` |
 | `lightbox-toolbar` | `PhotoGroup #toolbar` |
 
 ## Imperative handle
 
-```vue
-<script setup>
-import { ref } from 'vue'
-
-const carousel = ref()
-</script>
-
-<template>
-  <PhotoCarousel ref="carousel" :photos="photos" />
-  <button @click="carousel.goToNext()">Next</button>
-</template>
-```
-
-Exposed: `emblaApi`, `thumbsApi`, `selectedIndex`, `goTo(i, instant?)`, `goToNext(instant?)`, `goToPrev(instant?)`, `selectedSnap()`, `reInit(options?, plugins?)`.
-
 ## CSS classes
 
-| Class | Element |
-|---|---|
-| `.np-carousel` | Root container |
-| `.np-carousel__viewport` | Embla viewport |
-| `.np-carousel__container` | Slides wrapper |
-| `.np-carousel__slide` | Individual slide |
-| `.np-carousel__media` | Default `<img>` |
-| `.np-carousel__controls` | Arrow overlay |
-| `.np-carousel__arrow` | Arrow button |
-| `.np-carousel__counter` | Counter pill |
-| `.np-carousel__dots` | Dot nav container |
-| `.np-carousel__dot` | Individual dot |
-| `.np-carousel__thumbs` | Thumbnail rail |
-| `.np-carousel__thumb` | Thumbnail button |
-| `.np-carousel__caption` | Caption container |
+| Class                     | Element           |
+| ------------------------- | ----------------- |
+| `.np-carousel`            | Root container    |
+| `.np-carousel__viewport`  | Embla viewport    |
+| `.np-carousel__container` | Slides wrapper    |
+| `.np-carousel__slide`     | Individual slide  |
+| `.np-carousel__media`     | Default `<img>`   |
+| `.np-carousel__controls`  | Arrow overlay     |
+| `.np-carousel__arrow`     | Arrow button      |
+| `.np-carousel__counter`   | Counter pill      |
+| `.np-carousel__dots`      | Dot nav container |
+| `.np-carousel__dot`       | Individual dot    |
+| `.np-carousel__thumbs`    | Thumbnail rail    |
+| `.np-carousel__thumb`     | Thumbnail button  |
+| `.np-carousel__caption`   | Caption container |
 
 Layout CSS variables on `.np-carousel`: `--np-carousel-slide-size`, `--np-carousel-slide-aspect`, `--np-carousel-gap`, `--np-carousel-thumb-size`, `--np-carousel-thumb-gap`.

@@ -1,10 +1,29 @@
 <template>
   <div v-bind="$attrs">
-    <div data-np-slide-effect :class="effectClass" :style="ctx.getSlideEffectStyle(index)">
+    <div
+      data-np-slide-effect
+      :class="effectClass"
+      :style="ctx.getSlideEffectStyle(index)"
+    >
       <div data-np-slide-frame :class="frameClass" :style="frameStyle">
-        <div data-np-slide-zoom :class="zoomClass" :ref="ctx.setSlideZoomRef(index)">
-          <slot v-if="$slots.default" :photo="photo" :index="index" :width="frameWidth" :height="frameHeight" />
-          <CustomSlideRenderer v-else-if="slideRenderer" :renderer="slideRenderer" :photo="photo" :index="index" />
+        <div
+          data-np-slide-zoom
+          :class="zoomClass"
+          :ref="ctx.setSlideZoomRef(index)"
+        >
+          <slot
+            v-if="$slots.default"
+            :photo="photo"
+            :index="index"
+            :width="frameWidth"
+            :height="frameHeight"
+          />
+          <CustomSlideRenderer
+            v-else-if="slideRenderer"
+            :renderer="slideRenderer"
+            :photo="photo"
+            :index="index"
+          />
           <PhotoImage
             v-else
             :photo="photo"
@@ -20,7 +39,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, inject, type PropType, type VNodeChild } from 'vue'
+import {
+  computed,
+  defineComponent,
+  inject,
+  type PropType,
+  type VNodeChild,
+} from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
@@ -48,14 +73,21 @@ const isActive = computed(() => ctx.activeIndex.value === props.index)
 const frameStyle = computed(() => ctx.getSlideFrameStyle(props.photo))
 
 // Extract pixel dimensions from frame style for slot props
-const frameWidth = computed(() => Number.parseInt(frameStyle.value.width as string) || 0)
-const frameHeight = computed(() => Number.parseInt(frameStyle.value.height as string) || 0)
+const frameWidth = computed(
+  () => Number.parseInt(frameStyle.value.width as string) || 0,
+)
+const frameHeight = computed(
+  () => Number.parseInt(frameStyle.value.height as string) || 0,
+)
 
 // Stable wrapper component defined ONCE — never recreated on each render
 const CustomSlideRenderer = defineComponent({
   name: 'NuxtPhotoCustomSlide',
   props: {
-    renderer: { type: Function as PropType<LightboxSlideRenderer>, required: true },
+    renderer: {
+      type: Function as PropType<LightboxSlideRenderer>,
+      required: true,
+    },
     photo: { type: Object as PropType<PhotoItem>, required: true },
     index: { type: Number, required: true },
   },

@@ -3,7 +3,5 @@ export function easeOutCubic(value: number): number {
 }
 
 export function easeInOutCubic(value: number): number {
-  return value < 0.5
-    ? 4 * value * value * value
-    : 1 - ((-2 * value + 2) ** 3) / 2
+  return value < 0.5 ? 4 * value * value * value : 1 - (-2 * value + 2) ** 3 / 2
 }

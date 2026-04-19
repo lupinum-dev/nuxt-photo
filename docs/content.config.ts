@@ -9,7 +9,7 @@ const Button = z.object({
   size: z.enum(['sm', 'md', 'lg', 'xl']).optional(),
   variant: z.enum(['solid', 'outline', 'subtle', 'link']).optional(),
   id: z.string().optional(),
-  target: z.enum(['_blank', '_self']).optional()
+  target: z.enum(['_blank', '_self']).optional(),
 })
 
 export default defineContentConfig({
@@ -18,12 +18,12 @@ export default defineContentConfig({
       type: 'page',
       source: 'docs/**/*',
       schema: z.object({
-        links: z.array(Button).optional()
-      })
+        links: z.array(Button).optional(),
+      }),
     }),
     pages: defineCollection({
       type: 'page',
-      source: '*.md'
-    })
-  }
+      source: '*.md',
+    }),
+  },
 })

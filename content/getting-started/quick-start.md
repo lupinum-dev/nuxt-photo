@@ -14,11 +14,41 @@ Create a photos array following the `PhotoItem` shape. Every photo needs an `id`
 
 ```ts
 const photos = [
-  { id: 1, src: '/photos/mountains.jpg', width: 1600, height: 900, alt: 'Mountain landscape' },
-  { id: 2, src: '/photos/forest.jpg', width: 1200, height: 1600, alt: 'Forest path' },
-  { id: 3, src: '/photos/lake.jpg', width: 1400, height: 1000, alt: 'Lake at sunset' },
-  { id: 4, src: '/photos/city.jpg', width: 1800, height: 1200, alt: 'City skyline' },
-  { id: 5, src: '/photos/beach.jpg', width: 1000, height: 1500, alt: 'Sandy beach' },
+  {
+    id: 1,
+    src: '/photos/mountains.jpg',
+    width: 1600,
+    height: 900,
+    alt: 'Mountain landscape',
+  },
+  {
+    id: 2,
+    src: '/photos/forest.jpg',
+    width: 1200,
+    height: 1600,
+    alt: 'Forest path',
+  },
+  {
+    id: 3,
+    src: '/photos/lake.jpg',
+    width: 1400,
+    height: 1000,
+    alt: 'Lake at sunset',
+  },
+  {
+    id: 4,
+    src: '/photos/city.jpg',
+    width: 1800,
+    height: 1200,
+    alt: 'City skyline',
+  },
+  {
+    id: 5,
+    src: '/photos/beach.jpg',
+    width: 1000,
+    height: 1500,
+    alt: 'Sandy beach',
+  },
 ]
 ```
 
@@ -33,11 +63,41 @@ Drop in `PhotoAlbum` with your photos:
 ```vue [pages/gallery.vue]
 <script setup>
 const photos = [
-  { id: 1, src: '/photos/mountains.jpg', width: 1600, height: 900, alt: 'Mountain landscape' },
-  { id: 2, src: '/photos/forest.jpg', width: 1200, height: 1600, alt: 'Forest path' },
-  { id: 3, src: '/photos/lake.jpg', width: 1400, height: 1000, alt: 'Lake at sunset' },
-  { id: 4, src: '/photos/city.jpg', width: 1800, height: 1200, alt: 'City skyline' },
-  { id: 5, src: '/photos/beach.jpg', width: 1000, height: 1500, alt: 'Sandy beach' },
+  {
+    id: 1,
+    src: '/photos/mountains.jpg',
+    width: 1600,
+    height: 900,
+    alt: 'Mountain landscape',
+  },
+  {
+    id: 2,
+    src: '/photos/forest.jpg',
+    width: 1200,
+    height: 1600,
+    alt: 'Forest path',
+  },
+  {
+    id: 3,
+    src: '/photos/lake.jpg',
+    width: 1400,
+    height: 1000,
+    alt: 'Lake at sunset',
+  },
+  {
+    id: 4,
+    src: '/photos/city.jpg',
+    width: 1800,
+    height: 1200,
+    alt: 'City skyline',
+  },
+  {
+    id: 5,
+    src: '/photos/beach.jpg',
+    width: 1000,
+    height: 1500,
+    alt: 'Sandy beach',
+  },
 ]
 </script>
 
@@ -61,7 +121,6 @@ Switch the layout with a single prop:
 
 <!-- Masonry (Pinterest-style) -->
 <PhotoAlbum :photos="photos" layout="masonry" />
-
 ```
 
 ## 4. Customize Layout Options
@@ -91,9 +150,11 @@ The `responsive()` helper creates a function that picks the right value based on
 
 ::callout{type="info"}
 `responsive()` is auto-imported in Nuxt. For plain Vue, import it from `@nuxt-photo/vue`:
+
 ```ts
 import { responsive } from '@nuxt-photo/vue'
 ```
+
 ::
 
 ## 5. Add Captions

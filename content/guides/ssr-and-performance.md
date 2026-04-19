@@ -39,6 +39,7 @@ For pixel-perfect server rendering, tell the layout what width to expect:
 ```
 
 When `defaultContainerWidth` is set:
+
 1. The JS layout runs on the server with that width
 2. The HTML includes exact widths (not flex-grow approximations)
 3. On the client, the container width is measured and snapped to a breakpoint
@@ -57,10 +58,10 @@ The `breakpoints` prop snaps the observed container width to the largest breakpo
 ```
 
 | Actual width | Snapped width |
-|---|---|
-| 1440px | 1200px |
-| 1050px | 900px |
-| 620px | 600px |
+| ------------ | ------------- |
+| 1440px       | 1200px        |
+| 1050px       | 900px         |
+| 620px        | 600px         |
 
 This has three benefits:
 
@@ -109,6 +110,9 @@ These layouts have a brief flash between the CSS fallback and JS layout. Use `de
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :sizes="{ size: '100vw', sizes: [{ viewport: '(min-width: 1024px)', size: '80vw' }] }"
+  :sizes="{
+    size: '100vw',
+    sizes: [{ viewport: '(min-width: 1024px)', size: '80vw' }],
+  }"
 />
 ```

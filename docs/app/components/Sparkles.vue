@@ -5,92 +5,92 @@ import { loadSlim } from '@tsparticles/slim'
 const props = defineProps({
   size: {
     type: Number,
-    default: 1
+    default: 1,
   },
   minSize: {
     type: Number,
-    default: 0.4
+    default: 0.4,
   },
   density: {
     type: Number,
-    default: 800
+    default: 800,
   },
   speed: {
     type: Number,
-    default: 1
+    default: 1,
   },
   minSpeed: {
     type: Number,
-    required: false
+    required: false,
   },
   opacity: {
     type: Number,
-    default: 1
+    default: 1,
   },
   opacitySpeed: {
     type: Number,
-    default: 3
+    default: 3,
   },
   color: {
     type: String,
-    default: '#00DC82'
+    default: '#00DC82',
   },
   background: {
     type: String,
-    default: 'transparent'
+    default: 'transparent',
   },
   options: {
     type: Object,
-    required: false
-  }
+    required: false,
+  },
 })
 
 const defaultOptions = {
   background: {
     color: {
-      value: props.background
-    }
+      value: props.background,
+    },
   },
   fullScreen: {
     enable: false,
-    zIndex: 1
+    zIndex: 1,
   },
   fpsLimit: 120,
   particles: {
     color: {
-      value: props.color
+      value: props.color,
     },
     move: {
       enable: true,
       direction: 'none',
       speed: {
         min: props.minSpeed || props.speed / 10,
-        max: props.speed
+        max: props.speed,
       },
-      straight: false
+      straight: false,
     },
     number: {
-      value: props.density
+      value: props.density,
     },
     opacity: {
       value: {
         min: props.minOpacity || props.opacity / 10,
-        max: props.opacity
+        max: props.opacity,
       },
       animation: {
         enable: true,
         sync: false,
-        speed: props.opacitySpeed
-      }
+        speed: props.opacitySpeed,
+      },
     },
     size: {
       value: {
         min: props.minSize || props.size / 2.5,
-        max: props.size
-      }
-    }
+        max: props.size,
+      },
+    },
   },
-  detectRetina: true
+  detectRetina: true,
 }
 
 let container
@@ -101,7 +101,7 @@ onMounted(async () => {
 
   container = await tsParticles.load({
     id,
-    options: props.options || defaultOptions
+    options: props.options || defaultOptions,
   })
 })
 

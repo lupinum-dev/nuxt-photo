@@ -1,5 +1,12 @@
-import type { ComponentPublicInstance, ComputedRef, CSSProperties, Ref } from 'vue'
-import type { AreaMetrics, DebugLogger, PanState, PhotoItem, RectLike, TransitionModeConfig } from '@nuxt-photo/core'
+import type { ComputedRef, CSSProperties, Ref } from 'vue'
+import type {
+  AreaMetrics,
+  DebugLogger,
+  PanState,
+  PhotoItem,
+  RectLike,
+  TransitionModeConfig,
+} from '@nuxt-photo/core'
 
 export const openDurationMs = 420
 export const closeDurationMs = 380

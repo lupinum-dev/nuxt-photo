@@ -22,7 +22,10 @@ describe('PhotoAdapter type', () => {
 
     const input: UnsplashPhoto = {
       id: 'abc123',
-      urls: { regular: 'https://example.com/regular.jpg', thumb: 'https://example.com/thumb.jpg' },
+      urls: {
+        regular: 'https://example.com/regular.jpg',
+        thumb: 'https://example.com/thumb.jpg',
+      },
       width: 1920,
       height: 1080,
       alt_description: 'A sunset',
@@ -41,7 +44,9 @@ describe('PhotoAdapter type', () => {
   })
 
   it('works with array mapping', () => {
-    const adapter: PhotoAdapter<{ url: string; w: number; h: number }> = (item) => ({
+    const adapter: PhotoAdapter<{ url: string; w: number; h: number }> = (
+      item,
+    ) => ({
       id: item.url,
       src: item.url,
       width: item.w,

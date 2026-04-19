@@ -15,7 +15,9 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub"
@@ -29,9 +31,9 @@
   },
   "devDependencies": {
     "embla-carousel": "9.0.0-rc01",
+    "typescript": "5.9.3",
     "unbuild": "^3.5.0",
-    "typescript": "^5.9.2",
-    "vue": "^3.5.13",
-    "vue-tsc": "^2.2.8"
+    "vue": "3.5.31",
+    "vue-tsc": "2.2.12"
   }
 }

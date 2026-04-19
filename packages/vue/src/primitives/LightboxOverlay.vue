@@ -1,5 +1,9 @@
 <template>
-  <div :style="ctx.backdropStyle.value" v-bind="$attrs" @click="ctx.handleBackdropClick">
+  <div
+    :style="ctx.backdropStyle.value"
+    v-bind="$attrs"
+    @click="ctx.handleBackdropClick"
+  >
     <slot />
   </div>
 </template>

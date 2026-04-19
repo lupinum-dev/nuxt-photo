@@ -1,7 +1,21 @@
-import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type CSSProperties, type Ref } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  watch,
+  type ComputedRef,
+  type CSSProperties,
+  type Ref,
+} from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType } from 'embla-carousel'
-import { fitRect, type AreaMetrics, type CarouselConfig, type PhotoItem, type RectLike, type DebugLogger } from '@nuxt-photo/core'
+import {
+  fitRect,
+  type AreaMetrics,
+  type CarouselConfig,
+  type PhotoItem,
+  type DebugLogger,
+} from '@nuxt-photo/core'
 
 export function useCarousel(
   photos: ComputedRef<PhotoItem[]>,
@@ -17,28 +31,37 @@ export function useCarousel(
 
   const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
 
-  const currentPhoto = computed<PhotoItem>(() => photos.value[activeIndex.value] ?? photos.value[0]!)
+  const currentPhoto = computed<PhotoItem>(
+    () => photos.value[activeIndex.value] ?? photos.value[0]!,
+  )
 
-  watch(emblaApi, (api) => {
-    if (!api) return
+  watch(
+    emblaApi,
+    (api) => {
+      if (!api) return
 
-    api.on('select', (_api: EmblaCarouselType) => {
-      const newIndex = _api.selectedSnap()
-      debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
-      activeIndex.value = newIndex
-    })
+      api.on('select', (_api: EmblaCarouselType) => {
+        const newIndex = _api.selectedSnap()
+        debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
+        activeIndex.value = newIndex
+      })
 
-    api.on('scroll', (_api: EmblaCarouselType) => {
-      scrollProgress.value = _api.scrollProgress()
-    })
+      api.on('scroll', (_api: EmblaCarouselType) => {
+        scrollProgress.value = _api.scrollProgress()
+      })
 
-    api.on('pointerdown', () => {
-      if (isZoomedIn.value || animating.value) {
-        debug?.log('gestures', `embla pointerdown blocked (zoomed=${isZoomedIn.value} animating=${animating.value})`)
-        return false
-      }
-    })
-  }, { immediate: true })
+      api.on('pointerdown', () => {
+        if (isZoomedIn.value || animating.value) {
+          debug?.log(
+            'gestures',
+            `embla pointerdown blocked (zoomed=${isZoomedIn.value} animating=${animating.value})`,
+          )
+          return false
+        }
+      })
+    },
+    { immediate: true },
+  )
 
   function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
     if (!area) return null

@@ -30,10 +30,10 @@ Pass `:photos` to PhotoGroup and use the scoped slot:
 
 ### Slot Props
 
-| Prop | Type | Description |
-|---|---|---|
-| `open` | `(photoOrIndex?: PhotoItem \| number) => Promise<void>` | Opens the lightbox at the given index or photo. |
-| `setThumbRef` | `(index: number) => (el: HTMLElement \| null) => void` | Returns a ref callback for the thumbnail at the given index. Bind this to your thumbnail element to enable FLIP transitions. |
+| Prop          | Type                                                    | Description                                                                                                                  |
+| ------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `open`        | `(photoOrIndex?: PhotoItem \| number) => Promise<void>` | Opens the lightbox at the given index or photo.                                                                              |
+| `setThumbRef` | `(index: number) => (el: HTMLElement \| null) => void`  | Returns a ref callback for the thumbnail at the given index. Bind this to your thumbnail element to enable FLIP transitions. |
 
 ## Why Use setThumbRef?
 

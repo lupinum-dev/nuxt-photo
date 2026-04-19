@@ -17,7 +17,7 @@ function useLightboxProvider(
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
     minZoom?: number
-  }
+  },
 ): {
   open: (index?: number) => Promise<void>
   close: () => Promise<void>
@@ -35,22 +35,22 @@ function useLightboxProvider(
 
 ## Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
-| `photosInput` | `MaybeRef<PhotoItem \| PhotoItem[]>` | A single photo or array of photos. Can be a ref for reactive updates. |
-| `options.transition` | `LightboxTransitionOption` | Transition mode: `'flip'`, `'fade'`, `'auto'`, `'none'`, or a `TransitionModeConfig` object. |
+| Parameter              | Type                                                  | Description                                                                                                      |
+| ---------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `photosInput`          | `MaybeRef<PhotoItem \| PhotoItem[]>`                  | A single photo or array of photos. Can be a ref for reactive updates.                                            |
+| `options.transition`   | `LightboxTransitionOption`                            | Transition mode: `'flip'`, `'fade'`, `'auto'`, `'none'`, or a `TransitionModeConfig` object.                     |
 | `options.resolveSlide` | `(photo: PhotoItem) => LightboxSlideRenderer \| null` | Custom slide renderer lookup. Return a render function for custom slides, or `null` for the default image slide. |
-| `options.minZoom` | `number` | Minimum zoom level. `1` means no zoom below fit-to-screen. |
+| `options.minZoom`      | `number`                                              | Minimum zoom level. `1` means no zoom below fit-to-screen.                                                       |
 
 ## Return Value
 
 Returns everything from [`useLightbox`](/docs/composables/use-lightbox), plus:
 
-| Property | Type | Description |
-|---|---|---|
-| `photos` | `ComputedRef<PhotoItem[]>` | The normalized photos array. |
-| `setThumbRef` | `(index: number) => (el: HTMLElement \| null) => void` | Register a thumbnail DOM element for FLIP transitions. Call `setThumbRef(i)` to get a ref callback, then bind it to your thumbnail element. |
-| `hiddenThumbIndex` | `Ref<number \| null>` | Index of the thumbnail that should be hidden during a FLIP transition, or `null`. |
+| Property           | Type                                                   | Description                                                                                                                                 |
+| ------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `photos`           | `ComputedRef<PhotoItem[]>`                             | The normalized photos array.                                                                                                                |
+| `setThumbRef`      | `(index: number) => (el: HTMLElement \| null) => void` | Register a thumbnail DOM element for FLIP transitions. Call `setThumbRef(i)` to get a ref callback, then bind it to your thumbnail element. |
+| `hiddenThumbIndex` | `Ref<number \| null>`                                  | Index of the thumbnail that should be hidden during a FLIP transition, or `null`.                                                           |
 
 ## Usage
 
@@ -63,9 +63,12 @@ const photos = [
   { id: 2, src: '/b.jpg', width: 900, height: 1200 },
 ]
 
-const { open, close, isOpen, activePhoto, setThumbRef } = useLightboxProvider(photos, {
-  transition: 'auto',
-})
+const { open, close, isOpen, activePhoto, setThumbRef } = useLightboxProvider(
+  photos,
+  {
+    transition: 'auto',
+  },
+)
 </script>
 
 <template>
@@ -121,11 +124,11 @@ const { open } = useLightboxProvider(photos, {
 
 ## When to Use
 
-| Scenario | Composable |
-|---|---|
-| Just need open/close/navigate | [`useLightbox`](/docs/composables/use-lightbox) |
-| Building custom lightbox with primitives | `useLightboxProvider` |
-| Full engine access (50+ properties) | `useLightboxContext` via [extend API](/docs/advanced/extend-api) |
+| Scenario                                 | Composable                                                       |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| Just need open/close/navigate            | [`useLightbox`](/docs/composables/use-lightbox)                  |
+| Building custom lightbox with primitives | `useLightboxProvider`                                            |
+| Full engine access (50+ properties)      | `useLightboxContext` via [extend API](/docs/advanced/extend-api) |
 
 ::callout{type="info"}
 `useLightboxProvider` must be called inside a component's `setup()` function. It provides the lightbox context to all descendant components — this is required for the [primitive components](/docs/components/primitives) to work.

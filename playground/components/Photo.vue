@@ -1,5 +1,11 @@
 <template>
-  <RecipePhoto :photo="photo" :lightbox-ignore="lightboxIgnore" :image-adapter="imageAdapter" :loading="loading" v-bind="$attrs">
+  <RecipePhoto
+    :photo="photo"
+    :lightbox-ignore="lightboxIgnore"
+    :image-adapter="imageAdapter"
+    :loading="loading"
+    v-bind="$attrs"
+  >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
     </template>

@@ -9,7 +9,8 @@ export default defineNuxtPlugin({
     const image = useImage()
 
     const adapter = (photo: PhotoItem, context: ImageContext): ImageSource => {
-      const src = context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
+      const src =
+        context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
 
       if (context === 'preload') {
         return {
@@ -24,11 +25,12 @@ export default defineNuxtPlugin({
         // Lightbox media area is min(1240px, calc(100vw - 72px))
         const quality = 85
         const targetWidths = [640, 960, 1240, 1600, 2000]
-        const widths = targetWidths.filter(w => w <= photo.width * 1.5)
-        const srcsetWidths = widths.length > 0 ? widths : [Math.min(1240, photo.width)]
+        const widths = targetWidths.filter((w) => w <= photo.width * 1.5)
+        const srcsetWidths =
+          widths.length > 0 ? widths : [Math.min(1240, photo.width)]
 
         const srcset = srcsetWidths
-          .map(w => `${image(src, { width: w, quality })} ${w}w`)
+          .map((w) => `${image(src, { width: w, quality })} ${w}w`)
           .join(', ')
 
         return {

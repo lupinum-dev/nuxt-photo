@@ -24,12 +24,14 @@ function createGestureConfig(zoomedIn = false) {
     rafId: 0,
   }
 
-  const setPanzoomImmediate = vi.fn((scale: number, pan: { x: number; y: number }) => {
-    panzoomMotion.scale = scale
-    panzoomMotion.x = pan.x
-    panzoomMotion.y = pan.y
-    currentPan.value = pan
-  })
+  const setPanzoomImmediate = vi.fn(
+    (scale: number, pan: { x: number; y: number }) => {
+      panzoomMotion.scale = scale
+      panzoomMotion.x = pan.x
+      panzoomMotion.y = pan.y
+      currentPan.value = pan
+    },
+  )
 
   return {
     config: {

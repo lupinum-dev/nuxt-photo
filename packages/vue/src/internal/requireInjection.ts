@@ -7,16 +7,21 @@ export function requireInjection<T>(
 ): T {
   const context = inject(key, null)
   if (context == null) {
-    const error = new Error(`[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`)
+    const error = new Error(
+      `[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`,
+    )
 
-    return new Proxy({}, {
-      get() {
-        throw error
+    return new Proxy(
+      {},
+      {
+        get() {
+          throw error
+        },
+        set() {
+          throw error
+        },
       },
-      set() {
-        throw error
-      },
-    }) as T
+    ) as T
   }
 
   return context

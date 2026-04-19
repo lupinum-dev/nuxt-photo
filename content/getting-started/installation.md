@@ -11,6 +11,7 @@ navigation: true
 Install the Nuxt module — it includes all packages and handles auto-imports, component registration, and CSS injection.
 
 ::code-group
+
 ```bash [pnpm]
 pnpm add @nuxt-photo/nuxt
 ```
@@ -22,6 +23,7 @@ npm install @nuxt-photo/nuxt
 ```bash [yarn]
 yarn add @nuxt-photo/nuxt
 ```
+
 ::
 
 Add it to your `nuxt.config.ts`:
@@ -37,7 +39,7 @@ That's all you need. Components like `PhotoAlbum`, `PhotoGroup`, and `Photo` are
 ## Requirements
 
 - **Vue** >= 3.5.0
-- **Nuxt** >= 3.21.2 (when using the Nuxt module)
+- **Nuxt** 4.x (when using the Nuxt module)
 
 ## Module Options
 
@@ -80,11 +82,11 @@ export default defineNuxtConfig({
 
 The `css` option controls which styles are injected:
 
-| Value | What's included |
-|---|---|
-| `'none'` | No CSS injected. Bring your own styles entirely. |
+| Value         | What's included                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `'none'`      | No CSS injected. Bring your own styles entirely.                                                                                |
 | `'structure'` | Layout and positioning only — album grid, lightbox fixed positioning, controls layout. No colors, backgrounds, or visual theme. |
-| `'all'` | Structure + default theme — backdrop blur, button styles, caption typography, image border-radius. |
+| `'all'`       | Structure + default theme — backdrop blur, button styles, caption typography, image border-radius.                              |
 
 Use `'structure'` when you want full control over the visual appearance (e.g., with Tailwind). Use `'all'` for the default look out of the box.
 
@@ -96,12 +98,12 @@ When using `'none'`, you must provide **all** CSS yourself — including structu
 
 If you're not using Nuxt, or you need only part of the system:
 
-| Package | Use case |
-|---|---|
-| `@nuxt-photo/core` | Framework-free layout algorithms, physics, types. No Vue dependency. |
-| `@nuxt-photo/vue` | Vue composables and primitive lightbox components. |
+| Package               | Use case                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `@nuxt-photo/core`    | Framework-free layout algorithms, physics, types. No Vue dependency.                 |
+| `@nuxt-photo/vue`     | Vue composables and primitive lightbox components.                                   |
 | `@nuxt-photo/recipes` | Ready-to-use components (Photo, PhotoAlbum, PhotoGroup). Requires `@nuxt-photo/vue`. |
-| `@nuxt-photo/nuxt` | Full Nuxt integration. Includes everything above. |
+| `@nuxt-photo/nuxt`    | Full Nuxt integration. Includes everything above.                                    |
 
 Each package includes its dependencies — installing `@nuxt-photo/recipes` automatically includes `@nuxt-photo/vue` and `@nuxt-photo/core`.
 

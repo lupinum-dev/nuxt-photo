@@ -1,6 +1,8 @@
 // ─── Item types ───
 
-export type PhotoItem<TMeta extends Record<string, unknown> = Record<string, unknown>> = {
+export type PhotoItem<
+  TMeta extends Record<string, unknown> = Record<string, unknown>,
+> = {
   id: string | number
   src: string
   thumbSrc?: string
@@ -21,7 +23,13 @@ export function photoId(photo: PhotoItem): string {
 
 export type SlideItem =
   | { type: 'image'; photo: PhotoItem }
-  | { type: 'custom'; id: string; data?: unknown; width?: number; height?: number }
+  | {
+      type: 'custom'
+      id: string
+      data?: unknown
+      width?: number
+      height?: number
+    }
 
 // ─── Geometry ───
 
@@ -194,7 +202,10 @@ export type MasonryAlbumLayout = {
  * @example
  * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
  */
-export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
+export type AlbumLayout =
+  | RowsAlbumLayout
+  | ColumnsAlbumLayout
+  | MasonryAlbumLayout
 
 // ─── Image adapter ───
 
@@ -215,7 +226,10 @@ export type ImageSource = {
  */
 export type ImageContext = 'thumb' | 'slide' | 'preload'
 
-export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
+export type ImageAdapter = (
+  photo: PhotoItem,
+  context: ImageContext,
+) => ImageSource
 
 // ─── Responsive parameters ───
 
@@ -234,7 +248,9 @@ export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSou
  * // Breakpoint map via responsive() helper — declarative shorthand
  * :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
  */
-export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
+export type ResponsiveParameter<T = number> =
+  | T
+  | ((containerWidth: number) => T)
 
 const responsiveBreakpointsKey = Symbol('nuxt-photo:responsive-breakpoints')
 
@@ -252,7 +268,9 @@ export function resolveResponsiveParameter<T>(
   fallback: T,
 ): T {
   if (value === undefined) return fallback
-  return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
+  return typeof value === 'function'
+    ? (value as (w: number) => T)(containerWidth)
+    : value
 }
 
 export function getResponsiveBreakpoints<T>(
@@ -261,7 +279,9 @@ export function getResponsiveBreakpoints<T>(
   if (typeof value !== 'function') return undefined
 
   const breakpoints = (value as ResponsiveResolver<T>)[responsiveBreakpointsKey]
-  return Array.isArray(breakpoints) && breakpoints.length > 0 ? breakpoints : undefined
+  return Array.isArray(breakpoints) && breakpoints.length > 0
+    ? breakpoints
+    : undefined
 }
 
 export function mergeResponsiveBreakpoints(
@@ -309,13 +329,17 @@ export function mergeResponsiveBreakpoints(
  *   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
  * />
  */
-export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T> {
+export function responsive<T>(
+  breakpoints: Record<number, T>,
+): ResponsiveResolver<T> {
   const sorted = Object.entries(breakpoints)
     .map(([k, v]) => [Number(k), v] as [number, T])
     .sort((a, b) => b[0] - a[0])
 
   if (sorted.length === 0) {
-    throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
+    throw new Error(
+      '[nuxt-photo] responsive() requires at least one breakpoint',
+    )
   }
 
   const resolver = ((containerWidth: number) => {
@@ -326,7 +350,13 @@ export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolve
   }) as ResponsiveResolver<T>
 
   Object.defineProperty(resolver, responsiveBreakpointsKey, {
-    value: [...new Set(sorted.map(([minWidth]) => minWidth).filter(width => Number.isFinite(width) && width >= 0))].sort((a, b) => a - b),
+    value: [
+      ...new Set(
+        sorted
+          .map(([minWidth]) => minWidth)
+          .filter((width) => Number.isFinite(width) && width >= 0),
+      ),
+    ].sort((a, b) => a - b),
     enumerable: false,
     configurable: false,
     writable: false,
@@ -356,4 +386,10 @@ export type PhotoAdapter<T = any> = (item: T) => PhotoItem
 
 // ─── Debug ───
 
-export type DebugChannel = 'transitions' | 'gestures' | 'zoom' | 'slides' | 'geometry' | 'rects'
+export type DebugChannel =
+  | 'transitions'
+  | 'gestures'
+  | 'zoom'
+  | 'slides'
+  | 'geometry'
+  | 'rects'

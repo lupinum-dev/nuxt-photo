@@ -48,18 +48,22 @@ describe('primitive injection guards', () => {
   it('acts as a provider root when photos are passed directly', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    expect(() => mountExpectingError(LightboxRoot, {
-      photos: [makePhoto({ id: 'root-provider' })],
-    })).not.toThrow()
+    expect(() =>
+      mountExpectingError(LightboxRoot, {
+        photos: [makePhoto({ id: 'root-provider' })],
+      }),
+    ).not.toThrow()
   })
 
   it('throws an actionable error when PhotoTrigger is used without a provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    expect(() => mountExpectingError(PhotoTrigger, {
-      photo: makePhoto({ id: 'guarded-trigger' }),
-      index: 0,
-    })).toThrow(
+    expect(() =>
+      mountExpectingError(PhotoTrigger, {
+        photo: makePhoto({ id: 'guarded-trigger' }),
+        index: 0,
+      }),
+    ).toThrow(
       /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
     )
   })

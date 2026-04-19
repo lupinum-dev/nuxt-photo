@@ -1,6 +1,9 @@
 <template>
   <div v-bind="$attrs">
-    <slot :photo="ctx.activePhoto.value" :active-index="ctx.activeIndex.value" />
+    <slot
+      :photo="ctx.activePhoto.value"
+      :active-index="ctx.activeIndex.value"
+    />
   </div>
 </template>
 

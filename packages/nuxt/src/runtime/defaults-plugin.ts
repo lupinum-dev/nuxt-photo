@@ -14,7 +14,9 @@ export default defineNuxtPlugin({
     const lightbox = config.nuxtPhoto?.lightbox
 
     if (lightbox?.minZoom != null) {
-      nuxtApp.vueApp.provide(LightboxDefaultsKey, { minZoom: lightbox.minZoom })
+      nuxtApp.vueApp.provide(LightboxDefaultsKey, {
+        minZoom: lightbox.minZoom,
+      })
     }
   },
 })

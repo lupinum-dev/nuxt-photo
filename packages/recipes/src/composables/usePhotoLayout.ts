@@ -1,4 +1,11 @@
-import { ref, computed, onMounted, useId, type CSSProperties, type Ref } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  useId,
+  type CSSProperties,
+  type Ref,
+} from 'vue'
 import { useContainerWidth } from '@nuxt-photo/vue'
 import {
   computeRowsLayout,
@@ -52,9 +59,16 @@ interface PhotoLayoutOptions {
 
 export function usePhotoLayout(options: PhotoLayoutOptions) {
   const {
-    photos, layout, columns, spacing, padding,
+    photos,
+    layout,
+    columns,
+    spacing,
+    padding,
     targetRowHeight,
-    defaultContainerWidth, breakpoints, sizes, interactive,
+    defaultContainerWidth,
+    breakpoints,
+    sizes,
+    interactive,
   } = options
 
   const containerRef = ref<HTMLElement | null>(null)
@@ -62,7 +76,9 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
 
   // SSR-safe unique container name for CSS container queries
   const albumId = useId()
-  const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
+  const containerName = computed(
+    () => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`,
+  )
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const snapshotClass = computed(() => `np-snapshot-${containerName.value}`)
 
@@ -96,13 +112,41 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     }
 
     if (defaultContainerWidth && defaultContainerWidth > 0) {
-      const sp = resolveResponsiveParameter(spacing.value, defaultContainerWidth, 8)
-      const pd = resolveResponsiveParameter(padding.value, defaultContainerWidth, 0)
-      const cols = resolveResponsiveParameter(columns.value, defaultContainerWidth, 3)
-      const compute = layout.value === 'columns' ? computeColumnsLayout : computeMasonryLayout
-      const g = compute({ photos: photos.value, containerWidth: defaultContainerWidth, spacing: sp, padding: pd, columns: cols })
+      const sp = resolveResponsiveParameter(
+        spacing.value,
+        defaultContainerWidth,
+        8,
+      )
+      const pd = resolveResponsiveParameter(
+        padding.value,
+        defaultContainerWidth,
+        0,
+      )
+      const cols = resolveResponsiveParameter(
+        columns.value,
+        defaultContainerWidth,
+        3,
+      )
+      const compute =
+        layout.value === 'columns' ? computeColumnsLayout : computeMasonryLayout
+      const g = compute({
+        photos: photos.value,
+        containerWidth: defaultContainerWidth,
+        spacing: sp,
+        padding: pd,
+        columns: cols,
+      })
       if (g.length === 0) return []
-      return [{ spanKey: 'all', condition: '', containerWidth: defaultContainerWidth, spacing: sp, padding: pd, groups: g }]
+      return [
+        {
+          spanKey: 'all',
+          condition: '',
+          containerWidth: defaultContainerWidth,
+          spacing: sp,
+          padding: pd,
+          groups: g,
+        },
+      ]
     }
 
     return []
@@ -145,13 +189,20 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const cols = resolveResponsiveParameter(columns.value, w, 3)
     const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
 
-    const input = { photos: photos.value, containerWidth: w, spacing: sp, padding: pd }
+    const input = {
+      photos: photos.value,
+      containerWidth: w,
+      spacing: sp,
+      padding: pd,
+    }
 
     switch (layout.value) {
       case 'rows': {
         const result = computeRowsLayout({ ...input, targetRowHeight: trh })
         if (result.length === 0 && photos.value.length > 0) {
-          console.warn('[nuxt-photo] rows layout produced no groups — containerWidth may be too small for targetRowHeight')
+          console.warn(
+            '[nuxt-photo] rows layout produced no groups — containerWidth may be too small for targetRowHeight',
+          )
         }
         return result
       }
@@ -160,6 +211,8 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       case 'masonry':
         return computeMasonryLayout({ ...input, columns: cols })
     }
+
+    return []
   })
 
   const rowItems = computed<RowItem[]>(() => {
@@ -171,8 +224,10 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
 
     if (containerQueriesActive.value && !defaultContainerWidth) {
       return photos.value.map((photo, index) => ({
-        photo, index,
-        width: photo.width, height: photo.height,
+        photo,
+        index,
+        width: photo.width,
+        height: photo.height,
         style: { ...cursor, overflow: 'hidden' } as CSSProperties,
       }))
     }
@@ -181,14 +236,21 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       return photos.value.map((photo, index) => {
         const ar = photo.width / photo.height
         return {
-          photo, index,
-          width: photo.width, height: photo.height,
-          style: { ...cursor, flexGrow: ar, flexBasis: `${trh * ar}px`, overflow: 'hidden' } as CSSProperties,
+          photo,
+          index,
+          width: photo.width,
+          height: photo.height,
+          style: {
+            ...cursor,
+            flexGrow: ar,
+            flexBasis: `${trh * ar}px`,
+            overflow: 'hidden',
+          } as CSSProperties,
         }
       })
     }
 
-    return groups.value.flatMap(row =>
+    return groups.value.flatMap((row) =>
       row.entries.map((entry) => {
         const gaps = sp * (entry.itemsCount - 1) + 2 * pd * entry.itemsCount
         return {
@@ -196,7 +258,14 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes),
+          computedSizes: computePhotoSizes(
+            entry.width,
+            w,
+            entry.itemsCount,
+            sp,
+            pd,
+            sizes,
+          ),
           style: {
             ...cursor,
             flex: '0 0 auto',
@@ -206,7 +275,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
             width: `calc((100% - ${gaps}px) / ${round((w - gaps) / entry.width, 5)})`,
           } as CSSProperties,
         }
-      })
+      }),
     )
   })
 
@@ -215,9 +284,19 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const sp = resolveResponsiveParameter(spacing.value, w, 8)
     const cols = resolveResponsiveParameter(columns.value, w, 3)
     if (layout.value === 'rows') {
-      return { display: 'flex', flexWrap: 'wrap', gap: `${sp}px`, width: '100%' }
+      return {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: `${sp}px`,
+        width: '100%',
+      }
     }
-    return { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: `${sp}px`, width: '100%' }
+    return {
+      display: 'grid',
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gap: `${sp}px`,
+      width: '100%',
+    }
   })
 
   function ssrItemStyle(photo: PhotoItem): CSSProperties {
@@ -226,7 +305,12 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       const w = containerWidth.value
       const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
       const ar = photo.width / photo.height
-      return { ...cursor, flexGrow: ar, flexBasis: `${trh * ar}px`, overflow: 'hidden' }
+      return {
+        ...cursor,
+        flexGrow: ar,
+        flexBasis: `${trh * ar}px`,
+        overflow: 'hidden',
+      }
     }
     return { ...cursor, overflow: 'hidden' }
   }
@@ -235,16 +319,28 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
 
   const containerStyle = computed<CSSProperties>(() => {
     if (containerQueriesActive.value || snapshotsActive.value) {
-      return { width: '100%', containerType: 'inline-size', containerName: containerName.value }
+      return {
+        width: '100%',
+        containerType: 'inline-size',
+        containerName: containerName.value,
+      }
     }
     return { width: '100%' }
   })
 
   // Warn once per layout type if columns/masonry is used without any SSR signal.
   function maybeWarnApproximate() {
-    if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV === 'production') return
+    if (
+      (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
+        ?.NODE_ENV === 'production'
+    )
+      return
     if (layout.value === 'rows') return
-    if (breakpoints?.length || (defaultContainerWidth && defaultContainerWidth > 0)) return
+    if (
+      breakpoints?.length ||
+      (defaultContainerWidth && defaultContainerWidth > 0)
+    )
+      return
     if (warnedApproximateLayouts.has(layout.value)) return
     warnedApproximateLayouts.add(layout.value)
     console.warn(
@@ -252,19 +348,29 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     )
   }
 
-  type StyleContext = { containerWidth: number; spacing: number; padding: number; columnsCount: number; layoutType: 'rows' | 'columns' | 'masonry' }
+  type StyleContext = {
+    containerWidth: number
+    spacing: number
+    padding: number
+    columnsCount: number
+    layoutType: 'rows' | 'columns' | 'masonry'
+  }
 
-  function groupStyleWith(group: LayoutGroup, ctx: StyleContext): CSSProperties {
+  function groupStyleWith(
+    group: LayoutGroup,
+    ctx: StyleContext,
+  ): CSSProperties {
     if (group.type === 'row') {
       return {
-        marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
+        marginBottom:
+          group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
       }
     }
 
     if (
-      ctx.layoutType === 'masonry'
-      || group.columnsGaps === undefined
-      || group.columnsRatios === undefined
+      ctx.layoutType === 'masonry' ||
+      group.columnsGaps === undefined ||
+      group.columnsRatios === undefined
     ) {
       return {
         marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
@@ -275,16 +381,19 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     const totalRatio = group.columnsRatios.reduce((acc, v) => acc + v, 0)
     const totalAdjustedGaps = group.columnsRatios.reduce(
       (acc, v, ratioIndex) =>
-        acc + ((group.columnsGaps![group.index] ?? 0) - (group.columnsGaps![ratioIndex] ?? 0)) * v,
+        acc +
+        ((group.columnsGaps![group.index] ?? 0) -
+          (group.columnsGaps![ratioIndex] ?? 0)) *
+          v,
       0,
     )
 
     return {
       marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
       width: `calc((100% - ${round(
-        (ctx.columnsCount - 1) * ctx.spacing
-        + 2 * ctx.columnsCount * ctx.padding
-        + totalAdjustedGaps,
+        (ctx.columnsCount - 1) * ctx.spacing +
+          2 * ctx.columnsCount * ctx.padding +
+          totalAdjustedGaps,
         3,
       )}px) * ${round((group.columnsRatios[group.index] ?? 0) / totalRatio, 5)} + ${
         2 * ctx.padding
@@ -292,11 +401,17 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     }
   }
 
-  function itemStyleWith(entry: LayoutEntry, group: LayoutGroup, ctx: StyleContext): CSSProperties {
+  function itemStyleWith(
+    entry: LayoutEntry,
+    group: LayoutGroup,
+    ctx: StyleContext,
+  ): CSSProperties {
     const cursor = interactive.value ? { cursor: 'pointer' } : {}
 
     if (group.type === 'row') {
-      const gaps = ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
+      const gaps =
+        ctx.spacing * (entry.itemsCount - 1) +
+        2 * ctx.padding * entry.itemsCount
       return {
         ...cursor,
         boxSizing: 'content-box',
@@ -348,21 +463,29 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     return itemStyleWith(entry, group, liveCtx())
   }
 
-  function snapshotGroupStyle(group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+  function snapshotGroupStyle(
+    group: LayoutGroup,
+    snap: BreakpointSnapshot,
+  ): CSSProperties {
     return groupStyleWith(group, snapCtx(snap))
   }
 
-  function snapshotItemStyle(entry: LayoutEntry, group: LayoutGroup, snap: BreakpointSnapshot): CSSProperties {
+  function snapshotItemStyle(
+    entry: LayoutEntry,
+    group: LayoutGroup,
+    snap: BreakpointSnapshot,
+  ): CSSProperties {
     return itemStyleWith(entry, group, snapCtx(snap))
   }
 
-  function snapshotWrapperStyle(snap: BreakpointSnapshot, multiSpan: boolean): CSSProperties {
+  function snapshotWrapperStyle(
+    snap: BreakpointSnapshot,
+    multiSpan: boolean,
+  ): CSSProperties {
     // Column-layout snapshots use a row-flex wrapper (columns side-by-side). When there are
     // multiple spans, CSS `@container` rules toggle display between flex and none; when there
     // is only one span we skip the stylesheet and render flex inline.
-    return multiSpan
-      ? { width: '100%' }
-      : { width: '100%', display: 'flex' }
+    return multiSpan ? { width: '100%' } : { width: '100%', display: 'flex' }
   }
 
   return {

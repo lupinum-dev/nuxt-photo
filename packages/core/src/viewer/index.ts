@@ -9,11 +9,7 @@ export {
   computeTargetPanForZoom,
 } from './zoom'
 
-export {
-  classifyGesture,
-  isDoubleTap,
-  computeCloseDragRatio,
-} from './gestures'
+export { classifyGesture, isDoubleTap, computeCloseDragRatio } from './gestures'
 
 export {
   viewerTransition,

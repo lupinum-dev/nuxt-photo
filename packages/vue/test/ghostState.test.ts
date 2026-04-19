@@ -2,10 +2,19 @@
 
 import { computed, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
-import { createGhostState, resetOpenState, resetCloseState, setThumbRef } from '../src/composables/ghost/state'
+import {
+  createGhostState,
+  resetOpenState,
+  resetCloseState,
+  setThumbRef,
+} from '../src/composables/ghost/state'
 import { openTransition } from '../src/composables/ghost/openTransition'
 import { createCloseTransition } from '../src/composables/ghost/closeTransition'
-import type { CloseCallbacks, GhostState, TransitionCallbacks } from '../src/composables/ghost/types'
+import type {
+  CloseCallbacks,
+  GhostState,
+  TransitionCallbacks,
+} from '../src/composables/ghost/types'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function makeGhostState(
@@ -92,7 +101,9 @@ describe('resetCloseState', () => {
     state.closeDragY.value = 100
     state.disableBackdropTransition.value = true
 
-    resetCloseState(state, () => { guardCleared = true })
+    resetCloseState(state, () => {
+      guardCleared = true
+    })
 
     expect(guardCleared).toBe(true)
     expect(state.ghostVisible.value).toBe(false)
@@ -152,9 +163,13 @@ describe('setThumbRef', () => {
 describe('error propagation', () => {
   it('openTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
     const boom = new Error('geometry-failure')
-    const state = makeGhostState(() => { throw boom })
+    const state = makeGhostState(() => {
+      throw boom
+    })
 
-    await expect(openTransition(state, 0, makeTransitionCallbacks())).rejects.toBe(boom)
+    await expect(
+      openTransition(state, 0, makeTransitionCallbacks()),
+    ).rejects.toBe(boom)
 
     expect(state.animating.value).toBe(false)
     expect(state.ghostVisible.value).toBe(false)
@@ -166,7 +181,9 @@ describe('error propagation', () => {
 
   it('closeTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
     const boom = new Error('geometry-failure')
-    const state = makeGhostState(() => { throw boom })
+    const state = makeGhostState(() => {
+      throw boom
+    })
     state.lightboxMounted.value = true
 
     const { close } = createCloseTransition(state)

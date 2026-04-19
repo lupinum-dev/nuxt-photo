@@ -1,6 +1,23 @@
-import type { Component, ComponentPublicInstance, ComputedRef, CSSProperties, InjectionKey, Ref } from 'vue'
-import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '@nuxt-photo/core'
-import type { LightboxCaptionSlotProps, LightboxControlsSlotProps, LightboxSlideSlotProps } from '../types/slots'
+import type {
+  Component,
+  ComponentPublicInstance,
+  ComputedRef,
+  CSSProperties,
+  InjectionKey,
+  Ref,
+} from 'vue'
+import type {
+  GestureMode,
+  ImageAdapter,
+  PanState,
+  PhotoItem,
+  ZoomState,
+} from '@nuxt-photo/core'
+import type {
+  LightboxCaptionSlotProps,
+  LightboxControlsSlotProps,
+  LightboxSlideSlotProps,
+} from '../types/slots'
 
 /** Consumer API — what app code and recipe components need. */
 export interface LightboxConsumerAPI {
@@ -46,8 +63,12 @@ export interface LightboxRenderState {
 export interface LightboxDOMBindings {
   mediaAreaRef: Ref<HTMLElement | null>
   emblaRef: Ref<HTMLElement | null | undefined>
-  setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
-  setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  setThumbRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideZoomRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
   onMediaPointerDown: (e: PointerEvent) => void
   onMediaPointerMove: (e: PointerEvent) => void
   onMediaPointerUp: (e: PointerEvent) => void
@@ -57,18 +78,34 @@ export interface LightboxDOMBindings {
 }
 
 /** Full lightbox context — the intersection of all role-specific interfaces. */
-export type LightboxContext = LightboxConsumerAPI & LightboxRenderState & LightboxDOMBindings
+export type LightboxContext = LightboxConsumerAPI &
+  LightboxRenderState &
+  LightboxDOMBindings
 
-export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => unknown
+export type LightboxSlideRenderer = (props: {
+  photo: PhotoItem
+  index: number
+}) => unknown
 
-export const LightboxContextKey: InjectionKey<LightboxContext> = Symbol('nuxt-photo:lightbox')
-export const LightboxSlideRendererKey: InjectionKey<(photo: PhotoItem) => LightboxSlideRenderer | null> = Symbol('nuxt-photo:lightbox-slide-renderer')
-export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
+export const LightboxContextKey: InjectionKey<LightboxContext> = Symbol(
+  'nuxt-photo:lightbox',
+)
+export const LightboxSlideRendererKey: InjectionKey<
+  (photo: PhotoItem) => LightboxSlideRenderer | null
+> = Symbol('nuxt-photo:lightbox-slide-renderer')
+export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol(
+  'nuxt-photo:image-adapter',
+)
 
 export interface PhotoGroupContext {
   /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
   mode: 'auto' | 'explicit'
-  register(id: symbol, photo: PhotoItem, getThumbEl: () => HTMLElement | null, renderSlide?: LightboxSlideRenderer | null): void
+  register(
+    id: symbol,
+    photo: PhotoItem,
+    getThumbEl: () => HTMLElement | null,
+    renderSlide?: LightboxSlideRenderer | null,
+  ): void
   unregister(id: symbol): void
   open(index?: number): Promise<void>
   openPhoto(photo: PhotoItem): Promise<void>
@@ -77,7 +114,9 @@ export interface PhotoGroupContext {
   hiddenPhoto: ComputedRef<PhotoItem | null>
 }
 
-export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol('nuxt-photo:photo-group')
+export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(
+  'nuxt-photo:photo-group',
+)
 
 /**
  * Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
@@ -87,7 +126,9 @@ export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol('nux
  *   import MyLightbox from '~/components/Lightbox.vue'
  *   provide(LightboxComponentKey, MyLightbox)
  */
-export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
+export const LightboxComponentKey: InjectionKey<Component> = Symbol(
+  'nuxt-photo:lightbox-component',
+)
 
 /** Slot overrides injected by recipe components for customizing InternalLightbox. */
 export interface LightboxSlotOverrides {
@@ -95,10 +136,13 @@ export interface LightboxSlotOverrides {
   caption?: (props: LightboxCaptionSlotProps) => unknown
   slide?: (props: LightboxSlideSlotProps) => unknown
 }
-export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> = Symbol('nuxt-photo:lightbox-slots')
+export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> =
+  Symbol('nuxt-photo:lightbox-slots')
 
 /** Global defaults for lightbox behaviour, typically provided once at app level. */
 export interface LightboxDefaults {
   minZoom?: number
 }
-export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol('nuxt-photo:lightbox-defaults')
+export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol(
+  'nuxt-photo:lightbox-defaults',
+)

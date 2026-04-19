@@ -23,7 +23,8 @@ export function getCommonHeight(
   spacing: number,
   padding: number,
 ) {
-  const rowWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
+  const rowWidth =
+    containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
   const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
   return rowWidth / totalAspectRatio
 }

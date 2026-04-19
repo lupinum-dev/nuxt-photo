@@ -1,1 +1,8 @@
-export { isUsableRect, getLoopedIndex, fitRect, flipTransform, makeGhostBaseStyle, rubberband } from './rect'
+export {
+  isUsableRect,
+  getLoopedIndex,
+  fitRect,
+  flipTransform,
+  makeGhostBaseStyle,
+  rubberband,
+} from './rect'

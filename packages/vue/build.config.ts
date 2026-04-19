@@ -5,6 +5,11 @@ export default defineBuildConfig({
     { input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
   ],
   clean: true,
-  externals: ['vue', 'embla-carousel-vue', 'embla-carousel', '@nuxt-photo/core'],
+  externals: [
+    'vue',
+    'embla-carousel-vue',
+    'embla-carousel',
+    '@nuxt-photo/core',
+  ],
   failOnWarn: false,
 })

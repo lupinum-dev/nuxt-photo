@@ -1,13 +1,44 @@
 <template>
-  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true" aria-label="Photo lightbox">
+  <LightboxRoot
+    class="np-lightbox"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Photo lightbox"
+  >
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">
-      <LightboxControls v-slot="{ activeIndex, activePhoto, photos, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }">
+      <LightboxControls
+        v-slot="{
+          activeIndex,
+          activePhoto,
+          photos,
+          count,
+          prev,
+          next,
+          close,
+          toggleZoom,
+          isZoomedIn,
+          zoomAllowed,
+          controlsDisabled,
+        }"
+      >
         <SlotProxy
           v-if="slots?.toolbar"
           :render="slots!.toolbar"
-          :props="{ activeIndex, activePhoto, photos, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }"
+          :props="{
+            activeIndex,
+            activePhoto,
+            photos,
+            count,
+            prev,
+            next,
+            close,
+            toggleZoom,
+            isZoomedIn,
+            zoomAllowed,
+            controlsDisabled,
+          }"
         />
         <div v-else class="np-lightbox__topbar">
           <div class="np-lightbox__counter">
@@ -15,8 +46,22 @@
           </div>
 
           <div class="np-lightbox__actions">
-            <button class="np-lightbox__btn" aria-label="Previous" :disabled="controlsDisabled" @click="prev">&#8592;</button>
-            <button class="np-lightbox__btn" aria-label="Next" :disabled="controlsDisabled" @click="next">&#8594;</button>
+            <button
+              class="np-lightbox__btn"
+              aria-label="Previous"
+              :disabled="controlsDisabled"
+              @click="prev"
+            >
+              &#8592;
+            </button>
+            <button
+              class="np-lightbox__btn"
+              aria-label="Next"
+              :disabled="controlsDisabled"
+              @click="next"
+            >
+              &#8594;
+            </button>
             <button
               class="np-lightbox__btn"
               :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
@@ -25,7 +70,14 @@
             >
               {{ isZoomedIn ? 'Fit' : 'Zoom' }}
             </button>
-            <button class="np-lightbox__btn np-lightbox__btn--close" aria-label="Close" :disabled="controlsDisabled" @click="close">&#10005;</button>
+            <button
+              class="np-lightbox__btn np-lightbox__btn--close"
+              aria-label="Close"
+              :disabled="controlsDisabled"
+              @click="close"
+            >
+              &#10005;
+            </button>
           </div>
         </div>
       </LightboxControls>
@@ -35,7 +87,11 @@
           v-slot="{ photos, viewportRef, mediaOpacity }"
           class="np-lightbox__media"
         >
-          <div class="np-lightbox__viewport" :ref="viewportRef" :style="{ opacity: mediaOpacity }">
+          <div
+            class="np-lightbox__viewport"
+            :ref="viewportRef"
+            :style="{ opacity: mediaOpacity }"
+          >
             <div class="np-lightbox__container">
               <LightboxSlide
                 v-for="(photo, i) in photos"
@@ -52,8 +108,15 @@
           </div>
         </LightboxViewport>
 
-        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <SlotProxy v-if="slots?.caption" :render="slots!.caption" :props="{ photo, activeIndex }" />
+        <LightboxCaption
+          class="np-lightbox__caption"
+          v-slot="{ photo, activeIndex }"
+        >
+          <SlotProxy
+            v-if="slots?.caption"
+            :render="slots!.caption"
+            :props="{ photo, activeIndex }"
+          />
           <template v-else>
             <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
             <p v-if="photo?.description">{{ photo.description }}</p>

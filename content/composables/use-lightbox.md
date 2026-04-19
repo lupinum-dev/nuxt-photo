@@ -11,9 +11,7 @@ The simplest composable for creating and controlling a lightbox. It creates a li
 ## Signature
 
 ```ts
-function useLightbox(
-  photosInput: MaybeRef<PhotoItem | PhotoItem[]>
-): {
+function useLightbox(photosInput: MaybeRef<PhotoItem | PhotoItem[]>): {
   open: (index?: number) => Promise<void>
   close: () => Promise<void>
   next: () => void
@@ -27,22 +25,22 @@ function useLightbox(
 
 ## Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter     | Type                                 | Description                                                              |
+| ------------- | ------------------------------------ | ------------------------------------------------------------------------ |
 | `photosInput` | `MaybeRef<PhotoItem \| PhotoItem[]>` | A single photo or an array of photos. Can be a ref for reactive updates. |
 
 ## Return Value
 
-| Property | Type | Description |
-|---|---|---|
-| `open` | `(index?: number) => Promise<void>` | Opens the lightbox at the given index (defaults to 0). Returns a promise that resolves when the open transition completes. |
-| `close` | `() => Promise<void>` | Closes the lightbox. Returns a promise that resolves when the close transition completes. |
-| `next` | `() => void` | Navigate to the next photo. |
-| `prev` | `() => void` | Navigate to the previous photo. |
-| `isOpen` | `Ref<boolean>` | Whether the lightbox is currently open. |
-| `activeIndex` | `Ref<number>` | Index of the currently active photo. |
-| `activePhoto` | `ComputedRef<PhotoItem \| null>` | The currently active photo object, or `null` when closed. |
-| `count` | `ComputedRef<number>` | Total number of photos. |
+| Property      | Type                                | Description                                                                                                                |
+| ------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `open`        | `(index?: number) => Promise<void>` | Opens the lightbox at the given index (defaults to 0). Returns a promise that resolves when the open transition completes. |
+| `close`       | `() => Promise<void>`               | Closes the lightbox. Returns a promise that resolves when the close transition completes.                                  |
+| `next`        | `() => void`                        | Navigate to the next photo.                                                                                                |
+| `prev`        | `() => void`                        | Navigate to the previous photo.                                                                                            |
+| `isOpen`      | `Ref<boolean>`                      | Whether the lightbox is currently open.                                                                                    |
+| `activeIndex` | `Ref<number>`                       | Index of the currently active photo.                                                                                       |
+| `activePhoto` | `ComputedRef<PhotoItem \| null>`    | The currently active photo object, or `null` when closed.                                                                  |
+| `count`       | `ComputedRef<number>`               | Total number of photos.                                                                                                    |
 
 ## Usage
 
@@ -53,7 +51,7 @@ const photos = ref([
   { id: 2, src: '/b.jpg', width: 900, height: 1200 },
 ])
 
-const { open, close, isOpen, activeIndex, count } = useLightbox(photos)
+const { open, close, isOpen, activeIndex, count } = useLightbox()
 </script>
 
 <template>

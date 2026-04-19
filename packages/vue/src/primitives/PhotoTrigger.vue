@@ -9,7 +9,11 @@
     @keydown.enter="ctx.open(index)"
     @keydown.space.prevent="ctx.open(index)"
   >
-    <slot :photo="photo" :index="index" :hidden="ctx.hiddenThumbIndex.value === index" />
+    <slot
+      :photo="photo"
+      :index="index"
+      :hidden="ctx.hiddenThumbIndex.value === index"
+    />
   </div>
 </template>
 
@@ -25,5 +29,7 @@ const props = defineProps<{
 
 const ctx = useLightboxInject('PhotoTrigger')
 
-const ariaLabel = computed(() => props.photo.alt || `View photo ${props.index + 1}`)
+const ariaLabel = computed(
+  () => props.photo.alt || `View photo ${props.index + 1}`,
+)
 </script>

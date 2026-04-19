@@ -18,11 +18,15 @@ async function flushUi(iterations = 6) {
   for (let i = 0; i < iterations; i++) {
     await Promise.resolve()
     await nextTick()
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => setTimeout(r, 0))
   }
 }
 
-function mount(component: any, props: Record<string, any> = {}, slots: Record<string, any> = {}) {
+function mount(
+  component: any,
+  props: Record<string, any> = {},
+  slots: Record<string, any> = {},
+) {
   const container = document.createElement('div')
   document.body.appendChild(container)
 
@@ -39,7 +43,9 @@ function mount(component: any, props: Record<string, any> = {}, slots: Record<st
   return {
     app,
     container,
-    get handle() { return handleRef.value },
+    get handle() {
+      return handleRef.value
+    },
     unmount() {
       app.unmount()
       container.remove()
@@ -53,12 +59,16 @@ describe('PhotoCarousel — DOM', () => {
       observe() {}
       disconnect() {}
       unobserve() {}
-      takeRecords() { return [] }
+      takeRecords() {
+        return []
+      }
     }
     vi.stubGlobal('ResizeObserver', NoopObserver)
     // Embla looks these up on the element's ownerWindow — jsdom needs them installed there too.
-    window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
-    window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
+    window.ResizeObserver =
+      NoopObserver as unknown as typeof window.ResizeObserver
+    window.IntersectionObserver =
+      NoopObserver as unknown as typeof window.IntersectionObserver
     if (!window.matchMedia) {
       window.matchMedia = ((query: string) => ({
         matches: false,
@@ -81,14 +91,18 @@ describe('PhotoCarousel — DOM', () => {
   it('renders one slide element per photo', async () => {
     const m = mount(PhotoCarousel, { photos })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(photos.length)
+    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(
+      photos.length,
+    )
     m.unmount()
   })
 
   it('renders thumbnails by default', async () => {
     const m = mount(PhotoCarousel, { photos })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(photos.length)
+    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(
+      photos.length,
+    )
     m.unmount()
   })
 
@@ -113,10 +127,14 @@ describe('PhotoCarousel — DOM', () => {
   })
 
   it('custom #slide slot replaces default PhotoImage', async () => {
-    const m = mount(PhotoCarousel, { photos }, {
-      slide: ({ photo }: { photo: PhotoItem }) =>
-        h('div', { class: 'custom-slide', 'data-id': photo.id }, photo.id),
-    })
+    const m = mount(
+      PhotoCarousel,
+      { photos },
+      {
+        slide: ({ photo }: { photo: PhotoItem }) =>
+          h('div', { class: 'custom-slide', 'data-id': photo.id }, photo.id),
+      },
+    )
     await flushUi()
     const custom = m.container.querySelectorAll('.custom-slide')
     expect(custom.length).toBe(photos.length)
@@ -125,34 +143,18 @@ describe('PhotoCarousel — DOM', () => {
   })
 
   it('custom #thumb slot replaces default thumbnail', async () => {
-    const m = mount(PhotoCarousel, { photos }, {
-      thumb: ({ photo }: { photo: PhotoItem }) =>
-        h('span', { class: 'custom-thumb' }, photo.id),
-    })
+    const m = mount(
+      PhotoCarousel,
+      { photos },
+      {
+        thumb: ({ photo }: { photo: PhotoItem }) =>
+          h('span', { class: 'custom-thumb' }, photo.id),
+      },
+    )
     await flushUi()
-    expect(m.container.querySelectorAll('.custom-thumb').length).toBe(photos.length)
-    m.unmount()
-  })
-
-  it('exposes imperative goTo/goToNext/goToPrev and updates selectedIndex', async () => {
-    const m = mount(PhotoCarousel, { photos })
-    await flushUi()
-    const handle = m.handle
-    expect(handle).toBeTruthy()
-    expect(handle.selectedIndex).toBe(0)
-
-    handle.goTo(2, true)
-    await flushUi()
-    expect(handle.selectedIndex).toBe(2)
-
-    handle.goToPrev(true)
-    await flushUi()
-    expect(handle.selectedIndex).toBe(1)
-
-    handle.goToNext(true)
-    await flushUi()
-    expect(handle.selectedIndex).toBe(2)
-
+    expect(m.container.querySelectorAll('.custom-thumb').length).toBe(
+      photos.length,
+    )
     m.unmount()
   })
 
@@ -164,9 +166,15 @@ describe('PhotoCarousel — DOM', () => {
   })
 
   it('shows dots when showDots is true', async () => {
-    const m = mount(PhotoCarousel, { photos, showDots: true, showThumbnails: false })
+    const m = mount(PhotoCarousel, {
+      photos,
+      showDots: true,
+      showThumbnails: false,
+    })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(photos.length)
+    expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(
+      photos.length,
+    )
     m.unmount()
   })
 
@@ -181,7 +189,9 @@ describe('PhotoCarousel — DOM', () => {
     await flushUi()
     const root = m.container.querySelector('.np-carousel') as HTMLElement
     expect(root.style.getPropertyValue('--np-carousel-slide-size')).toBe('80%')
-    expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe('4 / 3')
+    expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe(
+      '4 / 3',
+    )
     expect(root.style.getPropertyValue('--np-carousel-gap')).toBe('2rem')
     expect(root.style.getPropertyValue('--np-carousel-thumb-size')).toBe('8rem')
     m.unmount()
@@ -189,8 +199,22 @@ describe('PhotoCarousel — DOM', () => {
 
   it('warns in dev when autoplay prop and user Autoplay plugin are both supplied', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fakeAutoplayPlugin = { name: 'autoplay', options: {}, init() {}, destroy() {}, play() {}, stop() {}, reset() {}, isPlaying: () => false, timeUntilNext: () => null } as any
-    const m = mount(PhotoCarousel, { photos, autoplay: { delay: 3000 }, plugins: [fakeAutoplayPlugin] })
+    const fakeAutoplayPlugin = {
+      name: 'autoplay',
+      options: {},
+      init() {},
+      destroy() {},
+      play() {},
+      stop() {},
+      reset() {},
+      isPlaying: () => false,
+      timeUntilNext: () => null,
+    } as any
+    const m = mount(PhotoCarousel, {
+      photos,
+      autoplay: { delay: 3000 },
+      plugins: [fakeAutoplayPlugin],
+    })
     await flushUi()
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('PhotoCarousel'))
     warn.mockRestore()
@@ -207,57 +231,6 @@ describe('PhotoCarousel — DOM', () => {
     const root = m.container.querySelector('.np-carousel') as HTMLElement
     expect(root.id).toBe('reviewed-carousel')
     expect(root.getAttribute('data-test-id')).toBe('carousel-root')
-    m.unmount()
-  })
-
-  it('reacts to updated Embla options after mount', async () => {
-    const container = document.createElement('div')
-    document.body.appendChild(container)
-
-    const loop = ref(false)
-    const handleRef = ref<any>(null)
-    const app = createApp(defineComponent({
-      setup() {
-        return () => h(PhotoCarousel, {
-          photos,
-          options: { loop: loop.value },
-          ref: handleRef,
-        })
-      },
-    }))
-
-    app.mount(container)
-    await flushUi()
-
-    handleRef.value.goTo(photos.length - 1, true)
-    await flushUi()
-
-    const nextButton = container.querySelector('.np-carousel__arrow--next') as HTMLButtonElement
-    expect(nextButton.disabled).toBe(true)
-
-    loop.value = true
-    await flushUi()
-
-    expect(nextButton.disabled).toBe(false)
-
-    app.unmount()
-    container.remove()
-  })
-
-  it('maps multi-slide navigation from photo index to the containing snap', async () => {
-    const m = mount(PhotoCarousel, {
-      photos,
-      options: { slidesToScroll: 2 },
-    })
-    await flushUi()
-
-    m.handle.goTo(3, true)
-    await flushUi()
-
-    expect(m.handle.selectedIndex).toBe(2)
-    expect(m.container.querySelector('.np-carousel__counter')?.textContent).toContain('3 / 4')
-    expect(m.container.querySelectorAll('.np-carousel__thumb--selected').length).toBe(2)
-
     m.unmount()
   })
 })

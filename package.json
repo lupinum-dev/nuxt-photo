@@ -15,11 +15,17 @@
     "size:vue": "node scripts/size/run.mjs vue",
     "size:nuxt": "node scripts/size/run.mjs nuxt",
     "size:analyze": "node scripts/size/run.mjs all --analyze",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck:packages": "pnpm build",
+    "typecheck:apps": "pnpm --filter nuxt-photo-playground exec nuxi prepare && pnpm --filter nuxt-photo-playground exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit && pnpm --filter nuxt-photo-playground-tw exec nuxi prepare && pnpm --filter nuxt-photo-playground-tw exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit && pnpm --filter nuxt-photo-docs exec nuxi prepare && pnpm --filter nuxt-photo-docs exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit",
+    "typecheck": "pnpm run typecheck:packages && pnpm run typecheck:apps",
     "test:unit": "vitest run",
     "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
     "test:e2e": "pnpm run build:playground && playwright test",
     "test": "pnpm test:unit && pnpm test:module-package && pnpm test:e2e",
-    "lint": "pnpm -r lint"
+    "lint": "eslint . && pnpm run format:check",
+    "lint:fix": "eslint . --fix && pnpm run format"
   },
   "engines": {
     "node": ">=18"
@@ -30,15 +36,23 @@
     "> 0.5%"
   ],
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nuxt-photo/core": "workspace:*",
-    "@playwright/test": "^1.58.2",
+    "@playwright/test": "1.58.2",
     "@size-limit/preset-small-lib": "^12.1.0",
-    "@vitejs/plugin-vue": "^6.0.5",
-    "@vue/server-renderer": "^3.5.31",
-    "jsdom": "^29.0.1",
+    "@vitejs/plugin-vue": "6.0.5",
+    "@vue/server-renderer": "3.5.31",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.5.0",
+    "jsdom": "29.0.1",
+    "prettier": "3.6.2",
     "rollup-plugin-visualizer": "^7.0.1",
     "size-limit": "^12.1.0",
-    "vitest": "^4.1.2",
-    "vue": "^3.5.31"
+    "typescript-eslint": "^8.58.2",
+    "vitest": "4.1.2",
+    "vue": "3.5.31",
+    "vue-eslint-parser": "^10.4.0"
   }
 }

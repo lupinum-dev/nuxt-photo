@@ -54,20 +54,20 @@ Each `Photo` auto-registers with the parent `PhotoGroup`. Clicking any photo ope
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `photo` | `PhotoItem` | — | **Required.** The photo data object. |
-| `lightbox` | `boolean \| Component` | `undefined` | Enables a solo lightbox when this Photo is not inside a PhotoGroup. Pass `true` for the default lightbox, or a custom lightbox component. |
-| `lightboxIgnore` | `boolean` | `undefined` | Opts this photo out of a parent PhotoGroup. The photo renders as a plain image with no click interaction. |
-| `adapter` | `ImageAdapter` | `undefined` | Custom image adapter for this photo. Overrides any adapter provided via injection. |
-| `loading` | `'lazy' \| 'eager'` | `'lazy'` | Image loading strategy. |
-| `imgClass` | `string` | `undefined` | Extra CSS classes applied to the inner `<img>` element. |
-| `captionClass` | `string` | `undefined` | Extra CSS classes applied to the `<figcaption>` element. |
+| Prop             | Type                   | Default     | Description                                                                                                                               |
+| ---------------- | ---------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `photo`          | `PhotoItem`            | —           | **Required.** The photo data object.                                                                                                      |
+| `lightbox`       | `boolean \| Component` | `undefined` | Enables a solo lightbox when this Photo is not inside a PhotoGroup. Pass `true` for the default lightbox, or a custom lightbox component. |
+| `lightboxIgnore` | `boolean`              | `undefined` | Opts this photo out of a parent PhotoGroup. The photo renders as a plain image with no click interaction.                                 |
+| `adapter`        | `ImageAdapter`         | `undefined` | Custom image adapter for this photo. Overrides any adapter provided via injection.                                                        |
+| `loading`        | `'lazy' \| 'eager'`    | `'lazy'`    | Image loading strategy.                                                                                                                   |
+| `imgClass`       | `string`               | `undefined` | Extra CSS classes applied to the inner `<img>` element.                                                                                   |
+| `captionClass`   | `string`               | `undefined` | Extra CSS classes applied to the `<figcaption>` element.                                                                                  |
 
 ## Slots
 
-| Slot | Props | Description |
-|---|---|---|
+| Slot    | Props                                 | Description                                                                                                              |
+| ------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `slide` | `{ photo: PhotoItem, index: number }` | Custom content for the lightbox slide. Only used when this Photo has a solo lightbox or is registered with a PhotoGroup. |
 
 ## Behavior
@@ -80,8 +80,8 @@ Each `Photo` auto-registers with the parent `PhotoGroup`. Clicking any photo ope
 
 ## CSS Classes
 
-| Class | Element |
-|---|---|
-| `.np-photo` | Root `<figure>` element |
-| `.np-photo__img` | Inner `<img>` element |
-| `.np-photo__caption` | `<figcaption>` element |
+| Class                | Element                 |
+| -------------------- | ----------------------- |
+| `.np-photo`          | Root `<figure>` element |
+| `.np-photo__img`     | Inner `<img>` element   |
+| `.np-photo__caption` | `<figcaption>` element  |

@@ -3,8 +3,9 @@
     <header class="header">
       <h1 class="header__title">PhotoCarousel</h1>
       <p class="header__desc">
-        A swipeable inline carousel for blogs and docs. Thumbnails, arrows, counter, caption —
-        all optional. Lightbox opt-in. Powered by <code>embla-carousel-vue</code>.
+        A swipeable inline carousel for blogs and docs. Thumbnails, arrows,
+        counter, caption — all optional. Lightbox opt-in. Powered by
+        <code>embla-carousel-vue</code>.
       </p>
     </header>
 
@@ -55,11 +56,18 @@
 
     <section class="demo">
       <h2 class="demo__title">With custom slide slot</h2>
-      <PhotoCarousel :photos="photos.slice(0, 4)" :show-thumbnails="false" :show-counter="false">
+      <PhotoCarousel
+        :photos="photos.slice(0, 4)"
+        :show-thumbnails="false"
+        :show-counter="false"
+      >
         <template #slide="{ photo, selected }">
           <div class="custom-slide">
             <img :src="photo.src" :alt="photo.alt" class="custom-slide__img" />
-            <div class="custom-slide__overlay" :class="{ 'custom-slide__overlay--active': selected }">
+            <div
+              class="custom-slide__overlay"
+              :class="{ 'custom-slide__overlay--active': selected }"
+            >
               <h3 class="custom-slide__title">{{ photo.caption }}</h3>
               <p class="custom-slide__desc">{{ photo.description }}</p>
             </div>
@@ -100,13 +108,15 @@ const autoplay = ref(false)
 const lightbox = ref(false)
 const loop = ref(false)
 
-const templateCode = computed(() => `<PhotoCarousel
+const templateCode = computed(
+  () => `<PhotoCarousel
   :photos="photos"
   :show-arrows="${showArrows.value}"
   :show-thumbnails="${showThumbnails.value}"
   :show-counter="${showCounter.value}"
   :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delay: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  :options="{ loop: true }"' : ''}
-/>`)
+/>`,
+)
 </script>
 
 <style scoped>

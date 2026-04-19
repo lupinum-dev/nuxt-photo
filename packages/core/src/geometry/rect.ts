@@ -1,11 +1,21 @@
 import type { RectLike } from '../types'
 
-export function isUsableRect(rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } | null): boolean {
+export function isUsableRect(
+  rect: {
+    left: number
+    top: number
+    right: number
+    bottom: number
+    width: number
+    height: number
+  } | null,
+): boolean {
   if (!rect) return false
   if (rect.width < 24 || rect.height < 24) return false
   if (rect.bottom < 0 || rect.right < 0) return false
   if (typeof window !== 'undefined') {
-    if (rect.top > window.innerHeight || rect.left > window.innerWidth) return false
+    if (rect.top > window.innerHeight || rect.left > window.innerWidth)
+      return false
   }
   return true
 }

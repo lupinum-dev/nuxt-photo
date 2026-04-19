@@ -5,14 +5,35 @@
     v-bind="{ ...$attrs, ...interactiveAttrs }"
     :style="figureStyle"
   >
-    <PhotoImage :photo="photo" context="thumb" :image-adapter="imageAdapter" :loading="loading ?? 'lazy'" class="np-photo__img" :class="imgClass" />
-    <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">{{ photo.caption }}</figcaption>
+    <PhotoImage
+      :photo="photo"
+      context="thumb"
+      :image-adapter="imageAdapter"
+      :loading="loading ?? 'lazy'"
+      class="np-photo__img"
+      :class="imgClass"
+    />
+    <figcaption
+      v-if="photo.caption"
+      class="np-photo__caption"
+      :class="captionClass"
+    >
+      {{ photo.caption }}
+    </figcaption>
   </figure>
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onBeforeUnmount, useSlots, type Component } from 'vue'
+import {
+  ref,
+  computed,
+  inject,
+  onMounted,
+  onBeforeUnmount,
+  useSlots,
+  type Component,
+} from 'vue'
 
 defineOptions({ inheritAttrs: false })
 import { PhotoImage, useLightboxProvider } from '@nuxt-photo/vue'
@@ -45,16 +66,26 @@ const group = inject(PhotoGroupContextKey, null)
 const injectedLightbox = inject(LightboxComponentKey, null)
 
 // Standalone mode: lightbox prop set and no parent group
-const isSolo = computed(() => !group && !!props.lightbox && !props.lightboxIgnore)
+const isSolo = computed(
+  () => !group && !!props.lightbox && !props.lightboxIgnore,
+)
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
-  ? useLightboxProvider(computed(() => props.photo), {
-    resolveSlide: photo => {
-      if ((photo !== props.photo && String(photo.id) !== String(props.photo.id)) || !slots.slide) return null
-      return slotProps => slots.slide?.(slotProps) ?? null
-    },
-  })
+  ? useLightboxProvider(
+      computed(() => props.photo),
+      {
+        resolveSlide: (photo) => {
+          if (
+            (photo !== props.photo &&
+              String(photo.id) !== String(props.photo.id)) ||
+            !slots.slide
+          )
+            return null
+          return (slotProps) => slots.slide?.(slotProps) ?? null
+        },
+      },
+    )
   : null
 
 const soloLightboxComponent = computed<Component>(() => {
@@ -71,12 +102,18 @@ const thumbRef = ref<HTMLElement | null>(null)
 const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
 
 // Auto-group mode: inside a PhotoGroup with auto-collection
-const isAutoGrouped = computed(() => !!group && !props.lightboxIgnore && group.mode === 'auto')
+const isAutoGrouped = computed(
+  () => !!group && !props.lightboxIgnore && group.mode === 'auto',
+)
 const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
 
 const figureStyle = computed(() => {
   if (isSolo.value) {
-    return { margin: 0, opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1, cursor: 'pointer' }
+    return {
+      margin: 0,
+      opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1,
+      cursor: 'pointer',
+    }
   }
   if (isAutoGrouped.value) {
     return { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
@@ -114,18 +151,28 @@ onMounted(() => {
   if (soloCtx) {
     soloCtx.setThumbRef(0)(thumbRef.value)
   }
-  if (group && group.mode === 'auto' && !props.lightboxIgnore && !isSolo.value) {
+  if (
+    group &&
+    group.mode === 'auto' &&
+    !props.lightboxIgnore &&
+    !isSolo.value
+  ) {
     group.register(
       id,
       props.photo,
       () => thumbRef.value,
-      slots.slide ? slotProps => slots.slide?.(slotProps) ?? null : null,
+      slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
     )
   }
 })
 
 onBeforeUnmount(() => {
-  if (group && group.mode === 'auto' && !props.lightboxIgnore && !isSolo.value) {
+  if (
+    group &&
+    group.mode === 'auto' &&
+    !props.lightboxIgnore &&
+    !isSolo.value
+  ) {
     group.unregister(id)
   }
 })

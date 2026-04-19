@@ -1,25 +1,36 @@
 <script setup lang="ts">
+import { computed, provide } from 'vue'
+import {
+  queryCollectionNavigation,
+  queryCollectionSearchSections,
+  useAppConfig,
+  useAsyncData,
+  useHead,
+  useLazyAsyncData,
+  useSeoMeta,
+} from '#imports'
+
 const { seo } = useAppConfig()
 
 const { data: navigation } = await useAsyncData('navigation', () => {
   return queryCollectionNavigation('docs')
 })
-const { data: files } = useLazyAsyncData('search', () => {
-  return queryCollectionSearchSections('docs')
-}, {
-  server: false
-})
+const { data: files } = useLazyAsyncData(
+  'search',
+  () => {
+    return queryCollectionSearchSections('docs')
+  },
+  {
+    server: false,
+  },
+)
 
 useHead({
-  meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-  ],
-  link: [
-    { rel: 'icon', href: '/favicon.ico' }
-  ],
+  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
+  link: [{ rel: 'icon', href: '/favicon.ico' }],
   htmlAttrs: {
-    lang: 'en'
-  }
+    lang: 'en',
+  },
 })
 
 useSeoMeta({
@@ -27,23 +38,24 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
   titleTemplate(title) {
     return title?.includes('Nuxt Photo') ? title : `${title} · Nuxt Photo`
-  }
+  },
 })
 
 provide('navigation', navigation)
 
 const links = computed(() => [
-  ...(navigation.value || []).map(item => ({
+  ...(navigation.value || []).map((item) => ({
     label: item.title,
     icon: item.icon,
-    to: item.path === '/docs' ? '/docs/getting-started/introduction' : item.path
+    to:
+      item.path === '/docs' ? '/docs/getting-started/introduction' : item.path,
   })),
   {
     label: 'lupinum-dev/nuxt-photo',
     to: 'https://github.com/lupinum-dev/nuxt-photo',
     target: '_blank',
-    icon: 'i-simple-icons-github'
-  }
+    icon: 'i-simple-icons-github',
+  },
 ])
 </script>
 
@@ -58,7 +70,11 @@ const links = computed(() => [
     <AppFooter />
 
     <ClientOnly>
-      <LazyUContentSearch :files="files || []" :navigation="navigation || []" :links="links" />
+      <LazyUContentSearch
+        :files="files || []"
+        :navigation="navigation || []"
+        :links="links"
+      />
     </ClientOnly>
   </UApp>
 </template>

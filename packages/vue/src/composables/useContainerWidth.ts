@@ -3,12 +3,15 @@ import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
 /** Max width delta considered a scrollbar oscillation. */
 const MAX_SCROLLBAR_WIDTH = 20
 
-function snapToBreakpoint(width: number, breakpoints: readonly number[]): number {
-  const sorted = [...breakpoints].filter(bp => bp > 0).sort((a, b) => b - a)
+function snapToBreakpoint(
+  width: number,
+  breakpoints: readonly number[],
+): number {
+  const sorted = [...breakpoints].filter((bp) => bp > 0).sort((a, b) => b - a)
   if (sorted.length === 0) return width
   // Synthetic floor: half the smallest declared breakpoint
   sorted.push(Math.floor(sorted[sorted.length - 1] / 2))
-  return sorted.find(bp => bp <= width) ?? sorted[sorted.length - 1]
+  return sorted.find((bp) => bp <= width) ?? sorted[sorted.length - 1]
 }
 
 /**
@@ -41,7 +44,9 @@ export function useContainerWidth(
   onMounted(() => {
     if (!containerRef.value) return
 
-    const initial = resolveWidth(containerRef.value.getBoundingClientRect().width)
+    const initial = resolveWidth(
+      containerRef.value.getBoundingClientRect().width,
+    )
     if (initial > 0) {
       prevWidth = containerWidth.value
       containerWidth.value = initial
@@ -54,7 +59,10 @@ export function useContainerWidth(
       const newW = resolveWidth(raw)
 
       // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
-      if (newW === prevWidth && Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH) {
+      if (
+        newW === prevWidth &&
+        Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH
+      ) {
         containerWidth.value = Math.min(containerWidth.value, newW)
         return
       }

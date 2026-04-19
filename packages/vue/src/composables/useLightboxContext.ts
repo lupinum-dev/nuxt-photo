@@ -1,4 +1,15 @@
-import { computed, getCurrentInstance, inject, nextTick, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRef } from 'vue'
+import {
+  computed,
+  getCurrentInstance,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  toValue,
+  watch,
+  type MaybeRef,
+} from 'vue'
 import {
   ensureImageLoaded,
   lockBodyScroll,
@@ -27,7 +38,9 @@ export function useLightboxContext(
   minZoom?: number,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
-    console.warn('[nuxt-photo] useLightboxContext must be called inside a component setup()')
+    console.warn(
+      '[nuxt-photo] useLightboxContext must be called inside a component setup()',
+    )
   }
 
   const photos = computed(() => {
@@ -54,10 +67,10 @@ export function useLightboxContext(
 
   // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
   if (
-    typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    && transitionConfig.mode !== 'none'
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    transitionConfig.mode !== 'none'
   ) {
     transitionConfig.mode = 'fade'
   }
@@ -87,7 +100,12 @@ export function useLightboxContext(
     debug,
   )
 
-  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, debug, resolvedMinZoom)
+  const panzoom = usePanzoom(
+    carousel.currentPhoto,
+    areaMetrics,
+    debug,
+    resolvedMinZoom,
+  )
 
   const ghost = useGhostTransition(
     carousel.activeIndex,
@@ -98,8 +116,20 @@ export function useLightboxContext(
     transitionConfig,
   )
 
-  watch(panzoom.isZoomedIn, (value) => { isZoomedInProxy.value = value }, { immediate: true })
-  watch(ghost.animating, (value) => { animatingProxy.value = value }, { immediate: true })
+  watch(
+    panzoom.isZoomedIn,
+    (value) => {
+      isZoomedInProxy.value = value
+    },
+    { immediate: true },
+  )
+  watch(
+    ghost.animating,
+    (value) => {
+      animatingProxy.value = value
+    },
+    { immediate: true },
+  )
 
   function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
@@ -128,21 +158,6 @@ export function useLightboxContext(
 
     debug.log('geometry', 'syncGeometry:', areaMetrics.value)
     return areaMetrics.value
-  }
-
-  let gestures!: ReturnType<typeof useGestures>
-
-  const transitionCallbacks = {
-    syncGeometry,
-    refreshZoomState: panzoom.refreshZoomState,
-    resetGestureState: () => gestures.resetGestureState(),
-    cancelTapTimer: () => gestures.cancelTapTimer(),
-  }
-
-  const closeCallbacks = {
-    ...transitionCallbacks,
-    setPanzoomImmediate: panzoom.setPanzoomImmediate,
-    isZoomedIn: panzoom.isZoomedIn,
   }
 
   let skipActiveIndexWatch = false
@@ -174,9 +189,12 @@ export function useLightboxContext(
   }
 
   async function open(photoOrIndex: PhotoItem | number = 0) {
-    const index = typeof photoOrIndex === 'number'
-      ? photoOrIndex
-      : photos.value.findIndex(photo => photoId(photo) === photoId(photoOrIndex as PhotoItem))
+    const index =
+      typeof photoOrIndex === 'number'
+        ? photoOrIndex
+        : photos.value.findIndex(
+            (photo) => photoId(photo) === photoId(photoOrIndex as PhotoItem),
+          )
 
     skipActiveIndexWatch = true
     ghost.setCloseDragY(0)
@@ -203,38 +221,54 @@ export function useLightboxContext(
     carousel.goToPrev()
   }
 
-  gestures = useGestures({
-    lightboxMounted: ghost.lightboxMounted,
-    animating: ghost.animating,
-    ghostVisible: ghost.ghostVisible,
-    isZoomedIn: panzoom.isZoomedIn,
-    zoomAllowed: panzoom.zoomAllowed,
-    mediaAreaRef,
-    currentPhoto: carousel.currentPhoto,
-    areaMetrics,
-    uiVisible: ghost.uiVisible,
-    panState: panzoom.panState,
-    zoomState: panzoom.zoomState,
-    setCloseDragY: ghost.setCloseDragY,
-    transitionInProgress: ghost.transitionInProgress,
+  const gestures = useGestures(
+    {
+      lightboxMounted: ghost.lightboxMounted,
+      animating: ghost.animating,
+      ghostVisible: ghost.ghostVisible,
+      isZoomedIn: panzoom.isZoomedIn,
+      zoomAllowed: panzoom.zoomAllowed,
+      mediaAreaRef,
+      currentPhoto: carousel.currentPhoto,
+      areaMetrics,
+      uiVisible: ghost.uiVisible,
+      panState: panzoom.panState,
+      zoomState: panzoom.zoomState,
+      setCloseDragY: ghost.setCloseDragY,
+      transitionInProgress: ghost.transitionInProgress,
 
-    panzoomMotion: panzoom.panzoomMotion,
+      panzoomMotion: panzoom.panzoomMotion,
+      setPanzoomImmediate: panzoom.setPanzoomImmediate,
+      startPanzoomSpring: panzoom.startPanzoomSpring,
+      clampPan: panzoom.clampPan,
+      clampPanWithResistance: panzoom.clampPanWithResistance,
+      applyWheelZoom: panzoom.applyWheelZoom,
+      toggleZoom: panzoom.toggleZoom,
+      getPanBounds: panzoom.getPanBounds,
+
+      goToNext: carousel.goToNext,
+      goToPrev: carousel.goToPrev,
+      goTo: carousel.goTo,
+      selectedSnap: carousel.selectedSnap,
+
+      handleCloseGesture: ghost.handleCloseGesture,
+      close,
+    },
+    debug,
+  )
+
+  const transitionCallbacks = {
+    syncGeometry,
+    refreshZoomState: panzoom.refreshZoomState,
+    resetGestureState: () => gestures.resetGestureState(),
+    cancelTapTimer: () => gestures.cancelTapTimer(),
+  }
+
+  const closeCallbacks = {
+    ...transitionCallbacks,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
-    startPanzoomSpring: panzoom.startPanzoomSpring,
-    clampPan: panzoom.clampPan,
-    clampPanWithResistance: panzoom.clampPanWithResistance,
-    applyWheelZoom: panzoom.applyWheelZoom,
-    toggleZoom: panzoom.toggleZoom,
-    getPanBounds: panzoom.getPanBounds,
-
-    goToNext: carousel.goToNext,
-    goToPrev: carousel.goToPrev,
-    goTo: carousel.goTo,
-    selectedSnap: carousel.selectedSnap,
-
-    handleCloseGesture: ghost.handleCloseGesture,
-    close,
-  }, debug)
+    isZoomedIn: panzoom.isZoomedIn,
+  }
 
   watch(ghost.lightboxMounted, (mounted) => {
     debug.log('transitions', `lightboxMounted → ${mounted}`)
@@ -249,7 +283,11 @@ export function useLightboxContext(
     const oldIds = new Set(oldPhotos.map(photoId))
 
     // No change in IDs
-    if (newIds.size === oldIds.size && [...newIds].every(id => oldIds.has(id))) return
+    if (
+      newIds.size === oldIds.size &&
+      [...newIds].every((id) => oldIds.has(id))
+    )
+      return
 
     const activePhoto = carousel.currentPhoto.value
     const activeId = activePhoto ? photoId(activePhoto) : null
@@ -264,7 +302,7 @@ export function useLightboxContext(
     }
 
     // Active photo still exists — jump to its new index
-    const newIndex = newPhotos.findIndex(p => photoId(p) === activeId)
+    const newIndex = newPhotos.findIndex((p) => photoId(p) === activeId)
     if (newIndex !== -1 && newIndex !== carousel.activeIndex.value) {
       carousel.goTo(newIndex, true)
     }

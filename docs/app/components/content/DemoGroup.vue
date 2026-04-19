@@ -10,9 +10,7 @@ const portrait = computed(() => demoPhotos.slice(6, 12))
   <PhotoGroup>
     <div class="space-y-6">
       <div>
-        <p class="text-sm text-muted mb-2 font-medium">
-          Landscapes
-        </p>
+        <p class="text-sm text-muted mb-2 font-medium">Landscapes</p>
         <PhotoAlbum
           :photos="landscape"
           layout="rows"
@@ -22,9 +20,7 @@ const portrait = computed(() => demoPhotos.slice(6, 12))
         />
       </div>
       <div>
-        <p class="text-sm text-muted mb-2 font-medium">
-          Studies
-        </p>
+        <p class="text-sm text-muted mb-2 font-medium">Studies</p>
         <PhotoAlbum
           :photos="portrait"
           layout="rows"

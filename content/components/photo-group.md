@@ -112,30 +112,30 @@ const adapter: PhotoAdapter = (item) => ({
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `photos` | `PhotoItem[] \| any[]` | `undefined` | Explicit photos list. When provided, the group operates in **explicit** mode and ignores child registrations. When omitted, the group uses **auto-collection** mode. |
-| `photoAdapter` | `PhotoAdapter` | `undefined` | Transforms each item in `photos` into a `PhotoItem`. Only used in explicit mode. |
-| `lightbox` | `boolean \| Component` | `true` | Lightbox to render. `true` = default lightbox, `false` = no lightbox, or pass a custom component. |
-| `transition` | `LightboxTransitionOption` | `undefined` | Transition mode for lightbox open/close animations. See [Transitions guide](/docs/guides/transitions). |
+| Prop          | Type                       | Default     | Description                                                                                                                                                          |
+| ------------- | -------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `photos`      | `PhotoItem[] \| any[]`     | `undefined` | Explicit photos list. When provided, the group operates in **explicit** mode and ignores child registrations. When omitted, the group uses **auto-collection** mode. |
+| `itemAdapter` | `PhotoAdapter`             | `undefined` | Transforms each item in `photos` into a `PhotoItem`. Only used in explicit mode.                                                                                     |
+| `lightbox`    | `boolean \| Component`     | `true`      | Lightbox to render. `true` = default lightbox, `false` = no lightbox, or pass a custom component.                                                                    |
+| `transition`  | `LightboxTransitionOption` | `undefined` | Transition mode for lightbox open/close animations. See [Transitions guide](/docs/guides/transitions).                                                               |
 
 ## Slots
 
-| Slot | Props | Description |
-|---|---|---|
+| Slot      | Props                                                                                                                                | Description                                                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `default` | `{ open: (photoOrIndex?: PhotoItem \| number) => Promise<void>, setThumbRef: (index: number) => (el: HTMLElement \| null) => void }` | Content area. In auto mode, place `Photo` or `PhotoAlbum` children here. In headless mode, use `open` and `setThumbRef` to build custom layouts. |
-| `toolbar` | `{ activeIndex: number, activePhoto: PhotoItem, count: number }` | Custom lightbox toolbar content. |
-| `caption` | `{ photo: PhotoItem, activeIndex: number }` | Custom lightbox caption content. |
-| `slide` | `{ photo: PhotoItem, index: number, width: number, height: number }` | Custom lightbox slide content. |
+| `toolbar` | `{ activeIndex: number, activePhoto: PhotoItem, count: number }`                                                                     | Custom lightbox toolbar content.                                                                                                                 |
+| `caption` | `{ photo: PhotoItem, activeIndex: number }`                                                                                          | Custom lightbox caption content.                                                                                                                 |
+| `slide`   | `{ photo: PhotoItem, index: number, width: number, height: number }`                                                                 | Custom lightbox slide content.                                                                                                                   |
 
 ## Exposed Methods
 
 Access these via a template ref:
 
-| Method | Signature | Description |
-|---|---|---|
-| `open` | `(photoOrIndex?: PhotoItem \| number) => Promise<void>` | Opens the lightbox. Pass a photo object, an index, or nothing (defaults to index 0). |
-| `close` | `() => Promise<void>` | Closes the lightbox with the configured transition. |
+| Method  | Signature                                               | Description                                                                          |
+| ------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `open`  | `(photoOrIndex?: PhotoItem \| number) => Promise<void>` | Opens the lightbox. Pass a photo object, an index, or nothing (defaults to index 0). |
+| `close` | `() => Promise<void>`                                   | Closes the lightbox with the configured transition.                                  |
 
 ## Behavior
 

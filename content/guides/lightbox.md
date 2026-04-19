@@ -20,11 +20,11 @@ Every `PhotoAlbum`, `PhotoGroup`, and `Photo` (with `lightbox` prop) creates a l
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|---|---|
-| `→` / `↓` | Next photo |
+| Key       | Action         |
+| --------- | -------------- |
+| `→` / `↓` | Next photo     |
 | `←` / `↑` | Previous photo |
-| `Escape` | Close lightbox |
+| `Escape`  | Close lightbox |
 
 ## Enabling and Disabling
 
@@ -67,12 +67,12 @@ The lightbox follows a strict state machine:
 closed → opening → open → closing → closed
 ```
 
-| State | Description |
-|---|---|
-| `closed` | Lightbox is not rendered. |
-| `opening` | Transition is playing (FLIP or fade). Controls are disabled. |
-| `open` | Fully interactive — navigation, gestures, and zoom are available. |
-| `closing` | Close transition is playing. Controls are disabled. |
+| State     | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| `closed`  | Lightbox is not rendered.                                         |
+| `opening` | Transition is playing (FLIP or fade). Controls are disabled.      |
+| `open`    | Fully interactive — navigation, gestures, and zoom are available. |
+| `closing` | Close transition is playing. Controls are disabled.               |
 
 The `ViewerState` type represents this:
 

@@ -25,6 +25,7 @@ type ImageSource = {
 ```
 
 The adapter receives:
+
 - **photo** — the photo data
 - **context** — where the image will be displayed:
   - `'thumb'` — grid thumbnail (small, responsive)
@@ -47,7 +48,7 @@ function nativeAdapter(photo: PhotoItem, context: ImageContext): ImageSource {
 
 ## Custom Adapter
 
-Pass an adapter to `PhotoAlbum` or `Photo`:
+Pass an image adapter to `PhotoAlbum` or `Photo`:
 
 ```vue
 <script setup>
@@ -73,7 +74,7 @@ const cloudinaryAdapter: ImageAdapter = (photo, context) => {
 </script>
 
 <template>
-  <PhotoAlbum :photos="photos" :adapter="cloudinaryAdapter" />
+  <PhotoAlbum :photos="photos" :image-adapter="cloudinaryAdapter" />
 </template>
 ```
 
@@ -130,13 +131,13 @@ const fromWordPress: PhotoAdapter = (item) => ({
 
 ## Adapter vs PhotoAdapter
 
-| | `ImageAdapter` | `PhotoAdapter` |
-|---|---|---|
-| **Purpose** | Controls how images are served (URLs, srcset) | Transforms API data into `PhotoItem` |
-| **Input** | `PhotoItem` + context | Your custom data type |
-| **Output** | `ImageSource` (src, srcset, sizes) | `PhotoItem` |
-| **Prop name** | `adapter` | `photoAdapter` |
-| **Used by** | `PhotoAlbum`, `Photo`, `PhotoImage` | `PhotoAlbum`, `PhotoGroup` |
+|               | `ImageAdapter`                                | `PhotoAdapter`                       |
+| ------------- | --------------------------------------------- | ------------------------------------ |
+| **Purpose**   | Controls how images are served (URLs, srcset) | Transforms API data into `PhotoItem` |
+| **Input**     | `PhotoItem` + context                         | Your custom data type                |
+| **Output**    | `ImageSource` (src, srcset, sizes)            | `PhotoItem`                          |
+| **Prop name** | `imageAdapter`                                | `itemAdapter`                        |
+| **Used by**   | `PhotoAlbum`, `Photo`, `PhotoImage`           | `PhotoAlbum`, `PhotoGroup`           |
 
 ## Providing an Adapter Globally
 
