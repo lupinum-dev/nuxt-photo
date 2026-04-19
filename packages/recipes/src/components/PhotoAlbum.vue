@@ -219,6 +219,10 @@ const props = withDefaults(defineProps<{
    * :layout="{ type: 'rows', targetRowHeight: 280 }"
    */
   layout?: AlbumLayout | AlbumLayout['type']
+  /** Shorthand for rows layout. Ignored unless `layout` resolves to `rows`. */
+  targetRowHeight?: ResponsiveParameter<number>
+  /** Shorthand for columns/masonry layouts. Ignored unless `layout` resolves to `columns` or `masonry`. */
+  columns?: ResponsiveParameter<number>
   /** Gap between images in pixels. Accepts a responsive function. @default 8 */
   spacing?: ResponsiveParameter<number>
   /** Outer padding around each image in pixels. Accepts a responsive function. @default 0 */
@@ -265,16 +269,24 @@ const props = withDefaults(defineProps<{
 // Normalize layout prop: string → object with defaults
 const normalizedLayout = computed<AlbumLayout>(() => {
   const raw = props.layout
-  if (typeof raw === 'object') return raw
+  if (typeof raw === 'object') {
+    switch (raw.type) {
+      case 'rows':
+        return { ...raw, targetRowHeight: raw.targetRowHeight ?? props.targetRowHeight }
+      case 'columns':
+      case 'masonry':
+        return { ...raw, columns: raw.columns ?? props.columns }
+    }
+  }
   switch (raw) {
-    case 'rows': return { type: 'rows' }
-    case 'columns': return { type: 'columns' }
-    case 'masonry': return { type: 'masonry' }
+    case 'rows': return { type: 'rows', targetRowHeight: props.targetRowHeight }
+    case 'columns': return { type: 'columns', columns: props.columns }
+    case 'masonry': return { type: 'masonry', columns: props.columns }
     default: {
       if ((globalThis as any).process?.env?.NODE_ENV !== 'production') {
         console.warn(`[nuxt-photo] Unknown layout type "${raw}", falling back to "rows"`)
       }
-      return { type: 'rows' }
+      return { type: 'rows', targetRowHeight: props.targetRowHeight }
     }
   }
 })

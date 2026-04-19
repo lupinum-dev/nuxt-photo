@@ -2,6 +2,8 @@
   <RecipePhotoAlbum
     :photos="photos"
     :layout="layout"
+    :target-row-height="targetRowHeight"
+    :columns="columns"
     :spacing="spacing"
     :padding="padding"
     :adapter="adapter"
@@ -14,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AlbumLayout, ImageAdapter, PhotoItem } from '@nuxt-photo/core'
+import type { AlbumLayout, ImageAdapter, PhotoItem, ResponsiveParameter } from '@nuxt-photo/core'
 
 defineOptions({ inheritAttrs: false })
 import { PhotoAlbum as RecipePhotoAlbum } from '@nuxt-photo/recipes'
@@ -22,6 +24,8 @@ import { PhotoAlbum as RecipePhotoAlbum } from '@nuxt-photo/recipes'
 withDefaults(defineProps<{
   photos: PhotoItem[]
   layout?: AlbumLayout | AlbumLayout['type']
+  targetRowHeight?: ResponsiveParameter<number>
+  columns?: ResponsiveParameter<number>
   spacing?: number
   padding?: number
   adapter?: ImageAdapter

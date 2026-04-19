@@ -333,6 +333,31 @@ describe('SSR', () => {
     expect(html).toContain('flex-grow')
   })
 
+  it('PhotoAlbum accepts top-level targetRowHeight shorthand', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, { photos, layout: 'rows', targetRowHeight: 200, lightbox: false }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('ssr-2')
+    expect(html).toContain('ssr-3')
+    expect(html).toContain('flex-grow')
+  })
+
+  it('PhotoAlbum accepts top-level columns shorthand', async () => {
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, { photos, layout: 'columns', columns: 2, lightbox: false }),
+    })
+
+    const html = await renderToString(app)
+
+    expect(html).toContain('ssr-1')
+    expect(html).toContain('grid-template-columns:repeat(2')
+    expect(html).not.toContain('np-album__skeleton')
+  })
+
   it('PhotoAlbum renders with its own lightbox during SSR', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
