@@ -2,6 +2,26 @@
   "name": "@nuxt-photo/nuxt",
   "version": "0.0.1",
   "type": "module",
+  "description": "Nuxt 4 module for photo galleries, lightboxes, and provider-aware image rendering.",
+  "keywords": [
+    "nuxt-photo",
+    "nuxt",
+    "photos",
+    "gallery",
+    "lightbox"
+  ],
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
+    "directory": "packages/nuxt"
+  },
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/module.mjs",

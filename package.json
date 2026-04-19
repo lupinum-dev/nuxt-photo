@@ -2,6 +2,15 @@
   "name": "nuxt-photo",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.10.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git"
+  },
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
   "scripts": {
     "build": "pnpm -r --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs build",
     "dev": "pnpm -r --parallel --filter=!nuxt-photo-playground --filter=!nuxt-photo-playground-tw --filter=!nuxt-photo-docs dev",

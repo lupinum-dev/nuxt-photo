@@ -2,6 +2,26 @@
   "name": "@nuxt-photo/recipes",
   "version": "0.0.1",
   "type": "module",
+  "description": "Ready-to-use photo album, group, and carousel components for Nuxt Photo.",
+  "keywords": [
+    "nuxt-photo",
+    "vue",
+    "nuxt",
+    "gallery",
+    "carousel"
+  ],
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
+    "directory": "packages/recipes"
+  },
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",

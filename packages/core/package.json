@@ -2,6 +2,26 @@
   "name": "@nuxt-photo/core",
   "version": "0.0.1",
   "type": "module",
+  "description": "Framework-free layout, image, gesture, and photo-model logic for Nuxt Photo.",
+  "keywords": [
+    "nuxt-photo",
+    "photos",
+    "gallery",
+    "lightbox",
+    "layout"
+  ],
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",

@@ -2,6 +2,26 @@
   "name": "@nuxt-photo/vue",
   "version": "0.0.1",
   "type": "module",
+  "description": "Vue composables and primitives for Nuxt Photo.",
+  "keywords": [
+    "nuxt-photo",
+    "vue",
+    "photos",
+    "gallery",
+    "lightbox"
+  ],
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
+    "directory": "packages/vue"
+  },
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
