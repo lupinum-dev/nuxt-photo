@@ -1,0 +1,41 @@
+import type { PhotoItem } from '@nuxt-photo/core'
+
+function localPhoto(
+  id: string,
+  width: number,
+  height: number,
+  alt: string,
+  caption: string,
+  description: string,
+  meta?: Record<string, unknown>
+): PhotoItem {
+  return {
+    id,
+    src: `/photos/${id}.jpg`,
+    width,
+    height,
+    alt,
+    caption,
+    description,
+    meta
+  }
+}
+
+export const demoPhotos: PhotoItem[] = [
+  localPhoto('desert-light', 1280, 800, 'Desert landscape at golden hour', 'Desert Light', 'Golden hour over sand dunes with long shadows stretching across the landscape.'),
+  localPhoto('ocean-glass', 960, 1200, 'Ocean waves reflecting light', 'Ocean Glass', 'Crystal clear waves catching the afternoon sunlight along the coast.'),
+  localPhoto('evening-canyon', 1280, 854, 'Canyon at dusk', 'Evening Canyon', 'Deep canyon walls painted in warm evening hues.'),
+  localPhoto('forest-haze', 1200, 800, 'Misty forest', 'Forest Haze', 'Morning fog drifting through ancient trees.'),
+  localPhoto('alpine-frame', 960, 1200, 'Mountain peak framed by trees', 'Alpine Frame', 'A snow-capped peak framed perfectly by towering pines.'),
+  localPhoto('soft-coast', 1280, 880, 'Soft coastal sunset', 'Soft Coast', 'Pastel skies reflecting off calm coastal waters at sunset.'),
+  localPhoto('lavender-dreams', 1200, 800, 'Lavender field under cloudy sky', 'Lavender Dreams', 'Endless rows of lavender stretching toward a dramatic sky.'),
+  localPhoto('cascade', 918, 1200, 'Waterfall in lush green valley', 'Cascade', 'A hidden waterfall surrounded by vibrant moss and ferns.'),
+  localPhoto('urban-glow', 1280, 720, 'City skyline at twilight', 'Urban Glow', 'The city lights beginning to shimmer as day turns to night.'),
+  localPhoto('amber-detail', 1200, 1200, 'Autumn leaves close-up', 'Amber Detail', 'Macro shot of autumn leaves with rich amber and crimson tones.'),
+  localPhoto('winter-ridge', 1280, 828, 'Snowy mountain range', 'Winter Ridge', 'A pristine mountain range blanketed in fresh snow under clear skies.'),
+  localPhoto('giants', 948, 1200, 'Tall redwood trees', 'Giants', 'Looking up through towering redwoods toward a canopy of green.')
+]
+
+export function useDemoPhotos(count?: number): PhotoItem[] {
+  return count ? demoPhotos.slice(0, count) : demoPhotos
+}

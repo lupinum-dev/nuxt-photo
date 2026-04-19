@@ -16,3 +16,4 @@ dist
 .cursorignore
 playwright-report
 test-results
+.content
