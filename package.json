@@ -10,6 +10,11 @@
     "dev:docs": "pnpm run build && pnpm --filter nuxt-photo-docs dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "build:docs": "pnpm --filter nuxt-photo-docs build",
+    "size": "node scripts/size/run.mjs",
+    "size:core": "node scripts/size/run.mjs core",
+    "size:vue": "node scripts/size/run.mjs vue",
+    "size:nuxt": "node scripts/size/run.mjs nuxt",
+    "size:analyze": "node scripts/size/run.mjs all --analyze",
     "test:unit": "vitest run",
     "test:module-package": "pnpm --filter @nuxt-photo/nuxt build && node --input-type=module -e \"const mod = await import(new URL('./packages/nuxt/dist/module.mjs', import.meta.url)); if (!mod.default) throw new Error('Missing default export from built module')\"",
     "test:e2e": "pnpm run build:playground && playwright test",
@@ -27,9 +32,12 @@
   "devDependencies": {
     "@nuxt-photo/core": "workspace:*",
     "@playwright/test": "^1.58.2",
+    "@size-limit/preset-small-lib": "^12.1.0",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/server-renderer": "^3.5.31",
     "jsdom": "^29.0.1",
+    "rollup-plugin-visualizer": "^7.0.1",
+    "size-limit": "^12.1.0",
     "vitest": "^4.1.2",
     "vue": "^3.5.31"
   }

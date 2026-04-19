@@ -1,0 +1,38 @@
+{
+  "core": {
+    "responsive": {
+      "label": "responsive named import",
+      "sizeLimit": "450 B",
+      "brotliLimit": 450
+    },
+    "all": {
+      "label": "full namespace import",
+      "sizeLimit": "8.5 kB",
+      "brotliLimit": 8704
+    }
+  },
+  "vue": {
+    "use-lightbox": {
+      "label": "useLightbox named import",
+      "brotliLimit": 19456
+    },
+    "photo-image": {
+      "label": "PhotoImage component import",
+      "brotliLimit": 1024
+    },
+    "all": {
+      "label": "full package import",
+      "brotliLimit": 21504
+    }
+  },
+  "nuxt": {
+    "module": {
+      "label": "module enabled, no usage",
+      "brotliDeltaLimit": 1024
+    },
+    "usage": {
+      "label": "module enabled with PhotoImage usage",
+      "brotliDeltaLimit": 1536
+    }
+  }
+}
