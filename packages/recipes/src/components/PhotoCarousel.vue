@@ -83,11 +83,34 @@ import { computed, ref, type Component } from 'vue'
 import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType, EmblaCarouselType } from 'embla-carousel'
 import type { PhotoAdapter, PhotoItem, ImageAdapter } from '@nuxt-photo/core'
+import type {
+  CarouselCaptionSlotProps,
+  CarouselControlsSlotProps,
+  CarouselDotsSlotProps,
+  CarouselSlideSlotProps,
+  CarouselThumbSlotProps,
+  LightboxCaptionSlotProps,
+  LightboxControlsSlotProps,
+  LightboxSlideSlotProps,
+} from '@nuxt-photo/vue'
 import type { LightboxTransitionOption } from '@nuxt-photo/vue/extend'
 import PhotoGroup from './PhotoGroup.vue'
 import CarouselLayout from './internal/CarouselLayout.vue'
 
 defineOptions({ inheritAttrs: false })
+
+defineSlots<{
+  slide?: (props: CarouselSlideSlotProps) => unknown
+  thumb?: (props: CarouselThumbSlotProps) => unknown
+  caption?: (props: CarouselCaptionSlotProps) => unknown
+  controls?: (props: CarouselControlsSlotProps) => unknown
+  prev?: () => unknown
+  next?: () => unknown
+  dots?: (props: CarouselDotsSlotProps) => unknown
+  'lightbox-slide'?: (props: LightboxSlideSlotProps) => unknown
+  'lightbox-caption'?: (props: LightboxCaptionSlotProps) => unknown
+  'lightbox-toolbar'?: (props: LightboxControlsSlotProps) => unknown
+}>()
 
 const props = withDefaults(defineProps<{
   photos: PhotoItem[] | any[]

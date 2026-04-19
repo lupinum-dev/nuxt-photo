@@ -25,6 +25,7 @@
     "> 0.5%"
   ],
   "devDependencies": {
+    "@nuxt-photo/core": "workspace:*",
     "@playwright/test": "^1.58.2",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/server-renderer": "^3.5.31",

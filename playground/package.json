@@ -9,7 +9,10 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
+    "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/nuxt": "workspace:*",
+    "@nuxt-photo/recipes": "workspace:*",
+    "@nuxt-photo/vue": "workspace:*",
     "@nuxt/image": "^2.0.0",
     "nuxt": "^4.4.2",
     "nuxt-shiki": "^0.3.2"

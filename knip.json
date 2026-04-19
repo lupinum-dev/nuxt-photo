@@ -2,37 +2,45 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["package.json"],
-      "ignoreDependencies": ["@vue/server-renderer"]
+      "entry": ["package.json", "test/**/*.ts"]
     },
     "packages/core": {
-      "entry": "src/index.ts",
-      "project": "src/**/*.ts"
+      "entry": ["test/**/*.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
     },
     "packages/vue": {
-      "entry": ["src/index.ts", "src/extend.ts", "src/globals.d.ts"],
-      "project": "src/**/*.{ts,vue}"
+      "entry": ["test/**/*.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"],
+      "ignoreDependencies": ["vue-tsc"]
     },
     "packages/recipes": {
-      "entry": ["src/index.ts", "src/components/index.ts"],
-      "project": "src/**/*.{ts,vue}"
+      "entry": ["test/**/*.ts"],
+      "project": ["src/**/*.{ts,vue}", "test/**/*.ts"],
+      "ignoreDependencies": ["vue-tsc"]
     },
     "packages/nuxt": {
-      "entry": ["src/module.ts", "src/runtime/*.ts"],
-      "project": "src/**/*.ts"
+      "entry": ["src/runtime/*.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"],
+      "ignoreDependencies": ["nuxt", "@nuxt-photo/recipes"],
+      "ignoreUnresolved": ["#imports"]
     },
     "docs": {
-      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}", "content.config.ts"],
-      "project": ["app/**/*.{vue,ts}", "*.ts"],
-      "ignore": ["app/components/content/**"]
+      "entry": ["app/**/*.vue", "app/**/*.ts", "server/**/*.ts", "content.config.ts"],
+      "project": ["app/**/*.ts", "server/**/*.ts", "*.ts"],
+      "ignoreDependencies": [
+        "@iconify-json/lucide",
+        "@iconify-json/simple-icons",
+        "@iconify-json/vscode-icons",
+        "@nuxt/fonts"
+      ]
     },
     "playground": {
-      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}"],
-      "project": ["app/**/*.{vue,ts}", "*.ts"]
+      "entry": ["pages/**/*.vue", "components/**/*.vue", "composables/**/*.ts"],
+      "project": ["*.ts", "composables/**/*.ts"]
     },
     "playground-tailwind": {
-      "entry": ["nuxt.config.ts", "app/**/*.{vue,ts}"],
-      "project": ["app/**/*.{vue,ts}", "*.ts"]
+      "entry": ["components/**/*.vue", "composables/**/*.ts"],
+      "project": ["*.ts", "composables/**/*.ts"]
     }
   }
 }

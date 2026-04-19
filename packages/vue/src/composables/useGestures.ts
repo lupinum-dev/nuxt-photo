@@ -12,7 +12,7 @@ import {
   type DebugLogger,
 } from '@nuxt-photo/core'
 
-export type GestureConfig = {
+type GestureConfig = {
   lightboxMounted: Ref<boolean>
   animating: Ref<boolean>
   ghostVisible: Ref<boolean>

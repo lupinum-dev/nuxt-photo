@@ -12,6 +12,7 @@
     "@iconify-json/lucide": "^1.2.81",
     "@iconify-json/simple-icons": "^1.2.63",
     "@iconify-json/vscode-icons": "^1.2.37",
+    "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/nuxt": "workspace:*",
     "@nuxt/content": "^3.12.0",
     "@nuxt/fonts": "^0.12.1",
@@ -24,7 +25,9 @@
     "nuxt": "^4.4.2",
     "nuxt-llms": "^0.1.4",
     "nuxt-og-image": "^5.1.13",
+    "minimark": "^0.2.0",
     "tailwindcss": "^4.1.18",
+    "ufo": "^1.6.3",
     "zod": "^4.2.1"
   }
 }

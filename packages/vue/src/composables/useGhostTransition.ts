@@ -4,8 +4,6 @@ import { createGhostState, setThumbRef } from './ghost/state'
 import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'
 
-export type { TransitionCallbacks, CloseCallbacks } from './ghost/types'
-
 export function useGhostTransition(
   activeIndex: Ref<number>,
   currentPhoto: ComputedRef<PhotoItem>,

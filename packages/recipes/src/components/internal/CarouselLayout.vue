@@ -127,9 +127,26 @@ import { computed, onBeforeUnmount, ref, toRef, useSlots, watch, type ComponentP
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType, EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
 import { PhotoImage } from '@nuxt-photo/vue'
+import type {
+  CarouselCaptionSlotProps,
+  CarouselControlsSlotProps,
+  CarouselDotsSlotProps,
+  CarouselSlideSlotProps,
+  CarouselThumbSlotProps,
+} from '@nuxt-photo/vue'
 import { photoId, type ImageAdapter, type PhotoItem } from '@nuxt-photo/core'
 
 defineOptions({ inheritAttrs: false })
+
+defineSlots<{
+  slide?: (props: CarouselSlideSlotProps) => unknown
+  controls?: (props: CarouselControlsSlotProps) => unknown
+  caption?: (props: CarouselCaptionSlotProps) => unknown
+  dots?: (props: CarouselDotsSlotProps) => unknown
+  thumb?: (props: CarouselThumbSlotProps) => unknown
+  prev?: () => unknown
+  next?: () => unknown
+}>()
 
 const props = defineProps<{
   photos: PhotoItem[]

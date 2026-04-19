@@ -80,4 +80,24 @@ import {
   LightboxSlide,
   LightboxViewport,
 } from '@nuxt-photo/vue'
+import type { LightboxCaptionSlotProps, LightboxControlsSlotProps, LightboxSlideSlotProps } from '@nuxt-photo/vue'
+
+interface LightboxCounterSlotProps {
+  activeIndex: number
+  count: number
+}
+
+interface LightboxActionsSlotProps extends Omit<LightboxControlsSlotProps, 'activeIndex' | 'activePhoto' | 'photos' | 'count'> {}
+
+interface LightboxCaptionRecipeSlotProps {
+  photo: LightboxCaptionSlotProps['photo']
+  index: number
+}
+
+defineSlots<{
+  counter?: (props: LightboxCounterSlotProps) => unknown
+  actions?: (props: LightboxActionsSlotProps) => unknown
+  slide?: (props: LightboxSlideSlotProps) => unknown
+  caption?: (props: LightboxCaptionRecipeSlotProps) => unknown
+}>()
 </script>
