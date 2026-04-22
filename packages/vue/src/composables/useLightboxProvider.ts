@@ -7,8 +7,8 @@ import { provideLightboxContexts } from '../provide/lightbox'
 
 /**
  * Creates a full lightbox context and provides it to child components.
- * This is the composable for building custom lightbox components — the middle tier
- * between `useLightbox` (for consumers) and raw `useLightboxContext` (full engine).
+ * This is the composable for building custom lightbox components.
+ * It is the supported advanced entrypoint above the internal lightbox runtime.
  *
  * @example
  * ```vue
@@ -39,7 +39,7 @@ export function useLightboxProvider(
     options?.minZoom,
   )
 
-  // Provide the unified context + deprecated individual keys for backward compat
+  // Provide the shared lightbox context plus custom slide resolution.
   provideLightboxContexts(ctx, {
     resolveSlide: options?.resolveSlide,
   })

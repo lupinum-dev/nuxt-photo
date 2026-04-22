@@ -14,12 +14,7 @@ export {
 
 // Re-export core utilities for convenience
 export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
-export type {
-  CarouselConfig,
-  CarouselStyle,
-  LightboxTransitionOption,
-  PanzoomMotion,
-} from '@nuxt-photo/engine'
+export type { LightboxTransitionOption } from '@nuxt-photo/engine'
 export type {
   PhotoItem,
   AreaMetrics,

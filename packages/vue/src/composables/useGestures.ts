@@ -10,7 +10,7 @@ import {
   type ZoomState,
   type DebugLogger,
 } from '@nuxt-photo/core'
-import type { PanzoomMotion } from '@nuxt-photo/engine'
+import type { PanzoomMotion } from './lightboxRuntimeTypes'
 import {
   MOUSE_WHEEL_THROTTLE_MS,
   TRACKPAD_WHEEL_THROTTLE_MS,

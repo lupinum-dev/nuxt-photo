@@ -2,28 +2,19 @@ import {
   computed,
   getCurrentInstance,
   inject,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
   ref,
   toValue,
-  watch,
   type MaybeRef,
 } from 'vue'
 import {
-  ensureImageLoaded,
-  lockBodyScroll,
-  nextFrame,
   createDebug,
   createTransitionMode,
-  isUsableRect,
   photoId,
-  type PhotoItem,
   type AreaMetrics,
+  type PhotoItem,
 } from '@nuxt-photo/core'
 import {
   createLightboxEngine,
-  type CarouselConfig,
   type LightboxTransitionOption,
 } from '@nuxt-photo/engine'
 import { usePanzoom } from './usePanzoom'
@@ -31,8 +22,25 @@ import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
 import { useLightboxEngineState } from './useLightboxEngineState'
+import {
+  createGeometrySync,
+  createKeydownBinding,
+  createPreloadAround,
+  syncEngineActiveIndex,
+  syncEnginePhotos,
+  syncEnginePresentationState,
+  syncEngineViewportState,
+  useLightboxWindowLifecycle,
+  watchActiveIndexRuntime,
+  watchPhotoCollection,
+} from './lightboxContextRuntime'
+import { DEFAULT_CAROUSEL_CONFIG } from './lightboxRuntimeTypes'
 import { LightboxDefaultsKey } from '../provide/keys'
 
+/**
+ * Internal orchestration layer for the Vue lightbox runtime.
+ * Public customisation should go through `useLightboxProvider`.
+ */
 export function useLightboxContext(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
@@ -82,19 +90,13 @@ export function useLightboxContext(
     window.__NUXT_PHOTO_DEBUG__ = debug.flags
   }
 
-  const carouselConfig: CarouselConfig = {
-    style: 'classic',
-    parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
-    fade: { minOpacity: 0 },
-  }
-
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
 
   const carousel = useCarousel(
     photos,
     areaMetrics,
-    carouselConfig,
+    DEFAULT_CAROUSEL_CONFIG,
     computed(() => engineState.isZoomedIn.value),
     engineState.animating,
     debug,
@@ -116,62 +118,9 @@ export function useLightboxContext(
     transitionConfig,
   )
 
-  function syncGeometry() {
-    const mediaAreaEl = mediaAreaRef.value
-    if (!mediaAreaEl) {
-      debug.warn('geometry', 'syncGeometry: mediaAreaRef is null')
-      return null
-    }
-
-    const rect = mediaAreaEl.getBoundingClientRect()
-    if (!isUsableRect(rect)) {
-      debug.warn('geometry', 'syncGeometry: rect not usable', {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-      })
-      return null
-    }
-
-    areaMetrics.value = {
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-    }
-
-    debug.log('geometry', 'syncGeometry:', areaMetrics.value)
-    return areaMetrics.value
-  }
-
-  let skipActiveIndexWatch = false
-
-  // Track whether the keyboard listener is currently attached
-  let keydownAttached = false
-
-  function attachKeydown() {
-    if (typeof window === 'undefined' || keydownAttached) return
-    window.addEventListener('keydown', gestures.onKeydown)
-    keydownAttached = true
-  }
-
-  function detachKeydown() {
-    if (typeof window === 'undefined' || !keydownAttached) return
-    window.removeEventListener('keydown', gestures.onKeydown)
-    keydownAttached = false
-  }
-
-  function preloadAround(index: number) {
-    const candidates = [index - 1, index, index + 1]
-
-    for (const candidate of candidates) {
-      if (candidate < 0 || candidate >= photos.value.length) continue
-      const photo = photos.value[candidate]
-      if (!photo) continue
-      void ensureImageLoaded(photo.src)
-    }
-  }
+  const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
+  const preloadAround = createPreloadAround(photos)
+  const skipActiveIndexWatch = ref(false)
 
   async function open(photoOrIndex: PhotoItem | number = 0) {
     const index =
@@ -181,15 +130,15 @@ export function useLightboxContext(
             (photo) => photoId(photo) === photoId(photoOrIndex as PhotoItem),
           )
 
-    skipActiveIndexWatch = true
+    skipActiveIndexWatch.value = true
     engine.open(index >= 0 ? index : 0)
     ghost.setCloseDragY(0)
     carousel.goTo(index >= 0 ? index : 0, true)
-    attachKeydown()
+    keydown.attach()
     await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
     engine.markOpened()
     preloadAround(index >= 0 ? index : 0)
-    skipActiveIndexWatch = false
+    skipActiveIndexWatch.value = false
   }
 
   async function close() {
@@ -197,7 +146,7 @@ export function useLightboxContext(
     await ghost.close(closeCallbacks)
     engine.markClosed()
     ghost.setCloseDragY(0)
-    detachKeydown()
+    keydown.detach()
   }
 
   function next() {
@@ -245,6 +194,7 @@ export function useLightboxContext(
     },
     debug,
   )
+  const keydown = createKeydownBinding(gestures.onKeydown)
 
   const transitionCallbacks = {
     syncGeometry,
@@ -259,155 +209,50 @@ export function useLightboxContext(
     isZoomedIn: panzoom.isZoomedIn,
   }
 
-  watch(ghost.lightboxMounted, (mounted) => {
-    debug.log('transitions', `lightboxMounted → ${mounted}`)
-    lockBodyScroll(mounted)
+  // Keep the top-level composable orchestration-only.
+  syncEnginePhotos(engine, photos)
+  syncEngineActiveIndex(engine, carousel.activeIndex)
+  syncEngineViewportState(engine, {
+    zoomState: panzoom.zoomState,
+    panState: panzoom.panState,
+    isZoomedIn: panzoom.isZoomedIn,
+    zoomAllowed: panzoom.zoomAllowed,
   })
-
-  watch(
-    photos,
-    (nextPhotos) => {
-      engine.setPhotos(nextPhotos)
-    },
-    { immediate: true },
-  )
-
-  watch(
-    carousel.activeIndex,
-    (index) => {
-      engine.setActiveIndex(index)
-    },
-    { immediate: true },
-  )
-
-  watch(
-    [
-      panzoom.zoomState,
-      panzoom.panState,
-      panzoom.isZoomedIn,
-      panzoom.zoomAllowed,
-    ],
-    ([zoomState, panState, isZoomedIn, zoomAllowed]) => {
-      engine.setZoomState(zoomState)
-      engine.setPanState(panState)
-      engine.setZoomFlags({ isZoomedIn, zoomAllowed })
-    },
-    { immediate: true },
-  )
-
-  watch(
-    [
-      gestures.gesturePhase,
-      ghost.animating,
-      ghost.ghostVisible,
-      ghost.ghostSrc,
-      ghost.hiddenThumbIndex,
-      ghost.overlayOpacity,
-      ghost.mediaOpacity,
-      ghost.chromeOpacity,
-      ghost.uiVisible,
-      ghost.closeDragY,
-    ],
-    ([
-      gesturePhase,
-      animating,
-      ghostVisible,
-      ghostSrc,
-      hiddenThumbIndex,
-      overlayOpacity,
-      mediaOpacity,
-      chromeOpacity,
-      uiVisible,
-      closeDragY,
-    ]) => {
-      engine.setGesturePhase(gesturePhase)
-      engine.setAnimating(animating)
-      engine.setUiVisible(uiVisible)
-      engine.setGhostState({
-        ghostVisible,
-        ghostSrc,
-        hiddenThumbIndex,
-        overlayOpacity,
-        mediaOpacity,
-        chromeOpacity,
-        closeDragY,
-      })
-    },
-    { immediate: true },
-  )
-
-  // Watch photos array — only close if the active photo was removed; otherwise maintain position
-  watch(photos, (newPhotos, oldPhotos) => {
-    if (!newPhotos || !oldPhotos) return
-
-    const newIds = new Set(newPhotos.map(photoId))
-    const oldIds = new Set(oldPhotos.map(photoId))
-
-    // No change in IDs
-    if (
-      newIds.size === oldIds.size &&
-      [...newIds].every((id) => oldIds.has(id))
-    )
-      return
-
-    const activePhoto = carousel.currentPhoto.value
-    const activeId = activePhoto ? photoId(activePhoto) : null
-
-    if (!activeId || !newIds.has(activeId)) {
-      // Active photo was removed or array is empty — close
-      if (ghost.lightboxMounted.value) {
-        void close()
-      }
-      carousel.goTo(0, true)
-      return
-    }
-
-    // Active photo still exists — jump to its new index
-    const newIndex = newPhotos.findIndex((p) => photoId(p) === activeId)
-    if (newIndex !== -1 && newIndex !== carousel.activeIndex.value) {
-      carousel.goTo(newIndex, true)
-    }
+  syncEnginePresentationState(engine, {
+    gesturePhase: gestures.gesturePhase,
+    animating: ghost.animating,
+    ghostVisible: ghost.ghostVisible,
+    ghostSrc: ghost.ghostSrc,
+    hiddenThumbIndex: ghost.hiddenThumbIndex,
+    overlayOpacity: ghost.overlayOpacity,
+    mediaOpacity: ghost.mediaOpacity,
+    chromeOpacity: ghost.chromeOpacity,
+    uiVisible: ghost.uiVisible,
+    closeDragY: ghost.closeDragY,
   })
-
-  watch(carousel.activeIndex, async (newIndex) => {
-    if (!ghost.lightboxMounted.value || skipActiveIndexWatch) return
-
-    debug.log('slides', `activeIndex changed → ${newIndex}`)
-
-    panzoom.setActiveSlideIndex(newIndex)
-
-    await nextTick()
-    await nextFrame()
-    syncGeometry()
-    panzoom.refreshZoomState(true)
-    preloadAround(newIndex)
+  watchPhotoCollection(photos, {
+    activeIndex: carousel.activeIndex,
+    lightboxMounted: ghost.lightboxMounted,
+    goTo: carousel.goTo,
+    close,
   })
-
-  onMounted(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onResize)
-    }
+  watchActiveIndexRuntime(carousel.activeIndex, {
+    lightboxMounted: ghost.lightboxMounted,
+    skipActiveIndexWatch,
+    setActiveSlideIndex: panzoom.setActiveSlideIndex,
+    refreshZoomState: panzoom.refreshZoomState,
+    syncGeometry,
+    preloadAround,
+    debug,
   })
-
-  onBeforeUnmount(() => {
-    gestures.cancelTapTimer()
-    detachKeydown()
-
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', onResize)
-    }
-
-    if (typeof document !== 'undefined') {
-      lockBodyScroll(false)
-    }
+  useLightboxWindowLifecycle({
+    lightboxMounted: ghost.lightboxMounted,
+    cancelTapTimer: gestures.cancelTapTimer,
+    detachKeydown: keydown.detach,
+    syncGeometry,
+    refreshZoomState: panzoom.refreshZoomState,
+    debug,
   })
-
-  function onResize() {
-    if (!ghost.lightboxMounted.value) return
-    debug.log('geometry', 'window resize')
-    syncGeometry()
-    panzoom.refreshZoomState(false)
-  }
 
   return {
     photos: engineState.photos,

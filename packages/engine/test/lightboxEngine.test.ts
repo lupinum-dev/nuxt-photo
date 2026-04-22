@@ -71,4 +71,46 @@ describe('createLightboxEngine', () => {
 
     expect(seen).toEqual([0, 1, 1])
   })
+
+  it('syncs viewport and presentation state in grouped updates', () => {
+    const engine = createLightboxEngine({
+      photos: createPhotoSet().slice(0, 1),
+    })
+
+    engine.syncViewportState({
+      zoomState: { fit: 1, secondary: 2, max: 4, current: 2 },
+      panState: { x: 12, y: -8 },
+      isZoomedIn: true,
+      zoomAllowed: true,
+    })
+    engine.syncPresentationState({
+      gesturePhase: 'pan',
+      animating: true,
+      ghostVisible: true,
+      ghostSrc: '/ghost.jpg',
+      hiddenThumbIndex: 0,
+      overlayOpacity: 0.75,
+      mediaOpacity: 0.5,
+      chromeOpacity: 0.25,
+      uiVisible: false,
+      closeDragY: 64,
+    })
+
+    expect(engine.getState()).toMatchObject({
+      zoomState: { fit: 1, secondary: 2, max: 4, current: 2 },
+      panState: { x: 12, y: -8 },
+      isZoomedIn: true,
+      zoomAllowed: true,
+      gesturePhase: 'pan',
+      animating: true,
+      ghostVisible: true,
+      ghostSrc: '/ghost.jpg',
+      hiddenThumbIndex: 0,
+      overlayOpacity: 0.75,
+      mediaOpacity: 0.5,
+      chromeOpacity: 0.25,
+      uiVisible: false,
+      closeDragY: 64,
+    })
+  })
 })

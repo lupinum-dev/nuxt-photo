@@ -13,6 +13,8 @@ import type {
   LightboxEngine,
   LightboxEngineListener,
   LightboxEngineState,
+  LightboxPresentationState,
+  LightboxViewportState,
 } from './types'
 
 const DEFAULT_ZOOM_STATE: ZoomState = {
@@ -201,32 +203,12 @@ export function createLightboxEngine(options?: {
       this.setActiveIndex(nextIndex)
     },
 
-    setZoomState(zoomState) {
-      patch({ zoomState })
+    syncViewportState(viewportState: LightboxViewportState) {
+      patch(viewportState)
     },
 
-    setPanState(panState) {
-      patch({ panState })
-    },
-
-    setZoomFlags(flags) {
-      patch(flags)
-    },
-
-    setGesturePhase(gesturePhase) {
-      patch({ gesturePhase })
-    },
-
-    setUiVisible(uiVisible) {
-      patch({ uiVisible })
-    },
-
-    setAnimating(animating) {
-      patch({ animating })
-    },
-
-    setGhostState(nextGhostState) {
-      patch(nextGhostState)
+    syncPresentationState(presentationState: LightboxPresentationState) {
+      patch(presentationState)
     },
   }
 }

@@ -6,33 +6,6 @@ import type {
   ZoomState,
 } from '@nuxt-photo/core'
 
-export type PanzoomMotion = {
-  /**
-   * Mutable spring state shared across pan/zoom gesture handlers for perf.
-   * This stays outside Vue refs so pointer move and RAF updates avoid per-frame allocations.
-   */
-  x: number
-  y: number
-  scale: number
-  targetX: number
-  targetY: number
-  targetScale: number
-  velocityX: number
-  velocityY: number
-  velocityScale: number
-  tension: number
-  friction: number
-  rafId: number
-}
-
-export type CarouselStyle = 'classic' | 'parallax' | 'fade'
-
-export type CarouselConfig = {
-  style: CarouselStyle
-  parallax: { amount: number; scale: number; opacity: number }
-  fade: { minOpacity: number }
-}
-
 export type LightboxTransitionOption =
   | TransitionMode
   | {
@@ -68,6 +41,25 @@ export type LightboxEngineListener = (
   state: Readonly<LightboxEngineState>,
 ) => void
 
+export type LightboxViewportState = Pick<
+  LightboxEngineState,
+  'zoomState' | 'panState' | 'isZoomedIn' | 'zoomAllowed'
+>
+
+export type LightboxPresentationState = Pick<
+  LightboxEngineState,
+  | 'gesturePhase'
+  | 'animating'
+  | 'ghostVisible'
+  | 'ghostSrc'
+  | 'hiddenThumbIndex'
+  | 'overlayOpacity'
+  | 'mediaOpacity'
+  | 'chromeOpacity'
+  | 'uiVisible'
+  | 'closeDragY'
+>
+
 export type LightboxEngine = {
   getState: () => Readonly<LightboxEngineState>
   subscribe: (listener: LightboxEngineListener) => () => void
@@ -79,24 +71,6 @@ export type LightboxEngine = {
   markClosed: () => void
   next: () => void
   prev: () => void
-  setZoomState: (zoomState: ZoomState) => void
-  setPanState: (panState: PanState) => void
-  setZoomFlags: (flags: { isZoomedIn?: boolean; zoomAllowed?: boolean }) => void
-  setGesturePhase: (gesturePhase: GestureMode) => void
-  setUiVisible: (uiVisible: boolean) => void
-  setAnimating: (animating: boolean) => void
-  setGhostState: (
-    state: Partial<
-      Pick<
-        LightboxEngineState,
-        | 'ghostVisible'
-        | 'ghostSrc'
-        | 'hiddenThumbIndex'
-        | 'overlayOpacity'
-        | 'mediaOpacity'
-        | 'chromeOpacity'
-        | 'closeDragY'
-      >
-    >,
-  ) => void
+  syncViewportState: (viewportState: LightboxViewportState) => void
+  syncPresentationState: (presentationState: LightboxPresentationState) => void
 }

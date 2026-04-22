@@ -18,7 +18,7 @@ import {
   type ZoomState,
   type DebugLogger,
 } from '@nuxt-photo/core'
-import type { PanzoomMotion } from '@nuxt-photo/engine'
+import type { PanzoomMotion } from './lightboxRuntimeTypes'
 
 export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem>,

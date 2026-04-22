@@ -15,7 +15,7 @@ import {
   type PhotoItem,
   type DebugLogger,
 } from '@nuxt-photo/core'
-import type { CarouselConfig } from '@nuxt-photo/engine'
+import type { CarouselConfig } from './lightboxRuntimeTypes'
 
 export function useCarousel(
   photos: ComputedRef<PhotoItem[]>,
