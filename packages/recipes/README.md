@@ -57,6 +57,7 @@ const photos: PhotoItem[] = [
 
 ## Components
 
+- `<Lightbox>`
 - `<Photo>`
 - `<PhotoAlbum>`
 - `<PhotoGroup>`
