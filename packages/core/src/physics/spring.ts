@@ -1,3 +1,13 @@
+/**
+ * 1D damped spring integrator.
+ *
+ * Model: force = displacement·tension − velocity·friction (Hooke's law with
+ * viscous damping). Integrated with semi-implicit Euler in {@link springStep}.
+ *
+ * Default (tension=260, friction=22) is tuned for overlay-scale movement
+ * (a few hundred pixels): slightly underdamped, settles in ~400ms without
+ * visible oscillation. Lower friction → bouncier; higher tension → snappier.
+ */
 export type Spring1D = {
   value: number
   target: number
@@ -42,6 +52,8 @@ export function runSpring(
   let lastTime = performance.now()
 
   const step = (now: number) => {
+    // Cap dt at 64ms (~15fps floor): after a dropped frame or tab switch we'd
+    // otherwise integrate a huge step and fling the spring past its target.
     const dt = Math.min(0.064, (now - lastTime) / 1000)
     lastTime = now
 

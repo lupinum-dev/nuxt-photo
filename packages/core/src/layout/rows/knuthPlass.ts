@@ -2,9 +2,33 @@ import type { PhotoItem } from '../../types'
 import { cost, findIdealNodeSearch } from './helpers'
 
 /**
- * Knuth-Plass DP — O(N·K) with typed arrays.
- * Globally optimal like Dijkstra but with no heap or graph overhead.
- * dp[i] = minimum total cost for laying out photos[0..i-1].
+ * Find globally optimal row breaks using a Knuth-Plass style DP.
+ *
+ * Same idea as the TeX line-breaker: pick break points that minimise the total
+ * "badness" of all rows, not just each row locally. A greedy packer can pick a
+ * good-looking first row and leave an awkwardly short or tall final row;
+ * global DP avoids that by considering the whole sequence together.
+ *
+ * Recurrence:
+ *   minCost[0] = 0
+ *   minCost[i] = min over j in [i − limitNodeSearch, i) of
+ *                  minCost[j] + cost(photos[j..i), container, targetHeight, …)
+ *
+ * `cost()` returns the squared deviation of the row's scaled height from the
+ * target height (see {@link ./helpers}) — rows that are too short or too tall
+ * are penalised quadratically, so a mediocre row is preferred to one bad row.
+ *
+ * `limitNodeSearch` is a dynamic upper bound on how far back `j` ranges for
+ * each `i`. A naive search would be O(N²); in practice the optimal break for
+ * position i sits a bounded number of photos behind it (no row contains 100
+ * photos), so we cap the window and get O(N·K).
+ *
+ * Path reconstruction: `pointers[i]` stores the `j` that produced `minCost[i]`.
+ * We walk pointers from N back to 0 to recover the ordered break indices, then
+ * reverse to get [0, …, N].
+ *
+ * Typed arrays (Float64Array / Int32Array) avoid V8 allocating boxed numbers
+ * per cell — meaningful on large galleries (hundreds of photos).
  */
 export function findRowBreaks(
   photos: PhotoItem[],

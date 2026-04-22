@@ -1,3 +1,40 @@
+/**
+ * Open-transition choreography for the lightbox ghost element.
+ *
+ * The public entry point is {@link openTransition}; it selects one of three
+ * paths based on `transitionConfig.mode`, the thumbnail rect, and the
+ * visibility heuristic in `shouldUseFlip` (from `@nuxt-photo/core`):
+ *
+ *   1. `doInstantOpen` — `mode: 'none'` (tests, reduced-motion). Overlay to 1,
+ *      wait for the image, media + chrome to 1. No ghost element involved.
+ *
+ *   2. `doFadeOpen` — either `mode: 'fade'` or auto fallback when the thumbnail
+ *      is off-screen/too small.
+ *        • with target rect: place ghost at the target (viewer) rect with
+ *          opacity 0 + scale 0.92, then animate scale→1, opacity→1, and
+ *          overlay→1 in parallel over 300ms (JS `animateNumber`).
+ *        • without target rect: just ramp the overlay.
+ *      After the ramp completes, wait for the full image, then reveal media
+ *      and hide the ghost.
+ *
+ *   3. `doFlipOpen` — FLIP morph from thumbnail rect to viewer rect. Position
+ *      the ghost at the destination with a `transform` that *inverts* it back
+ *      onto the thumb rect, then on the next frame set transform to identity
+ *      and let CSS transition (plus border-radius + shadow growth) run.
+ *      Image load races the wait in `Promise.all`, then media is revealed.
+ *
+ * Invariant: `ensureImageLoaded(photo.src)` MUST resolve before
+ * `mediaOpacity.value = 1` in every path. Otherwise the `<img>` in the viewer
+ * is still decoding and the reveal shows a blank frame or a flash of the thumb.
+ *
+ * State mutated (all refs live on `GhostState`): overlayOpacity, mediaOpacity,
+ * chromeOpacity, ghostSrc, ghostVisible, ghostStyle, animating, activeIndex,
+ * uiVisible, lightboxMounted, hiddenThumbIndex.
+ *
+ * On any error the catch block in `openTransition` forces overlay + media to
+ * 1 and calls `resetOpenState` so the lightbox is always in a usable state —
+ * no half-animated limbo.
+ */
 import { nextTick } from 'vue'
 import {
   flipTransform,

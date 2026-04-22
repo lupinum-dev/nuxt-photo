@@ -39,7 +39,64 @@ import { LightboxDefaultsKey } from '../provide/keys'
 
 /**
  * Internal orchestration layer for the Vue lightbox runtime.
- * Public customisation should go through `useLightboxProvider`.
+ *
+ * Public customisation should go through `useLightboxProvider`; this function
+ * wires together the engine (pure state) and the Vue-side composables
+ * (reactive bindings, DOM refs, animations). The returned object is the
+ * surface consumed by `<Lightbox>`, `<LightboxRoot>`, and recipes.
+ *
+ * ## Setup order (top to bottom of this function)
+ *
+ *   1. Normalise `photosInput` into a computed array ref.
+ *   2. Build the engine + a reactive snapshot of its state.
+ *   3. Resolve the transition config: user option > `prefers-reduced-motion`
+ *      downgrade > default. `'none'` is respected even under reduced motion.
+ *   4. Create geometry refs (`mediaAreaRef`, `areaMetrics`).
+ *   5. Create domain composables, in dependency order:
+ *        carousel   — Embla-backed paging, depends on photos + areaMetrics
+ *        panzoom    — depends on `carousel.currentPhoto` + areaMetrics
+ *        ghost      — depends on carousel (index + frame rect) for FLIP
+ *   6. Declare the `open` / `close` / `next` / `prev` methods.
+ *   7. Build gestures (takes references from every composable above).
+ *   8. Attach keydown.
+ *   9. Wire engine syncs + runtime watchers (see below).
+ *  10. Return the public surface.
+ *
+ * ## Watcher graph
+ *
+ *   photos                         → syncEnginePhotos      (push to engine)
+ *                                  → watchPhotoCollection  (navigate / close
+ *                                                           if active removed)
+ *
+ *   carousel.activeIndex           → syncEngineActiveIndex (push to engine)
+ *                                  → watchActiveIndexRuntime
+ *                                        (panzoom reset, preload neighbours,
+ *                                         refresh zoom state)
+ *
+ *   panzoom.{zoom,pan}State        → syncEngineViewportState
+ *   ghost.{opacities, visibility}  → syncEnginePresentationState
+ *
+ *   useLightboxWindowLifecycle watches window visibility / resize to cancel
+ *   pending taps, detach keydown, and resync geometry.
+ *
+ * ## `skipActiveIndexWatch` (the one subtle bit)
+ *
+ * During `open()` we call both `carousel.goTo(index, true)` and
+ * `ghost.open(index, …)`. Both would trigger the `watchActiveIndexRuntime`
+ * side effects (panzoom reset, preload, zoom refresh) — but at the wrong time,
+ * racing the ghost transition's own ordering. We set the flag to `true`
+ * around the open sequence so the watcher becomes a no-op; the ghost
+ * transition callbacks (`transitionCallbacks`) call the same side effects in
+ * the correct order. Cleared to `false` once `ghost.open` resolves.
+ *
+ * ## SSR
+ *
+ * Safe to call on the server: the engine runs, refs get their initial values,
+ * and `useLightboxWindowLifecycle` / `createKeydownBinding` guard `window`
+ * internally. Animations never fire because no user event reaches the server.
+ *
+ * Public API is exported at the bottom (`return { … }`) — everything above
+ * the `return` is wiring.
  */
 export function useLightboxContext(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
@@ -120,6 +177,8 @@ export function useLightboxContext(
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
   const preloadAround = createPreloadAround(photos)
+  // Suppresses `watchActiveIndexRuntime` side effects while `open()` runs —
+  // the ghost transition callbacks handle the same work in the right order.
   const skipActiveIndexWatch = ref(false)
 
   async function open(photoOrIndex: PhotoItem | number = 0) {

@@ -3,6 +3,19 @@ import { IMAGE_LOAD_CACHE_LIMIT } from './constants'
 
 const imageLoadCache = new Map<string, Promise<void>>()
 
+/**
+ * Resolve when an image is fully ready to paint without a flash.
+ *
+ * Completion paths, in order of preference:
+ *   1. `image.decode()` — modern, async, off-main-thread; preferred where available.
+ *   2. `onload` / `onerror` — always wired; fires even when `decode()` isn't used.
+ *   3. `image.complete` — synchronous check for browsers without `decode()`
+ *      when the image is already in the HTTP cache and finished before we got here.
+ *
+ * The `settled` flag guards against double-resolve: `decode()` rejecting on CORS
+ * also fires `onerror`, and either can race with a synchronous `complete` check.
+ * We need the promise to resolve exactly once regardless of which path wins.
+ */
 export function ensureImageLoaded(src: string): Promise<void> {
   const cached = imageLoadCache.get(src)
   if (cached) return cached

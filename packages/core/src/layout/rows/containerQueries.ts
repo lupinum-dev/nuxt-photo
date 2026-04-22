@@ -17,13 +17,29 @@ function rowSignature(groups: LayoutGroup[]): string {
 }
 
 /**
- * Generates CSS `@container` rules for each unique Knuth-Plass row layout across the provided
- * breakpoints. Adjacent breakpoints that produce identical row assignments are deduplicated into
- * a single rule — this is mathematically valid because the `calc()` divisor equals
- * `totalAspectRatio / ratio(photo)`, which is independent of container width.
+ * Generates CSS `@container` rules so each photo gets a fluid `width: calc(…)`
+ * that stays correct across container sizes without JS re-layout.
  *
- * The output is scoped to `containerName` so multiple albums on the same page never conflict.
- * Items must carry class `np-item-{index}` for the rules to apply.
+ * Three phases:
+ *   1. **Compute**: run {@link computeRowsLayout} once per breakpoint to find
+ *      which photos end up on which row (the "row signature").
+ *   2. **Collapse**: merge adjacent breakpoints whose row signatures match
+ *      into a single span. This is what keeps the CSS size O(distinct layouts)
+ *      instead of O(breakpoints).
+ *   3. **Emit**: for each span, emit one `@container` rule bounded by
+ *      `min-width` / `max-width` of its first and last breakpoint.
+ *
+ * Why collapse is safe:
+ *   Each item's width is `calc((100% − gaps) / divisor)`, where
+ *     gaps    = spacing·(n−1) + 2·padding·n
+ *     divisor = (sampleBp − gaps) / entry.width
+ *   `gaps` depends only on config (spacing, padding, count), and `entry.width`
+ *   is derived from the scaled row layout at `sampleBp`. Within a span the
+ *   row assignment doesn't change, so `divisor` is the same at every width —
+ *   the same CSS rule correctly fluidly sizes every container width in range.
+ *
+ * The output is scoped to `containerName` so multiple albums on the same page
+ * never conflict. Items must carry class `np-item-{index}` for the rules to apply.
  */
 export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   const { photos, containerName } = opts

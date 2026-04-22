@@ -55,6 +55,21 @@ export function getVisibilityRatio(rect: ViewportRect | null): number {
   return totalArea > 0 ? visibleArea / totalArea : 0
 }
 
+/**
+ * Decide whether an open transition should run as FLIP or FADE.
+ *
+ * - **FLIP**: morphs the thumbnail rect into the viewer rect. Requires the
+ *   thumbnail to be mostly on-screen at a reasonable size — animating from an
+ *   invisible or tiny source looks like a random zoom-in.
+ * - **FADE**: cross-fades the overlay and media. Used as the fallback when the
+ *   thumbnail is off-screen, below the minimum visible dimension, or when the
+ *   caller forces it via `config.mode`.
+ *
+ * In `auto` mode we require both a minimum visible dimension (short side) and a
+ * visibility ratio above `config.autoThreshold`. Either alone isn't enough: a
+ * large rect clipped to a thin sliver passes the ratio check; a tiny rect that
+ * happens to be fully visible passes the dimension check.
+ */
 export function shouldUseFlip(
   rect: ViewportRect | null,
   config: TransitionModeConfig,
@@ -110,6 +125,23 @@ export function shouldUseFlip(
   return useFlip
 }
 
+/**
+ * Plan the close transition. Mirror of {@link shouldUseFlip} for the reverse
+ * direction, but with extra guards: the thumbnail element may have unmounted
+ * or scrolled out of view while the lightbox was open.
+ *
+ * Decision order:
+ *   1. `mode: 'none'` → INSTANT (no animation, used for tests/reduced-motion)
+ *   2. `mode: 'fade'` → FADE
+ *   3. Missing `fromRect` (lightbox frame) → FADE — nothing to animate from
+ *   4. No thumb ref registered (list re-rendered during open) → FADE
+ *   5. Thumb rect unusable (off-screen or zero-size) → FADE
+ *   6. `mode: 'auto'` → delegate to {@link shouldUseFlip} for the visibility check
+ *   7. Otherwise → FLIP
+ *
+ * The `reason` in the returned plan is surfaced to the debug overlay so you
+ * can see *why* FADE was chosen when FLIP looked possible.
+ */
 export function planCloseTransition(opts: {
   fromRect: RectLike | null
   toRect: DOMRect | null

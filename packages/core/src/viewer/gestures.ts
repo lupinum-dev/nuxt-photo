@@ -14,10 +14,13 @@ export function classifyGesture(
 ): GestureMode {
   const absX = Math.abs(deltaX)
   const absY = Math.abs(deltaY)
+  // Touch needs more slack (finger inaccuracy); pointer is mouse-precise.
   const threshold = pointerType === 'touch' ? 10 : 6
 
   if (absX < threshold && absY < threshold) return 'idle'
 
+  // 1.1× ratio requires clearly directional motion so diagonal drags don't
+  // register as horizontal or vertical by accident.
   const horizontalIntent = absX > absY * 1.1
   const verticalIntent = absY > absX * 1.1
 
@@ -61,6 +64,10 @@ export function isDoubleTap(
 
 /**
  * Compute the close-drag ratio (0 to 0.75) from vertical drag distance.
+ *
+ * Divisor floor of 240px keeps tiny overlays from being a hair-trigger close;
+ * 0.85 × area height keeps the close gesture feeling deliberate on large
+ * viewports instead of triggering at a third of the way down.
  */
 export function computeCloseDragRatio(
   closeDragY: number,
