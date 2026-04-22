@@ -23,13 +23,12 @@ withDefaults(
       flex-direction: column;
       justify-content: space-between;
       padding: 56px;
-      background:
-        radial-gradient(
-          circle at top right,
-          rgba(0, 220, 130, 0.18),
-          transparent 32%
-        ),
-        linear-gradient(135deg, #020420 0%, #071033 58%, #0e1d4d 100%);
+      background: linear-gradient(
+        135deg,
+        #020420 0%,
+        #071033 58%,
+        #0e1d4d 100%
+      );
       color: #f8fafc;
       font-family: 'Public Sans', sans-serif;
     "

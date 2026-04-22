@@ -1,19 +1,18 @@
 # @nuxt-photo/recipes
 
-Ready-to-use Nuxt Photo components:
+Ready-to-use Vue components for Nuxt Photo.
 
-- `<Photo>`
-- `<PhotoAlbum>`
-- `<PhotoGroup>`
-- `<PhotoCarousel>`
-
-Install through `@nuxt-photo/nuxt` for the default Nuxt experience, or consume this package directly in a Vue app alongside `@nuxt-photo/vue`.
+Use this package when you want working components like `<PhotoAlbum>` and `<PhotoCarousel>` without assembling primitives yourself.
 
 ## Install
 
+In a plain Vue app:
+
 ```bash
-pnpm add @nuxt-photo/recipes @nuxt-photo/vue @nuxt-photo/core
+pnpm add @nuxt-photo/recipes
 ```
+
+This package depends on the Vue and core layers for you. In a Nuxt app, install `@nuxt-photo/nuxt` instead.
 
 ## Example
 
@@ -22,8 +21,20 @@ pnpm add @nuxt-photo/recipes @nuxt-photo/vue @nuxt-photo/core
 import type { PhotoItem } from '@nuxt-photo/core'
 
 const photos: PhotoItem[] = [
-  { id: '1', src: '/photos/a.jpg', width: 1280, height: 800, alt: 'Sunrise' },
-  { id: '2', src: '/photos/b.jpg', width: 960, height: 1200, alt: 'Canyon' },
+  {
+    id: 'desert',
+    src: '/photos/desert.jpg',
+    width: 1280,
+    height: 800,
+    alt: 'Desert at golden hour',
+  },
+  {
+    id: 'ocean',
+    src: '/photos/ocean.jpg',
+    width: 960,
+    height: 1200,
+    alt: 'Ocean waves at dusk',
+  },
 ]
 </script>
 
@@ -31,3 +42,15 @@ const photos: PhotoItem[] = [
   <PhotoAlbum :photos="photos" layout="rows" />
 </template>
 ```
+
+## Components
+
+- `<Photo>`
+- `<PhotoAlbum>`
+- `<PhotoGroup>`
+- `<PhotoCarousel>`
+
+## Where next
+
+- [Root documentation](../../README.md)
+- [Vue package guide](../vue/README.md)

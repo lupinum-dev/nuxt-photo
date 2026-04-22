@@ -340,7 +340,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     if (warnedApproximateLayouts.has(layout.value)) return
     warnedApproximateLayouts.add(layout.value)
     devWarn(
-      `${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
+      `${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.lupinum.com/docs/guides/ssr-and-cls`,
     )
   }
 

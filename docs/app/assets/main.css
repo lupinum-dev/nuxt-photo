@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
-@source "../../content/**/*";
+@source "../../content/docs/**/*";
 
 .dark {
   /* --ui-bg: var(--ui-color-neutral-950); */

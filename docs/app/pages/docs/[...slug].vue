@@ -32,7 +32,7 @@ useSeoMeta({
 })
 
 import.meta.server &&
-  defineOgImageComponent('Docs', {
+  defineOgImage('DocsSatori', {
     category: 'Docs',
   })
 </script>

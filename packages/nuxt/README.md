@@ -2,24 +2,33 @@
 
 Nuxt 4 module for Nuxt Photo.
 
+Install this package when you want the default Nuxt experience: auto-registered components, auto-imported composables, and CSS wiring from one module entry.
+
 ## Install
 
 ```bash
 pnpm add @nuxt-photo/nuxt
 ```
 
+Register the module in `nuxt.config.ts`:
+
 ```ts
-// nuxt.config.ts
 export default defineNuxtConfig({
   modules: ['@nuxt-photo/nuxt'],
 })
 ```
 
-Optional:
+## What it provides
 
-```bash
-pnpm add @nuxt/image
-```
+- auto-registered recipe components like `<PhotoAlbum>` and `<PhotoGroup>`
+- auto-registered primitives like `<LightboxRoot>` and `<PhotoImage>`
+- auto-imported `useLightbox`, `useLightboxProvider`, and `responsive`
+- optional `@nuxt/image` integration
+- structure-only or full-theme CSS loading
+
+## Optional `@nuxt/image`
+
+Add `@nuxt/image` when you want provider-backed image rendering and generated `srcset` values:
 
 ```ts
 export default defineNuxtConfig({
@@ -27,11 +36,7 @@ export default defineNuxtConfig({
 })
 ```
 
-## What it provides
+## Where next
 
-- auto-registered recipe components like `<PhotoAlbum>` and `<PhotoGroup>`
-- auto-imported `useLightbox`, `useLightboxProvider`, and `responsive`
-- optional `@nuxt/image` integration
-- structure or full theme CSS loading
-
-See the repo README and docs for the full contract and examples.
+- [Root documentation](../../README.md)
+- [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/installation)

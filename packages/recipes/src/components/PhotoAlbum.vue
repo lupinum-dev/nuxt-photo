@@ -92,8 +92,8 @@ import {
 } from 'vue'
 import {
   LightboxComponentKey,
-  LightboxTransitionOption,
   PhotoGroupContextKey,
+  type LightboxTransitionOption,
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
