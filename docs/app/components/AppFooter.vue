@@ -16,15 +16,7 @@ const links = [
 <template>
   <UFooter>
     <template #left>
-      <span class="inline text-sm">
-        Published under
-        <a
-          href="https://github.com/lupinum-dev/nuxt-photo/tree/main/LICENSE"
-          target="_blank"
-          class="text-highlighted hover:underline underline-offset-4"
-          >MIT license</a
-        >
-      </span>
+      <span class="inline text-sm">Open source on GitHub</span>
     </template>
 
     <UNavigationMenu :items="links" variant="link" />

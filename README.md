@@ -24,7 +24,7 @@ Render a gallery:
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '@nuxt-photo/nuxt'
 
 const photos: PhotoItem[] = [
   {

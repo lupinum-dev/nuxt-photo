@@ -15,8 +15,7 @@ pnpm add @nuxt-photo/vue
 `useLightboxProvider()` is the advanced entrypoint for custom lightbox components.
 
 ```ts
-import type { PhotoItem } from '@nuxt-photo/core'
-import { useLightboxProvider } from '@nuxt-photo/vue'
+import { useLightboxProvider, type PhotoItem } from '@nuxt-photo/vue'
 
 const photos: PhotoItem[] = [
   { id: 'desert', src: '/photos/desert.jpg', width: 1280, height: 800 },
@@ -34,7 +33,7 @@ It creates the shared lightbox context that Vue primitives consume.
 
 The root entrypoint exports:
 
-- composables like `useLightbox`, `useLightboxProvider`, and `responsive`
+- composables like `useLightbox`, `useLightboxProvider`, `useContainerWidth`, and `responsive`
 - primitives like `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
 - stable injection keys like `LightboxComponentKey`, `ImageAdapterKey`, `LightboxDefaultsKey`, and `PhotoGroupContextKey`
 

@@ -14,11 +14,23 @@ pnpm add @nuxt-photo/recipes
 
 This package depends on the Vue and core layers for you. In a Nuxt app, install `@nuxt-photo/nuxt` instead.
 
+## Styles
+
+In a plain Vue app, import the structure CSS for the components you use. For a `PhotoAlbum` with the built-in lightbox:
+
+```ts
+import '@nuxt-photo/recipes/styles/album.css'
+import '@nuxt-photo/recipes/styles/photo-structure.css'
+import '@nuxt-photo/recipes/styles/lightbox-structure.css'
+```
+
+Add the theme files too if you want the default visual styling instead of only the required layout/geometry CSS.
+
 ## Example
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/core'
+import { PhotoAlbum, type PhotoItem } from '@nuxt-photo/recipes'
 
 const photos: PhotoItem[] = [
   {
