@@ -6,7 +6,7 @@ navigation: true
 
 # useLightboxProvider
 
-Creates a full lightbox context and provides it to child components via Vue's provide/inject. This is the composable for **building custom lightbox components** — the middle tier between [`useLightbox`](/docs/composables/use-lightbox) (consumer-only) and the raw `useLightboxContext` (full engine access).
+Creates a full lightbox context and provides it to child components via Vue's provide/inject. This is the composable for **building custom lightbox components** — the middle tier between [`useLightbox`](/docs/composables/use-lightbox) (consumer-only) and the framework-free engine layer.
 
 ## Signature
 
@@ -124,11 +124,11 @@ const { open } = useLightboxProvider(photos, {
 
 ## When to Use
 
-| Scenario                                 | Composable                                                       |
-| ---------------------------------------- | ---------------------------------------------------------------- |
-| Just need open/close/navigate            | [`useLightbox`](/docs/composables/use-lightbox)                  |
-| Building custom lightbox with primitives | `useLightboxProvider`                                            |
-| Full engine access (50+ properties)      | `useLightboxContext` via [extend API](/docs/advanced/extend-api) |
+| Scenario                                 | Composable                                      |
+| ---------------------------------------- | ----------------------------------------------- |
+| Just need open/close/navigate            | [`useLightbox`](/docs/composables/use-lightbox) |
+| Building custom lightbox with primitives | `useLightboxProvider`                           |
+| Framework-free orchestration access      | `@nuxt-photo/engine`                            |
 
 ::callout{type="info"}
 `useLightboxProvider` must be called inside a component's `setup()` function. It provides the lightbox context to all descendant components — this is required for the [primitive components](/docs/components/primitives) to work.

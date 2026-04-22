@@ -12,10 +12,10 @@ import type { EmblaCarouselType } from 'embla-carousel'
 import {
   fitRect,
   type AreaMetrics,
-  type CarouselConfig,
   type PhotoItem,
   type DebugLogger,
 } from '@nuxt-photo/core'
+import type { CarouselConfig } from '@nuxt-photo/engine'
 
 export function useCarousel(
   photos: ComputedRef<PhotoItem[]>,

@@ -14,11 +14,11 @@ import {
   computeTargetPanForZoom,
   type AreaMetrics,
   type PanState,
-  type PanzoomMotion,
   type PhotoItem,
   type ZoomState,
   type DebugLogger,
 } from '@nuxt-photo/core'
+import type { PanzoomMotion } from '@nuxt-photo/engine'
 
 export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem>,
@@ -347,6 +347,7 @@ export function usePanzoom(
     panState,
     isZoomedIn,
     zoomAllowed,
+    // Shared mutable spring state for gesture handlers and RAF updates.
     panzoomMotion,
 
     setActiveSlideIndex,

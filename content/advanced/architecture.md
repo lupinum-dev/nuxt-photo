@@ -6,18 +6,20 @@ navigation: true
 
 # Architecture
 
-nuxt-photo is built as four packages with a strict dependency hierarchy. Each layer adds functionality on top of the previous one.
+nuxt-photo is built as five packages with a strict dependency hierarchy. Each layer adds functionality on top of the previous one.
 
 ## Package Hierarchy
 
 ```
 @nuxt-photo/core       (Layer 0 — framework-free)
   ↑
-@nuxt-photo/vue        (Layer 1 — Vue composables & primitives)
+@nuxt-photo/engine     (Layer 1 — framework-free orchestration)
   ↑
-@nuxt-photo/recipes    (Layer 2 — ready-to-use components)
+@nuxt-photo/vue        (Layer 2 — Vue composables & primitives)
   ↑
-@nuxt-photo/nuxt       (Layer 3 — Nuxt module integration)
+@nuxt-photo/recipes    (Layer 3 — ready-to-use components)
+  ↑
+@nuxt-photo/nuxt       (Layer 4 — Nuxt module integration)
 ```
 
 Dependencies flow upward — each package only depends on the ones below it.
@@ -37,20 +39,27 @@ Dependencies flow upward — each package only depends on the ones below it.
 
 **Why framework-free?** The core algorithms are reusable. If someone builds a React or Svelte version, they can import `@nuxt-photo/core` directly.
 
-## Layer 1: Vue
+## Layer 1: Engine
+
+`@nuxt-photo/engine` owns the framework-free runtime state and command layer for the lightbox:
+
+- Deterministic engine state (`status`, active index, zoom/pan state, gesture phase, render flags)
+- Command-oriented API (`open`, `close`, `next`, `prev`, state patching)
+- Subscription-based updates for framework adapters
+
+This layer exists to keep orchestration out of Vue-specific composables.
+
+## Layer 2: Vue
 
 `@nuxt-photo/vue` adds Vue 3 reactivity and component abstractions:
 
-- **Composables** — `useLightbox`, `useLightboxProvider`, `useLightboxContext` (full engine), `useContainerWidth`, `useGestures`, `usePanzoom`, `useCarousel`, `useGhostTransition`
+- **Composables** — `useLightbox`, `useLightboxProvider`, `useContainerWidth`
 - **Primitive components** — `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `LightboxSlide`, `LightboxControls`, `LightboxCaption`, `LightboxPortal`, `PhotoTrigger`, `PhotoImage`
-- **Provide/inject system** — Injection keys and context types for sharing lightbox state across the component tree
+- **Provide/inject system** — Stable keys for global adapters/defaults and internal context wiring
 
-This package has two export paths:
+The root `@nuxt-photo/vue` entrypoint is the public Vue surface.
 
-- `@nuxt-photo/vue` — Public API (composables, primitives)
-- `@nuxt-photo/vue/extend` — Extension API (injection keys, context types, internal types for building custom lightboxes)
-
-## Layer 2: Recipes
+## Layer 3: Recipes
 
 `@nuxt-photo/recipes` provides the high-level components most users interact with:
 
@@ -58,11 +67,11 @@ This package has two export paths:
 - **PhotoAlbum** — Photo grid with layout algorithms and integrated lightbox
 - **PhotoGroup** — Shared lightbox context for multiple albums/photos
 - **PhotoCarousel** — Embla-based carousel with thumbnails and integrated lightbox
-- **Lightbox / InternalLightbox** — The default lightbox UI with controls, counter, zoom button, and caption
+- **Lightbox** — The default lightbox UI with controls, counter, zoom button, and caption
 
 It also contains all CSS files (structure and theme).
 
-## Layer 3: Nuxt Module
+## Layer 4: Nuxt Module
 
 `@nuxt-photo/nuxt` integrates everything into Nuxt:
 
@@ -81,7 +90,7 @@ PhotoAlbum / PhotoGroup / Photo     ← "Just works" layer
   ↓ uses
 useLightboxProvider + primitives    ← "Custom UI" layer
   ↓ uses
-useLightboxContext                  ← "Full engine" layer
+@nuxt-photo/engine                  ← "Framework-free orchestration" layer
   ↓ uses
 Core algorithms + state machine    ← "Framework-free" layer
 ```
@@ -90,7 +99,7 @@ Core algorithms + state machine    ← "Framework-free" layer
 
 **Custom lightbox builders** drop to the middle layer. They call `useLightboxProvider` and compose primitives like `LightboxRoot`, `LightboxControls`, etc.
 
-**Advanced integrations** use `useLightboxContext` directly for full access to 50+ reactive properties (zoom state, pan bounds, gesture mode, transition plans, etc.).
+**Advanced integrations** build on `useLightboxProvider` plus primitives, or drop to `@nuxt-photo/engine` when they need the runtime below Vue.
 
 ## Build System
 

@@ -145,7 +145,7 @@ Use Vue's provide/inject to set a default adapter for all components:
 
 ```vue [app.vue]
 <script setup>
-import { ImageAdapterKey } from '@nuxt-photo/vue/extend'
+import { ImageAdapterKey } from '@nuxt-photo/vue'
 
 provide(ImageAdapterKey, myAdapter)
 </script>

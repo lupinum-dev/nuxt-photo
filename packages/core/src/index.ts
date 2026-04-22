@@ -24,6 +24,9 @@ export * from './dom'
 // Debug
 export * from './debug'
 
+// Environment
+export * from './env'
+
 // Viewer
 export * from './viewer'
 

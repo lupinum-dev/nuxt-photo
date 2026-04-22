@@ -2,13 +2,16 @@ import type { TransitionMode, CloseTransitionPlan, RectLike } from '../types'
 import type { DebugLogger } from '../debug/logger'
 import { isUsableRect } from '../geometry/rect'
 import { getWindowDimensions } from '../utils/dom'
+import {
+  CLOSE_FADE_DURATION_MS,
+  CLOSE_FLIP_DURATION_MS,
+  TRANSITION_AUTO_MIN_VISIBLE_DIMENSION,
+} from './constants'
 
 export type TransitionModeConfig = {
   mode: TransitionMode
   autoThreshold: number
 }
-
-const MIN_VISIBLE_DIMENSION = 80
 
 export function createTransitionMode(): TransitionModeConfig {
   return {
@@ -86,12 +89,12 @@ export function shouldUseFlip(
   )
 
   if (
-    visibleWidth < MIN_VISIBLE_DIMENSION ||
-    visibleHeight < MIN_VISIBLE_DIMENSION
+    visibleWidth < TRANSITION_AUTO_MIN_VISIBLE_DIMENSION ||
+    visibleHeight < TRANSITION_AUTO_MIN_VISIBLE_DIMENSION
   ) {
     debug?.log(
       'transitions',
-      `mode=auto → visible size ${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px < ${MIN_VISIBLE_DIMENSION}px min → FADE`,
+      `mode=auto → visible size ${visibleWidth.toFixed(0)}x${visibleHeight.toFixed(0)}px < ${TRANSITION_AUTO_MIN_VISIBLE_DIMENSION}px min → FADE`,
     )
     return false
   }
@@ -106,9 +109,6 @@ export function shouldUseFlip(
 
   return useFlip
 }
-
-const CLOSE_FLIP_DURATION_MS = 380
-const CLOSE_FADE_DURATION_MS = 200
 
 export function planCloseTransition(opts: {
   fromRect: RectLike | null

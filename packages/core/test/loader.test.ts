@@ -83,6 +83,7 @@ describe('ensureImageLoaded', () => {
   })
 
   it('resolves when image.decode() rejects and evicts from cache', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.stubGlobal(
       'Image',
       class extends MockImage {
@@ -92,6 +93,7 @@ describe('ensureImageLoaded', () => {
 
     const src = `/decode-fail-${Date.now()}.jpg`
     await ensureImageLoaded(src)
+    expect(warnSpy).toHaveBeenCalled()
 
     // Should not be cached — next call should create a new Image
     let imageCreated = false
@@ -108,6 +110,7 @@ describe('ensureImageLoaded', () => {
 
     await ensureImageLoaded(src)
     expect(imageCreated).toBe(true)
+    warnSpy.mockRestore()
   })
 
   it('deduplicates concurrent loads for the same src', async () => {

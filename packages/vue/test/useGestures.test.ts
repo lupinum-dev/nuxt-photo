@@ -9,6 +9,9 @@ function createGestureConfig(zoomedIn = false) {
   const isZoomedIn = ref(zoomedIn)
   const currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
+  const mediaArea = document.createElement('div')
+  mediaArea.setPointerCapture = vi.fn()
+  mediaArea.releasePointerCapture = vi.fn()
   const panzoomMotion = {
     x: currentPan.value.x,
     y: currentPan.value.y,
@@ -40,13 +43,14 @@ function createGestureConfig(zoomedIn = false) {
       ghostVisible: ref(false),
       isZoomedIn: computed(() => isZoomedIn.value),
       zoomAllowed: computed(() => true),
-      mediaAreaRef: ref(document.createElement('div')),
+      mediaAreaRef: ref(mediaArea),
       currentPhoto: computed(() => createPhotoSet()[0]!),
       areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
       uiVisible: ref(true),
       panState: currentPan,
       zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
       closeDragY: ref(0),
+      setCloseDragY: vi.fn(),
       controlsDisabled: computed(() => false),
 
       panzoomMotion,
@@ -103,5 +107,65 @@ describe('useGestures', () => {
     expect(config.goToPrev).not.toHaveBeenCalled()
     expect(setPanzoomImmediate).toHaveBeenNthCalledWith(1, 2, { x: -80, y: 0 })
     expect(setPanzoomImmediate).toHaveBeenNthCalledWith(2, 2, { x: 0, y: 0 })
+  })
+
+  it('supports mixed pointer types across consecutive gesture sessions', async () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useGestures(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 10,
+        clientY: 10,
+      }),
+    )
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 10,
+        clientY: 90,
+      }),
+    )
+    await gestures.onMediaPointerUp(
+      new PointerEvent('pointerup', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 10,
+        clientY: 120,
+      }),
+    )
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 2,
+        pointerType: 'mouse',
+        button: 0,
+        clientX: 20,
+        clientY: 20,
+      }),
+    )
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 2,
+        pointerType: 'mouse',
+        clientX: 120,
+        clientY: 20,
+      }),
+    )
+    await gestures.onMediaPointerUp(
+      new PointerEvent('pointerup', {
+        pointerId: 2,
+        pointerType: 'mouse',
+        button: 0,
+        clientX: 180,
+        clientY: 20,
+      }),
+    )
+
+    expect(config.handleCloseGesture).toHaveBeenCalledTimes(1)
+    expect(config.goToNext).not.toHaveBeenCalled()
   })
 })

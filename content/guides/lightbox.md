@@ -52,7 +52,7 @@ Or provide a global lightbox override for your entire app:
 
 ```vue [app.vue]
 <script setup>
-import { LightboxComponentKey } from '@nuxt-photo/vue/extend'
+import { LightboxComponentKey } from '@nuxt-photo/vue'
 import MyLightbox from '~/components/MyLightbox.vue'
 
 provide(LightboxComponentKey, MyLightbox)

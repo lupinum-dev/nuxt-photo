@@ -1,0 +1,1 @@
+export const IMAGE_LOAD_CACHE_LIMIT = 500

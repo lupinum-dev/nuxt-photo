@@ -36,13 +36,14 @@ import {
 } from 'vue'
 
 defineOptions({ inheritAttrs: false })
-import { PhotoImage, useLightboxProvider } from '@nuxt-photo/vue'
 import {
-  PhotoGroupContextKey,
   LightboxComponentKey,
-} from '@nuxt-photo/vue/extend'
+  PhotoGroupContextKey,
+  PhotoImage,
+  useLightboxProvider,
+} from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
-import InternalLightbox from './InternalLightbox.vue'
+import Lightbox from './Lightbox.vue'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -90,9 +91,9 @@ const soloCtx = isSolo.value
 
 const soloLightboxComponent = computed<Component>(() => {
   if (props.lightbox === true || props.lightbox === undefined) {
-    return injectedLightbox ?? InternalLightbox
+    return injectedLightbox ?? Lightbox
   }
-  return (props.lightbox as Component) ?? InternalLightbox
+  return (props.lightbox as Component) ?? Lightbox
 })
 
 // Ref for the thumb element

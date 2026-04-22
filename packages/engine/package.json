@@ -1,0 +1,48 @@
+{
+  "name": "@nuxt-photo/engine",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Framework-free lightbox orchestration for Nuxt Photo.",
+  "keywords": [
+    "nuxt-photo",
+    "engine",
+    "lightbox",
+    "gallery",
+    "photos"
+  ],
+  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
+    "directory": "packages/engine"
+  },
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub"
+  },
+  "dependencies": {
+    "@nuxt-photo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "unbuild": "^3.5.0"
+  }
+}

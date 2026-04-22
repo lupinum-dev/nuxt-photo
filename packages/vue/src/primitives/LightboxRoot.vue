@@ -21,9 +21,9 @@ defineOptions({ inheritAttrs: false })
 
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { PhotoItem } from '@nuxt-photo/core'
+import type { LightboxTransitionOption } from '@nuxt-photo/engine'
 import { useLightboxProvider } from '../composables/useLightboxProvider'
 import { useLightboxInject } from '../composables/useLightboxInject'
-import type { LightboxTransitionOption } from '../composables/useLightboxContext'
 
 const props = defineProps<{
   photos?: PhotoItem | PhotoItem[]

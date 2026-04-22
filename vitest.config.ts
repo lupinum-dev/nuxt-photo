@@ -11,8 +11,8 @@ export default defineConfig({
       '@nuxt-photo/core': fileURLToPath(
         new URL('./packages/core/src/index.ts', import.meta.url),
       ),
-      '@nuxt-photo/vue/extend': fileURLToPath(
-        new URL('./packages/vue/src/extend.ts', import.meta.url),
+      '@nuxt-photo/engine': fileURLToPath(
+        new URL('./packages/engine/src/index.ts', import.meta.url),
       ),
       '@nuxt-photo/vue': fileURLToPath(
         new URL('./packages/vue/src/index.ts', import.meta.url),

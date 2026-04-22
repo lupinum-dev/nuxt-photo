@@ -26,10 +26,6 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
-    },
-    "./extend": {
-      "import": "./dist/extend.mjs",
-      "types": "./dist/extend.d.ts"
     }
   },
   "main": "./dist/index.mjs",
@@ -44,6 +40,7 @@
   },
   "dependencies": {
     "@nuxt-photo/core": "workspace:*",
+    "@nuxt-photo/engine": "workspace:*",
     "embla-carousel-vue": "9.0.0-rc01"
   },
   "peerDependencies": {

@@ -13,12 +13,6 @@ import type {
   PhotoItem,
   ZoomState,
 } from '@nuxt-photo/core'
-import type {
-  LightboxCaptionSlotProps,
-  LightboxControlsSlotProps,
-  LightboxSlideSlotProps,
-} from '../types/slots'
-
 /** Consumer API — what app code and recipe components need. */
 export interface LightboxConsumerAPI {
   photos: ComputedRef<PhotoItem[]>
@@ -129,15 +123,6 @@ export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(
 export const LightboxComponentKey: InjectionKey<Component> = Symbol(
   'nuxt-photo:lightbox-component',
 )
-
-/** Slot overrides injected by recipe components for customizing InternalLightbox. */
-export interface LightboxSlotOverrides {
-  toolbar?: (props: LightboxControlsSlotProps) => unknown
-  caption?: (props: LightboxCaptionSlotProps) => unknown
-  slide?: (props: LightboxSlideSlotProps) => unknown
-}
-export const LightboxSlotsKey: InjectionKey<Ref<LightboxSlotOverrides>> =
-  Symbol('nuxt-photo:lightbox-slots')
 
 /** Global defaults for lightbox behaviour, typically provided once at app level. */
 export interface LightboxDefaults {

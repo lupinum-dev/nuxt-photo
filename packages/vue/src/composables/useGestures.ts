@@ -6,11 +6,15 @@ import {
   type AreaMetrics,
   type GestureMode,
   type PanState,
-  type PanzoomMotion,
   type PhotoItem,
   type ZoomState,
   type DebugLogger,
 } from '@nuxt-photo/core'
+import type { PanzoomMotion } from '@nuxt-photo/engine'
+import {
+  MOUSE_WHEEL_THROTTLE_MS,
+  TRACKPAD_WHEEL_THROTTLE_MS,
+} from './constants'
 
 type GestureConfig = {
   lightboxMounted: Ref<boolean>
@@ -316,7 +320,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     const now = performance.now()
     const isTrackpad =
       Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
-    const throttleMs = isTrackpad ? 200 : 45
+    // Trackpads emit a dense stream of tiny deltas; wheels are chunkier and can be handled more eagerly.
+    const throttleMs = isTrackpad
+      ? TRACKPAD_WHEEL_THROTTLE_MS
+      : MOUSE_WHEEL_THROTTLE_MS
 
     if (now - lastWheelTime < throttleMs) {
       event.preventDefault()

@@ -1,9 +1,7 @@
 import type { MaybeRef } from 'vue'
 import { photoId, type PhotoItem } from '@nuxt-photo/core'
-import {
-  useLightboxContext,
-  type LightboxTransitionOption,
-} from './useLightboxContext'
+import type { LightboxTransitionOption } from '@nuxt-photo/engine'
+import { useLightboxContext } from './useLightboxContext'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
 

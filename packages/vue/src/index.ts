@@ -2,20 +2,31 @@
 export * from './composables'
 export * from './primitives'
 export * from './types'
+export {
+  ImageAdapterKey,
+  LightboxComponentKey,
+  LightboxDefaultsKey,
+  PhotoGroupContextKey,
+  type LightboxDefaults,
+  type LightboxSlideRenderer,
+  type PhotoGroupContext,
+} from './provide/keys'
 
 // Re-export core utilities for convenience
 export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
 export type {
+  CarouselConfig,
+  CarouselStyle,
+  LightboxTransitionOption,
+  PanzoomMotion,
+} from '@nuxt-photo/engine'
+export type {
   PhotoItem,
-  SlideItem,
   AreaMetrics,
   RectLike,
   PanState,
   ZoomState,
   GestureMode,
-  PanzoomMotion,
-  CarouselStyle,
-  CarouselConfig,
   ViewerState,
   TransitionMode,
   ImageAdapter,

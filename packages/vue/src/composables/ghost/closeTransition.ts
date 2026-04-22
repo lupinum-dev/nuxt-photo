@@ -17,9 +17,8 @@ import {
   type CloseCallbacks,
   type GhostState,
 } from './types'
+import { MAX_CLOSE_ANIMATION_MS } from './constants'
 import { resetCloseState } from './state'
-
-const MAX_ANIMATION_MS = 2000
 
 async function doInstantClose(s: GhostState) {
   s.debug?.log('transitions', 'close: INSTANT (mode=none)')
@@ -225,11 +224,11 @@ export function createCloseTransition(s: GhostState) {
       if (s.animating.value) {
         s.debug?.warn(
           'transitions',
-          `RECOVERY: animating stuck for ${MAX_ANIMATION_MS}ms, forcing resetCloseState`,
+          `RECOVERY: animating stuck for ${MAX_CLOSE_ANIMATION_MS}ms, forcing resetCloseState`,
         )
         resetCloseState(s, clearAnimationGuard)
       }
-    }, MAX_ANIMATION_MS)
+    }, MAX_CLOSE_ANIMATION_MS)
   }
 
   async function close(callbacks: CloseCallbacks) {

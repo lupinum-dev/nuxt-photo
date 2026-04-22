@@ -18,19 +18,20 @@ import {
   createTransitionMode,
   isUsableRect,
   photoId,
-  type CarouselConfig,
   type PhotoItem,
   type AreaMetrics,
-  type TransitionMode,
-  type TransitionModeConfig,
 } from '@nuxt-photo/core'
+import {
+  createLightboxEngine,
+  type CarouselConfig,
+  type LightboxTransitionOption,
+} from '@nuxt-photo/engine'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
+import { useLightboxEngineState } from './useLightboxEngineState'
 import { LightboxDefaultsKey } from '../provide/keys'
-
-export type LightboxTransitionOption = TransitionMode | TransitionModeConfig
 
 export function useLightboxContext(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
@@ -47,7 +48,8 @@ export function useLightboxContext(
     const value = toValue(photosInput)
     return Array.isArray(value) ? value : [value]
   })
-  const count = computed(() => photos.value.length)
+  const engine = createLightboxEngine({ photos: photos.value })
+  const engineState = useLightboxEngineState(engine)
 
   const globalDefaults = inject(LightboxDefaultsKey, undefined)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
@@ -61,7 +63,8 @@ export function useLightboxContext(
       transitionConfig.mode = transitionOption
     } else {
       transitionConfig.mode = transitionOption.mode
-      transitionConfig.autoThreshold = transitionOption.autoThreshold
+      transitionConfig.autoThreshold =
+        transitionOption.autoThreshold ?? transitionConfig.autoThreshold
     }
   }
 
@@ -88,15 +91,12 @@ export function useLightboxContext(
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
 
-  const isZoomedInProxy = ref(false)
-  const animatingProxy = ref(false)
-
   const carousel = useCarousel(
     photos,
     areaMetrics,
     carouselConfig,
-    computed(() => isZoomedInProxy.value),
-    animatingProxy,
+    computed(() => engineState.isZoomedIn.value),
+    engineState.animating,
     debug,
   )
 
@@ -114,21 +114,6 @@ export function useLightboxContext(
     carousel.getAbsoluteFrameRect,
     debug,
     transitionConfig,
-  )
-
-  watch(
-    panzoom.isZoomedIn,
-    (value) => {
-      isZoomedInProxy.value = value
-    },
-    { immediate: true },
-  )
-  watch(
-    ghost.animating,
-    (value) => {
-      animatingProxy.value = value
-    },
-    { immediate: true },
   )
 
   function syncGeometry() {
@@ -197,16 +182,20 @@ export function useLightboxContext(
           )
 
     skipActiveIndexWatch = true
+    engine.open(index >= 0 ? index : 0)
     ghost.setCloseDragY(0)
     carousel.goTo(index >= 0 ? index : 0, true)
     attachKeydown()
     await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
+    engine.markOpened()
     preloadAround(index >= 0 ? index : 0)
     skipActiveIndexWatch = false
   }
 
   async function close() {
+    engine.close()
     await ghost.close(closeCallbacks)
+    engine.markClosed()
     ghost.setCloseDragY(0)
     detachKeydown()
   }
@@ -274,6 +263,78 @@ export function useLightboxContext(
     debug.log('transitions', `lightboxMounted → ${mounted}`)
     lockBodyScroll(mounted)
   })
+
+  watch(
+    photos,
+    (nextPhotos) => {
+      engine.setPhotos(nextPhotos)
+    },
+    { immediate: true },
+  )
+
+  watch(
+    carousel.activeIndex,
+    (index) => {
+      engine.setActiveIndex(index)
+    },
+    { immediate: true },
+  )
+
+  watch(
+    [
+      panzoom.zoomState,
+      panzoom.panState,
+      panzoom.isZoomedIn,
+      panzoom.zoomAllowed,
+    ],
+    ([zoomState, panState, isZoomedIn, zoomAllowed]) => {
+      engine.setZoomState(zoomState)
+      engine.setPanState(panState)
+      engine.setZoomFlags({ isZoomedIn, zoomAllowed })
+    },
+    { immediate: true },
+  )
+
+  watch(
+    [
+      gestures.gesturePhase,
+      ghost.animating,
+      ghost.ghostVisible,
+      ghost.ghostSrc,
+      ghost.hiddenThumbIndex,
+      ghost.overlayOpacity,
+      ghost.mediaOpacity,
+      ghost.chromeOpacity,
+      ghost.uiVisible,
+      ghost.closeDragY,
+    ],
+    ([
+      gesturePhase,
+      animating,
+      ghostVisible,
+      ghostSrc,
+      hiddenThumbIndex,
+      overlayOpacity,
+      mediaOpacity,
+      chromeOpacity,
+      uiVisible,
+      closeDragY,
+    ]) => {
+      engine.setGesturePhase(gesturePhase)
+      engine.setAnimating(animating)
+      engine.setUiVisible(uiVisible)
+      engine.setGhostState({
+        ghostVisible,
+        ghostSrc,
+        hiddenThumbIndex,
+        overlayOpacity,
+        mediaOpacity,
+        chromeOpacity,
+        closeDragY,
+      })
+    },
+    { immediate: true },
+  )
 
   // Watch photos array — only close if the active photo was removed; otherwise maintain position
   watch(photos, (newPhotos, oldPhotos) => {
@@ -349,34 +410,34 @@ export function useLightboxContext(
   }
 
   return {
-    photos,
-    count,
-    activeIndex: carousel.activeIndex,
-    activePhoto: carousel.currentPhoto,
-    isOpen: computed(() => ghost.lightboxMounted.value),
+    photos: engineState.photos,
+    count: engineState.count,
+    activeIndex: engineState.activeIndex,
+    activePhoto: engineState.activePhoto,
+    isOpen: engineState.isOpen,
 
-    zoomState: panzoom.zoomState,
-    panState: panzoom.panState,
-    isZoomedIn: panzoom.isZoomedIn,
-    zoomAllowed: panzoom.zoomAllowed,
+    zoomState: engineState.zoomState,
+    panState: engineState.panState,
+    isZoomedIn: engineState.isZoomedIn,
+    zoomAllowed: engineState.zoomAllowed,
 
-    animating: ghost.animating,
-    ghostVisible: ghost.ghostVisible,
-    ghostSrc: ghost.ghostSrc,
+    animating: engineState.animating,
+    ghostVisible: engineState.ghostVisible,
+    ghostSrc: engineState.ghostSrc,
     ghostStyle: ghost.ghostStyle,
-    hiddenThumbIndex: ghost.hiddenThumbIndex,
-    overlayOpacity: ghost.overlayOpacity,
-    mediaOpacity: ghost.mediaOpacity,
-    chromeOpacity: ghost.chromeOpacity,
-    uiVisible: ghost.uiVisible,
-    closeDragY: ghost.closeDragY,
+    hiddenThumbIndex: engineState.hiddenThumbIndex,
+    overlayOpacity: engineState.overlayOpacity,
+    mediaOpacity: engineState.mediaOpacity,
+    chromeOpacity: engineState.chromeOpacity,
+    uiVisible: engineState.uiVisible,
+    closeDragY: engineState.closeDragY,
     transitionInProgress: ghost.transitionInProgress,
     chromeStyle: ghost.chromeStyle,
     closeDragRatio: ghost.closeDragRatio,
     backdropStyle: ghost.backdropStyle,
     lightboxUiStyle: ghost.lightboxUiStyle,
 
-    gesturePhase: gestures.gesturePhase,
+    gesturePhase: engineState.gesturePhase,
 
     mediaAreaRef,
     emblaRef: carousel.emblaRef,

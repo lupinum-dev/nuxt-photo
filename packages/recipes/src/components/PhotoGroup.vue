@@ -13,19 +13,22 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { ref, computed, inject, provide, useSlots, type Component } from 'vue'
-import { useLightboxProvider } from '@nuxt-photo/vue'
+import { ref, computed, inject, provide, type Component } from 'vue'
 import {
-  PhotoGroupContextKey,
   LightboxComponentKey,
-  LightboxSlotsKey,
-  type LightboxSlotOverrides,
   type LightboxSlideRenderer,
-  type PhotoGroupContext,
   type LightboxTransitionOption,
-} from '@nuxt-photo/vue/extend'
-import { photoId, type PhotoItem, type PhotoAdapter } from '@nuxt-photo/core'
-import InternalLightbox from './InternalLightbox.vue'
+  PhotoGroupContextKey,
+  type PhotoGroupContext,
+  useLightboxProvider,
+} from '@nuxt-photo/vue'
+import {
+  devWarn,
+  photoId,
+  type PhotoItem,
+  type PhotoAdapter,
+} from '@nuxt-photo/core'
+import Lightbox from './Lightbox.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -67,23 +70,15 @@ function register(
   getThumbEl: () => HTMLElement | null,
   renderSlide?: LightboxSlideRenderer | null,
 ) {
-  if (
-    (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-      ?.NODE_ENV !== 'production'
-  ) {
-    if (props.photos !== undefined) {
-      console.warn(
-        '[nuxt-photo] PhotoGroup has both a :photos prop and child <Photo> registrations. ' +
-          'The :photos prop takes precedence; child registrations are ignored. ' +
-          'Remove :photos to use auto-collection, or remove child <Photo> components.',
-      )
-    }
-    for (const [existingId, entry] of registrationMap) {
-      if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
-        console.warn(
-          `[nuxt-photo] Duplicate photo id "${photo.id}" registered in PhotoGroup`,
-        )
-      }
+  if (props.photos !== undefined) {
+    devWarn(
+      'PhotoGroup has both a :photos prop and child <Photo> registrations. The :photos prop takes precedence; child registrations are ignored. Remove :photos to use auto-collection, or remove child <Photo> components.',
+    )
+  }
+  for (const [existingId, entry] of registrationMap) {
+    if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
+      devWarn(`Duplicate photo id "${photo.id}" registered in PhotoGroup`)
+      break
     }
   }
   registrationMap.set(id, { photo, getThumbEl, renderSlide })
@@ -202,24 +197,10 @@ Object.defineProperty(groupContext, 'mode', {
 
 provide(PhotoGroupContextKey, groupContext)
 
-// Forward #toolbar, #caption, #slide slots into the lightbox via injection
-const parentSlots = useSlots()
-const slotOverrides = computed<LightboxSlotOverrides>(() => {
-  const overrides: LightboxSlotOverrides = {}
-  if (parentSlots.toolbar)
-    overrides.toolbar = parentSlots.toolbar as LightboxSlotOverrides['toolbar']
-  if (parentSlots.caption)
-    overrides.caption = parentSlots.caption as LightboxSlotOverrides['caption']
-  if (parentSlots.slide)
-    overrides.slide = parentSlots.slide as LightboxSlotOverrides['slide']
-  return overrides
-})
-provide(LightboxSlotsKey, slotOverrides)
-
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
-  if (props.lightbox === true) return injectedLightbox ?? InternalLightbox
+  if (props.lightbox === true) return injectedLightbox ?? Lightbox
   return props.lightbox as Component
 })
 

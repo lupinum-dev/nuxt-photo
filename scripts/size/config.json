@@ -22,7 +22,7 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 21504
+      "brotliLimit": 22528
     }
   },
   "nuxt": {

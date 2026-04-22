@@ -16,6 +16,7 @@ import {
   computeMasonryBreakpointSnapshots,
   computeBreakpointVisibilityCSS,
   computePhotoSizes,
+  devWarn,
   resolveResponsiveParameter,
   round,
   type PhotoItem,
@@ -24,7 +25,7 @@ import {
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 
-type BreakpointSnapshot = {
+export type BreakpointSnapshot = {
   spanKey: string
   condition: string
   containerWidth: number
@@ -35,7 +36,7 @@ type BreakpointSnapshot = {
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
-type RowItem = {
+export type RowItem = {
   photo: PhotoItem
   index: number
   width: number
@@ -330,11 +331,6 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
 
   // Warn once per layout type if columns/masonry is used without any SSR signal.
   function maybeWarnApproximate() {
-    if (
-      (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-        ?.NODE_ENV === 'production'
-    )
-      return
     if (layout.value === 'rows') return
     if (
       breakpoints?.length ||
@@ -343,8 +339,8 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       return
     if (warnedApproximateLayouts.has(layout.value)) return
     warnedApproximateLayouts.add(layout.value)
-    console.warn(
-      `[nuxt-photo] ${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
+    devWarn(
+      `${layout.value} layout rendered without breakpoints or defaultContainerWidth — SSR will visibly reflow on hydration. See https://nuxt-photo.dev/guides/ssr-and-performance`,
     )
   }
 

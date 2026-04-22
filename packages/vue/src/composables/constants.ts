@@ -1,0 +1,2 @@
+export const TRACKPAD_WHEEL_THROTTLE_MS = 200
+export const MOUSE_WHEEL_THROTTLE_MS = 45

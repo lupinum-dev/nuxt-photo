@@ -134,6 +134,19 @@ importers:
         specifier: ^3.5.0
         version: 3.6.1(typescript@5.9.3)(vue-sfc-transformer@0.1.17(@vue/compiler-core@3.5.32)(esbuild@0.28.0)(vue@3.5.32(typescript@5.9.3)))(vue-tsc@3.2.7(typescript@5.9.3))(vue@3.5.32(typescript@5.9.3))
 
+  packages/engine:
+    dependencies:
+      '@nuxt-photo/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      unbuild:
+        specifier: ^3.5.0
+        version: 3.6.1(typescript@5.9.3)(vue-sfc-transformer@0.1.17(@vue/compiler-core@3.5.32)(esbuild@0.28.0)(vue@3.5.32(typescript@5.9.3)))(vue-tsc@3.2.7(typescript@5.9.3))(vue@3.5.32(typescript@5.9.3))
+
   packages/nuxt:
     dependencies:
       '@nuxt-photo/core':
@@ -201,6 +214,9 @@ importers:
       '@nuxt-photo/core':
         specifier: workspace:*
         version: link:../core
+      '@nuxt-photo/engine':
+        specifier: workspace:*
+        version: link:../engine
       embla-carousel-vue:
         specifier: 9.0.0-rc01
         version: 9.0.0-rc01(vue@3.5.31(typescript@5.9.3))

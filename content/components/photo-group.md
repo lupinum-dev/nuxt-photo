@@ -142,4 +142,4 @@ Access these via a template ref:
 - **Auto mode** (`photos` prop omitted): Child `Photo` and `PhotoAlbum` components register themselves via provide/inject. The order of photos matches DOM insertion order.
 - **Explicit mode** (`photos` prop set): The provided array is used directly. Child registrations are ignored (a dev warning is logged if both are used).
 - **Slot forwarding:** The `#toolbar`, `#caption`, and `#slide` slots are forwarded into the lightbox component via injection, so they work regardless of which lightbox is used.
-- **Lightbox component resolution:** If `lightbox` is `true`, the group checks for an injected custom lightbox (via `LightboxComponentKey`) before falling back to the built-in `InternalLightbox`.
+- **Lightbox component resolution:** If `lightbox` is `true`, the group checks for an injected custom lightbox (via `LightboxComponentKey`) before falling back to the built-in `Lightbox`.

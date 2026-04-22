@@ -1,5 +1,5 @@
 import { defineNuxtPlugin, type NuxtApp, useAppConfig } from '#app'
-import { LightboxDefaultsKey } from '@nuxt-photo/vue/extend'
+import { LightboxDefaultsKey } from '@nuxt-photo/vue'
 
 export default defineNuxtPlugin({
   name: 'nuxt-photo:defaults',

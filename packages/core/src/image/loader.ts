@@ -1,4 +1,6 @@
-const MAX_CACHE_SIZE = 500
+import { devWarn } from '../env'
+import { IMAGE_LOAD_CACHE_LIMIT } from './constants'
+
 const imageLoadCache = new Map<string, Promise<void>>()
 
 export function ensureImageLoaded(src: string): Promise<void> {
@@ -7,30 +9,39 @@ export function ensureImageLoaded(src: string): Promise<void> {
 
   const promise = new Promise<void>((resolve) => {
     const image = new Image()
-    image.onload = () => resolve()
+    let settled = false
+
+    const settle = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+
+    image.onload = () => settle()
     image.onerror = () => {
       imageLoadCache.delete(src)
-      resolve()
+      settle()
     }
     image.src = src
 
     if (image.decode) {
       image
         .decode()
-        .catch(() => {
+        .catch((error) => {
           imageLoadCache.delete(src)
+          devWarn(`Image decode failed for "${src}"`, error)
         })
-        .finally(resolve)
+        .finally(settle)
       return
     }
 
     if (image.complete) {
-      resolve()
+      settle()
     }
   })
 
   imageLoadCache.set(src, promise)
-  if (imageLoadCache.size > MAX_CACHE_SIZE) {
+  if (imageLoadCache.size > IMAGE_LOAD_CACHE_LIMIT) {
     imageLoadCache.delete(imageLoadCache.keys().next().value!)
   }
   return promise

@@ -21,16 +21,6 @@ export function photoId(photo: PhotoItem): string {
   return String(photo.id)
 }
 
-export type SlideItem =
-  | { type: 'image'; photo: PhotoItem }
-  | {
-      type: 'custom'
-      id: string
-      data?: unknown
-      width?: number
-      height?: number
-    }
-
 // ─── Geometry ───
 
 export type RectLike = {
@@ -66,33 +56,6 @@ export type ZoomState = {
 // ─── Gestures ───
 
 export type GestureMode = 'idle' | 'slide' | 'pan' | 'close'
-
-// ─── Panzoom motion ───
-
-export type PanzoomMotion = {
-  x: number
-  y: number
-  scale: number
-  targetX: number
-  targetY: number
-  targetScale: number
-  velocityX: number
-  velocityY: number
-  velocityScale: number
-  tension: number
-  friction: number
-  rafId: number
-}
-
-// ─── Carousel ───
-
-export type CarouselStyle = 'classic' | 'parallax' | 'fade'
-
-export type CarouselConfig = {
-  style: CarouselStyle
-  parallax: { amount: number; scale: number; opacity: number }
-  fade: { minOpacity: number }
-}
 
 // ─── Viewer state machine ───
 

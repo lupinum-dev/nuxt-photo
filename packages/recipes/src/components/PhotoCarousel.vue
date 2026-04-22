@@ -48,16 +48,6 @@
         /></template>
       </CarouselLayout>
     </template>
-
-    <template v-if="$slots['lightbox-slide']" #slide="slotProps"
-      ><slot name="lightbox-slide" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots['lightbox-caption']" #caption="slotProps"
-      ><slot name="lightbox-caption" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots['lightbox-toolbar']" #toolbar="slotProps"
-      ><slot name="lightbox-toolbar" v-bind="slotProps"
-    /></template>
   </PhotoGroup>
 
   <CarouselLayout
@@ -106,18 +96,20 @@
 import { computed, type Component } from 'vue'
 import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
-import type { PhotoAdapter, PhotoItem, ImageAdapter } from '@nuxt-photo/core'
+import {
+  devWarn,
+  type PhotoAdapter,
+  type PhotoItem,
+  type ImageAdapter,
+} from '@nuxt-photo/core'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
   CarouselDotsSlotProps,
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
-  LightboxCaptionSlotProps,
-  LightboxControlsSlotProps,
-  LightboxSlideSlotProps,
+  LightboxTransitionOption,
 } from '@nuxt-photo/vue'
-import type { LightboxTransitionOption } from '@nuxt-photo/vue/extend'
 import PhotoGroup from './PhotoGroup.vue'
 import CarouselLayout from './internal/CarouselLayout.vue'
 
@@ -131,9 +123,6 @@ defineSlots<{
   prev?: () => unknown
   next?: () => unknown
   dots?: (props: CarouselDotsSlotProps) => unknown
-  'lightbox-slide'?: (props: LightboxSlideSlotProps) => unknown
-  'lightbox-caption'?: (props: LightboxCaptionSlotProps) => unknown
-  'lightbox-toolbar'?: (props: LightboxControlsSlotProps) => unknown
 }>()
 
 const props = withDefaults(
@@ -211,13 +200,9 @@ const mergedPlugins = computed<EmblaPluginType[]>(() => {
   if (!autoplay) return user.slice()
 
   const filtered = user.filter((p) => p?.name !== 'autoplay')
-  if (
-    filtered.length !== user.length &&
-    (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-      ?.NODE_ENV !== 'production'
-  ) {
-    console.warn(
-      '[nuxt-photo] PhotoCarousel: `autoplay` prop is set, so a user-supplied Autoplay plugin was dropped. Pass only one of them.',
+  if (filtered.length !== user.length) {
+    devWarn(
+      'PhotoCarousel: `autoplay` prop is set, so a user-supplied Autoplay plugin was dropped. Pass only one of them.',
     )
   }
 
