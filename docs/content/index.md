@@ -1,7 +1,7 @@
 ---
 title: 'Photo galleries for Nuxt.'
 navigation: false
-description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and headless primitives — auto-imported into any Nuxt 4 app.'
+description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and headless primitives — auto-imported into any Nuxt app.'
 seo:
   ogImage: '/social-card.png'
 ---

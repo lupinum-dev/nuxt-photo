@@ -47,6 +47,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@nuxt-photo/core": "workspace:*",
+    "@nuxt/test-utils": "^4.0.2",
     "@playwright/test": "1.58.2",
     "@size-limit/preset-small-lib": "^12.1.0",
     "@vitejs/plugin-vue": "6.0.5",

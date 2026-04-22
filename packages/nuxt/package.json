@@ -2,7 +2,7 @@
   "name": "@nuxt-photo/nuxt",
   "version": "0.0.1",
   "type": "module",
-  "description": "Nuxt 4 module for photo galleries, lightboxes, and provider-aware image rendering.",
+  "description": "Photo galleries, lightboxes, and provider-aware image rendering for Nuxt.",
   "keywords": [
     "nuxt-photo",
     "nuxt",

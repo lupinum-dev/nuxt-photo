@@ -1,22 +1,14 @@
-import { defineNuxtPlugin, type NuxtApp, useAppConfig } from '#app'
+import { defineNuxtPlugin, type Plugin, useAppConfig } from '#app'
 import { LightboxDefaultsKey } from '@nuxt-photo/vue'
 
-export default defineNuxtPlugin({
-  name: 'nuxt-photo:defaults',
-  setup(nuxtApp: NuxtApp) {
-    const config = useAppConfig() as {
-      nuxtPhoto?: {
-        lightbox?: {
-          minZoom?: number
-        }
-      }
-    }
-    const lightbox = config.nuxtPhoto?.lightbox
+const nuxtPhotoDefaultsPlugin: Plugin = (nuxtApp): void => {
+  const lightbox = useAppConfig().nuxtPhoto?.lightbox
 
-    if (lightbox?.minZoom != null) {
-      nuxtApp.vueApp.provide(LightboxDefaultsKey, {
-        minZoom: lightbox.minZoom,
-      })
-    }
-  },
-})
+  if (lightbox?.minZoom != null) {
+    nuxtApp.vueApp.provide(LightboxDefaultsKey, {
+      minZoom: lightbox.minZoom,
+    })
+  }
+}
+
+export default defineNuxtPlugin(nuxtPhotoDefaultsPlugin)

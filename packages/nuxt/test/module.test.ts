@@ -53,7 +53,7 @@ describe('nuxt-photo module', () => {
     hasNuxtModule.mockReset()
   })
 
-  it('declares Nuxt 4 compatibility only', () => {
+  it('declares Nuxt compatibility through module metadata', () => {
     expect(nuxtPhotoModule.meta.compatibility).toEqual({
       nuxt: '^4.0.0',
     })
@@ -311,9 +311,21 @@ describe('nuxt-photo module', () => {
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(addImports).toHaveBeenCalledWith([
-      { name: 'useLightbox', from: '@nuxt-photo/vue' },
-      { name: 'useLightboxProvider', from: '@nuxt-photo/vue' },
-      { name: 'responsive', from: '@nuxt-photo/vue' },
+      {
+        name: 'useLightbox',
+        as: 'useNuxtPhotoLightbox',
+        from: '@nuxt-photo/vue',
+      },
+      {
+        name: 'useLightboxProvider',
+        as: 'useNuxtPhotoLightboxProvider',
+        from: '@nuxt-photo/vue',
+      },
+      {
+        name: 'responsive',
+        as: 'nuxtPhotoResponsive',
+        from: '@nuxt-photo/vue',
+      },
     ])
   })
 })

@@ -52,9 +52,18 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
 ]
 
 const AUTO_IMPORTS = [
-  'useLightbox',
-  'useLightboxProvider',
-  'responsive',
+  {
+    name: 'useLightbox',
+    as: 'useNuxtPhotoLightbox',
+  },
+  {
+    name: 'useLightboxProvider',
+    as: 'useNuxtPhotoLightboxProvider',
+  },
+  {
+    name: 'responsive',
+    as: 'nuxtPhotoResponsive',
+  },
 ] as const
 
 export default defineNuxtModule<NuxtPhotoOptions>({
@@ -150,7 +159,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
     if (options.autoImports) {
       addImports(
-        AUTO_IMPORTS.map((name) => ({ name, from: '@nuxt-photo/vue' })),
+        AUTO_IMPORTS.map((entry) => ({ ...entry, from: '@nuxt-photo/vue' })),
       )
     }
 
