@@ -20,6 +20,7 @@ const CHANNEL_COLORS: Record<DebugChannel, string> = {
   rects: '#fb923c',
 }
 
+/** Create a channel-aware debug logger whose output can be toggled at runtime. */
 export function createDebug(): DebugLogger {
   const flags: DebugFlags = {
     transitions: false,

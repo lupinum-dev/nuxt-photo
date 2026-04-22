@@ -68,6 +68,7 @@ function reconstructShortestPath<T>(
   return path.reverse()
 }
 
+/** Find the lightest path with exactly `pathLength` edges in an implicit graph. */
 export function findShortestPathLengthN<T>(
   graph: GraphFunction<T>,
   pathLength: number,

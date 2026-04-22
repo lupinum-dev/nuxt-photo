@@ -1,10 +1,12 @@
 import type { PhotoItem } from '../../types'
 import { round } from '../../utils/math'
 
+/** Return the aspect ratio for a photo item. */
 export function ratio(item: PhotoItem) {
   return item.width / item.height
 }
 
+/** Estimate how many next-row candidates the row solver should inspect. */
 export function findIdealNodeSearch(
   items: PhotoItem[],
   targetRowHeight: number,
@@ -17,6 +19,7 @@ export function findIdealNodeSearch(
   return round(containerWidth / targetRowHeight / minRatio) + 2
 }
 
+/** Compute the shared height that makes a row fill the available width exactly. */
 export function getCommonHeight(
   row: PhotoItem[],
   containerWidth: number,
@@ -29,6 +32,7 @@ export function getCommonHeight(
   return rowWidth / totalAspectRatio
 }
 
+/** Score a candidate row break for the Knuth-Plass row layout solver. */
 export function cost(
   items: PhotoItem[],
   start: number,

@@ -1,5 +1,6 @@
 import { inject, type InjectionKey } from 'vue'
 
+/** Inject a required dependency and throw lazily when a consumer is mis-nested. */
 export function requireInjection<T>(
   key: InjectionKey<T>,
   componentName: string,

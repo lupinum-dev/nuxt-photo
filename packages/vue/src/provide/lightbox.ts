@@ -7,6 +7,7 @@ import {
   type LightboxSlideRenderer,
 } from './keys'
 
+/** Provide the shared lightbox context plus the optional custom slide resolver. */
 export function provideLightboxContexts(
   ctx: LightboxContext,
   options?: {

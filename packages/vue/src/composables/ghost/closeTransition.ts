@@ -208,6 +208,7 @@ async function doFlipClose(
   )
 }
 
+/** Create the close-transition controller and recovery guards for ghost animations. */
 export function createCloseTransition(s: GhostState) {
   let animationGuardId: ReturnType<typeof setTimeout> | null = null
 

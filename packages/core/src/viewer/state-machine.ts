@@ -55,14 +55,17 @@ export function viewerTransition(
   }
 }
 
+/** Create the initial closed viewer state. */
 export function createViewerState(): ViewerState {
   return { status: 'closed' }
 }
 
+/** Return whether the viewer is mounted or in the process of opening. */
 export function isViewerOpen(state: ViewerState): boolean {
   return state.status === 'open' || state.status === 'opening'
 }
 
+/** Read the active item id from any non-closed viewer state. */
 export function getActiveId(state: ViewerState): (string | number) | undefined {
   if ('activeId' in state) return state.activeId
   return undefined

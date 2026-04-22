@@ -3,6 +3,7 @@ import { validatePhotoDimensions } from '../types'
 import { findRowBreaks } from './knuthPlass'
 import { pathToGroups } from './pathToGroups'
 
+/** Compute a justified rows layout using the global row-break solver. */
 export function computeRowsLayout(options: RowsLayoutOptions): LayoutGroup[] {
   const {
     containerWidth,

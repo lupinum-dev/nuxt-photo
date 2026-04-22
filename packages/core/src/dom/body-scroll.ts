@@ -2,6 +2,10 @@ let lockCount = 0
 let savedOverflow = ''
 let savedPaddingRight = ''
 
+/**
+ * Lock or unlock `document.body` scrolling with reference counting so nested
+ * overlays can share the same guard safely.
+ */
 export function lockBodyScroll(locked: boolean): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') return
 

@@ -1,6 +1,7 @@
 import type { LayoutGroup, PhotoItem } from '../../types'
 import { getCommonHeight, ratio } from './helpers'
 
+/** Convert row-break indices into concrete layout groups with sized entries. */
 export function pathToGroups(
   path: number[],
   photos: PhotoItem[],

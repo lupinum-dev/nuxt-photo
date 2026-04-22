@@ -58,6 +58,10 @@ interface PhotoLayoutOptions {
   interactive: Ref<boolean>
 }
 
+/**
+ * Derive the SSR and client-side layout state used by `PhotoAlbum`, including
+ * container-query snapshots and per-item inline styles.
+ */
 export function usePhotoLayout(options: PhotoLayoutOptions) {
   const {
     photos,

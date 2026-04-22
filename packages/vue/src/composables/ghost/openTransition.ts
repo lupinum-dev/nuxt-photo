@@ -187,6 +187,7 @@ async function doFlipOpen(
   resetOpenState(s)
 }
 
+/** Run the lightbox open transition with automatic FLIP/fade/instant selection. */
 export async function openTransition(
   s: GhostState,
   index: number,

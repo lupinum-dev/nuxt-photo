@@ -20,6 +20,10 @@ import {
 } from '@nuxt-photo/core'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
 
+/**
+ * Manage zoom state, pan bounds, and spring-driven transform updates for the
+ * currently active slide.
+ */
 export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem>,
   areaMetrics: Ref<AreaMetrics | null>,

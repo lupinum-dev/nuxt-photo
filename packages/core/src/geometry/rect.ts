@@ -1,5 +1,6 @@
 import type { RectLike } from '../types'
 
+/** Return whether a DOM rect is large enough and on-screen enough to animate from. */
 export function isUsableRect(
   rect: {
     left: number
@@ -20,10 +21,12 @@ export function isUsableRect(
   return true
 }
 
+/** Wrap an index into the `[0, length)` range for circular navigation. */
 export function getLoopedIndex(index: number, length: number): number {
   return (index + length) % length
 }
 
+/** Fit an aspect ratio into a container while preserving its center point. */
 export function fitRect(container: RectLike, aspect: number): RectLike {
   let width = container.width
   let height = width / aspect
@@ -41,6 +44,7 @@ export function fitRect(container: RectLike, aspect: number): RectLike {
   }
 }
 
+/** Compute the FLIP transform that maps `to` back onto `from`. */
 export function flipTransform(from: RectLike, to: RectLike): string {
   const dx = from.left - to.left
   const dy = from.top - to.top
@@ -49,6 +53,7 @@ export function flipTransform(from: RectLike, to: RectLike): string {
   return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`
 }
 
+/** Create the fixed-position style block shared by ghost-image transitions. */
 export function makeGhostBaseStyle(to: RectLike): Record<string, string> {
   return {
     left: `${to.left}px`,
@@ -58,6 +63,7 @@ export function makeGhostBaseStyle(to: RectLike): Record<string, string> {
   }
 }
 
+/** Apply a simple rubberband effect when a value moves beyond its allowed range. */
 export function rubberband(value: number, min: number, max: number): number {
   if (value < min) {
     return min + (value - min) * 0.2

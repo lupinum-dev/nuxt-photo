@@ -13,6 +13,7 @@ export interface Collection<T extends CollectionItem> {
   preloadCandidates(currentIndex: number, range?: number): T[]
 }
 
+/** Build an indexed collection with navigation helpers for photo-like items. */
 export function createCollection<T extends CollectionItem>(
   items: readonly T[],
 ): Collection<T> {

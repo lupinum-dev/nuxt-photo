@@ -9,6 +9,7 @@ import { createGhostState, setThumbRef } from './ghost/state'
 import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'
 
+/** Coordinate ghost-image open/close transitions and expose their reactive state. */
 export function useGhostTransition(
   activeIndex: Ref<number>,
   currentPhoto: ComputedRef<PhotoItem>,

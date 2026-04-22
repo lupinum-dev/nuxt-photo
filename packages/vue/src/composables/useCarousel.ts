@@ -17,6 +17,10 @@ import {
 } from '@nuxt-photo/core'
 import type { CarouselConfig } from './lightboxRuntimeTypes'
 
+/**
+ * Bind Embla-based slide navigation and per-slide visual effects to the active
+ * lightbox photo collection.
+ */
 export function useCarousel(
   photos: ComputedRef<PhotoItem[]>,
   areaMetrics: Ref<AreaMetrics | null>,

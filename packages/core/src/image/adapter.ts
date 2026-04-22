@@ -25,6 +25,7 @@ const _nativeAdapter: ImageAdapter = (
   }
 }
 
+/** Return the built-in adapter that uses `src`, `thumbSrc`, and `srcset` directly. */
 export function createNativeImageAdapter(): ImageAdapter {
   return _nativeAdapter
 }

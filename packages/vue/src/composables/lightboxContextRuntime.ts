@@ -25,6 +25,7 @@ import type {
   LightboxViewportState,
 } from '@nuxt-photo/engine'
 
+/** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(
   onKeydown: (event: KeyboardEvent) => void,
 ) {
@@ -45,6 +46,7 @@ export function createKeydownBinding(
   return { attach, detach }
 }
 
+/** Preload the active slide and its immediate neighbors. */
 export function createPreloadAround(photos: ComputedRef<PhotoItem[]>) {
   return function preloadAround(index: number) {
     const candidates = [index - 1, index, index + 1]
@@ -58,6 +60,7 @@ export function createPreloadAround(photos: ComputedRef<PhotoItem[]>) {
   }
 }
 
+/** Measure the media area and cache the usable viewport metrics. */
 export function createGeometrySync(
   mediaAreaRef: Ref<HTMLElement | null>,
   areaMetrics: Ref<AreaMetrics | null>,
@@ -93,6 +96,7 @@ export function createGeometrySync(
   }
 }
 
+/** Keep the engine photo collection in sync with the current reactive source. */
 export function syncEnginePhotos(
   engine: LightboxEngine,
   photos: ComputedRef<PhotoItem[]>,
@@ -106,6 +110,7 @@ export function syncEnginePhotos(
   )
 }
 
+/** Mirror the active slide index into the engine state. */
 export function syncEngineActiveIndex(
   engine: LightboxEngine,
   activeIndex: Ref<number>,
@@ -119,6 +124,7 @@ export function syncEngineActiveIndex(
   )
 }
 
+/** Push viewport-derived zoom and pan state into the engine snapshot. */
 export function syncEngineViewportState(
   engine: LightboxEngine,
   config: {
@@ -143,6 +149,7 @@ export function syncEngineViewportState(
   )
 }
 
+/** Push presentation-only runtime state into the engine snapshot. */
 export function syncEnginePresentationState(
   engine: LightboxEngine,
   config: {
@@ -201,6 +208,7 @@ export function syncEnginePresentationState(
   )
 }
 
+/** React to photo-list changes that can invalidate the active slide at runtime. */
 export function watchPhotoCollection(
   photos: ComputedRef<PhotoItem[]>,
   config: {
@@ -241,6 +249,7 @@ export function watchPhotoCollection(
   })
 }
 
+/** Refresh geometry, zoom bounds, and preloading when the active slide changes. */
 export function watchActiveIndexRuntime(
   activeIndex: Ref<number>,
   config: {
@@ -269,6 +278,7 @@ export function watchActiveIndexRuntime(
   })
 }
 
+/** Attach the window-level listeners and cleanup used by the lightbox runtime. */
 export function useLightboxWindowLifecycle(config: {
   lightboxMounted: Ref<boolean>
   cancelTapTimer: () => void

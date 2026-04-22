@@ -42,6 +42,13 @@ function createSnapshot(state: LightboxEngineState): LightboxEngineState {
   }
 }
 
+/**
+ * Create the framework-free lightbox runtime used by the Vue layer.
+ *
+ * The engine owns photo collection state, active index, viewer lifecycle, and
+ * presentation snapshots, but leaves DOM measurement and gesture handling to
+ * callers that sync those values back in.
+ */
 export function createLightboxEngine(options?: {
   photos?: PhotoItem[]
   state?: Partial<LightboxEngineState>

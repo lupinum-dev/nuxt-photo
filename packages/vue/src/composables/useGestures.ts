@@ -65,6 +65,10 @@ type GestureConfig = {
   close: () => Promise<void>
 }
 
+/**
+ * Classify pointer and wheel input into slide, pan, zoom, and close gestures,
+ * then dispatch the appropriate runtime side effects.
+ */
 export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   const gesturePhase = ref<GestureMode>('idle')
 

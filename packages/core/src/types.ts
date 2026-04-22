@@ -236,6 +236,7 @@ export function resolveResponsiveParameter<T>(
     : value
 }
 
+/** Read breakpoint metadata from a `responsive()` resolver when present. */
 export function getResponsiveBreakpoints<T>(
   value: ResponsiveParameter<T> | undefined,
 ): readonly number[] | undefined {
@@ -247,6 +248,7 @@ export function getResponsiveBreakpoints<T>(
     : undefined
 }
 
+/** Merge breakpoint metadata from several responsive parameters into one list. */
 export function mergeResponsiveBreakpoints(
   values: Array<ResponsiveParameter<any> | undefined>,
 ): readonly number[] | undefined {

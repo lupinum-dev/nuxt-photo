@@ -17,10 +17,12 @@ export type Spring1D = {
   rafId: number
 }
 
+/** Create a spring state object with tuned default motion parameters. */
 export function createSpring1D(tension = 260, friction = 22): Spring1D {
   return { value: 0, target: 0, velocity: 0, tension, friction, rafId: 0 }
 }
 
+/** Cancel a running spring animation if one is active. */
 export function stopSpring(spring: Spring1D) {
   if (spring.rafId) {
     cancelAnimationFrame(spring.rafId)
@@ -28,6 +30,7 @@ export function stopSpring(spring: Spring1D) {
   }
 }
 
+/** Advance a spring by one semi-implicit Euler integration step. */
 export function springStep(
   current: number,
   target: number,
@@ -41,6 +44,7 @@ export function springStep(
   return { value: current + newVelocity * dt, velocity: newVelocity }
 }
 
+/** Run a spring to completion, calling `onUpdate` on every animation frame. */
 export function runSpring(
   spring: Spring1D,
   onUpdate: (value: number) => void,

@@ -14,6 +14,7 @@ import type {
 } from '@nuxt-photo/core'
 import type { GhostState } from './types'
 
+/** Create the shared reactive state used by ghost open/close transition helpers. */
 export function createGhostState(
   activeIndex: Ref<number>,
   currentPhoto: ComputedRef<PhotoItem>,
@@ -71,6 +72,7 @@ export function createGhostState(
   }
 }
 
+/** Record or clear the thumbnail element for a slide index. */
 export function setThumbRef(state: GhostState, index: number) {
   return (value: Element | ComponentPublicInstance | null) => {
     const el =
@@ -88,6 +90,7 @@ export function setThumbRef(state: GhostState, index: number) {
   }
 }
 
+/** Reset the transient state used only during the open transition path. */
 export function resetOpenState(state: GhostState) {
   state.ghostVisible.value = false
   state.ghostSrc.value = ''
@@ -100,6 +103,7 @@ export function resetOpenState(state: GhostState) {
   state.disableBackdropTransition.value = false
 }
 
+/** Reset the close-transition state and unmount the lightbox runtime cleanly. */
 export function resetCloseState(state: GhostState, clearGuard: () => void) {
   state.debug?.log('transitions', 'resetCloseState: unmounting lightbox')
   clearGuard()

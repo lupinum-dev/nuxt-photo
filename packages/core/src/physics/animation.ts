@@ -1,5 +1,6 @@
 import { easeInOutCubic } from './easing'
 
+/** Animate a numeric value over time and resolve once the animation completes. */
 export async function animateNumber(
   from: number,
   to: number,

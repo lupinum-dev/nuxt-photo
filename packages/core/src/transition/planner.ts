@@ -13,6 +13,7 @@ export type TransitionModeConfig = {
   autoThreshold: number
 }
 
+/** Create the default close/open transition selection policy. */
 export function createTransitionMode(): TransitionModeConfig {
   return {
     mode: 'auto',
@@ -40,6 +41,7 @@ function getVisibleDimensions(
   }
 }
 
+/** Return the visible-area ratio for a rect within the current viewport. */
 export function getVisibilityRatio(rect: ViewportRect | null): number {
   if (!rect || rect.width <= 0 || rect.height <= 0) return 0
 

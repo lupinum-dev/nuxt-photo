@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import type { LightboxEngine } from '@nuxt-photo/engine'
 
+/** Mirror a lightbox engine snapshot into Vue refs that update on subscription. */
 export function useLightboxEngineState(engine: LightboxEngine) {
   const initial = engine.getState()
 
