@@ -2,7 +2,7 @@
 
 Nuxt module for Nuxt Photo.
 
-Install this package when you want the default Nuxt experience: auto-registered components, prefixed auto-imported helpers, and CSS wiring from one module entry.
+Install this package when you want the default Nuxt experience: auto-registered components, auto-imported helpers, and CSS wiring from one module entry.
 
 ## Install
 
@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 
 - auto-registered recipe components like `<PhotoAlbum>` and `<PhotoGroup>`
 - auto-registered primitives like `<LightboxRoot>` and `<PhotoImage>`
-- auto-imported `useNuxtPhotoLightbox`, `useNuxtPhotoLightboxProvider`, and `nuxtPhotoResponsive`
+- auto-imported `useLightbox`, `useLightboxProvider`, and `responsive`
 - optional `@nuxt/image` integration
 - structure-only or full-theme CSS loading
 

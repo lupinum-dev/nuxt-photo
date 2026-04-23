@@ -10,7 +10,7 @@ import type { NuxtModule } from '@nuxt/schema'
 export type { PhotoItem } from '@nuxt-photo/core'
 
 export interface NuxtPhotoOptions {
-  autoImports?: boolean
+  autoImports?: boolean | { prefix?: string }
   components?: boolean | { prefix?: string }
   css?: 'none' | 'structure' | 'all'
   image?:
@@ -52,19 +52,26 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
 ]
 
 const AUTO_IMPORTS = [
-  {
-    name: 'useLightbox',
-    as: 'useNuxtPhotoLightbox',
-  },
-  {
-    name: 'useLightboxProvider',
-    as: 'useNuxtPhotoLightboxProvider',
-  },
-  {
-    name: 'responsive',
-    as: 'nuxtPhotoResponsive',
-  },
+  'useLightbox',
+  'useLightboxProvider',
+  'responsive',
 ] as const
+
+function capitalize(name: string) {
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)}`
+}
+
+function resolveAutoImportAlias(name: string, prefix: string) {
+  if (!prefix) {
+    return name
+  }
+
+  if (name.startsWith('use')) {
+    return `use${prefix}${name.slice(3)}`
+  }
+
+  return `${prefix.charAt(0).toLowerCase()}${prefix.slice(1)}${capitalize(name)}`
+}
 
 export default defineNuxtModule<NuxtPhotoOptions>({
   meta: {
@@ -158,8 +165,17 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     if (options.autoImports) {
+      const prefix =
+        typeof options.autoImports === 'object'
+          ? (options.autoImports.prefix ?? '')
+          : ''
+
       addImports(
-        AUTO_IMPORTS.map((entry) => ({ ...entry, from: '@nuxt-photo/vue' })),
+        AUTO_IMPORTS.map((name) => ({
+          name,
+          as: resolveAutoImportAlias(name, prefix),
+          from: '@nuxt-photo/vue',
+        })),
       )
     }
 

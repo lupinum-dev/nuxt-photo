@@ -12,8 +12,8 @@
     "@nuxt-photo/nuxt": "workspace:*",
     "@nuxt-photo/recipes": "workspace:*",
     "@nuxt-photo/vue": "workspace:*",
+    "@tailwindcss/vite": "^4.2.4",
     "nuxt": "^4.4.2",
-    "tailwindcss": "^4",
-    "@tailwindcss/vite": "^4"
+    "tailwindcss": "^4.2.4"
   }
 }

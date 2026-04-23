@@ -42,7 +42,7 @@
     "@nuxt-photo/core": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
+    "typescript": "6.0.3",
     "unbuild": "^3.5.0"
   }
 }

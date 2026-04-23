@@ -55,6 +55,6 @@
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
     "nuxt": "^4.4.2",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   }
 }

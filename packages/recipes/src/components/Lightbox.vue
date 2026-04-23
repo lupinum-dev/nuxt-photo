@@ -134,11 +134,10 @@ interface LightboxCounterSlotProps {
   count: number
 }
 
-interface LightboxActionsSlotProps
-  extends Omit<
-    LightboxControlsSlotProps,
-    'activeIndex' | 'activePhoto' | 'photos' | 'count'
-  > {}
+interface LightboxActionsSlotProps extends Omit<
+  LightboxControlsSlotProps,
+  'activeIndex' | 'activePhoto' | 'photos' | 'count'
+> {}
 
 interface LightboxCaptionRecipeSlotProps {
   photo: LightboxCaptionSlotProps['photo']

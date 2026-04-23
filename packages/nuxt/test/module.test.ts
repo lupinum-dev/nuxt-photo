@@ -313,17 +313,47 @@ describe('nuxt-photo module', () => {
     expect(addImports).toHaveBeenCalledWith([
       {
         name: 'useLightbox',
-        as: 'useNuxtPhotoLightbox',
+        as: 'useLightbox',
         from: '@nuxt-photo/vue',
       },
       {
         name: 'useLightboxProvider',
-        as: 'useNuxtPhotoLightboxProvider',
+        as: 'useLightboxProvider',
         from: '@nuxt-photo/vue',
       },
       {
         name: 'responsive',
-        as: 'nuxtPhotoResponsive',
+        as: 'responsive',
+        from: '@nuxt-photo/vue',
+      },
+    ])
+  })
+
+  it('registers auto-imports with an opt-in prefix', () => {
+    const nuxt = createNuxt()
+
+    nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        autoImports: { prefix: 'Np' },
+      },
+      nuxt,
+    )
+
+    expect(addImports).toHaveBeenCalledWith([
+      {
+        name: 'useLightbox',
+        as: 'useNpLightbox',
+        from: '@nuxt-photo/vue',
+      },
+      {
+        name: 'useLightboxProvider',
+        as: 'useNpLightboxProvider',
+        from: '@nuxt-photo/vue',
+      },
+      {
+        name: 'responsive',
+        as: 'npResponsive',
         from: '@nuxt-photo/vue',
       },
     ])

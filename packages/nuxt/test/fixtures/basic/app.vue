@@ -18,7 +18,7 @@ const photos: PhotoItem[] = [
   },
 ]
 
-const spacing = nuxtPhotoResponsive({ 0: 4, 640: 8 })
+const spacing = responsive({ 0: 4, 640: 8 })
 const minZoom = useAppConfig().nuxtPhoto?.lightbox?.minZoom
 </script>
 
