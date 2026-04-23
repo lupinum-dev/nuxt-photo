@@ -235,7 +235,7 @@ const {
   padding: computed(() => props.padding),
   targetRowHeight: layoutTargetRowHeight,
   defaultContainerWidth: props.defaultContainerWidth,
-  breakpoints: effectiveBreakpoints.value,
+  breakpoints: effectiveBreakpoints,
   sizes: props.sizes,
   interactive: hasLightbox,
 })
@@ -317,35 +317,22 @@ function isHidden(photo: PhotoItem): boolean {
   return false
 }
 
-const idToSymbol = new Map<string, symbol>()
 let registrationIds: symbol[] = []
 
 if (parentGroup) {
   function syncRegistrations(nextPhotos: PhotoItem[]) {
-    const newIds = new Set(nextPhotos.map(photoId))
-    const oldIds = new Set(idToSymbol.keys())
-
-    for (const pid of oldIds) {
-      if (!newIds.has(pid)) {
-        const symbol = idToSymbol.get(pid)!
-        parentGroup.unregister(symbol)
-        idToSymbol.delete(pid)
-      }
+    for (const symbol of registrationIds) {
+      parentGroup.unregister(symbol)
     }
 
     registrationIds = nextPhotos.map((photo, index) => {
-      const pid = photoId(photo)
-      let symbol = idToSymbol.get(pid)
-      if (!symbol) {
-        symbol = Symbol()
-        idToSymbol.set(pid, symbol)
-        parentGroup.register(
-          symbol,
-          photo,
-          () => thumbElsMap[index] ?? null,
-          null,
-        )
-      }
+      const symbol = Symbol(photoId(photo))
+      parentGroup.register(
+        symbol,
+        photo,
+        () => thumbElsMap[index] ?? null,
+        null,
+      )
       return symbol
     })
   }
@@ -362,7 +349,6 @@ if (parentGroup) {
     for (const symbol of registrationIds) {
       parentGroup.unregister(symbol)
     }
-    idToSymbol.clear()
     registrationIds = []
   })
 }

@@ -25,7 +25,7 @@ import type { PanzoomMotion } from './lightboxRuntimeTypes'
  * currently active slide.
  */
 export function usePanzoom(
-  currentPhoto: ComputedRef<PhotoItem>,
+  currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   debug?: DebugLogger,
   minZoom?: number,
@@ -93,6 +93,7 @@ export function usePanzoom(
     zoom = zoomState.value.current,
     photo = currentPhoto.value,
   ): PanState {
+    if (!photo) return { x: 0, y: 0 }
     const bounds = getPanBounds(photo, zoom)
     return clampPanToBounds(pan, bounds)
   }
@@ -102,6 +103,7 @@ export function usePanzoom(
     zoom = zoomState.value.current,
     photo = currentPhoto.value,
   ): PanState {
+    if (!photo) return { x: 0, y: 0 }
     const bounds = getPanBounds(photo, zoom)
     return coreClampPanWithResistance(pan, bounds)
   }
@@ -127,10 +129,13 @@ export function usePanzoom(
       return { x: 0, y: 0 }
     }
 
+    const photo = currentPhoto.value
+    if (!photo) return { x: 0, y: 0 }
+
     const point = clientPoint
       ? getPointFromClient(clientPoint.x, clientPoint.y)
       : { x: 0, y: 0 }
-    const bounds = getPanBounds(currentPhoto.value, targetZoom)
+    const bounds = getPanBounds(photo, targetZoom)
 
     return computeTargetPanForZoom(
       targetZoom,
@@ -256,7 +261,10 @@ export function usePanzoom(
   }
 
   function refreshZoomState(reset = false) {
-    const next = computeZoomLevels(currentPhoto.value)
+    const photo = currentPhoto.value
+    const next = photo
+      ? computeZoomLevels(photo)
+      : { fit: 1, secondary: 1, max: 1, current: 1 }
     const current = reset
       ? next.fit
       : Math.min(next.max, Math.max(next.fit, panzoomMotion.targetScale))
@@ -266,7 +274,7 @@ export function usePanzoom(
         : clampPan(
             { x: panzoomMotion.targetX, y: panzoomMotion.targetY },
             current,
-            currentPhoto.value,
+            photo ?? undefined,
           )
 
     debug?.log(

@@ -3,6 +3,8 @@ import {
   classifyGesture as coreClassifyGesture,
   isDoubleTap as coreIsDoubleTap,
   VelocityTracker,
+  clientToAreaPoint,
+  computeTargetPanForZoom,
   type AreaMetrics,
   type GestureMode,
   type PanState,
@@ -23,7 +25,7 @@ type GestureConfig = {
   isZoomedIn: ComputedRef<boolean>
   zoomAllowed: ComputedRef<boolean>
   mediaAreaRef: Ref<HTMLElement | null>
-  currentPhoto: ComputedRef<PhotoItem>
+  currentPhoto: ComputedRef<PhotoItem | null>
   areaMetrics: Ref<AreaMetrics | null>
   uiVisible: Ref<boolean>
   panState: Ref<PanState>
@@ -72,6 +74,13 @@ type GestureConfig = {
 export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   const gesturePhase = ref<GestureMode>('idle')
 
+  type TrackedPointer = {
+    id: number
+    pointerType: string
+    clientX: number
+    clientY: number
+  }
+
   let pointerSession: {
     id: number
     pointerType: string
@@ -83,6 +92,17 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     startPan: PanState
   } | null = null
 
+  let pinchSession: {
+    startDistance: number
+    startCenter: { x: number; y: number }
+    startScale: number
+    startPan: PanState
+    moved: boolean
+  } | null = null
+
+  const activePointers = new Map<number, TrackedPointer>()
+  const capturedPointers = new Set<number>()
+
   let tapTimer: ReturnType<typeof setTimeout> | undefined
   let lastTap: { time: number; clientX: number; clientY: number } | null = null
   let lastWheelTime = 0
@@ -91,8 +111,11 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   const velocityTracker = new VelocityTracker(100)
 
   function resetGestureState() {
+    releaseAllPointers()
     gesturePhase.value = 'idle'
     pointerSession = null
+    pinchSession = null
+    activePointers.clear()
     emblaStolen = false
   }
 
@@ -132,10 +155,10 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     deltaY: number,
     pointerType: string,
   ): GestureMode {
-    const bounds = config.getPanBounds(
-      config.currentPhoto.value,
-      config.zoomState.value.current,
-    )
+    const photo = config.currentPhoto.value
+    if (!photo) return 'idle'
+
+    const bounds = config.getPanBounds(photo, config.zoomState.value.current)
     return coreClassifyGesture(
       deltaX,
       deltaY,
@@ -144,6 +167,155 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
       bounds,
       config.panState.value,
     )
+  }
+
+  function getPointerPair() {
+    const pointers = Array.from(activePointers.values())
+    if (pointers.length < 2) return null
+    return [pointers[0]!, pointers[1]!] as const
+  }
+
+  function getPairGeometry(pair: readonly [TrackedPointer, TrackedPointer]) {
+    const [a, b] = pair
+    const dx = b.clientX - a.clientX
+    const dy = b.clientY - a.clientY
+    return {
+      distance: Math.hypot(dx, dy),
+      center: {
+        x: (a.clientX + b.clientX) / 2,
+        y: (a.clientY + b.clientY) / 2,
+      },
+    }
+  }
+
+  function capturePointer(id: number) {
+    try {
+      config.mediaAreaRef.value?.setPointerCapture(id)
+      capturedPointers.add(id)
+    } catch {
+      // Pointer capture is best-effort; Safari can throw during cancelled sequences.
+    }
+  }
+
+  function releasePointer(id: number) {
+    try {
+      config.mediaAreaRef.value?.releasePointerCapture(id)
+    } catch {
+      // ignored
+    } finally {
+      capturedPointers.delete(id)
+    }
+  }
+
+  function releaseAllPointers() {
+    for (const id of capturedPointers) {
+      releasePointer(id)
+    }
+  }
+
+  function startPinchGesture() {
+    const pair = getPointerPair()
+    if (!pair || !config.zoomAllowed.value) return false
+
+    const { distance, center } = getPairGeometry(pair)
+    if (distance <= 0) return false
+
+    pinchSession = {
+      startDistance: distance,
+      startCenter: center,
+      startScale: config.panzoomMotion.scale,
+      startPan: {
+        x: config.panzoomMotion.x,
+        y: config.panzoomMotion.y,
+      },
+      moved: false,
+    }
+
+    gesturePhase.value = 'pinch'
+    emblaStolen = true
+    pointerSession = null
+    config.goTo(config.selectedSnap(), true)
+    for (const pointer of activePointers.values()) {
+      capturePointer(pointer.id)
+    }
+    debug?.log(
+      'gestures',
+      `pinch start: distance=${distance.toFixed(1)} scale=${pinchSession.startScale.toFixed(3)}`,
+    )
+    return true
+  }
+
+  function applyPinchGesture(event: PointerEvent) {
+    const photo = config.currentPhoto.value
+    const pair = getPointerPair()
+    if (!pinchSession || !photo || !pair) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const { distance, center } = getPairGeometry(pair)
+    const scaleRatio = distance / pinchSession.startDistance
+    const targetScale = Math.min(
+      config.zoomState.value.max,
+      Math.max(
+        config.zoomState.value.fit,
+        pinchSession.startScale * scaleRatio,
+      ),
+    )
+
+    const area = config.areaMetrics.value
+    const startPoint = area
+      ? clientToAreaPoint(
+          pinchSession.startCenter.x,
+          pinchSession.startCenter.y,
+          area.left,
+          area.top,
+          area.width,
+          area.height,
+        )
+      : { x: 0, y: 0 }
+    const bounds = config.getPanBounds(photo, targetScale)
+    const scalePan = computeTargetPanForZoom(
+      targetScale,
+      pinchSession.startScale,
+      pinchSession.startPan,
+      startPoint,
+      config.zoomState.value.fit,
+      bounds,
+    )
+    const targetPan = {
+      x: scalePan.x + (center.x - pinchSession.startCenter.x),
+      y: scalePan.y + (center.y - pinchSession.startCenter.y),
+    }
+
+    pinchSession.moved =
+      pinchSession.moved ||
+      Math.abs(distance - pinchSession.startDistance) > 4 ||
+      Math.abs(center.x - pinchSession.startCenter.x) > 4 ||
+      Math.abs(center.y - pinchSession.startCenter.y) > 4
+
+    config.setPanzoomImmediate(
+      targetScale,
+      config.clampPanWithResistance(targetPan, targetScale, photo),
+      false,
+    )
+  }
+
+  function settlePinchGesture() {
+    const photo = config.currentPhoto.value
+    const targetScale = config.panzoomMotion.scale
+    const clampedPan = photo
+      ? config.clampPan(
+          { x: config.panzoomMotion.x, y: config.panzoomMotion.y },
+          targetScale,
+          photo,
+        )
+      : { x: 0, y: 0 }
+
+    config.startPanzoomSpring(targetScale, clampedPan, {
+      tension: 190,
+      friction: 20,
+    })
   }
 
   function onMediaPointerDown(event: PointerEvent) {
@@ -155,6 +327,22 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     }
 
     if (event.pointerType === 'mouse' && event.button !== 0) return
+
+    activePointers.set(event.pointerId, {
+      id: event.pointerId,
+      pointerType: event.pointerType,
+      clientX: event.clientX,
+      clientY: event.clientY,
+    })
+
+    if (activePointers.size >= 2) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (startPinchGesture()) return
+      pointerSession = null
+      gesturePhase.value = 'idle'
+      return
+    }
 
     if (config.isZoomedIn.value) {
       event.stopPropagation()
@@ -182,11 +370,31 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
     emblaStolen = false
 
     if (config.isZoomedIn.value) {
-      config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
+      capturePointer(event.pointerId)
     }
   }
 
   function onMediaPointerMove(event: PointerEvent) {
+    const tracked = activePointers.get(event.pointerId)
+    if (tracked) {
+      tracked.clientX = event.clientX
+      tracked.clientY = event.clientY
+    }
+
+    if (gesturePhase.value === 'pinch') {
+      applyPinchGesture(event)
+      return
+    }
+
+    if (activePointers.size >= 2) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (startPinchGesture()) {
+        applyPinchGesture(event)
+      }
+      return
+    }
+
     if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     const deltaX = event.clientX - pointerSession.startX
@@ -212,7 +420,7 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
           event.stopPropagation()
           emblaStolen = true
           config.goTo(config.selectedSnap(), true)
-          config.mediaAreaRef.value?.setPointerCapture(event.pointerId)
+          capturePointer(event.pointerId)
         }
 
         if (mode === 'slide' && config.isZoomedIn.value) {
@@ -250,14 +458,34 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   }
 
   async function onMediaPointerUp(event: PointerEvent) {
+    const wasPinching = gesturePhase.value === 'pinch'
+    activePointers.delete(event.pointerId)
+
+    if (wasPinching) {
+      releasePointer(event.pointerId)
+
+      if (activePointers.size >= 2) {
+        startPinchGesture()
+        return
+      }
+
+      const session = pinchSession
+      for (const pointer of activePointers.values()) {
+        releasePointer(pointer.id)
+      }
+      resetGestureState()
+      event.preventDefault()
+      event.stopPropagation()
+      if (session?.moved) {
+        settlePinchGesture()
+      }
+      return
+    }
+
     if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     if (config.isZoomedIn.value || emblaStolen) {
-      try {
-        config.mediaAreaRef.value?.releasePointerCapture(event.pointerId)
-      } catch {
-        // ignored
-      }
+      releasePointer(event.pointerId)
     }
 
     const session = pointerSession
@@ -301,6 +529,16 @@ export function useGestures(config: GestureConfig, debug?: DebugLogger) {
   }
 
   function onMediaPointerCancel(event: PointerEvent) {
+    const wasPinching = gesturePhase.value === 'pinch'
+    activePointers.delete(event.pointerId)
+
+    if (wasPinching) {
+      settlePinchGesture()
+      resetGestureState()
+      config.setCloseDragY(0)
+      return
+    }
+
     if (!pointerSession || event.pointerId !== pointerSession.id) return
 
     const wasZoomed = config.isZoomedIn.value || emblaStolen

@@ -15,6 +15,7 @@
   position: absolute;
   inset: 0;
   transform-origin: center 28%;
+  pointer-events: none;
 }
 
 .np-lightbox__topbar {
@@ -27,11 +28,13 @@
   align-items: center;
   justify-content: space-between;
   transition: opacity 160ms ease;
+  pointer-events: none;
 }
 
 .np-lightbox__actions {
   display: flex;
   gap: 10px;
+  pointer-events: auto;
 }
 
 .np-lightbox__btn {
@@ -66,6 +69,7 @@
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 18px;
   justify-items: center;
+  pointer-events: none;
 }
 
 .np-lightbox__media {
@@ -73,6 +77,8 @@
   width: min(1240px, calc(100vw - 72px));
   height: min(78vh, calc(100vh - 150px));
   overflow: hidden;
+  touch-action: none;
+  pointer-events: auto;
 }
 
 .np-lightbox__media[data-zoomed] {
@@ -92,7 +98,7 @@
 .np-lightbox__container {
   display: flex;
   height: 100%;
-  touch-action: pan-y pinch-zoom;
+  touch-action: none;
 }
 
 .np-lightbox__slide {
@@ -142,6 +148,11 @@
   width: min(1240px, calc(100vw - 72px));
   text-align: left;
   transition: opacity 160ms ease;
+  pointer-events: none;
+}
+
+.np-lightbox__caption > * {
+  pointer-events: auto;
 }
 
 .np-lightbox__caption h2 {

@@ -12,7 +12,7 @@ import { createCloseTransition } from './ghost/closeTransition'
 /** Coordinate ghost-image open/close transitions and expose their reactive state. */
 export function useGhostTransition(
   activeIndex: Ref<number>,
-  currentPhoto: ComputedRef<PhotoItem>,
+  currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (
     photo: PhotoItem,

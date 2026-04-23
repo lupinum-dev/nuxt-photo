@@ -4,6 +4,7 @@ import {
   onMounted,
   useId,
   type CSSProperties,
+  type ComputedRef,
   type Ref,
 } from 'vue'
 import { useContainerWidth } from '@nuxt-photo/vue'
@@ -53,7 +54,7 @@ interface PhotoLayoutOptions {
   padding: Ref<ResponsiveParameter<number>>
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
-  breakpoints?: readonly number[]
+  breakpoints: ComputedRef<readonly number[] | undefined>
   sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
   interactive: Ref<boolean>
 }
@@ -87,7 +88,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const snapshotClass = computed(() => `np-snapshot-${containerName.value}`)
 
-  const containerQueriesActive = computed(() => !!breakpoints?.length)
+  const containerQueriesActive = computed(() => !!breakpoints.value?.length)
 
   // ─── Per-breakpoint SSR snapshots for columns/masonry ──────────────────────
   // Precedence:
@@ -97,11 +98,12 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
   const breakpointSnapshots = computed<BreakpointSnapshot[]>(() => {
     if (layout.value === 'rows') return []
 
-    if (breakpoints?.length) {
+    const bp = breakpoints.value
+    if (bp?.length) {
       if (layout.value === 'columns') {
         return computeColumnsBreakpointSnapshots({
           photos: photos.value,
-          breakpoints,
+          breakpoints: bp,
           spacing: spacing.value,
           padding: padding.value,
           columns: columns.value,
@@ -109,7 +111,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
       }
       return computeMasonryBreakpointSnapshots({
         photos: photos.value,
-        breakpoints,
+        breakpoints: bp,
         spacing: spacing.value,
         padding: padding.value,
         columns: columns.value,
@@ -162,7 +164,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
     if (layout.value === 'rows') {
       return computeBreakpointStyles({
         photos: photos.value,
-        breakpoints: breakpoints!,
+        breakpoints: breakpoints.value!,
         spacing: spacing.value,
         padding: padding.value,
         targetRowHeight: targetRowHeight.value,
@@ -337,7 +339,7 @@ export function usePhotoLayout(options: PhotoLayoutOptions) {
   function maybeWarnApproximate() {
     if (layout.value === 'rows') return
     if (
-      breakpoints?.length ||
+      breakpoints.value?.length ||
       (defaultContainerWidth && defaultContainerWidth > 0)
     )
       return

@@ -180,27 +180,61 @@ export function useLightboxContext(
   // Suppresses `watchActiveIndexRuntime` side effects while `open()` runs —
   // the ghost transition callbacks handle the same work in the right order.
   const skipActiveIndexWatch = ref(false)
+  let pendingOpen: Promise<boolean> | null = null
+
+  async function settlePendingOpen() {
+    if (!pendingOpen) return
+
+    try {
+      await pendingOpen
+    } catch {
+      // Let close/open recovery continue even when the previous transition threw.
+    }
+  }
 
   async function open(photoOrIndex: PhotoItem | number = 0) {
+    await settlePendingOpen()
+
+    const currentPhotos = photos.value
+    if (currentPhotos.length === 0) return
+
     const index =
       typeof photoOrIndex === 'number'
         ? photoOrIndex
-        : photos.value.findIndex(
+        : currentPhotos.findIndex(
             (photo) => photoId(photo) === photoId(photoOrIndex as PhotoItem),
           )
 
+    const targetIndex = index >= 0 ? index : 0
+
     skipActiveIndexWatch.value = true
-    engine.open(index >= 0 ? index : 0)
-    ghost.setCloseDragY(0)
-    carousel.goTo(index >= 0 ? index : 0, true)
-    keydown.attach()
-    await ghost.open(index >= 0 ? index : 0, transitionCallbacks)
-    engine.markOpened()
-    preloadAround(index >= 0 ? index : 0)
-    skipActiveIndexWatch.value = false
+    try {
+      engine.open(targetIndex)
+      ghost.setCloseDragY(0)
+      carousel.goTo(targetIndex, true)
+      keydown.attach()
+
+      pendingOpen = ghost.open(targetIndex, transitionCallbacks)
+      const opened = await pendingOpen
+      if (!opened) {
+        engine.markClosed()
+        keydown.detach()
+        return
+      }
+
+      engine.markOpened()
+      preloadAround(targetIndex)
+    } finally {
+      pendingOpen = null
+      skipActiveIndexWatch.value = false
+    }
   }
 
   async function close() {
+    await settlePendingOpen()
+
+    if (!ghost.lightboxMounted.value && !engineState.isOpen.value) return
+
     engine.close()
     await ghost.close(closeCallbacks)
     engine.markClosed()

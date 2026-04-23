@@ -1,4 +1,12 @@
-import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  toValue,
+  watch,
+  type MaybeRef,
+  type Ref,
+} from 'vue'
 
 /** Max width delta considered a scrollbar oscillation. */
 const MAX_SCROLLBAR_WIDTH = 20
@@ -25,15 +33,19 @@ export function useContainerWidth(
     /** Pre-render width so the JS layout runs on the server. Avoids CLS when it matches the breakpoint. */
     defaultContainerWidth?: number
     /** Snap observed width down to the largest breakpoint ≤ actual width. */
-    breakpoints?: readonly number[]
+    breakpoints?: MaybeRef<readonly number[] | undefined>
   },
 ): { containerWidth: Ref<number> } {
   const containerWidth = ref<number>(options?.defaultContainerWidth ?? 0)
+  let rawWidth = options?.defaultContainerWidth ?? 0
 
   function resolveWidth(raw: number): number {
     if (!raw || raw <= 0) return 0
-    if (options?.breakpoints?.length) {
-      return snapToBreakpoint(raw, options.breakpoints)
+    const breakpoints = options?.breakpoints
+      ? toValue(options.breakpoints)
+      : undefined
+    if (breakpoints?.length) {
+      return snapToBreakpoint(raw, breakpoints)
     }
     return raw
   }
@@ -44,9 +56,8 @@ export function useContainerWidth(
   onMounted(() => {
     if (!containerRef.value) return
 
-    const initial = resolveWidth(
-      containerRef.value.getBoundingClientRect().width,
-    )
+    rawWidth = containerRef.value.getBoundingClientRect().width
+    const initial = resolveWidth(rawWidth)
     if (initial > 0) {
       prevWidth = containerWidth.value
       containerWidth.value = initial
@@ -56,6 +67,7 @@ export function useContainerWidth(
       const raw = entries[0]?.contentRect.width
       if (!raw || raw <= 0) return
 
+      rawWidth = raw
       const newW = resolveWidth(raw)
 
       // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
@@ -73,6 +85,17 @@ export function useContainerWidth(
 
     resizeObserver.observe(containerRef.value)
   })
+
+  watch(
+    () => (options?.breakpoints ? toValue(options.breakpoints) : undefined),
+    () => {
+      const newW = resolveWidth(rawWidth)
+      if (newW > 0) {
+        prevWidth = containerWidth.value
+        containerWidth.value = newW
+      }
+    },
+  )
 
   onBeforeUnmount(() => {
     resizeObserver?.disconnect()

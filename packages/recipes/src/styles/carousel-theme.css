@@ -53,6 +53,17 @@
 }
 
 .np-carousel__dot {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: currentColor;
+}
+
+.np-carousel__dot::after {
+  content: '';
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
@@ -60,7 +71,7 @@
   opacity: 0.3;
 }
 
-.np-carousel__dot--selected {
+.np-carousel__dot--selected::after {
   opacity: 1;
 }
 

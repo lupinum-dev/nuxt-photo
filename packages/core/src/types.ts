@@ -55,7 +55,7 @@ export type ZoomState = {
 
 // ─── Gestures ───
 
-export type GestureMode = 'idle' | 'slide' | 'pan' | 'close'
+export type GestureMode = 'idle' | 'slide' | 'pan' | 'pinch' | 'close'
 
 // ─── Viewer state machine ───
 

@@ -214,25 +214,34 @@ describe('recipe contracts', () => {
     // Initial: a and b registered
     expect(register.mock.calls.map((call) => call[1].id)).toEqual(['a', 'b'])
 
-    // Reorder + insert c: only c is newly registered (diff-based — a and b preserved)
+    register.mockClear()
+    unregister.mockClear()
+
+    // Reorder + insert c: registrations are rebuilt in render order.
     photos.value = [b, a, c]
     await flushUi()
+    expect(unregister).toHaveBeenCalledTimes(2)
     expect(register.mock.calls.map((call) => call[1].id)).toEqual([
-      'a',
       'b',
+      'a',
       'c',
     ])
-    expect(unregister).not.toHaveBeenCalled()
 
-    // Remove b: only b gets unregistered; c and a are preserved
+    register.mockClear()
+    unregister.mockClear()
+
+    // Remove b: registrations are rebuilt again so Map insertion order stays correct.
     photos.value = [c, a]
     await flushUi()
-    expect(register).toHaveBeenCalledTimes(3) // no new registrations
-    expect(unregister).toHaveBeenCalledTimes(1) // b removed
+    expect(unregister).toHaveBeenCalledTimes(3)
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual(['c', 'a'])
 
-    // Unmount: remaining registrations (c, a) cleaned up
+    register.mockClear()
+    unregister.mockClear()
+
+    // Unmount: current registrations (c, a) cleaned up.
     mounted.unmount()
-    expect(unregister).toHaveBeenCalledTimes(3) // b + c + a
+    expect(unregister).toHaveBeenCalledTimes(2)
   })
 
   it('renders custom solo slide content through a custom lightbox recipe', async () => {

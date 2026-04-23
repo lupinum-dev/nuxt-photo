@@ -35,8 +35,8 @@ export function useCarousel(
 
   const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
 
-  const currentPhoto = computed<PhotoItem>(
-    () => photos.value[activeIndex.value] ?? photos.value[0]!,
+  const currentPhoto = computed<PhotoItem | null>(
+    () => photos.value[activeIndex.value] ?? photos.value[0] ?? null,
   )
 
   watch(

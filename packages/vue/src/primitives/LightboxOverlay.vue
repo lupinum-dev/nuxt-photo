@@ -2,7 +2,7 @@
   <div
     :style="ctx.backdropStyle.value"
     v-bind="$attrs"
-    @click="ctx.handleBackdropClick"
+    @click.self="ctx.handleBackdropClick"
   >
     <slot />
   </div>

@@ -14,6 +14,7 @@
     @pointermove.capture="ctx.onMediaPointerMove"
     @pointerup.capture="ctx.onMediaPointerUp"
     @pointercancel.capture="ctx.onMediaPointerCancel"
+    @lostpointercapture.capture="ctx.onMediaPointerCancel"
     @wheel="ctx.onWheel"
   >
     <slot

@@ -192,8 +192,8 @@ export async function openTransition(
   s: GhostState,
   index: number,
   callbacks: TransitionCallbacks,
-) {
-  if (s.animating.value) return
+): Promise<boolean> {
+  if (s.animating.value) return false
 
   s.debug?.group('transitions', `open(index=${index})`)
 
@@ -215,13 +215,22 @@ export async function openTransition(
   callbacks.refreshZoomState(true)
 
   const photo = s.currentPhoto.value
+  if (!photo) {
+    s.debug?.warn('transitions', 'open: no active photo, aborting')
+    s.lightboxMounted.value = false
+    s.overlayOpacity.value = 0
+    s.mediaOpacity.value = 0
+    s.chromeOpacity.value = 0
+    s.debug?.groupEnd('transitions')
+    return false
+  }
 
   try {
     if (s.transitionConfig?.mode === 'none') {
       await doInstantOpen(s, photo)
       s.debug?.log('transitions', 'open: complete')
       s.debug?.groupEnd('transitions')
-      return
+      return true
     }
 
     const thumbEl = s.thumbRefs.get(index)
@@ -243,6 +252,7 @@ export async function openTransition(
 
     s.debug?.log('transitions', 'open: complete')
     s.debug?.groupEnd('transitions')
+    return true
   } catch (err) {
     s.debug?.warn('transitions', 'open: error, forcing recovery', err)
     s.debug?.groupEnd('transitions')

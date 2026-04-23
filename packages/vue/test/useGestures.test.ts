@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { useGestures } from '../src/composables/useGestures'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function createGestureConfig(zoomedIn = false) {
+function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
   const isZoomedIn = ref(zoomedIn)
   const currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
@@ -42,7 +42,7 @@ function createGestureConfig(zoomedIn = false) {
       animating: ref(false),
       ghostVisible: ref(false),
       isZoomedIn: computed(() => isZoomedIn.value),
-      zoomAllowed: computed(() => true),
+      zoomAllowed: computed(() => zoomAllowed),
       mediaAreaRef: ref(mediaArea),
       currentPhoto: computed(() => createPhotoSet()[0]!),
       areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
@@ -51,7 +51,7 @@ function createGestureConfig(zoomedIn = false) {
       zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
       closeDragY: ref(0),
       setCloseDragY: vi.fn(),
-      controlsDisabled: computed(() => false),
+      transitionInProgress: computed(() => false),
 
       panzoomMotion,
       setPanzoomImmediate,
@@ -167,5 +167,216 @@ describe('useGestures', () => {
 
     expect(config.handleCloseGesture).toHaveBeenCalledTimes(1)
     expect(config.goToNext).not.toHaveBeenCalled()
+  })
+
+  it('pinch-zooms with two active touch pointers', async () => {
+    const { config, setPanzoomImmediate } = createGestureConfig(false)
+    const gestures = useGestures(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 100,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 200,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 300,
+        clientY: 100,
+      }),
+    )
+
+    expect(gestures.gesturePhase.value).toBe('pinch')
+    expect(setPanzoomImmediate).toHaveBeenCalledWith(
+      2,
+      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+      false,
+    )
+    expect(config.goTo).toHaveBeenCalledWith(0, true)
+
+    await gestures.onMediaPointerUp(
+      new PointerEvent('pointerup', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 300,
+        clientY: 100,
+      }),
+    )
+
+    expect(config.startPanzoomSpring).toHaveBeenCalledWith(
+      2,
+      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+      { tension: 190, friction: 20 },
+    )
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(1)
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(2)
+    expect(gestures.gesturePhase.value).toBe('idle')
+  })
+
+  it('keeps a pinch alive when one pointer leaves a three-pointer gesture', async () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useGestures(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 100,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 200,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 3,
+        pointerType: 'touch',
+        clientX: 300,
+        clientY: 100,
+      }),
+    )
+
+    await gestures.onMediaPointerUp(
+      new PointerEvent('pointerup', {
+        pointerId: 3,
+        pointerType: 'touch',
+        clientX: 300,
+        clientY: 100,
+      }),
+    )
+
+    expect(gestures.gesturePhase.value).toBe('pinch')
+    expect(config.startPanzoomSpring).not.toHaveBeenCalled()
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(3)
+
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 260,
+        clientY: 100,
+      }),
+    )
+
+    expect(config.setPanzoomImmediate).toHaveBeenCalled()
+  })
+
+  it('settles and releases pointer capture when pinch is cancelled', () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useGestures(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 100,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 200,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 260,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerCancel(
+      new PointerEvent('pointercancel', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 260,
+        clientY: 100,
+      }),
+    )
+
+    expect(gestures.gesturePhase.value).toBe('idle')
+    expect(config.startPanzoomSpring).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+      { tension: 190, friction: 20 },
+    )
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(1)
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(2)
+  })
+
+  it('ignores multi-touch when pinch zoom is disabled', async () => {
+    const { config } = createGestureConfig(false, false)
+    const gestures = useGestures(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX: 100,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 200,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerMove(
+      new PointerEvent('pointermove', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 240,
+        clientY: 100,
+      }),
+    )
+    await gestures.onMediaPointerUp(
+      new PointerEvent('pointerup', {
+        pointerId: 2,
+        pointerType: 'touch',
+        clientX: 240,
+        clientY: 100,
+      }),
+    )
+
+    expect(gestures.gesturePhase.value).toBe('idle')
+    expect(config.setPanzoomImmediate).not.toHaveBeenCalled()
+    expect(config.goToNext).not.toHaveBeenCalled()
+    expect(config.goToPrev).not.toHaveBeenCalled()
+    expect(config.handleCloseGesture).not.toHaveBeenCalled()
   })
 })

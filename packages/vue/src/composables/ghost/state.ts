@@ -17,7 +17,7 @@ import type { GhostState } from './types'
 /** Create the shared reactive state used by ghost open/close transition helpers. */
 export function createGhostState(
   activeIndex: Ref<number>,
-  currentPhoto: ComputedRef<PhotoItem>,
+  currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'],
   debug?: DebugLogger,

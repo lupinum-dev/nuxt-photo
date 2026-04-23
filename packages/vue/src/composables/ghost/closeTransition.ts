@@ -271,6 +271,16 @@ export function createCloseTransition(s: GhostState) {
     callbacks.syncGeometry()
 
     const photo = s.currentPhoto.value
+    if (!photo) {
+      s.debug?.warn(
+        'transitions',
+        'close: no active photo, using instant close',
+      )
+      await doInstantClose(s)
+      resetCloseState(s, clearAnimationGuard)
+      s.debug?.groupEnd('transitions')
+      return
+    }
 
     try {
       const fromRect = s.getAbsoluteFrameRect(photo)

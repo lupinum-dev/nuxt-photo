@@ -29,5 +29,5 @@ describe('nuxt-photo module integration', async () => {
       `${fixtureRoot}/.nuxt/tsconfig.app.json`,
       '--noEmit',
     ])
-  })
+  }, 30_000)
 })

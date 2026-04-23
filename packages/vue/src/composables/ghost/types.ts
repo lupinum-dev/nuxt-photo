@@ -52,7 +52,7 @@ export interface GhostState {
 
   // External dependencies
   activeIndex: Ref<number>
-  currentPhoto: ComputedRef<PhotoItem>
+  currentPhoto: ComputedRef<PhotoItem | null>
   areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
   debug?: DebugLogger

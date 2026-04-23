@@ -19,11 +19,11 @@ import { createPhotoSet } from '@test-fixtures/photos'
 
 function makeGhostState(
   getAbsoluteFrameRect: GhostState['getAbsoluteFrameRect'] = () => null,
+  currentPhoto = computed(() => createPhotoSet()[0] ?? null),
 ): GhostState {
-  const photos = createPhotoSet()
   return createGhostState(
     ref(0),
-    computed(() => photos[0]!),
+    currentPhoto,
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     getAbsoluteFrameRect,
   )
@@ -161,6 +161,22 @@ describe('setThumbRef', () => {
 })
 
 describe('error propagation', () => {
+  it('openTransition reports when it aborts without an active photo', async () => {
+    const state = makeGhostState(
+      () => null,
+      computed(() => null),
+    )
+
+    await expect(
+      openTransition(state, 0, makeTransitionCallbacks()),
+    ).resolves.toBe(false)
+
+    expect(state.lightboxMounted.value).toBe(false)
+    expect(state.overlayOpacity.value).toBe(0)
+    expect(state.mediaOpacity.value).toBe(0)
+    expect(state.chromeOpacity.value).toBe(0)
+  })
+
   it('openTransition rethrows errors from getAbsoluteFrameRect and resets state', async () => {
     const boom = new Error('geometry-failure')
     const state = makeGhostState(() => {
