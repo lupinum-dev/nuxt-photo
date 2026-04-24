@@ -4,6 +4,7 @@ import * as api from '@nuxt-photo/vue'
 describe('@nuxt-photo/vue public API', () => {
   it('exports the intended lightbox controller and primitives', () => {
     expect(api).toHaveProperty('useLightbox')
+    expect(api).toHaveProperty('LightboxProvider')
     expect(api).toHaveProperty('LightboxRoot')
     expect(api).toHaveProperty('LightboxSlide')
     expect(api).toHaveProperty('PhotoImage')

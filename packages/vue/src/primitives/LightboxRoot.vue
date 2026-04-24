@@ -1,9 +1,5 @@
 <template>
-  <div v-if="props.photos !== undefined" v-bind="$attrs">
-    <slot />
-  </div>
-
-  <Teleport v-else to="body">
+  <Teleport to="body">
     <div
       v-if="ctx.isOpen.value"
       ref="rootRef"
@@ -19,28 +15,10 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
-import type { LightboxTransitionOption } from '@nuxt-photo/engine'
-import { useLightboxProvider } from '../composables/useLightboxProvider'
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useLightboxInject } from '../composables/useLightboxInject'
 
-const props = defineProps<{
-  photos?: PhotoItem | PhotoItem[]
-  transition?: LightboxTransitionOption
-  minZoom?: number
-}>()
-
-const ctx =
-  props.photos !== undefined
-    ? useLightboxProvider(
-        computed(() => props.photos as PhotoItem | PhotoItem[]),
-        {
-          transition: props.transition,
-          minZoom: props.minZoom,
-        },
-      )
-    : useLightboxInject('LightboxRoot')
+const ctx = useLightboxInject('LightboxRoot')
 
 const rootRef = ref<HTMLElement | null>(null)
 let restoreFocusEl: HTMLElement | null = null

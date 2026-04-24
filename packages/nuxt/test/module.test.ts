@@ -219,6 +219,13 @@ describe('nuxt-photo module', () => {
         filePath: '@nuxt-photo/vue',
       }),
     )
+    expect(addComponent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'LightboxProvider',
+        export: 'LightboxProvider',
+        filePath: '@nuxt-photo/vue',
+      }),
+    )
     expect(addComponent).not.toHaveBeenCalledWith(
       expect.objectContaining({
         export: 'Lightbox',
@@ -256,6 +263,13 @@ describe('nuxt-photo module', () => {
       expect.objectContaining({
         name: 'NpLightboxRoot',
         export: 'LightboxRoot',
+        filePath: '@nuxt-photo/vue',
+      }),
+    )
+    expect(addComponent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'NpLightboxProvider',
+        export: 'LightboxProvider',
         filePath: '@nuxt-photo/vue',
       }),
     )

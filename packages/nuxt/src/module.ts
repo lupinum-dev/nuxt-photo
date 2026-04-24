@@ -40,6 +40,7 @@ const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
 ]
 // Primitive components — registered as `{prefix}{name}`
 const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
+  { export: 'LightboxProvider', name: 'LightboxProvider' },
   { export: 'LightboxRoot', name: 'LightboxRoot' },
   { export: 'LightboxOverlay', name: 'LightboxOverlay' },
   { export: 'LightboxViewport', name: 'LightboxViewport' },

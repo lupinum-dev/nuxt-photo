@@ -34,7 +34,7 @@ It creates the shared lightbox context that Vue primitives consume.
 The root entrypoint exports:
 
 - composables like `useLightbox`, `useLightboxProvider`, `useContainerWidth`, and `responsive`
-- primitives like `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
+- primitives like `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
 - stable injection keys like `LightboxComponentKey`, `ImageAdapterKey`, `LightboxDefaultsKey`, and `PhotoGroupContextKey`
 
 ## Stability

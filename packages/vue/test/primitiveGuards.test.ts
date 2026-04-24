@@ -2,7 +2,7 @@
 
 import { createApp, h } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { LightboxRoot, PhotoTrigger } from '@nuxt-photo/vue'
+import { LightboxProvider, LightboxRoot, PhotoTrigger } from '@nuxt-photo/vue'
 import { makePhoto } from '@test-fixtures/photos'
 
 function mountExpectingError(component: any, props?: Record<string, unknown>) {
@@ -45,11 +45,11 @@ describe('primitive injection guards', () => {
     )
   })
 
-  it('acts as a provider root when photos are passed directly', () => {
+  it('provides lightbox context from LightboxProvider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() =>
-      mountExpectingError(LightboxRoot, {
+      mountExpectingError(LightboxProvider, {
         photos: [makePhoto({ id: 'root-provider' })],
       }),
     ).not.toThrow()
