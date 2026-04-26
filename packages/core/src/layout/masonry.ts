@@ -1,5 +1,9 @@
 import type { LayoutEntry, LayoutGroup, MasonryLayoutOptions } from '../types'
-import { validatePhotoDimensions } from './types'
+import {
+  normalizeColumnCount,
+  normalizeLayoutNumber,
+  validatePhotoDimensions,
+} from './types'
 
 /**
  * Masonry layout — places photos into equal-width columns using greedy
@@ -10,12 +14,27 @@ import { validatePhotoDimensions } from './types'
 export function computeMasonryLayout(
   options: MasonryLayoutOptions,
 ): LayoutGroup[] {
-  const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
+  const spacing = normalizeLayoutNumber(options.spacing, 8)
+  const padding = normalizeLayoutNumber(options.padding, 0)
+  const columns = normalizeColumnCount(options.columns)
   const photos = validatePhotoDimensions(options.photos)
-  if (photos.length === 0 || columns < 1) return []
+  if (photos.length === 0 || containerWidth <= 0) return []
 
   const columnWidth =
     (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
+  if (!Number.isFinite(columnWidth) || columnWidth <= 0) {
+    if (columns > 1) {
+      return computeMasonryLayout({
+        ...options,
+        containerWidth,
+        spacing,
+        padding,
+        columns: columns - 1,
+      })
+    }
+    return []
+  }
   const photoHeights = photos.map((p) => columnWidth / (p.width / p.height))
 
   const colItems: number[][] = Array.from({ length: columns }, () => [])

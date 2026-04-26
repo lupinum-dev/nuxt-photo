@@ -367,6 +367,10 @@ describe('recipe contracts', () => {
     await flushUi()
     expect(lightboxApi?.activeIndex.value).toBe(0)
 
+    await groupApi.value.openById('missing-photo')
+    await flushUi()
+    expect(lightboxApi?.activeIndex.value).toBe(0)
+
     mounted.unmount()
   })
 
@@ -390,6 +394,7 @@ describe('recipe contracts', () => {
       '.np-lightbox[tabindex="-1"]',
     ) as HTMLElement | null
     expect(dialog).toBeTruthy()
+    expect(dialog?.getAttribute('aria-label')).toBe('Photo viewer')
     expect(dialog?.contains(document.activeElement)).toBe(true)
 
     const closeButton = document.body.querySelector(

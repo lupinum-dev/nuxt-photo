@@ -222,19 +222,15 @@ export function watchPhotoCollection(
     if (!newPhotos || !oldPhotos) return
 
     const newIds = new Set(newPhotos.map(photoId))
-    const oldIds = new Set(oldPhotos.map(photoId))
+    const activePhoto = oldPhotos[config.activeIndex.value] ?? null
+    const activeId = activePhoto ? photoId(activePhoto) : null
 
-    if (
-      newIds.size === oldIds.size &&
-      [...newIds].every((id) => oldIds.has(id))
-    ) {
+    if (!activeId) {
+      config.goTo(0, true)
       return
     }
 
-    const activePhoto = photos.value[config.activeIndex.value] ?? null
-    const activeId = activePhoto ? photoId(activePhoto) : null
-
-    if (!activeId || !newIds.has(activeId)) {
+    if (!newIds.has(activeId)) {
       if (config.lightboxMounted.value) {
         void config.close()
       }
@@ -287,6 +283,8 @@ export function useLightboxWindowLifecycle(config: {
   refreshZoomState: (preserveCurrent?: boolean) => void
   debug?: DebugLogger
 }) {
+  let didLock = false
+
   function onResize() {
     if (!config.lightboxMounted.value) return
     config.debug?.log('geometry', 'window resize')
@@ -296,7 +294,18 @@ export function useLightboxWindowLifecycle(config: {
 
   watch(config.lightboxMounted, (mounted) => {
     config.debug?.log('transitions', `lightboxMounted → ${mounted}`)
-    lockBodyScroll(mounted)
+    if (mounted) {
+      if (!didLock) {
+        lockBodyScroll(true)
+        didLock = true
+      }
+      return
+    }
+
+    if (didLock) {
+      lockBodyScroll(false)
+      didLock = false
+    }
   })
 
   onMounted(() => {
@@ -313,8 +322,9 @@ export function useLightboxWindowLifecycle(config: {
       window.removeEventListener('resize', onResize)
     }
 
-    if (typeof document !== 'undefined') {
+    if (typeof document !== 'undefined' && didLock) {
       lockBodyScroll(false)
+      didLock = false
     }
   })
 }

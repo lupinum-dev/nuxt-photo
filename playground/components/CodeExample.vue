@@ -3,21 +3,14 @@
     <div v-if="title" class="code-example__header">
       <span class="code-example__title">{{ title }}</span>
     </div>
-    <Shiki
-      :code="code"
-      :lang="lang || 'vue'"
-      theme="vitesse-dark"
-      class="code-example__block"
-    />
+    <pre class="code-example__block"><code>{{ code }}</code></pre>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { BundledLanguage } from 'shiki'
-
 defineProps<{
   code: string
-  lang?: BundledLanguage | 'text'
+  lang?: string
   title?: string
 }>()
 </script>
@@ -43,7 +36,7 @@ defineProps<{
   color: #c8956c;
 }
 
-.code-example__block :deep(pre) {
+.code-example__block {
   margin: 0;
   padding: 20px 24px;
   background: transparent !important;
@@ -53,7 +46,7 @@ defineProps<{
   line-height: 1.7;
 }
 
-.code-example__block :deep(code) {
+.code-example__block code {
   font-family: inherit;
 }
 </style>

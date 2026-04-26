@@ -1,6 +1,6 @@
 {
   "name": "@nuxt-photo/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "Framework-free layout, image, gesture, and photo-model logic for Nuxt Photo.",
   "keywords": [
@@ -41,5 +41,9 @@
   "devDependencies": {
     "typescript": "6.0.3",
     "unbuild": "^3.5.0"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0 || >=22.12.0"
   }
 }

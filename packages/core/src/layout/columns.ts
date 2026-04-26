@@ -4,7 +4,11 @@ import type {
   LayoutGroup,
   PhotoItem,
 } from '../types'
-import { validatePhotoDimensions } from './types'
+import {
+  normalizeColumnCount,
+  normalizeLayoutNumber,
+  validatePhotoDimensions,
+} from './types'
 import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
 function ratio(item: PhotoItem) {
@@ -138,9 +142,12 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
 export function computeColumnsLayout(
   options: ColumnsLayoutOptions,
 ): LayoutGroup[] {
-  const { containerWidth, spacing = 8, padding = 0, columns = 3 } = options
+  const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
+  const spacing = normalizeLayoutNumber(options.spacing, 8)
+  const padding = normalizeLayoutNumber(options.padding, 0)
+  const columns = normalizeColumnCount(options.columns)
   const photos = validatePhotoDimensions(options.photos)
-  if (photos.length === 0 || columns < 1) return []
+  if (photos.length === 0 || containerWidth <= 0) return []
 
   const targetColumnWidth =
     (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
@@ -192,7 +199,13 @@ export function computeColumnsLayout(
 
     if (entries.some((e) => e.width <= 0 || e.height <= 0)) {
       if (columns > 1) {
-        return computeColumnsLayout({ ...options, columns: columns - 1 })
+        return computeColumnsLayout({
+          ...options,
+          containerWidth,
+          spacing,
+          padding,
+          columns: columns - 1,
+        })
       }
       return []
     }

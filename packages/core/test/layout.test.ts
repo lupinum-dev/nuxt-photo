@@ -83,6 +83,34 @@ describe('layout algorithms', () => {
     expect(Math.max(...heights) - Math.min(...heights)).toBeLessThan(60)
   })
 
+  it('normalizes unsafe column layout inputs to safe output', () => {
+    const photos = createPhotoSet().slice(0, 4)
+
+    const fractional = computeColumnsLayout({
+      photos,
+      containerWidth: 800,
+      columns: 2.8,
+    })
+    expect(fractional).toHaveLength(2)
+
+    expect(
+      computeColumnsLayout({
+        photos,
+        containerWidth: Number.NaN,
+        columns: 3,
+      }),
+    ).toEqual([])
+
+    expect(
+      computeColumnsLayout({
+        photos,
+        containerWidth: 20,
+        columns: Number.NaN,
+        padding: 100,
+      }),
+    ).toEqual([])
+  })
+
   it('keeps masonry columns ordered and does not worsen the greedy baseline', () => {
     const photos = createPhotoSet()
     const containerWidth = 1000
@@ -119,5 +147,33 @@ describe('layout algorithms', () => {
     const finalDelta = Math.max(...heights) - Math.min(...heights)
 
     expect(finalDelta).toBeLessThanOrEqual(greedyDelta)
+  })
+
+  it('normalizes unsafe masonry layout inputs to safe output', () => {
+    const photos = createPhotoSet().slice(0, 4)
+
+    const fractional = computeMasonryLayout({
+      photos,
+      containerWidth: 800,
+      columns: 2.8,
+    })
+    expect(fractional).toHaveLength(2)
+
+    expect(
+      computeMasonryLayout({
+        photos,
+        containerWidth: Number.NaN,
+        columns: 3,
+      }),
+    ).toEqual([])
+
+    expect(
+      computeMasonryLayout({
+        photos,
+        containerWidth: 20,
+        columns: Number.NaN,
+        padding: 100,
+      }),
+    ).toEqual([])
   })
 })

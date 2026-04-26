@@ -13,10 +13,10 @@ This repo has five library packages, two playground apps, and a docs app. The mo
 
 ## Prerequisites
 
-- Node.js `18+`
+- Node.js `>=20.19.0 || >=22.12.0`
 - `pnpm` `10.x`
 
-The repo declares both in the root [package.json](/Users/matthias/Git/0_libs/nuxt-photo/package.json:1).
+The repo declares both in the root [`package.json`](./package.json).
 
 ## Repo layout
 
@@ -98,6 +98,7 @@ pnpm typecheck
 pnpm test:unit
 pnpm test:module-package
 pnpm size
+pnpm release:pack
 ```
 
 Use these when needed:
@@ -112,7 +113,32 @@ Notes:
 
 - `pnpm test:e2e` builds the main playground first and then runs Playwright.
 - `pnpm size` is the source of truth for documented size numbers.
+- `pnpm release:pack` packs every public workspace package with pnpm and verifies rewritten workspace dependencies and tarball metadata.
 - `pnpm test` includes e2e, so it is heavier than the normal pre-PR loop.
+
+## Release dry run
+
+Use pnpm for packaging and publishing. The workspace packages use `workspace:*`
+internally, and pnpm is the supported tool that rewrites those ranges for
+packed/published tarballs.
+
+Before publishing:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test:unit
+pnpm test:module-package
+pnpm size
+pnpm build:playground
+pnpm --filter nuxt-photo-playground-tw build
+pnpm build:docs
+pnpm test:e2e
+pnpm release:pack
+```
+
+Do not publish these packages with `npm publish` from a workspace package
+directory; it does not apply the same workspace dependency rewrite.
 
 ## When code changes require doc changes
 

@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
+import { expect, stubImageRequests, test } from './helpers'
 
 async function dispatchPointerPinch(
   media: Locator,
@@ -63,6 +64,7 @@ async function waitForSpringFrame() {
 test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({
   page,
 }) => {
+  await stubImageRequests(page)
   await page.goto('/')
 
   await page.locator('.np-album__item').first().click()
@@ -99,6 +101,7 @@ test.describe('touch gestures', () => {
   test('recipe lightbox supports automated two-finger pinch zoom', async ({
     page,
   }) => {
+    await stubImageRequests(page)
     await page.goto('/')
 
     await page.locator('.np-album__item').first().click()

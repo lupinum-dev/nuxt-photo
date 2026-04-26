@@ -1,5 +1,5 @@
 import type { MaybeRef } from 'vue'
-import { photoId, type PhotoItem } from '@nuxt-photo/core'
+import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
 import type { LightboxTransitionOption } from '@nuxt-photo/engine'
 import { useLightboxContext } from './useLightboxContext'
 import { type LightboxSlideRenderer } from '../provide/keys'
@@ -56,7 +56,11 @@ export function useLightboxProvider(
     const index = ctx.photos.value.findIndex(
       (photo) => photoId(photo) === String(id),
     )
-    return ctx.open(index >= 0 ? index : 0)
+    if (index < 0) {
+      devWarn(`No photo found for id "${String(id)}"`)
+      return Promise.resolve()
+    }
+    return ctx.open(index)
   }
 
   return {

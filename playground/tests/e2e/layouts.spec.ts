@@ -1,8 +1,9 @@
-import { expect, test } from '@playwright/test'
+import { expect, stubImageRequests, test } from './helpers'
 
 test('layout explorer switches layouts and still opens the lightbox', async ({
   page,
 }) => {
+  await stubImageRequests(page)
   await page.goto('/layouts')
 
   for (const name of ['rows', 'columns', 'masonry'] as const) {

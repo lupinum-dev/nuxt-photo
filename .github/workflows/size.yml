@@ -1,4 +1,4 @@
-name: size
+name: release-readiness
 
 on:
   pull_request:
@@ -7,19 +7,26 @@ on:
       - main
 
 jobs:
-  size:
+  release-readiness:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.19.0
           cache: pnpm
 
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.10.0 --activate
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+      - run: pnpm test:module-package
       - run: pnpm size
+      - run: pnpm build:playground
+      - run: pnpm --filter nuxt-photo-playground-tw build
+      - run: pnpm build:docs
+      - run: pnpm test:e2e
+      - run: pnpm release:pack

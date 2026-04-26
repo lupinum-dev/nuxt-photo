@@ -1,4 +1,4 @@
-import { photoId, type PhotoItem } from '@nuxt-photo/core'
+import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
 import { useLightboxInject } from './useLightboxInject'
 
 /** Consume the nearest lightbox context as a simple controller/read-model API. */
@@ -17,7 +17,11 @@ export function useLightbox() {
     const index = context.photos.value.findIndex(
       (photo) => photoId(photo) === String(id),
     )
-    return context.open(index >= 0 ? index : 0)
+    if (index < 0) {
+      devWarn(`No photo found for id "${String(id)}"`)
+      return Promise.resolve()
+    }
+    return context.open(index)
   }
 
   return {

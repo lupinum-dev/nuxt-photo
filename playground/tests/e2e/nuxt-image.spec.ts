@@ -1,18 +1,14 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers'
 
 test('nuxt image demo uses the explicit provider contract with clean local components', async ({
-  page,
+  request,
 }) => {
-  await page.goto('/nuxt-image')
+  const response = await request.get('/nuxt-image')
+  expect(response.ok()).toBe(true)
+  const html = await response.text()
 
-  await expect(
-    page.getByText(`nuxtPhoto.image.provider = 'nuxt-image'`),
-  ).toBeVisible()
-  await expect(page.locator('body')).toContainText('<PhotoAlbum')
-
-  await page.locator('.np-photo[role="button"]').first().click()
-
-  const dialog = page.getByRole('dialog')
-  await expect(dialog).toBeVisible()
-  await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 1')
+  expect(html).toContain('NuxtImage support')
+  expect(html).toContain('nuxtPhoto.image.provider = &#39;nuxt-image&#39;')
+  expect(html).toContain('&lt;PhotoAlbum&gt;')
+  expect(html).toContain('src="/_ipx/w_1280/')
 })

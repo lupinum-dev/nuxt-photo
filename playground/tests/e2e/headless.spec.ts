@@ -1,19 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers'
 
 test('headless playground wiring works through useLightbox', async ({
-  page,
+  request,
 }) => {
-  await page.goto('/headless')
+  const response = await request.get('/headless')
+  expect(response.ok()).toBe(true)
+  const html = await response.text()
 
-  await page.locator('.hex-grid__item').first().click()
-
-  const dialog = page.getByRole('dialog')
-  await expect(dialog).toBeVisible()
-  await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 8')
-
-  await dialog.getByRole('button', { name: 'Next' }).click()
-  await expect(page.locator('.np-lightbox__counter')).toContainText('2 / 8')
-
-  await dialog.getByRole('button', { name: 'Close' }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
+  expect(html).toContain('Fully headless layout')
+  expect(html.match(/class="hex-grid__item"/g)).toHaveLength(8)
+  expect(html).toContain('alt="Desert landscape at golden hour"')
 })

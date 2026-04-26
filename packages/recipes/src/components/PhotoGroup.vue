@@ -146,7 +146,11 @@ async function openById(id: string | number) {
   const index = collectedPhotos.value.findIndex(
     (photo) => photoId(photo) === String(id),
   )
-  await open(index >= 0 ? index : 0)
+  if (index < 0) {
+    devWarn(`No photo found for id "${String(id)}"`)
+    return
+  }
+  await open(index)
 }
 
 function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {

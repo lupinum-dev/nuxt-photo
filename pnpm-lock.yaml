@@ -190,14 +190,14 @@ importers:
         specifier: workspace:*
         version: link:../vue
       embla-carousel:
-        specifier: 9.0.0-rc01
-        version: 9.0.0-rc01
+        specifier: 9.0.0-rc02
+        version: 9.0.0-rc02
       embla-carousel-autoplay:
-        specifier: 9.0.0-rc01
-        version: 9.0.0-rc01(embla-carousel@9.0.0-rc01)
+        specifier: 9.0.0-rc02
+        version: 9.0.0-rc02(embla-carousel@9.0.0-rc02)
       embla-carousel-vue:
-        specifier: 9.0.0-rc01
-        version: 9.0.0-rc01(vue@3.5.33(typescript@6.0.3))
+        specifier: 9.0.0-rc02
+        version: 9.0.0-rc02(vue@3.5.33(typescript@6.0.3))
     devDependencies:
       typescript:
         specifier: 6.0.3
@@ -221,12 +221,12 @@ importers:
         specifier: workspace:*
         version: link:../engine
       embla-carousel-vue:
-        specifier: 9.0.0-rc01
-        version: 9.0.0-rc01(vue@3.5.33(typescript@6.0.3))
+        specifier: 9.0.0-rc02
+        version: 9.0.0-rc02(vue@3.5.33(typescript@6.0.3))
     devDependencies:
       embla-carousel:
-        specifier: 9.0.0-rc01
-        version: 9.0.0-rc01
+        specifier: 9.0.0-rc02
+        version: 9.0.0-rc02
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -6468,13 +6468,13 @@ packages:
     peerDependencies:
       embla-carousel: 8.6.0
 
-  embla-carousel-autoplay@9.0.0-rc01:
+  embla-carousel-autoplay@9.0.0-rc02:
     resolution:
       {
-        integrity: sha512-gl7jUe0X9xd5v7IiyFF2FCR+KTBesnutM0gQ3S75oo9EizZi5tJMNdVaFwvzepz6kGzDkkSbKMWitQvAbFVfdQ==,
+        integrity: sha512-xmHUL/dVL0EN9Tf6EeWirc1eEYEr8uxEG4l4QxzRPrUbHhshTzPcKfB0DatAmOI6rcTldqQsslbffNqQmg9E3Q==,
       }
     peerDependencies:
-      embla-carousel: 9.0.0-rc01
+      embla-carousel: 9.0.0-rc02
 
   embla-carousel-class-names@8.6.0:
     resolution:
@@ -6500,13 +6500,13 @@ packages:
     peerDependencies:
       embla-carousel: 8.6.0
 
-  embla-carousel-reactive-utils@9.0.0-rc01:
+  embla-carousel-reactive-utils@9.0.0-rc02:
     resolution:
       {
-        integrity: sha512-RnW0NMrL7wVAQb9jro+l96hLI2JairyFHS2Jv+fvXakveD/c5aD9aoNH94YRbTmi0G7PxrKSxydmCpTy5eFmrA==,
+        integrity: sha512-H1c+yUbcVST9eJoGU+05L1vSDyBs0hf/Gf1OadHYIJ3asBfyvn6oaGCs2wXq1D8/f09y0wwCxeRxT9UZU/TxJA==,
       }
     peerDependencies:
-      embla-carousel: 9.0.0-rc01
+      embla-carousel: 9.0.0-rc02
 
   embla-carousel-vue@8.6.0:
     resolution:
@@ -6516,10 +6516,10 @@ packages:
     peerDependencies:
       vue: ^3.2.37
 
-  embla-carousel-vue@9.0.0-rc01:
+  embla-carousel-vue@9.0.0-rc02:
     resolution:
       {
-        integrity: sha512-Fy3MeolfZXwDIUdfxtQ3Kb+4dfjV9kosXQ9ic+Lfj2wxxm2YZO/g2znZ1cbd71ES7WCXy0DsunufHIINFT18ow==,
+        integrity: sha512-QokXgQhl6/iTO89mojCSGyZMaZpgy9nnDrHAITMmdtGKLESPaPRR62Z7+h2tMiqt8h9csj+IPk/fh5pR/8b2cA==,
       }
     peerDependencies:
       vue: ^3.2.37
@@ -6539,10 +6539,10 @@ packages:
         integrity: sha512-SjWyZBHJPbqxHOzckOfo8lHisEaJWmwd23XppYFYVh10bU66/Pn5tkVkbkCMZVdbUE5eTCI2nD8OyIP4Z+uwkA==,
       }
 
-  embla-carousel@9.0.0-rc01:
+  embla-carousel@9.0.0-rc02:
     resolution:
       {
-        integrity: sha512-4BTERU1gAXgg4Vl0m7hQ1GzePGLNNfM2j030ww8i9idiPXumyRUpaNUDfT2zx1Hv8um1Ew7QKBy/HdNPz8L30g==,
+        integrity: sha512-GOQBX6v5cNk/ptfuHUoHhW9rvl5KeSGsBoppaUqtihu2kDmQAyzvnH/95r3TaSScFSJTj68V9AM6E5nq3jUVcQ==,
       }
 
   emoji-regex@10.6.0:
@@ -15924,9 +15924,9 @@ snapshots:
     dependencies:
       embla-carousel: 8.6.0
 
-  embla-carousel-autoplay@9.0.0-rc01(embla-carousel@9.0.0-rc01):
+  embla-carousel-autoplay@9.0.0-rc02(embla-carousel@9.0.0-rc02):
     dependencies:
-      embla-carousel: 9.0.0-rc01
+      embla-carousel: 9.0.0-rc02
 
   embla-carousel-class-names@8.6.0(embla-carousel@8.6.0):
     dependencies:
@@ -15940,9 +15940,9 @@ snapshots:
     dependencies:
       embla-carousel: 8.6.0
 
-  embla-carousel-reactive-utils@9.0.0-rc01(embla-carousel@9.0.0-rc01):
+  embla-carousel-reactive-utils@9.0.0-rc02(embla-carousel@9.0.0-rc02):
     dependencies:
-      embla-carousel: 9.0.0-rc01
+      embla-carousel: 9.0.0-rc02
 
   embla-carousel-vue@8.6.0(vue@3.5.33(typescript@5.9.3)):
     dependencies:
@@ -15950,10 +15950,10 @@ snapshots:
       embla-carousel-reactive-utils: 8.6.0(embla-carousel@8.6.0)
       vue: 3.5.33(typescript@5.9.3)
 
-  embla-carousel-vue@9.0.0-rc01(vue@3.5.33(typescript@6.0.3)):
+  embla-carousel-vue@9.0.0-rc02(vue@3.5.33(typescript@6.0.3)):
     dependencies:
-      embla-carousel: 9.0.0-rc01
-      embla-carousel-reactive-utils: 9.0.0-rc01(embla-carousel@9.0.0-rc01)
+      embla-carousel: 9.0.0-rc02
+      embla-carousel-reactive-utils: 9.0.0-rc02(embla-carousel@9.0.0-rc02)
       vue: 3.5.33(typescript@6.0.3)
 
   embla-carousel-wheel-gestures@8.1.0(embla-carousel@8.6.0):
@@ -15963,7 +15963,7 @@ snapshots:
 
   embla-carousel@8.6.0: {}
 
-  embla-carousel@9.0.0-rc01: {}
+  embla-carousel@9.0.0-rc02: {}
 
   emoji-regex@10.6.0: {}
 

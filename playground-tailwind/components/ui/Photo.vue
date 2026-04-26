@@ -2,7 +2,7 @@
   <RecipePhoto
     :photo="photo"
     :lightbox-ignore="lightboxIgnore"
-    :adapter="adapter"
+    :image-adapter="imageAdapter"
     :loading="loading"
     v-bind="$attrs"
   >
@@ -21,7 +21,7 @@ import { Photo as RecipePhoto } from '@nuxt-photo/recipes'
 defineProps<{
   photo: PhotoItem
   lightboxIgnore?: boolean
-  adapter?: ImageAdapter
+  imageAdapter?: ImageAdapter
   loading?: 'lazy' | 'eager'
 }>()
 </script>

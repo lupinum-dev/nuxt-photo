@@ -1,5 +1,10 @@
 <template>
-  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true">
+  <LightboxRoot
+    class="np-lightbox"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Photo viewer"
+  >
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">

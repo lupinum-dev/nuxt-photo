@@ -1,6 +1,6 @@
 {
   "name": "@nuxt-photo/recipes",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "Ready-to-use photo album, group, and carousel components for Nuxt Photo.",
   "keywords": [
@@ -41,9 +41,9 @@
   "dependencies": {
     "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/vue": "workspace:*",
-    "embla-carousel": "9.0.0-rc01",
-    "embla-carousel-autoplay": "9.0.0-rc01",
-    "embla-carousel-vue": "9.0.0-rc01"
+    "embla-carousel": "9.0.0-rc02",
+    "embla-carousel-autoplay": "9.0.0-rc02",
+    "embla-carousel-vue": "9.0.0-rc02"
   },
   "peerDependencies": {
     "vue": "^3.5.0"
@@ -53,5 +53,9 @@
     "unbuild": "^3.5.0",
     "vue": "3.5.33",
     "vue-tsc": "3.2.7"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0 || >=22.12.0"
   }
 }

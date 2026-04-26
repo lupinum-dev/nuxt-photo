@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, stubImageRequests, test } from './helpers'
 
 test('renders carousel slides and thumbnails', async ({ page }) => {
+  await stubImageRequests(page)
   await page.goto('/carousel')
 
   const carousel = page.locator('.np-carousel').first()
@@ -10,6 +11,7 @@ test('renders carousel slides and thumbnails', async ({ page }) => {
 })
 
 test('arrow navigation advances the counter', async ({ page }) => {
+  await stubImageRequests(page)
   await page.goto('/carousel')
 
   const carousel = page.locator('.np-carousel').first()
@@ -21,6 +23,7 @@ test('arrow navigation advances the counter', async ({ page }) => {
 })
 
 test('thumbnail click syncs to main carousel', async ({ page }) => {
+  await stubImageRequests(page)
   await page.goto('/carousel')
 
   const carousel = page.locator('.np-carousel').first()
@@ -33,6 +36,7 @@ test('thumbnail click syncs to main carousel', async ({ page }) => {
 test('toggling lightbox enables slide click to open dialog', async ({
   page,
 }) => {
+  await stubImageRequests(page)
   await page.goto('/carousel')
 
   await page.getByLabel('Lightbox').check()
@@ -49,6 +53,7 @@ test('toggling lightbox enables slide click to open dialog', async ({
 test('hiding arrows via control removes them from the DOM', async ({
   page,
 }) => {
+  await stubImageRequests(page)
   await page.goto('/carousel')
 
   const carousel = page.locator('.np-carousel').first()

@@ -1,6 +1,6 @@
 {
   "name": "@nuxt-photo/vue",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "Vue composables and primitives for Nuxt Photo.",
   "keywords": [
@@ -41,16 +41,20 @@
   "dependencies": {
     "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/engine": "workspace:*",
-    "embla-carousel-vue": "9.0.0-rc01"
+    "embla-carousel-vue": "9.0.0-rc02"
   },
   "peerDependencies": {
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "embla-carousel": "9.0.0-rc01",
+    "embla-carousel": "9.0.0-rc02",
     "typescript": "6.0.3",
     "unbuild": "^3.5.0",
     "vue": "3.5.33",
     "vue-tsc": "3.2.7"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0 || >=22.12.0"
   }
 }
