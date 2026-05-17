@@ -10,10 +10,6 @@ const imageLoadCache = new Map<string, Promise<LoadImageResult>>()
  *
  * Completion paths, in order of preference:
  *   1. `image.decode()` — modern, async, off-main-thread; preferred where available.
- *   2. `onload` / `onerror` — always wired; fires even when `decode()` isn't used.
- *   3. `image.complete` — synchronous check for browsers without `decode()`
- *      when the image is already in the HTTP cache and finished before we got here.
- *
  *   2. `onload` / `onerror` — fallback for browsers without `decode()`.
  *   3. `image.complete` — synchronous success check for browsers without
  *      `decode()` when the image is already in the HTTP cache.
