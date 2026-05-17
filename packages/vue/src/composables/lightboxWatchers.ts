@@ -7,8 +7,8 @@ import {
   type Ref,
 } from 'vue'
 import {
-  ensureImageLoaded,
   isUsableRect,
+  loadImage,
   lockBodyScroll,
   nextFrame,
   photoId,
@@ -16,7 +16,7 @@ import {
   type DebugLogger,
   type ImageAdapter,
   type PhotoItem,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(
@@ -51,7 +51,7 @@ export function createPreloadAround(
       if (candidate < 0 || candidate >= photos.value.length) continue
       const photo = photos.value[candidate]
       if (!photo) continue
-      void ensureImageLoaded(imageAdapter.value(photo, 'slide').src)
+      void loadImage(imageAdapter.value(photo, 'slide').src)
     }
   }
 }

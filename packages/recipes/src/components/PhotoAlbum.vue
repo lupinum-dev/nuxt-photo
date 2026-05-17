@@ -41,21 +41,30 @@
       </template>
     </AlbumSnapshotsView>
 
-    <AlbumApproximateView
-      v-else-if="!isMounted"
-      :photos="photos"
-      :ssr-wrapper-style="ssrWrapperStyle"
-      :item-class="itemClass"
-      :img-class="imgClass"
-      :image-adapter="imageAdapter"
-      :item-bindings="itemBindings"
-      :ssr-item-style="ssrItemStyle"
-      :photo-id="photoId"
-    >
-      <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-        <slot name="thumbnail" v-bind="slotProps" />
-      </template>
-    </AlbumApproximateView>
+    <div v-else-if="!isMounted" :style="ssrWrapperStyle">
+      <div
+        v-for="(photo, index) in photos"
+        :key="photoId(photo)"
+        class="np-album__item"
+        :class="itemClass"
+        :style="ssrItemStyle(photo)"
+        v-bind="itemBindings(photo, index)"
+      >
+        <AlbumItemContent
+          :photo="photo"
+          :index="index"
+          :width="photo.width"
+          :height="photo.height"
+          :hidden="false"
+          :image-adapter="imageAdapter"
+          :img-class="imgClass"
+        >
+          <template v-if="$slots.thumbnail" #thumbnail="slotProps">
+            <slot name="thumbnail" v-bind="slotProps" />
+          </template>
+        </AlbumItemContent>
+      </div>
+    </div>
 
     <AlbumMountedView
       v-else
@@ -97,7 +106,6 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
-  devWarn,
   mergeResponsiveBreakpoints,
   photoId,
   type AlbumLayout,
@@ -106,8 +114,9 @@ import {
   type PhotoItem,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
+import { devWarn } from '@nuxt-photo/core/internal'
 import Lightbox from './Lightbox.vue'
-import AlbumApproximateView from './photo-album/AlbumApproximateView.vue'
+import AlbumItemContent from './photo-album/AlbumItemContent.vue'
 import AlbumMountedView from './photo-album/AlbumMountedView.vue'
 import AlbumRowsView from './photo-album/AlbumRowsView.vue'
 import AlbumSnapshotsView from './photo-album/AlbumSnapshotsView.vue'
@@ -252,7 +261,7 @@ const LightboxComponent = computed<Component | null>(() => {
   return props.lightbox as Component
 })
 
-const ownCtx = !parentGroup
+const ownCtx = hasOwnLightbox
   ? useLightboxProvider(photos, {
       transition: props.transition,
       imageAdapter: props.imageAdapter,

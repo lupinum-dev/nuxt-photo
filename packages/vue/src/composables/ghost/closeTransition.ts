@@ -1,15 +1,13 @@
 import {
   flipTransform,
-  isUsableRect,
   makeGhostBaseStyle,
   nextFrame,
   wait,
   animateNumber,
   easeOutCubic,
-  shouldUseFlip,
   planCloseTransition,
   type RectLike,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import {
   closeDurationMs,
   fadeDurationMs,
@@ -307,7 +305,7 @@ export function createCloseTransition(s: GhostState) {
           : 'NULL',
       )
 
-      let plan = planCloseTransition({
+      const plan = planCloseTransition({
         fromRect,
         toRect,
         thumbRefExists: !!thumbEl,
@@ -319,52 +317,6 @@ export function createCloseTransition(s: GhostState) {
         'transitions',
         `close: plan=${plan.mode} reason=${plan.reason}`,
       )
-
-      if (plan.reason === 'thumb-off-screen' && thumbEl) {
-        s.debug?.log(
-          'transitions',
-          'close: thumbnail off-screen, attempting scrollIntoView recovery',
-        )
-        try {
-          thumbEl.scrollIntoView({ behavior: 'instant', block: 'nearest' })
-        } catch {
-          thumbEl.scrollIntoView({ block: 'nearest' })
-        }
-        await nextFrame()
-
-        const retriedRect = thumbEl.getBoundingClientRect()
-        s.debug?.log(
-          'transitions',
-          'close: retried toRect after scroll',
-          `${retriedRect.width.toFixed(0)}x${retriedRect.height.toFixed(0)} @ (${retriedRect.left.toFixed(0)},${retriedRect.top.toFixed(0)})`,
-        )
-
-        if (
-          isUsableRect(retriedRect) &&
-          shouldUseFlip(
-            retriedRect,
-            s.transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 },
-            s.debug,
-          )
-        ) {
-          s.debug?.log(
-            'transitions',
-            'close: scroll recovery succeeded → upgrading to FLIP',
-          )
-          plan = {
-            mode: 'flip',
-            durationMs: closeDurationMs,
-            fromRect: fromRect!,
-            toRect: retriedRect,
-            reason: 'scrolled-into-view',
-          }
-        } else {
-          s.debug?.log(
-            'transitions',
-            'close: scroll recovery failed → staying with FADE',
-          )
-        }
-      }
 
       if (plan.mode === 'instant') {
         await doInstantClose(s)

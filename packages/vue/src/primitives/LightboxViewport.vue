@@ -21,6 +21,7 @@
       :photos="ctx.photos.value"
       :viewport-ref="ctx.emblaRef"
       :media-opacity="ctx.mediaOpacity.value"
+      :image-load-failed="ctx.activeImageLoadFailed.value"
     />
   </div>
 </template>

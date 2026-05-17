@@ -1,15 +1,7 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync, readdirSync } from 'node:fs'
+import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-
-const packages = [
-  ['@nuxt-photo/core', 'packages/core'],
-  ['@nuxt-photo/engine', 'packages/engine'],
-  ['@nuxt-photo/vue', 'packages/vue'],
-  ['@nuxt-photo/recipes', 'packages/recipes'],
-  ['@nuxt-photo/nuxt', 'packages/nuxt'],
-]
 
 const requiredPackageFiles = ['package.json', 'README.md']
 
@@ -36,10 +28,66 @@ function assert(condition, message) {
   }
 }
 
+function readPackageManifest(packageDir) {
+  return JSON.parse(readFileSync(join(packageDir, 'package.json'), 'utf8'))
+}
+
+function discoverPackages() {
+  const packageRoot = 'packages'
+  const packages = readdirSync(packageRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
+      const packageDir = join(packageRoot, entry.name)
+      const manifest = readPackageManifest(packageDir)
+      return {
+        name: manifest.name,
+        dir: packageDir,
+        dependencies: Object.keys({
+          ...manifest.dependencies,
+          ...manifest.peerDependencies,
+          ...manifest.optionalDependencies,
+        }),
+      }
+    })
+    .filter((pkg) => pkg.name?.startsWith('@nuxt-photo/'))
+
+  const byName = new Map(packages.map((pkg) => [pkg.name, pkg]))
+  const sorted = []
+  const visiting = new Set()
+  const visited = new Set()
+
+  function visit(pkg) {
+    if (visited.has(pkg.name)) return
+    assert(
+      !visiting.has(pkg.name),
+      `Circular package dependency at ${pkg.name}`,
+    )
+    visiting.add(pkg.name)
+
+    for (const dependency of pkg.dependencies) {
+      const workspaceDependency = byName.get(dependency)
+      if (workspaceDependency) visit(workspaceDependency)
+    }
+
+    visiting.delete(pkg.name)
+    visited.add(pkg.name)
+    sorted.push(pkg)
+  }
+
+  for (const pkg of packages.toSorted((a, b) => a.name.localeCompare(b.name))) {
+    visit(pkg)
+  }
+
+  return sorted
+}
+
+const packages = discoverPackages()
+assert(packages.length > 0, 'No @nuxt-photo packages found in packages/*')
+
 const packDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-pack-'))
 
 try {
-  for (const [packageName, packageDir] of packages) {
+  for (const { name: packageName, dir: packageDir } of packages) {
     const before = new Set(readdirSync(packDir))
     run('pnpm', ['pack', '--pack-destination', packDir], {
       cwd: packageDir,

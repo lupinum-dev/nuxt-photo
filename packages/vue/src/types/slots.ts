@@ -33,6 +33,7 @@ export interface LightboxViewportSlotProps {
   photos: PhotoItem[]
   viewportRef: Ref<HTMLElement | null | undefined>
   mediaOpacity: number
+  imageLoadFailed: boolean
 }
 
 // ─── PhotoCarousel slot props ──────────────────────────────────────────────

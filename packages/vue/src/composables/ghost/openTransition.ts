@@ -6,7 +6,8 @@
  * visibility heuristic in `shouldUseFlip` (from `@nuxt-photo/core`):
  *
  *   1. `doInstantOpen` — `mode: 'none'` (tests, reduced-motion). Overlay to 1,
- *      wait for the image, media + chrome to 1. No ghost element involved.
+ *      wait for the image. Successful loads reveal media + chrome. Failed
+ *      loads keep media hidden and let the lightbox render its fallback.
  *
  *   2. `doFadeOpen` — either `mode: 'fade'` or auto fallback when the thumbnail
  *      is off-screen/too small.
@@ -23,17 +24,17 @@
  *      and let CSS transition (plus border-radius + shadow growth) run.
  *      Image load races the wait in `Promise.all`, then media is revealed.
  *
- * Invariant: `callbacks.loadSlideImage(photo)` MUST resolve before
- * `mediaOpacity.value = 1` in every path. Otherwise the `<img>` in the viewer
- * is still decoding and the reveal shows a blank frame or a flash of the thumb.
+ * Invariant: `mediaOpacity.value = 1` is only set after
+ * `callbacks.loadSlideImage(photo)` returns `{ ok: true }`. Failed loads keep
+ * the media layer hidden so broken images are not treated as ready.
  *
  * State mutated (all refs live on `GhostState`): overlayOpacity, mediaOpacity,
  * chromeOpacity, ghostSrc, ghostVisible, ghostStyle, animating, activeIndex,
  * uiVisible, lightboxMounted, hiddenThumbIndex.
  *
- * On any error the catch block in `openTransition` forces overlay + media to
- * 1 and calls `resetOpenState` so the lightbox is always in a usable state —
- * no half-animated limbo.
+ * On any unexpected error the catch block in `openTransition` forces overlay +
+ * media to 1 and calls `resetOpenState` so the lightbox is always in a usable
+ * state — no half-animated limbo.
  */
 import { nextTick } from 'vue'
 import {
@@ -47,13 +48,45 @@ import {
   shouldUseFlip,
   type PhotoItem,
   type RectLike,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import {
   openDurationMs,
   type GhostState,
   type TransitionCallbacks,
 } from './types'
 import { resetOpenState } from './state'
+
+function showImageLoadFallback(s: GhostState) {
+  s.ghostVisible.value = false
+  s.ghostSrc.value = ''
+  s.hiddenThumbIndex.value = null
+  s.overlayOpacity.value = 1
+  s.mediaOpacity.value = 0
+  s.chromeOpacity.value = 1
+  s.animating.value = false
+  s.closeDragY.value = 0
+  s.disableBackdropTransition.value = false
+}
+
+async function revealLoadedSlide(
+  s: GhostState,
+  photo: PhotoItem,
+  callbacks: TransitionCallbacks,
+): Promise<boolean> {
+  const result = await callbacks.loadSlideImage(photo)
+  if (!result.ok) {
+    s.debug?.warn(
+      'transitions',
+      'open: slide image failed to load',
+      result.error,
+    )
+    showImageLoadFallback(s)
+    return false
+  }
+
+  s.mediaOpacity.value = 1
+  return true
+}
 
 async function doInstantOpen(
   s: GhostState,
@@ -62,8 +95,7 @@ async function doInstantOpen(
 ) {
   s.debug?.log('transitions', 'open: INSTANT (mode=none)')
   s.overlayOpacity.value = 1
-  await callbacks.loadSlideImage(photo)
-  s.mediaOpacity.value = 1
+  await revealLoadedSlide(s, photo, callbacks)
   s.chromeOpacity.value = 1
 }
 
@@ -117,8 +149,7 @@ async function doFadeOpen(
       easeOutCubic,
     )
 
-    await callbacks.loadSlideImage(photo)
-    s.mediaOpacity.value = 1
+    await revealLoadedSlide(s, photo, callbacks)
     s.ghostVisible.value = false
     s.chromeOpacity.value = 1
   } else {
@@ -137,8 +168,7 @@ async function doFadeOpen(
       easeOutCubic,
     )
 
-    await callbacks.loadSlideImage(photo)
-    s.mediaOpacity.value = 1
+    await revealLoadedSlide(s, photo, callbacks)
     s.chromeOpacity.value = 1
   }
 
@@ -185,7 +215,20 @@ async function doFlipOpen(
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
   }
 
-  await Promise.all([wait(openDurationMs), callbacks.loadSlideImage(photo)])
+  const [, loadResult] = await Promise.all([
+    wait(openDurationMs),
+    callbacks.loadSlideImage(photo),
+  ])
+
+  if (!loadResult.ok) {
+    s.debug?.warn(
+      'transitions',
+      'open: slide image failed to load',
+      loadResult.error,
+    )
+    showImageLoadFallback(s)
+    return
+  }
 
   s.mediaOpacity.value = 1
   await nextFrame()

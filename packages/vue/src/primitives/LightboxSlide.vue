@@ -1,10 +1,6 @@
 <template>
   <div v-bind="$attrs">
-    <div
-      data-np-slide-effect
-      :class="effectClass"
-      :style="ctx.getSlideEffectStyle(index)"
-    >
+    <div data-np-slide-effect :class="effectClass">
       <div data-np-slide-frame :class="frameClass" :style="frameStyle">
         <div
           data-np-slide-zoom

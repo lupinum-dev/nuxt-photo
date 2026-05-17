@@ -10,13 +10,14 @@ import {
   createDebug,
   createNativeImageAdapter,
   createTransitionMode,
-  ensureImageLoaded,
+  loadImage,
   photoId,
   type AreaMetrics,
   type ImageAdapter,
+  type LoadImageResult,
   type LightboxTransitionOption,
   type PhotoItem,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
@@ -105,8 +106,10 @@ export function useLightboxContext(
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
+  const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
+  let imageLoadToken = 0
 
   const carousel = useCarousel(
     photos,
@@ -243,6 +246,29 @@ export function useLightboxContext(
   )
   const keydown = createKeydownBinding(gestures.onKeydown)
 
+  async function loadActiveSlideImage(
+    photo: PhotoItem,
+  ): Promise<LoadImageResult> {
+    const token = ++imageLoadToken
+    activeImageLoadFailed.value = false
+
+    const result = await loadImage(
+      resolvedImageAdapter.value(photo, 'slide').src,
+    )
+    if (token !== imageLoadToken) return result
+
+    activeImageLoadFailed.value = !result.ok
+    if (!result.ok) {
+      debug.warn(
+        'images',
+        `slide image failed to load for "${photo.id}"`,
+        result.error,
+      )
+    }
+
+    return result
+  }
+
   const transitionCallbacks = {
     syncGeometry,
     refreshZoomState: panzoom.refreshZoomState,
@@ -252,8 +278,7 @@ export function useLightboxContext(
       resolvedImageAdapter.value(photo, 'thumb').src,
     getSlideSrc: (photo: PhotoItem) =>
       resolvedImageAdapter.value(photo, 'slide').src,
-    loadSlideImage: (photo: PhotoItem) =>
-      ensureImageLoaded(resolvedImageAdapter.value(photo, 'slide').src),
+    loadSlideImage: loadActiveSlideImage,
   }
 
   const closeCallbacks = {
@@ -305,6 +330,7 @@ export function useLightboxContext(
     hiddenThumbIndex: ghost.hiddenThumbIndex,
     overlayOpacity: ghost.overlayOpacity,
     mediaOpacity: ghost.mediaOpacity,
+    activeImageLoadFailed,
     chromeOpacity: ghost.chromeOpacity,
     uiVisible: ghost.uiVisible,
     closeDragY: ghost.closeDragY,
@@ -335,6 +361,5 @@ export function useLightboxContext(
     toggleZoom: panzoom.toggleZoom,
     handleBackdropClick: () => ghost.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
-    getSlideEffectStyle: carousel.getSlideEffectStyle,
   }
 }

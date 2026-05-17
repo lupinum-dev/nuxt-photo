@@ -40,6 +40,7 @@ interface LightboxRenderState {
   hiddenThumbIndex: Ref<number | null>
   overlayOpacity: Ref<number>
   mediaOpacity: Ref<number>
+  activeImageLoadFailed: Ref<boolean>
   chromeOpacity: Ref<number>
   uiVisible: Ref<boolean>
   closeDragY: Ref<number>
@@ -50,7 +51,6 @@ interface LightboxRenderState {
   lightboxUiStyle: ComputedRef<CSSProperties>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
-  getSlideEffectStyle: (index: number) => CSSProperties
 }
 
 /** DOM bindings — what primitives need to wire up event handlers and refs. */
@@ -93,7 +93,7 @@ export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol(
 
 export interface PhotoGroupContext {
   /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
-  mode: 'auto' | 'explicit'
+  mode: ComputedRef<'auto' | 'explicit'>
   register(
     id: symbol,
     photo: PhotoItem,

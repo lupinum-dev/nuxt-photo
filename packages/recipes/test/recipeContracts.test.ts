@@ -218,6 +218,24 @@ describe('recipe contracts', () => {
     mounted.unmount()
   })
 
+  it('renders PhotoAlbum with no trigger behavior when lightbox is disabled', async () => {
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [makePhoto({ id: 'plain-album' })],
+        lightbox: false,
+        defaultContainerWidth: 800,
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.unmount()
+  })
+
   it('uses the imageAdapter for slide rendering and lightbox preload requests', async () => {
     const imageRequests: string[] = []
     vi.stubGlobal('Image', createImmediateImage(imageRequests))
@@ -286,7 +304,7 @@ describe('recipe contracts', () => {
     const unregister = vi.fn()
 
     const parentGroup: PhotoGroupContext = {
-      mode: 'explicit',
+      mode: computed(() => 'explicit'),
       register,
       unregister,
       open: vi.fn(async () => {}),

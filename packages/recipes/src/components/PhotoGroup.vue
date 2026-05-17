@@ -23,12 +23,12 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
-  devWarn,
   photoId,
   type ImageAdapter,
   type PhotoItem,
   type PhotoMapper,
 } from '@nuxt-photo/core'
+import { devWarn } from '@nuxt-photo/core/internal'
 import Lightbox from './Lightbox.vue'
 
 const props = withDefaults(
@@ -186,7 +186,7 @@ function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
 
 // Group context for child Photo/PhotoAlbum components
 const groupContext: PhotoGroupContext = {
-  mode: groupMode.value,
+  mode: groupMode,
   register,
   unregister,
   open,
@@ -195,12 +195,6 @@ const groupContext: PhotoGroupContext = {
   photos: collectedPhotos,
   hiddenPhoto,
 }
-
-// Keep mode reactive for children that check it after mount
-Object.defineProperty(groupContext, 'mode', {
-  get: () => groupMode.value,
-  enumerable: true,
-})
 
 provide(PhotoGroupContextKey, groupContext)
 

@@ -4,7 +4,7 @@ import type {
   DebugLogger,
   PhotoItem,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import { createGhostState, setThumbRef } from './ghost/state'
 import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'

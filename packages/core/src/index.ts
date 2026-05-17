@@ -1,34 +1,48 @@
-// @nuxt-photo/core — Framework-free TypeScript
+// @nuxt-photo/core — documented app-facing API
 
-// Types
-export * from './types'
+export {
+  photoId,
+  responsive,
+  resolveResponsiveParameter,
+  mergeResponsiveBreakpoints,
+} from './types'
+export type {
+  PhotoItem,
+  PhotoMapper,
+  AlbumLayout,
+  RowsAlbumLayout,
+  ColumnsAlbumLayout,
+  MasonryAlbumLayout,
+  ImageAdapter,
+  ImageContext,
+  ImageSource,
+  LightboxTransitionOption,
+  TransitionMode,
+  ResponsiveParameter,
+  ResponsiveResolver,
+  LayoutInput,
+  RowsLayoutOptions,
+  ColumnsLayoutOptions,
+  MasonryLayoutOptions,
+  LayoutEntry,
+  LayoutGroup,
+  RectLike,
+  AreaMetrics,
+  PanState,
+  PanBounds,
+  ZoomState,
+  GestureMode,
+} from './types'
 
-// Layout
-export * from './layout'
+export {
+  computeRowsLayout,
+  computeColumnsLayout,
+  computeMasonryLayout,
+} from './layout'
 
-// Geometry
-export * from './geometry'
-
-// Physics
-export * from './physics'
-
-// Image
-export * from './image'
-
-// DOM utilities
-export * from './dom'
-
-// Debug
-export * from './debug'
-
-// Environment
-export * from './env'
-
-// Viewer
-export * from './viewer'
-
-// Transition
-export * from './transition'
-
-// Utilities
-export * from './utils'
+export {
+  createNativeImageAdapter,
+  computePhotoSizes,
+  loadImage,
+  type LoadImageResult,
+} from './image'

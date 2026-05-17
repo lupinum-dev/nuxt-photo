@@ -2,11 +2,12 @@ import type { ComputedRef, CSSProperties, Ref } from 'vue'
 import type {
   AreaMetrics,
   DebugLogger,
+  LoadImageResult,
   PanState,
   PhotoItem,
   RectLike,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
 export const openDurationMs = 420
 export const closeDurationMs = 380
@@ -19,7 +20,7 @@ export type TransitionCallbacks = {
   cancelTapTimer: () => void
   getThumbSrc: (photo: PhotoItem) => string
   getSlideSrc: (photo: PhotoItem) => string
-  loadSlideImage: (photo: PhotoItem) => Promise<void>
+  loadSlideImage: (photo: PhotoItem) => Promise<LoadImageResult>
 }
 
 export type CloseCallbacks = TransitionCallbacks & {

@@ -11,7 +11,6 @@ export type PhotoItem<
   alt?: string
   caption?: string
   description?: string
-  blurhash?: string
   srcset?: string
   meta?: TMeta
 }
@@ -81,7 +80,6 @@ export type CloseTransitionPlan = {
     | 'mode-forced-fade'
     | 'mode-forced-none'
     | 'visibility-below-threshold'
-    | 'scrolled-into-view'
 }
 
 // ─── Layout ───

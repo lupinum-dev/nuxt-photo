@@ -13,12 +13,9 @@ import {
   type AreaMetrics,
   type PhotoItem,
   type DebugLogger,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
-/**
- * Bind Embla-based slide navigation and per-slide visual effects to the active
- * lightbox photo collection.
- */
+/** Bind Embla-based slide navigation to the active lightbox photo collection. */
 export function useCarousel(
   photos: Readonly<Ref<PhotoItem[]>>,
   areaMetrics: Ref<AreaMetrics | null>,
@@ -27,7 +24,6 @@ export function useCarousel(
   debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
-  const scrollProgress = ref(0)
   const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
 
   const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
@@ -45,10 +41,6 @@ export function useCarousel(
         const newIndex = _api.selectedSnap()
         debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
         activeIndex.value = newIndex
-      })
-
-      api.on('scroll', (_api: EmblaCarouselType) => {
-        scrollProgress.value = _api.scrollProgress()
       })
 
       api.on('pointerdown', () => {
@@ -87,11 +79,6 @@ export function useCarousel(
     }
   }
 
-  function getSlideEffectStyle(slideIndex: number): CSSProperties {
-    void slideIndex
-    return {}
-  }
-
   function goToNext() {
     emblaApi.value?.goToNext()
   }
@@ -119,12 +106,10 @@ export function useCarousel(
     emblaApi,
     activeIndex,
     currentPhoto,
-    scrollProgress,
 
     getRelativeFrameRect,
     getAbsoluteFrameRect,
     getSlideFrameStyle,
-    getSlideEffectStyle,
 
     goToNext,
     goToPrev,

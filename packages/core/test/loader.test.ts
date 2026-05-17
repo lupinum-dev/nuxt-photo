@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { ensureImageLoaded } from '../src/image/loader'
+import { loadImage } from '../src/image/loader'
 
 // Mock Image constructor
 class MockImage {
@@ -33,24 +33,26 @@ beforeEach(() => {
   // so each test uses a unique URL via Date.now() to avoid cache collisions
 })
 
-describe('ensureImageLoaded', () => {
-  it('resolves for a valid image', async () => {
-    await expect(
-      ensureImageLoaded(`/valid-${Date.now()}.jpg`),
-    ).resolves.toBeUndefined()
+describe('loadImage', () => {
+  it('returns ok for a valid image', async () => {
+    await expect(loadImage(`/valid-${Date.now()}.jpg`)).resolves.toEqual({
+      ok: true,
+    })
   })
 
-  it('resolves (does not reject) for a broken image', async () => {
-    await expect(
-      ensureImageLoaded(`/broken-${Date.now()}.jpg`),
-    ).resolves.toBeUndefined()
+  it('returns failure for a broken image', async () => {
+    await expect(loadImage(`/broken-${Date.now()}.jpg`)).resolves.toMatchObject(
+      {
+        ok: false,
+      },
+    )
   })
 
   it('does not cache failed loads so retries can succeed', async () => {
     const src = `/broken-retry-${Date.now()}.jpg`
 
     // First call: broken image
-    await ensureImageLoaded(src)
+    await loadImage(src)
 
     // Simulate fix: next load of same src should create a new Image
     // (not return a cached resolved promise from the failed load)
@@ -66,7 +68,7 @@ describe('ensureImageLoaded', () => {
       },
     )
 
-    await ensureImageLoaded(src)
+    await loadImage(src)
     expect(imageCreated).toBe(true)
   })
 
@@ -77,12 +79,12 @@ describe('ensureImageLoaded', () => {
         decode = () => Promise.resolve()
       },
     )
-    await expect(
-      ensureImageLoaded(`/decode-ok-${Date.now()}.jpg`),
-    ).resolves.toBeUndefined()
+    await expect(loadImage(`/decode-ok-${Date.now()}.jpg`)).resolves.toEqual({
+      ok: true,
+    })
   })
 
-  it('resolves when image.decode() rejects and evicts from cache', async () => {
+  it('returns failure when image.decode() rejects and evicts from cache', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.stubGlobal(
       'Image',
@@ -92,7 +94,7 @@ describe('ensureImageLoaded', () => {
     )
 
     const src = `/decode-fail-${Date.now()}.jpg`
-    await ensureImageLoaded(src)
+    await expect(loadImage(src)).resolves.toMatchObject({ ok: false })
     expect(warnSpy).toHaveBeenCalled()
 
     // Should not be cached — next call should create a new Image
@@ -108,7 +110,7 @@ describe('ensureImageLoaded', () => {
       },
     )
 
-    await ensureImageLoaded(src)
+    await loadImage(src)
     expect(imageCreated).toBe(true)
     warnSpy.mockRestore()
   })
@@ -126,8 +128,8 @@ describe('ensureImageLoaded', () => {
     )
 
     const src = `/dedup-${Date.now()}.jpg`
-    const p1 = ensureImageLoaded(src)
-    const p2 = ensureImageLoaded(src)
+    const p1 = loadImage(src)
+    const p2 = loadImage(src)
 
     // Same promise reference (cache hit on second call)
     expect(p1).toBe(p2)

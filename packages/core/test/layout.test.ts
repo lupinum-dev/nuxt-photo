@@ -111,6 +111,33 @@ describe('layout algorithms', () => {
     ).toEqual([])
   })
 
+  it('rejects invalid photo dimensions instead of inventing fallback geometry', () => {
+    const invalidPhotos = [
+      { ...createPhotoSet()[0]!, id: 'invalid-width', width: 0 },
+    ]
+
+    expect(() =>
+      computeRowsLayout({
+        photos: invalidPhotos,
+        containerWidth: 1000,
+      }),
+    ).toThrow('invalid dimensions')
+
+    expect(() =>
+      computeColumnsLayout({
+        photos: invalidPhotos,
+        containerWidth: 1000,
+      }),
+    ).toThrow('invalid dimensions')
+
+    expect(() =>
+      computeMasonryLayout({
+        photos: invalidPhotos,
+        containerWidth: 1000,
+      }),
+    ).toThrow('invalid dimensions')
+  })
+
   it('keeps masonry columns ordered and does not worsen the greedy baseline', () => {
     const photos = createPhotoSet()
     const containerWidth = 1000

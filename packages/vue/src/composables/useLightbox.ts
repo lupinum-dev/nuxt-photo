@@ -1,4 +1,5 @@
-import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
+import { photoId, type PhotoItem } from '@nuxt-photo/core'
+import { devWarn } from '@nuxt-photo/core/internal'
 import { useLightboxInject } from './useLightboxInject'
 
 /** Consume the nearest lightbox context as a simple controller/read-model API. */

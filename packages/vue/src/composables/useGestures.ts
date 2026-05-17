@@ -11,7 +11,7 @@ import {
   type PhotoItem,
   type ZoomState,
   type DebugLogger,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
 import {
   MOUSE_WHEEL_THROTTLE_MS,

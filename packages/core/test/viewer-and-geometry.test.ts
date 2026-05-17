@@ -11,7 +11,7 @@ import {
   getLoopedIndex,
   isDoubleTap,
   rubberband,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
 describe('geometry and viewer utilities', () => {
   it('fits rectangles and loops indexes predictably', () => {

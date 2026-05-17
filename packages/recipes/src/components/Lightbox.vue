@@ -78,7 +78,7 @@
 
       <div class="np-lightbox__stage">
         <LightboxViewport
-          v-slot="{ photos, viewportRef, mediaOpacity }"
+          v-slot="{ photos, viewportRef, mediaOpacity, imageLoadFailed }"
           class="np-lightbox__media"
         >
           <div
@@ -99,6 +99,13 @@
                 </template>
               </LightboxSlide>
             </div>
+          </div>
+          <div
+            v-if="imageLoadFailed"
+            class="np-lightbox__fallback"
+            role="status"
+          >
+            Image could not be loaded.
           </div>
         </LightboxViewport>
 

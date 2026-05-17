@@ -1,2 +1,2 @@
-export { ensureImageLoaded } from './loader'
+export { loadImage, type LoadImageResult } from './loader'
 export { createNativeImageAdapter, computePhotoSizes } from './adapter'

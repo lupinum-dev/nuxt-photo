@@ -4,7 +4,7 @@ import {
   getVisibilityRatio,
   planCloseTransition,
   shouldUseFlip,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
 function rect({
   left,

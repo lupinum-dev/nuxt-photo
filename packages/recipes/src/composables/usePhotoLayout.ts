@@ -24,7 +24,7 @@ import {
   type LayoutGroup,
   type LayoutEntry,
   type ResponsiveParameter,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 
 export type BreakpointSnapshot = {
   spanKey: string

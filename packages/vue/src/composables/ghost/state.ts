@@ -11,7 +11,7 @@ import type {
   DebugLogger,
   PhotoItem,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/core/internal'
 import type { GhostState } from './types'
 
 /** Create the shared reactive state used by ghost open/close transition helpers. */

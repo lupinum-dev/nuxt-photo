@@ -1,11 +1,11 @@
 import type { MaybeRef } from 'vue'
 import {
-  devWarn,
   photoId,
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '@nuxt-photo/core'
+import { devWarn } from '@nuxt-photo/core/internal'
 import { useLightboxContext } from './useLightboxContext'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'

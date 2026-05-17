@@ -1,10 +1,12 @@
 import { devWarn } from '../env'
 import { IMAGE_LOAD_CACHE_LIMIT } from './constants'
 
-const imageLoadCache = new Map<string, Promise<void>>()
+export type LoadImageResult = { ok: true } | { ok: false; error?: unknown }
+
+const imageLoadCache = new Map<string, Promise<LoadImageResult>>()
 
 /**
- * Resolve when an image is fully ready to paint without a flash.
+ * Load and decode an image, returning whether it is actually ready to paint.
  *
  * Completion paths, in order of preference:
  *   1. `image.decode()` — modern, async, off-main-thread; preferred where available.
@@ -12,44 +14,50 @@ const imageLoadCache = new Map<string, Promise<void>>()
  *   3. `image.complete` — synchronous check for browsers without `decode()`
  *      when the image is already in the HTTP cache and finished before we got here.
  *
- * The `settled` flag guards against double-resolve: `decode()` rejecting on CORS
- * also fires `onerror`, and either can race with a synchronous `complete` check.
- * We need the promise to resolve exactly once regardless of which path wins.
+ *   2. `onload` / `onerror` — fallback for browsers without `decode()`.
+ *   3. `image.complete` — synchronous success check for browsers without
+ *      `decode()` when the image is already in the HTTP cache.
+ *
+ * Failed loads are not cached, so a later retry can observe a recovered URL.
  */
-export function ensureImageLoaded(src: string): Promise<void> {
+export function loadImage(src: string): Promise<LoadImageResult> {
   const cached = imageLoadCache.get(src)
   if (cached) return cached
 
-  const promise = new Promise<void>((resolve) => {
+  const promise = new Promise<LoadImageResult>((resolve) => {
     const image = new Image()
     let settled = false
 
-    const settle = () => {
+    const settle = (result: LoadImageResult) => {
       if (settled) return
       settled = true
-      resolve()
+      if (!result.ok) imageLoadCache.delete(src)
+      resolve(result)
     }
 
-    image.onload = () => settle()
     image.onerror = () => {
-      imageLoadCache.delete(src)
-      settle()
+      settle({ ok: false, error: new Error(`Image failed to load: ${src}`) })
     }
-    image.src = src
 
     if (image.decode) {
+      image.src = src
       image
         .decode()
-        .catch((error) => {
-          imageLoadCache.delete(src)
-          devWarn(`Image decode failed for "${src}"`, error)
+        .then(() => {
+          settle({ ok: true })
         })
-        .finally(settle)
+        .catch((error: unknown) => {
+          devWarn(`Image decode failed for "${src}"`, error)
+          settle({ ok: false, error })
+        })
       return
     }
 
+    image.onload = () => settle({ ok: true })
+    image.src = src
+
     if (image.complete) {
-      settle()
+      settle({ ok: true })
     }
   })
 
