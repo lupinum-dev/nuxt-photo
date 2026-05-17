@@ -38,6 +38,8 @@ export {
   computeRowsLayout,
   computeColumnsLayout,
   computeMasonryLayout,
+  computeBreakpointStyles,
+  type BreakpointStylesOptions,
 } from './layout'
 
 export {
@@ -46,3 +48,53 @@ export {
   loadImage,
   type LoadImageResult,
 } from './image'
+
+export {
+  isUsableRect,
+  getLoopedIndex,
+  fitRect,
+  flipTransform,
+  makeGhostBaseStyle,
+  rubberband,
+} from './geometry'
+
+export {
+  type Spring1D,
+  createSpring1D,
+  stopSpring,
+  springStep,
+  runSpring,
+  VelocityTracker,
+  animateNumber,
+  easeOutCubic,
+  easeInOutCubic,
+} from './physics'
+
+export { wait, nextFrame, lockBodyScroll } from './dom'
+
+export {
+  DEFAULT_MIN_ZOOM,
+  computeFittedFrame,
+  computeZoomLevels,
+  computePanBounds,
+  clampPanToBounds,
+  clampPanWithResistance,
+  clientToAreaPoint,
+  computeTargetPanForZoom,
+  classifyGesture,
+  isDoubleTap,
+  computeCloseDragRatio,
+} from './viewer'
+
+export { createDebug, type DebugLogger, type DebugFlags } from './debug'
+
+export {
+  createTransitionMode,
+  getVisibilityRatio,
+  shouldUseFlip,
+  planCloseTransition,
+  type TransitionModeConfig,
+} from './transition'
+
+export { isDev, devWarn } from './env'
+export { round, getWindowDimensions } from './utils'

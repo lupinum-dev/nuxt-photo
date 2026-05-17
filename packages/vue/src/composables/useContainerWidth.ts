@@ -17,9 +17,7 @@ function snapToBreakpoint(
 ): number {
   const sorted = [...breakpoints].filter((bp) => bp > 0).sort((a, b) => b - a)
   if (sorted.length === 0) return width
-  // Synthetic floor: half the smallest declared breakpoint
-  sorted.push(Math.floor(sorted[sorted.length - 1] / 2))
-  return sorted.find((bp) => bp <= width) ?? sorted[sorted.length - 1]
+  return sorted.find((bp) => bp <= width) ?? width
 }
 
 /**

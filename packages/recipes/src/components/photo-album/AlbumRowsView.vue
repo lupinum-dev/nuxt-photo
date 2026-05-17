@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
-import type { RowItem } from '../../composables/usePhotoLayout'
+import type { RowItem } from '../../composables/usePhotoAlbumLayoutState'
 import AlbumItemContent from './AlbumItemContent.vue'
 
 defineProps<{

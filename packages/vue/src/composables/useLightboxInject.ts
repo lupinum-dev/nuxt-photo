@@ -1,4 +1,7 @@
-import { LightboxContextKey, type LightboxContext } from '../provide/keys'
+import {
+  LightboxContextKey,
+  type InternalLightboxContext,
+} from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
 /**
@@ -6,7 +9,9 @@ import { requireInjection } from '../internal/requireInjection'
  * `useLightboxProvider()` call.
  * Throws a descriptive error if no lightbox context is available.
  */
-export function useLightboxInject(componentName: string): LightboxContext {
+export function useLightboxInject(
+  componentName: string,
+): InternalLightboxContext {
   return requireInjection(
     LightboxContextKey,
     componentName,

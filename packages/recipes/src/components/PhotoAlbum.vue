@@ -23,23 +23,22 @@
       </template>
     </AlbumRowsView>
 
-    <AlbumSnapshotsView
-      v-else-if="!isMounted && breakpointSnapshots.length > 0"
-      :container-query-css="containerQueryCSS"
-      :breakpoint-snapshots="breakpointSnapshots"
-      :snapshot-class="snapshotClass"
+    <AlbumMountedView
+      v-else-if="!isMounted && groups.length > 0"
+      :photos="photos"
+      :groups="groups"
       :item-class="itemClass"
       :img-class="imgClass"
       :image-adapter="imageAdapter"
       :item-bindings="itemBindings"
-      :snapshot-wrapper-style="snapshotWrapperStyle"
-      :snapshot-group-style="snapshotGroupStyle"
-      :snapshot-item-style="snapshotItemStyle"
+      :is-hidden="isHidden"
+      :group-style="groupStyle"
+      :item-style="itemStyle"
     >
       <template v-if="$slots.thumbnail" #thumbnail="slotProps">
         <slot name="thumbnail" v-bind="slotProps" />
       </template>
-    </AlbumSnapshotsView>
+    </AlbumMountedView>
 
     <div v-else-if="!isMounted" :style="ssrWrapperStyle">
       <div
@@ -106,6 +105,7 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
+  devWarn,
   mergeResponsiveBreakpoints,
   photoId,
   type AlbumLayout,
@@ -114,13 +114,11 @@ import {
   type PhotoItem,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
-import { devWarn } from '@nuxt-photo/core/internal'
 import Lightbox from './Lightbox.vue'
 import AlbumItemContent from './photo-album/AlbumItemContent.vue'
 import AlbumMountedView from './photo-album/AlbumMountedView.vue'
 import AlbumRowsView from './photo-album/AlbumRowsView.vue'
-import AlbumSnapshotsView from './photo-album/AlbumSnapshotsView.vue'
-import { usePhotoLayout } from '../composables/usePhotoLayout'
+import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
 
 const props = withDefaults(
   defineProps<{
@@ -221,22 +219,17 @@ const {
   containerRef,
   isMounted,
   scopeClass,
-  snapshotClass,
   containerStyle,
   containerQueryCSS,
   containerQueriesActive,
-  breakpointSnapshots,
   groups,
   rowItems,
   ssrWrapperStyle,
   ssrItemStyle,
   groupStyle,
   itemStyle,
-  snapshotGroupStyle,
-  snapshotItemStyle,
-  snapshotWrapperStyle,
   maybeWarnApproximate,
-} = usePhotoLayout({
+} = usePhotoAlbumLayoutState({
   photos,
   layout: layoutType,
   columns: layoutColumns,

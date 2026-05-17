@@ -48,7 +48,7 @@ import {
   shouldUseFlip,
   type PhotoItem,
   type RectLike,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 import {
   openDurationMs,
   type GhostState,

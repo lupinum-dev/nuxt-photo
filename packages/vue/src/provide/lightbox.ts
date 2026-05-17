@@ -3,14 +3,14 @@ import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import {
   ImageAdapterKey,
   LightboxContextKey,
-  type LightboxContext,
+  type InternalLightboxContext,
   LightboxSlideRendererKey,
   type LightboxSlideRenderer,
 } from './keys'
 
 /** Provide the shared lightbox context plus the optional custom slide resolver. */
 export function provideLightboxContexts(
-  ctx: LightboxContext,
+  ctx: InternalLightboxContext,
   options?: {
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
     imageAdapter?: ImageAdapter

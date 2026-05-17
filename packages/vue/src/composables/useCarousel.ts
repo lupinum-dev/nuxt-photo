@@ -13,7 +13,7 @@ import {
   type AreaMetrics,
   type PhotoItem,
   type DebugLogger,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 
 /** Bind Embla-based slide navigation to the active lightbox photo collection. */
 export function useCarousel(

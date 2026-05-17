@@ -17,7 +17,7 @@ import {
   type PhotoItem,
   type ZoomState,
   type DebugLogger,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
 
 /**

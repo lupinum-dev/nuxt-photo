@@ -9,104 +9,112 @@ import {
   normalizeLayoutNumber,
   validatePhotoDimensions,
 } from './types'
-import { findShortestPathLengthN, type GraphFunction } from './shortestPath'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
 }
 
-function makeGetColumnNeighbors({
-  items,
-  spacing,
-  padding,
-  targetColumnWidth,
-  targetColumnHeight,
-}: {
-  items: PhotoItem[]
-  spacing: number
-  padding: number
-  targetColumnWidth: number
-  targetColumnHeight: number
-}): GraphFunction<number> {
-  return (node: number) => {
-    const results: Array<{ neighbor: number; weight: number }> = []
-    const cutOffHeight = targetColumnHeight * 1.5
-    const firstItem = items[node]
-    if (!firstItem) return results
-
-    let height = targetColumnWidth / ratio(firstItem) + 2 * padding
-
-    for (let index = node + 1; index < items.length + 1; index += 1) {
-      results.push({
-        neighbor: index,
-        weight: (targetColumnHeight - height) ** 2,
-      })
-
-      if (height > cutOffHeight || index === items.length) break
-
-      const nextItem = items[index]
-      if (!nextItem) break
-
-      height += targetColumnWidth / ratio(nextItem) + spacing + 2 * padding
-    }
-
-    return results
+function columnHeight(
+  items: PhotoItem[],
+  start: number,
+  end: number,
+  targetColumnWidth: number,
+  spacing: number,
+  padding: number,
+) {
+  let height = 0
+  for (let index = start; index < end; index++) {
+    height += targetColumnWidth / ratio(items[index]!) + 2 * padding
+    if (index > start) height += spacing
   }
+  return height
 }
 
-function computeColumnsModel(
+function findColumnBreaks(
   items: PhotoItem[],
   columns: number,
-  containerWidth: number,
+  targetColumnWidth: number,
+  spacing: number,
+  padding: number,
+): number[] {
+  const count = items.length
+  const targetColumnHeight =
+    (items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0) +
+      spacing * Math.max(0, count - columns) +
+      2 * padding * count) /
+    columns
+
+  const costs: number[][] = Array.from({ length: columns + 1 }, () =>
+    new Array(count + 1).fill(Infinity),
+  )
+  const previous: number[][] = Array.from({ length: columns + 1 }, () =>
+    new Array(count + 1).fill(-1),
+  )
+  costs[0]![0] = 0
+
+  for (let column = 1; column <= columns; column++) {
+    for (let end = column; end <= count; end++) {
+      for (let start = column - 1; start < end; start++) {
+        const height = columnHeight(
+          items,
+          start,
+          end,
+          targetColumnWidth,
+          spacing,
+          padding,
+        )
+        const nextCost =
+          costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
+        if (nextCost < costs[column]![end]!) {
+          costs[column]![end] = nextCost
+          previous[column]![end] = start
+        }
+      }
+    }
+  }
+
+  const path = [count]
+  let end = count
+  for (let column = columns; column > 0; column--) {
+    const start = previous[column]![end]!
+    if (start < 0) return [0, count]
+    path.push(start)
+    end = start
+  }
+  return path.reverse()
+}
+
+function partitionColumns(
+  items: PhotoItem[],
+  columns: number,
   spacing: number,
   padding: number,
   targetColumnWidth: number,
-):
-  | {
-      columnsGaps: number[]
-      columnsRatios: number[]
-      columnGroups: { photo: PhotoItem; index: number }[][]
-    }
-  | undefined {
+): {
+  columnsGaps: number[]
+  columnsRatios: number[]
+  columnGroups: { photo: PhotoItem; index: number }[][]
+} {
   const columnsGaps: number[] = []
   const columnsRatios: number[] = []
 
   if (items.length <= columns) {
-    const averageRatio =
-      items.length > 0
-        ? items.reduce((acc, item) => acc + ratio(item), 0) / items.length
-        : 1
-
-    for (let col = 0; col < columns; col++) {
+    for (let col = 0; col < items.length; col++) {
       columnsGaps[col] = 2 * padding
-      columnsRatios[col] =
-        col < items.length && items[col] ? ratio(items[col]!) : averageRatio
+      columnsRatios[col] = ratio(items[col]!)
     }
 
-    const path = Array.from({ length: columns + 1 }, (_, i) =>
-      Math.min(i, items.length),
-    )
+    const path = Array.from({ length: items.length + 1 }, (_, i) => i)
     const columnGroups = buildColumnGroups(path, items)
     return { columnsGaps, columnsRatios, columnGroups }
   }
 
-  const targetColumnHeight =
-    (items.reduce((acc, item) => acc + targetColumnWidth / ratio(item), 0) +
-      spacing * (items.length - columns) +
-      2 * padding * items.length) /
-    columns
-
-  const path = findShortestPathLengthN(
-    makeGetColumnNeighbors({
-      items,
-      targetColumnWidth,
-      targetColumnHeight,
-      spacing,
-      padding,
-    }),
+  const path = findColumnBreaks(
+    items,
     columns,
-    0,
-    items.length,
+    targetColumnWidth,
+    spacing,
+    padding,
   )
 
   for (let col = 0; col < path.length - 1; col++) {
@@ -135,8 +143,8 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
 }
 
 /**
- * Columns layout — distributes photos into balanced columns using
- * shortest-path algorithm for optimal distribution. Returns LayoutGroup[]
+ * Columns layout — partitions photos into balanced sequential columns.
+ * Returns LayoutGroup[]
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
 export function computeColumnsLayout(
@@ -145,22 +153,20 @@ export function computeColumnsLayout(
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
   const spacing = normalizeLayoutNumber(options.spacing, 8)
   const padding = normalizeLayoutNumber(options.padding, 0)
-  const columns = normalizeColumnCount(options.columns)
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || containerWidth <= 0) return []
+  const columns = Math.min(normalizeColumnCount(options.columns), photos.length)
 
   const targetColumnWidth =
     (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
 
-  const result = computeColumnsModel(
+  const result = partitionColumns(
     photos,
     columns,
-    containerWidth,
     spacing,
     padding,
     targetColumnWidth,
   )
-  if (!result) return []
 
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 

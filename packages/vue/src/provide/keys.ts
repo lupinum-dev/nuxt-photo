@@ -13,8 +13,8 @@ import type {
   PhotoItem,
   ZoomState,
 } from '@nuxt-photo/core'
-/** Consumer API — what app code and recipe components need. */
-interface LightboxConsumerAPI {
+/** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
+export interface LightboxController {
   photos: ComputedRef<PhotoItem[]>
   count: ComputedRef<number>
   activeIndex: Ref<number>
@@ -25,10 +25,11 @@ interface LightboxConsumerAPI {
   next: () => void
   prev: () => void
   toggleZoom: () => void
+  openPhoto(photo: PhotoItem): Promise<void>
+  openById(id: string | number): Promise<void>
 }
 
-/** Render state — what primitive components read for styling and visibility. */
-interface LightboxRenderState {
+type LightboxRuntimeState = {
   zoomState: Ref<ZoomState>
   panState: Ref<PanState>
   isZoomedIn: ComputedRef<boolean>
@@ -53,8 +54,7 @@ interface LightboxRenderState {
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
 }
 
-/** DOM bindings — what primitives need to wire up event handlers and refs. */
-interface LightboxDOMBindings {
+type LightboxDomBindings = {
   mediaAreaRef: Ref<HTMLElement | null>
   emblaRef: Ref<HTMLElement | null | undefined>
   setThumbRef: (
@@ -71,17 +71,19 @@ interface LightboxDOMBindings {
   handleBackdropClick: () => void
 }
 
-/** Full lightbox context — the intersection of all role-specific interfaces. */
-export type LightboxContext = LightboxConsumerAPI &
-  LightboxRenderState &
-  LightboxDOMBindings
+export type InternalLightboxContext = Omit<
+  LightboxController,
+  'openPhoto' | 'openById'
+> &
+  LightboxRuntimeState &
+  LightboxDomBindings
 
 export type LightboxSlideRenderer = (props: {
   photo: PhotoItem
   index: number
 }) => unknown
 
-export const LightboxContextKey: InjectionKey<LightboxContext> = Symbol(
+export const LightboxContextKey: InjectionKey<InternalLightboxContext> = Symbol(
   'nuxt-photo:lightbox',
 )
 export const LightboxSlideRendererKey: InjectionKey<

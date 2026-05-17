@@ -1,11 +1,11 @@
 import type { MaybeRef } from 'vue'
 import {
+  devWarn,
   photoId,
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '@nuxt-photo/core'
-import { devWarn } from '@nuxt-photo/core/internal'
 import { useLightboxContext } from './useLightboxContext'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -13,7 +13,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
 /**
  * Creates a full lightbox context and provides it to child components.
  * This is the composable for building custom lightbox components.
- * It is the supported advanced entrypoint above the internal lightbox runtime.
+ * It is the supported advanced entrypoint above the internal lightbox state.
  *
  * @example
  * ```vue
@@ -78,11 +78,12 @@ export function useLightboxProvider(
     close: ctx.close,
     next: ctx.next,
     prev: ctx.prev,
+    toggleZoom: ctx.toggleZoom,
     isOpen: ctx.isOpen,
     activeIndex: ctx.activeIndex,
     activePhoto: ctx.activePhoto,
-    photos: ctx.photos,
     count: ctx.count,
+    photos: ctx.photos,
     setThumbRef: ctx.setThumbRef,
     hiddenThumbIndex: ctx.hiddenThumbIndex,
   }

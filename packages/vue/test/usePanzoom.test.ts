@@ -2,7 +2,7 @@
 
 import { computed, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
-import { computeZoomLevels } from '@nuxt-photo/core/internal'
+import { computeZoomLevels } from '@nuxt-photo/core'
 import { usePanzoom } from '../src/composables/usePanzoom'
 import { createPhotoSet } from '@test-fixtures/photos'
 

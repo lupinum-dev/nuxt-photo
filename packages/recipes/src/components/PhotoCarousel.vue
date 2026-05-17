@@ -98,11 +98,11 @@ import { computed, type Component } from 'vue'
 import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
 import {
+  devWarn,
   type PhotoMapper,
   type ImageAdapter,
   type PhotoItem,
 } from '@nuxt-photo/core'
-import { devWarn } from '@nuxt-photo/core/internal'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,

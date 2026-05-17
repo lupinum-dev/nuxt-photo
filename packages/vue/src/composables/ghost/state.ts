@@ -11,7 +11,7 @@ import type {
   DebugLogger,
   PhotoItem,
   TransitionModeConfig,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 import type { GhostState } from './types'
 
 /** Create the shared reactive state used by ghost open/close transition helpers. */
@@ -103,7 +103,7 @@ export function resetOpenState(state: GhostState) {
   state.disableBackdropTransition.value = false
 }
 
-/** Reset the close-transition state and unmount the lightbox runtime cleanly. */
+/** Reset the close-transition state and unmount the lightbox cleanly. */
 export function resetCloseState(state: GhostState, clearGuard: () => void) {
   state.debug?.log('transitions', 'resetCloseState: unmounting lightbox')
   clearGuard()

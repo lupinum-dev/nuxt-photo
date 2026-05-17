@@ -1,5 +1,4 @@
-import { photoId, type PhotoItem } from '@nuxt-photo/core'
-import { devWarn } from '@nuxt-photo/core/internal'
+import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
 import { useLightboxInject } from './useLightboxInject'
 
 /** Consume the nearest lightbox context as a simple controller/read-model API. */
@@ -26,15 +25,17 @@ export function useLightbox() {
   }
 
   return {
+    photos: context.photos,
+    count: context.count,
+    activeIndex: context.activeIndex,
+    activePhoto: context.activePhoto,
+    isOpen: context.isOpen,
     open,
     openPhoto,
     openById,
     close: context.close,
     next: context.next,
     prev: context.prev,
-    isOpen: context.isOpen,
-    activeIndex: context.activeIndex,
-    activePhoto: context.activePhoto,
-    count: context.count,
+    toggleZoom: context.toggleZoom,
   }
 }

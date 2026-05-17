@@ -7,7 +7,7 @@ import type {
   PhotoItem,
   RectLike,
   TransitionModeConfig,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 
 export const openDurationMs = 420
 export const closeDurationMs = 380

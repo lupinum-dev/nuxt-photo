@@ -5,11 +5,6 @@ export default defineBuildConfig({
     { input: 'src/', builder: 'mkdist', format: 'esm', declaration: true },
   ],
   clean: true,
-  externals: [
-    'vue',
-    '@nuxt-photo/core',
-    '@nuxt-photo/core/internal',
-    '@nuxt-photo/vue',
-  ],
+  externals: ['vue', '@nuxt-photo/core', '@nuxt-photo/vue'],
   failOnWarn: false,
 })

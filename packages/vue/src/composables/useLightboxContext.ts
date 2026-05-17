@@ -17,7 +17,7 @@ import {
   type LoadImageResult,
   type LightboxTransitionOption,
   type PhotoItem,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
@@ -33,7 +33,7 @@ import {
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 
 /**
- * Internal coordinator for the Vue lightbox runtime.
+ * Internal coordinator for Vue lightbox state.
  *
  * Public customisation should go through `useLightboxProvider`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,

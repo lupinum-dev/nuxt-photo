@@ -23,12 +23,12 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
+  devWarn,
   photoId,
   type ImageAdapter,
   type PhotoItem,
   type PhotoMapper,
 } from '@nuxt-photo/core'
-import { devWarn } from '@nuxt-photo/core/internal'
 import Lightbox from './Lightbox.vue'
 
 const props = withDefaults(

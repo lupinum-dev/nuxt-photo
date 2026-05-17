@@ -14,7 +14,7 @@ async function flushWatchers() {
   await Promise.resolve()
 }
 
-describe('lightbox runtime collection handling', () => {
+describe('lightbox state collection handling', () => {
   it('keeps the same active photo selected across reorder, insert, and remove-before-active changes', async () => {
     const a = makePhoto({ id: 'a' })
     const b = makePhoto({ id: 'b' })
@@ -73,7 +73,7 @@ describe('lightbox runtime collection handling', () => {
   })
 })
 
-describe('lightbox runtime scroll lock ownership', () => {
+describe('lightbox state scroll lock ownership', () => {
   afterEach(() => {
     document.body.innerHTML = ''
     document.body.style.overflow = ''

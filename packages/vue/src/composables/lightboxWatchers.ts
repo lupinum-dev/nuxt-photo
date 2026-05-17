@@ -16,7 +16,7 @@ import {
   type DebugLogger,
   type ImageAdapter,
   type PhotoItem,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(
@@ -158,7 +158,7 @@ export function watchActiveIndexRuntime(
   })
 }
 
-/** Attach the window-level listeners and cleanup used by the lightbox runtime. */
+/** Attach the window-level listeners and cleanup used by lightbox state. */
 export function useLightboxWindowLifecycle(config: {
   lightboxMounted: Ref<boolean>
   cancelTapTimer: () => void

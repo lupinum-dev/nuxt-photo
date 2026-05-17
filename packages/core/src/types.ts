@@ -230,7 +230,6 @@ export function mergeResponsiveBreakpoints(
   values: Array<ResponsiveParameter<any> | undefined>,
 ): readonly number[] | undefined {
   const positive = new Set<number>()
-  let sawZeroBreakpoint = false
 
   for (const value of values) {
     const breakpoints = getResponsiveBreakpoints(value)
@@ -238,21 +237,14 @@ export function mergeResponsiveBreakpoints(
 
     for (const breakpoint of breakpoints) {
       if (!Number.isFinite(breakpoint) || breakpoint < 0) continue
-      if (breakpoint === 0) {
-        sawZeroBreakpoint = true
-        continue
-      }
+      if (breakpoint === 0) continue
       positive.add(breakpoint)
     }
   }
 
   if (positive.size === 0) return undefined
 
-  const merged = [...positive].sort((a, b) => a - b)
-  if (!sawZeroBreakpoint) return merged
-
-  const floor = Math.max(1, Math.floor(merged[0]! / 2))
-  return merged[0] === floor ? merged : [floor, ...merged]
+  return [...positive].sort((a, b) => a - b)
 }
 
 /**

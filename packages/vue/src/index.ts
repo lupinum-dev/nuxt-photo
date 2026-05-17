@@ -7,6 +7,7 @@ export {
   LightboxComponentKey,
   LightboxDefaultsKey,
   PhotoGroupContextKey,
+  type LightboxController,
   type LightboxDefaults,
   type LightboxSlideRenderer,
   type PhotoGroupContext,

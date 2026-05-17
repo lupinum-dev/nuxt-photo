@@ -76,7 +76,7 @@ afterEach(() => {
 })
 
 describe('SSR hydration', () => {
-  it('hydrates columns snapshot SSR without Vue hydration mismatch warnings', async () => {
+  it('hydrates deterministic columns SSR without Vue hydration mismatch warnings', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -86,7 +86,7 @@ describe('SSR hydration', () => {
         type: 'columns',
         columns: responsive({ 0: 1, 800: 3 }),
       },
-      breakpoints: [320, 800],
+      defaultContainerWidth: 800,
       lightbox: false,
     })
 
@@ -105,7 +105,7 @@ describe('SSR hydration', () => {
     app.unmount()
   })
 
-  it('hydrates masonry snapshot SSR without Vue hydration mismatch warnings', async () => {
+  it('hydrates deterministic masonry SSR without Vue hydration mismatch warnings', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -115,7 +115,7 @@ describe('SSR hydration', () => {
         type: 'masonry',
         columns: responsive({ 0: 1, 800: 3 }),
       },
-      breakpoints: [320, 800],
+      defaultContainerWidth: 800,
       lightbox: false,
     })
 

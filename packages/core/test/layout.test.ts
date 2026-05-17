@@ -16,24 +16,6 @@ function totalGroupHeight(
   )
 }
 
-function masonryGreedyDelta(
-  widths: Array<{ width: number; height: number }>,
-  columns: number,
-  spacing: number,
-) {
-  const heights = new Array(columns).fill(0)
-
-  for (const photo of widths) {
-    let shortest = 0
-    for (let index = 1; index < heights.length; index++) {
-      if (heights[index]! < heights[shortest]!) shortest = index
-    }
-    heights[shortest] += photo.height + spacing
-  }
-
-  return Math.max(...heights) - Math.min(...heights)
-}
-
 describe('layout algorithms', () => {
   it('justifies rows to the container width and returns no invalid entries', () => {
     const containerWidth = 1000
@@ -111,6 +93,19 @@ describe('layout algorithms', () => {
     ).toEqual([])
   })
 
+  it('uses only non-empty columns when fewer photos than requested columns exist', () => {
+    const columns = computeColumnsLayout({
+      photos: createPhotoSet().slice(0, 2),
+      containerWidth: 800,
+      columns: 4,
+    })
+
+    expect(columns).toHaveLength(2)
+    expect(
+      columns.map((column) => column.entries.map((entry) => entry.index)),
+    ).toEqual([[0], [1]])
+  })
+
   it('rejects invalid photo dimensions instead of inventing fallback geometry', () => {
     const invalidPhotos = [
       { ...createPhotoSet()[0]!, id: 'invalid-width', width: 0 },
@@ -138,21 +133,11 @@ describe('layout algorithms', () => {
     ).toThrow('invalid dimensions')
   })
 
-  it('keeps masonry columns ordered and does not worsen the greedy baseline', () => {
+  it('keeps masonry assignment stable and ordered', () => {
     const photos = createPhotoSet()
     const containerWidth = 1000
     const columnsCount = 3
     const spacing = 8
-    const columnWidth =
-      (containerWidth - spacing * (columnsCount - 1)) / columnsCount
-    const greedyDelta = masonryGreedyDelta(
-      photos.map((photo) => ({
-        width: columnWidth,
-        height: columnWidth / (photo.width / photo.height),
-      })),
-      columnsCount,
-      spacing,
-    )
 
     const masonry = computeMasonryLayout({
       photos,
@@ -170,10 +155,13 @@ describe('layout algorithms', () => {
       )
     }
 
-    const heights = masonry.map((column) => totalGroupHeight(column, spacing))
-    const finalDelta = Math.max(...heights) - Math.min(...heights)
-
-    expect(finalDelta).toBeLessThanOrEqual(greedyDelta)
+    expect(
+      masonry.map((column) => column.entries.map((entry) => entry.index)),
+    ).toEqual([
+      [0, 3, 6, 9, 11],
+      [1, 5, 8, 10],
+      [2, 4, 7],
+    ])
   })
 
   it('normalizes unsafe masonry layout inputs to safe output', () => {

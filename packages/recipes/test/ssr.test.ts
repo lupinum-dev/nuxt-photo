@@ -5,7 +5,7 @@ import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vitest'
 import { makePhoto } from '@test-fixtures/photos'
 import { responsive } from '@nuxt-photo/core'
-import { computeBreakpointStyles } from '@nuxt-photo/core/internal'
+import { computeBreakpointStyles } from '@nuxt-photo/core'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import Photo from '../src/components/Photo.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
@@ -181,7 +181,7 @@ describe('SSR', () => {
       expect(html).toContain('@container')
     })
 
-    it('columns layout with a single breakpoint emits one snapshot and no @container visibility CSS', async () => {
+    it('columns breakpoints do not emit hidden SSR variant branches', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -192,18 +192,15 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      // Single-span: no @container visibility rules are generated
       expect(html).not.toContain('@container')
-      // But the snapshot structure is rendered
-      expect(html).toContain('np-album__bp-snapshot')
-      expect(html).toContain('np-album__column')
-      // Container query context is still set up on the wrapper so post-mount queries could attach
-      expect(html).toContain('container-type')
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).not.toContain('data-bp')
+      expect(html).toContain('grid-template-columns')
     })
   })
 
-  describe('columns/masonry breakpoint-aware SSR', () => {
-    it('columns with defaultContainerWidth emits one snapshot with column structure and no flat grid', async () => {
+  describe('columns/masonry SSR', () => {
+    it('columns with defaultContainerWidth renders deterministic column groups', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -214,18 +211,17 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('np-album__bp-snapshot')
       expect(html).toContain('np-album__column')
-      // No @container CSS for a single snapshot
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).not.toContain('data-bp')
       expect(html).not.toContain('@container')
-      // No hardcoded approximate-grid fallback
       expect(html).not.toMatch(
         /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
       )
       expect(html).toContain('ssr-1')
     })
 
-    it('masonry with defaultContainerWidth emits one snapshot with column structure', async () => {
+    it('masonry with defaultContainerWidth renders deterministic column groups', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -236,8 +232,9 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('np-album__bp-snapshot')
       expect(html).toContain('np-album__column')
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).not.toContain('data-bp')
       expect(html).not.toContain('@container')
       expect(html).not.toMatch(
         /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
@@ -245,7 +242,7 @@ describe('SSR', () => {
       expect(html).toContain('ssr-1')
     })
 
-    it('columns with explicit breakpoints and responsive spacing emits multiple snapshots and @container rules', async () => {
+    it('columns with explicit breakpoints still uses the simple SSR fallback without defaultContainerWidth', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -260,19 +257,13 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      const snapshotCount = (html.match(/np-album__bp-snapshot/g) ?? []).length
-      expect(snapshotCount).toBeGreaterThan(1)
-      expect(html).toContain('@container')
-      expect(html).toContain('data-bp="bp-0-799"')
-      expect(html).toContain('[data-bp=bp-0-799]')
-      expect(html).toContain('.np-snapshot-')
-      expect(html).toContain('container-type')
-      expect(html).not.toMatch(
-        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
-      )
+      expect(html).not.toContain('@container')
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).not.toContain('data-bp')
+      expect(html).toMatch(/grid-template-columns\s*:\s*repeat\(1\s*,\s*1fr\)/)
     })
 
-    it('columns infers breakpoints from responsive columns input (no explicit breakpoints)', async () => {
+    it('responsive columns infer client snap breakpoints but not SSR branches', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -285,13 +276,12 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      const snapshotCount = (html.match(/np-album__bp-snapshot/g) ?? []).length
-      expect(snapshotCount).toBeGreaterThan(1)
-      expect(html).toContain('@container')
-      expect(html).toContain('np-album__column')
+      expect(html).not.toContain('@container')
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).toContain('grid-template-columns')
     })
 
-    it('masonry infers breakpoints from responsive spacing', async () => {
+    it('masonry responsive spacing does not create duplicate SSR branches', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -302,43 +292,12 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('np-album__bp-snapshot')
-      expect(html).toContain('@container')
+      expect(html).not.toContain('np-album__ssr-variant')
+      expect(html).not.toContain('@container')
+      expect(html).toContain('grid-template-columns')
     })
 
-    it('scopes each snapshot visibility stylesheet to its own album root', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h('div', null, [
-            h(PhotoAlbum, {
-              photos,
-              layout: {
-                type: 'columns',
-                columns: responsive({ 0: 1, 800: 3 }),
-              },
-              lightbox: false,
-              breakpoints: [320, 800],
-            }),
-            h(PhotoAlbum, {
-              photos,
-              layout: {
-                type: 'masonry',
-                columns: responsive({ 0: 1, 800: 3 }),
-              },
-              lightbox: false,
-              breakpoints: [320, 800],
-            }),
-          ]),
-      })
-      const html = await renderToString(app)
-      const snapshotMatches = [
-        ...html.matchAll(/np-snapshot-np-[a-z0-9]+/g),
-      ].map((match) => match[0])
-      expect(new Set(snapshotMatches).size).toBeGreaterThanOrEqual(2)
-      expect(html).toMatch(/\.np-snapshot-np-[a-z0-9]+\[data-bp=bp-/)
-    })
-
-    it('snapshot SSR branch keeps button semantics when lightbox is enabled', async () => {
+    it('deterministic server layout keeps button semantics when lightbox is enabled', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -348,11 +307,11 @@ describe('SSR', () => {
               columns: responsive({ 0: 1, 800: 3 }),
             },
             lightbox: true,
-            breakpoints: [320, 800],
+            defaultContainerWidth: 800,
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('np-album__bp-snapshot')
+      expect(html).toContain('np-album__column')
       expect(html).toContain('role="button"')
       expect(html).toContain('tabindex="0"')
     })
@@ -367,8 +326,7 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      // Approximate fallback — no snapshot structure
-      expect(html).not.toContain('np-album__bp-snapshot')
+      expect(html).not.toContain('np-album__ssr-variant')
       expect(html).toContain('grid-template-columns')
       expect(html).toContain('ssr-1')
     })

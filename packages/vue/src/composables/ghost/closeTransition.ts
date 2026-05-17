@@ -7,7 +7,7 @@ import {
   easeOutCubic,
   planCloseTransition,
   type RectLike,
-} from '@nuxt-photo/core/internal'
+} from '@nuxt-photo/core'
 import {
   closeDurationMs,
   fadeDurationMs,
