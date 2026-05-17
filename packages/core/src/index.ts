@@ -34,20 +34,16 @@ export type {
   GestureMode,
 } from './types'
 
+export { computeRowsLayout } from './layout/rows/index'
 export {
-  computeRowsLayout,
-  computeColumnsLayout,
-  computeMasonryLayout,
   computeBreakpointStyles,
   type BreakpointStylesOptions,
-} from './layout'
+} from './layout/rows/containerQueries'
+export { computeColumnsLayout } from './layout/columns'
+export { computeMasonryLayout } from './layout/masonry'
 
-export {
-  createNativeImageAdapter,
-  computePhotoSizes,
-  loadImage,
-  type LoadImageResult,
-} from './image'
+export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
+export { loadImage, type LoadImageResult } from './image/loader'
 
 export {
   isUsableRect,
@@ -56,7 +52,7 @@ export {
   flipTransform,
   makeGhostBaseStyle,
   rubberband,
-} from './geometry'
+} from './geometry/rect'
 
 export {
   type Spring1D,
@@ -64,13 +60,13 @@ export {
   stopSpring,
   springStep,
   runSpring,
-  VelocityTracker,
-  animateNumber,
-  easeOutCubic,
-  easeInOutCubic,
-} from './physics'
+} from './physics/spring'
+export { VelocityTracker } from './physics/velocity'
+export { animateNumber } from './physics/animation'
+export { easeOutCubic, easeInOutCubic } from './physics/easing'
 
-export { wait, nextFrame, lockBodyScroll } from './dom'
+export { wait, nextFrame } from './dom/timing'
+export { lockBodyScroll } from './dom/body-scroll'
 
 export {
   DEFAULT_MIN_ZOOM,
@@ -81,20 +77,23 @@ export {
   clampPanWithResistance,
   clientToAreaPoint,
   computeTargetPanForZoom,
+} from './viewer/zoom'
+export {
   classifyGesture,
   isDoubleTap,
   computeCloseDragRatio,
-} from './viewer'
+} from './viewer/gestures'
 
-export { createDebug, type DebugLogger, type DebugFlags } from './debug'
+export { createDebug, type DebugLogger, type DebugFlags } from './debug/logger'
 
 export {
-  createTransitionMode,
+  DEFAULT_TRANSITION_CONFIG,
   getVisibilityRatio,
   shouldUseFlip,
-  planCloseTransition,
+  chooseCloseTransition,
   type TransitionModeConfig,
-} from './transition'
+} from './transition/transitionChoice'
 
 export { isDev, devWarn } from './env'
-export { round, getWindowDimensions } from './utils'
+export { round } from './utils/math'
+export { getWindowDimensions } from './utils/dom'

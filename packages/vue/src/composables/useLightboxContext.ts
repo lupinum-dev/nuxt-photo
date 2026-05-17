@@ -9,7 +9,7 @@ import {
 import {
   createDebug,
   createNativeImageAdapter,
-  createTransitionMode,
+  DEFAULT_TRANSITION_CONFIG,
   loadImage,
   photoId,
   type AreaMetrics,
@@ -33,7 +33,7 @@ import {
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 
 /**
- * Internal coordinator for Vue lightbox state.
+ * Internal Vue lightbox state.
  *
  * Public customisation should go through `useLightboxProvider`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
@@ -77,7 +77,7 @@ export function useLightboxContext(
   )
 
   const debug = createDebug()
-  const transitionConfig = createTransitionMode()
+  const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
 
   // Apply user-provided transition option
   if (transitionOption) {

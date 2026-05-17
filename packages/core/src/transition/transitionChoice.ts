@@ -13,12 +13,10 @@ export type TransitionModeConfig = {
   autoThreshold: number
 }
 
-/** Create the default close/open transition selection policy. */
-export function createTransitionMode(): TransitionModeConfig {
-  return {
-    mode: 'auto',
-    autoThreshold: 0.55,
-  }
+/** Default close/open transition selection policy. */
+export const DEFAULT_TRANSITION_CONFIG: TransitionModeConfig = {
+  mode: 'auto',
+  autoThreshold: 0.55,
 }
 
 type ViewportRect = {
@@ -128,7 +126,7 @@ export function shouldUseFlip(
 }
 
 /**
- * Plan the close transition. Mirror of {@link shouldUseFlip} for the reverse
+ * Choose the close transition. Mirror of {@link shouldUseFlip} for the reverse
  * direction, but with extra guards: the thumbnail element may have unmounted
  * or scrolled out of view while the lightbox was open.
  *
@@ -144,7 +142,7 @@ export function shouldUseFlip(
  * The `reason` in the returned plan is surfaced to the debug overlay so you
  * can see *why* FADE was chosen when FLIP looked possible.
  */
-export function planCloseTransition(opts: {
+export function chooseCloseTransition(opts: {
   fromRect: RectLike | null
   toRect: DOMRect | null
   thumbRefExists: boolean

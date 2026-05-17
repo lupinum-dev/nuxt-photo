@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { computed, createApp, defineComponent, nextTick, ref } from 'vue'
+import { computed, createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { makePhoto } from '@test-fixtures/photos'
+import { useLightbox, useLightboxProvider } from '../src/composables'
 import {
   useLightboxWindowLifecycle,
   watchPhotoCollection,
@@ -13,6 +14,61 @@ async function flushWatchers() {
   await nextTick()
   await Promise.resolve()
 }
+
+describe('lightbox controller surface', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('returns the same controller behavior from provider and injected consumer', async () => {
+    const photos = [makePhoto({ id: 'controller-a' })]
+    let providerApi: ReturnType<typeof useLightboxProvider> | null = null
+    let consumerApi: ReturnType<typeof useLightbox> | null = null
+
+    const Consumer = defineComponent({
+      setup() {
+        consumerApi = useLightbox()
+        return () => null
+      },
+    })
+
+    const App = defineComponent({
+      setup() {
+        providerApi = useLightboxProvider(photos, { transition: 'none' })
+        return () => h(Consumer)
+      },
+    })
+
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+    await flushWatchers()
+
+    expect(Object.keys(consumerApi!).sort()).toEqual(
+      [
+        'activeIndex',
+        'activePhoto',
+        'close',
+        'count',
+        'isOpen',
+        'next',
+        'open',
+        'openById',
+        'openPhoto',
+        'photos',
+        'prev',
+        'toggleZoom',
+      ].sort(),
+    )
+    expect(consumerApi!.photos).toBe(providerApi!.photos)
+    expect(consumerApi!.activeIndex).toBe(providerApi!.activeIndex)
+    expect(consumerApi!.open).toBe(providerApi!.open)
+
+    app.unmount()
+    host.remove()
+  })
+})
 
 describe('lightbox state collection handling', () => {
   it('keeps the same active photo selected across reorder, insert, and remove-before-active changes', async () => {

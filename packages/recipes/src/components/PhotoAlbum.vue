@@ -245,9 +245,12 @@ const {
 maybeWarnApproximate()
 
 const parentGroup = inject(PhotoGroupContextKey, null)
+const parentAutoGroup = computed(() =>
+  parentGroup?.mode.value === 'auto' ? parentGroup : null,
+)
 const injectedLightbox = inject(LightboxComponentKey, null)
 
-const hasOwnLightbox = !parentGroup && props.lightbox !== false
+const hasOwnLightbox = !parentAutoGroup.value && props.lightbox !== false
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
   if (props.lightbox === true) return injectedLightbox ?? Lightbox
@@ -277,8 +280,8 @@ function syncOwnThumbRefs() {
 }
 
 function openPhoto(photo: PhotoItem, index: number) {
-  if (parentGroup) {
-    void parentGroup.openPhoto(photo)
+  if (parentAutoGroup.value) {
+    void parentAutoGroup.value.openPhoto(photo)
     return
   }
 
@@ -313,7 +316,9 @@ function itemBindings(photo: PhotoItem, index: number) {
 }
 
 function isHidden(photo: PhotoItem): boolean {
-  if (parentGroup) return parentGroup.hiddenPhoto.value === photo
+  if (parentAutoGroup.value) {
+    return parentAutoGroup.value.hiddenPhoto.value === photo
+  }
   if (ownCtx) {
     const index = ownCtx.hiddenThumbIndex.value
     if (index === null) return false
@@ -324,15 +329,15 @@ function isHidden(photo: PhotoItem): boolean {
 
 let registrationIds: symbol[] = []
 
-if (parentGroup) {
+if (parentAutoGroup.value) {
   function syncRegistrations(nextPhotos: PhotoItem[]) {
     for (const symbol of registrationIds) {
-      parentGroup.unregister(symbol)
+      parentAutoGroup.value?.unregister(symbol)
     }
 
     registrationIds = nextPhotos.map((photo, index) => {
       const symbol = Symbol(photoId(photo))
-      parentGroup.register(
+      parentAutoGroup.value?.register(
         symbol,
         photo,
         () => thumbElsMap[index] ?? null,
@@ -352,7 +357,7 @@ if (parentGroup) {
 
   onBeforeUnmount(() => {
     for (const symbol of registrationIds) {
-      parentGroup.unregister(symbol)
+      parentAutoGroup.value?.unregister(symbol)
     }
     registrationIds = []
   })

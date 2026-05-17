@@ -295,7 +295,7 @@ describe('recipe contracts', () => {
     mounted.unmount()
   })
 
-  it('refreshes PhotoAlbum parent-group registrations when photos reorder, insert, or remove', async () => {
+  it('refreshes PhotoAlbum auto-group registrations when photos reorder, insert, or remove', async () => {
     const a = makePhoto({ id: 'a' })
     const b = makePhoto({ id: 'b' })
     const c = makePhoto({ id: 'c' })
@@ -304,7 +304,7 @@ describe('recipe contracts', () => {
     const unregister = vi.fn()
 
     const parentGroup: PhotoGroupContext = {
-      mode: computed(() => 'explicit'),
+      mode: computed(() => 'auto'),
       register,
       unregister,
       open: vi.fn(async () => {}),
@@ -359,6 +359,66 @@ describe('recipe contracts', () => {
     // Unmount: current registrations (c, a) cleaned up.
     mounted.unmount()
     expect(unregister).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps explicit PhotoGroup photos as the only source of truth', async () => {
+    const explicit = makePhoto({ id: 'explicit-source' })
+    const child = makePhoto({ id: 'ignored-child' })
+    let slotPhotos: PhotoItem[] = []
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        photos: [explicit],
+        lightbox: false,
+      },
+      slots: {
+        default: (props: { photos: PhotoItem[] }) => {
+          slotPhotos = props.photos
+          return [h(Photo, { photo: child })]
+        },
+      },
+    })
+
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['explicit-source'])
+    expect(
+      mounted.container.querySelector('.np-photo')?.getAttribute('role'),
+    ).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('ignores child slide renderers in explicit PhotoGroup mode', async () => {
+    const explicit = makePhoto({ id: 'explicit-slide' })
+    const child = makePhoto({ id: 'child-slide' })
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        photos: [explicit],
+        lightbox: TestLightbox,
+      },
+      slots: {
+        default: () => [
+          h(
+            Photo,
+            { photo: child },
+            {
+              slide: () =>
+                h('div', { 'data-testid': 'ignored-slide' }, 'ignored'),
+            },
+          ),
+        ],
+      },
+    })
+
+    await flushUi()
+
+    expect(
+      mounted.container.querySelector('[data-testid="ignored-slide"]'),
+    ).toBeNull()
+
+    mounted.unmount()
   })
 
   it('renders custom solo slide content through a custom lightbox recipe', async () => {

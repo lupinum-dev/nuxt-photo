@@ -60,6 +60,7 @@ type Registration = {
 
 const registrationMap = new Map<symbol, Registration>()
 const registrationVersion = ref(0)
+let warnedIgnoredRegistrations = false
 
 // 'explicit' when :photos prop is provided; 'auto' when collecting from children
 const groupMode = computed<'auto' | 'explicit'>(() =>
@@ -73,9 +74,13 @@ function register(
   renderSlide?: LightboxSlideRenderer | null,
 ) {
   if (props.photos !== undefined) {
-    devWarn(
-      'PhotoGroup has both a :photos prop and child <Photo> registrations. The :photos prop takes precedence; child registrations are ignored. Remove :photos to use auto-collection, or remove child <Photo> components.',
-    )
+    if (!warnedIgnoredRegistrations) {
+      warnedIgnoredRegistrations = true
+      devWarn(
+        'PhotoGroup has both a :photos prop and child registrations. The :photos prop is the only photo source; child registrations are ignored. Remove :photos to use auto-collection.',
+      )
+    }
+    return
   }
   for (const [existingId, entry] of registrationMap) {
     if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
@@ -88,6 +93,7 @@ function register(
 }
 
 function unregister(id: symbol) {
+  if (props.photos !== undefined) return
   registrationMap.delete(id)
   registrationVersion.value++
 }
@@ -108,6 +114,7 @@ const ctx = useLightboxProvider(collectedPhotos, {
   transition: props.transition,
   imageAdapter: props.imageAdapter,
   resolveSlide: (photo) => {
+    if (groupMode.value !== 'auto') return null
     for (const entry of registrationMap.values()) {
       if (photoId(entry.photo) === photoId(photo)) {
         return entry.renderSlide ?? null

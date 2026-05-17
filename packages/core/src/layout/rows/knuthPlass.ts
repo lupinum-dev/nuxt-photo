@@ -2,12 +2,13 @@ import type { PhotoItem } from '../../types'
 import { cost, findIdealNodeSearch } from './helpers'
 
 /**
- * Find globally optimal row breaks using a Knuth-Plass style DP.
+ * Find row breaks using a bounded dynamic-programming search.
  *
  * Same idea as the TeX line-breaker: pick break points that minimise the total
  * "badness" of all rows, not just each row locally. A greedy packer can pick a
  * good-looking first row and leave an awkwardly short or tall final row;
- * global DP avoids that by considering the whole sequence together.
+ * this bounded DP avoids many of those cases by considering a window of
+ * previous breaks for each position.
  *
  * Recurrence:
  *   minCost[0] = 0

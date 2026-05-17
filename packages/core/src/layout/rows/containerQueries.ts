@@ -12,8 +12,16 @@ export interface BreakpointStylesOptions {
   containerName: string
 }
 
-function rowSignature(groups: LayoutGroup[]): string {
-  return groups.map((g) => g.entries[g.entries.length - 1]!.index).join(',')
+function rowSignature(
+  groups: LayoutGroup[],
+  spacing: number,
+  padding: number,
+  targetRowHeight: number,
+): string {
+  const rows = groups
+    .map((g) => g.entries[g.entries.length - 1]!.index)
+    .join(',')
+  return `${rows}|s:${spacing}|p:${padding}|h:${targetRowHeight}`
 }
 
 /**
@@ -69,7 +77,11 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
       targetRowHeight,
     })
     if (groups.length === 0 && photos.length > 0) continue
-    bpEntries.push({ bp, sig: rowSignature(groups), groups })
+    bpEntries.push({
+      bp,
+      sig: rowSignature(groups, spacing, padding, targetRowHeight),
+      groups,
+    })
   }
   if (bpEntries.length === 0) return ''
 

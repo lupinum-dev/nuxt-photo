@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  createTransitionMode,
+  DEFAULT_TRANSITION_CONFIG,
   getVisibilityRatio,
-  planCloseTransition,
+  chooseCloseTransition,
   shouldUseFlip,
 } from '@nuxt-photo/core'
 
@@ -84,7 +84,7 @@ describe('transition planning', () => {
     const fromRect = { left: 100, top: 120, width: 900, height: 500 }
 
     expect(
-      planCloseTransition({
+      chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
         thumbRefExists: true,
@@ -93,7 +93,7 @@ describe('transition planning', () => {
     ).toMatchObject({ mode: 'instant', reason: 'mode-forced-none' })
 
     expect(
-      planCloseTransition({
+      chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
         thumbRefExists: true,
@@ -102,16 +102,16 @@ describe('transition planning', () => {
     ).toMatchObject({ mode: 'fade', reason: 'mode-forced-fade' })
 
     expect(
-      planCloseTransition({
+      chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 20, height: 20 }) as DOMRect,
         thumbRefExists: true,
-        config: createTransitionMode(),
+        config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'fade', reason: 'thumb-off-screen' })
 
     expect(
-      planCloseTransition({
+      chooseCloseTransition({
         fromRect,
         toRect: rect({
           left: -220,
@@ -120,16 +120,16 @@ describe('transition planning', () => {
           height: 400,
         }) as DOMRect,
         thumbRefExists: true,
-        config: createTransitionMode(),
+        config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'fade', reason: 'visibility-below-threshold' })
 
     expect(
-      planCloseTransition({
+      chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
         thumbRefExists: true,
-        config: createTransitionMode(),
+        config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'flip', reason: 'ok' })
   })

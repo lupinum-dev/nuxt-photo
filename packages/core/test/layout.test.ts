@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  computeBreakpointStyles,
   computeColumnsLayout,
   computeMasonryLayout,
   computeRowsLayout,
+  responsive,
+  type PhotoItem,
 } from '@nuxt-photo/core'
 import { createPhotoSet } from '@test-fixtures/photos'
 
@@ -14,6 +17,86 @@ function totalGroupHeight(
     group.entries.reduce((sum, entry) => sum + entry.height, 0) +
     spacing * Math.max(0, group.entries.length - 1)
   )
+}
+
+function rowsBadness(
+  groups: ReturnType<typeof computeRowsLayout>,
+  targetRowHeight: number,
+) {
+  return groups.reduce(
+    (sum, group) =>
+      sum +
+      (group.entries[0]!.height - targetRowHeight) ** 2 * group.entries.length,
+    0,
+  )
+}
+
+function greedyRows(
+  photos: PhotoItem[],
+  containerWidth: number,
+  targetRowHeight: number,
+  spacing: number,
+) {
+  const groups: ReturnType<typeof computeRowsLayout> = []
+  let start = 0
+
+  while (start < photos.length) {
+    let end = start + 1
+    let bestEnd = end
+    let bestDelta = Infinity
+
+    while (end <= photos.length) {
+      const row = photos.slice(start, end)
+      const ratioSum = row.reduce(
+        (sum, photo) => sum + photo.width / photo.height,
+        0,
+      )
+      const height = (containerWidth - spacing * (row.length - 1)) / ratioSum
+      const delta = Math.abs(height - targetRowHeight)
+      if (delta <= bestDelta) {
+        bestDelta = delta
+        bestEnd = end
+        end++
+        continue
+      }
+      break
+    }
+
+    const row = photos.slice(start, bestEnd)
+    const ratioSum = row.reduce(
+      (sum, photo) => sum + photo.width / photo.height,
+      0,
+    )
+    const height = (containerWidth - spacing * (row.length - 1)) / ratioSum
+    groups.push({
+      type: 'row',
+      index: groups.length,
+      entries: row.map((photo, offset) => ({
+        index: start + offset,
+        photo,
+        width: height * (photo.width / photo.height),
+        height,
+        positionIndex: offset,
+        itemsCount: row.length,
+      })),
+    })
+    start = bestEnd
+  }
+
+  return groups
+}
+
+function parseItemWidths(css: string) {
+  const widths = new Map<number, { gaps: number; divisor: number }>()
+  const pattern =
+    /\.np-item-(\d+)\{[^}]*width:calc\(\(100% - ([\d.]+)px\) \/ ([\d.]+)\)/g
+  for (const match of css.matchAll(pattern)) {
+    widths.set(Number(match[1]), {
+      gaps: Number(match[2]),
+      divisor: Number(match[3]),
+    })
+  }
+  return widths
 }
 
 describe('layout algorithms', () => {
@@ -39,6 +122,92 @@ describe('layout algorithms', () => {
         row.entries.every((entry) => entry.width > 0 && entry.height > 0),
       ).toBe(true)
     }
+  })
+
+  it('returns no rows when padding makes positive row geometry impossible', () => {
+    expect(
+      computeRowsLayout({
+        photos: createPhotoSet().slice(0, 3),
+        containerWidth: 40,
+        padding: 80,
+      }),
+    ).toEqual([])
+  })
+
+  it('keeps bounded row DP at least as good as greedy on awkward ratios', () => {
+    const photos: PhotoItem[] = [
+      { id: 'wide-1', src: '/1.jpg', width: 1800, height: 700 },
+      { id: 'tall-1', src: '/2.jpg', width: 650, height: 1300 },
+      { id: 'wide-2', src: '/3.jpg', width: 1700, height: 760 },
+      { id: 'square', src: '/4.jpg', width: 1000, height: 1000 },
+      { id: 'tall-2', src: '/5.jpg', width: 700, height: 1400 },
+      { id: 'wide-3', src: '/6.jpg', width: 1900, height: 800 },
+      { id: 'mid', src: '/7.jpg', width: 1200, height: 900 },
+    ]
+    const containerWidth = 960
+    const spacing = 10
+    const targetRowHeight = 260
+
+    const bounded = computeRowsLayout({
+      photos,
+      containerWidth,
+      spacing,
+      targetRowHeight,
+    })
+    const greedy = greedyRows(photos, containerWidth, targetRowHeight, spacing)
+
+    expect(rowsBadness(bounded, targetRowHeight)).toBeLessThanOrEqual(
+      rowsBadness(greedy, targetRowHeight),
+    )
+  })
+
+  it('emits container-query widths that match row layout math inside a stable span', () => {
+    const photos: PhotoItem[] = [
+      { id: 'a', src: '/a.jpg', width: 1000, height: 1000 },
+      { id: 'b', src: '/b.jpg', width: 1000, height: 1000 },
+      { id: 'c', src: '/c.jpg', width: 1000, height: 1000 },
+    ]
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [600, 700],
+      spacing: 10,
+      padding: 2,
+      targetRowHeight: 220,
+      containerName: 'test',
+    })
+    const widths = parseItemWidths(css)
+
+    for (const sampleWidth of [650, 760]) {
+      const layout = computeRowsLayout({
+        photos,
+        containerWidth: sampleWidth,
+        spacing: 10,
+        padding: 2,
+        targetRowHeight: 220,
+      })
+      for (const entry of layout.flatMap((group) => group.entries)) {
+        const rule = widths.get(entry.index)!
+        const cssWidth = (sampleWidth - rule.gaps) / rule.divisor
+        expect(cssWidth).toBeCloseTo(entry.width, 3)
+      }
+    }
+  })
+
+  it('does not collapse container-query spans across responsive parameter changes', () => {
+    const photos = createPhotoSet().slice(0, 4)
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [400, 800],
+      spacing: responsive({ 0: 4, 800: 20 }),
+      padding: responsive({ 0: 0, 800: 8 }),
+      targetRowHeight: 220,
+      containerName: 'responsive-test',
+    })
+
+    expect(css).toContain('max-width: 799px')
+    expect(css).toContain('min-width: 800px')
+    expect(css).toContain('52px')
+    expect(css).toContain('padding:8px')
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {

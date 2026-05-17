@@ -5,7 +5,8 @@ import {
   wait,
   animateNumber,
   easeOutCubic,
-  planCloseTransition,
+  chooseCloseTransition,
+  DEFAULT_TRANSITION_CONFIG,
   type RectLike,
 } from '@nuxt-photo/core'
 import {
@@ -305,11 +306,11 @@ export function createCloseTransition(s: GhostState) {
           : 'NULL',
       )
 
-      const plan = planCloseTransition({
+      const plan = chooseCloseTransition({
         fromRect,
         toRect,
         thumbRefExists: !!thumbEl,
-        config: s.transitionConfig ?? { mode: 'auto', autoThreshold: 0.55 },
+        config: s.transitionConfig ?? DEFAULT_TRANSITION_CONFIG,
         debug: s.debug,
       })
 
