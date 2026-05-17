@@ -114,7 +114,7 @@
       </div>
     </div>
 
-    <LightboxPortal class="np-lightbox__ghost" />
+    <LightboxGhostImage class="np-lightbox__ghost" />
   </LightboxRoot>
 </template>
 
@@ -123,7 +123,7 @@ import {
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
-  LightboxPortal,
+  LightboxGhostImage,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,

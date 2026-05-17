@@ -17,6 +17,9 @@ export type TransitionCallbacks = {
   refreshZoomState: (reset: boolean) => void
   resetGestureState: () => void
   cancelTapTimer: () => void
+  getThumbSrc: (photo: PhotoItem) => string
+  getSlideSrc: (photo: PhotoItem) => string
+  loadSlideImage: (photo: PhotoItem) => Promise<void>
 }
 
 export type CloseCallbacks = TransitionCallbacks & {

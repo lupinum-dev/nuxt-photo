@@ -10,11 +10,3 @@ export {
 } from './zoom'
 
 export { classifyGesture, isDoubleTap, computeCloseDragRatio } from './gestures'
-
-export {
-  viewerTransition,
-  createViewerState,
-  isViewerOpen,
-  getActiveId,
-  type ViewerAction,
-} from './state-machine'

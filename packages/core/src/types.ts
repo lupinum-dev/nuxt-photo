@@ -57,35 +57,16 @@ export type ZoomState = {
 
 export type GestureMode = 'idle' | 'slide' | 'pan' | 'pinch' | 'close'
 
-// ─── Viewer state machine ───
-
-export type ViewerState =
-  | { status: 'closed' }
-  | { status: 'opening'; activeId: string | number }
-  | { status: 'open'; activeId: string | number }
-  | { status: 'closing'; activeId: string | number }
-
 // ─── Transition ───
 
 export type TransitionMode = 'flip' | 'fade' | 'auto' | 'none'
 
-export type OpenTransitionPlan = {
-  mode: 'connected' | 'fade' | 'scale-fade'
-  sourceRect?: RectLike
-  targetRect?: RectLike
-  sourceAspectRatio?: number
-  targetAspectRatio?: number
-  durationMs: number
-  easing: string
-  reason?:
-    | 'ok'
-    | 'missing-source'
-    | 'not-visible'
-    | 'bad-geometry'
-    | 'aspect-ratio-too-far'
-    | 'decode-timeout'
-    | 'reduced-motion'
-}
+export type LightboxTransitionOption =
+  | TransitionMode
+  | {
+      mode: TransitionMode
+      autoThreshold?: number
+    }
 
 export type CloseTransitionPlan = {
   mode: 'flip' | 'fade' | 'instant'
@@ -184,10 +165,8 @@ export type ImageSource = {
  * Context in which an image is being rendered.
  * - `'thumb'` — grid thumbnail (smaller, responsive srcset)
  * - `'slide'` — lightbox slide (full-viewport srcset)
- * - `'preload'` — reserved for future preloading support; adapters may return a
- *   single low-res URL here. The native adapter treats it the same as `'slide'`.
  */
-export type ImageContext = 'thumb' | 'slide' | 'preload'
+export type ImageContext = 'thumb' | 'slide'
 
 export type ImageAdapter = (
   photo: PhotoItem,
@@ -330,15 +309,15 @@ export function responsive<T>(
   return resolver
 }
 
-// ─── Photo adapter ───
+// ─── Photo mapper ───
 
 /**
  * Transforms external data shapes into `PhotoItem`.
- * Pass to `PhotoAlbum` or `PhotoGroup` via the `:itemAdapter` prop so you can
+ * Pass to `PhotoAlbum` or `PhotoGroup` via the `:itemMapper` prop so you can
  * feed CMS / API responses directly without manual mapping.
  *
  * @example
- * const fromUnsplash: PhotoAdapter<UnsplashPhoto> = (item) => ({
+ * const fromUnsplash: PhotoMapper<UnsplashPhoto> = (item) => ({
  *   id: item.id,
  *   src: item.urls.regular,
  *   thumbSrc: item.urls.thumb,
@@ -347,7 +326,7 @@ export function responsive<T>(
  *   alt: item.alt_description ?? undefined,
  * })
  */
-export type PhotoAdapter<T = any> = (item: T) => PhotoItem
+export type PhotoMapper<T = unknown> = (item: T) => PhotoItem
 
 // ─── Debug ───
 

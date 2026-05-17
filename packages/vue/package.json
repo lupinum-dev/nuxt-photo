@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@nuxt-photo/core": "workspace:*",
-    "@nuxt-photo/engine": "workspace:*",
     "embla-carousel-vue": "9.0.0-rc02"
   },
   "peerDependencies": {

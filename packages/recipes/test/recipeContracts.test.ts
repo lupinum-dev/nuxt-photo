@@ -25,7 +25,7 @@ import Photo from '../src/components/Photo.vue'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 
-function createImmediateImage() {
+function createImmediateImage(requests: string[] = []) {
   return class ImmediateImage {
     onload: null | (() => void) = null
     onerror: null | (() => void) = null
@@ -35,7 +35,8 @@ function createImmediateImage() {
       return Promise.resolve()
     }
 
-    set src(_value: string) {
+    set src(value: string) {
+      requests.push(value)
       queueMicrotask(() => {
         this.onload?.()
       })
@@ -157,7 +158,7 @@ describe('recipe contracts', () => {
   it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
     const photo = makePhoto({ id: 'plain-photo' })
     const imageAdapter = vi.fn(
-      (item: PhotoItem, context: 'thumb' | 'slide' | 'preload') => ({
+      (item: PhotoItem, context: 'thumb' | 'slide') => ({
         src: `/${context}/${item.id}.jpg`,
         width: item.width,
         height: item.height,
@@ -174,6 +175,104 @@ describe('recipe contracts', () => {
     expect(
       new Set(imageAdapter.mock.calls.map(([, context]) => context)),
     ).toEqual(new Set(['thumb']))
+
+    mounted.unmount()
+  })
+
+  it('maps external item shapes before album rendering', async () => {
+    const raw = {
+      assetId: 'cms-asset',
+      url: '/cms/full.jpg',
+      thumbUrl: '/cms/thumb.jpg',
+      w: 1200,
+      h: 800,
+      title: 'Mapped CMS asset',
+    }
+    const itemMapper = vi.fn((item: typeof raw): PhotoItem => {
+      return {
+        id: item.assetId,
+        src: item.url,
+        thumbSrc: item.thumbUrl,
+        width: item.w,
+        height: item.h,
+        alt: item.title,
+      }
+    })
+
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [raw],
+        itemMapper,
+        lightbox: false,
+        defaultContainerWidth: 800,
+      },
+    })
+
+    await flushUi()
+
+    const img = mounted.container.querySelector('img')
+    expect(itemMapper).toHaveBeenCalledWith(raw, 0, [raw])
+    expect(img?.getAttribute('src')).toBe('/cms/thumb.jpg')
+    expect(img?.getAttribute('alt')).toBe('Mapped CMS asset')
+
+    mounted.unmount()
+  })
+
+  it('uses the imageAdapter for slide rendering and lightbox preload requests', async () => {
+    const imageRequests: string[] = []
+    vi.stubGlobal('Image', createImmediateImage(imageRequests))
+
+    const photos = [
+      makePhoto({
+        id: 'adapter-a',
+        src: '/raw/a.jpg',
+        thumbSrc: '/raw/a-thumb.jpg',
+      }),
+      makePhoto({
+        id: 'adapter-b',
+        src: '/raw/b.jpg',
+        thumbSrc: '/raw/b-thumb.jpg',
+      }),
+      makePhoto({
+        id: 'adapter-c',
+        src: '/raw/c.jpg',
+        thumbSrc: '/raw/c-thumb.jpg',
+      }),
+    ]
+    const imageAdapter = vi.fn(
+      (photo: PhotoItem, context: 'thumb' | 'slide') => ({
+        src: `/adapter/${context}/${photo.id}.jpg`,
+        width: photo.width,
+        height: photo.height,
+      }),
+    )
+
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos,
+        imageAdapter,
+        transition: 'none',
+        defaultContainerWidth: 800,
+      },
+    })
+
+    const trigger = mounted.container.querySelector(
+      '[role="button"]',
+    ) as HTMLElement | null
+    expect(trigger).toBeTruthy()
+
+    trigger?.click()
+    await flushUi()
+
+    expect(
+      document.body.querySelector('img[src="/adapter/slide/adapter-a.jpg"]'),
+    ).toBeTruthy()
+    expect(imageRequests).toContain('/adapter/slide/adapter-a.jpg')
+    expect(imageRequests).toContain('/adapter/slide/adapter-b.jpg')
+    expect(imageRequests.some((src) => src.startsWith('/raw/'))).toBe(false)
+    expect(
+      new Set(imageAdapter.mock.calls.map(([, context]) => context)),
+    ).toEqual(new Set(['thumb', 'slide']))
 
     mounted.unmount()
   })

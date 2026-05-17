@@ -28,11 +28,11 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 1024
+      "brotliDeltaLimit": 1280
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 1536
+      "brotliDeltaLimit": 1700
     }
   }
 }

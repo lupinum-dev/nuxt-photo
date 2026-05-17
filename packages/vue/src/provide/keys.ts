@@ -14,7 +14,7 @@ import type {
   ZoomState,
 } from '@nuxt-photo/core'
 /** Consumer API — what app code and recipe components need. */
-export interface LightboxConsumerAPI {
+interface LightboxConsumerAPI {
   photos: ComputedRef<PhotoItem[]>
   count: ComputedRef<number>
   activeIndex: Ref<number>
@@ -28,7 +28,7 @@ export interface LightboxConsumerAPI {
 }
 
 /** Render state — what primitive components read for styling and visibility. */
-export interface LightboxRenderState {
+interface LightboxRenderState {
   zoomState: Ref<ZoomState>
   panState: Ref<PanState>
   isZoomedIn: ComputedRef<boolean>
@@ -54,7 +54,7 @@ export interface LightboxRenderState {
 }
 
 /** DOM bindings — what primitives need to wire up event handlers and refs. */
-export interface LightboxDOMBindings {
+interface LightboxDOMBindings {
   mediaAreaRef: Ref<HTMLElement | null>
   emblaRef: Ref<HTMLElement | null | undefined>
   setThumbRef: (

@@ -12,5 +12,5 @@
 <script setup lang="ts">
 import { useLightboxInject } from '../composables/useLightboxInject'
 
-const ctx = useLightboxInject('LightboxPortal')
+const ctx = useLightboxInject('LightboxGhostImage')
 </script>

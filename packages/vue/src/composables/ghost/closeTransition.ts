@@ -8,7 +8,6 @@ import {
   easeOutCubic,
   shouldUseFlip,
   planCloseTransition,
-  type PhotoItem,
   type RectLike,
 } from '@nuxt-photo/core'
 import {
@@ -29,7 +28,7 @@ async function doInstantClose(s: GhostState) {
 
 async function doFadeClose(
   s: GhostState,
-  photo: PhotoItem,
+  slideSrc: string,
   frameRect: RectLike | null,
 ) {
   const fadeCloseDuration = 300
@@ -45,7 +44,7 @@ async function doFadeClose(
       `close FADE: ghost scale-out at ${frameRect.width.toFixed(0)}x${frameRect.height.toFixed(0)} @ (${frameRect.left.toFixed(0)},${frameRect.top.toFixed(0)})`,
     )
 
-    s.ghostSrc.value = photo.src
+    s.ghostSrc.value = slideSrc
     s.ghostVisible.value = true
     s.ghostStyle.value = {
       position: 'fixed',
@@ -109,7 +108,7 @@ async function doFadeClose(
 
 async function doFlipClose(
   s: GhostState,
-  photo: PhotoItem,
+  slideSrc: string,
   fromRect: RectLike,
   toRect: DOMRect,
   dragOffsetY: number,
@@ -122,8 +121,8 @@ async function doFlipClose(
   s.hiddenThumbIndex.value = s.activeIndex.value
   s.chromeOpacity.value = 0
 
-  s.ghostSrc.value = photo.src
-  s.debug?.log('transitions', `close FLIP: ghostSrc=${photo.src}`)
+  s.ghostSrc.value = slideSrc
+  s.debug?.log('transitions', `close FLIP: ghostSrc=${slideSrc}`)
 
   const adjustedFromRect: RectLike =
     dragOffsetY !== 0 || dragScale !== 1
@@ -283,6 +282,7 @@ export function createCloseTransition(s: GhostState) {
     }
 
     try {
+      const slideSrc = callbacks.getSlideSrc(photo)
       const fromRect = s.getAbsoluteFrameRect(photo)
       s.debug?.log(
         'transitions',
@@ -371,14 +371,14 @@ export function createCloseTransition(s: GhostState) {
       } else if (plan.mode === 'flip' && plan.fromRect && plan.toRect) {
         await doFlipClose(
           s,
-          photo,
+          slideSrc,
           plan.fromRect,
           plan.toRect as DOMRect,
           dragOffsetY,
           dragScale,
         )
       } else {
-        await doFadeClose(s, photo, fromRect)
+        await doFadeClose(s, slideSrc, fromRect)
       }
 
       s.debug?.log('transitions', 'close: complete')

@@ -102,7 +102,7 @@ import {
   photoId,
   type AlbumLayout,
   type ImageAdapter,
-  type PhotoAdapter,
+  type PhotoMapper,
   type PhotoItem,
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
@@ -116,7 +116,7 @@ import { usePhotoLayout } from '../composables/usePhotoLayout'
 const props = withDefaults(
   defineProps<{
     photos: PhotoItem[] | any[]
-    itemAdapter?: PhotoAdapter
+    itemMapper?: PhotoMapper
     layout?: AlbumLayout | AlbumLayout['type']
     targetRowHeight?: ResponsiveParameter<number>
     columns?: ResponsiveParameter<number>
@@ -177,8 +177,8 @@ if (props.defaultContainerWidth === 0) {
 }
 
 const photos = computed<PhotoItem[]>(() =>
-  props.itemAdapter
-    ? props.photos.map(props.itemAdapter)
+  props.itemMapper
+    ? props.photos.map(props.itemMapper)
     : (props.photos as PhotoItem[]),
 )
 
@@ -253,7 +253,10 @@ const LightboxComponent = computed<Component | null>(() => {
 })
 
 const ownCtx = !parentGroup
-  ? useLightboxProvider(photos, { transition: props.transition })
+  ? useLightboxProvider(photos, {
+      transition: props.transition,
+      imageAdapter: props.imageAdapter,
+    })
   : null
 
 const thumbElsMap: Record<number, HTMLElement | null> = {}

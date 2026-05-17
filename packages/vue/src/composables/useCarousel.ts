@@ -3,7 +3,6 @@ import {
   onBeforeUnmount,
   ref,
   watch,
-  type ComputedRef,
   type CSSProperties,
   type Ref,
 } from 'vue'
@@ -15,18 +14,16 @@ import {
   type PhotoItem,
   type DebugLogger,
 } from '@nuxt-photo/core'
-import type { CarouselConfig } from './lightboxRuntimeTypes'
 
 /**
  * Bind Embla-based slide navigation and per-slide visual effects to the active
  * lightbox photo collection.
  */
 export function useCarousel(
-  photos: ComputedRef<PhotoItem[]>,
+  photos: Readonly<Ref<PhotoItem[]>>,
   areaMetrics: Ref<AreaMetrics | null>,
-  config: CarouselConfig,
-  isZoomedIn: ComputedRef<boolean>,
-  animating: Ref<boolean>,
+  isZoomedIn: () => boolean,
+  isInteractionLocked: () => boolean,
   debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
@@ -55,10 +52,12 @@ export function useCarousel(
       })
 
       api.on('pointerdown', () => {
-        if (isZoomedIn.value || animating.value) {
+        const zoomed = isZoomedIn()
+        const locked = isInteractionLocked()
+        if (zoomed || locked) {
           debug?.log(
             'gestures',
-            `embla pointerdown blocked (zoomed=${isZoomedIn.value} animating=${animating.value})`,
+            `embla pointerdown blocked (zoomed=${zoomed} locked=${locked})`,
           )
           return false
         }
@@ -89,51 +88,8 @@ export function useCarousel(
   }
 
   function getSlideEffectStyle(slideIndex: number): CSSProperties {
-    const api = emblaApi.value
-    if (!api) return {}
-
-    const snaps = api.snapList()
-    if (!snaps.length) return {}
-
-    const progress = scrollProgress.value
-    const snapPos = snaps[slideIndex] ?? 0
-
-    let distance = progress - snapPos
-    if (distance > 0.5) distance -= 1
-    if (distance < -0.5) distance += 1
-
-    const n = photos.value.length
-    const slidePosition = distance * n
-
-    // Skip effect computation for slides more than 1.5 positions away — saves CPU per frame
-    if (Math.abs(slidePosition) > 1.5) return {}
-
-    switch (config.style) {
-      case 'classic':
-        return {}
-
-      case 'parallax': {
-        const { amount, scale, opacity } = config.parallax
-        const absPos = Math.min(1, Math.abs(slidePosition))
-        const width = areaMetrics.value?.width ?? 1
-        const parallaxShift = slidePosition * amount * width * -1
-        const scaleValue = 1 - absPos * (1 - scale)
-        const opacityValue = 1 - absPos * (1 - opacity)
-        return {
-          transform: `translate3d(${parallaxShift}px, 0, 0) scale(${scaleValue})`,
-          opacity: String(Math.max(0, opacityValue)),
-        }
-      }
-
-      case 'fade': {
-        const absPos = Math.min(1, Math.abs(slidePosition))
-        const opacityValue = Math.max(config.fade.minOpacity, 1 - absPos)
-        return {
-          opacity: String(opacityValue),
-          transform: `translate3d(${slidePosition * 40}px, 0, 0)`,
-        }
-      }
-    }
+    void slideIndex
+    return {}
   }
 
   function goToNext() {

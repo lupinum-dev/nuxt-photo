@@ -47,7 +47,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxSlide', name: 'LightboxSlide' },
   { export: 'LightboxControls', name: 'LightboxControls' },
   { export: 'LightboxCaption', name: 'LightboxCaption' },
-  { export: 'LightboxPortal', name: 'LightboxPortal' },
+  { export: 'LightboxGhostImage', name: 'LightboxGhostImage' },
   { export: 'PhotoTrigger', name: 'PhotoTrigger' },
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]

@@ -25,8 +25,9 @@ import {
 import {
   devWarn,
   photoId,
+  type ImageAdapter,
   type PhotoItem,
-  type PhotoAdapter,
+  type PhotoMapper,
 } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
 
@@ -35,7 +36,8 @@ const props = withDefaults(
     /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
     photos?: PhotoItem[] | any[]
     /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-    itemAdapter?: PhotoAdapter
+    itemMapper?: PhotoMapper
+    imageAdapter?: ImageAdapter
     /** Lightbox to render: true = default, false = none, Component = custom */
     lightbox?: boolean | Component
     /** Transition mode for open/close animations */
@@ -94,8 +96,8 @@ function unregister(id: symbol) {
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
   if (props.photos !== undefined) {
-    return props.itemAdapter
-      ? props.photos.map(props.itemAdapter)
+    return props.itemMapper
+      ? props.photos.map(props.itemMapper)
       : (props.photos as PhotoItem[])
   }
   return Array.from(registrationMap.values()).map((r) => r.photo)
@@ -104,6 +106,7 @@ const collectedPhotos = computed<PhotoItem[]>(() => {
 // Full lightbox context — creates and provides to children
 const ctx = useLightboxProvider(collectedPhotos, {
   transition: props.transition,
+  imageAdapter: props.imageAdapter,
   resolveSlide: (photo) => {
     for (const entry of registrationMap.values()) {
       if (photoId(entry.photo) === photoId(photo)) {

@@ -53,20 +53,18 @@ Click any photo and the built-in lightbox opens with gestures, keyboard support,
 
 ## Packages
 
-Nuxt Photo is split into five packages:
+Nuxt Photo is split into four packages:
 
 - `@nuxt-photo/nuxt` for the Nuxt module, auto-imports, and CSS wiring
 - `@nuxt-photo/recipes` for ready-to-use components like `<PhotoAlbum>` and `<PhotoCarousel>`
 - `@nuxt-photo/vue` for primitives and composables like `useLightboxProvider`
 - `@nuxt-photo/core` for framework-free layout, geometry, and image helpers
-- `@nuxt-photo/engine` for the framework-free lightbox runtime below Vue
 
 ## Stability
 
 Nuxt Photo is pre-1.0.
 
 - Root imports from `@nuxt-photo/core`, `@nuxt-photo/vue`, `@nuxt-photo/recipes`, and `@nuxt-photo/nuxt` are the stable public surface.
-- `@nuxt-photo/engine` is public and intentionally low-level. Use it only when you want the framework-free lightbox orchestration layer directly.
 - Undocumented exports are internal, even if they are visible in generated output today.
 
 ## Where next

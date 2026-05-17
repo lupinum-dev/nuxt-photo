@@ -8,12 +8,9 @@ import {
   computeTargetPanForZoom,
   computeZoomLevels,
   fitRect,
-  getActiveId,
   getLoopedIndex,
   isDoubleTap,
-  isViewerOpen,
   rubberband,
-  viewerTransition,
 } from '@nuxt-photo/core'
 
 describe('geometry and viewer utilities', () => {
@@ -105,28 +102,6 @@ describe('geometry and viewer utilities', () => {
         y: 200,
       }),
     ).toEqual({ x: -300, y: 200 })
-  })
-
-  it('transitions viewer state through open, active change, and close', () => {
-    const opening = viewerTransition(
-      { status: 'closed' },
-      { type: 'open', activeId: 'one' },
-    )
-    const opened = viewerTransition(opening, { type: 'opened' })
-    const changed = viewerTransition(opened, {
-      type: 'setActive',
-      activeId: 'two',
-    })
-    const closing = viewerTransition(changed, { type: 'close' })
-    const closed = viewerTransition(closing, { type: 'closed' })
-
-    expect(opening).toEqual({ status: 'opening', activeId: 'one' })
-    expect(isViewerOpen(opening)).toBe(true)
-    expect(changed).toEqual({ status: 'open', activeId: 'two' })
-    expect(getActiveId(changed)).toBe('two')
-    expect(closed).toEqual({ status: 'closed' })
-    expect(isViewerOpen(closed)).toBe(false)
-    expect(getActiveId(closed)).toBeUndefined()
   })
 })
 

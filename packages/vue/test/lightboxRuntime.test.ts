@@ -7,7 +7,7 @@ import { makePhoto } from '@test-fixtures/photos'
 import {
   useLightboxWindowLifecycle,
   watchPhotoCollection,
-} from '../src/composables/lightboxContextRuntime'
+} from '../src/composables/lightboxWatchers'
 
 async function flushWatchers() {
   await nextTick()

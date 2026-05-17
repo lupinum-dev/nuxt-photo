@@ -1,5 +1,3 @@
-import type { PanState } from '@nuxt-photo/core'
-
 export type PanzoomMotion = {
   /**
    * Mutable spring state shared across pan/zoom gesture handlers for perf.
@@ -18,23 +16,3 @@ export type PanzoomMotion = {
   friction: number
   rafId: number
 }
-
-export type CarouselStyle = 'classic' | 'parallax' | 'fade'
-
-export type CarouselConfig = {
-  style: CarouselStyle
-  parallax: { amount: number; scale: number; opacity: number }
-  fade: { minOpacity: number }
-}
-
-export const DEFAULT_CAROUSEL_CONFIG: CarouselConfig = {
-  style: 'classic',
-  parallax: { amount: 0.3, scale: 0.92, opacity: 0.5 },
-  fade: { minOpacity: 0 },
-}
-
-export type PanzoomImmediateSetter = (
-  scale: number,
-  pan: PanState,
-  syncRefs?: boolean,
-) => void

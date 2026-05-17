@@ -3,9 +3,6 @@
 // Types
 export * from './types'
 
-// Collection
-export * from './collection'
-
 // Layout
 export * from './layout'
 

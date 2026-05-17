@@ -23,7 +23,7 @@
  *      and let CSS transition (plus border-radius + shadow growth) run.
  *      Image load races the wait in `Promise.all`, then media is revealed.
  *
- * Invariant: `ensureImageLoaded(photo.src)` MUST resolve before
+ * Invariant: `callbacks.loadSlideImage(photo)` MUST resolve before
  * `mediaOpacity.value = 1` in every path. Otherwise the `<img>` in the viewer
  * is still decoding and the reveal shows a blank frame or a flash of the thumb.
  *
@@ -40,7 +40,6 @@ import {
   flipTransform,
   isUsableRect,
   makeGhostBaseStyle,
-  ensureImageLoaded,
   nextFrame,
   wait,
   animateNumber,
@@ -56,10 +55,14 @@ import {
 } from './types'
 import { resetOpenState } from './state'
 
-async function doInstantOpen(s: GhostState, photo: PhotoItem) {
+async function doInstantOpen(
+  s: GhostState,
+  photo: PhotoItem,
+  callbacks: TransitionCallbacks,
+) {
   s.debug?.log('transitions', 'open: INSTANT (mode=none)')
   s.overlayOpacity.value = 1
-  await ensureImageLoaded(photo.src)
+  await callbacks.loadSlideImage(photo)
   s.mediaOpacity.value = 1
   s.chromeOpacity.value = 1
 }
@@ -68,11 +71,12 @@ async function doFadeOpen(
   s: GhostState,
   photo: PhotoItem,
   targetRect: RectLike | null,
+  callbacks: TransitionCallbacks,
 ) {
   const fadeOpenDuration = 300
 
   s.animating.value = true
-  const imgSrc = photo.thumbSrc || photo.src
+  const imgSrc = callbacks.getThumbSrc(photo)
 
   if (targetRect) {
     s.debug?.log(
@@ -113,7 +117,7 @@ async function doFadeOpen(
       easeOutCubic,
     )
 
-    await ensureImageLoaded(photo.src)
+    await callbacks.loadSlideImage(photo)
     s.mediaOpacity.value = 1
     s.ghostVisible.value = false
     s.chromeOpacity.value = 1
@@ -133,7 +137,7 @@ async function doFadeOpen(
       easeOutCubic,
     )
 
-    await ensureImageLoaded(photo.src)
+    await callbacks.loadSlideImage(photo)
     s.mediaOpacity.value = 1
     s.chromeOpacity.value = 1
   }
@@ -147,13 +151,14 @@ async function doFlipOpen(
   photo: PhotoItem,
   fromRect: DOMRect,
   toRect: RectLike,
+  callbacks: TransitionCallbacks,
 ) {
   s.debug?.log('transitions', 'open: using FLIP animation')
 
   s.animating.value = true
   s.hiddenThumbIndex.value = index
 
-  const thumbSrc = photo.thumbSrc || photo.src
+  const thumbSrc = callbacks.getThumbSrc(photo)
   s.ghostSrc.value = thumbSrc
   s.ghostVisible.value = true
   s.ghostStyle.value = {
@@ -180,7 +185,7 @@ async function doFlipOpen(
     boxShadow: '0 30px 120px rgba(0, 0, 0, 0.45)',
   }
 
-  await Promise.all([wait(openDurationMs), ensureImageLoaded(photo.src)])
+  await Promise.all([wait(openDurationMs), callbacks.loadSlideImage(photo)])
 
   s.mediaOpacity.value = 1
   await nextFrame()
@@ -227,7 +232,7 @@ export async function openTransition(
 
   try {
     if (s.transitionConfig?.mode === 'none') {
-      await doInstantOpen(s, photo)
+      await doInstantOpen(s, photo, callbacks)
       s.debug?.log('transitions', 'open: complete')
       s.debug?.groupEnd('transitions')
       return true
@@ -245,9 +250,9 @@ export async function openTransition(
         shouldUseFlip(fromRect, s.transitionConfig, s.debug))
 
     if (useFlip) {
-      await doFlipOpen(s, index, photo, fromRect, toRect)
+      await doFlipOpen(s, index, photo, fromRect, toRect, callbacks)
     } else {
-      await doFadeOpen(s, photo, toRect)
+      await doFadeOpen(s, photo, toRect, callbacks)
     }
 
     s.debug?.log('transitions', 'open: complete')

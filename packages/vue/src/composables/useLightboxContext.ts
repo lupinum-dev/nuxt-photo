@@ -8,76 +8,35 @@ import {
 } from 'vue'
 import {
   createDebug,
+  createNativeImageAdapter,
   createTransitionMode,
+  ensureImageLoaded,
   photoId,
   type AreaMetrics,
+  type ImageAdapter,
+  type LightboxTransitionOption,
   type PhotoItem,
 } from '@nuxt-photo/core'
-import {
-  createLightboxEngine,
-  type LightboxTransitionOption,
-} from '@nuxt-photo/engine'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
 import { useGestures } from './useGestures'
-import { useLightboxEngineState } from './useLightboxEngineState'
 import {
   createGeometrySync,
   createKeydownBinding,
   createPreloadAround,
-  syncEngineActiveIndex,
-  syncEnginePhotos,
-  syncEnginePresentationState,
-  syncEngineViewportState,
   useLightboxWindowLifecycle,
   watchActiveIndexRuntime,
   watchPhotoCollection,
-} from './lightboxContextRuntime'
-import { DEFAULT_CAROUSEL_CONFIG } from './lightboxRuntimeTypes'
-import { LightboxDefaultsKey } from '../provide/keys'
+} from './lightboxWatchers'
+import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 
 /**
- * Internal orchestration layer for the Vue lightbox runtime.
+ * Internal coordinator for the Vue lightbox runtime.
  *
  * Public customisation should go through `useLightboxProvider`; this function
- * wires together the engine (pure state) and the Vue-side composables
- * (reactive bindings, DOM refs, animations). The returned object is the
- * surface consumed by `<Lightbox>`, `<LightboxRoot>`, and recipes.
- *
- * ## Setup order (top to bottom of this function)
- *
- *   1. Normalise `photosInput` into a computed array ref.
- *   2. Build the engine + a reactive snapshot of its state.
- *   3. Resolve the transition config: user option > `prefers-reduced-motion`
- *      downgrade > default. `'none'` is respected even under reduced motion.
- *   4. Create geometry refs (`mediaAreaRef`, `areaMetrics`).
- *   5. Create domain composables, in dependency order:
- *        carousel   — Embla-backed paging, depends on photos + areaMetrics
- *        panzoom    — depends on `carousel.currentPhoto` + areaMetrics
- *        ghost      — depends on carousel (index + frame rect) for FLIP
- *   6. Declare the `open` / `close` / `next` / `prev` methods.
- *   7. Build gestures (takes references from every composable above).
- *   8. Attach keydown.
- *   9. Wire engine syncs + runtime watchers (see below).
- *  10. Return the public surface.
- *
- * ## Watcher graph
- *
- *   photos                         → syncEnginePhotos      (push to engine)
- *                                  → watchPhotoCollection  (navigate / close
- *                                                           if active removed)
- *
- *   carousel.activeIndex           → syncEngineActiveIndex (push to engine)
- *                                  → watchActiveIndexRuntime
- *                                        (panzoom reset, preload neighbours,
- *                                         refresh zoom state)
- *
- *   panzoom.{zoom,pan}State        → syncEngineViewportState
- *   ghost.{opacities, visibility}  → syncEnginePresentationState
- *
- *   useLightboxWindowLifecycle watches window visibility / resize to cancel
- *   pending taps, detach keydown, and resync geometry.
+ * wires the Vue-side composables together: reactive photo state, DOM refs,
+ * Embla paging, pan/zoom, gestures, and ghost transitions.
  *
  * ## `skipActiveIndexWatch` (the one subtle bit)
  *
@@ -89,12 +48,6 @@ import { LightboxDefaultsKey } from '../provide/keys'
  * transition callbacks (`transitionCallbacks`) call the same side effects in
  * the correct order. Cleared to `false` once `ghost.open` resolves.
  *
- * ## SSR
- *
- * Safe to call on the server: the engine runs, refs get their initial values,
- * and `useLightboxWindowLifecycle` / `createKeydownBinding` guard `window`
- * internally. Animations never fire because no user event reaches the server.
- *
  * Public API is exported at the bottom (`return { … }`) — everything above
  * the `return` is wiring.
  */
@@ -102,6 +55,7 @@ export function useLightboxContext(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
+  imageAdapter?: ImageAdapter,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn(
@@ -113,11 +67,13 @@ export function useLightboxContext(
     const value = toValue(photosInput)
     return Array.isArray(value) ? value : [value]
   })
-  const engine = createLightboxEngine({ photos: photos.value })
-  const engineState = useLightboxEngineState(engine)
 
   const globalDefaults = inject(LightboxDefaultsKey, undefined)
+  const injectedImageAdapter = inject(ImageAdapterKey, null)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
+  const resolvedImageAdapter = computed(
+    () => imageAdapter ?? injectedImageAdapter ?? createNativeImageAdapter(),
+  )
 
   const debug = createDebug()
   const transitionConfig = createTransitionMode()
@@ -149,13 +105,14 @@ export function useLightboxContext(
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
+  let isZoomedIn = () => false
+  let isInteractionLocked = () => false
 
   const carousel = useCarousel(
     photos,
     areaMetrics,
-    DEFAULT_CAROUSEL_CONFIG,
-    computed(() => engineState.isZoomedIn.value),
-    engineState.animating,
+    () => isZoomedIn(),
+    () => isInteractionLocked(),
     debug,
   )
 
@@ -174,9 +131,11 @@ export function useLightboxContext(
     debug,
     transitionConfig,
   )
+  isZoomedIn = () => panzoom.isZoomedIn.value
+  isInteractionLocked = () => ghost.animating.value
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
-  const preloadAround = createPreloadAround(photos)
+  const preloadAround = createPreloadAround(photos, resolvedImageAdapter)
   // Suppresses `watchActiveIndexRuntime` side effects while `open()` runs —
   // the ghost transition callbacks handle the same work in the right order.
   const skipActiveIndexWatch = ref(false)
@@ -209,7 +168,6 @@ export function useLightboxContext(
 
     skipActiveIndexWatch.value = true
     try {
-      engine.open(targetIndex)
       ghost.setCloseDragY(0)
       carousel.goTo(targetIndex, true)
       keydown.attach()
@@ -217,12 +175,10 @@ export function useLightboxContext(
       pendingOpen = ghost.open(targetIndex, transitionCallbacks)
       const opened = await pendingOpen
       if (!opened) {
-        engine.markClosed()
         keydown.detach()
         return
       }
 
-      engine.markOpened()
       preloadAround(targetIndex)
     } finally {
       pendingOpen = null
@@ -233,11 +189,9 @@ export function useLightboxContext(
   async function close() {
     await settlePendingOpen()
 
-    if (!ghost.lightboxMounted.value && !engineState.isOpen.value) return
+    if (!ghost.lightboxMounted.value) return
 
-    engine.close()
     await ghost.close(closeCallbacks)
-    engine.markClosed()
     ghost.setCloseDragY(0)
     keydown.detach()
   }
@@ -294,6 +248,12 @@ export function useLightboxContext(
     refreshZoomState: panzoom.refreshZoomState,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
+    getThumbSrc: (photo: PhotoItem) =>
+      resolvedImageAdapter.value(photo, 'thumb').src,
+    getSlideSrc: (photo: PhotoItem) =>
+      resolvedImageAdapter.value(photo, 'slide').src,
+    loadSlideImage: (photo: PhotoItem) =>
+      ensureImageLoaded(resolvedImageAdapter.value(photo, 'slide').src),
   }
 
   const closeCallbacks = {
@@ -302,27 +262,6 @@ export function useLightboxContext(
     isZoomedIn: panzoom.isZoomedIn,
   }
 
-  // Keep the top-level composable orchestration-only.
-  syncEnginePhotos(engine, photos)
-  syncEngineActiveIndex(engine, carousel.activeIndex)
-  syncEngineViewportState(engine, {
-    zoomState: panzoom.zoomState,
-    panState: panzoom.panState,
-    isZoomedIn: panzoom.isZoomedIn,
-    zoomAllowed: panzoom.zoomAllowed,
-  })
-  syncEnginePresentationState(engine, {
-    gesturePhase: gestures.gesturePhase,
-    animating: ghost.animating,
-    ghostVisible: ghost.ghostVisible,
-    ghostSrc: ghost.ghostSrc,
-    hiddenThumbIndex: ghost.hiddenThumbIndex,
-    overlayOpacity: ghost.overlayOpacity,
-    mediaOpacity: ghost.mediaOpacity,
-    chromeOpacity: ghost.chromeOpacity,
-    uiVisible: ghost.uiVisible,
-    closeDragY: ghost.closeDragY,
-  })
   watchPhotoCollection(photos, {
     activeIndex: carousel.activeIndex,
     lightboxMounted: ghost.lightboxMounted,
@@ -348,34 +287,34 @@ export function useLightboxContext(
   })
 
   return {
-    photos: engineState.photos,
-    count: engineState.count,
-    activeIndex: engineState.activeIndex,
-    activePhoto: engineState.activePhoto,
-    isOpen: engineState.isOpen,
+    photos,
+    count: computed(() => photos.value.length),
+    activeIndex: carousel.activeIndex,
+    activePhoto: carousel.currentPhoto,
+    isOpen: computed(() => ghost.lightboxMounted.value),
 
-    zoomState: engineState.zoomState,
-    panState: engineState.panState,
-    isZoomedIn: engineState.isZoomedIn,
-    zoomAllowed: engineState.zoomAllowed,
+    zoomState: panzoom.zoomState,
+    panState: panzoom.panState,
+    isZoomedIn: panzoom.isZoomedIn,
+    zoomAllowed: panzoom.zoomAllowed,
 
-    animating: engineState.animating,
-    ghostVisible: engineState.ghostVisible,
-    ghostSrc: engineState.ghostSrc,
+    animating: ghost.animating,
+    ghostVisible: ghost.ghostVisible,
+    ghostSrc: ghost.ghostSrc,
     ghostStyle: ghost.ghostStyle,
-    hiddenThumbIndex: engineState.hiddenThumbIndex,
-    overlayOpacity: engineState.overlayOpacity,
-    mediaOpacity: engineState.mediaOpacity,
-    chromeOpacity: engineState.chromeOpacity,
-    uiVisible: engineState.uiVisible,
-    closeDragY: engineState.closeDragY,
+    hiddenThumbIndex: ghost.hiddenThumbIndex,
+    overlayOpacity: ghost.overlayOpacity,
+    mediaOpacity: ghost.mediaOpacity,
+    chromeOpacity: ghost.chromeOpacity,
+    uiVisible: ghost.uiVisible,
+    closeDragY: ghost.closeDragY,
     transitionInProgress: ghost.transitionInProgress,
     chromeStyle: ghost.chromeStyle,
     closeDragRatio: ghost.closeDragRatio,
     backdropStyle: ghost.backdropStyle,
     lightboxUiStyle: ghost.lightboxUiStyle,
 
-    gesturePhase: engineState.gesturePhase,
+    gesturePhase: gestures.gesturePhase,
 
     mediaAreaRef,
     emblaRef: carousel.emblaRef,

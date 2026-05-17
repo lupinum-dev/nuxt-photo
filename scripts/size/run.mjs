@@ -10,6 +10,7 @@ import {
   readFileSync,
   readdirSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { basename, dirname, extname, join, relative, resolve } from 'node:path'
@@ -20,10 +21,11 @@ import limits from './config.json' with { type: 'json' }
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..', '..')
+const nuxtPackageRoot = resolve(root, 'packages', 'nuxt')
 const fixturesRoot = resolve(root, 'test', 'size')
 const resultsRoot = resolve(root, 'test-results', 'size')
 const analyzeRoot = resolve(root, 'test-results', 'size-analyze')
-const nuxiBin = resolve(root, 'node_modules', '.bin', 'nuxi')
+const nuxiBin = resolve(nuxtPackageRoot, 'node_modules', '.bin', 'nuxi')
 const sizeLimitBin = resolve(root, 'node_modules', '.bin', 'size-limit')
 
 const args = process.argv.slice(2)
@@ -306,8 +308,13 @@ async function measureViteFixture(fixtureId) {
 
 function runNuxtFixture(fixtureId) {
   const tempDir = prepareFixture('nuxt', fixtureId)
-  runCommand(nuxiBin, ['build'], {
-    cwd: tempDir,
+  symlinkSync(
+    resolve(nuxtPackageRoot, 'node_modules'),
+    resolve(tempDir, 'node_modules'),
+    'dir',
+  )
+  runCommand(nuxiBin, ['build', tempDir], {
+    cwd: nuxtPackageRoot,
     env: {
       ...process.env,
       NUXT_TELEMETRY_DISABLED: '1',

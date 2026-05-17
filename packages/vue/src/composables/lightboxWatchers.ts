@@ -14,16 +14,9 @@ import {
   photoId,
   type AreaMetrics,
   type DebugLogger,
-  type GestureMode,
-  type PanState,
+  type ImageAdapter,
   type PhotoItem,
-  type ZoomState,
 } from '@nuxt-photo/core'
-import type {
-  LightboxEngine,
-  LightboxPresentationState,
-  LightboxViewportState,
-} from '@nuxt-photo/engine'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(
@@ -47,7 +40,10 @@ export function createKeydownBinding(
 }
 
 /** Preload the active slide and its immediate neighbors. */
-export function createPreloadAround(photos: ComputedRef<PhotoItem[]>) {
+export function createPreloadAround(
+  photos: ComputedRef<PhotoItem[]>,
+  imageAdapter: ComputedRef<ImageAdapter>,
+) {
   return function preloadAround(index: number) {
     const candidates = [index - 1, index, index + 1]
 
@@ -55,7 +51,7 @@ export function createPreloadAround(photos: ComputedRef<PhotoItem[]>) {
       if (candidate < 0 || candidate >= photos.value.length) continue
       const photo = photos.value[candidate]
       if (!photo) continue
-      void ensureImageLoaded(photo.src)
+      void ensureImageLoaded(imageAdapter.value(photo, 'slide').src)
     }
   }
 }
@@ -94,118 +90,6 @@ export function createGeometrySync(
     debug?.log('geometry', 'syncGeometry:', areaMetrics.value)
     return areaMetrics.value
   }
-}
-
-/** Keep the engine photo collection in sync with the current reactive source. */
-export function syncEnginePhotos(
-  engine: LightboxEngine,
-  photos: ComputedRef<PhotoItem[]>,
-) {
-  watch(
-    photos,
-    (nextPhotos) => {
-      engine.setPhotos(nextPhotos)
-    },
-    { immediate: true },
-  )
-}
-
-/** Mirror the active slide index into the engine state. */
-export function syncEngineActiveIndex(
-  engine: LightboxEngine,
-  activeIndex: Ref<number>,
-) {
-  watch(
-    activeIndex,
-    (index) => {
-      engine.setActiveIndex(index)
-    },
-    { immediate: true },
-  )
-}
-
-/** Push viewport-derived zoom and pan state into the engine snapshot. */
-export function syncEngineViewportState(
-  engine: LightboxEngine,
-  config: {
-    zoomState: Ref<ZoomState>
-    panState: Ref<PanState>
-    isZoomedIn: ComputedRef<boolean>
-    zoomAllowed: ComputedRef<boolean>
-  },
-) {
-  watch(
-    [config.zoomState, config.panState, config.isZoomedIn, config.zoomAllowed],
-    ([zoomState, panState, isZoomedIn, zoomAllowed]) => {
-      const viewportState: LightboxViewportState = {
-        zoomState,
-        panState,
-        isZoomedIn,
-        zoomAllowed,
-      }
-      engine.syncViewportState(viewportState)
-    },
-    { immediate: true },
-  )
-}
-
-/** Push presentation-only runtime state into the engine snapshot. */
-export function syncEnginePresentationState(
-  engine: LightboxEngine,
-  config: {
-    gesturePhase: Ref<GestureMode>
-    animating: Ref<boolean>
-    ghostVisible: Ref<boolean>
-    ghostSrc: Ref<string>
-    hiddenThumbIndex: Ref<number | null>
-    overlayOpacity: Ref<number>
-    mediaOpacity: Ref<number>
-    chromeOpacity: Ref<number>
-    uiVisible: Ref<boolean>
-    closeDragY: Ref<number>
-  },
-) {
-  watch(
-    [
-      config.gesturePhase,
-      config.animating,
-      config.ghostVisible,
-      config.ghostSrc,
-      config.hiddenThumbIndex,
-      config.overlayOpacity,
-      config.mediaOpacity,
-      config.chromeOpacity,
-      config.uiVisible,
-      config.closeDragY,
-    ],
-    ([
-      gesturePhase,
-      animating,
-      ghostVisible,
-      ghostSrc,
-      hiddenThumbIndex,
-      overlayOpacity,
-      mediaOpacity,
-      chromeOpacity,
-      uiVisible,
-      closeDragY,
-    ]) => {
-      const presentationState: LightboxPresentationState = {
-        gesturePhase,
-        animating,
-        ghostVisible,
-        ghostSrc,
-        hiddenThumbIndex,
-        overlayOpacity,
-        mediaOpacity,
-        chromeOpacity,
-        uiVisible,
-        closeDragY,
-      }
-      engine.syncPresentationState(presentationState)
-    },
-    { immediate: true },
-  )
 }
 
 /** React to photo-list changes that can invalidate the active slide at runtime. */

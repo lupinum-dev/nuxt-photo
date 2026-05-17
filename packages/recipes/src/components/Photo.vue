@@ -76,6 +76,7 @@ const soloCtx = isSolo.value
   ? useLightboxProvider(
       computed(() => props.photo),
       {
+        imageAdapter: props.imageAdapter,
         resolveSlide: (photo) => {
           if (
             (photo !== props.photo &&

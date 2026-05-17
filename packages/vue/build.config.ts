@@ -10,7 +10,6 @@ export default defineBuildConfig({
     'embla-carousel-vue',
     'embla-carousel',
     '@nuxt-photo/core',
-    '@nuxt-photo/engine',
   ],
   failOnWarn: false,
 })

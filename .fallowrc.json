@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "publicPackages": [
+    "@nuxt-photo/core",
+    "@nuxt-photo/engine",
+    "@nuxt-photo/vue",
+    "@nuxt-photo/recipes",
+    "@nuxt-photo/nuxt"
+  ],
+  "dynamicallyLoaded": [
+    ".size-limit.cjs",
+    "docs/content.config.ts",
+    "packages/*/build.config.ts",
+    "packages/nuxt/src/runtime/*.ts",
+    "packages/nuxt/test/fixtures/basic/app.vue",
+    "packages/recipes/src/styles/*.css",
+    "test/size/**/*"
+  ],
+  "ignoreDependencies": [
+    "@iconify-json/lucide",
+    "@iconify-json/simple-icons",
+    "@iconify-json/vscode-icons",
+    "@nuxt/fonts",
+    "@size-limit/preset-small-lib",
+    "@test-fixtures/photos",
+    "size-limit",
+    "zod"
+  ]
+}

@@ -1,6 +1,11 @@
 import type { MaybeRef } from 'vue'
-import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
-import type { LightboxTransitionOption } from '@nuxt-photo/engine'
+import {
+  devWarn,
+  photoId,
+  type ImageAdapter,
+  type LightboxTransitionOption,
+  type PhotoItem,
+} from '@nuxt-photo/core'
 import { useLightboxContext } from './useLightboxContext'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -31,17 +36,20 @@ export function useLightboxProvider(
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
     minZoom?: number
+    imageAdapter?: ImageAdapter
   },
 ) {
   const ctx = useLightboxContext(
     photosInput,
     options?.transition,
     options?.minZoom,
+    options?.imageAdapter,
   )
 
   // Provide the shared lightbox context plus custom slide resolution.
   provideLightboxContexts(ctx, {
     resolveSlide: options?.resolveSlide,
+    imageAdapter: options?.imageAdapter,
   })
 
   function open(index = 0) {

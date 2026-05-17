@@ -12,14 +12,6 @@ export default defineNuxtPlugin({
       const src =
         context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
 
-      if (context === 'preload') {
-        return {
-          src: image(src, { width: 1600, quality: 85 }),
-          width: photo.width,
-          height: photo.height,
-        }
-      }
-
       if (context === 'slide') {
         // Generate srcset explicitly — avoids getSizes() format issues with @nuxt/image v2
         // Lightbox media area is min(1240px, calc(100vw - 72px))

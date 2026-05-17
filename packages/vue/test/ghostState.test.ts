@@ -35,6 +35,9 @@ function makeTransitionCallbacks(): TransitionCallbacks {
     refreshZoomState: () => {},
     resetGestureState: () => {},
     cancelTapTimer: () => {},
+    getThumbSrc: (photo) => photo.thumbSrc ?? photo.src,
+    getSlideSrc: (photo) => photo.src,
+    loadSlideImage: () => Promise.resolve(),
   }
 }
 

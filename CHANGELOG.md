@@ -6,6 +6,29 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 
 ## [Unreleased]
 
+### Breaking
+
+- Removed the `@nuxt-photo/engine` package. Lightbox runtime state is now owned by the Vue layer through `@nuxt-photo/vue`.
+- Removed public core collection helpers and the unused viewer state-machine exports.
+- Removed `ImageContext = 'preload'`. Preloading now routes through the configured `ImageAdapter` with the existing `'slide'` context.
+- Renamed `PhotoAdapter` to `PhotoMapper`.
+- Renamed recipe props from `itemAdapter` / `:item-adapter` to `itemMapper` / `:item-mapper`.
+- Renamed the lightbox ghost primitive from `LightboxPortal` to `LightboxGhostImage`.
+
+### Changed
+
+- Routed lightbox slide rendering, ghost-image transitions, and preloading through the configured `ImageAdapter`.
+- Collapsed duplicated lightbox state ownership so Vue refs are the source of truth for open state, active index, gesture phase, pan/zoom state, and ghost transition state.
+- Updated docs to describe only shipped behavior and remove framework-free engine, decode-timeout, aspect-ratio rejection, and universal primitive attribute-forwarding claims.
+
+### Removed
+
+- Removed export-name smoke tests and adapter/collection tests that only exercised plumbing.
+
+### Fixed
+
+- Fixed custom and Nuxt image adapters not being used consistently by lightbox preloading and transition image loading.
+
 ## [0.1.0] - 2026-04-26
 
 ### Added

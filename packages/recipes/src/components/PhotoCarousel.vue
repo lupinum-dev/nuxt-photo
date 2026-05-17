@@ -2,6 +2,7 @@
   <PhotoGroup
     v-if="hasLightbox"
     :photos="resolvedPhotos"
+    :image-adapter="props.imageAdapter"
     :lightbox="props.lightbox"
     :transition="props.transition"
   >
@@ -98,9 +99,9 @@ import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
 import {
   devWarn,
-  type PhotoAdapter,
-  type PhotoItem,
+  type PhotoMapper,
   type ImageAdapter,
+  type PhotoItem,
 } from '@nuxt-photo/core'
 import type {
   CarouselCaptionSlotProps,
@@ -128,7 +129,7 @@ defineSlots<{
 const props = withDefaults(
   defineProps<{
     photos: PhotoItem[] | any[]
-    itemAdapter?: PhotoAdapter
+    itemMapper?: PhotoMapper
     imageAdapter?: ImageAdapter
 
     options?: EmblaOptionsType
@@ -166,8 +167,8 @@ const props = withDefaults(
 )
 
 const resolvedPhotos = computed<PhotoItem[]>(() =>
-  props.itemAdapter
-    ? (props.photos as any[]).map(props.itemAdapter)
+  props.itemMapper
+    ? (props.photos as any[]).map(props.itemMapper)
     : (props.photos as PhotoItem[]),
 )
 

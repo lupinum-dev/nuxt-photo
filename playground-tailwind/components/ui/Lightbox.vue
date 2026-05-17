@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    <LightboxPortal class="pointer-events-none fixed inset-0 z-50" />
+    <LightboxGhostImage class="pointer-events-none fixed inset-0 z-50" />
   </LightboxRoot>
 </template>
 
@@ -107,7 +107,7 @@ import {
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
-  LightboxPortal,
+  LightboxGhostImage,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,

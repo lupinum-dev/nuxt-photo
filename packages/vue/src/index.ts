@@ -14,18 +14,17 @@ export {
 
 // Re-export core utilities for convenience
 export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
-export type { LightboxTransitionOption } from '@nuxt-photo/engine'
 export type {
   PhotoItem,
+  LightboxTransitionOption,
   AreaMetrics,
   RectLike,
   PanState,
   ZoomState,
   GestureMode,
-  ViewerState,
   TransitionMode,
   ImageAdapter,
-  PhotoAdapter,
+  PhotoMapper,
   ImageSource,
   LayoutInput,
   LayoutEntry,
