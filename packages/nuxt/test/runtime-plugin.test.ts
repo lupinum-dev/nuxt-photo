@@ -3,9 +3,11 @@ import { ImageAdapterKey } from '@nuxt-photo/vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 
 const mocks = vi.hoisted(() => {
-  const image = vi.fn((src: string, options: { width: number; quality: number }) => {
-    return `/_ipx/w_${options.width},q_${options.quality}${src}`
-  }) as any
+  const image = vi.fn(
+    (src: string, options: { width: number; quality: number }) => {
+      return `/_ipx/w_${options.width},q_${options.quality}${src}`
+    },
+  ) as any
 
   image.getSizes = vi.fn(
     (src: string, options: { sizes: string; quality: number }) => ({
