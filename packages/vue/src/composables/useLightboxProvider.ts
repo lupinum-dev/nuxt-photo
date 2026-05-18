@@ -4,7 +4,7 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
 } from '@nuxt-photo/core'
-import { useLightboxContext } from './useLightboxContext'
+import { useLightboxRuntimeState } from './useLightboxRuntimeState'
 import { createLightboxController } from './lightboxController'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -38,7 +38,7 @@ export function useLightboxProvider(
     imageAdapter?: ImageAdapter
   },
 ) {
-  const ctx = useLightboxContext(
+  const ctx = useLightboxRuntimeState(
     photosInput,
     options?.transition,
     options?.minZoom,

@@ -1,96 +1,31 @@
 <template>
-  <PhotoGroup
-    v-if="hasLightbox"
-    :photos="resolvedPhotos"
-    :image-adapter="props.imageAdapter"
-    :lightbox="props.lightbox"
+  <CarouselLayoutBridge
+    v-bind="{ ...$attrs, ...layoutProps }"
+    :lightbox="resolvedLightbox"
     :transition="props.transition"
   >
-    <template #default="{ open, setThumbRef }">
-      <CarouselLayout
-        v-bind="$attrs"
-        :photos="resolvedPhotos"
-        :image-adapter="props.imageAdapter"
-        :options="mergedOptions"
-        :plugins="mergedPlugins"
-        :thumbs-options="mergedThumbsOptions"
-        :show-arrows="props.showArrows"
-        :show-thumbnails="props.showThumbnails"
-        :show-counter="props.showCounter"
-        :show-dots="props.showDots"
-        :slide-size="props.slideSize"
-        :slide-aspect="props.slideAspect"
-        :gap="props.gap"
-        :thumb-size="props.thumbSize"
-        :slide-class="props.slideClass"
-        :img-class="props.imgClass"
-        :thumb-class="props.thumbClass"
-        :caption-class="props.captionClass"
-        :controls-class="props.controlsClass"
-        :on-slide-activate="hasLightbox ? (index) => open(index) : undefined"
-        :set-slide-ref="hasLightbox ? setThumbRef : undefined"
-      >
-        <template v-if="$slots.slide" #slide="slotProps"
-          ><slot name="slide" v-bind="slotProps"
-        /></template>
-        <template v-if="$slots.thumb" #thumb="slotProps"
-          ><slot name="thumb" v-bind="slotProps"
-        /></template>
-        <template v-if="$slots.caption" #caption="slotProps"
-          ><slot name="caption" v-bind="slotProps"
-        /></template>
-        <template v-if="$slots.controls" #controls="slotProps"
-          ><slot name="controls" v-bind="slotProps"
-        /></template>
-        <template v-if="$slots.prev" #prev><slot name="prev" /></template>
-        <template v-if="$slots.next" #next><slot name="next" /></template>
-        <template v-if="$slots.dots" #dots="slotProps"
-          ><slot name="dots" v-bind="slotProps"
-        /></template>
-      </CarouselLayout>
+    <template v-if="$slots.slide" #slide="slotProps">
+      <slot name="slide" v-bind="slotProps" />
     </template>
-  </PhotoGroup>
-
-  <CarouselLayout
-    v-else
-    v-bind="$attrs"
-    :photos="resolvedPhotos"
-    :image-adapter="props.imageAdapter"
-    :options="mergedOptions"
-    :plugins="mergedPlugins"
-    :thumbs-options="mergedThumbsOptions"
-    :show-arrows="props.showArrows"
-    :show-thumbnails="props.showThumbnails"
-    :show-counter="props.showCounter"
-    :show-dots="props.showDots"
-    :slide-size="props.slideSize"
-    :slide-aspect="props.slideAspect"
-    :gap="props.gap"
-    :thumb-size="props.thumbSize"
-    :slide-class="props.slideClass"
-    :img-class="props.imgClass"
-    :thumb-class="props.thumbClass"
-    :caption-class="props.captionClass"
-    :controls-class="props.controlsClass"
-  >
-    <template v-if="$slots.slide" #slide="slotProps"
-      ><slot name="slide" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots.thumb" #thumb="slotProps"
-      ><slot name="thumb" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots.caption" #caption="slotProps"
-      ><slot name="caption" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots.controls" #controls="slotProps"
-      ><slot name="controls" v-bind="slotProps"
-    /></template>
-    <template v-if="$slots.prev" #prev><slot name="prev" /></template>
-    <template v-if="$slots.next" #next><slot name="next" /></template>
-    <template v-if="$slots.dots" #dots="slotProps"
-      ><slot name="dots" v-bind="slotProps"
-    /></template>
-  </CarouselLayout>
+    <template v-if="$slots.thumb" #thumb="slotProps">
+      <slot name="thumb" v-bind="slotProps" />
+    </template>
+    <template v-if="$slots.caption" #caption="slotProps">
+      <slot name="caption" v-bind="slotProps" />
+    </template>
+    <template v-if="$slots.controls" #controls="slotProps">
+      <slot name="controls" v-bind="slotProps" />
+    </template>
+    <template v-if="$slots.prev" #prev>
+      <slot name="prev" />
+    </template>
+    <template v-if="$slots.next" #next>
+      <slot name="next" />
+    </template>
+    <template v-if="$slots.dots" #dots="slotProps">
+      <slot name="dots" v-bind="slotProps" />
+    </template>
+  </CarouselLayoutBridge>
 </template>
 
 <script setup lang="ts">
@@ -111,8 +46,7 @@ import type {
   CarouselThumbSlotProps,
   LightboxTransitionOption,
 } from '@nuxt-photo/vue'
-import PhotoGroup from './PhotoGroup.vue'
-import CarouselLayout from './internal/CarouselLayout.vue'
+import CarouselLayoutBridge from './internal/CarouselLayoutBridge'
 import { resolveRecipePhotos } from '../utils/photos'
 
 defineOptions({ inheritAttrs: false })
@@ -174,6 +108,9 @@ const resolvedPhotos = computed<PhotoItem[]>(() =>
 const hasLightbox = computed(
   () => props.lightbox !== undefined && props.lightbox !== false,
 )
+const resolvedLightbox = computed(() =>
+  hasLightbox.value ? props.lightbox : false,
+)
 
 const defaultMainOptions: EmblaOptionsType = {
   loop: false,
@@ -209,4 +146,25 @@ const mergedPlugins = computed<EmblaPluginType[]>(() => {
   const opts = typeof autoplay === 'object' ? autoplay : undefined
   return [Autoplay(opts), ...filtered]
 })
+
+const layoutProps = computed(() => ({
+  photos: resolvedPhotos.value,
+  imageAdapter: props.imageAdapter,
+  options: mergedOptions.value,
+  plugins: mergedPlugins.value,
+  thumbsOptions: mergedThumbsOptions.value,
+  showArrows: props.showArrows,
+  showThumbnails: props.showThumbnails,
+  showCounter: props.showCounter,
+  showDots: props.showDots,
+  slideSize: props.slideSize,
+  slideAspect: props.slideAspect,
+  gap: props.gap,
+  thumbSize: props.thumbSize,
+  slideClass: props.slideClass,
+  imgClass: props.imgClass,
+  thumbClass: props.thumbClass,
+  captionClass: props.captionClass,
+  controlsClass: props.controlsClass,
+}))
 </script>

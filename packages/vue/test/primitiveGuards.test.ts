@@ -1,8 +1,19 @@
 // @vitest-environment jsdom
 
-import { createApp, h } from 'vue'
+import { createApp, defineComponent, h } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { LightboxProvider, LightboxRoot, PhotoTrigger } from '@nuxt-photo/vue'
+import {
+  LightboxCaption,
+  LightboxControls,
+  LightboxGhostImage,
+  LightboxOverlay,
+  LightboxProvider,
+  LightboxRoot,
+  LightboxSlide,
+  LightboxViewport,
+  PhotoTrigger,
+  useLightboxProvider,
+} from '@nuxt-photo/vue'
 import { makePhoto } from '@test-fixtures/photos'
 
 function mountExpectingError(component: any, props?: Record<string, unknown>) {
@@ -66,5 +77,29 @@ describe('primitive injection guards', () => {
     ).toThrow(
       /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
     )
+  })
+
+  it('supports every lightbox primitive from the single internal context', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const photos = [makePhoto({ id: 'primitive-all' })]
+
+    const App = defineComponent({
+      setup() {
+        useLightboxProvider(photos, { transition: 'none' })
+        return () =>
+          h('div', [
+            h(LightboxRoot),
+            h(LightboxOverlay),
+            h(LightboxControls, null, { default: () => null }),
+            h(LightboxCaption, null, { default: () => null }),
+            h(LightboxViewport, null, { default: () => null }),
+            h(LightboxSlide, { photo: photos[0], index: 0 }),
+            h(LightboxGhostImage),
+            h(PhotoTrigger, { photo: photos[0], index: 0 }),
+          ])
+      },
+    })
+
+    expect(() => mountExpectingError(App)).not.toThrow()
   })
 })

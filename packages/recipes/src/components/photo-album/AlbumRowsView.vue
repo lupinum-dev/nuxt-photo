@@ -15,7 +15,7 @@
       :style="item.style"
       v-bind="itemBindings(item.photo, item.index)"
     >
-      <AlbumItemContent
+      <AlbumThumbnail
         :photo="item.photo"
         :index="item.index"
         :width="item.width"
@@ -28,7 +28,7 @@
         <template v-if="$slots.thumbnail" #thumbnail="slotProps">
           <slot name="thumbnail" v-bind="slotProps" />
         </template>
-      </AlbumItemContent>
+      </AlbumThumbnail>
     </div>
 
     <span
@@ -42,7 +42,7 @@
 import type { CSSProperties } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import type { RowItem } from '../../composables/usePhotoAlbumLayoutState'
-import AlbumItemContent from './AlbumItemContent.vue'
+import AlbumThumbnail from './AlbumThumbnail.vue'
 
 defineProps<{
   containerQueryCss: string

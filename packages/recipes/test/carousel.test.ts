@@ -233,6 +233,105 @@ describe('PhotoCarousel — DOM', () => {
     expect(root.getAttribute('data-test-id')).toBe('carousel-root')
     m.unmount()
   })
+
+  it.each([
+    ['without lightbox', false],
+    ['with lightbox', true],
+  ])('forwards public layout slots %s', async (_label, lightbox) => {
+    const m = mount(
+      PhotoCarousel,
+      { photos, lightbox, showDots: true, transition: 'none' },
+      {
+        slide: ({ photo }: { photo: PhotoItem }) =>
+          h('span', { class: 'slot-slide' }, photo.id),
+        thumb: ({ photo }: { photo: PhotoItem }) =>
+          h('span', { class: 'slot-thumb' }, photo.id),
+        caption: () => h('span', { class: 'slot-caption' }, 'caption'),
+        controls: () => h('span', { class: 'slot-controls' }, 'controls'),
+        dots: () => h('span', { class: 'slot-dots' }, 'dots'),
+      },
+    )
+    await flushUi()
+
+    expect(m.container.querySelectorAll('.slot-slide').length).toBe(
+      photos.length,
+    )
+    expect(m.container.querySelectorAll('.slot-thumb').length).toBe(
+      photos.length,
+    )
+    expect(m.container.querySelector('.slot-caption')).not.toBeNull()
+    expect(m.container.querySelector('.slot-controls')).not.toBeNull()
+    expect(m.container.querySelector('.slot-dots')).not.toBeNull()
+
+    m.unmount()
+  })
+
+  it.each([
+    ['without lightbox', false],
+    ['with lightbox', true],
+  ])('forwards prev and next slots %s', async (_label, lightbox) => {
+    const m = mount(
+      PhotoCarousel,
+      { photos, lightbox, transition: 'none' },
+      {
+        prev: () => h('span', { class: 'slot-prev' }, 'previous'),
+        next: () => h('span', { class: 'slot-next' }, 'next'),
+      },
+    )
+    await flushUi()
+
+    expect(m.container.querySelector('.slot-prev')).not.toBeNull()
+    expect(m.container.querySelector('.slot-next')).not.toBeNull()
+
+    m.unmount()
+  })
+
+  it('opens the selected slide when lightbox is enabled', async () => {
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: null | (() => void) = null
+        set src(_value: string) {}
+        decode() {
+          return Promise.resolve()
+        }
+      },
+    )
+
+    const m = mount(
+      PhotoCarousel,
+      { photos, lightbox: true, transition: 'none' },
+      {
+        slide: ({
+          index,
+          open,
+        }: {
+          index: number
+          open: () => Promise<void> | void
+        }) =>
+          h(
+            'button',
+            {
+              class: 'slot-open',
+              onClick: open,
+            },
+            `open ${index}`,
+          ),
+      },
+    )
+    await flushUi()
+    ;(
+      m.container.querySelectorAll('.slot-open')[1] as HTMLButtonElement
+    ).click()
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).not.toBeNull()
+    expect(
+      document.body.querySelector('.np-lightbox__counter')?.textContent,
+    ).toContain('2 / 4')
+
+    m.unmount()
+  })
 })
 
 describe('PhotoCarousel — SSR', () => {

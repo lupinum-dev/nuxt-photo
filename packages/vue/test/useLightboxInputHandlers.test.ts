@@ -2,7 +2,7 @@
 
 import { computed, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { useGestures } from '../src/composables/useGestures'
+import { useLightboxInputHandlers } from '../src/composables/useLightboxInputHandlers'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
@@ -74,10 +74,10 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
   }
 }
 
-describe('useGestures', () => {
+describe('useLightboxInputHandlers', () => {
   it('closes on Escape when the lightbox is mounted and idle', () => {
     const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }))
 
@@ -86,7 +86,7 @@ describe('useGestures', () => {
 
   it('navigates with arrow keys when not zoomed in', () => {
     const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
@@ -98,7 +98,7 @@ describe('useGestures', () => {
 
   it('pans with arrow keys instead of navigating when zoomed in', () => {
     const { config, setPanzoomImmediate } = createGestureConfig(true)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
@@ -111,7 +111,7 @@ describe('useGestures', () => {
 
   it('supports mixed pointer types across consecutive gesture sessions', async () => {
     const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onMediaPointerDown(
       new PointerEvent('pointerdown', {
@@ -171,7 +171,7 @@ describe('useGestures', () => {
 
   it('pinch-zooms with two active touch pointers', async () => {
     const { config, setPanzoomImmediate } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onMediaPointerDown(
       new PointerEvent('pointerdown', {
@@ -231,7 +231,7 @@ describe('useGestures', () => {
 
   it('keeps a pinch alive when one pointer leaves a three-pointer gesture', async () => {
     const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onMediaPointerDown(
       new PointerEvent('pointerdown', {
@@ -287,7 +287,7 @@ describe('useGestures', () => {
 
   it('settles and releases pointer capture when pinch is cancelled', () => {
     const { config } = createGestureConfig(false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onMediaPointerDown(
       new PointerEvent('pointerdown', {
@@ -338,7 +338,7 @@ describe('useGestures', () => {
 
   it('ignores multi-touch when pinch zoom is disabled', async () => {
     const { config } = createGestureConfig(false, false)
-    const gestures = useGestures(config)
+    const gestures = useLightboxInputHandlers(config)
 
     gestures.onMediaPointerDown(
       new PointerEvent('pointerdown', {

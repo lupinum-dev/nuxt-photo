@@ -22,7 +22,7 @@ import {
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'
-import { useGestures } from './useGestures'
+import { useLightboxInputHandlers } from './useLightboxInputHandlers'
 import {
   createGeometrySync,
   createKeydownBinding,
@@ -53,7 +53,7 @@ import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
  * Public API is exported at the bottom (`return { … }`) — everything above
  * the `return` is wiring.
  */
-export function useLightboxContext(
+export function useLightboxRuntimeState(
   photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
@@ -61,7 +61,7 @@ export function useLightboxContext(
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn(
-      '[nuxt-photo] useLightboxContext must be called inside a component setup()',
+      '[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()',
     )
   }
 
@@ -219,7 +219,7 @@ export function useLightboxContext(
     carousel.goToPrev()
   }
 
-  const gestures = useGestures(
+  const gestures = useLightboxInputHandlers(
     {
       lightboxMounted: ghost.lightboxMounted,
       animating: ghost.animating,

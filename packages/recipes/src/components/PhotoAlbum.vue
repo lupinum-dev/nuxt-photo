@@ -23,7 +23,7 @@
       </template>
     </AlbumRowsView>
 
-    <AlbumMountedView
+    <AlbumMeasuredView
       v-else-if="!isMounted && groups.length > 0"
       :photos="photos"
       :groups="groups"
@@ -38,7 +38,7 @@
       <template v-if="$slots.thumbnail" #thumbnail="slotProps">
         <slot name="thumbnail" v-bind="slotProps" />
       </template>
-    </AlbumMountedView>
+    </AlbumMeasuredView>
 
     <div v-else-if="!isMounted" :style="ssrWrapperStyle">
       <div
@@ -49,7 +49,7 @@
         :style="ssrItemStyle(photo)"
         v-bind="itemBindings(photo, index)"
       >
-        <AlbumItemContent
+        <AlbumThumbnail
           :photo="photo"
           :index="index"
           :width="photo.width"
@@ -61,11 +61,11 @@
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
           </template>
-        </AlbumItemContent>
+        </AlbumThumbnail>
       </div>
     </div>
 
-    <AlbumMountedView
+    <AlbumMeasuredView
       v-else
       :photos="photos"
       :groups="groups"
@@ -80,7 +80,7 @@
       <template v-if="$slots.thumbnail" #thumbnail="slotProps">
         <slot name="thumbnail" v-bind="slotProps" />
       </template>
-    </AlbumMountedView>
+    </AlbumMeasuredView>
   </div>
 
   <component
@@ -115,8 +115,8 @@ import {
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
-import AlbumItemContent from './photo-album/AlbumItemContent.vue'
-import AlbumMountedView from './photo-album/AlbumMountedView.vue'
+import AlbumMeasuredView from './photo-album/AlbumMeasuredView.vue'
+import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import AlbumRowsView from './photo-album/AlbumRowsView.vue'
 import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
 import { resolveRecipePhotos } from '../utils/photos'

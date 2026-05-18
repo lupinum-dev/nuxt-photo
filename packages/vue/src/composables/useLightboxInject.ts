@@ -1,4 +1,7 @@
-import { LightboxContextKey, type InternalLightboxContext } from '../provide/keys'
+import {
+  LightboxContextKey,
+  type InternalLightboxContext,
+} from '../provide/keys'
 import { requireInjection } from '../internal/requireInjection'
 
 /**

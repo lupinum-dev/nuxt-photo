@@ -18,7 +18,7 @@
         :style="itemStyle(entry, group)"
         v-bind="itemBindings(entry.photo, entry.index)"
       >
-        <AlbumItemContent
+        <AlbumThumbnail
           :photo="entry.photo"
           :index="entry.index"
           :width="entry.width"
@@ -30,7 +30,7 @@
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
           </template>
-        </AlbumItemContent>
+        </AlbumThumbnail>
       </div>
     </div>
   </template>
@@ -44,7 +44,7 @@ import type {
   LayoutGroup,
   PhotoItem,
 } from '@nuxt-photo/core'
-import AlbumItemContent from './AlbumItemContent.vue'
+import AlbumThumbnail from './AlbumThumbnail.vue'
 
 defineProps<{
   photos: PhotoItem[]
