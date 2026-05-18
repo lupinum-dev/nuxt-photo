@@ -68,6 +68,37 @@ describe('lightbox controller surface', () => {
     app.unmount()
     host.remove()
   })
+
+  it('does not open the first photo for missing controller targets', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const photos = [makePhoto({ id: 'controller-a' })]
+    let providerApi: ReturnType<typeof useLightboxProvider> | null = null
+
+    const App = defineComponent({
+      setup() {
+        providerApi = useLightboxProvider(photos, { transition: 'none' })
+        return () => null
+      },
+    })
+
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+    await flushWatchers()
+
+    await providerApi!.openPhoto(makePhoto({ id: 'missing-controller' }))
+    await providerApi!.open(-1)
+    await flushWatchers()
+
+    expect(providerApi!.isOpen.value).toBe(false)
+    expect(providerApi!.activeIndex.value).toBe(0)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No photo found'))
+
+    warn.mockRestore()
+    app.unmount()
+    host.remove()
+  })
 })
 
 describe('lightbox state collection handling', () => {

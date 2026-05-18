@@ -41,7 +41,7 @@ useHead({ title: 'nuxt-photo — Tailwind 4' })
       </header>
 
       <section class="border-t border-stone-800 pt-12">
-        <UiPhotoAlbum
+        <PhotoAlbum
           :photos="photos"
           layout="rows"
           :target-row-height="280"

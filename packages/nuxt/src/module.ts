@@ -11,12 +11,23 @@ export type { PhotoItem } from '@nuxt-photo/core'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean | { prefix?: string }
-  components?: boolean | { prefix?: string }
+  components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?:
     | false
     | {
-        provider?: 'auto' | 'nuxt-image' | 'native' | 'custom'
+        provider?: 'auto' | 'nuxt-image' | 'native'
+        thumb?: {
+          sizes?: string
+          quality?: number
+        }
+        slide?: {
+          widths?: number[]
+          maxWidth?: number
+          maxDensity?: number
+          sizes?: string
+          quality?: number
+        }
       }
   lightbox?: {
     minZoom?: number
@@ -25,6 +36,7 @@ export interface NuxtPhotoOptions {
 
 type NuxtPhotoAppConfig = {
   nuxtPhoto?: {
+    image?: Exclude<NuxtPhotoOptions['image'], false>
     lightbox?: {
       minZoom?: number
     }
@@ -121,6 +133,18 @@ export default defineNuxtModule<NuxtPhotoOptions>({
           )
         })
       }
+
+      if (imageProvider === 'nuxt-image' && typeof options.image === 'object') {
+        const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+        appConfig.nuxtPhoto = {
+          ...appConfig.nuxtPhoto,
+          image: {
+            ...appConfig.nuxtPhoto?.image,
+            thumb: options.image.thumb,
+            slide: options.image.slide,
+          },
+        }
+      }
     }
 
     if (minZoom != null) {
@@ -156,12 +180,17 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         })
       }
 
-      for (const component of PRIMITIVE_COMPONENTS) {
-        addComponent({
-          name: `${prefix}${component.name}`,
-          export: component.export,
-          filePath: '@nuxt-photo/vue',
-        })
+      const registerPrimitives =
+        typeof options.components === 'object' && options.components.primitives
+
+      if (registerPrimitives) {
+        for (const component of PRIMITIVE_COMPONENTS) {
+          addComponent({
+            name: `${prefix}${component.name}`,
+            export: component.export,
+            filePath: '@nuxt-photo/vue',
+          })
+        }
       }
     }
 

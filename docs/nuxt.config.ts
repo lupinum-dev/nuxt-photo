@@ -87,7 +87,7 @@ export default defineNuxtConfig({
     domain: 'https://nuxt-photo.lupinum.com',
     title: 'Nuxt Photo Documentation for LLMs',
     description:
-      'Nuxt Photo is a Nuxt module for photo galleries, albums, lightbox and carousel, with first-class @nuxt/image integration.',
+      'Nuxt Photo is a Nuxt module for photo galleries, albums, lightbox and carousel, with a built-in @nuxt/image adapter.',
     full: {
       title: 'Nuxt Photo Complete Documentation',
       description:

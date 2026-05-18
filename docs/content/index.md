@@ -1,7 +1,7 @@
 ---
 title: 'Photo galleries for Nuxt.'
 navigation: false
-description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and headless primitives — auto-imported into any Nuxt app.'
+description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and advanced lightbox building blocks — auto-imported into any Nuxt app.'
 seo:
   ogImage: '/social-card.png'
 ---
@@ -26,14 +26,14 @@ trailing-icon: i-lucide-arrow-right
 
 ---
 
-Albums, lightbox, carousel, primitives — for Nuxt
+Albums, lightbox, carousel — for Nuxt
 :::
 
 #title
-Photo galleries for Nuxt, [done right]{.text-primary}.
+Photo galleries for Nuxt apps.
 
 #description
-Nuxt Photo drops in a single module and gives you justified row layouts, shared lightbox with pinch-to-zoom, and an Embla carousel — all SSR-safe and wired to `@nuxt/image` when you need it.
+Nuxt Photo renders albums, grouped lightboxes, and carousels from photo objects with stable ids, source URLs, and dimensions. Rows are the strongest SSR path; columns and masonry are deterministic when you provide an assumed container width.
 
 #links
 :::u-button
@@ -175,7 +175,7 @@ title: text-3xl font-semibold
 Carousel with a lightbox on top
 
 #description
-`<PhotoCarousel>` wraps Embla with first-class support for thumbnails, counter, autoplay, and a lightbox overlay. Works on desktop and touch.
+`<PhotoCarousel>` wraps Embla with built-in thumbnails, counter, autoplay, and an optional lightbox overlay. Works best when its Embla options stay within the documented recipe path.
 
 #default
 ::demo-carousel
@@ -248,8 +248,8 @@ to: /docs/concepts/image-providers
 
 ---
 
-title: Headless primitives
-description: Build your own layout or custom lightbox with the same primitives the recipes ship on.
+title: Lightbox building blocks
+description: Build a custom lightbox when the recipe wrapper is not the right structure.
 icon: i-lucide-blocks
 to: /docs/guides/custom-lightbox
 

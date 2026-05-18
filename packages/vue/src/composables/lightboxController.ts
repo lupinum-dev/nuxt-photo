@@ -1,14 +1,21 @@
 import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
 import type {
-  InternalLightboxContext,
   LightboxController,
+  InternalLightboxContext,
 } from '../provide/keys'
 
 export function createLightboxController(
   context: InternalLightboxContext,
 ): LightboxController {
   async function openPhoto(photo: PhotoItem) {
-    await context.open(photo)
+    const index = context.photos.value.findIndex(
+      (item) => photoId(item) === photoId(photo),
+    )
+    if (index < 0) {
+      devWarn(`No photo found for id "${photoId(photo)}"`)
+      return
+    }
+    await context.open(index)
   }
 
   async function openById(id: string | number) {

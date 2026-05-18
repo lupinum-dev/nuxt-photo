@@ -1,9 +1,9 @@
 import { provide } from 'vue'
 import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import {
+  type InternalLightboxContext,
   ImageAdapterKey,
   LightboxContextKey,
-  type InternalLightboxContext,
   LightboxSlideRendererKey,
   type LightboxSlideRenderer,
 } from './keys'

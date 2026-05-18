@@ -10,6 +10,7 @@ import {
   createDebug,
   createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
+  devWarn,
   loadImage,
   photoId,
   type AreaMetrics,
@@ -167,7 +168,16 @@ export function useLightboxContext(
             (photo) => photoId(photo) === photoId(photoOrIndex as PhotoItem),
           )
 
-    const targetIndex = index >= 0 ? index : 0
+    if (index < 0 || index >= currentPhotos.length) {
+      devWarn(
+        typeof photoOrIndex === 'number'
+          ? `No photo found at index ${photoOrIndex}`
+          : `No photo found for id "${photoId(photoOrIndex)}"`,
+      )
+      return
+    }
+
+    const targetIndex = index
 
     skipActiveIndexWatch.value = true
     try {

@@ -1,35 +1,27 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ImageAdapterKey } from '@nuxt-photo/vue'
-import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
+import { describe, expect, it, vi } from 'vitest'
+import type { PhotoItem } from '@nuxt-photo/core'
+import {
+  createNuxtImageAdapter,
+  DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG,
+  type NuxtImageFunction,
+} from '../src/runtime/image-adapter'
 
-const mocks = vi.hoisted(() => {
+function createImageMock() {
   const image = vi.fn(
-    (src: string, options: { width: number; quality: number }) => {
-      return `/_ipx/w_${options.width},q_${options.quality}${src}`
-    },
-  ) as any
+    (src: string, options: { width: number; quality: number }) =>
+      `/_ipx/w_${options.width},q_${options.quality}${src}`,
+  ) as NuxtImageFunction & ReturnType<typeof vi.fn>
 
   image.getSizes = vi.fn(
     (src: string, options: { sizes: string; quality: number }) => ({
       src: `/_ipx/thumb,q_${options.quality}${src}`,
-      srcset: `/_ipx/thumb-400,q_${options.quality}${src} 400w, /_ipx/thumb-800,q_${options.quality}${src} 800w`,
+      srcset: `/_ipx/thumb-400,q_${options.quality}${src} 400w`,
       sizes: options.sizes,
     }),
   )
 
-  return {
-    image,
-    provide: vi.fn(),
-  }
-})
-
-vi.mock('#app', () => ({
-  defineNuxtPlugin: (plugin: unknown) => plugin,
-}))
-
-vi.mock('#imports', () => ({
-  useImage: () => mocks.image,
-}))
+  return image
+}
 
 const photo: PhotoItem = {
   id: 'nuxt-image',
@@ -39,51 +31,61 @@ const photo: PhotoItem = {
   height: 1000,
 }
 
-describe('nuxt image runtime plugin', () => {
-  beforeEach(() => {
-    mocks.image.mockClear()
-    mocks.image.getSizes.mockClear()
-    mocks.provide.mockClear()
+describe('nuxt image adapter', () => {
+  it('uses thumbSrc for thumbnails and configurable thumb options', () => {
+    const image = createImageMock()
+    const adapter = createNuxtImageAdapter(image, {
+      thumb: {
+        sizes: 'sm:100vw lg:360px',
+        quality: 72,
+      },
+    })
+
+    const thumb = adapter(photo, 'thumb')
+
+    expect(image.getSizes).toHaveBeenCalledWith('/photos/thumb.jpg', {
+      sizes: 'sm:100vw lg:360px',
+      quality: 72,
+    })
+    expect(thumb).toMatchObject({
+      src: '/_ipx/thumb,q_72/photos/thumb.jpg',
+      sizes: 'sm:100vw lg:360px',
+      width: 1600,
+      height: 1000,
+    })
   })
 
-  it('provides an adapter that generates separate thumbnail and slide sources', async () => {
-    const plugin = (await import('../src/runtime/plugin')).default
-
-    plugin.setup({
-      vueApp: {
-        provide: mocks.provide,
+  it('uses src for slides and honors configured widths, caps, density, sizes, and quality', () => {
+    const image = createImageMock()
+    const adapter = createNuxtImageAdapter(image, {
+      slide: {
+        widths: [400, 800, 1200, 1800],
+        maxWidth: 900,
+        maxDensity: 1,
+        sizes: '90vw',
+        quality: 77,
       },
-    } as any)
+    })
 
-    expect(mocks.provide).toHaveBeenCalledWith(
-      ImageAdapterKey,
-      expect.any(Function),
-    )
-
-    const adapter = mocks.provide.mock.calls[0]![1] as ImageAdapter
-    const thumb = adapter(photo, 'thumb')
     const slide = adapter(photo, 'slide')
 
-    expect(mocks.image.getSizes).toHaveBeenCalledWith('/photos/thumb.jpg', {
-      sizes: 'sm:100vw md:50vw lg:400px',
-      quality: 80,
-    })
-    expect(thumb).toEqual({
-      src: '/_ipx/thumb,q_80/photos/thumb.jpg',
-      srcset:
-        '/_ipx/thumb-400,q_80/photos/thumb.jpg 400w, /_ipx/thumb-800,q_80/photos/thumb.jpg 800w',
-      sizes: 'sm:100vw md:50vw lg:400px',
-      width: 1600,
-      height: 1000,
-    })
+    expect(slide.src).toBe('/_ipx/w_900,q_77/photos/full.jpg')
+    expect(slide.srcset).toContain('/_ipx/w_400,q_77/photos/full.jpg 400w')
+    expect(slide.srcset).toContain('/_ipx/w_800,q_77/photos/full.jpg 800w')
+    expect(slide.srcset).toContain('/_ipx/w_1200,q_77/photos/full.jpg 1200w')
+    expect(slide.srcset).not.toContain('1800w')
+    expect(slide.sizes).toBe('90vw')
+  })
 
-    expect(slide).toEqual({
-      src: '/_ipx/w_1240,q_85/photos/full.jpg',
-      srcset:
-        '/_ipx/w_640,q_85/photos/full.jpg 640w, /_ipx/w_960,q_85/photos/full.jpg 960w, /_ipx/w_1240,q_85/photos/full.jpg 1240w, /_ipx/w_1600,q_85/photos/full.jpg 1600w, /_ipx/w_2000,q_85/photos/full.jpg 2000w',
-      sizes: 'min(1240px, calc(100vw - 72px))',
-      width: 1600,
-      height: 1000,
-    })
+  it('keeps the existing default slide cap and fallback width behavior', () => {
+    const image = createImageMock()
+    const adapter = createNuxtImageAdapter(image)
+    const tiny = { ...photo, width: 300 }
+
+    const slide = adapter(tiny, 'slide')
+
+    expect(slide.src).toBe('/_ipx/w_300,q_85/photos/full.jpg')
+    expect(slide.srcset).toBe('/_ipx/w_300,q_85/photos/full.jpg 300w')
+    expect(slide.sizes).toBe(DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide.sizes)
   })
 })

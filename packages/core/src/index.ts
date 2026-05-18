@@ -6,6 +6,13 @@ export {
   resolveResponsiveParameter,
   mergeResponsiveBreakpoints,
 } from './types'
+export {
+  normalizePhotos,
+  type NormalizePhotosOptions,
+  type NormalizePhotosResult,
+  type PhotoValidationIssue,
+  type PhotoValidationIssueCode,
+} from './photo/normalize'
 export type {
   PhotoItem,
   PhotoMapper,

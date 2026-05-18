@@ -1,6 +1,6 @@
 # @nuxt-photo/vue
 
-Vue composables, primitives, and stable injection keys for Nuxt Photo.
+Vue composables and advanced lightbox building blocks for Nuxt Photo.
 
 Use this package when you need custom lightbox UI, lower-level integration than the recipe components, or direct access to the Vue bindings without the Nuxt module.
 
@@ -34,8 +34,8 @@ It creates the shared lightbox context that Vue primitives consume.
 The root entrypoint exports:
 
 - composables like `useLightbox`, `useLightboxProvider`, `useContainerWidth`, and `responsive`
-- primitives like `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
-- stable injection keys like `LightboxComponentKey`, `ImageAdapterKey`, `LightboxDefaultsKey`, and `PhotoGroupContextKey`
+- lightbox building blocks like `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
+- documented injection keys like `LightboxComponentKey`, `ImageAdapterKey`, and `LightboxDefaultsKey`
 
 ## Stability
 

@@ -1,8 +1,8 @@
 # Nuxt Photo
 
-Nuxt Photo gives Nuxt apps photo albums, a shared lightbox, a carousel, and headless primitives from one module.
+Nuxt Photo gives Nuxt apps photo albums, a shared lightbox, a carousel, and advanced lightbox building blocks from one module.
 
-Use it when you want responsive gallery layouts, SSR-safe rendering, and optional `@nuxt/image` integration without stitching together separate gallery and lightbox libraries.
+Use it when you have real photo data (`id`, `src`, `width`, and `height`) and want stable gallery layouts, an honest SSR story, and native, Nuxt Image, or custom image adapters without stitching together separate gallery and lightbox libraries.
 
 ## Smallest working example
 
@@ -57,7 +57,7 @@ Nuxt Photo is split into four packages:
 
 - `@nuxt-photo/nuxt` for the Nuxt module, auto-imports, and CSS wiring
 - `@nuxt-photo/recipes` for ready-to-use components like `<PhotoAlbum>` and `<PhotoCarousel>`
-- `@nuxt-photo/vue` for primitives and composables like `useLightboxProvider`
+- `@nuxt-photo/vue` for advanced lightbox building blocks and composables like `useLightboxProvider`
 - `@nuxt-photo/core` for framework-free layout, geometry, and image helpers
 
 ## Stability

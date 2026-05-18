@@ -11,7 +11,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
 
 /**
  * Creates a full lightbox context and provides it to child components.
- * This is the composable for building custom lightbox components.
+ * This is the composable for providing context to custom lightbox components.
  * It is the supported advanced entrypoint above the internal lightbox state.
  *
  * @example

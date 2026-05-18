@@ -2,7 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "publicPackages": [
     "@nuxt-photo/core",
-    "@nuxt-photo/engine",
     "@nuxt-photo/vue",
     "@nuxt-photo/recipes",
     "@nuxt-photo/nuxt"

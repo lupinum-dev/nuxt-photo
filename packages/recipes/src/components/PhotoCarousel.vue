@@ -27,8 +27,8 @@
         :thumb-class="props.thumbClass"
         :caption-class="props.captionClass"
         :controls-class="props.controlsClass"
-        :on-slide-activate="(index) => open(index)"
-        :set-slide-ref="setThumbRef"
+        :on-slide-activate="hasLightbox ? (index) => open(index) : undefined"
+        :set-slide-ref="hasLightbox ? setThumbRef : undefined"
       >
         <template v-if="$slots.slide" #slide="slotProps"
           ><slot name="slide" v-bind="slotProps"
@@ -113,6 +113,7 @@ import type {
 } from '@nuxt-photo/vue'
 import PhotoGroup from './PhotoGroup.vue'
 import CarouselLayout from './internal/CarouselLayout.vue'
+import { resolveRecipePhotos } from '../utils/photos'
 
 defineOptions({ inheritAttrs: false })
 
@@ -167,9 +168,7 @@ const props = withDefaults(
 )
 
 const resolvedPhotos = computed<PhotoItem[]>(() =>
-  props.itemMapper
-    ? (props.photos as any[]).map(props.itemMapper)
-    : (props.photos as PhotoItem[]),
+  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoCarousel'),
 )
 
 const hasLightbox = computed(

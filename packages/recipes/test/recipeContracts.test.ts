@@ -551,6 +551,105 @@ describe('recipe contracts', () => {
     mounted.unmount()
   })
 
+  it('does not open the first photo for missing PhotoGroup targets', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const photos = [
+      makePhoto({ id: 'target-a' }),
+      makePhoto({ id: 'target-b' }),
+    ]
+    const stalePhoto = makePhoto({ id: 'target-missing' })
+    let groupApi: any = null
+    let lightboxApi: ReturnType<typeof useLightbox> | null = null
+
+    const Probe = defineComponent({
+      setup() {
+        lightboxApi = useLightbox()
+        return () => null
+      },
+    })
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: false,
+            },
+            {
+              default: ({ trigger }: Record<string, any>) => [
+                h(Probe),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    id: 'invalid-index',
+                    ...trigger(-1),
+                  },
+                  'Invalid index',
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    id: 'stale-photo',
+                    ...trigger(stalePhoto),
+                  },
+                  'Stale photo',
+                ),
+              ],
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    await groupApi.value.openPhoto(stalePhoto)
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+
+    mounted.container
+      .querySelector<HTMLButtonElement>('#invalid-index')
+      ?.click()
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+
+    mounted.container.querySelector<HTMLButtonElement>('#stale-photo')?.click()
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No photo found'))
+
+    warn.mockRestore()
+    mounted.unmount()
+  })
+
+  it('throws when recipe itemMapper output is not a valid photo list', async () => {
+    const raw = [{ id: 'dup' }, { id: 'dup' }]
+
+    await expect(
+      mountComponent(PhotoGroup, {
+        props: {
+          photos: raw,
+          itemMapper: (item: { id: string }) => ({
+            id: item.id,
+            src: '',
+            width: Number.NaN,
+            height: 0,
+          }),
+          lightbox: false,
+        },
+      }),
+    ).rejects.toThrow(
+      /PhotoGroup: photo "dup" is missing[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
+    )
+  })
+
   it('moves focus into the lightbox and restores it to the trigger on close', async () => {
     const photo = makePhoto({ id: 'focus-photo' })
 

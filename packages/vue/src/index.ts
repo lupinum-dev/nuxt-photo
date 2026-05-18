@@ -1,7 +1,32 @@
 // @nuxt-photo/vue — Vue bindings over core
-export * from './composables'
-export * from './primitives'
-export * from './types'
+export {
+  useLightbox,
+  useLightboxProvider,
+  useContainerWidth,
+} from './composables'
+export {
+  LightboxProvider,
+  LightboxRoot,
+  LightboxOverlay,
+  LightboxViewport,
+  LightboxSlide,
+  LightboxControls,
+  LightboxCaption,
+  LightboxGhostImage,
+  PhotoTrigger,
+  PhotoImage,
+} from './primitives'
+export type {
+  LightboxControlsSlotProps,
+  LightboxCaptionSlotProps,
+  LightboxSlideSlotProps,
+  LightboxViewportSlotProps,
+  CarouselSlideSlotProps,
+  CarouselThumbSlotProps,
+  CarouselCaptionSlotProps,
+  CarouselControlsSlotProps,
+  CarouselDotsSlotProps,
+} from './types'
 export {
   ImageAdapterKey,
   LightboxComponentKey,
@@ -18,18 +43,10 @@ export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
 export type {
   PhotoItem,
   LightboxTransitionOption,
-  AreaMetrics,
-  RectLike,
-  PanState,
-  ZoomState,
-  GestureMode,
-  TransitionMode,
   ImageAdapter,
   PhotoMapper,
   ImageSource,
-  LayoutInput,
-  LayoutEntry,
-  LayoutGroup,
+  ImageContext,
   ResponsiveParameter,
   AlbumLayout,
   RowsAlbumLayout,

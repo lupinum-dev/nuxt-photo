@@ -1,4 +1,17 @@
 type NuxtPhotoLightboxAppConfig = {
+  image?: {
+    thumb?: {
+      sizes?: string
+      quality?: number
+    }
+    slide?: {
+      widths?: number[]
+      maxWidth?: number
+      maxDensity?: number
+      sizes?: string
+      quality?: number
+    }
+  }
   lightbox?: {
     minZoom?: number
   }

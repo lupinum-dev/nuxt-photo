@@ -184,6 +184,7 @@ import type {
   CarouselThumbSlotProps,
 } from '@nuxt-photo/vue'
 import { photoId, type ImageAdapter, type PhotoItem } from '@nuxt-photo/core'
+import { readEmblaSnapStateUnsafe } from './emblaSnapState'
 
 defineOptions({ inheritAttrs: false })
 
@@ -262,53 +263,6 @@ const cssVarStyle = computed(() => {
   return vars
 })
 
-function fallbackSlidesBySnap() {
-  const slidesToScroll = props.options.slidesToScroll
-  const chunkSize =
-    typeof slidesToScroll === 'number' && slidesToScroll > 1
-      ? slidesToScroll
-      : 1
-  const groups: number[][] = []
-
-  for (let start = 0; start < props.photos.length; start += chunkSize) {
-    groups.push(
-      Array.from(
-        { length: Math.min(chunkSize, props.photos.length - start) },
-        (_, offset) => start + offset,
-      ),
-    )
-  }
-
-  return groups
-}
-
-function getSnapState(api: EmblaCarouselType) {
-  const scrollSnapList = api.internalEngine().scrollSnapList
-  const fallback = fallbackSlidesBySnap()
-  const hasUsableEmblaSnaps =
-    scrollSnapList.slidesBySnap.length > 1 ||
-    props.photos.length <= 1 ||
-    fallback.length <= 1
-
-  const slidesBySnap = hasUsableEmblaSnaps
-    ? scrollSnapList.slidesBySnap
-    : fallback
-  const snapBySlide = hasUsableEmblaSnaps
-    ? scrollSnapList.snapBySlide
-    : Object.fromEntries(
-        slidesBySnap.flatMap((slides, snapIndex) =>
-          slides.map((slideIndex) => [slideIndex, snapIndex]),
-        ),
-      )
-  const snapTotal = api.snapList().length || slidesBySnap.length
-
-  return {
-    slidesBySnap,
-    snapBySlide,
-    snapTotal,
-  }
-}
-
 function syncThumbs(api: EmblaCarouselType) {
   if (!props.showThumbnails) return
   thumbsApi.value?.goTo(selectedIndex.value)
@@ -321,7 +275,11 @@ function syncAutoplay(api: EmblaCarouselType) {
 }
 
 function syncState(api: EmblaCarouselType, forcedSnap?: number) {
-  const { slidesBySnap, snapTotal } = getSnapState(api)
+  const { slidesBySnap, snapTotal } = readEmblaSnapStateUnsafe(
+    api,
+    props.photos.length,
+    props.options.slidesToScroll,
+  )
   const maxSnapIndex = Math.max(0, snapTotal - 1)
   const selectedSnap = Math.min(forcedSnap ?? api.selectedSnap(), maxSnapIndex)
   const activeSlides = slidesBySnap[selectedSnap] ?? [selectedSnap]
@@ -386,7 +344,12 @@ function goTo(index: number, instant = false) {
   const target = clampIndex(index)
   const api = emblaApi.value
   if (api) {
-    const targetSnap = getSnapState(api).snapBySlide[target] ?? target
+    const targetSnap =
+      readEmblaSnapStateUnsafe(
+        api,
+        props.photos.length,
+        props.options.slidesToScroll,
+      ).snapBySlide[target] ?? target
     api.goTo(targetSnap, instant)
     if (instant) {
       syncState(api, targetSnap)

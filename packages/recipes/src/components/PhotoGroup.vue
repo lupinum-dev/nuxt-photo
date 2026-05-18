@@ -30,6 +30,7 @@ import {
   type PhotoMapper,
 } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
+import { resolveRecipePhotos } from '../utils/photos'
 
 const props = withDefaults(
   defineProps<{
@@ -102,9 +103,7 @@ function unregister(id: symbol) {
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
   if (props.photos !== undefined) {
-    return props.itemMapper
-      ? props.photos.map(props.itemMapper)
-      : (props.photos as PhotoItem[])
+    return resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoGroup')
   }
   return Array.from(registrationMap.values()).map((r) => r.photo)
 })
@@ -141,6 +140,10 @@ function syncThumbRefs() {
 }
 
 async function open(index = 0) {
+  if (index < 0 || index >= collectedPhotos.value.length) {
+    devWarn(`No photo found at index ${index}`)
+    return
+  }
   syncThumbRefs()
   await ctx.open(index)
 }
@@ -149,7 +152,11 @@ async function openPhoto(photo: PhotoItem) {
   const index = collectedPhotos.value.findIndex(
     (p) => photoId(p) === photoId(photo),
   )
-  await open(index >= 0 ? index : 0)
+  if (index < 0) {
+    devWarn(`No photo found for id "${photoId(photo)}"`)
+    return
+  }
+  await open(index)
 }
 
 async function openById(id: string | number) {
@@ -171,21 +178,21 @@ function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
       : typeof maybeIndex === 'number'
         ? maybeIndex
         : photos.findIndex((photo) => photoId(photo) === photoId(photoOrIndex))
-  const safeIndex = index >= 0 ? index : 0
-  const photo =
-    typeof photoOrIndex === 'number' ? photos[safeIndex] : photoOrIndex
+  const hasValidIndex = index >= 0 && index < photos.length
+  const photo = typeof photoOrIndex === 'number' ? photos[index] : photoOrIndex
+  const labelIndex = hasValidIndex ? index + 1 : 0
 
   return {
-    ref: ctx.setThumbRef(safeIndex),
+    ref: hasValidIndex ? ctx.setThumbRef(index) : undefined,
     role: 'button',
     tabindex: 0,
-    'aria-label': photo?.alt || `View photo ${safeIndex + 1}`,
-    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(safeIndex),
-    onClick: () => open(safeIndex),
+    'aria-label': photo?.alt || `View photo ${labelIndex}`,
+    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(index),
+    onClick: () => open(index),
     onKeydown: (event: KeyboardEvent) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        void open(safeIndex)
+        void open(index)
       }
     },
   }

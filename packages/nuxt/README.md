@@ -21,7 +21,7 @@ export default defineNuxtConfig({
 ## What it provides
 
 - auto-registered recipe components like `<PhotoAlbum>` and `<PhotoGroup>`
-- auto-registered primitives like `<LightboxProvider>`, `<LightboxRoot>`, and `<PhotoImage>`
+- opt-in primitive auto-registration for advanced lightbox composition
 - auto-imported `useLightbox`, `useLightboxProvider`, and `responsive`
 - optional `@nuxt/image` integration
 - structure-only or full-theme CSS loading

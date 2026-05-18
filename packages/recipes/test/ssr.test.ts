@@ -46,7 +46,7 @@ describe('SSR', () => {
     expect(html).toContain('flex-grow')
   })
 
-  it('PhotoAlbum rows layout never switches to JS row groups (zero CLS)', async () => {
+  it('PhotoAlbum rows layout keeps the same SSR row structure', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
     })

@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 const port = 4173
 
@@ -17,6 +17,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: {
+        browserName: 'chromium',
+      },
+    },
+    {
+      name: 'mobile-chromium',
+      grep: /touch gestures|recipe gallery opens/,
+      use: {
+        ...devices['Pixel 7'],
         browserName: 'chromium',
       },
     },

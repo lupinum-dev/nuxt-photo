@@ -119,6 +119,7 @@ import AlbumItemContent from './photo-album/AlbumItemContent.vue'
 import AlbumMountedView from './photo-album/AlbumMountedView.vue'
 import AlbumRowsView from './photo-album/AlbumRowsView.vue'
 import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
+import { resolveRecipePhotos } from '../utils/photos'
 
 const props = withDefaults(
   defineProps<{
@@ -184,9 +185,7 @@ if (props.defaultContainerWidth === 0) {
 }
 
 const photos = computed<PhotoItem[]>(() =>
-  props.itemMapper
-    ? props.photos.map(props.itemMapper)
-    : (props.photos as PhotoItem[]),
+  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoAlbum'),
 )
 
 const hasLightbox = computed(() => props.lightbox !== false)
