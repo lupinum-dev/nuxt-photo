@@ -12,18 +12,16 @@ import {
   type InjectionKey,
 } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  LightboxControls,
-  LightboxSlide,
-  PhotoGroupContextKey,
-  type PhotoGroupContext,
-  useLightbox,
-} from '@nuxt-photo/vue'
+import { LightboxControls, LightboxSlide, useLightbox } from '@nuxt-photo/vue'
 import type { PhotoItem } from '@nuxt-photo/core'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../src/components/Photo.vue'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
+import {
+  PhotoGroupContextKey,
+  type PhotoGroupContext,
+} from '../src/context/photoGroup'
 
 function createImmediateImage(requests: string[] = []) {
   return class ImmediateImage {
@@ -482,10 +480,10 @@ describe('recipe contracts', () => {
     mounted.unmount()
   })
 
-  it('exposes the documented headless PhotoGroup slot helpers and methods', async () => {
+  it('exposes the documented custom layout PhotoGroup slot helpers and methods', async () => {
     const photos = [
-      makePhoto({ id: 'headless-a' }),
-      makePhoto({ id: 'headless-b' }),
+      makePhoto({ id: 'custom-layout-a' }),
+      makePhoto({ id: 'custom-layout-b' }),
     ]
 
     let slotProps: Record<string, any> | null = null
@@ -535,7 +533,7 @@ describe('recipe contracts', () => {
     expect(typeof groupApi?.value?.openPhoto).toBe('function')
     expect(typeof groupApi?.value?.openById).toBe('function')
 
-    await groupApi.value.openById('headless-b')
+    await groupApi.value.openById('custom-layout-b')
     await flushUi()
     expect(lightboxApi?.isOpen.value).toBe(true)
     expect(lightboxApi?.activeIndex.value).toBe(1)
@@ -647,6 +645,27 @@ describe('recipe contracts', () => {
       }),
     ).rejects.toThrow(
       /PhotoGroup: photo "dup" is missing[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
+    )
+  })
+
+  it('rejects invalid PhotoAlbum data before it reaches layout math', async () => {
+    await expect(
+      mountComponent(PhotoAlbum, {
+        props: {
+          photos: [
+            {
+              id: 'broken-album-photo',
+              src: '/broken.jpg',
+              width: 0,
+              height: 600,
+            },
+          ],
+          lightbox: false,
+          defaultContainerWidth: 800,
+        },
+      }),
+    ).rejects.toThrow(
+      /PhotoAlbum: photo "broken-album-photo" has invalid width/,
     )
   })
 

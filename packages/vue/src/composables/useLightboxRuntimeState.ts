@@ -32,6 +32,7 @@ import {
   watchPhotoCollection,
 } from './lightboxWatchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
+import type { LightboxLifecycleStatus } from '../provide/keys'
 
 /**
  * Internal Vue lightbox state.
@@ -107,6 +108,7 @@ export function useLightboxRuntimeState(
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
+  const lifecycleStatus = ref<LightboxLifecycleStatus>('closed')
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
@@ -179,6 +181,7 @@ export function useLightboxRuntimeState(
 
     const targetIndex = index
 
+    lifecycleStatus.value = 'opening'
     skipActiveIndexWatch.value = true
     try {
       ghost.setCloseDragY(0)
@@ -188,10 +191,12 @@ export function useLightboxRuntimeState(
       pendingOpen = ghost.open(targetIndex, transitionCallbacks)
       const opened = await pendingOpen
       if (!opened) {
+        lifecycleStatus.value = 'closed'
         keydown.detach()
         return
       }
 
+      lifecycleStatus.value = 'open'
       preloadAround(targetIndex)
     } finally {
       pendingOpen = null
@@ -204,9 +209,14 @@ export function useLightboxRuntimeState(
 
     if (!ghost.lightboxMounted.value) return
 
-    await ghost.close(closeCallbacks)
-    ghost.setCloseDragY(0)
-    keydown.detach()
+    lifecycleStatus.value = 'closing'
+    try {
+      await ghost.close(closeCallbacks)
+    } finally {
+      ghost.setCloseDragY(0)
+      keydown.detach()
+      lifecycleStatus.value = ghost.lightboxMounted.value ? 'open' : 'closed'
+    }
   }
 
   function next() {
@@ -324,6 +334,7 @@ export function useLightboxRuntimeState(
   return {
     photos,
     count: computed(() => photos.value.length),
+    lifecycleStatus,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen: computed(() => ghost.lightboxMounted.value),

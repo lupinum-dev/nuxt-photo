@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+// @vitest-environment jsdom
+
+import EmblaCarousel from 'embla-carousel'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { readEmblaSnapStateUnsafe } from '../src/components/internal/emblaSnapState'
 
 function makeApi(options: {
@@ -22,6 +25,44 @@ function makeApi(options: {
 }
 
 describe('readEmblaSnapStateUnsafe', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {},
+        dispatchEvent() {
+          return false
+        },
+      })),
+    )
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    )
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    document.body.innerHTML = ''
+  })
+
   it('reads usable Embla grouped snap state', () => {
     const api = makeApi({
       slidesBySnap: [
@@ -67,5 +108,39 @@ describe('readEmblaSnapStateUnsafe', () => {
       snapBySlide: { 0: 0, 1: 0, 2: 1 },
       snapTotal: 2,
     })
+  })
+
+  it('reads grouped snap state from a real Embla carousel', () => {
+    const viewport = document.createElement('div')
+    const container = document.createElement('div')
+    viewport.appendChild(container)
+    document.body.appendChild(viewport)
+
+    for (let i = 0; i < 4; i++) {
+      const slide = document.createElement('div')
+      Object.defineProperty(slide, 'offsetWidth', { value: 100 })
+      Object.defineProperty(slide, 'offsetHeight', { value: 100 })
+      container.appendChild(slide)
+    }
+
+    Object.defineProperty(viewport, 'offsetWidth', { value: 200 })
+    Object.defineProperty(container, 'offsetWidth', { value: 400 })
+
+    const api = EmblaCarousel(viewport, {
+      containScroll: false,
+      slidesToScroll: 2,
+    })
+
+    try {
+      const state = readEmblaSnapStateUnsafe(api, 4, 2)
+      expect(state.slidesBySnap).toEqual([
+        [0, 1],
+        [2, 3],
+      ])
+      expect(state.snapBySlide).toEqual({ 0: 0, 1: 0, 2: 1, 3: 1 })
+      expect(state.snapTotal).toBe(2)
+    } finally {
+      api.destroy()
+    }
   })
 })

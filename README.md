@@ -64,8 +64,8 @@ Nuxt Photo is split into four packages:
 
 Nuxt Photo is pre-1.0.
 
-- Root imports from `@nuxt-photo/core`, `@nuxt-photo/vue`, `@nuxt-photo/recipes`, and `@nuxt-photo/nuxt` are the stable public surface.
-- Undocumented exports are internal, even if they are visible in generated output today.
+- Documented root imports from `@nuxt-photo/core`, `@nuxt-photo/vue`, `@nuxt-photo/recipes`, and `@nuxt-photo/nuxt` are the stable public surface.
+- Undocumented symbols are internal, even if they are visible in generated output today.
 
 ## Where next
 

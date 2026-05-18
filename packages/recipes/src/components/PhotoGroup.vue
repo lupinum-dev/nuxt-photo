@@ -18,8 +18,6 @@ import {
   LightboxComponentKey,
   type LightboxSlideRenderer,
   type LightboxTransitionOption,
-  PhotoGroupContextKey,
-  type PhotoGroupContext,
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
@@ -30,11 +28,15 @@ import {
   type PhotoMapper,
 } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
+import {
+  PhotoGroupContextKey,
+  type PhotoGroupContext,
+} from '../context/photoGroup'
 import { resolveRecipePhotos } from '../utils/photos'
 
 const props = withDefaults(
   defineProps<{
-    /** Explicit photos list (for headless/programmatic use). If omitted, photos auto-collect from child Photo components. */
+    /** Explicit photos list for custom layout/programmatic use. If omitted, photos auto-collect from child Photo components. */
     photos?: PhotoItem[] | any[]
     /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
     itemMapper?: PhotoMapper

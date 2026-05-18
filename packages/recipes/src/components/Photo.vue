@@ -38,12 +38,12 @@ import {
 defineOptions({ inheritAttrs: false })
 import {
   LightboxComponentKey,
-  PhotoGroupContextKey,
   PhotoImage,
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import type { PhotoItem, ImageAdapter } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
+import { PhotoGroupContextKey } from '../context/photoGroup'
 
 const props = defineProps<{
   photo: PhotoItem

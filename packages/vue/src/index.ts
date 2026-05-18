@@ -31,11 +31,9 @@ export {
   ImageAdapterKey,
   LightboxComponentKey,
   LightboxDefaultsKey,
-  PhotoGroupContextKey,
   type LightboxController,
   type LightboxDefaults,
   type LightboxSlideRenderer,
-  type PhotoGroupContext,
 } from './provide/keys'
 
 // Re-export core utilities for convenience

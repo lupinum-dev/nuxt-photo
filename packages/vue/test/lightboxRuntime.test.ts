@@ -17,6 +17,13 @@ async function flushWatchers() {
   await Promise.resolve()
 }
 
+async function flushUntil(predicate: () => boolean, attempts = 8) {
+  for (let i = 0; i < attempts; i++) {
+    if (predicate()) return
+    await flushWatchers()
+  }
+}
+
 describe('lightbox controller surface', () => {
   afterEach(() => {
     document.body.innerHTML = ''
@@ -105,15 +112,15 @@ describe('lightbox controller surface', () => {
 
 describe('lightbox lifecycle invariants', () => {
   beforeEach(() => {
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
-      window.setTimeout(() => callback(performance.now()), 0),
-    )
-    vi.stubGlobal('cancelAnimationFrame', (id: number) =>
-      window.clearTimeout(id),
-    )
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(performance.now())
+      return 0
+    })
+    vi.stubGlobal('cancelAnimationFrame', () => {})
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
     document.body.style.overflow = ''
@@ -138,11 +145,11 @@ describe('lightbox lifecycle invariants', () => {
     const photos = [
       makePhoto({ id: 'delayed-close', src: '/delayed-close.jpg' }),
     ]
-    let api: ReturnType<typeof useLightboxProvider> | null = null
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
 
     const App = defineComponent({
       setup() {
-        api = useLightboxProvider(photos, { transition: 'none' })
+        api = useLightboxRuntimeState(photos, 'none')
         return () => null
       },
     })
@@ -153,16 +160,21 @@ describe('lightbox lifecycle invariants', () => {
     app.mount(host)
 
     const openPromise = api!.open(0)
-    await flushWatchers()
+    await flushUntil(() => typeof resolveDecode === 'function')
+    expect(resolveDecode).toEqual(expect.any(Function))
+    expect(api!.lifecycleStatus.value).toBe('opening')
     expect(api!.isOpen.value).toBe(true)
     expect(document.body.style.overflow).toBe('hidden')
 
     const closePromise = api!.close()
+    await flushWatchers()
+    expect(api!.lifecycleStatus.value).toBe('opening')
     resolveDecode?.()
     await openPromise
     await closePromise
     await flushWatchers()
 
+    expect(api!.lifecycleStatus.value).toBe('closed')
     expect(api!.isOpen.value).toBe(false)
     expect(document.body.style.overflow).toBe('')
 
@@ -171,6 +183,7 @@ describe('lightbox lifecycle invariants', () => {
   })
 
   it('does not leak a failed slide image into the next active slide', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.stubGlobal(
       'Image',
       class {
@@ -208,14 +221,17 @@ describe('lightbox lifecycle invariants', () => {
     await api!.open(0)
     await flushWatchers()
     expect(api!.activeImageLoadFailed.value).toBe(true)
+    expect(api!.lifecycleStatus.value).toBe('open')
 
     await api!.open(1)
     await flushWatchers()
     expect(api!.activeIndex.value).toBe(1)
     expect(api!.activeImageLoadFailed.value).toBe(false)
+    expect(api!.lifecycleStatus.value).toBe('open')
 
     app.unmount()
     host.remove()
+    warn.mockRestore()
   })
 
   it('serializes quick open requests and lands on the last requested slide', async () => {
@@ -270,6 +286,7 @@ describe('lightbox lifecycle invariants', () => {
 
     expect(api!.activeIndex.value).toBe(1)
     expect(api!.isOpen.value).toBe(true)
+    expect(api!.lifecycleStatus.value).toBe('open')
 
     app.unmount()
     host.remove()
@@ -319,12 +336,14 @@ describe('lightbox lifecycle invariants', () => {
     app.mount(host)
 
     await api!.open(0)
+    expect(api!.lifecycleStatus.value).toBe('open')
     api!.hiddenThumbIndex.value = 0
     await api!.close()
     await flushWatchers()
 
     expect(api!.hiddenThumbIndex.value).toBeNull()
     expect(api!.isOpen.value).toBe(false)
+    expect(api!.lifecycleStatus.value).toBe('closed')
 
     app.unmount()
     host.remove()

@@ -5,44 +5,97 @@
     :class="[scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
-    <AlbumRowsView
-      v-if="layoutType === 'rows'"
-      :container-query-css="containerQueryCSS"
-      :ssr-wrapper-style="ssrWrapperStyle"
-      :row-items="rowItems"
-      :container-queries-active="containerQueriesActive"
-      :item-class="itemClass"
-      :img-class="imgClass"
-      :image-adapter="imageAdapter"
-      :item-bindings="itemBindings"
-      :is-hidden="isHidden"
-      :photo-id="photoId"
-    >
-      <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-        <slot name="thumbnail" v-bind="slotProps" />
+    <template v-if="renderBranch.kind === 'rows'">
+      <template v-if="renderBranch.containerQueryCss">
+        <component :is="'style'">{{
+          renderBranch.containerQueryCss
+        }}</component>
       </template>
-    </AlbumRowsView>
 
-    <AlbumMeasuredView
-      v-else-if="!isMounted && groups.length > 0"
-      :photos="photos"
-      :groups="groups"
-      :item-class="itemClass"
-      :img-class="imgClass"
-      :image-adapter="imageAdapter"
-      :item-bindings="itemBindings"
-      :is-hidden="isHidden"
-      :group-style="groupStyle"
-      :item-style="itemStyle"
-    >
-      <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-        <slot name="thumbnail" v-bind="slotProps" />
+      <div :style="renderBranch.wrapperStyle">
+        <div
+          v-for="item in renderBranch.items"
+          :key="photoId(item.photo)"
+          class="np-album__item"
+          :class="[
+            renderBranch.containerQueriesActive
+              ? `np-item-${item.index}`
+              : undefined,
+            itemClass,
+          ]"
+          :style="item.style"
+          v-bind="itemBindings(item.photo, item.index)"
+        >
+          <AlbumThumbnail
+            :photo="item.photo"
+            :index="item.index"
+            :width="item.width"
+            :height="item.height"
+            :hidden="isHidden(item.photo)"
+            :image-adapter="imageAdapter"
+            :img-class="imgClass"
+            :sizes="item.computedSizes"
+          >
+            <template v-if="$slots.thumbnail" #thumbnail="slotProps">
+              <slot name="thumbnail" v-bind="slotProps" />
+            </template>
+          </AlbumThumbnail>
+        </div>
+
+        <span
+          style="
+            flex-grow: 9999;
+            flex-basis: 0;
+            height: 0;
+            margin: 0;
+            padding: 0;
+          "
+          aria-hidden="true"
+        />
+      </div>
+    </template>
+
+    <template v-else-if="renderBranch.kind === 'measured'">
+      <template v-if="renderBranch.groups.length === 0 && photos.length > 0">
+        <div class="np-album__skeleton" />
       </template>
-    </AlbumMeasuredView>
 
-    <div v-else-if="!isMounted" :style="ssrWrapperStyle">
+      <template v-else>
+        <div
+          v-for="group in renderBranch.groups"
+          :key="`${group.type}-${group.index}`"
+          :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
+          :style="groupStyle(group)"
+        >
+          <div
+            v-for="entry in group.entries"
+            :key="entry.photo.id"
+            class="np-album__item"
+            :class="itemClass"
+            :style="itemStyle(entry, group)"
+            v-bind="itemBindings(entry.photo, entry.index)"
+          >
+            <AlbumThumbnail
+              :photo="entry.photo"
+              :index="entry.index"
+              :width="entry.width"
+              :height="entry.height"
+              :hidden="isHidden(entry.photo)"
+              :image-adapter="imageAdapter"
+              :img-class="imgClass"
+            >
+              <template v-if="$slots.thumbnail" #thumbnail="slotProps">
+                <slot name="thumbnail" v-bind="slotProps" />
+              </template>
+            </AlbumThumbnail>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <div v-else :style="renderBranch.wrapperStyle">
       <div
-        v-for="(photo, index) in photos"
+        v-for="(photo, index) in renderBranch.photos"
         :key="photoId(photo)"
         class="np-album__item"
         :class="itemClass"
@@ -64,23 +117,6 @@
         </AlbumThumbnail>
       </div>
     </div>
-
-    <AlbumMeasuredView
-      v-else
-      :photos="photos"
-      :groups="groups"
-      :item-class="itemClass"
-      :img-class="imgClass"
-      :image-adapter="imageAdapter"
-      :item-bindings="itemBindings"
-      :is-hidden="isHidden"
-      :group-style="groupStyle"
-      :item-style="itemStyle"
-    >
-      <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-        <slot name="thumbnail" v-bind="slotProps" />
-      </template>
-    </AlbumMeasuredView>
   </div>
 
   <component
@@ -100,7 +136,6 @@ import {
 } from 'vue'
 import {
   LightboxComponentKey,
-  PhotoGroupContextKey,
   type LightboxTransitionOption,
   useLightboxProvider,
 } from '@nuxt-photo/vue'
@@ -115,9 +150,8 @@ import {
   type ResponsiveParameter,
 } from '@nuxt-photo/core'
 import Lightbox from './Lightbox.vue'
-import AlbumMeasuredView from './photo-album/AlbumMeasuredView.vue'
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
-import AlbumRowsView from './photo-album/AlbumRowsView.vue'
+import { PhotoGroupContextKey } from '../context/photoGroup'
 import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
 import { resolveRecipePhotos } from '../utils/photos'
 
@@ -242,6 +276,31 @@ const {
 })
 
 maybeWarnApproximate()
+
+const renderBranch = computed(() => {
+  if (layoutType.value === 'rows') {
+    return {
+      kind: 'rows' as const,
+      containerQueryCss: containerQueryCSS.value,
+      wrapperStyle: ssrWrapperStyle.value,
+      items: rowItems.value,
+      containerQueriesActive: containerQueriesActive.value,
+    }
+  }
+
+  if (isMounted.value || groups.value.length > 0) {
+    return {
+      kind: 'measured' as const,
+      groups: groups.value,
+    }
+  }
+
+  return {
+    kind: 'fallback-grid' as const,
+    wrapperStyle: ssrWrapperStyle.value,
+    photos: photos.value,
+  }
+})
 
 const parentGroup = inject(PhotoGroupContextKey, null)
 const parentAutoGroup = computed(() =>

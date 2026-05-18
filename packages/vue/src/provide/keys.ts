@@ -13,6 +13,9 @@ import type {
   PhotoItem,
   ZoomState,
 } from '@nuxt-photo/core'
+
+export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
+
 /** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
 export interface LightboxController {
   photos: ComputedRef<PhotoItem[]>
@@ -30,6 +33,7 @@ export interface LightboxController {
 }
 
 type LightboxRuntimeState = {
+  lifecycleStatus: Ref<LightboxLifecycleStatus>
   zoomState: Ref<ZoomState>
   panState: Ref<PanState>
   isZoomedIn: ComputedRef<boolean>
@@ -91,27 +95,6 @@ export const LightboxSlideRendererKey: InjectionKey<
 > = Symbol('nuxt-photo:lightbox-slide-renderer')
 export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol(
   'nuxt-photo:image-adapter',
-)
-
-export interface PhotoGroupContext {
-  /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
-  mode: ComputedRef<'auto' | 'explicit'>
-  register(
-    id: symbol,
-    photo: PhotoItem,
-    getThumbEl: () => HTMLElement | null,
-    renderSlide?: LightboxSlideRenderer | null,
-  ): void
-  unregister(id: symbol): void
-  open(index?: number): Promise<void>
-  openPhoto(photo: PhotoItem): Promise<void>
-  openById(id: string | number): Promise<void>
-  photos: ComputedRef<PhotoItem[]>
-  hiddenPhoto: ComputedRef<PhotoItem | null>
-}
-
-export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(
-  'nuxt-photo:photo-group',
 )
 
 /**
