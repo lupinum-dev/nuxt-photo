@@ -65,5 +65,5 @@ const photos: PhotoItem[] = [
 
 ## Where next
 
-- [Root documentation](../../README.md)
-- [Vue package guide](../vue/README.md)
+- [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
+- [Vue primitives documentation](https://nuxt-photo.lupinum.com/docs/components/lightbox-primitives)

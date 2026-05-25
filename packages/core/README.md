@@ -1,6 +1,6 @@
 # @nuxt-photo/core
 
-Framework-free layout, geometry, image, transition, and shared type utilities for Nuxt Photo.
+Framework-free photo data, layout, image, geometry, viewer, and transition utilities for Nuxt Photo.
 
 Use this package when you want the gallery math and reusable helpers without Vue or Nuxt.
 
@@ -26,13 +26,17 @@ const spacing = responsive({
 
 ## Public surface
 
-The root entrypoint exports:
+The root entrypoint intentionally stays focused on framework-free photo primitives:
 
 - shared types like `PhotoItem`, `AlbumLayout`, `PanState`, and `ZoomState`
-- layout helpers like `responsive` and `resolveResponsiveParameter`
-- framework-free layout, geometry, image, viewer, and transition helpers
+- photo normalization and responsive value helpers
+- album layout functions for rows, columns, and masonry
+- image adapter and image-load helpers
+- geometry, viewer, gesture, and transition-planning helpers
+
+Debug, DOM locking, environment, animation, and package-internal runtime helpers are not exported from this root entrypoint.
 
 ## Where next
 
-- [Root documentation](../../README.md)
+- [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
 - [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/introduction)

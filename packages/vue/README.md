@@ -45,5 +45,5 @@ Undocumented exports and generated deep paths are internal.
 
 ## Where next
 
-- [Root documentation](../../README.md)
+- [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
 - [Documentation site](https://nuxt-photo.lupinum.com/docs/composables/use-lightbox-provider)

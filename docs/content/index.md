@@ -1,7 +1,7 @@
 ---
 title: 'Photo galleries for Nuxt.'
 navigation: false
-description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and advanced lightbox building blocks — auto-imported into any Nuxt app.'
+description: 'Justified albums, a shared lightbox with pinch-to-zoom, an Embla-powered carousel, and advanced lightbox building blocks for Nuxt apps.'
 seo:
   ogImage: '/social-card.png'
 ---
@@ -57,7 +57,7 @@ Get started
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '@nuxt-photo/nuxt'
 
 const photos: PhotoItem[] = [
   {
@@ -225,7 +225,7 @@ to: /docs/concepts/transitions
 ---
 
 title: Embla carousel
-description: A carousel with thumbnails, counter, autoplay, and lightbox integration out of the box.
+description: A carousel with thumbnails, counter, autoplay, and optional lightbox integration.
 icon: i-lucide-images
 to: /docs/components/photo-carousel
 
@@ -237,7 +237,7 @@ to: /docs/components/photo-carousel
 ---
 
 title: @nuxt/image ready
-description: Detects `@nuxt/image`, routes all images through it, and emits proper `srcset` and `sizes`.
+description: Detects `@nuxt/image` when installed, routes thumbnails and slides through it, and emits `srcset` and `sizes`.
 icon: i-lucide-image
 to: /docs/concepts/image-providers
 

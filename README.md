@@ -1,18 +1,45 @@
 # Nuxt Photo
 
-Nuxt Photo gives Nuxt apps photo albums, a shared lightbox, a carousel, and advanced lightbox building blocks from one module.
+Photo galleries, lightboxes, and carousels for Nuxt apps with real image data.
 
-Use it when you have real photo data (`id`, `src`, `width`, and `height`) and want stable gallery layouts, an honest SSR story, and native, Nuxt Image, or custom image adapters without stitching together separate gallery and lightbox libraries.
+Nuxt Photo is for teams that already know each photo's `src`, `width`, and
+`height`, and want predictable layouts, shared lightbox behavior, keyboard and
+gesture handling, SSR-friendly rendering, and optional `@nuxt/image` support
+without wiring separate gallery, carousel, and lightbox libraries together.
 
-## Smallest working example
+## At a glance
 
-Install the module:
+- Nuxt 4 module with auto-registered gallery and carousel components
+- Ready-to-use `<PhotoAlbum>`, `<PhotoGroup>`, `<Photo>`, and `<PhotoCarousel>`
+- Built-in shared lightbox with transitions, captions, keyboard, pointer, and
+  gesture handling
+- Rows, columns, and masonry album layouts from the framework-free core package
+- Native image fallback, with provider-backed `@nuxt/image` rendering when the
+  Nuxt Image module is installed
+- Structure-only CSS by default, with optional theme CSS when you want the
+  bundled visual styling
+- Lower-level Vue primitives and composables for custom lightbox UI
+
+## Use it when
+
+- your app has photo metadata with stable IDs, source URLs, widths, and heights
+- you want album layouts that do not wait for every image to load before sizing
+- you need one shared lightbox across galleries, groups, or custom triggers
+- you want Nuxt module ergonomics but still need access to lower-level Vue
+  primitives for advanced cases
+
+## Skip it when
+
+- you only need a plain `<img>` grid with no lightbox, carousel, or layout logic
+- you do not know image dimensions and cannot derive them before rendering
+- you need a headless image CMS, optimizer, or asset pipeline rather than UI
+  components and layout helpers
+
+## Install
 
 ```bash
 pnpm add @nuxt-photo/nuxt
 ```
-
-Register it in `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
@@ -20,7 +47,15 @@ export default defineNuxtConfig({
 })
 ```
 
-Render a gallery:
+Add `@nuxt/image` first if you want Nuxt Image provider integration:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+})
+```
+
+## Smallest working example
 
 ```vue
 <script setup lang="ts">
@@ -49,31 +84,35 @@ const photos: PhotoItem[] = [
 </template>
 ```
 
-Click any photo and the built-in lightbox opens with gestures, keyboard support, and transition handling already wired up.
+Clicking a photo opens the built-in lightbox. The same photo model works for
+albums, groups, carousels, and custom lightbox triggers.
 
-## Packages
+## Package map
 
-Nuxt Photo is split into four packages:
+- `@nuxt-photo/nuxt` is the Nuxt module. Install this first in Nuxt apps.
+- `@nuxt-photo/recipes` contains ready-to-use Vue components such as
+  `<PhotoAlbum>` and `<PhotoCarousel>`.
+- `@nuxt-photo/vue` contains composables and lightbox primitives for custom UI.
+- `@nuxt-photo/core` contains framework-free photo normalization, layout,
+  image, geometry, gesture, viewer, and transition helpers.
 
-- `@nuxt-photo/nuxt` for the Nuxt module, auto-imports, and CSS wiring
-- `@nuxt-photo/recipes` for ready-to-use components like `<PhotoAlbum>` and `<PhotoCarousel>`
-- `@nuxt-photo/vue` for advanced lightbox building blocks and composables like `useLightboxProvider`
-- `@nuxt-photo/core` for framework-free layout, geometry, and image helpers
+## Public API and stability
 
-## Stability
+Nuxt Photo is pre-1.0. The stable public surface is the documented root exports
+from `@nuxt-photo/nuxt`, `@nuxt-photo/recipes`, `@nuxt-photo/vue`, and
+`@nuxt-photo/core`.
 
-Nuxt Photo is pre-1.0.
+Generated files, deep imports, and undocumented exports are internal even if
+they are visible in the package output.
 
-- Documented root imports from `@nuxt-photo/core`, `@nuxt-photo/vue`, `@nuxt-photo/recipes`, and `@nuxt-photo/nuxt` are the stable public surface.
-- Undocumented symbols are internal, even if they are visible in generated output today.
-
-## Where next
+## Links
 
 - [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/introduction)
 - [Live examples](https://nuxt-photo.lupinum.com)
-- [Package guide for `@nuxt-photo/nuxt`](./packages/nuxt/README.md)
-- [Package guide for `@nuxt-photo/vue`](./packages/vue/README.md)
-- [Package guide for `@nuxt-photo/recipes`](./packages/recipes/README.md)
-- [Package guide for `@nuxt-photo/core`](./packages/core/README.md)
+- [Nuxt package guide](./packages/nuxt/README.md)
+- [Vue package guide](./packages/vue/README.md)
+- [Recipes package guide](./packages/recipes/README.md)
+- [Core package guide](./packages/core/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Security policy](./SECURITY.md)
