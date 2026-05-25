@@ -14,6 +14,7 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 - Renamed `PhotoAdapter` to `PhotoMapper`.
 - Renamed recipe props from `itemAdapter` / `:item-adapter` to `itemMapper` / `:item-mapper`.
 - Renamed the lightbox ghost primitive from `LightboxPortal` to `LightboxGhostImage`.
+- Raised the Node.js support floor to active even-numbered lines: `^22.12.0 || ^24.11.0 || >=26.0.0`. Node 20 is no longer supported.
 
 ### Changed
 

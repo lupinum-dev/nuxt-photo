@@ -9,17 +9,25 @@ on:
 jobs:
   release-readiness:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.12.0
+          - 24.11.0
+          - 26.0.0
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.19.0
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - run: corepack enable
       - run: corepack prepare pnpm@10.10.0 --activate
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level moderate
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:unit
@@ -28,5 +36,6 @@ jobs:
       - run: pnpm build:playground
       - run: pnpm --filter nuxt-photo-playground-tw build
       - run: pnpm build:docs
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
       - run: pnpm release:pack

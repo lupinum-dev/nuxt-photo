@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const requiredPackageFiles = ['package.json', 'README.md']
+const requiredPackageFiles = ['package.json', 'README.md', 'LICENSE']
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -20,6 +20,32 @@ function readPackedPackageJson(tarball) {
 
 function listPackedFiles(tarball) {
   return run('tar', ['-tf', tarball]).trim().split('\n').filter(Boolean)
+}
+
+function collectExportTargets(value) {
+  if (!value) return []
+  if (typeof value === 'string') return [value]
+  if (typeof value !== 'object') return []
+  return Object.values(value).flatMap(collectExportTargets)
+}
+
+function assertPackedPath(files, packageName, target) {
+  if (!target?.startsWith('./')) return
+
+  const packedTarget = `package/${target.slice(2)}`
+  if (packedTarget.includes('*')) {
+    const prefix = packedTarget.slice(0, packedTarget.indexOf('*'))
+    assert(
+      files.some((file) => file.startsWith(prefix)),
+      `${packageName} export target ${target} matched no packed files`,
+    )
+    return
+  }
+
+  assert(
+    files.includes(packedTarget),
+    `${packageName} export target ${target} is missing from the tarball`,
+  )
 }
 
 function assert(condition, message) {
@@ -41,6 +67,7 @@ function discoverPackages() {
       const manifest = readPackageManifest(packageDir)
       return {
         name: manifest.name,
+        version: manifest.version,
         dir: packageDir,
         dependencies: Object.keys({
           ...manifest.dependencies,
@@ -87,7 +114,7 @@ assert(packages.length > 0, 'No @nuxt-photo packages found in packages/*')
 const packDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-pack-'))
 
 try {
-  for (const { name: packageName, dir: packageDir } of packages) {
+  for (const { name: packageName, version, dir: packageDir } of packages) {
     const before = new Set(readdirSync(packDir))
     run('pnpm', ['pack', '--pack-destination', packDir], {
       cwd: packageDir,
@@ -105,7 +132,7 @@ try {
       `Packed ${packageName} produced ${packageJson.name}`,
     )
     assert(
-      packageJson.version === '0.1.0',
+      packageJson.version === version,
       `${packageName} package version is ${packageJson.version}`,
     )
     assert(
@@ -123,6 +150,13 @@ try {
         `${packageName} tarball is missing ${required}`,
       )
     }
+
+    for (const target of collectExportTargets(packageJson.exports)) {
+      assertPackedPath(files, packageName, target)
+    }
+
+    assertPackedPath(files, packageName, packageJson.main)
+    assertPackedPath(files, packageName, packageJson.types)
 
     const dependencyBlocks = [
       packageJson.dependencies,

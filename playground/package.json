@@ -14,7 +14,10 @@
     "@nuxt-photo/recipes": "workspace:*",
     "@nuxt-photo/vue": "workspace:*",
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^4.4.2",
+    "nuxt": "^4.4.6",
     "nuxt-shiki": "^0.3.2"
+  },
+  "devDependencies": {
+    "vite": "7.3.3"
   }
 }

@@ -1,0 +1,49 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.0
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.10.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level moderate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+      - run: pnpm test:module-package
+      - run: pnpm size
+      - run: pnpm build:playground
+      - run: pnpm --filter nuxt-photo-playground-tw build
+      - run: pnpm build:docs
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: pnpm test:e2e
+      - run: pnpm release:pack
+
+      - run: mkdir -p .release
+      - run: pnpm --filter @nuxt-photo/core pack --pack-destination .release
+      - run: pnpm --filter @nuxt-photo/vue pack --pack-destination .release
+      - run: pnpm --filter @nuxt-photo/recipes pack --pack-destination .release
+      - run: pnpm --filter @nuxt-photo/nuxt pack --pack-destination .release
+
+      - run: npm publish .release/nuxt-photo-core-*.tgz --access public --provenance
+      - run: npm publish .release/nuxt-photo-vue-*.tgz --access public --provenance
+      - run: npm publish .release/nuxt-photo-recipes-*.tgz --access public --provenance
+      - run: npm publish .release/nuxt-photo-nuxt-*.tgz --access public --provenance

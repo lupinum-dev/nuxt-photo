@@ -13,7 +13,7 @@ This repo has four library packages, two playground apps, and a docs app. The mo
 
 ## Prerequisites
 
-- Node.js `>=20.19.0 || >=22.12.0`
+- Node.js `^22.12.0 || ^24.11.0 || >=26.0.0`
 - `pnpm` `10.x`
 
 The repo declares both in the root [`package.json`](./package.json).
@@ -96,6 +96,7 @@ pnpm lint
 pnpm typecheck
 pnpm test:unit
 pnpm test:module-package
+pnpm audit --audit-level moderate
 pnpm size
 pnpm release:pack
 ```
@@ -110,16 +111,16 @@ pnpm build:playground
 
 Notes:
 
-- `pnpm test:e2e` builds the main playground first and then runs Playwright.
+- `pnpm test:e2e` builds the main playground first and then runs Playwright across Chromium plus Firefox/WebKit smoke projects.
+- `pnpm audit --audit-level moderate` is a release gate.
 - `pnpm size` is the source of truth for documented size numbers.
 - `pnpm release:pack` packs every public workspace package with pnpm and verifies rewritten workspace dependencies and tarball metadata.
 - `pnpm test` includes e2e, so it is heavier than the normal pre-PR loop.
 
 ## Release dry run
 
-Use pnpm for packaging and publishing. The workspace packages use `workspace:*`
-internally, and pnpm is the supported tool that rewrites those ranges for
-packed/published tarballs.
+Use pnpm for packaging. The workspace packages use `workspace:*` internally, and
+pnpm is the supported tool that rewrites those ranges for packed tarballs.
 
 Before publishing:
 
@@ -128,6 +129,7 @@ pnpm lint
 pnpm typecheck
 pnpm test:unit
 pnpm test:module-package
+pnpm audit --audit-level moderate
 pnpm size
 pnpm build:playground
 pnpm --filter nuxt-photo-playground-tw build
@@ -137,7 +139,10 @@ pnpm release:pack
 ```
 
 Do not publish these packages with `npm publish` from a workspace package
-directory; it does not apply the same workspace dependency rewrite.
+directory; it does not apply the same workspace dependency rewrite. The
+`.github/workflows/publish.yml` publishes tag builds only. It publishes the
+pnpm-packed tarballs in dependency order with npm provenance enabled. Configure
+npm trusted publishing for this repository before pushing the release tag.
 
 ## When code changes require doc changes
 

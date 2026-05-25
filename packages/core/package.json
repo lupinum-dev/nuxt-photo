@@ -39,11 +39,11 @@
     "dev": "unbuild --stub"
   },
   "devDependencies": {
-    "typescript": "6.0.3",
+    "typescript": "5.9.3",
     "unbuild": "^3.5.0"
   },
   "license": "MIT",
   "engines": {
-    "node": ">=20.19.0 || >=22.12.0"
+    "node": "^22.12.0 || ^24.11.0 || >=26.0.0"
   }
 }

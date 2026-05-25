@@ -14,20 +14,23 @@
     "@iconify-json/vscode-icons": "^1.2.46",
     "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/nuxt": "workspace:*",
-    "@nuxt/content": "^3.13.0",
+    "@nuxt/content": "^3.14.0",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/image": "^2.0.0",
-    "@nuxt/ui": "^4.6.0",
+    "@nuxt/ui": "^4.8.0",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/slim": "^3.9.1",
     "@vueuse/core": "^14.1.0",
     "@vueuse/nuxt": "^14.1.0",
     "minimark": "^1.0.0",
-    "nuxt": "^4.4.2",
+    "nuxt": "^4.4.6",
     "nuxt-llms": "^0.2.0",
-    "nuxt-og-image": "^6.4.6",
+    "nuxt-og-image": "^6.5.1",
     "tailwindcss": "^4.2.4",
     "ufo": "^1.6.3",
     "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "vite": "7.3.3"
   }
 }

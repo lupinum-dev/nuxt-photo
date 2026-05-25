@@ -4,9 +4,10 @@ const port = 4173
 
 export default defineConfig({
   testDir: './playground/tests/e2e',
+  forbidOnly: !!process.env.CI,
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
-  reporter: 'list',
+  reporter: process.env.CI ? [['list'], ['github']] : 'list',
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     browserName: 'chromium',
@@ -26,6 +27,20 @@ export default defineConfig({
       use: {
         ...devices['Pixel 7'],
         browserName: 'chromium',
+      },
+    },
+    {
+      name: 'firefox-smoke',
+      grep: /recipe gallery opens/,
+      use: {
+        browserName: 'firefox',
+      },
+    },
+    {
+      name: 'webkit-smoke',
+      grep: /recipe gallery opens/,
+      use: {
+        browserName: 'webkit',
       },
     },
   ],
