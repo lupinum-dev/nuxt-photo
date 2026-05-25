@@ -105,7 +105,11 @@ const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
 
 // Auto-group mode: inside a PhotoGroup with auto-collection
 const isAutoGrouped = computed(
-  () => !!group && !props.lightboxIgnore && group.mode.value === 'auto',
+  () =>
+    !!group &&
+    group.lightboxEnabled.value &&
+    !props.lightboxIgnore &&
+    group.mode.value === 'auto',
 )
 const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
 
@@ -155,6 +159,7 @@ onMounted(() => {
   }
   if (
     group &&
+    group.lightboxEnabled.value &&
     group.mode.value === 'auto' &&
     !props.lightboxIgnore &&
     !isSolo.value
@@ -171,6 +176,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (
     group &&
+    group.lightboxEnabled.value &&
     group.mode.value === 'auto' &&
     !props.lightboxIgnore &&
     !isSolo.value

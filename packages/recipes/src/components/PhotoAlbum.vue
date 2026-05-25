@@ -222,7 +222,18 @@ const photos = computed<PhotoItem[]>(() =>
   resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoAlbum'),
 )
 
-const hasLightbox = computed(() => props.lightbox !== false)
+const parentGroup = inject(PhotoGroupContextKey, null)
+const parentAutoGroup = computed(() =>
+  parentGroup?.mode.value === 'auto' && parentGroup.lightboxEnabled.value
+    ? parentGroup
+    : null,
+)
+const injectedLightbox = inject(LightboxComponentKey, null)
+
+const hasLightbox = computed(
+  () =>
+    props.lightbox !== false && (parentGroup?.lightboxEnabled.value ?? true),
+)
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
@@ -302,13 +313,10 @@ const renderBranch = computed(() => {
   }
 })
 
-const parentGroup = inject(PhotoGroupContextKey, null)
-const parentAutoGroup = computed(() =>
-  parentGroup?.mode.value === 'auto' ? parentGroup : null,
-)
-const injectedLightbox = inject(LightboxComponentKey, null)
-
-const hasOwnLightbox = !parentAutoGroup.value && props.lightbox !== false
+const hasOwnLightbox =
+  !parentAutoGroup.value &&
+  props.lightbox !== false &&
+  (parentGroup?.lightboxEnabled.value ?? true)
 const LightboxComponent = computed<Component | null>(() => {
   if (props.lightbox === false) return null
   if (props.lightbox === true) return injectedLightbox ?? Lightbox

@@ -4,7 +4,7 @@
     :open-photo="openPhoto"
     :open-by-id="openById"
     :photos="collectedPhotos"
-    :set-thumb-ref="ctx.setThumbRef"
+    :set-thumb-ref="setThumbRef"
     :trigger="trigger"
   />
   <component :is="LightboxComponent" v-if="LightboxComponent" />
@@ -13,7 +13,14 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { ref, computed, inject, provide, type Component } from 'vue'
+import {
+  ref,
+  computed,
+  inject,
+  provide,
+  type Component,
+  type ComponentPublicInstance,
+} from 'vue'
 import {
   LightboxComponentKey,
   type LightboxSlideRenderer,
@@ -69,6 +76,12 @@ let warnedIgnoredRegistrations = false
 const groupMode = computed<'auto' | 'explicit'>(() =>
   props.photos !== undefined ? 'explicit' : 'auto',
 )
+// The Vue provider can only be created during setup; a group mounted disabled
+// must stay inert instead of later exposing controls with no backing context.
+const hasLightboxProvider: boolean = props.lightbox !== false
+const lightboxEnabled = computed(
+  () => hasLightboxProvider && props.lightbox !== false,
+)
 
 function register(
   id: symbol,
@@ -111,28 +124,127 @@ const collectedPhotos = computed<PhotoItem[]>(() => {
 })
 
 // Full lightbox context — creates and provides to children
-const ctx = useLightboxProvider(collectedPhotos, {
-  transition: props.transition,
-  imageAdapter: props.imageAdapter,
-  resolveSlide: (photo) => {
-    if (groupMode.value !== 'auto') return null
-    for (const entry of registrationMap.values()) {
-      if (photoId(entry.photo) === photoId(photo)) {
-        return entry.renderSlide ?? null
+const ctx = hasLightboxProvider
+  ? useLightboxProvider(collectedPhotos, {
+      transition: props.transition,
+      imageAdapter: props.imageAdapter,
+      resolveSlide: (photo) => {
+        if (groupMode.value !== 'auto') return null
+        for (const entry of registrationMap.values()) {
+          if (photoId(entry.photo) === photoId(photo)) {
+            return entry.renderSlide ?? null
+          }
+        }
+        return null
+      },
+    })
+  : null
+
+const ignoreThumbRef = (_el: Element | ComponentPublicInstance | null) => {
+  // no lightbox means no transition anchor is needed
+}
+
+function setThumbRef(index: number) {
+  return ctx?.setThumbRef(index) ?? ignoreThumbRef
+}
+
+function findPhotoIndex(photo: PhotoItem) {
+  return collectedPhotos.value.findIndex((p) => photoId(p) === photoId(photo))
+}
+
+function findPhotoIndexById(id: string | number) {
+  return collectedPhotos.value.findIndex(
+    (photo) => photoId(photo) === String(id),
+  )
+}
+
+function warnMissingPhoto(photoOrIndex: number | string) {
+  if (typeof photoOrIndex === 'number') {
+    devWarn(`No photo found at index ${photoOrIndex}`)
+    return
+  }
+
+  devWarn(`No photo found for id "${String(photoOrIndex)}"`)
+}
+
+function resolveTriggerPhoto(
+  photoOrIndex: PhotoItem | number,
+  maybeIndex?: number,
+) {
+  const photos = collectedPhotos.value
+  const index =
+    typeof photoOrIndex === 'number'
+      ? photoOrIndex
+      : typeof maybeIndex === 'number'
+        ? maybeIndex
+        : findPhotoIndex(photoOrIndex)
+
+  return {
+    index,
+    hasValidIndex: index >= 0 && index < photos.length,
+    photo: typeof photoOrIndex === 'number' ? photos[index] : photoOrIndex,
+  }
+}
+
+async function openResolvedIndex(index: number) {
+  if (!lightboxEnabled.value || !ctx) return
+
+  if (index < 0 || index >= collectedPhotos.value.length) {
+    warnMissingPhoto(index)
+    return
+  }
+
+  syncThumbRefs()
+  await ctx.open(index)
+}
+
+function buildDisabledTrigger(photoOrIndex: PhotoItem | number) {
+  const photo =
+    typeof photoOrIndex === 'number'
+      ? collectedPhotos.value[photoOrIndex]
+      : photoOrIndex
+
+  return photo
+    ? { 'data-nuxt-photo-trigger': photoId(photo) }
+    : { 'data-nuxt-photo-trigger': String(photoOrIndex) }
+}
+
+function buildEnabledTrigger(
+  photoOrIndex: PhotoItem | number,
+  maybeIndex?: number,
+) {
+  const { index, hasValidIndex, photo } = resolveTriggerPhoto(
+    photoOrIndex,
+    maybeIndex,
+  )
+  const labelIndex = hasValidIndex ? index + 1 : 0
+
+  return {
+    ref: hasValidIndex ? setThumbRef(index) : undefined,
+    role: 'button',
+    tabindex: 0,
+    'aria-label': photo?.alt || `View photo ${labelIndex}`,
+    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(index),
+    onClick: () => openResolvedIndex(index),
+    onKeydown: (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        void openResolvedIndex(index)
       }
-    }
-    return null
-  },
-})
+    },
+  }
+}
 
 // Which photo's thumb is currently hidden during transitions
 const hiddenPhoto = computed<PhotoItem | null>(() => {
+  if (!ctx) return null
   const idx = ctx.hiddenThumbIndex.value
   if (idx === null) return null
   return collectedPhotos.value[idx] ?? null
 })
 
 function syncThumbRefs() {
+  if (!ctx) return
   // Wire current thumb elements from registrations (auto mode only)
   if (props.photos === undefined) {
     Array.from(registrationMap.values()).forEach((reg, i) => {
@@ -142,67 +254,46 @@ function syncThumbRefs() {
 }
 
 async function open(index = 0) {
-  if (index < 0 || index >= collectedPhotos.value.length) {
-    devWarn(`No photo found at index ${index}`)
-    return
-  }
-  syncThumbRefs()
-  await ctx.open(index)
+  await openResolvedIndex(index)
 }
 
 async function openPhoto(photo: PhotoItem) {
-  const index = collectedPhotos.value.findIndex(
-    (p) => photoId(p) === photoId(photo),
-  )
+  if (!lightboxEnabled.value || !ctx) return
+
+  const index = findPhotoIndex(photo)
   if (index < 0) {
-    devWarn(`No photo found for id "${photoId(photo)}"`)
+    warnMissingPhoto(photoId(photo))
     return
   }
   await open(index)
 }
 
 async function openById(id: string | number) {
-  const index = collectedPhotos.value.findIndex(
-    (photo) => photoId(photo) === String(id),
-  )
+  if (!lightboxEnabled.value || !ctx) return
+
+  const index = findPhotoIndexById(id)
   if (index < 0) {
-    devWarn(`No photo found for id "${String(id)}"`)
+    warnMissingPhoto(id)
     return
   }
   await open(index)
 }
 
-function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
-  const photos = collectedPhotos.value
-  const index =
-    typeof photoOrIndex === 'number'
-      ? photoOrIndex
-      : typeof maybeIndex === 'number'
-        ? maybeIndex
-        : photos.findIndex((photo) => photoId(photo) === photoId(photoOrIndex))
-  const hasValidIndex = index >= 0 && index < photos.length
-  const photo = typeof photoOrIndex === 'number' ? photos[index] : photoOrIndex
-  const labelIndex = hasValidIndex ? index + 1 : 0
+async function close() {
+  if (!ctx) return
+  await ctx.close()
+}
 
-  return {
-    ref: hasValidIndex ? ctx.setThumbRef(index) : undefined,
-    role: 'button',
-    tabindex: 0,
-    'aria-label': photo?.alt || `View photo ${labelIndex}`,
-    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(index),
-    onClick: () => open(index),
-    onKeydown: (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        void open(index)
-      }
-    },
-  }
+function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
+  return lightboxEnabled.value && ctx
+    ? buildEnabledTrigger(photoOrIndex, maybeIndex)
+    : buildDisabledTrigger(photoOrIndex)
 }
 
 // Group context for child Photo/PhotoAlbum components
 const groupContext: PhotoGroupContext = {
   mode: groupMode,
+  lightboxEnabled,
   register,
   unregister,
   open,
@@ -216,10 +307,10 @@ provide(PhotoGroupContextKey, groupContext)
 
 // Which lightbox component to render
 const LightboxComponent = computed<Component | null>(() => {
-  if (props.lightbox === false) return null
+  if (!lightboxEnabled.value) return null
   if (props.lightbox === true) return injectedLightbox ?? Lightbox
   return props.lightbox as Component
 })
 
-defineExpose({ open, openPhoto, openById, close: ctx.close })
+defineExpose({ open, openPhoto, openById, close })
 </script>

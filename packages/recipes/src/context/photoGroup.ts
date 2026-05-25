@@ -5,6 +5,7 @@ import type { LightboxSlideRenderer } from '@nuxt-photo/vue'
 export interface PhotoGroupContext {
   /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
   mode: ComputedRef<'auto' | 'explicit'>
+  lightboxEnabled: ComputedRef<boolean>
   register(
     id: symbol,
     photo: PhotoItem,

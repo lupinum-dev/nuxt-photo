@@ -303,6 +303,7 @@ describe('recipe contracts', () => {
 
     const parentGroup: PhotoGroupContext = {
       mode: computed(() => 'auto'),
+      lightboxEnabled: computed(() => true),
       register,
       unregister,
       open: vi.fn(async () => {}),
@@ -383,6 +384,181 @@ describe('recipe contracts', () => {
     expect(
       mounted.container.querySelector('.np-photo')?.getAttribute('role'),
     ).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('keeps disabled explicit PhotoGroup triggers inert', async () => {
+    const photos = [
+      makePhoto({ id: 'disabled-explicit-a' }),
+      makePhoto({ id: 'disabled-explicit-b' }),
+    ]
+    let groupApi: any = null
+    let slotPhotos: PhotoItem[] = []
+    let triggerAttrs: Record<string, unknown> | null = null
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: false,
+            },
+            {
+              default: ({ trigger, photos }: Record<string, any>) => {
+                slotPhotos = photos
+                triggerAttrs = trigger(photos[0], 0)
+                return [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      id: 'disabled-explicit-trigger',
+                      ...triggerAttrs,
+                    },
+                    'No lightbox',
+                  ),
+                ]
+              },
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+    const trigger = mounted.container.querySelector<HTMLButtonElement>(
+      '#disabled-explicit-trigger',
+    )
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual([
+      'disabled-explicit-a',
+      'disabled-explicit-b',
+    ])
+    expect(triggerAttrs).toEqual({
+      'data-nuxt-photo-trigger': 'disabled-explicit-a',
+    })
+    expect(trigger?.getAttribute('role')).toBeNull()
+    expect(trigger?.hasAttribute('tabindex')).toBe(false)
+
+    trigger?.click()
+    await groupApi.value.openById('disabled-explicit-b')
+    await groupApi.value.openPhoto(photos[0]!)
+    await groupApi.value.open(0)
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('does not provide a useLightbox context when PhotoGroup is disabled', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const Probe = defineComponent({
+      setup() {
+        useLightbox()
+        return () => null
+      },
+    })
+
+    try {
+      await expect(
+        mountComponent(PhotoGroup, {
+          props: {
+            photos: [makePhoto({ id: 'disabled-context' })],
+            lightbox: false,
+          },
+          slots: {
+            default: () => h(Probe),
+          },
+        }),
+      ).rejects.toThrow('requires an active lightbox context')
+    } finally {
+      warn.mockRestore()
+      error.mockRestore()
+    }
+  })
+
+  it('keeps disabled auto PhotoGroup children inert', async () => {
+    const albumPhoto = makePhoto({ id: 'disabled-album-photo' })
+    const singlePhoto = makePhoto({ id: 'disabled-single-photo' })
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        lightbox: false,
+      },
+      slots: {
+        default: () => [
+          h(Photo, { photo: singlePhoto }),
+          h(PhotoAlbum, {
+            photos: [albumPhoto],
+            defaultContainerWidth: 800,
+          }),
+        ],
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.container.querySelector<HTMLElement>('.np-photo')?.click()
+    mounted.container.querySelector<HTMLElement>('.np-album__item')?.click()
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('keeps a PhotoGroup mounted disabled inert if lightbox later changes', async () => {
+    const enabled = ref(false)
+    const albumPhoto = makePhoto({ id: 'late-enabled-album-photo' })
+    const singlePhoto = makePhoto({ id: 'late-enabled-single-photo' })
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              lightbox: enabled.value,
+            },
+            {
+              default: () => [
+                h(Photo, { photo: singlePhoto }),
+                h(PhotoAlbum, {
+                  photos: [albumPhoto],
+                  defaultContainerWidth: 800,
+                }),
+              ],
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    enabled.value = true
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.container.querySelector<HTMLElement>('.np-photo')?.click()
+    mounted.container.querySelector<HTMLElement>('.np-album__item')?.click()
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
 
     mounted.unmount()
   })
@@ -508,7 +684,7 @@ describe('recipe contracts', () => {
             {
               ref: groupRef,
               photos,
-              lightbox: false,
+              lightbox: TestLightbox,
             },
             {
               default: (props: Record<string, any>) => {
@@ -577,7 +753,7 @@ describe('recipe contracts', () => {
             {
               ref: groupRef,
               photos,
-              lightbox: false,
+              lightbox: TestLightbox,
             },
             {
               default: ({ trigger }: Record<string, any>) => [
