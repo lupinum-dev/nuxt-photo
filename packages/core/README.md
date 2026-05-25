@@ -34,7 +34,7 @@ The root entrypoint intentionally stays focused on framework-free photo primitiv
 - image adapter and image-load helpers
 - geometry, viewer, gesture, and transition-planning helpers
 
-Debug, DOM locking, environment, animation, and package-internal runtime helpers are not exported from this root entrypoint.
+Debug, environment, DOM measurement, and package-internal runtime helpers are not exported from this root entrypoint.
 
 ## Where next
 
