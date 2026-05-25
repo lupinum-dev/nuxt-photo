@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Nuxt Photo'
+  short_description: 'Build and customize Nuxt Photo galleries'
+  default_prompt: 'Use $nuxt-photo to add a responsive gallery with a lightbox to my Nuxt app.'
