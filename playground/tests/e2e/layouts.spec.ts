@@ -1,10 +1,10 @@
-import { expect, stubImageRequests, test } from './helpers'
+import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
 test('layout explorer switches layouts and still opens the lightbox', async ({
   page,
 }) => {
   await stubImageRequests(page)
-  await page.goto('/layouts')
+  await gotoPlayground(page, '/layouts')
 
   for (const name of ['rows', 'columns', 'masonry'] as const) {
     await page.getByRole('button', { name }).click()

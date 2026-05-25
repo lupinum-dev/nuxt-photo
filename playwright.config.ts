@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = 4173
+const port = process.env.PLAYWRIGHT_PORT ?? '45173'
 
 export default defineConfig({
   testDir: './playground/tests/e2e',
@@ -47,7 +47,7 @@ export default defineConfig({
   webServer: {
     command: `cd playground && PORT=${port} HOST=127.0.0.1 node .output/server/index.mjs`,
     url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     stdout: 'pipe',
     stderr: 'pipe',
   },

@@ -1,8 +1,8 @@
-import { expect, stubImageRequests, test } from './helpers'
+import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
 test('renders carousel slides and thumbnails', async ({ page }) => {
   await stubImageRequests(page)
-  await page.goto('/carousel')
+  await gotoPlayground(page, '/carousel')
 
   const carousel = page.locator('.np-carousel').first()
   await expect(carousel).toBeVisible()
@@ -12,7 +12,7 @@ test('renders carousel slides and thumbnails', async ({ page }) => {
 
 test('arrow navigation advances the counter', async ({ page }) => {
   await stubImageRequests(page)
-  await page.goto('/carousel')
+  await gotoPlayground(page, '/carousel')
 
   const carousel = page.locator('.np-carousel').first()
   const counter = carousel.locator('.np-carousel__counter')
@@ -24,7 +24,7 @@ test('arrow navigation advances the counter', async ({ page }) => {
 
 test('thumbnail click syncs to main carousel', async ({ page }) => {
   await stubImageRequests(page)
-  await page.goto('/carousel')
+  await gotoPlayground(page, '/carousel')
 
   const carousel = page.locator('.np-carousel').first()
   await carousel.locator('.np-carousel__thumb').nth(3).click()
@@ -37,7 +37,7 @@ test('toggling lightbox enables slide click to open dialog', async ({
   page,
 }) => {
   await stubImageRequests(page)
-  await page.goto('/carousel')
+  await gotoPlayground(page, '/carousel')
 
   await page.getByLabel('Lightbox').check()
 
@@ -54,7 +54,7 @@ test('hiding arrows via control removes them from the DOM', async ({
   page,
 }) => {
   await stubImageRequests(page)
-  await page.goto('/carousel')
+  await gotoPlayground(page, '/carousel')
 
   const carousel = page.locator('.np-carousel').first()
   await expect(carousel.locator('.np-carousel__arrow')).toHaveCount(2)

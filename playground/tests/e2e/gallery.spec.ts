@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
-import { expect, stubImageRequests, test } from './helpers'
+import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
 async function dispatchPointerPinch(
   media: Locator,
@@ -65,7 +65,7 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({
   page,
 }) => {
   await stubImageRequests(page)
-  await page.goto('/')
+  await gotoPlayground(page)
 
   await page.locator('.np-album__item').first().click()
 
@@ -102,7 +102,7 @@ test.describe('touch gestures', () => {
     page,
   }) => {
     await stubImageRequests(page)
-    await page.goto('/')
+    await gotoPlayground(page)
 
     await page.locator('.np-album__item').first().click()
 

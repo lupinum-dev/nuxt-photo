@@ -15,4 +15,8 @@ export async function stubImageRequests(page: Page) {
   })
 }
 
+export async function gotoPlayground(page: Page, path = '/') {
+  await page.goto(path, { waitUntil: 'domcontentloaded' })
+}
+
 export { expect, test }
