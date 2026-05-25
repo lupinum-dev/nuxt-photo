@@ -16,6 +16,7 @@ const CHANNEL_COLORS: Record<DebugChannel, string> = {
   gestures: '#34d399',
   zoom: '#fbbf24',
   slides: '#60a5fa',
+  images: '#2dd4bf',
   geometry: '#f87171',
   rects: '#fb923c',
 }
@@ -27,6 +28,7 @@ export function createDebug(): DebugLogger {
     gestures: false,
     zoom: false,
     slides: false,
+    images: false,
     geometry: false,
     rects: false,
     all: false,

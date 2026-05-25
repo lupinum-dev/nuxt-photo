@@ -8,11 +8,11 @@ import {
 } from 'vue'
 import type {
   AreaMetrics,
-  DebugLogger,
   PhotoItem,
   TransitionModeConfig,
 } from '@nuxt-photo/core'
 import type { GhostState } from './types'
+import type { DebugLogger } from '../../internal/runtime'
 
 /** Create the shared reactive state used by ghost open/close transition helpers. */
 export function createGhostState(

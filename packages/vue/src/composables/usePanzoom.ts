@@ -16,9 +16,9 @@ import {
   type PanState,
   type PhotoItem,
   type ZoomState,
-  type DebugLogger,
 } from '@nuxt-photo/core'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
+import type { DebugLogger } from '../internal/runtime'
 
 /**
  * Manage zoom state, pan bounds, and spring-driven transform updates for the

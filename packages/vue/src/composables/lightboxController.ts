@@ -1,8 +1,9 @@
-import { devWarn, photoId, type PhotoItem } from '@nuxt-photo/core'
+import { photoId, type PhotoItem } from '@nuxt-photo/core'
 import type {
   LightboxController,
   InternalLightboxContext,
 } from '../provide/keys'
+import { devWarn } from '../internal/runtime'
 
 export function createLightboxController(
   context: InternalLightboxContext,

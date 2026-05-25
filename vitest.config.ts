@@ -9,12 +9,6 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@nuxt-photo\/core\/internal$/,
-        replacement: fileURLToPath(
-          new URL('./packages/core/src/internal.ts', import.meta.url),
-        ),
-      },
-      {
         find: /^@nuxt-photo\/core$/,
         replacement: fileURLToPath(
           new URL('./packages/core/src/index.ts', import.meta.url),
@@ -48,9 +42,7 @@ export default defineConfig({
     root: rootDir,
     include: ['packages/*/test/**/*.test.ts'],
     environment: 'node',
-    environmentMatchGlobs: [
-      ['packages/vue/test/**', 'jsdom'],
-      ['packages/recipes/test/**', 'jsdom'],
-    ],
+    clearMocks: true,
+    restoreMocks: true,
   },
 })

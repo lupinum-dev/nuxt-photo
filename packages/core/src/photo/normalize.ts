@@ -52,8 +52,8 @@ export function normalizePhotos<T = unknown>(
 ): NormalizePhotosResult {
   const onInvalid = options.onInvalid ?? 'throw'
   const issues: PhotoValidationIssue[] = []
-  const mapped = rawPhotos.map((item, index) =>
-    options.mapper ? options.mapper(item, index, rawPhotos as T[]) : item,
+  const mapped = rawPhotos.map((item) =>
+    options.mapper ? options.mapper(item) : item,
   ) as PhotoItem[]
   const seen = new Map<string, number>()
   const invalidIndexes = new Set<number>()

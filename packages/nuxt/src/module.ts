@@ -7,7 +7,14 @@ import {
   hasNuxtModule,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
-export type { PhotoItem } from '@nuxt-photo/core'
+export type {
+  AlbumLayout,
+  ImageAdapter,
+  LightboxTransitionOption,
+  PhotoItem,
+  PhotoMapper,
+  ResponsiveParameter,
+} from '@nuxt-photo/core'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean | { prefix?: string }

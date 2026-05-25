@@ -14,9 +14,7 @@ import {
   computeColumnsLayout,
   computeMasonryLayout,
   computePhotoSizes,
-  devWarn,
   resolveResponsiveParameter,
-  round,
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
@@ -26,6 +24,7 @@ import {
   albumItemStyle,
   type AlbumStyleContext,
 } from './albumStyles'
+import { devWarn, round } from '../utils/runtime'
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 

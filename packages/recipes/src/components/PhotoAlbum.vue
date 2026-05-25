@@ -140,7 +140,6 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
-  devWarn,
   mergeResponsiveBreakpoints,
   photoId,
   type AlbumLayout,
@@ -154,6 +153,7 @@ import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { PhotoGroupContextKey } from '../context/photoGroup'
 import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
 import { resolveRecipePhotos } from '../utils/photos'
+import { devWarn } from '../utils/runtime'
 
 const props = withDefaults(
   defineProps<{

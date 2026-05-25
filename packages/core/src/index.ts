@@ -1,4 +1,4 @@
-// @nuxt-photo/core — documented app-facing API
+// @nuxt-photo/core — framework-free public API
 
 export {
   photoId,
@@ -62,20 +62,6 @@ export {
 } from './geometry/rect'
 
 export {
-  type Spring1D,
-  createSpring1D,
-  stopSpring,
-  springStep,
-  runSpring,
-} from './physics/spring'
-export { VelocityTracker } from './physics/velocity'
-export { animateNumber } from './physics/animation'
-export { easeOutCubic, easeInOutCubic } from './physics/easing'
-
-export { wait, nextFrame } from './dom/timing'
-export { lockBodyScroll } from './dom/body-scroll'
-
-export {
   DEFAULT_MIN_ZOOM,
   computeFittedFrame,
   computeZoomLevels,
@@ -91,8 +77,6 @@ export {
   computeCloseDragRatio,
 } from './viewer/gestures'
 
-export { createDebug, type DebugLogger, type DebugFlags } from './debug/logger'
-
 export {
   DEFAULT_TRANSITION_CONFIG,
   getVisibilityRatio,
@@ -100,7 +84,3 @@ export {
   chooseCloseTransition,
   type TransitionModeConfig,
 } from './transition/transitionChoice'
-
-export { isDev, devWarn } from './env'
-export { round } from './utils/math'
-export { getWindowDimensions } from './utils/dom'

@@ -9,14 +9,16 @@ import {
 import {
   isUsableRect,
   loadImage,
-  lockBodyScroll,
-  nextFrame,
   photoId,
   type AreaMetrics,
-  type DebugLogger,
   type ImageAdapter,
   type PhotoItem,
 } from '@nuxt-photo/core'
+import {
+  lockBodyScroll,
+  nextFrame,
+  type DebugLogger,
+} from '../internal/runtime'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(

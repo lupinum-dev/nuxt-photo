@@ -41,10 +41,6 @@ import {
   flipTransform,
   isUsableRect,
   makeGhostBaseStyle,
-  nextFrame,
-  wait,
-  animateNumber,
-  easeOutCubic,
   shouldUseFlip,
   type PhotoItem,
   type RectLike,
@@ -55,6 +51,12 @@ import {
   type TransitionCallbacks,
 } from './types'
 import { resetOpenState } from './state'
+import {
+  animateNumber,
+  easeOutCubic,
+  nextFrame,
+  wait,
+} from '../../internal/runtime'
 
 function showImageLoadFallback(s: GhostState) {
   s.ghostVisible.value = false

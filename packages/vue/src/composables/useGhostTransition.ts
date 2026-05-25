@@ -1,13 +1,13 @@
 import { computed, type ComputedRef, type CSSProperties, type Ref } from 'vue'
 import type {
   AreaMetrics,
-  DebugLogger,
   PhotoItem,
   TransitionModeConfig,
 } from '@nuxt-photo/core'
 import { createGhostState, setThumbRef } from './ghost/state'
 import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'
+import type { DebugLogger } from '../internal/runtime'
 
 /** Coordinate ghost-image open/close transitions and expose their reactive state. */
 export function useGhostTransition(
@@ -74,6 +74,18 @@ export function useGhostTransition(
     },
     open: (index: number, callbacks: Parameters<typeof openTransition>[2]) =>
       openTransition(s, index, callbacks),
+    abortOpen: () => {
+      s.ghostVisible.value = false
+      s.ghostSrc.value = ''
+      s.hiddenThumbIndex.value = null
+      s.overlayOpacity.value = 0
+      s.mediaOpacity.value = 0
+      s.chromeOpacity.value = 0
+      s.animating.value = false
+      s.closeDragY.value = 0
+      s.disableBackdropTransition.value = false
+      s.lightboxMounted.value = false
+    },
     close,
     animateCloseDragTo,
     handleCloseGesture,

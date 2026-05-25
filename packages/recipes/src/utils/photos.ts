@@ -1,9 +1,9 @@
 import {
-  isDev,
   normalizePhotos,
   type PhotoItem,
   type PhotoMapper,
 } from '@nuxt-photo/core'
+import { isDev } from './runtime'
 
 export function resolveRecipePhotos(
   rawPhotos: PhotoItem[] | any[],

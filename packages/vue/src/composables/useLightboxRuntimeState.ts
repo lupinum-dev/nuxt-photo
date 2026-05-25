@@ -7,10 +7,8 @@ import {
   type MaybeRef,
 } from 'vue'
 import {
-  createDebug,
   createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
-  devWarn,
   loadImage,
   photoId,
   type AreaMetrics,
@@ -33,6 +31,7 @@ import {
 } from './lightboxWatchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
+import { createDebug, devWarn } from '../internal/runtime'
 
 /**
  * Internal Vue lightbox state.
@@ -146,6 +145,8 @@ export function useLightboxRuntimeState(
   // the ghost transition callbacks handle the same work in the right order.
   const skipActiveIndexWatch = ref(false)
   let pendingOpen: Promise<boolean> | null = null
+  let openToken = 0
+  let closeGeneration = 0
 
   async function settlePendingOpen() {
     if (!pendingOpen) return
@@ -158,7 +159,9 @@ export function useLightboxRuntimeState(
   }
 
   async function open(photoOrIndex: PhotoItem | number = 0) {
+    const requestedCloseGeneration = closeGeneration
     await settlePendingOpen()
+    if (requestedCloseGeneration !== closeGeneration) return
 
     const currentPhotos = photos.value
     if (currentPhotos.length === 0) return
@@ -183,13 +186,19 @@ export function useLightboxRuntimeState(
 
     lifecycleStatus.value = 'opening'
     skipActiveIndexWatch.value = true
+    const token = ++openToken
+    let openPromise: Promise<boolean> | null = null
+
     try {
       ghost.setCloseDragY(0)
       carousel.goTo(targetIndex, true)
       keydown.attach()
 
-      pendingOpen = ghost.open(targetIndex, transitionCallbacks)
-      const opened = await pendingOpen
+      openPromise = ghost.open(targetIndex, transitionCallbacks)
+      pendingOpen = openPromise
+      const opened = await openPromise
+      if (token !== openToken) return
+
       if (!opened) {
         lifecycleStatus.value = 'closed'
         keydown.detach()
@@ -199,12 +208,28 @@ export function useLightboxRuntimeState(
       lifecycleStatus.value = 'open'
       preloadAround(targetIndex)
     } finally {
-      pendingOpen = null
-      skipActiveIndexWatch.value = false
+      if (token === openToken && pendingOpen === openPromise) {
+        pendingOpen = null
+      }
+      if (token === openToken) {
+        skipActiveIndexWatch.value = false
+      }
     }
   }
 
   async function close() {
+    closeGeneration++
+
+    if (lifecycleStatus.value === 'opening') {
+      openToken++
+      pendingOpen = null
+      skipActiveIndexWatch.value = false
+      ghost.abortOpen()
+      keydown.detach()
+      lifecycleStatus.value = 'closed'
+      return
+    }
+
     await settlePendingOpen()
 
     if (!ghost.lightboxMounted.value) return

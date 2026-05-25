@@ -127,7 +127,7 @@ describe('lightbox lifecycle invariants', () => {
     document.body.style.paddingRight = ''
   })
 
-  it('waits for a pending open before close and releases body scroll', async () => {
+  it('closes immediately while an opening image decode is pending', async () => {
     let resolveDecode: (() => void) | null = null
     vi.stubGlobal(
       'Image',
@@ -167,16 +167,81 @@ describe('lightbox lifecycle invariants', () => {
     expect(document.body.style.overflow).toBe('hidden')
 
     const closePromise = api!.close()
-    await flushWatchers()
-    expect(api!.lifecycleStatus.value).toBe('opening')
-    resolveDecode?.()
-    await openPromise
     await closePromise
     await flushWatchers()
 
     expect(api!.lifecycleStatus.value).toBe('closed')
     expect(api!.isOpen.value).toBe(false)
     expect(document.body.style.overflow).toBe('')
+
+    resolveDecode?.()
+    await openPromise
+    await flushWatchers()
+
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(api!.isOpen.value).toBe(false)
+    expect(document.body.style.overflow).toBe('')
+
+    app.unmount()
+    host.remove()
+  })
+
+  it('does not run a queued open after close cancels the active open', async () => {
+    let resolveFirst: (() => void) | null = null
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: null | (() => void) = null
+        private value = ''
+        set src(value: string) {
+          this.value = value
+        }
+        decode() {
+          if (this.value.includes('queued-first')) {
+            return new Promise<void>((resolve) => {
+              resolveFirst = resolve
+            })
+          }
+          return Promise.resolve()
+        }
+      },
+    )
+
+    const photos = [
+      makePhoto({ id: 'queued-first', src: '/queued-first.jpg' }),
+      makePhoto({ id: 'queued-second', src: '/queued-second.jpg' }),
+    ]
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState(photos, 'none')
+        return () => null
+      },
+    })
+
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    const firstOpen = api!.open(0)
+    await flushUntil(() => typeof resolveFirst === 'function')
+    const secondOpen = api!.open(1)
+    await flushWatchers()
+
+    await api!.close()
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(api!.isOpen.value).toBe(false)
+
+    resolveFirst?.()
+    await firstOpen
+    await secondOpen
+    await flushWatchers()
+
+    expect(api!.activeIndex.value).toBe(0)
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(api!.isOpen.value).toBe(false)
 
     app.unmount()
     host.remove()

@@ -22,6 +22,53 @@ const ctx = useLightboxInject('LightboxRoot')
 
 const rootRef = ref<HTMLElement | null>(null)
 let restoreFocusEl: HTMLElement | null = null
+let restoreSiblings: (() => void) | null = null
+
+function isolatePageSiblings(root: HTMLElement) {
+  restoreSiblings?.()
+
+  const previous = new Map<
+    HTMLElement,
+    { inert: boolean; ariaHidden: string | null }
+  >()
+  const observer = new MutationObserver(() => {
+    isolateCurrentSiblings()
+  })
+
+  function isolateElement(element: HTMLElement) {
+    if (element === root || previous.has(element)) return
+    previous.set(element, {
+      inert: element.inert,
+      ariaHidden: element.getAttribute('aria-hidden'),
+    })
+    element.inert = true
+    element.setAttribute('aria-hidden', 'true')
+  }
+
+  function isolateCurrentSiblings() {
+    for (const child of document.body.children) {
+      if (child instanceof HTMLElement) {
+        isolateElement(child)
+      }
+    }
+  }
+
+  isolateCurrentSiblings()
+  observer.observe(document.body, { childList: true })
+
+  restoreSiblings = () => {
+    observer.disconnect()
+    for (const [element, { inert, ariaHidden }] of previous) {
+      element.inert = inert
+      if (ariaHidden === null) {
+        element.removeAttribute('aria-hidden')
+      } else {
+        element.setAttribute('aria-hidden', ariaHidden)
+      }
+    }
+    restoreSiblings = null
+  }
+}
 
 function getFocusableElements(root: HTMLElement) {
   return Array.from(
@@ -74,6 +121,9 @@ watch(
           ? document.activeElement
           : null
       await nextTick()
+      if (rootRef.value) {
+        isolatePageSiblings(rootRef.value)
+      }
       rootRef.value?.focus()
       if (rootRef.value && document.activeElement !== rootRef.value) {
         const firstFocusable = getFocusableElements(rootRef.value)[0]
@@ -84,6 +134,7 @@ watch(
 
     const target = restoreFocusEl
     restoreFocusEl = null
+    restoreSiblings?.()
     if (!target?.isConnected) return
 
     await nextTick()
@@ -93,5 +144,6 @@ watch(
 
 onBeforeUnmount(() => {
   restoreFocusEl = null
+  restoreSiblings?.()
 })
 </script>

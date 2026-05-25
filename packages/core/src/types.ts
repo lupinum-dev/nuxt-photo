@@ -325,5 +325,6 @@ export type DebugChannel =
   | 'gestures'
   | 'zoom'
   | 'slides'
+  | 'images'
   | 'geometry'
   | 'rects'

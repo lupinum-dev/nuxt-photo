@@ -10,7 +10,6 @@
 .np-album--columns,
 .np-album--masonry {
   display: flex;
-  flex-wrap: nowrap;
 }
 
 .np-album--rows {
@@ -19,14 +18,12 @@
 
 .np-album--columns,
 .np-album--masonry {
-  flex-direction: row;
   justify-content: space-between;
 }
 
 /* Row group */
 .np-album__row {
   display: flex;
-  flex-flow: row nowrap;
   justify-content: space-between;
   align-items: flex-start;
 }
@@ -34,7 +31,7 @@
 /* Column group */
 .np-album__column {
   display: flex;
-  flex-flow: column nowrap;
+  flex-direction: column;
   align-items: flex-start;
 }
 

@@ -209,7 +209,7 @@ describe('recipe contracts', () => {
     await flushUi()
 
     const img = mounted.container.querySelector('img')
-    expect(itemMapper).toHaveBeenCalledWith(raw, 0, [raw])
+    expect(itemMapper).toHaveBeenCalledWith(raw)
     expect(img?.getAttribute('src')).toBe('/cms/thumb.jpg')
     expect(img?.getAttribute('alt')).toBe('Mapped CMS asset')
 
@@ -691,6 +691,14 @@ describe('recipe contracts', () => {
     expect(dialog).toBeTruthy()
     expect(dialog?.getAttribute('aria-label')).toBe('Photo viewer')
     expect(dialog?.contains(document.activeElement)).toBe(true)
+    expect(mounted.container.inert).toBe(true)
+    expect(mounted.container.getAttribute('aria-hidden')).toBe('true')
+
+    const lateSibling = document.createElement('div')
+    document.body.appendChild(lateSibling)
+    await flushUi()
+    expect(lateSibling.inert).toBe(true)
+    expect(lateSibling.getAttribute('aria-hidden')).toBe('true')
 
     const closeButton = document.body.querySelector(
       '.np-lightbox__btn--close',
@@ -700,7 +708,12 @@ describe('recipe contracts', () => {
     await flushUi()
 
     expect(document.activeElement).toBe(trigger)
+    expect(mounted.container.inert).not.toBe(true)
+    expect(mounted.container.hasAttribute('aria-hidden')).toBe(false)
+    expect(lateSibling.inert).not.toBe(true)
+    expect(lateSibling.hasAttribute('aria-hidden')).toBe(false)
 
     mounted.unmount()
+    lateSibling.remove()
   })
 })

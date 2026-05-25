@@ -1,5 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadImage } from '../src/image/loader'
+import { IMAGE_LOAD_TIMEOUT_MS } from '../src/image/constants'
 
 // Mock Image constructor
 class MockImage {
@@ -7,6 +8,8 @@ class MockImage {
   onerror: (() => void) | null = null
   decode?: () => Promise<void>
   complete = false
+  naturalWidth = 0
+  naturalHeight = 0
   private _src = ''
 
   get src() {
@@ -21,6 +24,8 @@ class MockImage {
         this.onerror?.()
       } else {
         this.complete = true
+        this.naturalWidth = 1
+        this.naturalHeight = 1
         this.onload?.()
       }
     })
@@ -31,6 +36,10 @@ beforeEach(() => {
   vi.stubGlobal('Image', MockImage)
   // We can't clear the module-level cache between tests,
   // so each test uses a unique URL via Date.now() to avoid cache collisions
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('loadImage', () => {
@@ -136,5 +145,53 @@ describe('loadImage', () => {
     expect(imageCount).toBe(1)
 
     await Promise.all([p1, p2])
+  })
+
+  it('returns failure and evicts the cache when image decode never settles', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal(
+      'Image',
+      class extends MockImage {
+        decode = () => new Promise<void>(() => {})
+      },
+    )
+
+    const src = `/decode-timeout-${Date.now()}.jpg`
+    const promise = loadImage(src)
+    await vi.advanceTimersByTimeAsync(IMAGE_LOAD_TIMEOUT_MS)
+
+    await expect(promise).resolves.toMatchObject({ ok: false })
+
+    let imageCreated = false
+    vi.stubGlobal(
+      'Image',
+      class extends MockImage {
+        decode = () => Promise.resolve()
+        constructor() {
+          super()
+          imageCreated = true
+        }
+      },
+    )
+
+    await loadImage(src)
+    expect(imageCreated).toBe(true)
+  })
+
+  it('treats complete cached images without natural dimensions as failed loads', async () => {
+    vi.stubGlobal(
+      'Image',
+      class extends MockImage {
+        complete = true
+        naturalWidth = 0
+        naturalHeight = 0
+      },
+    )
+
+    await expect(
+      loadImage(`/cached-broken-${Date.now()}.jpg`),
+    ).resolves.toMatchObject({
+      ok: false,
+    })
   })
 })

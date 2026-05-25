@@ -1,5 +1,5 @@
 import { devWarn } from '../env'
-import { IMAGE_LOAD_CACHE_LIMIT } from './constants'
+import { IMAGE_LOAD_CACHE_LIMIT, IMAGE_LOAD_TIMEOUT_MS } from './constants'
 
 export type LoadImageResult = { ok: true } | { ok: false; error?: unknown }
 
@@ -23,10 +23,19 @@ export function loadImage(src: string): Promise<LoadImageResult> {
   const promise = new Promise<LoadImageResult>((resolve) => {
     const image = new Image()
     let settled = false
+    const timeoutId = setTimeout(() => {
+      settle({
+        ok: false,
+        error: new Error(`Image load timed out: ${src}`),
+      })
+    }, IMAGE_LOAD_TIMEOUT_MS)
 
     const settle = (result: LoadImageResult) => {
       if (settled) return
       settled = true
+      clearTimeout(timeoutId)
+      image.onload = null
+      image.onerror = null
       if (!result.ok) imageLoadCache.delete(src)
       resolve(result)
     }
@@ -49,11 +58,22 @@ export function loadImage(src: string): Promise<LoadImageResult> {
       return
     }
 
-    image.onload = () => settle({ ok: true })
+    const resolveLoaded = () => {
+      if (image.naturalWidth === 0 && image.naturalHeight === 0) {
+        settle({
+          ok: false,
+          error: new Error(`Image failed to load: ${src}`),
+        })
+        return
+      }
+      settle({ ok: true })
+    }
+
+    image.onload = resolveLoaded
     image.src = src
 
     if (image.complete) {
-      settle({ ok: true })
+      resolveLoaded()
     }
   })
 

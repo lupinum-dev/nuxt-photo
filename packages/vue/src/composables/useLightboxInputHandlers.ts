@@ -2,7 +2,6 @@ import { ref, type ComputedRef, type Ref } from 'vue'
 import {
   classifyGesture as coreClassifyGesture,
   isDoubleTap as coreIsDoubleTap,
-  VelocityTracker,
   clientToAreaPoint,
   computeTargetPanForZoom,
   type AreaMetrics,
@@ -10,13 +9,13 @@ import {
   type PanState,
   type PhotoItem,
   type ZoomState,
-  type DebugLogger,
 } from '@nuxt-photo/core'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
 import {
   MOUSE_WHEEL_THROTTLE_MS,
   TRACKPAD_WHEEL_THROTTLE_MS,
 } from './constants'
+import { VelocityTracker, type DebugLogger } from '../internal/runtime'
 
 type GestureConfig = {
   lightboxMounted: Ref<boolean>
@@ -65,6 +64,18 @@ type GestureConfig = {
     closeFn: () => Promise<void>,
   ) => Promise<void>
   close: () => Promise<void>
+}
+
+function isEditableKeyTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false
+
+  if (target.isContentEditable) return true
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  )
 }
 
 /**
@@ -586,6 +597,7 @@ export function useLightboxInputHandlers(
 
   function onKeydown(event: KeyboardEvent) {
     if (!config.lightboxMounted.value || config.animating.value) return
+    if (event.defaultPrevented || isEditableKeyTarget(event.target)) return
 
     if (event.key === 'Escape') {
       debug?.log('gestures', 'key: Escape → close')

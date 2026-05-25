@@ -1,13 +1,13 @@
 import type { ComputedRef, CSSProperties, Ref } from 'vue'
 import type {
   AreaMetrics,
-  DebugLogger,
   LoadImageResult,
   PanState,
   PhotoItem,
   RectLike,
   TransitionModeConfig,
 } from '@nuxt-photo/core'
+import type { DebugLogger } from '../../internal/runtime'
 
 export const openDurationMs = 420
 export const closeDurationMs = 380

@@ -21,7 +21,6 @@ import {
   useLightboxProvider,
 } from '@nuxt-photo/vue'
 import {
-  devWarn,
   photoId,
   type ImageAdapter,
   type PhotoItem,
@@ -33,6 +32,7 @@ import {
   type PhotoGroupContext,
 } from '../context/photoGroup'
 import { resolveRecipePhotos } from '../utils/photos'
+import { devWarn } from '../utils/runtime'
 
 const props = withDefaults(
   defineProps<{

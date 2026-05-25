@@ -109,6 +109,37 @@ describe('useLightboxInputHandlers', () => {
     expect(setPanzoomImmediate).toHaveBeenNthCalledWith(2, 2, { x: 0, y: 0 })
   })
 
+  it('ignores keydown events that were already handled', () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useLightboxInputHandlers(config)
+    const event = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      cancelable: true,
+    })
+    event.preventDefault()
+
+    gestures.onKeydown(event)
+
+    expect(config.close).not.toHaveBeenCalled()
+  })
+
+  it('ignores global shortcuts from editable content', () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useLightboxInputHandlers(config)
+    const input = document.createElement('input')
+    input.addEventListener('keydown', gestures.onKeydown)
+
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+    )
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'z', bubbles: true }),
+    )
+
+    expect(config.goToNext).not.toHaveBeenCalled()
+    expect(config.toggleZoom).not.toHaveBeenCalled()
+  })
+
   it('supports mixed pointer types across consecutive gesture sessions', async () => {
     const { config } = createGestureConfig(false)
     const gestures = useLightboxInputHandlers(config)

@@ -39,12 +39,7 @@ import {
 } from 'vue'
 import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
-import {
-  devWarn,
-  type PhotoMapper,
-  type ImageAdapter,
-  type PhotoItem,
-} from '@nuxt-photo/core'
+import type { PhotoMapper, ImageAdapter, PhotoItem } from '@nuxt-photo/core'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -56,6 +51,7 @@ import type {
 import PhotoGroup from './PhotoGroup.vue'
 import CarouselLayout from './internal/CarouselLayout.vue'
 import { resolveRecipePhotos } from '../utils/photos'
+import { devWarn } from '../utils/runtime'
 
 defineOptions({ inheritAttrs: false })
 

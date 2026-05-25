@@ -1,5 +1,6 @@
 import type { CSSProperties, Ref } from 'vue'
-import { round, type LayoutEntry, type LayoutGroup } from '@nuxt-photo/core'
+import type { LayoutEntry, LayoutGroup } from '@nuxt-photo/core'
+import { round } from '../utils/runtime'
 
 export type AlbumStyleContext = {
   containerWidth: number

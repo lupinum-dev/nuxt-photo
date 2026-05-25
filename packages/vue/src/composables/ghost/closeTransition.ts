@@ -1,10 +1,6 @@
 import {
   flipTransform,
   makeGhostBaseStyle,
-  nextFrame,
-  wait,
-  animateNumber,
-  easeOutCubic,
   chooseCloseTransition,
   DEFAULT_TRANSITION_CONFIG,
   type RectLike,
@@ -17,6 +13,12 @@ import {
 } from './types'
 import { MAX_CLOSE_ANIMATION_MS } from './constants'
 import { resetCloseState } from './state'
+import {
+  animateNumber,
+  easeOutCubic,
+  nextFrame,
+  wait,
+} from '../../internal/runtime'
 
 async function doInstantClose(s: GhostState) {
   s.debug?.log('transitions', 'close: INSTANT (mode=none)')

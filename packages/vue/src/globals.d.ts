@@ -1,4 +1,4 @@
-import type { DebugFlags } from '@nuxt-photo/core'
+import type { DebugFlags } from './internal/runtime'
 
 declare global {
   interface Window {
