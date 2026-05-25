@@ -276,30 +276,47 @@ describe('layout algorithms', () => {
   })
 
   it('rejects invalid photo dimensions instead of inventing fallback geometry', () => {
-    const invalidPhotos = [
-      { ...createPhotoSet()[0]!, id: 'invalid-width', width: 0 },
-    ]
+    const invalidDimensions = [0, -1, Number.NaN, Infinity]
 
-    expect(() =>
-      computeRowsLayout({
-        photos: invalidPhotos,
-        containerWidth: 1000,
-      }),
-    ).toThrow('invalid dimensions')
+    for (const dimension of invalidDimensions) {
+      const invalidWidth = [
+        {
+          ...createPhotoSet()[0]!,
+          id: `invalid-width-${dimension}`,
+          width: dimension,
+        },
+      ]
+      const invalidHeight = [
+        {
+          ...createPhotoSet()[0]!,
+          id: `invalid-height-${dimension}`,
+          height: dimension,
+        },
+      ]
 
-    expect(() =>
-      computeColumnsLayout({
-        photos: invalidPhotos,
-        containerWidth: 1000,
-      }),
-    ).toThrow('invalid dimensions')
+      for (const invalidPhotos of [invalidWidth, invalidHeight]) {
+        expect(() =>
+          computeRowsLayout({
+            photos: invalidPhotos,
+            containerWidth: 1000,
+          }),
+        ).toThrow('invalid dimensions')
 
-    expect(() =>
-      computeMasonryLayout({
-        photos: invalidPhotos,
-        containerWidth: 1000,
-      }),
-    ).toThrow('invalid dimensions')
+        expect(() =>
+          computeColumnsLayout({
+            photos: invalidPhotos,
+            containerWidth: 1000,
+          }),
+        ).toThrow('invalid dimensions')
+
+        expect(() =>
+          computeMasonryLayout({
+            photos: invalidPhotos,
+            containerWidth: 1000,
+          }),
+        ).toThrow('invalid dimensions')
+      }
+    }
   })
 
   it('keeps masonry assignment stable and ordered', () => {

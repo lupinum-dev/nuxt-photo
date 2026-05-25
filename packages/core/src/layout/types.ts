@@ -3,7 +3,14 @@ import type { PhotoItem } from '../types'
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
 export function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
   for (const photo of photos) {
-    if (photo.width > 0 && photo.height > 0) continue
+    if (
+      Number.isFinite(photo.width) &&
+      photo.width > 0 &&
+      Number.isFinite(photo.height) &&
+      photo.height > 0
+    ) {
+      continue
+    }
 
     throw new Error(
       `Photo "${photo.id}" has invalid dimensions (${photo.width}x${photo.height})`,

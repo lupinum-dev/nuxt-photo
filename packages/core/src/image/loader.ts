@@ -20,6 +20,13 @@ export function loadImage(src: string): Promise<LoadImageResult> {
   const cached = imageLoadCache.get(src)
   if (cached) return cached
 
+  if (typeof Image === 'undefined') {
+    return Promise.resolve({
+      ok: false,
+      error: new Error('Image loading requires a browser Image constructor'),
+    })
+  }
+
   const promise = new Promise<LoadImageResult>((resolve) => {
     const image = new Image()
     let settled = false

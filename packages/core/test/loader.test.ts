@@ -43,6 +43,17 @@ afterEach(() => {
 })
 
 describe('loadImage', () => {
+  it('returns failure when no browser Image constructor is available', async () => {
+    vi.stubGlobal('Image', undefined)
+
+    await expect(loadImage(`/server-${Date.now()}.jpg`)).resolves.toMatchObject(
+      {
+        ok: false,
+        error: expect.any(Error),
+      },
+    )
+  })
+
   it('returns ok for a valid image', async () => {
     await expect(loadImage(`/valid-${Date.now()}.jpg`)).resolves.toEqual({
       ok: true,
