@@ -47,7 +47,11 @@ export default defineNuxtConfig({
 })
 ```
 
-Add `@nuxt/image` first if you want Nuxt Image provider integration:
+For a styled first pass, add `nuxtPhoto: { css: 'all' }`. The default
+`css: 'structure'` keeps only the layout and geometry CSS for apps that provide
+their own theme.
+
+Add `@nuxt/image` later when you want Nuxt Image provider integration:
 
 ```ts
 export default defineNuxtConfig({
@@ -63,18 +67,18 @@ import type { PhotoItem } from '@nuxt-photo/nuxt'
 
 const photos: PhotoItem[] = [
   {
-    id: 'desert',
-    src: '/photos/desert.jpg',
+    id: 'landscape',
+    src: 'https://picsum.photos/id/1018/1280/800',
     width: 1280,
     height: 800,
-    alt: 'Desert at golden hour',
+    alt: 'Sample landscape photo',
   },
   {
-    id: 'ocean',
-    src: '/photos/ocean.jpg',
+    id: 'portrait',
+    src: 'https://picsum.photos/id/1015/960/1200',
     width: 960,
     height: 1200,
-    alt: 'Ocean waves at dusk',
+    alt: 'Sample vertical photo',
   },
 ]
 </script>
@@ -91,7 +95,8 @@ albums, groups, carousels, and custom lightbox triggers.
 
 - `@nuxt-photo/nuxt` is the Nuxt module. Install this first in Nuxt apps.
 - `@nuxt-photo/recipes` contains ready-to-use Vue components such as
-  `<PhotoAlbum>` and `<PhotoCarousel>`.
+  `<PhotoAlbum>` and `<PhotoCarousel>`, plus recipe-level helper exports like
+  `responsive()` and common prop types.
 - `@nuxt-photo/vue` contains composables and lightbox primitives for custom UI.
 - `@nuxt-photo/core` contains framework-free photo normalization, layout,
   image, geometry, gesture, viewer, and transition helpers.

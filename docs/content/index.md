@@ -61,13 +61,19 @@ import type { PhotoItem } from '@nuxt-photo/nuxt'
 
 const photos: PhotoItem[] = [
   {
-    id: '1',
-    src: '/photos/desert.jpg',
+    id: 'landscape',
+    src: 'https://picsum.photos/id/1018/1280/800',
     width: 1280,
     height: 800,
-    alt: 'Desert',
+    alt: 'Sample landscape photo',
   },
-  { id: '2', src: '/photos/ocean.jpg', width: 960, height: 1200, alt: 'Ocean' },
+  {
+    id: 'portrait',
+    src: 'https://picsum.photos/id/1015/960/1200',
+    width: 960,
+    height: 1200,
+    alt: 'Sample vertical photo',
+  },
 ]
 </script>
 
@@ -84,10 +90,10 @@ const photos: PhotoItem[] = [
   <Photo
     :photo="{
       id: 'hero',
-      src: '/photos/hero.jpg',
+      src: 'https://picsum.photos/id/1020/1600/1000',
       width: 1600,
       height: 1000,
-      alt: 'Hero image',
+      alt: 'Sample hero photo',
     }"
     lightbox
   />

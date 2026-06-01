@@ -63,6 +63,20 @@ const photos: PhotoItem[] = [
 - `<PhotoGroup>`
 - `<PhotoCarousel>`
 
+## Common helper exports
+
+The recipes root also exports the common public types used by its component
+props (`PhotoItem`, `PhotoMapper`, `ImageAdapter`, `AlbumLayout`, and related
+layout types) plus the `responsive()` helper for responsive album props.
+
+```ts
+import {
+  responsive,
+  type PhotoItem,
+  type PhotoMapper,
+} from '@nuxt-photo/recipes'
+```
+
 ## Where next
 
 - [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
