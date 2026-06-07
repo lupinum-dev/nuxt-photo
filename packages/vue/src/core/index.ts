@@ -10,6 +10,8 @@ export {
   normalizePhotos,
   type NormalizePhotosOptions,
   type NormalizePhotosResult,
+  type InvalidPhotoPolicy,
+  type InvalidPhotosEvent,
   type PhotoValidationIssue,
   type PhotoValidationIssueCode,
 } from './photo/normalize'

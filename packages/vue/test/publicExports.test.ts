@@ -2,16 +2,51 @@ import { describe, expect, it } from 'vitest'
 import * as vue from '../src'
 
 describe('@nuxt-photo/vue public exports', () => {
-  it('exposes high-level components from the root entry', () => {
-    expect(vue.Photo).toBeTypeOf('object')
-    expect(vue.PhotoAlbum).toBeTypeOf('object')
-    expect(vue.PhotoCarousel).toBeTypeOf('object')
-    expect(vue.Lightbox).toBeTypeOf('object')
+  it('exposes the documented root runtime API exactly', () => {
+    expect(Object.keys(vue).sort()).toEqual(
+      [
+        'ImageAdapterKey',
+        'Lightbox',
+        'LightboxCaption',
+        'LightboxComponentKey',
+        'LightboxControls',
+        'LightboxDefaultsKey',
+        'LightboxGhostImage',
+        'LightboxOverlay',
+        'LightboxProvider',
+        'LightboxRoot',
+        'LightboxSlide',
+        'LightboxViewport',
+        'Photo',
+        'PhotoAlbum',
+        'PhotoCarousel',
+        'PhotoGroup',
+        'PhotoImage',
+        'PhotoTrigger',
+        'photoId',
+        'resolveResponsiveParameter',
+        'responsive',
+        'useContainerWidth',
+        'useLightbox',
+        'useLightboxProvider',
+      ].sort(),
+    )
   })
 
-  it('does not expose recipe-owned PhotoGroup internals from the root entry', () => {
-    expect('PhotoGroupContextKey' in vue).toBe(false)
-    expect('PhotoGroupContext' in vue).toBe(false)
+  it('does not expose internal implementation helpers from the root entry', () => {
+    for (const name of [
+      'PhotoGroupContextKey',
+      'PhotoGroupContext',
+      'computeRowsLayout',
+      'computeColumnsLayout',
+      'computeMasonryLayout',
+      'computeZoomLevels',
+      'loadImage',
+      'chooseCloseTransition',
+      'DEFAULT_MIN_ZOOM',
+    ]) {
+      expect(name in vue, name).toBe(false)
+    }
   })
 
   it('keeps app-level extension keys public', () => {

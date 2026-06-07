@@ -42,5 +42,25 @@ export {
   type LightboxDefaults,
   type LightboxSlideRenderer,
 } from './provide/keys'
-
-export * from './core/index'
+export { photoId, responsive, resolveResponsiveParameter } from './core/types'
+export type {
+  PhotoItem,
+  PhotoMapper,
+  AlbumLayout,
+  RowsAlbumLayout,
+  ColumnsAlbumLayout,
+  MasonryAlbumLayout,
+  ImageAdapter,
+  ImageContext,
+  ImageSource,
+  LightboxTransitionOption,
+  TransitionMode,
+  ResponsiveParameter,
+  ResponsiveResolver,
+} from './core/types'
+export type {
+  InvalidPhotoPolicy,
+  InvalidPhotosEvent,
+  PhotoValidationIssue,
+  PhotoValidationIssueCode,
+} from './core/photo/normalize'
