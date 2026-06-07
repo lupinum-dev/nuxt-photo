@@ -1,5 +1,15 @@
 import type { EmblaCarouselType } from 'embla-carousel'
 
+// Embla integration risk:
+// This file is the only place in @nuxt-photo/vue that may read Embla private
+// runtime state. The private shape is
+// api.internalEngine().scrollSnapList.{slidesBySnap,snapBySlide}. The carousel
+// recipe needs that grouping to keep dots, thumbnails, counters, and lightbox
+// slide activation aligned when slidesToScroll groups multiple photos. If the
+// private shape changes, fall back to deterministic slidesToScroll chunks.
+// Upgrade rule: before bumping Embla, run this file's canary tests plus the
+// PhotoCarousel DOM and SSR tests.
+
 export type EmblaSnapState = {
   slidesBySnap: number[][]
   snapBySlide: Record<number, number>
@@ -52,10 +62,6 @@ function isUsableSnapBySlide(value: unknown): value is Record<number, number> {
   )
 }
 
-/**
- * Embla does not expose the slide groups needed by the recipe's thumbnails,
- * dots, and counters, so this reads its private snap state behind one guard.
- */
 export function readEmblaSnapStateUnsafe(
   api: EmblaCarouselType,
   photoCount: number,

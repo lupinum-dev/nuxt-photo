@@ -2,7 +2,7 @@
 
 import EmblaCarousel from 'embla-carousel'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { readEmblaSnapStateUnsafe } from '../../src/components/internal/emblaSnapState'
+import { readEmblaSnapStateUnsafe } from '../../src/integrations/embla/snapState'
 
 function makeApi(options: {
   slidesBySnap?: unknown
@@ -110,13 +110,16 @@ describe('readEmblaSnapStateUnsafe', () => {
     })
   })
 
-  it('reads grouped snap state from a real Embla carousel', () => {
+  function createRealEmbla(
+    photoCount: number,
+    options: Record<string, unknown>,
+  ) {
     const viewport = document.createElement('div')
     const container = document.createElement('div')
     viewport.appendChild(container)
     document.body.appendChild(viewport)
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < photoCount; i++) {
       const slide = document.createElement('div')
       Object.defineProperty(slide, 'offsetWidth', { value: 100 })
       Object.defineProperty(slide, 'offsetHeight', { value: 100 })
@@ -124,12 +127,29 @@ describe('readEmblaSnapStateUnsafe', () => {
     }
 
     Object.defineProperty(viewport, 'offsetWidth', { value: 200 })
-    Object.defineProperty(container, 'offsetWidth', { value: 400 })
+    Object.defineProperty(container, 'offsetWidth', { value: photoCount * 100 })
 
-    const api = EmblaCarousel(viewport, {
+    return EmblaCarousel(viewport, {
       containScroll: false,
-      slidesToScroll: 2,
+      ...options,
     })
+  }
+
+  it('reads real Embla snap state for slidesToScroll: 1', () => {
+    const api = createRealEmbla(4, { slidesToScroll: 1 })
+
+    try {
+      const state = readEmblaSnapStateUnsafe(api, 4, 1)
+      expect(state.slidesBySnap).toEqual([[0], [1], [2], [3]])
+      expect(state.snapBySlide).toEqual({ 0: 0, 1: 1, 2: 2, 3: 3 })
+      expect(state.snapTotal).toBe(4)
+    } finally {
+      api.destroy()
+    }
+  })
+
+  it('reads real Embla grouped snap state for slidesToScroll: 2', () => {
+    const api = createRealEmbla(4, { slidesToScroll: 2 })
 
     try {
       const state = readEmblaSnapStateUnsafe(api, 4, 2)
@@ -139,6 +159,57 @@ describe('readEmblaSnapStateUnsafe', () => {
       ])
       expect(state.snapBySlide).toEqual({ 0: 0, 1: 0, 2: 1, 3: 1 })
       expect(state.snapTotal).toBe(2)
+    } finally {
+      api.destroy()
+    }
+  })
+
+  it('keeps grouped snap state available when loop is enabled', () => {
+    const api = createRealEmbla(4, { loop: true, slidesToScroll: 2 })
+
+    try {
+      const state = readEmblaSnapStateUnsafe(api, 4, 2)
+      expect(state.slidesBySnap).toEqual([
+        [0, 1],
+        [2, 3],
+      ])
+      expect(state.snapBySlide).toEqual({ 0: 0, 1: 0, 2: 1, 3: 1 })
+      expect(state.snapTotal).toBe(2)
+    } finally {
+      api.destroy()
+    }
+  })
+
+  it('handles photo counts smaller than slidesToScroll', () => {
+    const api = createRealEmbla(2, { slidesToScroll: 3 })
+
+    try {
+      const state = readEmblaSnapStateUnsafe(api, 2, 3)
+      expect(state.slidesBySnap).toEqual([[0, 1]])
+      expect(state.snapBySlide).toEqual({ 0: 0, 1: 0 })
+      expect(state.snapTotal).toBe(1)
+    } finally {
+      api.destroy()
+    }
+  })
+
+  it('updates grouped snap state after Embla reInit', () => {
+    const api = createRealEmbla(4, { slidesToScroll: 1 })
+
+    try {
+      expect(readEmblaSnapStateUnsafe(api, 4, 1).slidesBySnap).toEqual([
+        [0],
+        [1],
+        [2],
+        [3],
+      ])
+
+      api.reInit({ slidesToScroll: 2 })
+
+      expect(readEmblaSnapStateUnsafe(api, 4, 2).slidesBySnap).toEqual([
+        [0, 1],
+        [2, 3],
+      ])
     } finally {
       api.destroy()
     }

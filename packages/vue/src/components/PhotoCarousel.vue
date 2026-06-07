@@ -29,14 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  defineComponent,
-  h,
-  type Component,
-  type ComponentPublicInstance,
-  type PropType,
-} from 'vue'
+import { computed, type Component } from 'vue'
 import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
 import type { PhotoMapper, ImageAdapter, PhotoItem } from '../core/index'
@@ -47,9 +40,12 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../types/index'
-import type { LightboxTransitionOption } from '../core/index'
-import PhotoGroup from './PhotoGroup.vue'
-import CarouselLayout from './internal/CarouselLayout.vue'
+import type {
+  InvalidPhotoPolicy,
+  InvalidPhotosEvent,
+  LightboxTransitionOption,
+} from '../core/index'
+import CarouselLayoutHost from './internal/CarouselLayoutHost'
 import { resolveRecipePhotos } from '../utils/photos'
 import { devWarn } from '../utils/runtime'
 
@@ -67,8 +63,10 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
-    photos: PhotoItem[] | any[]
+    photos: readonly unknown[]
     itemMapper?: PhotoMapper
+    validation?: InvalidPhotoPolicy
+    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     imageAdapter?: ImageAdapter
 
     options?: EmblaOptionsType
@@ -106,7 +104,10 @@ const props = withDefaults(
 )
 
 const resolvedPhotos = computed<PhotoItem[]>(() =>
-  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoCarousel'),
+  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoCarousel', {
+    validation: props.validation,
+    onInvalidPhotos: props.onInvalidPhotos,
+  }),
 )
 
 const hasLightbox = computed(
@@ -171,103 +172,4 @@ const layoutProps = computed(() => ({
   captionClass: props.captionClass,
   controlsClass: props.controlsClass,
 }))
-
-const CarouselLayoutHost = defineComponent({
-  name: 'CarouselLayoutHost',
-  inheritAttrs: false,
-  props: {
-    photos: { type: Array as PropType<PhotoItem[]>, required: true },
-    imageAdapter: {
-      type: Function as PropType<ImageAdapter>,
-      default: undefined,
-    },
-    options: { type: Object as PropType<EmblaOptionsType>, required: true },
-    plugins: { type: Array as PropType<EmblaPluginType[]>, required: true },
-    thumbsOptions: {
-      type: Object as PropType<EmblaOptionsType>,
-      required: true,
-    },
-    showArrows: { type: Boolean, required: true },
-    showThumbnails: { type: Boolean, required: true },
-    showCounter: { type: Boolean, required: true },
-    showDots: { type: Boolean, required: true },
-    slideSize: { type: String, default: undefined },
-    slideAspect: { type: String, default: undefined },
-    gap: { type: String, default: undefined },
-    thumbSize: { type: String, default: undefined },
-    lightbox: {
-      type: [Boolean, Object, Function] as PropType<boolean | Component>,
-      default: false,
-    },
-    transition: {
-      type: [String, Object] as PropType<LightboxTransitionOption>,
-      default: undefined,
-    },
-    slideClass: { type: String, default: undefined },
-    imgClass: { type: String, default: undefined },
-    thumbClass: { type: String, default: undefined },
-    captionClass: { type: String, default: undefined },
-    controlsClass: { type: String, default: undefined },
-  },
-  setup(hostProps, { attrs, slots }) {
-    const renderLayout = (
-      open?: (index: number) => void,
-      setThumbRef?: (
-        index: number,
-      ) => (el: Element | ComponentPublicInstance | null) => void,
-    ) =>
-      h(
-        CarouselLayout,
-        {
-          ...attrs,
-          photos: hostProps.photos,
-          imageAdapter: hostProps.imageAdapter,
-          options: hostProps.options,
-          plugins: hostProps.plugins,
-          thumbsOptions: hostProps.thumbsOptions,
-          showArrows: hostProps.showArrows,
-          showThumbnails: hostProps.showThumbnails,
-          showCounter: hostProps.showCounter,
-          showDots: hostProps.showDots,
-          slideSize: hostProps.slideSize,
-          slideAspect: hostProps.slideAspect,
-          gap: hostProps.gap,
-          thumbSize: hostProps.thumbSize,
-          slideClass: hostProps.slideClass,
-          imgClass: hostProps.imgClass,
-          thumbClass: hostProps.thumbClass,
-          captionClass: hostProps.captionClass,
-          controlsClass: hostProps.controlsClass,
-          onSlideActivate: open,
-          setSlideRef: setThumbRef,
-        },
-        slots,
-      )
-
-    return () => {
-      if (hostProps.lightbox === false) return renderLayout()
-
-      return h(
-        PhotoGroup,
-        {
-          photos: hostProps.photos,
-          imageAdapter: hostProps.imageAdapter,
-          lightbox: hostProps.lightbox,
-          transition: hostProps.transition,
-        },
-        {
-          default: ({
-            open,
-            setThumbRef,
-          }: {
-            open: (index: number) => void
-            setThumbRef: (
-              index: number,
-            ) => (el: Element | ComponentPublicInstance | null) => void
-          }) => renderLayout(open, setThumbRef),
-        },
-      )
-    }
-  },
-})
 </script>

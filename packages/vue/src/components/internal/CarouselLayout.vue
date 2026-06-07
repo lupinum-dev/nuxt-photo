@@ -184,7 +184,7 @@ import type {
   CarouselThumbSlotProps,
 } from '../../types/index'
 import { photoId, type ImageAdapter, type PhotoItem } from '../../core/index'
-import { readEmblaSnapStateUnsafe } from './emblaSnapState'
+import { readEmblaSnapStateUnsafe } from '../../integrations/embla/snapState'
 
 defineOptions({ inheritAttrs: false })
 
