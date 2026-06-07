@@ -66,10 +66,13 @@ describe('package consistency', () => {
 
   it('publishes only existing public packages', () => {
     const workflow = readText('.github/workflows/publish.yml')
-    const publishedPackages = [
-      ...workflow.matchAll(/--filter (@nuxt-photo\/\w+)/g),
-    ]
-      .map((match) => match[1])
+    const publishedPackages = [...workflow.matchAll(/--dir packages\/(\w+)/g)]
+      .map((match) => {
+        const manifest = JSON.parse(
+          readText(join('packages', match[1], 'package.json')),
+        )
+        return manifest.name as string
+      })
       .sort()
 
     expect(publishedPackages).toEqual(workspacePackageNames())

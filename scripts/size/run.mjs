@@ -177,6 +177,9 @@ async function measureViteFixture(fixtureId) {
         : null,
     ].filter(Boolean),
     resolve: {
+      alias: {
+        '@nuxt-photo/vue': resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
+      },
       preserveSymlinks: false,
     },
     build: {
