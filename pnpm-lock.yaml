@@ -125,6 +125,9 @@ importers:
       vite:
         specifier: 7.3.3
         version: 7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0)
+      vue-tsc:
+        specifier: 3.2.7
+        version: 3.2.7(typescript@5.9.3)
 
   packages/nuxt:
     dependencies:
@@ -200,6 +203,9 @@ importers:
       vite:
         specifier: 7.3.3
         version: 7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0)
+      vue-tsc:
+        specifier: 3.2.7
+        version: 3.2.7(typescript@6.0.3)
 
   playground-tailwind:
     dependencies:
@@ -219,6 +225,9 @@ importers:
       vite:
         specifier: 7.3.3
         version: 7.3.3(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0)
+      vue-tsc:
+        specifier: 3.2.7
+        version: 3.2.7(typescript@6.0.3)
 
 packages:
   '@alloc/quick-lru@5.2.0':
