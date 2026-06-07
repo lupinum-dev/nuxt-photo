@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import {
   addComponent,
   addImports,
@@ -7,14 +8,6 @@ import {
   hasNuxtModule,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
-export type {
-  AlbumLayout,
-  ImageAdapter,
-  LightboxTransitionOption,
-  PhotoItem,
-  PhotoMapper,
-  ResponsiveParameter,
-} from '@nuxt-photo/core'
 
 export interface NuxtPhotoOptions {
   autoImports?: boolean | { prefix?: string }
@@ -77,6 +70,29 @@ const AUTO_IMPORTS = [
   'responsive',
 ] as const
 
+const packageRoots = [
+  fileURLToPath(new URL('..', import.meta.url)),
+  fileURLToPath(new URL('../../vue', import.meta.url)),
+]
+
+const optimizedDependencies = [
+  'embla-carousel',
+  'embla-carousel-autoplay',
+  'embla-carousel-vue',
+]
+
+function resolveRecipeComponent(name: string) {
+  return fileURLToPath(
+    new URL(`../../vue/dist/components/${name}.vue`, import.meta.url),
+  )
+}
+
+function resolvePrimitiveComponent(name: string) {
+  return fileURLToPath(
+    new URL(`../../vue/dist/primitives/${name}.vue`, import.meta.url),
+  )
+}
+
 function capitalize(name: string) {
   return `${name.charAt(0).toUpperCase()}${name.slice(1)}`
 }
@@ -114,6 +130,29 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     const minZoom = options.lightbox?.minZoom
+
+    nuxt.options.vite.server ??= {}
+    nuxt.options.vite.server.fs ??= {}
+    const allow = nuxt.options.vite.server.fs.allow ?? []
+
+    for (const root of packageRoots) {
+      if (!allow.includes(root)) {
+        allow.push(root)
+      }
+    }
+
+    nuxt.options.vite.server.fs.allow = allow
+
+    nuxt.options.vite.optimizeDeps ??= {}
+    const include = nuxt.options.vite.optimizeDeps.include ?? []
+
+    for (const dependency of optimizedDependencies) {
+      if (!include.includes(dependency)) {
+        include.push(dependency)
+      }
+    }
+
+    nuxt.options.vite.optimizeDeps.include = include
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
@@ -182,8 +221,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
           name: `${prefix}${component.name}`,
-          export: component.export,
-          filePath: '@nuxt-photo/recipes',
+          filePath: resolveRecipeComponent(component.export),
         })
       }
 
@@ -194,8 +232,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         for (const component of PRIMITIVE_COMPONENTS) {
           addComponent({
             name: `${prefix}${component.name}`,
-            export: component.export,
-            filePath: '@nuxt-photo/vue',
+            filePath: resolvePrimitiveComponent(component.export),
           })
         }
       }
@@ -211,21 +248,41 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         AUTO_IMPORTS.map((name) => ({
           name,
           as: resolveAutoImportAlias(name, prefix),
-          from: '@nuxt-photo/vue',
+          from: '@nuxt-photo/nuxt/app',
         })),
       )
     }
 
     const structureCSS = [
-      '@nuxt-photo/recipes/styles/lightbox-structure.css',
-      '@nuxt-photo/recipes/styles/album.css',
-      '@nuxt-photo/recipes/styles/photo-structure.css',
-      '@nuxt-photo/recipes/styles/carousel-structure.css',
+      fileURLToPath(
+        new URL(
+          '../../vue/dist/styles/lightbox-structure.css',
+          import.meta.url,
+        ),
+      ),
+      fileURLToPath(
+        new URL('../../vue/dist/styles/album.css', import.meta.url),
+      ),
+      fileURLToPath(
+        new URL('../../vue/dist/styles/photo-structure.css', import.meta.url),
+      ),
+      fileURLToPath(
+        new URL(
+          '../../vue/dist/styles/carousel-structure.css',
+          import.meta.url,
+        ),
+      ),
     ]
     const themeCSS = [
-      '@nuxt-photo/recipes/styles/lightbox-theme.css',
-      '@nuxt-photo/recipes/styles/photo.css',
-      '@nuxt-photo/recipes/styles/carousel-theme.css',
+      fileURLToPath(
+        new URL('../../vue/dist/styles/lightbox-theme.css', import.meta.url),
+      ),
+      fileURLToPath(
+        new URL('../../vue/dist/styles/photo.css', import.meta.url),
+      ),
+      fileURLToPath(
+        new URL('../../vue/dist/styles/carousel-theme.css', import.meta.url),
+      ),
     ]
 
     const cssFiles =

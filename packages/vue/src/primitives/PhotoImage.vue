@@ -19,7 +19,7 @@ import {
   type PhotoItem,
   type ImageAdapter,
   type ImageContext,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import { ImageAdapterKey } from '../provide/keys'
 
 const props = withDefaults(

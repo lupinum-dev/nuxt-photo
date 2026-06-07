@@ -111,5 +111,5 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-} from '@nuxt-photo/vue'
+} from '@nuxt-photo/nuxt/app'
 </script>

@@ -1,4 +1,4 @@
-import { photoId, type PhotoItem } from '@nuxt-photo/core'
+import { photoId, type PhotoItem } from '../core/index'
 import type {
   LightboxController,
   InternalLightboxContext,

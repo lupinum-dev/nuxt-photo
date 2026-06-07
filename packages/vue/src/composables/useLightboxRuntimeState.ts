@@ -16,7 +16,7 @@ import {
   type LoadImageResult,
   type LightboxTransitionOption,
   type PhotoItem,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import { usePanzoom } from './usePanzoom'
 import { useCarousel } from './useCarousel'
 import { useGhostTransition } from './useGhostTransition'

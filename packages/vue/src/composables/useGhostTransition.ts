@@ -3,7 +3,7 @@ import type {
   AreaMetrics,
   PhotoItem,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import { createGhostState, setThumbRef } from './ghost/state'
 import { openTransition } from './ghost/openTransition'
 import { createCloseTransition } from './ghost/closeTransition'

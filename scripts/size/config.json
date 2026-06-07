@@ -1,16 +1,4 @@
 {
-  "core": {
-    "responsive": {
-      "label": "responsive named import",
-      "sizeLimit": "450 B",
-      "brotliLimit": 450
-    },
-    "all": {
-      "label": "full namespace import",
-      "sizeLimit": "8.5 kB",
-      "brotliLimit": 8704
-    }
-  },
   "vue": {
     "use-lightbox": {
       "label": "useLightbox named import",
@@ -22,7 +10,11 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 23552
+      "brotliLimit": 34816
+    },
+    "responsive": {
+      "label": "responsive named import",
+      "brotliLimit": 700
     }
   },
   "nuxt": {

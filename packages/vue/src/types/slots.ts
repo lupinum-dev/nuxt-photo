@@ -1,4 +1,4 @@
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '../core/index'
 import type { Ref } from 'vue'
 
 // ─── Lightbox primitive slot props ─────────────────────────────────────────

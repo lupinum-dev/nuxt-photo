@@ -3,7 +3,7 @@
  *
  * The public entry point is {@link openTransition}; it selects one of three
  * paths based on `transitionConfig.mode`, the thumbnail rect, and the
- * visibility heuristic in `shouldUseFlip` (from `@nuxt-photo/core`):
+ * visibility heuristic in `shouldUseFlip` (from `../../core/index`):
  *
  *   1. `doInstantOpen` — `mode: 'none'` (tests, reduced-motion). Overlay to 1,
  *      wait for the image. Successful loads reveal media + chrome. Failed
@@ -44,7 +44,7 @@ import {
   shouldUseFlip,
   type PhotoItem,
   type RectLike,
-} from '@nuxt-photo/core'
+} from '../../core/index'
 import {
   openDurationMs,
   type GhostState,

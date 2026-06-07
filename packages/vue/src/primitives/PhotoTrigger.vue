@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '../core/index'
 import { useLightboxInject } from '../composables/useLightboxInject'
 
 const props = defineProps<{

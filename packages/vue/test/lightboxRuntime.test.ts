@@ -2,7 +2,7 @@
 
 import { computed, createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, useLightboxProvider } from '../src/composables'
 import { useLightboxRuntimeState } from '../src/composables/useLightboxRuntimeState'

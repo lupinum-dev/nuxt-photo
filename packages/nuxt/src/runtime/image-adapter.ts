@@ -3,7 +3,7 @@ import type {
   ImageContext,
   ImageSource,
   PhotoItem,
-} from '@nuxt-photo/core'
+} from '@nuxt-photo/vue'
 
 export type NuxtImageFunction = {
   (src: string, options: { width: number; quality: number }): string

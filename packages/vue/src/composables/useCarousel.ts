@@ -8,7 +8,7 @@ import {
 } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType } from 'embla-carousel'
-import { fitRect, type AreaMetrics, type PhotoItem } from '@nuxt-photo/core'
+import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
 import type { DebugLogger } from '../internal/runtime'
 
 /** Bind Embla-based slide navigation to the active lightbox photo collection. */

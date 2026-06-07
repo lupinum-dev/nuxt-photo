@@ -27,9 +27,9 @@
 
     <footer class="footer">
       <p class="footer__line">
-        Built with <span class="footer__pkg">@nuxt-photo/core</span>,
-        <span class="footer__pkg">@nuxt-photo/vue</span>,
-        <span class="footer__pkg">@nuxt-photo/recipes</span>, and
+        Built with <span class="footer__pkg">@nuxt-photo/nuxt/app</span>,
+        <span class="footer__pkg">@nuxt-photo/nuxt/app</span>,
+        <span class="footer__pkg">@nuxt-photo/nuxt/app</span>, and
         <span class="footer__pkg">@nuxt-photo/nuxt</span>.
       </p>
       <p class="footer__sub">

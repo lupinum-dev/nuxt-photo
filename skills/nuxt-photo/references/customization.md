@@ -142,7 +142,7 @@ export default defineNuxtConfig({
 
 ```ts
 // app/utils/photoAdapter.ts
-import type { ImageAdapter, PhotoItem } from '@nuxt-photo/nuxt'
+import type { ImageAdapter, PhotoItem } from '@nuxt-photo/nuxt/app'
 
 const BASE = 'https://cdn.example.com/transform'
 
@@ -201,7 +201,7 @@ Use Nuxt payload hydration for server-generated signed URLs:
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt'
+import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 
 type CdnPhoto = {
   id: string

@@ -26,6 +26,10 @@
     ".": {
       "import": "./dist/module.mjs",
       "types": "./dist/module.d.mts"
+    },
+    "./app": {
+      "import": "./dist/runtime/app.js",
+      "types": "./dist/runtime/app.d.ts"
     }
   },
   "main": "./dist/module.mjs",
@@ -37,8 +41,6 @@
     "dev": "nuxt-module-build build --stub"
   },
   "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
-    "@nuxt-photo/recipes": "workspace:*",
     "@nuxt-photo/vue": "workspace:*",
     "@nuxt/kit": "^4.4.6",
     "@nuxt/schema": "^4.4.6"

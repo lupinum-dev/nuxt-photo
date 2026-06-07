@@ -12,7 +12,7 @@ import type {
   PanState,
   PhotoItem,
   ZoomState,
-} from '@nuxt-photo/core'
+} from '../core/index'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 

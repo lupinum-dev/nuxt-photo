@@ -1,4 +1,3 @@
-import { build as esbuildBuild } from 'esbuild'
 import { build as viteBuild } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -26,28 +25,13 @@ const fixturesRoot = resolve(root, 'test', 'size')
 const resultsRoot = resolve(root, 'test-results', 'size')
 const analyzeRoot = resolve(root, 'test-results', 'size-analyze')
 const nuxiBin = resolve(nuxtPackageRoot, 'node_modules', '.bin', 'nuxi')
-const sizeLimitBin = resolve(root, 'node_modules', '.bin', 'size-limit')
 
 const args = process.argv.slice(2)
 const analyze = args.includes('--analyze')
-const target =
-  ['core', 'vue', 'nuxt'].find((arg) => args.includes(arg)) ?? 'all'
-
-const coreScenarios = [
-  {
-    id: 'responsive',
-    name: 'core:responsive',
-    source:
-      "import { responsive } from '@nuxt-photo/core'; console.log(responsive)",
-  },
-  {
-    id: 'all',
-    name: 'core:all',
-    source: "import * as core from '@nuxt-photo/core'; console.log(core)",
-  },
-]
+const target = ['vue', 'nuxt'].find((arg) => args.includes(arg)) ?? 'all'
 
 const vueScenarios = [
+  { id: 'responsive', name: 'vue:responsive' },
   { id: 'use-lightbox', name: 'vue:use-lightbox' },
   { id: 'photo-image', name: 'vue:photo-image' },
   { id: 'all', name: 'vue:all' },
@@ -67,44 +51,7 @@ async function main() {
 
   ensureBuild(target)
 
-  let sizeLimitResults = new Map()
-  if (target === 'all' || target === 'core') {
-    sizeLimitResults = runSizeLimit()
-  }
-
   const failures = []
-
-  if (target === 'all' || target === 'core') {
-    const rows = []
-    for (const scenario of coreScenarios) {
-      const result = await measureCoreScenario(scenario)
-      const sizeLimitResult = sizeLimitResults.get(scenario.name)
-      const passed =
-        sizeLimitResult?.passed ??
-        result.brotli <= limits.core[scenario.id].brotliLimit
-      if (!passed) failures.push(scenario.name)
-      rows.push({
-        scenario: limits.core[scenario.id].label,
-        raw: formatBytes(result.raw),
-        gzip: formatBytes(result.gzip),
-        brotli: formatBytes(result.brotli),
-        limit: formatBytes(limits.core[scenario.id].brotliLimit),
-        status: passed ? 'PASS' : 'FAIL',
-      })
-    }
-    printTable(
-      'Core',
-      ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'],
-      rows.map((row) => [
-        row.scenario,
-        row.raw,
-        row.gzip,
-        row.brotli,
-        row.limit,
-        row.status,
-      ]),
-    )
-  }
 
   if (target === 'all' || target === 'vue') {
     const rows = []
@@ -200,66 +147,13 @@ function ensureBuild(surface) {
   }
 
   const buildSets = {
-    core: ['@nuxt-photo/core'],
-    vue: ['@nuxt-photo/core', '@nuxt-photo/vue'],
-    nuxt: [
-      '@nuxt-photo/core',
-      '@nuxt-photo/vue',
-      '@nuxt-photo/recipes',
-      '@nuxt-photo/nuxt',
-    ],
+    vue: ['@nuxt-photo/vue'],
+    nuxt: ['@nuxt-photo/vue', '@nuxt-photo/nuxt'],
   }
 
   for (const pkg of buildSets[surface]) {
     runCommand('pnpm', ['--filter', pkg, 'build'])
   }
-}
-
-function runSizeLimit() {
-  const stdout = execFileSync(sizeLimitBin, ['--json'], {
-    cwd: root,
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      FORCE_COLOR: '0',
-    },
-  })
-
-  const parsed = JSON.parse(stdout)
-  const results = new Map()
-  for (const entry of parsed) {
-    results.set(entry.name, entry)
-  }
-  return results
-}
-
-async function measureCoreScenario(scenario) {
-  const result = await esbuildBuild({
-    stdin: {
-      contents: scenario.source,
-      resolveDir: root,
-      sourcefile: `${scenario.id}.ts`,
-      loader: 'ts',
-    },
-    bundle: true,
-    format: 'esm',
-    platform: 'browser',
-    treeShaking: true,
-    minify: true,
-    write: false,
-    metafile: analyze,
-  })
-
-  const output = result.outputFiles[0].contents
-
-  if (analyze && result.metafile) {
-    writeFileSync(
-      resolve(analyzeRoot, `${scenario.name}.metafile.json`),
-      JSON.stringify(result.metafile, null, 2),
-    )
-  }
-
-  return sizeBuffer(output)
 }
 
 async function measureViteFixture(fixtureId) {

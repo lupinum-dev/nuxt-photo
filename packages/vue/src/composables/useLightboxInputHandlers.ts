@@ -9,7 +9,7 @@ import {
   type PanState,
   type PhotoItem,
   type ZoomState,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import type { PanzoomMotion } from './lightboxRuntimeTypes'
 import {
   MOUSE_WHEEL_THROTTLE_MS,

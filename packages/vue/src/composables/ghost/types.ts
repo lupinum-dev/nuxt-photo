@@ -6,7 +6,7 @@ import type {
   PhotoItem,
   RectLike,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '../../core/index'
 import type { DebugLogger } from '../../internal/runtime'
 
 export const openDurationMs = 420

@@ -10,7 +10,7 @@ import type {
   AreaMetrics,
   PhotoItem,
   TransitionModeConfig,
-} from '@nuxt-photo/core'
+} from '../../core/index'
 import type { GhostState } from './types'
 import type { DebugLogger } from '../../internal/runtime'
 

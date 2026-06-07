@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { demoPhotos } from '~/composables/demoPhotos'
-import { responsive } from '@nuxt-photo/core'
+import { responsive } from '@nuxt-photo/nuxt/app'
 </script>
 
 <template>

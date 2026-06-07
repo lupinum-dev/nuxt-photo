@@ -1,5 +1,5 @@
 import { provide } from 'vue'
-import type { ImageAdapter, PhotoItem } from '@nuxt-photo/core'
+import type { ImageAdapter, PhotoItem } from '../core/index'
 import {
   type InternalLightboxContext,
   ImageAdapterKey,

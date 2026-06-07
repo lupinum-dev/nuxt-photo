@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '@nuxt-photo/vue'
 import {
   createNuxtImageAdapter,
   DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG,

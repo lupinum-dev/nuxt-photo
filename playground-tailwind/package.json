@@ -8,10 +8,7 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/nuxt": "workspace:*",
-    "@nuxt-photo/recipes": "workspace:*",
-    "@nuxt-photo/vue": "workspace:*",
     "@tailwindcss/vite": "^4.2.4",
     "nuxt": "^4.4.6",
     "tailwindcss": "^4.2.4"

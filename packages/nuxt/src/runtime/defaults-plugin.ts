@@ -1,5 +1,5 @@
 import { defineNuxtPlugin, type Plugin, useAppConfig } from '#app'
-import { LightboxDefaultsKey } from '@nuxt-photo/vue'
+import { LightboxDefaultsKey } from '@nuxt-photo/vue/provide'
 
 const nuxtPhotoDefaultsPlugin: Plugin = (nuxtApp): void => {
   const lightbox = useAppConfig().nuxtPhoto?.lightbox

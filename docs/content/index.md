@@ -57,7 +57,7 @@ Get started
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt'
+import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 
 const photos: PhotoItem[] = [
   {

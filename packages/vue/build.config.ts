@@ -9,7 +9,7 @@ export default defineBuildConfig({
     'vue',
     'embla-carousel-vue',
     'embla-carousel',
-    '@nuxt-photo/core',
+    'embla-carousel-autoplay',
   ],
   failOnWarn: false,
 })

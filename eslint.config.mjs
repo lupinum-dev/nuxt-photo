@@ -86,7 +86,7 @@ export default tseslint.config(
   },
   {
     files: [
-      'packages/core/src/debug/logger.ts',
+      'packages/vue/src/core/debug/logger.ts',
       'scripts/size/run.mjs',
       'test/size/**/*.ts',
     ],

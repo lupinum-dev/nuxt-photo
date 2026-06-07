@@ -4,7 +4,7 @@ import {
   chooseCloseTransition,
   DEFAULT_TRANSITION_CONFIG,
   type RectLike,
-} from '@nuxt-photo/core'
+} from '../../core/index'
 import {
   closeDurationMs,
   fadeDurationMs,

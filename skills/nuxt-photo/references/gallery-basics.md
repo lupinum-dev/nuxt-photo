@@ -45,7 +45,7 @@ export default defineNuxtConfig({
 })
 ```
 
-Only install `@nuxt-photo/core`, `@nuxt-photo/vue`, or `@nuxt-photo/recipes` directly when app code imports directly from those packages.
+Only install `@nuxt-photo/vue`, `@nuxt-photo/vue`, or `@nuxt-photo/vue` directly when app code imports directly from those packages.
 
 ## First Styled Result
 
@@ -65,7 +65,7 @@ export default defineNuxtConfig({
 Every rendered photo must have:
 
 ```ts
-import type { PhotoItem } from '@nuxt-photo/nuxt'
+import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 
 const photos: PhotoItem[] = [
   {
@@ -91,7 +91,7 @@ Rules:
 Map external data with `PhotoMapper` instead of spreading CMS records into components:
 
 ```ts
-import type { PhotoMapper } from '@nuxt-photo/nuxt'
+import type { PhotoMapper } from '@nuxt-photo/nuxt/app'
 
 type Asset = {
   sys: { id: string }

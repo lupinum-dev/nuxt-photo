@@ -63,7 +63,7 @@ export default defineNuxtConfig({
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt'
+import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 
 const photos: PhotoItem[] = [
   {
@@ -93,19 +93,16 @@ albums, groups, carousels, and custom lightbox triggers.
 
 ## Package map
 
-- `@nuxt-photo/nuxt` is the Nuxt module. Install this first in Nuxt apps.
-- `@nuxt-photo/recipes` contains ready-to-use Vue components such as
-  `<PhotoAlbum>` and `<PhotoCarousel>`, plus recipe-level helper exports like
-  `responsive()` and common prop types.
-- `@nuxt-photo/vue` contains composables and lightbox primitives for custom UI.
-- `@nuxt-photo/core` contains framework-free photo normalization, layout,
-  image, geometry, gesture, viewer, and transition helpers.
+- `@nuxt-photo/nuxt` is the Nuxt module. Nuxt apps install only this package.
+  App/runtime imports use `@nuxt-photo/nuxt/app`.
+- `@nuxt-photo/vue` is the Vue library. Plain Vue apps install this package for
+  components, composables, primitives, styles, common types, and photo helpers.
 
 ## Public API and stability
 
 Nuxt Photo is pre-1.0. The stable public surface is the documented root exports
-from `@nuxt-photo/nuxt`, `@nuxt-photo/recipes`, `@nuxt-photo/vue`, and
-`@nuxt-photo/core`.
+from `@nuxt-photo/vue`, the Nuxt module entry `@nuxt-photo/nuxt`, and the Nuxt
+app entry `@nuxt-photo/nuxt/app`.
 
 Generated files, deep imports, and undocumented exports are internal even if
 they are visible in the package output.
@@ -116,8 +113,6 @@ they are visible in the package output.
 - [Live examples](https://nuxt-photo.lupinum.com)
 - [Nuxt package guide](./packages/nuxt/README.md)
 - [Vue package guide](./packages/vue/README.md)
-- [Recipes package guide](./packages/recipes/README.md)
-- [Core package guide](./packages/core/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Security policy](./SECURITY.md)

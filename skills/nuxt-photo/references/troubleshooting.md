@@ -22,7 +22,7 @@ cat package.json
 rg "nuxtPhoto|@nuxt-photo|@nuxt/image|PhotoAlbum|PhotoGroup|PhotoCarousel|useLightboxProvider" .
 ```
 
-In Nuxt apps, check whether imports are auto-imported or explicit. If explicit imports use `@nuxt-photo/vue`, `@nuxt-photo/core`, or `@nuxt-photo/recipes`, the app should list that package directly.
+In Nuxt apps, check whether imports are auto-imported or explicit. If explicit imports use `@nuxt-photo/vue`, `@nuxt-photo/vue`, or `@nuxt-photo/vue`, the app should list that package directly.
 
 ## Verification Commands
 

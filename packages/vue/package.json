@@ -2,7 +2,7 @@
   "name": "@nuxt-photo/vue",
   "version": "0.1.0",
   "type": "module",
-  "description": "Vue composables and primitives for Nuxt Photo.",
+  "description": "Vue components, composables, and photo utilities for Nuxt Photo.",
   "keywords": [
     "nuxt-photo",
     "vue",
@@ -26,11 +26,28 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
+    },
+    "./composables": {
+      "import": "./dist/composables/index.mjs",
+      "types": "./dist/composables/index.d.ts"
+    },
+    "./provide": {
+      "import": "./dist/provide/keys.mjs",
+      "types": "./dist/provide/keys.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.mjs",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./styles.css": {
+      "default": "./dist/styles.css"
     }
   },
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "dist"
   ],
@@ -39,14 +56,14 @@
     "dev": "unbuild --stub"
   },
   "dependencies": {
-    "@nuxt-photo/core": "workspace:*",
+    "embla-carousel": "9.0.0-rc02",
+    "embla-carousel-autoplay": "9.0.0-rc02",
     "embla-carousel-vue": "9.0.0-rc02"
   },
   "peerDependencies": {
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "embla-carousel": "9.0.0-rc02",
     "typescript": "5.9.3",
     "unbuild": "^3.5.0",
     "vue": "3.5.33",

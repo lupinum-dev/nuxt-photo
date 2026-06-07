@@ -135,7 +135,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'PhotoGroup — nuxt-photo' })

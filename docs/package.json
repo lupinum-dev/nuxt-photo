@@ -12,7 +12,6 @@
     "@iconify-json/lucide": "^1.2.102",
     "@iconify-json/simple-icons": "^1.2.79",
     "@iconify-json/vscode-icons": "^1.2.46",
-    "@nuxt-photo/core": "workspace:*",
     "@nuxt-photo/nuxt": "workspace:*",
     "@nuxt/content": "^3.14.0",
     "@nuxt/fonts": "^0.14.0",

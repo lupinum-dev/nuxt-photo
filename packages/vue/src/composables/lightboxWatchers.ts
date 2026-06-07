@@ -13,7 +13,7 @@ import {
   type AreaMetrics,
   type ImageAdapter,
   type PhotoItem,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import {
   lockBodyScroll,
   nextFrame,

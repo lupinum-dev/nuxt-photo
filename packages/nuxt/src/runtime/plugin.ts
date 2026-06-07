@@ -1,6 +1,6 @@
 import { defineNuxtPlugin, type NuxtApp, useAppConfig } from '#app'
 import { useImage } from '#imports'
-import { ImageAdapterKey } from '@nuxt-photo/vue'
+import { ImageAdapterKey } from '@nuxt-photo/vue/provide'
 import { createNuxtImageAdapter } from './image-adapter'
 
 export default defineNuxtPlugin({

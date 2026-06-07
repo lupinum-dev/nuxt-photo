@@ -10,7 +10,7 @@ import type {
   ImageAdapter,
   LightboxTransitionOption,
   PhotoItem,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import { useLightboxProvider } from '../composables/useLightboxProvider'
 
 defineOptions({ inheritAttrs: false })

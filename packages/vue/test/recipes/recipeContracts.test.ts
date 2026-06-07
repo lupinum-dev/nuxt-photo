@@ -1,0 +1,946 @@
+// @vitest-environment jsdom
+
+import {
+  computed,
+  createApp,
+  defineComponent,
+  h,
+  nextTick,
+  onMounted,
+  provide,
+  ref,
+  type Component,
+  type InjectionKey,
+} from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  Lightbox,
+  LightboxControls,
+  LightboxSlide,
+  useLightbox,
+  useLightboxProvider,
+} from '@nuxt-photo/vue'
+import type { PhotoItem } from '../../src/core/index'
+import { makePhoto } from '@test-fixtures/photos'
+import Photo from '../../src/components/Photo.vue'
+import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
+import PhotoGroup from '../../src/components/PhotoGroup.vue'
+import {
+  PhotoGroupContextKey,
+  type PhotoGroupContext,
+} from '../../src/context/photoGroup'
+
+function createImmediateImage(requests: string[] = []) {
+  return class ImmediateImage {
+    onload: null | (() => void) = null
+    onerror: null | (() => void) = null
+    complete = true
+
+    decode() {
+      return Promise.resolve()
+    }
+
+    set src(value: string) {
+      requests.push(value)
+      queueMicrotask(() => {
+        this.onload?.()
+      })
+    }
+  }
+}
+
+const TestLightbox = defineComponent({
+  name: 'TestLightbox',
+  setup() {
+    return () =>
+      h(LightboxControls, null, {
+        default: ({ photos }: { photos: PhotoItem[] }) =>
+          h(
+            'div',
+            { 'data-testid': 'test-lightbox' },
+            photos.map((photo, index) =>
+              h(LightboxSlide, {
+                key: photo.id,
+                photo,
+                index,
+              }),
+            ),
+          ),
+      })
+  },
+})
+
+async function flushUi(iterations = 6) {
+  for (let i = 0; i < iterations; i++) {
+    await Promise.resolve()
+    await nextTick()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+}
+
+async function mountComponent(
+  component: Component,
+  options?: {
+    props?: Record<string, unknown>
+    slots?: Record<string, (...args: any[]) => any>
+    provideValues?: Array<[InjectionKey<any> | string, unknown]>
+  },
+) {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+
+  const app = createApp({
+    setup() {
+      for (const [key, value] of options?.provideValues ?? []) {
+        provide(key as any, value)
+      }
+
+      return () => h(component, options?.props ?? {}, options?.slots ?? {})
+    },
+  })
+
+  app.mount(container)
+  await flushUi(2)
+
+  return {
+    app,
+    container,
+    unmount() {
+      app.unmount()
+      container.remove()
+    },
+  }
+}
+
+describe('recipe contracts', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    )
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+        takeRecords() {
+          return []
+        }
+      },
+    )
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation(() => ({
+        matches: false,
+        addEventListener() {},
+        removeEventListener() {},
+        addListener() {},
+        removeListener() {},
+        dispatchEvent() {
+          return false
+        },
+      })),
+    )
+    vi.stubGlobal('Image', createImmediateImage())
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+      window.setTimeout(() => callback(performance.now() + 1000), 0),
+    )
+    vi.stubGlobal('cancelAnimationFrame', (id: number) =>
+      window.clearTimeout(id),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    document.body.innerHTML = ''
+  })
+
+  it('renders plain Photo with thumb semantics instead of slide semantics', async () => {
+    const photo = makePhoto({ id: 'plain-photo' })
+    const imageAdapter = vi.fn(
+      (item: PhotoItem, context: 'thumb' | 'slide') => ({
+        src: `/${context}/${item.id}.jpg`,
+        width: item.width,
+        height: item.height,
+      }),
+    )
+
+    const mounted = await mountComponent(Photo, {
+      props: { photo, imageAdapter },
+    })
+
+    const img = mounted.container.querySelector('img')
+
+    expect(img?.getAttribute('src')).toBe('/thumb/plain-photo.jpg')
+    expect(
+      new Set(imageAdapter.mock.calls.map(([, context]) => context)),
+    ).toEqual(new Set(['thumb']))
+
+    mounted.unmount()
+  })
+
+  it('maps external item shapes before album rendering', async () => {
+    const raw = {
+      assetId: 'cms-asset',
+      url: '/cms/full.jpg',
+      thumbUrl: '/cms/thumb.jpg',
+      w: 1200,
+      h: 800,
+      title: 'Mapped CMS asset',
+    }
+    const itemMapper = vi.fn((item: typeof raw): PhotoItem => {
+      return {
+        id: item.assetId,
+        src: item.url,
+        thumbSrc: item.thumbUrl,
+        width: item.w,
+        height: item.h,
+        alt: item.title,
+      }
+    })
+
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [raw],
+        itemMapper,
+        lightbox: false,
+        defaultContainerWidth: 800,
+      },
+    })
+
+    await flushUi()
+
+    const img = mounted.container.querySelector('img')
+    expect(itemMapper).toHaveBeenCalledWith(raw)
+    expect(img?.getAttribute('src')).toBe('/cms/thumb.jpg')
+    expect(img?.getAttribute('alt')).toBe('Mapped CMS asset')
+
+    mounted.unmount()
+  })
+
+  it('passes active index and count to recipe lightbox action slots', async () => {
+    const photos = [
+      makePhoto({ id: 'actions-a' }),
+      makePhoto({ id: 'actions-b' }),
+    ]
+    let actionProps: {
+      activeIndex: number
+      count: number
+    } | null = null
+
+    const Host = defineComponent({
+      name: 'ActionSlotHost',
+      setup() {
+        const lightbox = useLightboxProvider(photos)
+
+        onMounted(() => {
+          void lightbox.open(1)
+        })
+
+        return () =>
+          h(Lightbox, null, {
+            actions: (props: { activeIndex: number; count: number }) => {
+              actionProps = props
+              return h('div', {
+                'data-active-index': props.activeIndex,
+                'data-count': props.count,
+              })
+            },
+          })
+      },
+    })
+
+    const mounted = await mountComponent(Host)
+    await flushUi()
+
+    expect(actionProps?.activeIndex).toBe(1)
+    expect(actionProps?.count).toBe(2)
+    expect(
+      document.body.querySelector('[data-active-index="1"][data-count="2"]'),
+    ).not.toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('renders PhotoAlbum with no trigger behavior when lightbox is disabled', async () => {
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [makePhoto({ id: 'plain-album' })],
+        lightbox: false,
+        defaultContainerWidth: 800,
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('uses the imageAdapter for slide rendering and lightbox preload requests', async () => {
+    const imageRequests: string[] = []
+    vi.stubGlobal('Image', createImmediateImage(imageRequests))
+
+    const photos = [
+      makePhoto({
+        id: 'adapter-a',
+        src: '/raw/a.jpg',
+        thumbSrc: '/raw/a-thumb.jpg',
+      }),
+      makePhoto({
+        id: 'adapter-b',
+        src: '/raw/b.jpg',
+        thumbSrc: '/raw/b-thumb.jpg',
+      }),
+      makePhoto({
+        id: 'adapter-c',
+        src: '/raw/c.jpg',
+        thumbSrc: '/raw/c-thumb.jpg',
+      }),
+    ]
+    const imageAdapter = vi.fn(
+      (photo: PhotoItem, context: 'thumb' | 'slide') => ({
+        src: `/adapter/${context}/${photo.id}.jpg`,
+        width: photo.width,
+        height: photo.height,
+      }),
+    )
+
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos,
+        imageAdapter,
+        transition: 'none',
+        defaultContainerWidth: 800,
+      },
+    })
+
+    const trigger = mounted.container.querySelector(
+      '[role="button"]',
+    ) as HTMLElement | null
+    expect(trigger).toBeTruthy()
+
+    trigger?.click()
+    await flushUi()
+
+    expect(
+      document.body.querySelector('img[src="/adapter/slide/adapter-a.jpg"]'),
+    ).toBeTruthy()
+    expect(imageRequests).toContain('/adapter/slide/adapter-a.jpg')
+    expect(imageRequests).toContain('/adapter/slide/adapter-b.jpg')
+    expect(imageRequests.some((src) => src.startsWith('/raw/'))).toBe(false)
+    expect(
+      new Set(imageAdapter.mock.calls.map(([, context]) => context)),
+    ).toEqual(new Set(['thumb', 'slide']))
+
+    mounted.unmount()
+  })
+
+  it('refreshes PhotoAlbum auto-group registrations when photos reorder, insert, or remove', async () => {
+    const a = makePhoto({ id: 'a' })
+    const b = makePhoto({ id: 'b' })
+    const c = makePhoto({ id: 'c' })
+    const photos = ref<PhotoItem[]>([a, b])
+    const register = vi.fn()
+    const unregister = vi.fn()
+
+    const parentGroup: PhotoGroupContext = {
+      mode: computed(() => 'auto'),
+      lightboxEnabled: computed(() => true),
+      register,
+      unregister,
+      open: vi.fn(async () => {}),
+      openPhoto: vi.fn(async () => {}),
+      openById: vi.fn(async () => {}),
+      photos: computed(() => photos.value),
+      hiddenPhoto: computed(() => null),
+    }
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(PhotoAlbum, {
+            photos: photos.value,
+            lightbox: false,
+          })
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper, {
+      provideValues: [[PhotoGroupContextKey, parentGroup]],
+    })
+
+    // Initial: a and b registered
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual(['a', 'b'])
+
+    register.mockClear()
+    unregister.mockClear()
+
+    // Reorder + insert c: registrations are rebuilt in render order.
+    photos.value = [b, a, c]
+    await flushUi()
+    expect(unregister).toHaveBeenCalledTimes(2)
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual([
+      'b',
+      'a',
+      'c',
+    ])
+
+    register.mockClear()
+    unregister.mockClear()
+
+    // Remove b: registrations are rebuilt again so Map insertion order stays correct.
+    photos.value = [c, a]
+    await flushUi()
+    expect(unregister).toHaveBeenCalledTimes(3)
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual(['c', 'a'])
+
+    register.mockClear()
+    unregister.mockClear()
+
+    // Unmount: current registrations (c, a) cleaned up.
+    mounted.unmount()
+    expect(unregister).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps explicit PhotoGroup photos as the only source of truth', async () => {
+    const explicit = makePhoto({ id: 'explicit-source' })
+    const child = makePhoto({ id: 'ignored-child' })
+    let slotPhotos: PhotoItem[] = []
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        photos: [explicit],
+        lightbox: false,
+      },
+      slots: {
+        default: (props: { photos: PhotoItem[] }) => {
+          slotPhotos = props.photos
+          return [h(Photo, { photo: child })]
+        },
+      },
+    })
+
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['explicit-source'])
+    expect(
+      mounted.container.querySelector('.np-photo')?.getAttribute('role'),
+    ).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('keeps disabled explicit PhotoGroup triggers inert', async () => {
+    const photos = [
+      makePhoto({ id: 'disabled-explicit-a' }),
+      makePhoto({ id: 'disabled-explicit-b' }),
+    ]
+    let groupApi: any = null
+    let slotPhotos: PhotoItem[] = []
+    let triggerAttrs: Record<string, unknown> | null = null
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: false,
+            },
+            {
+              default: ({ trigger, photos }: Record<string, any>) => {
+                slotPhotos = photos
+                triggerAttrs = trigger(photos[0], 0)
+                return [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      id: 'disabled-explicit-trigger',
+                      ...triggerAttrs,
+                    },
+                    'No lightbox',
+                  ),
+                ]
+              },
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+    const trigger = mounted.container.querySelector<HTMLButtonElement>(
+      '#disabled-explicit-trigger',
+    )
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual([
+      'disabled-explicit-a',
+      'disabled-explicit-b',
+    ])
+    expect(triggerAttrs).toEqual({
+      'data-nuxt-photo-trigger': 'disabled-explicit-a',
+    })
+    expect(trigger?.getAttribute('role')).toBeNull()
+    expect(trigger?.hasAttribute('tabindex')).toBe(false)
+
+    trigger?.click()
+    await groupApi.value.openById('disabled-explicit-b')
+    await groupApi.value.openPhoto(photos[0]!)
+    await groupApi.value.open(0)
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('does not provide a useLightbox context when PhotoGroup is disabled', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const Probe = defineComponent({
+      setup() {
+        useLightbox()
+        return () => null
+      },
+    })
+
+    try {
+      await expect(
+        mountComponent(PhotoGroup, {
+          props: {
+            photos: [makePhoto({ id: 'disabled-context' })],
+            lightbox: false,
+          },
+          slots: {
+            default: () => h(Probe),
+          },
+        }),
+      ).rejects.toThrow('requires an active lightbox context')
+    } finally {
+      warn.mockRestore()
+      error.mockRestore()
+    }
+  })
+
+  it('keeps disabled auto PhotoGroup children inert', async () => {
+    const albumPhoto = makePhoto({ id: 'disabled-album-photo' })
+    const singlePhoto = makePhoto({ id: 'disabled-single-photo' })
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        lightbox: false,
+      },
+      slots: {
+        default: () => [
+          h(Photo, { photo: singlePhoto }),
+          h(PhotoAlbum, {
+            photos: [albumPhoto],
+            defaultContainerWidth: 800,
+          }),
+        ],
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.container.querySelector<HTMLElement>('.np-photo')?.click()
+    mounted.container.querySelector<HTMLElement>('.np-album__item')?.click()
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('keeps a PhotoGroup mounted disabled inert if lightbox later changes', async () => {
+    const enabled = ref(false)
+    const albumPhoto = makePhoto({ id: 'late-enabled-album-photo' })
+    const singlePhoto = makePhoto({ id: 'late-enabled-single-photo' })
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              lightbox: enabled.value,
+            },
+            {
+              default: () => [
+                h(Photo, { photo: singlePhoto }),
+                h(PhotoAlbum, {
+                  photos: [albumPhoto],
+                  defaultContainerWidth: 800,
+                }),
+              ],
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    enabled.value = true
+    await flushUi()
+
+    expect(mounted.container.querySelector('.np-lightbox')).toBeNull()
+    expect(mounted.container.querySelector('[role="button"]')).toBeNull()
+    expect(mounted.container.querySelector('[tabindex]')).toBeNull()
+
+    mounted.container.querySelector<HTMLElement>('.np-photo')?.click()
+    mounted.container.querySelector<HTMLElement>('.np-album__item')?.click()
+    await flushUi()
+
+    expect(document.body.querySelector('.np-lightbox')).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('ignores child slide renderers in explicit PhotoGroup mode', async () => {
+    const explicit = makePhoto({ id: 'explicit-slide' })
+    const child = makePhoto({ id: 'child-slide' })
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        photos: [explicit],
+        lightbox: TestLightbox,
+      },
+      slots: {
+        default: () => [
+          h(
+            Photo,
+            { photo: child },
+            {
+              slide: () =>
+                h('div', { 'data-testid': 'ignored-slide' }, 'ignored'),
+            },
+          ),
+        ],
+      },
+    })
+
+    await flushUi()
+
+    expect(
+      mounted.container.querySelector('[data-testid="ignored-slide"]'),
+    ).toBeNull()
+
+    mounted.unmount()
+  })
+
+  it('renders custom solo slide content through a custom lightbox recipe', async () => {
+    const photo = makePhoto({ id: 'solo-slide' })
+
+    const mounted = await mountComponent(Photo, {
+      props: {
+        photo,
+        lightbox: TestLightbox,
+      },
+      slots: {
+        slide: ({ photo: slidePhoto }: { photo: PhotoItem }) =>
+          h(
+            'div',
+            { 'data-testid': 'solo-custom-slide' },
+            `Solo ${slidePhoto.id}`,
+          ),
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.innerHTML).toContain('solo-custom-slide')
+    expect(mounted.container.textContent ?? '').toContain('solo-slide')
+
+    mounted.unmount()
+  })
+
+  it('renders custom grouped slide content through a custom lightbox recipe', async () => {
+    const photo = makePhoto({ id: 'grouped-slide' })
+
+    const mounted = await mountComponent(PhotoGroup, {
+      props: {
+        lightbox: TestLightbox,
+      },
+      slots: {
+        default: () => [
+          h(
+            Photo,
+            { photo },
+            {
+              slide: ({ photo: slidePhoto }: { photo: PhotoItem }) =>
+                h(
+                  'div',
+                  { 'data-testid': 'grouped-custom-slide' },
+                  `Grouped ${slidePhoto.id}`,
+                ),
+            },
+          ),
+        ],
+      },
+    })
+
+    await flushUi()
+
+    expect(
+      mounted.container.querySelector('[data-testid="grouped-custom-slide"]')
+        ?.textContent,
+    ).toContain('grouped-slide')
+
+    mounted.unmount()
+  })
+
+  it('exposes the documented custom layout PhotoGroup slot helpers and methods', async () => {
+    const photos = [
+      makePhoto({ id: 'custom-layout-a' }),
+      makePhoto({ id: 'custom-layout-b' }),
+    ]
+
+    let slotProps: Record<string, any> | null = null
+    let groupApi: any = null
+    let lightboxApi: ReturnType<typeof useLightbox> | null = null
+
+    const Probe = defineComponent({
+      setup() {
+        lightboxApi = useLightbox()
+        return () => null
+      },
+    })
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: TestLightbox,
+            },
+            {
+              default: (props: Record<string, any>) => {
+                slotProps = props
+                return [h(Probe)]
+              },
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    expect(slotProps).toBeTruthy()
+    expect(slotProps?.photos).toHaveLength(2)
+    expect(typeof slotProps?.open).toBe('function')
+    expect(typeof slotProps?.openPhoto).toBe('function')
+    expect(typeof slotProps?.openById).toBe('function')
+    expect(typeof slotProps?.setThumbRef).toBe('function')
+    expect(typeof slotProps?.trigger).toBe('function')
+    expect(typeof groupApi?.value?.open).toBe('function')
+    expect(typeof groupApi?.value?.openPhoto).toBe('function')
+    expect(typeof groupApi?.value?.openById).toBe('function')
+
+    await groupApi.value.openById('custom-layout-b')
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(true)
+    expect(lightboxApi?.activeIndex.value).toBe(1)
+
+    await groupApi.value.openPhoto(photos[0]!)
+    await flushUi()
+    expect(lightboxApi?.activeIndex.value).toBe(0)
+
+    await groupApi.value.openById('missing-photo')
+    await flushUi()
+    expect(lightboxApi?.activeIndex.value).toBe(0)
+
+    mounted.unmount()
+  })
+
+  it('does not open the first photo for missing PhotoGroup targets', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const photos = [
+      makePhoto({ id: 'target-a' }),
+      makePhoto({ id: 'target-b' }),
+    ]
+    const stalePhoto = makePhoto({ id: 'target-missing' })
+    let groupApi: any = null
+    let lightboxApi: ReturnType<typeof useLightbox> | null = null
+
+    const Probe = defineComponent({
+      setup() {
+        lightboxApi = useLightbox()
+        return () => null
+      },
+    })
+
+    const Wrapper = defineComponent({
+      setup() {
+        const groupRef = ref()
+        groupApi = groupRef
+
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              ref: groupRef,
+              photos,
+              lightbox: TestLightbox,
+            },
+            {
+              default: ({ trigger }: Record<string, any>) => [
+                h(Probe),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    id: 'invalid-index',
+                    ...trigger(-1),
+                  },
+                  'Invalid index',
+                ),
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    id: 'stale-photo',
+                    ...trigger(stalePhoto),
+                  },
+                  'Stale photo',
+                ),
+              ],
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+
+    await groupApi.value.openPhoto(stalePhoto)
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+
+    mounted.container
+      .querySelector<HTMLButtonElement>('#invalid-index')
+      ?.click()
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+
+    mounted.container.querySelector<HTMLButtonElement>('#stale-photo')?.click()
+    await flushUi()
+    expect(lightboxApi?.isOpen.value).toBe(false)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No photo found'))
+
+    warn.mockRestore()
+    mounted.unmount()
+  })
+
+  it('throws when recipe itemMapper output is not a valid photo list', async () => {
+    const raw = [{ id: 'dup' }, { id: 'dup' }]
+
+    await expect(
+      mountComponent(PhotoGroup, {
+        props: {
+          photos: raw,
+          itemMapper: (item: { id: string }) => ({
+            id: item.id,
+            src: '',
+            width: Number.NaN,
+            height: 0,
+          }),
+          lightbox: false,
+        },
+      }),
+    ).rejects.toThrow(
+      /PhotoGroup: photo "dup" is missing[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
+    )
+  })
+
+  it('rejects invalid PhotoAlbum data before it reaches layout math', async () => {
+    await expect(
+      mountComponent(PhotoAlbum, {
+        props: {
+          photos: [
+            {
+              id: 'broken-album-photo',
+              src: '/broken.jpg',
+              width: 0,
+              height: 600,
+            },
+          ],
+          lightbox: false,
+          defaultContainerWidth: 800,
+        },
+      }),
+    ).rejects.toThrow(
+      /PhotoAlbum: photo "broken-album-photo" has invalid width/,
+    )
+  })
+
+  it('moves focus into the lightbox and restores it to the trigger on close', async () => {
+    const photo = makePhoto({ id: 'focus-photo' })
+
+    const mounted = await mountComponent(Photo, {
+      props: { photo, lightbox: true },
+    })
+
+    const trigger = mounted.container.querySelector(
+      'figure',
+    ) as HTMLElement | null
+    expect(trigger).toBeTruthy()
+
+    trigger?.focus()
+    trigger?.click()
+    await flushUi()
+
+    const dialog = document.body.querySelector(
+      '.np-lightbox[tabindex="-1"]',
+    ) as HTMLElement | null
+    expect(dialog).toBeTruthy()
+    expect(dialog?.getAttribute('aria-label')).toBe('Photo viewer')
+    expect(dialog?.contains(document.activeElement)).toBe(true)
+    expect(mounted.container.inert).toBe(true)
+    expect(mounted.container.getAttribute('aria-hidden')).toBe('true')
+
+    const lateSibling = document.createElement('div')
+    document.body.appendChild(lateSibling)
+    await flushUi()
+    expect(lateSibling.inert).toBe(true)
+    expect(lateSibling.getAttribute('aria-hidden')).toBe('true')
+
+    const closeButton = document.body.querySelector(
+      '.np-lightbox__btn--close',
+    ) as HTMLButtonElement | null
+    expect(closeButton).toBeTruthy()
+    closeButton?.click()
+    await flushUi()
+
+    expect(document.activeElement).toBe(trigger)
+    expect(mounted.container.inert).not.toBe(true)
+    expect(mounted.container.hasAttribute('aria-hidden')).toBe(false)
+    expect(lateSibling.inert).not.toBe(true)
+    expect(lateSibling.hasAttribute('aria-hidden')).toBe(false)
+
+    mounted.unmount()
+    lateSibling.remove()
+  })
+})

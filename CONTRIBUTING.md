@@ -2,11 +2,11 @@
 
 Thanks for contributing to Nuxt Photo.
 
-This repo has four library packages, two playground apps, and a docs app. The most reliable way to make a good change is to work against the smallest surface that proves the behavior, then run the same checks the repo uses in CI.
+This repo has two library packages, two playground apps, and a docs app. The most reliable way to make a good change is to work against the smallest surface that proves the behavior, then run the same checks the repo uses in CI.
 
 ## What kinds of contributions help
 
-- Bug fixes in the Nuxt module, recipes, Vue primitives, or core helpers
+- Bug fixes in the Nuxt module, Vue components, primitives, or photo helpers
 - Documentation improvements for the README, docs site, package READMEs, changelog entries, or contributor workflow
 - Tests that lock down a bug, regression, or edge case
 - Focused performance or bundle-size improvements with a measurable payoff
@@ -22,9 +22,7 @@ The repo declares both in the root [`package.json`](./package.json).
 
 The main workspaces are:
 
-- `packages/core` — framework-free layout, geometry, image, and transition helpers
-- `packages/vue` — Vue composables and primitives
-- `packages/recipes` — ready-to-use components and styles
+- `packages/vue` — Vue components, composables, primitives, styles, and shared photo helpers
 - `packages/nuxt` — Nuxt module integration
 - `playground` — main demo app used for development and e2e coverage
 - `playground-tailwind` — Tailwind-focused demo app
@@ -43,7 +41,7 @@ pnpm install
 pnpm build
 ```
 
-`pnpm build` compiles the workspace packages in dependency order: `core` → `vue` → `recipes` → `nuxt`.
+`pnpm build` compiles the workspace packages in dependency order: `vue` → `nuxt`.
 
 ## Local development
 

@@ -3,7 +3,7 @@ import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
-} from '@nuxt-photo/core'
+} from '../core/index'
 import { useLightboxRuntimeState } from './useLightboxRuntimeState'
 import { createLightboxController } from './lightboxController'
 import { type LightboxSlideRenderer } from '../provide/keys'

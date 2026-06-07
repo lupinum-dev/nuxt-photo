@@ -9,9 +9,21 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^@nuxt-photo\/core$/,
+        find: '@nuxt-photo/vue/composables',
         replacement: fileURLToPath(
-          new URL('./packages/core/src/index.ts', import.meta.url),
+          new URL('./packages/vue/src/composables/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: '@nuxt-photo/vue/provide',
+        replacement: fileURLToPath(
+          new URL('./packages/vue/src/provide/keys.ts', import.meta.url),
+        ),
+      },
+      {
+        find: '@nuxt-photo/vue/types',
+        replacement: fileURLToPath(
+          new URL('./packages/vue/src/types/index.ts', import.meta.url),
         ),
       },
       {
@@ -21,9 +33,9 @@ export default defineConfig({
         ),
       },
       {
-        find: '@nuxt-photo/recipes',
+        find: '@nuxt-photo/nuxt/app',
         replacement: fileURLToPath(
-          new URL('./packages/recipes/src/index.ts', import.meta.url),
+          new URL('./packages/nuxt/src/runtime/app.ts', import.meta.url),
         ),
       },
       {

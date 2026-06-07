@@ -1,4 +1,11 @@
-// @nuxt-photo/vue — Vue bindings over core
+// @nuxt-photo/vue — Vue components, composables, and photo utilities
+export {
+  Lightbox,
+  Photo,
+  PhotoAlbum,
+  PhotoCarousel,
+  PhotoGroup,
+} from './components'
 export {
   useLightbox,
   useLightboxProvider,
@@ -36,18 +43,4 @@ export {
   type LightboxSlideRenderer,
 } from './provide/keys'
 
-// Re-export core utilities for convenience
-export { responsive, resolveResponsiveParameter } from '@nuxt-photo/core'
-export type {
-  PhotoItem,
-  LightboxTransitionOption,
-  ImageAdapter,
-  PhotoMapper,
-  ImageSource,
-  ImageContext,
-  ResponsiveParameter,
-  AlbumLayout,
-  RowsAlbumLayout,
-  ColumnsAlbumLayout,
-  MasonryAlbumLayout,
-} from '@nuxt-photo/core'
+export * from './core/index'

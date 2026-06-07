@@ -42,7 +42,7 @@ import {
   type PropType,
   type VNodeChild,
 } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/core'
+import type { PhotoItem } from '../core/index'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
 import type { LightboxSlideSlotProps } from '../types/slots'
