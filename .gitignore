@@ -17,6 +17,7 @@ dist
 .claude/
 playwright-report
 test-results
+.release
 .content
 .data
 .fallow/
