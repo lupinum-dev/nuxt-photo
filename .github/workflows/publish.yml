@@ -13,13 +13,12 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24.11.0
           registry-url: https://registry.npmjs.org
-          cache: pnpm
 
       - run: corepack enable
       - run: corepack prepare pnpm@10.10.0 --activate
@@ -38,8 +37,8 @@ jobs:
       - run: pnpm release:pack
 
       - run: mkdir -p .release
-      - run: pnpm --filter @nuxt-photo/vue pack --pack-destination .release
-      - run: pnpm --filter @nuxt-photo/nuxt pack --pack-destination .release
+      - run: pnpm --dir packages/vue pack --pack-destination ../../.release
+      - run: pnpm --dir packages/nuxt pack --pack-destination ../../.release
 
       - run: npm publish .release/nuxt-photo-vue-*.tgz --access public --provenance
       - run: npm publish .release/nuxt-photo-nuxt-*.tgz --access public --provenance
