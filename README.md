@@ -13,7 +13,7 @@ without wiring separate gallery, carousel, and lightbox libraries together.
 - Ready-to-use `<PhotoAlbum>`, `<PhotoGroup>`, `<Photo>`, and `<PhotoCarousel>`
 - Built-in shared lightbox with transitions, captions, keyboard, pointer, and
   gesture handling
-- Rows, columns, and masonry album layouts from the framework-free core package
+- Rows, columns, and masonry album layouts from framework-free Vue package logic
 - Native image fallback, with provider-backed `@nuxt/image` rendering when the
   Nuxt Image module is installed
 - Structure-only CSS by default, with optional theme CSS when you want the
