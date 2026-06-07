@@ -1,17 +1,7 @@
+import type { NuxtPhotoImageAdapterConfig } from '../image-adapter'
+
 type NuxtPhotoLightboxAppConfig = {
-  image?: {
-    thumb?: {
-      sizes?: string
-      quality?: number
-    }
-    slide?: {
-      widths?: number[]
-      maxWidth?: number
-      maxDensity?: number
-      sizes?: string
-      quality?: number
-    }
-  }
+  image?: NuxtPhotoImageAdapterConfig
   lightbox?: {
     minZoom?: number
   }

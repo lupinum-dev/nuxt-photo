@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addComponent = vi.fn()
@@ -49,6 +51,7 @@ function createNuxt() {
 }
 
 let nuxtPhotoModule: Awaited<typeof import('../src/module')>['default']
+const vueDistRoot = fileURLToPath(new URL('../../vue/dist', import.meta.url))
 
 describe('nuxt-photo module', () => {
   beforeAll(async () => {
@@ -186,6 +189,88 @@ describe('nuxt-photo module', () => {
     ).toThrow(/requires `@nuxt\/image`/)
   })
 
+  it.each([
+    [
+      'css',
+      { css: 'everything' },
+      /`nuxtPhoto\.css` must be "none", "structure", or "all"/,
+    ],
+    [
+      'image provider',
+      { image: { provider: 'cloud' } },
+      /`nuxtPhoto\.image\.provider` must be "auto", "nuxt-image", or "native"/,
+    ],
+    [
+      'thumb quality',
+      { image: { provider: 'native', thumb: { quality: 0 } } },
+      /`nuxtPhoto\.image\.thumb\.quality` must be between 1 and 100/,
+    ],
+    [
+      'slide widths',
+      { image: { provider: 'native', slide: { widths: [640, -1] } } },
+      /`nuxtPhoto\.image\.slide\.widths` must be a non-empty array of positive integers/,
+    ],
+    [
+      'slide maxWidth',
+      { image: { provider: 'native', slide: { maxWidth: 0 } } },
+      /`nuxtPhoto\.image\.slide\.maxWidth` must be greater than 0/,
+    ],
+    [
+      'slide maxDensity',
+      { image: { provider: 'native', slide: { maxDensity: Number.NaN } } },
+      /`nuxtPhoto\.image\.slide\.maxDensity` must be a finite number/,
+    ],
+    [
+      'lightbox minZoom',
+      { lightbox: { minZoom: -1 } },
+      /`nuxtPhoto\.lightbox\.minZoom` must be greater than 0/,
+    ],
+    [
+      'component prefix',
+      { components: { prefix: 1 } },
+      /`nuxtPhoto\.components\.prefix` must be a string/,
+    ],
+    [
+      'auto import prefix',
+      { autoImports: { prefix: 1 } },
+      /`nuxtPhoto\.autoImports\.prefix` must be a string/,
+    ],
+    [
+      'null auto imports',
+      { autoImports: null },
+      /`nuxtPhoto\.autoImports` must be a boolean or object/,
+    ],
+    [
+      'null components',
+      { components: null },
+      /`nuxtPhoto\.components` must be a boolean or object/,
+    ],
+    [
+      'null image',
+      { image: null },
+      /`nuxtPhoto\.image` must be false or an object/,
+    ],
+  ])(
+    'validates invalid %s config before setup side effects',
+    (_name, config, message) => {
+      const nuxt = createNuxt()
+
+      expect(() =>
+        nuxtPhotoModule.setup(
+          {
+            ...nuxtPhotoModule.defaults,
+            ...(config as any),
+          },
+          nuxt,
+        ),
+      ).toThrow(message)
+
+      expect(addComponent).not.toHaveBeenCalled()
+      expect(addImports).not.toHaveBeenCalled()
+      expect(addPlugin).not.toHaveBeenCalled()
+    },
+  )
+
   it('injects structure-only CSS by default (no theme)', () => {
     const nuxt = createNuxt()
 
@@ -205,6 +290,31 @@ describe('nuxt-photo module', () => {
       ),
     ])
   })
+
+  it.skipIf(!existsSync(vueDistRoot))(
+    'registers component and CSS paths that exist after Vue is built',
+    () => {
+      const nuxt = createNuxt()
+
+      nuxtPhotoModule.setup(
+        {
+          ...nuxtPhotoModule.defaults,
+          components: { primitives: true },
+          css: 'all',
+        },
+        nuxt,
+      )
+
+      const componentPaths = addComponent.mock.calls.map(
+        ([component]) => component.filePath,
+      )
+
+      expect(componentPaths.length).toBeGreaterThan(0)
+      expect([...componentPaths, ...nuxt.options.css].every(existsSync)).toBe(
+        true,
+      )
+    },
+  )
 
   it('injects all CSS (structure + theme) with css: "all"', () => {
     const nuxt = createNuxt()
@@ -245,9 +355,6 @@ describe('nuxt-photo module', () => {
     ])
     expect(nuxt.options.vite.optimizeDeps.include).toEqual([
       'existing-dependency',
-      'embla-carousel',
-      'embla-carousel-autoplay',
-      'embla-carousel-vue',
     ])
   })
 
