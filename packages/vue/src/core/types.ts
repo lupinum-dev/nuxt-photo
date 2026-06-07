@@ -316,7 +316,12 @@ export function responsive<T>(
  *   alt: item.alt_description ?? undefined,
  * })
  */
-export type PhotoMapper<T = unknown> = (item: T) => PhotoItem
+export type PhotoMapper<
+  TInput = unknown,
+  TMeta extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  map(item: TInput, index: number): PhotoItem<TMeta>
+}['map']
 
 // ─── Debug ───
 

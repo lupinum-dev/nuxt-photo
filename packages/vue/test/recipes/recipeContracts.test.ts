@@ -216,7 +216,7 @@ describe('recipe contracts', () => {
     await flushUi()
 
     const img = mounted.container.querySelector('img')
-    expect(itemMapper).toHaveBeenCalledWith(raw)
+    expect(itemMapper).toHaveBeenCalledWith(raw, 0)
     expect(img?.getAttribute('src')).toBe('/cms/thumb.jpg')
     expect(img?.getAttribute('alt')).toBe('Mapped CMS asset')
 
@@ -409,6 +409,317 @@ describe('recipe contracts', () => {
     // Unmount: current registrations (c, a) cleaned up.
     mounted.unmount()
     expect(unregister).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not rebuild PhotoAlbum auto-group registrations for equivalent inline arrays', async () => {
+    const a = makePhoto({ id: 'inline-a' })
+    const b = makePhoto({ id: 'inline-b' })
+    const photos = ref<PhotoItem[]>([a, b])
+    const parentRenderVersion = ref(0)
+    const registrations = new Map<symbol, PhotoItem>()
+    const register = vi.fn((id: symbol, photo: PhotoItem) => {
+      registrations.set(id, photo)
+      parentRenderVersion.value++
+    })
+    const unregister = vi.fn((id: symbol) => {
+      registrations.delete(id)
+      parentRenderVersion.value++
+    })
+
+    const parentGroup: PhotoGroupContext = {
+      mode: computed(() => 'auto'),
+      lightboxEnabled: computed(() => true),
+      register,
+      unregister,
+      open: vi.fn(async () => {}),
+      openPhoto: vi.fn(async () => {}),
+      openById: vi.fn(async () => {}),
+      photos: computed(() => Array.from(registrations.values())),
+      hiddenPhoto: computed(() => null),
+    }
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () => {
+          void parentRenderVersion.value
+
+          return h(PhotoAlbum, {
+            photos: photos.value.slice(0, 2),
+            lightbox: false,
+          })
+        }
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper, {
+      provideValues: [[PhotoGroupContextKey, parentGroup]],
+    })
+
+    await flushUi()
+
+    expect(register.mock.calls.map((call) => call[1].id)).toEqual([
+      'inline-a',
+      'inline-b',
+    ])
+    expect(unregister).not.toHaveBeenCalled()
+
+    register.mockClear()
+    unregister.mockClear()
+
+    parentRenderVersion.value++
+    await flushUi()
+
+    expect(register).not.toHaveBeenCalled()
+    expect(unregister).not.toHaveBeenCalled()
+
+    mounted.unmount()
+  })
+
+  it('does not recursively update when PhotoGroup renders PhotoAlbum with inline slices', async () => {
+    const photos = [
+      makePhoto({ id: 'actual-inline-a' }),
+      makePhoto({ id: 'actual-inline-b' }),
+      makePhoto({ id: 'actual-inline-c' }),
+    ]
+    const updateErrors: string[] = []
+    const errorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation((message) => {
+        updateErrors.push(String(message))
+      })
+
+    const Host = defineComponent({
+      setup() {
+        return () =>
+          h(PhotoGroup, null, {
+            default: () =>
+              h(PhotoAlbum, {
+                photos: photos.slice(0, 2),
+                lightbox: false,
+              }),
+          })
+      },
+    })
+
+    const mounted = await mountComponent(Host)
+    await flushUi()
+
+    expect(
+      updateErrors.some((message) =>
+        message.includes('Maximum recursive updates exceeded'),
+      ),
+    ).toBe(false)
+
+    errorSpy.mockRestore()
+    mounted.unmount()
+  })
+
+  it('does not recursively update when PhotoGroup renders multiple child albums', async () => {
+    const photos = [
+      makePhoto({ id: 'multi-inline-a' }),
+      makePhoto({ id: 'multi-inline-b' }),
+      makePhoto({ id: 'multi-inline-c' }),
+      makePhoto({ id: 'multi-inline-d' }),
+    ]
+    const updateErrors: string[] = []
+    const errorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation((message) => {
+        updateErrors.push(String(message))
+      })
+
+    const Host = defineComponent({
+      setup() {
+        return () =>
+          h(PhotoGroup, null, {
+            default: () => [
+              h(PhotoAlbum, {
+                photos: photos.slice(0, 2),
+                lightbox: false,
+              }),
+              h(PhotoAlbum, {
+                photos: photos.slice(2),
+                lightbox: false,
+              }),
+            ],
+          })
+      },
+    })
+
+    const mounted = await mountComponent(Host)
+    await flushUi()
+
+    expect(
+      updateErrors.some((message) =>
+        message.includes('Maximum recursive updates exceeded'),
+      ),
+    ).toBe(false)
+
+    errorSpy.mockRestore()
+    mounted.unmount()
+  })
+
+  it('refreshes auto PhotoGroup registration when a Photo prop changes', async () => {
+    const first = makePhoto({ id: 'single-registration-a' })
+    const second = makePhoto({ id: 'single-registration-b' })
+    const currentPhoto = ref(first)
+    const mode = ref<'auto' | 'explicit'>('auto')
+    const registrations = new Map<symbol, PhotoItem>()
+    const parentGroup: PhotoGroupContext = {
+      mode: computed(() => mode.value),
+      lightboxEnabled: computed(() => true),
+      register: vi.fn((id: symbol, photo: PhotoItem) => {
+        registrations.set(id, photo)
+      }),
+      unregister: vi.fn((id: symbol) => {
+        registrations.delete(id)
+      }),
+      open: vi.fn(async () => {}),
+      openPhoto: vi.fn(async () => {}),
+      openById: vi.fn(async () => {}),
+      photos: computed(() => Array.from(registrations.values())),
+      hiddenPhoto: computed(() => null),
+    }
+
+    const Host = defineComponent({
+      setup() {
+        return () => h(Photo, { photo: currentPhoto.value })
+      },
+    })
+
+    const mounted = await mountComponent(Host, {
+      provideValues: [[PhotoGroupContextKey, parentGroup]],
+    })
+
+    expect(Array.from(registrations.values()).map((photo) => photo.id)).toEqual(
+      ['single-registration-a'],
+    )
+
+    currentPhoto.value = second
+    await flushUi()
+
+    expect(parentGroup.unregister).toHaveBeenCalledTimes(1)
+    expect(Array.from(registrations.values()).map((photo) => photo.id)).toEqual(
+      ['single-registration-b'],
+    )
+
+    mode.value = 'explicit'
+    await flushUi()
+
+    expect(parentGroup.unregister).toHaveBeenCalledTimes(2)
+    expect(Array.from(registrations.values())).toEqual([])
+
+    mode.value = 'auto'
+    await flushUi()
+
+    expect(Array.from(registrations.values()).map((photo) => photo.id)).toEqual(
+      ['single-registration-b'],
+    )
+
+    mounted.unmount()
+  })
+
+  it('keeps PhotoGroup child Photo registrations correct when switching modes', async () => {
+    const autoA = makePhoto({ id: 'mode-photo-auto-a' })
+    const autoB = makePhoto({ id: 'mode-photo-auto-b' })
+    const explicit = makePhoto({ id: 'mode-photo-explicit' })
+    const currentPhoto = ref(autoA)
+    const explicitPhotos = ref<PhotoItem[] | undefined>(undefined)
+    let slotPhotos: PhotoItem[] = []
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              photos: explicitPhotos.value,
+            },
+            {
+              default: ({ photos }: { photos: PhotoItem[] }) => {
+                slotPhotos = photos
+                return [h(Photo, { photo: currentPhoto.value })]
+              },
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-photo-auto-a'])
+
+    explicitPhotos.value = [explicit]
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-photo-explicit'])
+
+    currentPhoto.value = autoB
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-photo-explicit'])
+
+    explicitPhotos.value = undefined
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-photo-auto-b'])
+
+    mounted.unmount()
+  })
+
+  it('keeps PhotoGroup child PhotoAlbum registrations correct when switching modes', async () => {
+    const albumA = makePhoto({ id: 'mode-album-auto-a' })
+    const albumB = makePhoto({ id: 'mode-album-auto-b' })
+    const explicit = makePhoto({ id: 'mode-album-explicit' })
+    const albumPhotos = ref<PhotoItem[]>([albumA])
+    const explicitPhotos = ref<PhotoItem[] | undefined>(undefined)
+    let slotPhotos: PhotoItem[] = []
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            PhotoGroup,
+            {
+              photos: explicitPhotos.value,
+            },
+            {
+              default: ({ photos }: { photos: PhotoItem[] }) => {
+                slotPhotos = photos
+                return [
+                  h(PhotoAlbum, {
+                    photos: albumPhotos.value,
+                    defaultContainerWidth: 800,
+                  }),
+                ]
+              },
+            },
+          )
+      },
+    })
+
+    const mounted = await mountComponent(Wrapper)
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-album-auto-a'])
+
+    explicitPhotos.value = [explicit]
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-album-explicit'])
+
+    albumPhotos.value = [albumB]
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-album-explicit'])
+
+    explicitPhotos.value = undefined
+    await flushUi()
+
+    expect(slotPhotos.map((photo) => photo.id)).toEqual(['mode-album-auto-b'])
+
+    mounted.unmount()
   })
 
   it('keeps explicit PhotoGroup photos as the only source of truth', async () => {
@@ -894,6 +1205,43 @@ describe('recipe contracts', () => {
     ).rejects.toThrow(
       /PhotoAlbum: photo "broken-album-photo" has invalid width/,
     )
+  })
+
+  it('drops invalid recipe photos only when validation is set to drop', async () => {
+    const onInvalidPhotos = vi.fn()
+
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [
+          makePhoto({ id: 'valid-drop-policy-photo' }),
+          {
+            id: 'invalid-drop-policy-photo',
+            src: '',
+            width: 0,
+            height: 600,
+          },
+        ],
+        validation: 'drop',
+        onInvalidPhotos,
+        lightbox: false,
+        defaultContainerWidth: 800,
+      },
+    })
+
+    await flushUi()
+
+    expect(mounted.container.querySelectorAll('img')).toHaveLength(1)
+    expect(onInvalidPhotos).toHaveBeenCalledWith(
+      expect.objectContaining({
+        owner: 'PhotoAlbum',
+        issues: expect.arrayContaining([
+          expect.objectContaining({ code: 'missing-src' }),
+          expect.objectContaining({ code: 'invalid-width' }),
+        ]),
+      }),
+    )
+
+    mounted.unmount()
   })
 
   it('moves focus into the lightbox and restores it to the trigger on close', async () => {

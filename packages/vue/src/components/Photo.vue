@@ -31,6 +31,7 @@ import {
   inject,
   onMounted,
   onBeforeUnmount,
+  watch,
   useSlots,
   type Component,
 } from 'vue'
@@ -150,38 +151,57 @@ const interactiveAttrs = computed(() => {
 
 // Registration with parent group (auto mode only)
 const id = Symbol()
+const registered = ref(false)
+
+function shouldRegisterWithGroup() {
+  return (
+    group &&
+    group.lightboxEnabled.value &&
+    group.mode.value === 'auto' &&
+    !props.lightboxIgnore &&
+    !isSolo.value
+  )
+}
+
+function unregisterFromGroup() {
+  if (!group || !registered.value) return
+  group.unregister(id)
+  registered.value = false
+}
+
+function registerWithGroup() {
+  if (!shouldRegisterWithGroup()) return
+  group!.register(
+    id,
+    props.photo,
+    () => thumbRef.value,
+    slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
+  )
+  registered.value = true
+}
 
 onMounted(() => {
   if (soloCtx) {
     soloCtx.setThumbRef(0)(thumbRef.value)
   }
-  if (
-    group &&
-    group.lightboxEnabled.value &&
-    group.mode.value === 'auto' &&
-    !props.lightboxIgnore &&
-    !isSolo.value
-  ) {
-    group.register(
-      id,
-      props.photo,
-      () => thumbRef.value,
-      slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
-    )
-  }
+
+  registerWithGroup()
 })
 
-onBeforeUnmount(() => {
-  if (
-    group &&
-    group.lightboxEnabled.value &&
-    group.mode.value === 'auto' &&
-    !props.lightboxIgnore &&
-    !isSolo.value
-  ) {
-    group.unregister(id)
-  }
-})
+watch(
+  () => [
+    props.photo,
+    props.lightboxIgnore,
+    group?.lightboxEnabled.value,
+    group?.mode.value,
+  ],
+  () => {
+    unregisterFromGroup()
+    registerWithGroup()
+  },
+)
+
+onBeforeUnmount(unregisterFromGroup)
 
 async function soloOpen() {
   if (!soloCtx) return

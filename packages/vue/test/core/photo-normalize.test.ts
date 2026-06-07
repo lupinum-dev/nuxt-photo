@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePhotos } from '../../src'
+import { normalizePhotos } from '../../src/core/photo/normalize'
 
 describe('photo normalization', () => {
   it('returns valid mapped photos without issues', () => {

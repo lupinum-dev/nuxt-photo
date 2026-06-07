@@ -98,6 +98,7 @@ describe('lightbox controller surface', () => {
 
     await providerApi!.openPhoto(makePhoto({ id: 'missing-controller' }))
     await providerApi!.open(-1)
+    await providerApi!.openById('missing-controller')
     await flushWatchers()
 
     expect(providerApi!.isOpen.value).toBe(false)

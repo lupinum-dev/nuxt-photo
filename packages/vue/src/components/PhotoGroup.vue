@@ -32,6 +32,8 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
   type PhotoMapper,
+  type InvalidPhotoPolicy,
+  type InvalidPhotosEvent,
 } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import {
@@ -44,9 +46,11 @@ import { devWarn } from '../utils/runtime'
 const props = withDefaults(
   defineProps<{
     /** Explicit photos list for custom layout/programmatic use. If omitted, photos auto-collect from child Photo components. */
-    photos?: PhotoItem[] | any[]
+    photos?: readonly unknown[]
     /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
     itemMapper?: PhotoMapper
+    validation?: InvalidPhotoPolicy
+    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     imageAdapter?: ImageAdapter
     /** Lightbox to render: true = default, false = none, Component = custom */
     lightbox?: boolean | Component
@@ -109,16 +113,19 @@ function register(
 }
 
 function unregister(id: symbol) {
-  if (props.photos !== undefined) return
-  registrationMap.delete(id)
-  registrationVersion.value++
+  if (registrationMap.delete(id)) {
+    registrationVersion.value++
+  }
 }
 
 // Collected photos (reactive) — either from :photos prop or auto-registered children
 const collectedPhotos = computed<PhotoItem[]>(() => {
   void registrationVersion.value // reactive dependency
   if (props.photos !== undefined) {
-    return resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoGroup')
+    return resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoGroup', {
+      validation: props.validation,
+      onInvalidPhotos: props.onInvalidPhotos,
+    })
   }
   return Array.from(registrationMap.values()).map((r) => r.photo)
 })

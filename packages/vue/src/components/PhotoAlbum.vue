@@ -126,16 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  inject,
-  onBeforeUnmount,
-  watch,
-  type Component,
-  type ComponentPublicInstance,
-} from 'vue'
-import { useLightboxProvider } from '../composables/index'
-import { LightboxComponentKey } from '../provide/keys'
+import { computed, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
   photoId,
@@ -145,18 +136,21 @@ import {
   type PhotoMapper,
   type PhotoItem,
   type ResponsiveParameter,
+  type InvalidPhotoPolicy,
+  type InvalidPhotosEvent,
 } from '../core/index'
-import Lightbox from './Lightbox.vue'
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
-import { PhotoGroupContextKey } from '../context/photoGroup'
 import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
 import { resolveRecipePhotos } from '../utils/photos'
 import { devWarn } from '../utils/runtime'
+import { useAlbumLightbox } from './photo-album/useAlbumLightbox'
 
 const props = withDefaults(
   defineProps<{
-    photos: PhotoItem[] | any[]
+    photos: readonly unknown[]
     itemMapper?: PhotoMapper
+    validation?: InvalidPhotoPolicy
+    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     layout?: AlbumLayout | AlbumLayout['type']
     targetRowHeight?: ResponsiveParameter<number>
     columns?: ResponsiveParameter<number>
@@ -217,21 +211,19 @@ if (props.defaultContainerWidth === 0) {
 }
 
 const photos = computed<PhotoItem[]>(() =>
-  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoAlbum'),
+  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoAlbum', {
+    validation: props.validation,
+    onInvalidPhotos: props.onInvalidPhotos,
+  }),
 )
 
-const parentGroup = inject(PhotoGroupContextKey, null)
-const parentAutoGroup = computed(() =>
-  parentGroup?.mode.value === 'auto' && parentGroup.lightboxEnabled.value
-    ? parentGroup
-    : null,
-)
-const injectedLightbox = inject(LightboxComponentKey, null)
-
-const hasLightbox = computed(
-  () =>
-    props.lightbox !== false && (parentGroup?.lightboxEnabled.value ?? true),
-)
+const {
+  hasLightbox,
+  hasOwnLightbox,
+  LightboxComponent,
+  itemBindings,
+  isHidden,
+} = useAlbumLightbox(photos, props)
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
@@ -310,120 +302,4 @@ const renderBranch = computed(() => {
     photos: photos.value,
   }
 })
-
-const hasOwnLightbox =
-  !parentAutoGroup.value &&
-  props.lightbox !== false &&
-  (parentGroup?.lightboxEnabled.value ?? true)
-const LightboxComponent = computed<Component | null>(() => {
-  if (props.lightbox === false) return null
-  if (props.lightbox === true) return injectedLightbox ?? Lightbox
-  return props.lightbox as Component
-})
-
-const ownCtx = hasOwnLightbox
-  ? useLightboxProvider(photos, {
-      transition: props.transition,
-      imageAdapter: props.imageAdapter,
-    })
-  : null
-
-const thumbElsMap: Record<number, HTMLElement | null> = {}
-
-function setItemRef(index: number) {
-  return (el: Element | ComponentPublicInstance | null) => {
-    thumbElsMap[index] = el as HTMLElement | null
-  }
-}
-
-function syncOwnThumbRefs() {
-  if (!ownCtx) return
-  for (const [index, element] of Object.entries(thumbElsMap)) {
-    ownCtx.setThumbRef(Number(index))(element)
-  }
-}
-
-function openPhoto(photo: PhotoItem, index: number) {
-  if (parentAutoGroup.value) {
-    void parentAutoGroup.value.openPhoto(photo)
-    return
-  }
-
-  if (!ownCtx) return
-  syncOwnThumbRefs()
-  void ownCtx.open(index)
-}
-
-function handleItemKeydown(
-  event: KeyboardEvent,
-  photo: PhotoItem,
-  index: number,
-) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    openPhoto(photo, index)
-  }
-}
-
-function itemBindings(photo: PhotoItem, index: number) {
-  const base = { ref: setItemRef(index) }
-  if (!hasLightbox.value) return base
-
-  return {
-    ...base,
-    role: 'button',
-    tabindex: '0',
-    'aria-label': photo.alt || `View photo ${index + 1}`,
-    onClick: () => openPhoto(photo, index),
-    onKeydown: (event: KeyboardEvent) => handleItemKeydown(event, photo, index),
-  }
-}
-
-function isHidden(photo: PhotoItem): boolean {
-  if (parentAutoGroup.value) {
-    return parentAutoGroup.value.hiddenPhoto.value === photo
-  }
-  if (ownCtx) {
-    const index = ownCtx.hiddenThumbIndex.value
-    if (index === null) return false
-    return photos.value[index] === photo
-  }
-  return false
-}
-
-let registrationIds: symbol[] = []
-
-if (parentAutoGroup.value) {
-  function syncRegistrations(nextPhotos: PhotoItem[]) {
-    for (const symbol of registrationIds) {
-      parentAutoGroup.value?.unregister(symbol)
-    }
-
-    registrationIds = nextPhotos.map((photo, index) => {
-      const symbol = Symbol(photoId(photo))
-      parentAutoGroup.value?.register(
-        symbol,
-        photo,
-        () => thumbElsMap[index] ?? null,
-        null,
-      )
-      return symbol
-    })
-  }
-
-  watch(
-    photos,
-    (nextPhotos) => {
-      syncRegistrations(nextPhotos)
-    },
-    { immediate: true },
-  )
-
-  onBeforeUnmount(() => {
-    for (const symbol of registrationIds) {
-      parentAutoGroup.value?.unregister(symbol)
-    }
-    registrationIds = []
-  })
-}
 </script>

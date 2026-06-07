@@ -15,6 +15,14 @@ export type PhotoValidationIssue = {
   message: string
 }
 
+export type InvalidPhotoPolicy = 'throw' | 'drop' | 'warn'
+
+export type InvalidPhotosEvent = {
+  owner: string
+  issues: PhotoValidationIssue[]
+  rawPhotos: readonly unknown[]
+}
+
 export type NormalizePhotosResult = {
   photos: PhotoItem[]
   issues: PhotoValidationIssue[]
@@ -23,7 +31,7 @@ export type NormalizePhotosResult = {
 export type NormalizePhotosOptions<T = unknown> = {
   owner: string
   mapper?: PhotoMapper<T>
-  onInvalid?: 'throw' | 'drop' | 'return'
+  onInvalid?: InvalidPhotoPolicy | 'return'
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -52,8 +60,8 @@ export function normalizePhotos<T = unknown>(
 ): NormalizePhotosResult {
   const onInvalid = options.onInvalid ?? 'throw'
   const issues: PhotoValidationIssue[] = []
-  const mapped = rawPhotos.map((item) =>
-    options.mapper ? options.mapper(item) : item,
+  const mapped = rawPhotos.map((item, index) =>
+    options.mapper ? options.mapper(item, index) : item,
   ) as PhotoItem[]
   const seen = new Map<string, number>()
   const invalidIndexes = new Set<number>()
