@@ -79,7 +79,7 @@ type LightboxDomBindings = {
   onMediaPointerUp: (e: PointerEvent) => void
   onMediaPointerCancel: (e: PointerEvent) => void
   onWheel: (e: WheelEvent) => void
-  handleBackdropClick: () => void
+  handleBackdropClick: () => Promise<void> | undefined
 }
 
 export type InternalLightboxContext = Omit<

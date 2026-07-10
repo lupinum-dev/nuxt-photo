@@ -85,7 +85,7 @@
         Wrap two <code>PhotoAlbum</code> components in <code>PhotoGroup</code>
         to share one lightbox with navigation across both.
       </p>
-      <PhotoGroup class="gallery-wrap">
+      <PhotoGroup :photos="photos" class="gallery-wrap">
         <PhotoAlbum
           :photos="photos.slice(0, 6)"
           :layout="{ type: 'rows', targetRowHeight: 200 }"
@@ -137,7 +137,7 @@ const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
 </PhotoAlbum>`
 
 const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
-<PhotoGroup>
+<PhotoGroup :photos="[...set1, ...set2]">
   <PhotoAlbum :photos="set1" layout="rows" />
   <PhotoAlbum :photos="set2" layout="rows" />
 </PhotoGroup>`

@@ -1,17 +1,16 @@
 <template>
-  <slot :photos="collectedPhotos" :controller="controller" />
+  <slot :photos="canonicalPhotos" :controller="controller" />
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import { computed, inject, provide, shallowReactive, type Component } from 'vue'
+import { computed, inject, provide, shallowRef, type Component } from 'vue'
 import { useLightboxProvider } from '../composables/index'
 import {
   LightboxComponentKey,
   type LightboxProviderController,
-  type LightboxSlideRenderer,
 } from '../provide/keys'
 import {
   normalizePhotos,
@@ -22,6 +21,7 @@ import {
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
+  type PhotoGroupCapability,
   type PhotoGroupContext,
 } from './photo-group/context'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
@@ -29,6 +29,8 @@ import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 const props = withDefaults(
   defineProps<{
+    /** Canonical photo collection and navigation order. */
+    photos: readonly PhotoItem[]
     imageAdapter?: ImageAdapter
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
@@ -38,20 +40,23 @@ const props = withDefaults(
   { lightbox: true },
 )
 
-type Registration = {
-  photo: PhotoItem
-  getThumbnailElement: () => HTMLElement | null
-  renderSlide?: LightboxSlideRenderer | null
-}
+const canonicalPhotos = computed<readonly PhotoItem[]>(
+  () =>
+    normalizePhotos(props.photos, {
+      owner: 'PhotoGroup',
+      onInvalid: 'throw',
+    }).photos,
+)
+const capabilityBatches = shallowRef(
+  new Map<symbol, readonly PhotoGroupCapability[]>(),
+)
+const capabilities = computed(() =>
+  [...capabilityBatches.value.values()].flat(),
+)
 
-const registrations = shallowReactive(new Map<symbol, Registration>())
-const collectedPhotos = computed<PhotoItem[]>(() => {
-  const photos = [...registrations.values()].map((entry) => entry.photo)
-  return normalizePhotos(photos, {
-    owner: 'PhotoGroup',
-    onInvalid: 'throw',
-  }).photos
-})
+function hasPhoto(id: string) {
+  return canonicalPhotos.value.some((photo) => photo.id === id)
+}
 
 const injectedLightbox = inject(LightboxComponentKey, null)
 const lightboxComponent = resolveLightboxComponent(
@@ -67,49 +72,86 @@ warnOnSetupOptionChanges('PhotoGroup', {
   imageAdapter: () => props.imageAdapter,
 })
 const provider = enabled
-  ? useLightboxProvider(collectedPhotos, {
+  ? useLightboxProvider(canonicalPhotos, {
       transition: props.transition,
       imageAdapter: props.imageAdapter,
       resolveSlide: (photo) => {
-        for (const entry of registrations.values()) {
-          if (entry.photo.id === photo.id) return entry.renderSlide ?? null
+        for (const entry of capabilities.value) {
+          if (entry.id === photo.id && entry.renderSlide) {
+            return entry.renderSlide
+          }
         }
         return null
       },
     })
   : null
 
-function register(
-  id: symbol,
-  photo: PhotoItem,
-  getThumbnailElement: () => HTMLElement | null,
-  renderSlide?: LightboxSlideRenderer | null,
+function validateCapabilityIds(
+  batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>,
 ) {
-  const previous = registrations.get(id)
-  registrations.set(id, { photo, getThumbnailElement, renderSlide })
-  try {
-    // Force aggregate validation at the registration boundary.
-    void collectedPhotos.value
-  } catch (error) {
-    if (previous) registrations.set(id, previous)
-    else registrations.delete(id)
-    throw error
+  const canonicalIds = new Set(canonicalPhotos.value.map((photo) => photo.id))
+  for (const batch of batches.values()) {
+    for (const entry of batch) {
+      if (!canonicalIds.has(entry.id)) {
+        throw new Error(
+          `[nuxt-photo] PhotoGroup descendant photo "${entry.id}" is missing from the canonical photos collection`,
+        )
+      }
+    }
   }
 }
 
-function unregister(id: symbol) {
-  registrations.delete(id)
+function replaceCapabilities(
+  owner: symbol,
+  entries: readonly PhotoGroupCapability[],
+) {
+  const next = new Map(capabilityBatches.value)
+  if (entries.length === 0) next.delete(owner)
+  else next.set(owner, [...entries])
+
+  validateCapabilityIds(next)
+
+  const rendererOwner = new Map<string, symbol>()
+  for (const [batchOwner, batch] of next) {
+    for (const entry of batch) {
+      if (!entry.renderSlide) continue
+      const existingOwner = rendererOwner.get(entry.id)
+      if (existingOwner && existingOwner !== batchOwner) {
+        throw new Error(
+          `[nuxt-photo] Multiple custom slide renderers registered for photo "${entry.id}"`,
+        )
+      }
+      rendererOwner.set(entry.id, batchOwner)
+    }
+  }
+
+  capabilityBatches.value = next
+}
+
+function removeCapabilities(owner: symbol) {
+  if (!capabilityBatches.value.has(owner)) return
+  const next = new Map(capabilityBatches.value)
+  next.delete(owner)
+  capabilityBatches.value = next
 }
 
 function syncThumbnailRefs() {
   if (!provider) return
-  ;[...registrations.values()].forEach((entry, index) => {
-    provider.setThumbnailRef(index)(entry.getThumbnailElement())
+  canonicalPhotos.value.forEach((photo, index) => {
+    let element: HTMLElement | null = null
+    for (const candidate of capabilities.value) {
+      if (candidate.id !== photo.id) continue
+      const current = candidate.getThumbnailElement()
+      if (!current?.isConnected) continue
+      element = current
+      break
+    }
+    provider.setThumbnailRef(index)(element)
   })
 }
 
 async function open(index = 0) {
-  if (index < 0 || index >= collectedPhotos.value.length) {
+  if (index < 0 || index >= canonicalPhotos.value.length) {
     throw new RangeError(
       `[nuxt-photo] No photo found at index ${String(index)}`,
     )
@@ -119,13 +161,19 @@ async function open(index = 0) {
   await provider.open(index)
 }
 
-async function openById(id: string) {
-  if (!collectedPhotos.value.some((photo) => photo.id === id)) {
+async function activateById(id: string, source?: HTMLElement | null) {
+  const index = canonicalPhotos.value.findIndex((photo) => photo.id === id)
+  if (index < 0) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
   if (!provider) return
   syncThumbnailRefs()
+  if (source) provider.setThumbnailRef(index)(source)
   await provider.openById(id)
+}
+
+async function openById(id: string) {
+  await activateById(id)
 }
 
 async function close() {
@@ -133,8 +181,8 @@ async function close() {
 }
 
 const disabledController: LightboxProviderController = {
-  photos: computed(() => collectedPhotos.value),
-  count: computed(() => collectedPhotos.value.length),
+  photos: computed(() => canonicalPhotos.value),
+  count: computed(() => canonicalPhotos.value.length),
   activeIndex: computed(() => 0),
   activePhoto: computed(() => null),
   isOpen: computed(() => false),
@@ -155,16 +203,17 @@ const controller: LightboxProviderController = provider
 const hiddenPhoto = computed<PhotoItem | null>(() => {
   if (!provider) return null
   const index = provider.hiddenThumbnailIndex.value
-  return index === null ? null : (collectedPhotos.value[index] ?? null)
+  return index === null ? null : (canonicalPhotos.value[index] ?? null)
 })
 
 const groupContext: PhotoGroupContext = {
   enabled,
-  register,
-  unregister,
+  hasPhoto,
+  replaceCapabilities,
+  removeCapabilities,
   open,
-  openById,
-  photos: collectedPhotos,
+  activateById,
+  photos: canonicalPhotos,
   hiddenPhoto,
 }
 provide(PhotoGroupContextKey, groupContext)

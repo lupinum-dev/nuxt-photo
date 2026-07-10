@@ -2,7 +2,6 @@ import {
   computed,
   inject,
   onBeforeUnmount,
-  onMounted,
   watch,
   type Component,
   type ComponentPublicInstance,
@@ -71,18 +70,21 @@ export function useAlbumLightbox(
 
   function activatePhoto(photo: PhotoItem, index: number) {
     if (delegatedGroup) {
-      void delegatedGroup.openById(photo.id)
-      return
+      return delegatedGroup.activateById(photo.id, thumbElsMap[index])
     }
 
     if (!ownCtx) return
     syncOwnThumbRefs()
-    void ownCtx.open(index)
+    return ownCtx.open(index)
   }
 
   function itemBindings(photo: PhotoItem, index: number) {
     const base = { ref: setItemRef(index) }
-    if (!hasLightbox.value) return base
+    if (
+      !hasLightbox.value ||
+      (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))
+    )
+      return base
 
     return {
       ...base,
@@ -94,7 +96,7 @@ export function useAlbumLightbox(
 
   function isHidden(photo: PhotoItem): boolean {
     if (delegatedGroup) {
-      return delegatedGroup.hiddenPhoto.value === photo
+      return delegatedGroup.hiddenPhoto.value?.id === photo.id
     }
     if (ownCtx) {
       const index = ownCtx.hiddenThumbnailIndex.value
@@ -104,52 +106,40 @@ export function useAlbumLightbox(
     return false
   }
 
-  let registrationIds: symbol[] = []
-  let registeredPhotos: PhotoItem[] = []
+  const capabilityOwner = Symbol('PhotoAlbum')
 
-  function clearRegistrations() {
-    for (const symbol of registrationIds) {
-      parentGroup?.unregister(symbol)
-    }
-    registrationIds = []
-    registeredPhotos = []
+  function removeCapabilities() {
+    parentGroup?.removeCapabilities(capabilityOwner)
   }
 
-  function syncRegistrations(nextPhotos: PhotoItem[]) {
+  function syncCapabilities(nextPhotos: PhotoItem[]) {
     const group = delegatedGroup
     if (!group) {
-      clearRegistrations()
+      removeCapabilities()
       return
     }
 
-    if (
-      registeredPhotos.length === nextPhotos.length &&
-      nextPhotos.every((photo, index) => registeredPhotos[index] === photo)
-    ) {
-      return
-    }
-
-    clearRegistrations()
-
-    registrationIds = nextPhotos.map((photo, index) => {
-      const symbol = Symbol(photo.id)
-      group.register(symbol, photo, () => thumbElsMap[index] ?? null, null)
-      return symbol
-    })
-    registeredPhotos = [...nextPhotos]
+    group.replaceCapabilities(
+      capabilityOwner,
+      nextPhotos.map((photo, index) => ({
+        id: photo.id,
+        getThumbnailElement: () => thumbElsMap[index] ?? null,
+        renderSlide: null,
+      })),
+    )
   }
 
   watch(
     photos,
     (nextPhotos) => {
-      syncRegistrations(nextPhotos)
+      syncCapabilities(nextPhotos)
     },
     { flush: 'post' },
   )
 
-  onMounted(() => syncRegistrations(photos.value))
+  syncCapabilities(photos.value)
 
-  onBeforeUnmount(clearRegistrations)
+  onBeforeUnmount(removeCapabilities)
 
   return {
     hasLightbox,

@@ -55,6 +55,7 @@ export function useLightboxInputHandlers(
       goToNext: navigation.goToNext,
       goToPrev: navigation.goToPrev,
       close: lifecycle.close,
+      reportAsyncError: lifecycle.reportAsyncError,
     },
     debug,
   )

@@ -38,6 +38,17 @@ function assertPlainRecord(
   if (!isPlainRecord(value)) throw configError(path, 'an object')
 }
 
+function assertKnownKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  path: string,
+) {
+  const unknown = Object.keys(value).find((key) => !allowed.includes(key))
+  if (!unknown) return
+  const fullPath = path ? `${path}.${unknown}` : unknown
+  throw new TypeError(`[nuxt-photo] Unknown \`nuxtPhoto.${fullPath}\` option.`)
+}
+
 function assertString(value: unknown, path: string) {
   if (value !== undefined && typeof value !== 'string') {
     throw configError(path, 'a string')
@@ -90,6 +101,11 @@ function assertWidths(value: unknown, path: string) {
 function validateToggleRecord(value: unknown, path: string) {
   if (value === undefined || typeof value === 'boolean') return
   if (!isPlainRecord(value)) throw configError(path, 'a boolean or object')
+  assertKnownKeys(
+    value,
+    path === 'components' ? ['prefix', 'primitives'] : ['prefix'],
+    path,
+  )
   assertString(value.prefix, `${path}.prefix`)
   if (path === 'components') {
     assertBoolean(value.primitives, 'components.primitives')
@@ -101,6 +117,11 @@ export function validateNuxtPhotoOptions(
   options: unknown,
 ): asserts options is NuxtPhotoOptions {
   assertPlainRecord(options, '')
+  assertKnownKeys(
+    options,
+    ['autoImports', 'components', 'css', 'image', 'lightbox'],
+    '',
+  )
 
   if (
     options.css !== undefined &&
@@ -116,6 +137,7 @@ export function validateNuxtPhotoOptions(
     if (!isPlainRecord(options.image)) {
       throw configError('image', 'false or an object')
     }
+    assertKnownKeys(options.image, ['provider', 'thumb', 'slide'], 'image')
     if (
       options.image.provider !== undefined &&
       !['auto', 'nuxt-image', 'native'].includes(String(options.image.provider))
@@ -125,12 +147,18 @@ export function validateNuxtPhotoOptions(
 
     if (options.image.thumb !== undefined) {
       assertPlainRecord(options.image.thumb, 'image.thumb')
+      assertKnownKeys(options.image.thumb, ['sizes', 'quality'], 'image.thumb')
       assertString(options.image.thumb.sizes, 'image.thumb.sizes')
       assertQuality(options.image.thumb.quality, 'image.thumb.quality')
     }
 
     if (options.image.slide !== undefined) {
       assertPlainRecord(options.image.slide, 'image.slide')
+      assertKnownKeys(
+        options.image.slide,
+        ['widths', 'maxWidth', 'maxDensity', 'sizes', 'quality'],
+        'image.slide',
+      )
       assertWidths(options.image.slide.widths, 'image.slide.widths')
       assertPositiveNumber(options.image.slide.maxWidth, 'image.slide.maxWidth')
       assertPositiveNumber(
@@ -144,6 +172,7 @@ export function validateNuxtPhotoOptions(
 
   if (options.lightbox !== undefined) {
     assertPlainRecord(options.lightbox, 'lightbox')
+    assertKnownKeys(options.lightbox, ['minZoom'], 'lightbox')
     assertPositiveNumber(options.lightbox.minZoom, 'lightbox.minZoom')
   }
 }

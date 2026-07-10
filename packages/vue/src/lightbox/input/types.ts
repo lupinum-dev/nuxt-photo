@@ -63,6 +63,7 @@ export type GestureInputConfig = {
       closeFn: () => Promise<void>,
     ) => Promise<void>
     close: () => Promise<void>
+    reportAsyncError: (operation: string, task: Promise<unknown>) => void
   }
 }
 

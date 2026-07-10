@@ -367,7 +367,7 @@ describe('SSR', () => {
     expect(html).toContain('flex-grow')
   })
 
-  it('PhotoAlbum renders with its own lightbox during SSR', async () => {
+  it('PhotoAlbum omits its closed lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
     })
@@ -375,27 +375,31 @@ describe('SSR', () => {
     const html = await renderToString(app)
 
     expect(html).toContain('role="button"')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
-  it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
+  it('PhotoGroup omits its closed shared-lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () =>
-        h(PhotoGroup, null, {
-          default: () =>
-            h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-        }),
+        h(
+          PhotoGroup,
+          { photos },
+          {
+            default: () =>
+              h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+          },
+        ),
     })
 
     const html = await renderToString(app)
 
     expect(html).toContain('ssr-1')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
-  it('Photo renders standalone SSR markup with solo lightbox enabled', async () => {
+  it('Photo omits its closed solo-lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () => h(Photo, { photo: photos[0], lightbox: true }),
     })
@@ -403,8 +407,8 @@ describe('SSR', () => {
     const html = await renderToString(app)
 
     expect(html).toContain('np-photo')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
   it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {

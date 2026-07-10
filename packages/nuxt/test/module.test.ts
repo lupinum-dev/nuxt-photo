@@ -280,6 +280,17 @@ describe('nuxt-photo module', () => {
       { lightbox: [] },
       /`nuxtPhoto\.lightbox` must be an object/,
     ],
+    ['unknown root option', { csss: 'all' }, /Unknown `nuxtPhoto\.csss`/],
+    [
+      'unknown component option',
+      { components: { primitive: true } },
+      /Unknown `nuxtPhoto\.components\.primitive`/,
+    ],
+    [
+      'unknown image option',
+      { image: { provider: 'native', slied: {} } },
+      /Unknown `nuxtPhoto\.image\.slied`/,
+    ],
   ])(
     'validates invalid %s config before setup side effects',
     (_name, config, message) => {

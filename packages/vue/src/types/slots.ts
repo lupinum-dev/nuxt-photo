@@ -42,7 +42,7 @@ export interface CarouselSlideSlotProps {
   photo: PhotoItem
   index: number
   selected: boolean
-  open: () => void
+  open: () => void | Promise<void>
 }
 
 export interface CarouselThumbSlotProps {

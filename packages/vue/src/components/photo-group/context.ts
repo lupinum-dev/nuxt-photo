@@ -4,17 +4,22 @@ import type { LightboxSlideRenderer } from '../../provide/keys'
 
 export interface PhotoGroupContext {
   readonly enabled: boolean
-  register(
-    id: symbol,
-    photo: PhotoItem,
-    getThumbnailElement: () => HTMLElement | null,
-    renderSlide?: LightboxSlideRenderer | null,
+  replaceCapabilities(
+    owner: symbol,
+    entries: readonly PhotoGroupCapability[],
   ): void
-  unregister(id: symbol): void
+  removeCapabilities(owner: symbol): void
   open(index?: number): Promise<void>
-  openById(id: string): Promise<void>
+  activateById(id: string, source?: HTMLElement | null): Promise<void>
+  hasPhoto(id: string): boolean
   readonly photos: ComputedRef<readonly PhotoItem[]>
   readonly hiddenPhoto: ComputedRef<PhotoItem | null>
+}
+
+export interface PhotoGroupCapability {
+  readonly id: string
+  readonly getThumbnailElement: () => HTMLElement | null
+  readonly renderSlide?: LightboxSlideRenderer | null
 }
 
 export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(

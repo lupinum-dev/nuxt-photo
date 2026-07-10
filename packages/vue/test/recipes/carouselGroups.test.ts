@@ -2,87 +2,129 @@
 
 import EmblaCarousel from 'embla-carousel'
 import { describe, expect, it } from 'vitest'
-import { createCarouselGroups } from '../../src/integrations/embla/groups'
+import { readEmblaSnapModel } from '../../src/integrations/embla/snapModel'
+import {
+  validatePhotoCarouselAutoplayOptions,
+  validatePhotoCarouselOptions,
+} from '../../src/components/photo-carousel/usePhotoCarouselRuntime'
 
 function setRect(
   element: HTMLElement,
-  rect: { left: number; top?: number; width: number; height?: number },
+  rect: { left: number; width: number; height?: number },
 ) {
-  const values = {
+  for (const [name, value] of Object.entries({
     offsetLeft: rect.left,
-    offsetTop: rect.top ?? 0,
+    offsetTop: 0,
     offsetWidth: rect.width,
     offsetHeight: rect.height ?? 400,
-  }
-  for (const [name, value] of Object.entries(values)) {
+  })) {
     Object.defineProperty(element, name, { configurable: true, value })
   }
 }
 
-describe('canonical carousel groups', () => {
-  it('uses one deterministic model for snaps and slides', () => {
-    expect(createCarouselGroups(5, 2)).toEqual({
-      slidesBySnap: [[0, 1], [2, 3], [4]],
-      snapBySlide: { 0: 0, 1: 0, 2: 1, 3: 1, 4: 2 },
-    })
-  })
+function createCarousel(
+  slideCount: number,
+  slideWidth: number,
+  groupSize: number,
+) {
+  class NoopObserver {
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  }
+  window.IntersectionObserver =
+    NoopObserver as unknown as typeof window.IntersectionObserver
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia
 
-  it('normalizes invalid group sizes without vendor state', () => {
-    expect(createCarouselGroups(2, Number.NaN).slidesBySnap).toEqual([[0], [1]])
-    expect(createCarouselGroups(2, 8).slidesBySnap).toEqual([[0, 1]])
+  const root = document.createElement('div')
+  const container = document.createElement('div')
+  const slides = Array.from({ length: slideCount }, (_, index) => {
+    const slide = document.createElement('div')
+    setRect(slide, { left: index * slideWidth, width: slideWidth })
+    return slide
   })
+  setRect(root, { left: 0, width: 600 })
+  setRect(container, { left: 0, width: 600 })
+  container.append(...slides)
+  root.append(container)
+  document.body.append(root)
 
-  it('matches real Embla 9 selection using only its public API', () => {
-    class NoopObserver {
-      observe() {}
-      disconnect() {}
-      unobserve() {}
+  const api = EmblaCarousel(root, {
+    align: 'start',
+    containScroll: 'trimSnaps',
+    slidesToScroll: groupSize,
+    resize: false,
+    slideChanges: false,
+  })
+  return { api, root }
+}
+
+describe('Embla snap model', () => {
+  it.each([
+    [5, 300, 1, [[0], [1], [2], [3, 4]]],
+    [5, 200, 1, [[0], [1], [2, 3, 4]]],
+    [
+      5,
+      200,
+      2,
+      [
+        [0, 1],
+        [2, 3, 4],
+      ],
+    ],
+    [4, 150, 2, [[0, 1, 2, 3]]],
+  ])(
+    'uses real trimmed groups for %i slides at %ipx grouped by %i',
+    (slideCount, slideWidth, groupSize, expectedGroups) => {
+      const { api, root } = createCarousel(slideCount, slideWidth, groupSize)
+      const model = readEmblaSnapModel(api)
+
+      expect(model.slidesBySnap).toEqual(expectedGroups)
+      expect(model.snapBySlide).toEqual(
+        Object.fromEntries(
+          expectedGroups.flatMap((slides, snap) =>
+            slides.map((slide) => [slide, snap]),
+          ),
+        ),
+      )
+
+      api.destroy()
+      root.remove()
+    },
+  )
+
+  it('rejects invalid public grouping values before Embla sees them', () => {
+    for (const slidesToScroll of [0, -1, 0.5, Number.NaN]) {
+      expect(() => validatePhotoCarouselOptions({ slidesToScroll })).toThrow(
+        /positive integer/,
+      )
     }
-    window.IntersectionObserver =
-      NoopObserver as unknown as typeof window.IntersectionObserver
-    window.matchMedia = ((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener() {},
-      removeEventListener() {},
-      addListener() {},
-      removeListener() {},
-      dispatchEvent: () => false,
-    })) as typeof window.matchMedia
+    expect(() =>
+      validatePhotoCarouselOptions({ slidesToScroll: 2 }),
+    ).not.toThrow()
+  })
 
-    const root = document.createElement('div')
-    const container = document.createElement('div')
-    const slides = Array.from({ length: 5 }, (_, index) => {
-      const slide = document.createElement('div')
-      setRect(slide, { left: index * 300, width: 300 })
-      return slide
-    })
-    setRect(root, { left: 0, width: 600 })
-    setRect(container, { left: 0, width: 600 })
-    container.append(...slides)
-    root.append(container)
-    document.body.append(root)
-
-    const groups = createCarouselGroups(slides.length, 2)
-    const api = EmblaCarousel(root, {
-      align: 'start',
-      containScroll: 'trimSnaps',
-      slidesToScroll: 2,
-      resize: false,
-      slideChanges: false,
-    })
-
-    expect(api.snapList()).toHaveLength(groups.slidesBySnap.length)
-    api.goTo(1, true)
-    expect(api.selectedSnap()).toBe(1)
-    expect(groups.slidesBySnap[api.selectedSnap()]).toEqual([2, 3])
-
-    api.reInit()
-    expect(api.selectedSnap()).toBe(1)
-    expect(groups.slidesBySnap[api.selectedSnap()]).toEqual([2, 3])
-
-    api.destroy()
-    root.remove()
+  it('rejects unsafe autoplay values before the plugin sees them', () => {
+    for (const delayMs of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => validatePhotoCarouselAutoplayOptions({ delayMs })).toThrow(
+        /positive finite number/,
+      )
+    }
+    expect(() =>
+      validatePhotoCarouselAutoplayOptions({
+        delayMs: 3000,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+      }),
+    ).not.toThrow()
   })
 })

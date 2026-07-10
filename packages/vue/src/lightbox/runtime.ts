@@ -34,6 +34,11 @@ import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { createDebug } from '../core/debug/logger'
 import { abortable, isAbortError } from './transitions/animation'
+import { useAsyncErrorReporter } from '../internal/asyncErrors'
+import {
+  acquireLightboxOwnership,
+  releaseLightboxOwnership,
+} from '../internal/lightboxOwnership'
 
 /**
  * Internal Vue lightbox state.
@@ -69,6 +74,8 @@ export function useLightboxRuntimeState(
   )
 
   const debug = createDebug()
+  const reportAsyncError = useAsyncErrorReporter()
+  const ownershipId = Symbol('nuxt-photo:lightbox-owner')
   const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
 
   // Apply user-provided transition option
@@ -231,15 +238,33 @@ export function useLightboxRuntimeState(
       )
     }
 
-    desired = { kind: 'open', index }
+    const target: LightboxIntent = { kind: 'open', index }
+    desired = target
     activeRun?.controller.abort()
-    await ensureReconciled()
+    await acquireLightboxOwnership({ id: ownershipId, close })
+    try {
+      if (desired !== target) {
+        await ensureReconciled()
+        return
+      }
+      await ensureReconciled()
+    } finally {
+      if (lifecycleStatus.value === 'closed') {
+        releaseLightboxOwnership(ownershipId)
+      }
+    }
   }
 
   async function close() {
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
-    await ensureReconciled()
+    try {
+      await ensureReconciled()
+    } finally {
+      if (lifecycleStatus.value === 'closed') {
+        releaseLightboxOwnership(ownershipId)
+      }
+    }
   }
 
   function next() {
@@ -293,6 +318,7 @@ export function useLightboxRuntimeState(
         setCloseDragY: ghost.setCloseDragY,
         handleCloseGesture: ghost.handleCloseGesture,
         close,
+        reportAsyncError,
       },
     },
     debug,
@@ -345,11 +371,12 @@ export function useLightboxRuntimeState(
     isMounted: isOpen,
     goTo: carousel.goTo,
     close,
+    reportAsyncError,
   })
   watch(carousel.activeIndex, (index) => {
     if (lifecycleStatus.value !== 'open') return
     debug.log('slides', `activeIndex changed → ${index}`)
-    void prepareActiveSlide(true)
+    reportAsyncError('prepare-active-slide', prepareActiveSlide(true))
   })
   useLightboxWindowLifecycle({
     isMounted: isOpen,
@@ -367,6 +394,7 @@ export function useLightboxRuntimeState(
     ghost.resetClosedVisualState()
     keydown.detach()
     lifecycleStatus.value = 'closed'
+    releaseLightboxOwnership(ownershipId)
   })
 
   return {

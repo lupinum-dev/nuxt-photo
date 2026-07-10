@@ -366,7 +366,7 @@ export function createCloseTransition(s: GhostState) {
   function handleBackdropClick(closeFn: () => Promise<void>) {
     if (s.animating.value) return
     s.debug?.log('transitions', 'backdrop click → closing')
-    void closeFn()
+    return closeFn()
   }
 
   return { close, animateCloseDragTo, handleCloseGesture, handleBackdropClick }

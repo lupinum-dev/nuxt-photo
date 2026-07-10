@@ -204,6 +204,11 @@ try {
           nuxt: nuxtManifest.devDependencies.nuxt,
           vue: rootManifest.devDependencies.vue,
         },
+        pnpm: {
+          overrides: {
+            '@nuxt-photo/vue': `file:${packedTarballs.get('@nuxt-photo/vue')}`,
+          },
+        },
       },
       null,
       2,
@@ -251,13 +256,21 @@ try {
   writeFileSync(
     join(consumerDir, 'app.vue'),
     `<script setup lang="ts">
-      import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+      import { PhotoValidationError, type PhotoItem } from '@nuxt-photo/nuxt/app'
+      import { responsive } from '@nuxt-photo/vue'
+      import { useContainerWidth } from '@nuxt-photo/vue/composables'
+      import type { LightboxCaptionSlotProps } from '@nuxt-photo/vue/types'
       const photos: readonly PhotoItem[] = [
         { id: 'packed', src: '/packed.jpg', width: 1200, height: 800 },
       ]
+      const spacing = responsive({ 0: 4, 800: 8 })
+      void PhotoValidationError
+      void useContainerWidth
+      const caption: LightboxCaptionSlotProps['photo'] = photos[0] ?? null
+      void caption
     </script>
     <template>
-      <PhotoAlbum :photos="photos" :layout="{ type: 'rows' }" />
+      <PhotoAlbum :photos="photos" :layout="{ type: 'rows' }" :spacing="spacing" />
     </template>\n`,
   )
   run('pnpm', ['exec', 'nuxt', 'build'], { cwd: consumerDir })

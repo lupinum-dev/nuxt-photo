@@ -23,6 +23,7 @@ describe('@nuxt-photo/vue public exports', () => {
         'PhotoGroup',
         'PhotoImage',
         'PhotoTrigger',
+        'PhotoValidationError',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
@@ -52,5 +53,8 @@ describe('@nuxt-photo/vue public exports', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')
     expect(vue.LightboxDefaultsKey).toBeTypeOf('symbol')
+    expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(
+      vue.PhotoValidationError,
+    )
   })
 })

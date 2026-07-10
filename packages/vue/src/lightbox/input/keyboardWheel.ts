@@ -19,6 +19,7 @@ type KeyboardWheelConfig = {
   goToNext: () => void
   goToPrev: () => void
   close: () => Promise<void>
+  reportAsyncError: (operation: string, task: Promise<unknown>) => void
 }
 
 function isEditableKeyTarget(target: EventTarget | null) {
@@ -67,7 +68,7 @@ export function createKeyboardWheelHandlers(
 
     if (event.key === 'Escape') {
       debug?.log('gestures', 'key: Escape → close')
-      void config.close()
+      config.reportAsyncError('escape-close', config.close())
       return
     }
     if (event.key === 'z' || event.key === 'Z') {

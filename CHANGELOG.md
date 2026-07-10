@@ -6,29 +6,33 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-10
+
 ### Breaking
 
-- Removed the `@nuxt-photo/engine` package. Lightbox runtime state is now owned by the Vue layer through `@nuxt-photo/vue`.
-- Removed public core collection helpers and the unused viewer state-machine exports.
-- Removed `ImageContext = 'preload'`. Preloading now routes through the configured `ImageAdapter` with the existing `'slide'` context.
-- Renamed `PhotoAdapter` to `PhotoMapper`.
-- Renamed recipe props from `itemAdapter` / `:item-adapter` to `itemMapper` / `:item-mapper`.
-- Renamed the lightbox ghost primitive from `LightboxPortal` to `LightboxGhostImage`.
-- Raised the Node.js support floor to active even-numbered lines: `^22.12.0 || ^24.11.0 || >=26.0.0`. Node 20 is no longer supported.
+- Photo IDs are required non-empty strings and public photo/controller models are readonly.
+- Removed `PhotoMapper`, `itemMapper`, `photoId`, object-identity opening, `openPhoto`, raw Embla options/plugins, and duplicate album layout props.
+- `PhotoGroup` now requires one explicit `photos` collection. Descendants contribute thumbnail and slide-renderer capabilities without owning collection order.
+- Carousel and autoplay props use library-owned option types. Embla remains an internal exact-version dependency.
+- Provider configuration is setup-time; remount a provider to change lightbox capability, transitions, zoom defaults, or image adapters.
 
 ### Changed
 
-- Routed lightbox slide rendering, ghost-image transitions, and preloading through the configured `ImageAdapter`.
-- Collapsed duplicated lightbox state ownership so Vue refs are the source of truth for open state, active index, gesture phase, pan/zoom state, and ghost transition state.
-- Updated docs to describe only shipped behavior and remove framework-free engine, decode-timeout, aspect-ratio rejection, and universal primitive attribute-forwarding claims.
+- Centralized lightbox lifecycle intent, abortable transitions, modal ownership, body-scroll ownership, gesture sessions, and pan/zoom orchestration.
+- Carousel dots, thumbnails, counters, and navigation now derive from Embla's real geometry-dependent snap registry.
+- Invalid photo data and unknown Nuxt module options fail at their public boundaries with structured, namespaced errors.
+- Only one lightbox owns focus and page isolation at a time.
 
 ### Removed
 
-- Removed export-name smoke tests and adapter/collection tests that only exercised plumbing.
+- Removed the old framework-free engine package, compatibility paths, automatic PhotoGroup collection, public vendor types, private helper exports, and obsolete test scaffolding.
 
 ### Fixed
 
-- Fixed custom and Nuxt image adapters not being used consistently by lightbox preloading and transition image loading.
+- Fixed close-during-open, open-during-close, stale queued intent, and cross-provider modal races.
+- Fixed non-atomic group registration, registration-order drift, and carousel snap mismatches for multiple visible slides.
+- Fixed built-in interactions losing rejected lifecycle promises.
+- Fixed runtime export and packed-consumer coverage for `PhotoValidationError`.
 
 ## [0.1.0] - 2026-04-26
 

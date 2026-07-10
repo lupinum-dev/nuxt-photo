@@ -1,7 +1,6 @@
 <template>
-  <Teleport to="body">
+  <Teleport v-if="ctx.isOpen.value" to="body">
     <div
-      v-if="ctx.isOpen.value"
       ref="rootRef"
       tabindex="-1"
       v-bind="$attrs"

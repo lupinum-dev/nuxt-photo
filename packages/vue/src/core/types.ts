@@ -1,9 +1,7 @@
 // ─── Item types ───
 
 export interface PhotoItem<
-  TMeta extends Readonly<Record<string, unknown>> = Readonly<
-    Record<string, unknown>
-  >,
+  TMeta extends object = Readonly<Record<string, unknown>>,
 > {
   readonly id: string
   readonly src: string
@@ -14,7 +12,7 @@ export interface PhotoItem<
   readonly caption?: string
   readonly description?: string
   readonly srcset?: string
-  readonly meta?: TMeta
+  readonly meta?: Readonly<TMeta>
 }
 
 // ─── Geometry ───

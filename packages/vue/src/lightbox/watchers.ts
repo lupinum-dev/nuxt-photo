@@ -97,6 +97,7 @@ export function watchPhotoCollection(
     isMounted: Readonly<Ref<boolean>>
     goTo: (index: number, instant?: boolean) => void
     close: () => Promise<void>
+    reportAsyncError: (operation: string, task: Promise<unknown>) => void
   },
 ) {
   watch(photos, (newPhotos, oldPhotos) => {
@@ -113,7 +114,7 @@ export function watchPhotoCollection(
 
     if (!newIds.has(activeId)) {
       if (config.isMounted.value) {
-        void config.close()
+        config.reportAsyncError('collection-close', config.close())
       }
       config.goTo(0, true)
       return

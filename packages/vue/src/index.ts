@@ -65,5 +65,5 @@ export type {
   InvalidPhotosEvent,
   PhotoValidationIssue,
   PhotoValidationIssueCode,
-  PhotoValidationError,
 } from './core/photo/normalize'
+export { PhotoValidationError } from './core/photo/normalize'

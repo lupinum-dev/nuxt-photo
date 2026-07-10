@@ -44,6 +44,7 @@ import type { PhotoItem, ImageAdapter } from '../core/index'
 import type { LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
+import { normalizePhotos } from '../core/photo/normalize'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
@@ -64,6 +65,11 @@ const props = defineProps<{
   captionClass?: string
 }>()
 const slots = useSlots()
+
+function validatePhoto() {
+  normalizePhotos([props.photo], { owner: 'Photo', onInvalid: 'throw' })
+}
+validatePhoto()
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
@@ -107,13 +113,17 @@ const soloCtx = isSolo.value
 const thumbRef = ref<HTMLElement | null>(null)
 
 // Is this photo's thumb hidden during a transition?
-const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
+const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
 
-// Auto-group mode: inside a PhotoGroup with auto-collection
-const isAutoGrouped = computed(
-  () => !!group && group.enabled && !props.lightboxIgnore,
+// Group mode: the parent owns the canonical collection; this photo is a trigger.
+const isGrouped = computed(
+  () =>
+    !!group &&
+    group.enabled &&
+    group.hasPhoto(props.photo.id) &&
+    !props.lightboxIgnore,
 )
-const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
+const isInteractive = computed(() => isSolo.value || isGrouped.value)
 
 const figureStyle = computed(() => {
   if (isSolo.value) {
@@ -123,15 +133,16 @@ const figureStyle = computed(() => {
       cursor: 'pointer',
     }
   }
-  if (isAutoGrouped.value) {
+  if (isGrouped.value) {
     return { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
   }
   return { margin: 0 }
 })
 
 function handleClick() {
-  if (isSolo.value) soloOpen()
-  else if (isAutoGrouped.value) void group!.openById(props.photo.id)
+  if (isSolo.value) return soloOpen()
+  else if (isGrouped.value)
+    return group!.activateById(props.photo.id, thumbRef.value)
 }
 
 const interactiveAttrs = computed(() => {
@@ -139,7 +150,7 @@ const interactiveAttrs = computed(() => {
   return createPhotoTriggerBindings(props.photo, 0, handleClick)
 })
 
-// Registration with parent group (auto mode only)
+// Capability registration with the parent group.
 const id = Symbol()
 const registered = ref(false)
 
@@ -149,18 +160,21 @@ function shouldRegisterWithGroup() {
 
 function unregisterFromGroup() {
   if (!group || !registered.value) return
-  group.unregister(id)
+  group.removeCapabilities(id)
   registered.value = false
 }
 
 function registerWithGroup() {
   if (!shouldRegisterWithGroup()) return
-  group!.register(
-    id,
-    props.photo,
-    () => thumbRef.value,
-    slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
-  )
+  group!.replaceCapabilities(id, [
+    {
+      id: props.photo.id,
+      getThumbnailElement: () => thumbRef.value,
+      renderSlide: slots.slide
+        ? (slotProps) => slots.slide?.(slotProps) ?? null
+        : null,
+    },
+  ])
   registered.value = true
 }
 
@@ -168,13 +182,14 @@ onMounted(() => {
   if (soloCtx) {
     soloCtx.setThumbnailRef(0)(thumbRef.value)
   }
-
-  registerWithGroup()
 })
+
+registerWithGroup()
 
 watch(
   () => [props.photo, props.lightboxIgnore],
   () => {
+    validatePhoto()
     unregisterFromGroup()
     registerWithGroup()
   },

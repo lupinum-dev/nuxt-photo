@@ -115,12 +115,12 @@ const photos = assets.map(
 
 Use the highest-level component that fits:
 
-| Component         | Use for                                                                       |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `<Photo>`         | One standalone image with optional lightbox.                                  |
-| `<PhotoAlbum>`    | Rows, columns, or masonry grid with built-in lightbox.                        |
-| `<PhotoGroup>`    | Multiple photos/albums sharing one lightbox, or custom thumbnail layouts.     |
-| `<PhotoCarousel>` | Horizontal Embla-powered carousel with optional thumbnails/autoplay/lightbox. |
+| Component         | Use for                                                                        |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `<Photo>`         | One standalone image with optional lightbox.                                   |
+| `<PhotoAlbum>`    | Rows, columns, or masonry grid with built-in lightbox.                         |
+| `<PhotoGroup>`    | Multiple recipe components sharing one explicit photo collection and lightbox. |
+| `<PhotoCarousel>` | Horizontal Embla-powered carousel with optional thumbnails/autoplay/lightbox.  |
 
 Recipe components are auto-registered by the Nuxt module. Composables `useLightbox`, `useLightboxProvider`, and `responsive` are auto-imported unless `autoImports` is disabled.
 
@@ -161,10 +161,10 @@ If the app disables Nuxt Photo auto-imports and imports `responsive` explicitly 
 
 ## PhotoGroup
 
-PhotoGroup collects descendant recipes into one shared lightbox:
+PhotoGroup gives descendant recipes one explicit shared collection and lightbox:
 
 ```vue
-<PhotoGroup>
+<PhotoGroup :photos="[...landscapes, ...portraits]">
   <PhotoAlbum :photos="landscapes" :layout="{ type: 'rows' }" />
   <PhotoAlbum :photos="portraits" :layout="{ type: 'columns' }" />
 </PhotoGroup>

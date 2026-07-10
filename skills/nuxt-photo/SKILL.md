@@ -12,9 +12,9 @@ Use this skill to add or fix Nuxt Photo in a Nuxt 4 app without guessing at the 
 1. Inspect the target app first: package manager, Nuxt version, `nuxt.config`, existing image/CMS pipeline, and whether `@nuxt/image` is already used.
 2. Pick the smallest working layer:
    - Use `<PhotoAlbum>` for normal galleries.
-   - Use `<PhotoGroup>` when multiple albums or a custom thumbnail layout should share one lightbox.
+   - Use `<PhotoGroup :photos="photos">` when several recipe components should share one explicit lightbox collection.
    - Use `<PhotoCarousel>` for horizontal swipeable galleries.
-   - Use primitives only when the default recipe UI cannot satisfy the design.
+   - Use primitives for custom thumbnail layouts or when the default recipe UI cannot satisfy the design.
 3. Normalize all data to `PhotoItem`: every rendered photo needs stable `id`, `src`, real intrinsic `width`, and real intrinsic `height`.
 4. Prefer module defaults unless the app has a concrete reason to change them. The default CSS mode is `structure`; use `css: 'all'` for a styled first result.
 5. Verify with the app's normal checks. At minimum, run the relevant typecheck/build path and manually inspect the gallery if a browser target is available.

@@ -1,9 +1,10 @@
-import type { MaybeRef } from 'vue'
+import { computed, toValue, type MaybeRef } from 'vue'
 import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
+import { normalizePhotos } from '../core/photo/normalize'
 import { useLightboxRuntimeState } from '../lightbox/runtime'
 import { createLightboxController } from '../lightbox/controller'
 import { type LightboxSlideRenderer } from '../provide/keys'
@@ -39,8 +40,15 @@ export function useLightboxProvider(
     imageAdapter?: ImageAdapter
   },
 ): LightboxProviderController {
+  const photos = computed(() => {
+    const value = toValue(photosInput)
+    return normalizePhotos(Array.isArray(value) ? value : [value], {
+      owner: 'useLightboxProvider',
+      onInvalid: 'throw',
+    }).photos
+  })
   const ctx = useLightboxRuntimeState(
-    photosInput,
+    photos,
     options?.transition,
     options?.minZoom,
     options?.imageAdapter,

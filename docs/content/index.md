@@ -109,7 +109,7 @@ const photos: PhotoItem[] = [
 ```vue
 <template>
   <!-- One lightbox, shared across both albums -->
-  <PhotoGroup>
+  <PhotoGroup :photos="[...landscape, ...studies]">
     <PhotoAlbum :photos="landscape" layout="rows" />
     <PhotoAlbum :photos="studies" layout="rows" />
   </PhotoGroup>
@@ -165,7 +165,9 @@ title: text-3xl font-semibold
 One lightbox, many albums
 
 #description
-Wrap any number of `<PhotoAlbum>` in a `<PhotoGroup>` and they share a single lightbox. Click a photo in either album below — navigation flows across both.
+Give `<PhotoGroup>` the combined collection and wrap any number of
+`<PhotoAlbum>` descendants to share one lightbox. Navigation follows the
+explicit collection order.
 
 #default
 ::demo-group
@@ -184,7 +186,8 @@ title: text-3xl font-semibold
 Carousel with a lightbox on top
 
 #description
-`<PhotoCarousel>` wraps Embla with built-in thumbnails, counter, autoplay, and an optional lightbox overlay. Works best when its Embla options stay within the documented recipe path.
+`<PhotoCarousel>` wraps Embla with built-in thumbnails, counter, autoplay, and
+an optional lightbox overlay behind a small library-owned option surface.
 
 #default
 ::demo-carousel

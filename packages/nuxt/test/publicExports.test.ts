@@ -19,6 +19,7 @@ import {
   PhotoGroup,
   PhotoImage,
   PhotoTrigger,
+  PhotoValidationError,
   responsive,
   resolveResponsiveParameter,
   useContainerWidth,
@@ -49,6 +50,7 @@ describe('@nuxt-photo/nuxt app exports', () => {
         'PhotoGroup',
         'PhotoImage',
         'PhotoTrigger',
+        'PhotoValidationError',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
@@ -76,6 +78,7 @@ describe('@nuxt-photo/nuxt app exports', () => {
     expect(LightboxViewport).toBeTypeOf('object')
     expect(PhotoImage).toBeTypeOf('object')
     expect(PhotoTrigger).toBeTypeOf('object')
+    expect(PhotoValidationError).toBeTypeOf('function')
     expect(useLightbox).toBeTypeOf('function')
     expect(useLightboxProvider).toBeTypeOf('function')
     expect(useContainerWidth).toBeTypeOf('function')

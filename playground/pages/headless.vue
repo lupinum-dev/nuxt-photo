@@ -14,11 +14,10 @@
     <section class="section">
       <h2 class="section__title">Scattered photos sharing one lightbox</h2>
       <p class="section__desc">
-        Each <code>Photo</code> auto-registers with the parent
-        <code>PhotoGroup</code>. No <code>:photos</code> array, no index
-        tracking, no ctx wiring.
+        <code>PhotoGroup</code> owns the canonical navigation order while each
+        descendant contributes its thumbnail and optional slide renderer.
       </p>
-      <PhotoGroup class="scattered">
+      <PhotoGroup :photos="scatteredPhotos" class="scattered">
         <div class="scattered__grid">
           <Photo
             :photo="photos[0]!"
@@ -50,7 +49,7 @@
         <code>PhotoGroup</code> — they join one lightbox. Navigate across all
         photos from both albums seamlessly.
       </p>
-      <PhotoGroup>
+      <PhotoGroup :photos="groupedPhotos">
         <div class="two-albums">
           <div class="two-albums__col">
             <h3 class="two-albums__label">Landscapes</h3>
@@ -82,7 +81,7 @@
         Use <code>ref</code> on <code>PhotoGroup</code> to open the lightbox
         from outside — e.g., from a button or after a route change.
       </p>
-      <PhotoGroup ref="gallery">
+      <PhotoGroup ref="gallery" :photos="programmaticPhotos">
         <PhotoAlbum
           :photos="photos.slice(0, 6)"
           :layout="{ type: 'rows', targetRowHeight: 220 }"
@@ -144,13 +143,22 @@ useHead({ title: 'PhotoGroup — nuxt-photo' })
 
 const landscapes = photos.filter((_, i) => i % 2 === 0).slice(0, 6)
 const portraits = photos.filter((_, i) => i % 2 === 1).slice(0, 6)
+const scatteredPhotos = [
+  photos[0]!,
+  photos[1]!,
+  photos[2]!,
+  photos[3]!,
+  photos[5]!,
+]
+const groupedPhotos = [...landscapes, ...portraits]
+const programmaticPhotos = photos.slice(0, 6)
 
 const gallery = ref<{
   open: (index: number) => void
   openById: (id: string) => void
 } | null>(null)
 
-const scatteredCode = `<PhotoGroup>
+const scatteredCode = `<PhotoGroup :photos="lightboxPhotos">
   <div class="layout">
     <Photo :photo="photos[0]" />
     <Photo :photo="photos[1]" />
@@ -159,7 +167,7 @@ const scatteredCode = `<PhotoGroup>
 </PhotoGroup>`
 
 const twoAlbumsCode = `<!-- Two albums sharing one lightbox -->
-<PhotoGroup>
+<PhotoGroup :photos="[...landscapes, ...portraits]">
   <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
   <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />
 </PhotoGroup>
@@ -168,7 +176,7 @@ const twoAlbumsCode = `<!-- Two albums sharing one lightbox -->
 <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
 <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />`
 
-const programmaticCode = `<PhotoGroup ref="gallery">
+const programmaticCode = `<PhotoGroup ref="gallery" :photos="photos">
   <PhotoAlbum :photos="photos" layout="rows" />
 </PhotoGroup>
 <button @click="gallery?.open(0)">Open Gallery</button>

@@ -7,6 +7,8 @@ export type PhotoValidationIssueCode =
   | 'invalid-height'
   | 'duplicate-id'
   | 'invalid-item'
+  | 'invalid-optional-field'
+  | 'invalid-meta'
 
 export type PhotoValidationIssue = {
   readonly code: PhotoValidationIssueCode
@@ -72,8 +74,12 @@ function createIssue(
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false
+  }
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
 }
 
 export function normalizePhotos(
@@ -87,7 +93,7 @@ export function normalizePhotos(
   const invalidIndexes = new Set<number>()
 
   rawPhotos.forEach((rawPhoto, index) => {
-    if (!isRecord(rawPhoto)) {
+    if (!isPlainRecord(rawPhoto)) {
       issues.push(
         createIssue(
           'invalid-item',
@@ -159,6 +165,45 @@ export function normalizePhotos(
       invalidIndexes.add(index)
     }
 
+    for (const field of [
+      'thumbSrc',
+      'alt',
+      'caption',
+      'description',
+      'srcset',
+    ] as const) {
+      const value = rawPhoto[field]
+      if (value !== undefined && typeof value !== 'string') {
+        issues.push(
+          createIssue(
+            'invalid-optional-field',
+            options.owner,
+            index,
+            id,
+            `photo "${String(id ?? '')}" field "${field}" must be a string`,
+          ),
+        )
+        invalidIndexes.add(index)
+      }
+    }
+
+    if (
+      rawPhoto.meta !== undefined &&
+      (typeof rawPhoto.meta !== 'object' || rawPhoto.meta === null)
+    ) {
+      issues.push(
+        createIssue(
+          'invalid-meta',
+          options.owner,
+          index,
+          id,
+          `photo "${String(id ?? '')}" field "meta" must be an object`,
+        ),
+      )
+      invalidIndexes.add(index)
+    }
+
+    // Every consumed field has been checked above; preserve unknown app fields.
     candidates.push(rawPhoto as unknown as PhotoItem)
   })
 

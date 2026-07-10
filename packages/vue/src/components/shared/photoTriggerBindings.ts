@@ -4,7 +4,7 @@ import type { PhotoItem } from '../../core/index'
 export function createPhotoTriggerBindings(
   photo: PhotoItem,
   index: number,
-  activate: () => void,
+  activate: () => void | Promise<void>,
   label = photo.alt || `View photo ${index + 1}`,
 ) {
   return {
@@ -15,7 +15,7 @@ export function createPhotoTriggerBindings(
     onKeydown(event: KeyboardEvent) {
       if (event.key !== 'Enter' && event.key !== ' ') return
       event.preventDefault()
-      activate()
+      return activate()
     },
   }
 }
