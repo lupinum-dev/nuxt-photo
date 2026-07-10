@@ -46,23 +46,16 @@ type LightboxRuntimeState = {
   isZoomedIn: ComputedRef<boolean>
   zoomAllowed: ComputedRef<boolean>
   animating: Ref<boolean>
-  ghostVisible: Ref<boolean>
-  ghostSrc: Ref<string>
-  ghostStyle: Ref<CSSProperties>
   hiddenThumbIndex: Ref<number | null>
-  overlayOpacity: Ref<number>
-  mediaOpacity: Ref<number>
   activeImageLoadFailed: Ref<boolean>
-  chromeOpacity: Ref<number>
   uiVisible: Ref<boolean>
   closeDragY: Ref<number>
+  stageMounted: Ref<boolean>
+  activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
-  chromeStyle: ComputedRef<CSSProperties>
-  closeDragRatio: ComputedRef<number>
-  backdropStyle: ComputedRef<CSSProperties>
-  lightboxUiStyle: ComputedRef<CSSProperties>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  isSlideMediaMounted: (index: number) => boolean
 }
 
 type LightboxDomBindings = {
@@ -74,6 +67,19 @@ type LightboxDomBindings = {
   setSlideZoomRef: (
     index: number,
   ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideFrameRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideImageRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setOverlayRef: (el: Element | ComponentPublicInstance | null) => void
+  setViewportRef: (el: Element | ComponentPublicInstance | null) => void
+  setControlsRef: (el: Element | ComponentPublicInstance | null) => void
+  setCaptionRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionFrameRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionImageRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionShadowRef: (el: Element | ComponentPublicInstance | null) => void
   onMediaPointerDown: (e: PointerEvent) => void
   onMediaPointerMove: (e: PointerEvent) => void
   onMediaPointerUp: (e: PointerEvent) => void

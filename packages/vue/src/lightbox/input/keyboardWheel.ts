@@ -63,7 +63,7 @@ export function createKeyboardWheelHandlers(
   }
 
   function onKeydown(event: KeyboardEvent) {
-    if (!config.isOpen.value || config.animating.value) return
+    if (!config.isOpen.value) return
     if (event.defaultPrevented || isEditableKeyTarget(event.target)) return
 
     if (event.key === 'Escape') {
@@ -71,6 +71,7 @@ export function createKeyboardWheelHandlers(
       config.reportAsyncError('escape-close', config.close())
       return
     }
+    if (config.animating.value) return
     if (event.key === 'z' || event.key === 'Z') {
       debug?.log('gestures', 'key: Z → toggleZoom')
       config.toggleZoom()

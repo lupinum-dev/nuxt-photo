@@ -19,7 +19,6 @@ export {
   LightboxSlide,
   LightboxControls,
   LightboxCaption,
-  LightboxGhostImage,
   PhotoTrigger,
   PhotoImage,
 } from './primitives'

@@ -60,7 +60,6 @@ export {
   getLoopedIndex,
   fitRect,
   flipTransform,
-  makeGhostBaseStyle,
   rubberband,
 } from './geometry/rect'
 

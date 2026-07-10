@@ -25,7 +25,6 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
   const config = {
     isOpen: ref(true),
     animating: ref(false),
-    ghostVisible: ref(false),
     isZoomedIn: computed(() => isZoomedIn.value),
     zoomAllowed: computed(() => zoomAllowed),
     mediaAreaRef: ref(mediaArea),
@@ -63,7 +62,6 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
     state: {
       isOpen: config.isOpen,
       animating: config.animating,
-      ghostVisible: config.ghostVisible,
       isZoomedIn: config.isZoomedIn,
       zoomAllowed: config.zoomAllowed,
       mediaAreaRef: config.mediaAreaRef,

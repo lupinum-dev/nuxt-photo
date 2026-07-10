@@ -3,9 +3,11 @@
     :ref="
       (el) => {
         ctx.mediaAreaRef.value = el as HTMLElement | null
+        ctx.setViewportRef(el as Element | null)
       }
     "
     v-bind="$attrs"
+    data-np-motion="viewport"
     :data-zoomed="ctx.isZoomedIn.value || undefined"
     :data-gesture="
       ctx.gesturePhase.value !== 'idle' ? ctx.gesturePhase.value : undefined
@@ -18,9 +20,9 @@
     @wheel="ctx.onWheel"
   >
     <slot
+      v-if="ctx.stageMounted.value"
       :photos="ctx.photos.value"
       :viewport-ref="ctx.emblaRef"
-      :media-opacity="ctx.mediaOpacity.value"
       :image-load-failed="ctx.activeImageLoadFailed.value"
     />
   </div>

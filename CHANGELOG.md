@@ -6,12 +6,30 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 
 ## [Unreleased]
 
+### Breaking
+
+- `LightboxRoot` now owns the FLIP transition visual. Remove
+  `LightboxGhostImage` from custom lightboxes and remove `mediaOpacity` bindings
+  from `LightboxViewport` slots.
+- Replaced `--np-backdrop-blur` with `--np-backdrop-filter`. The default is
+  `none`; themes can opt in with `--np-backdrop-filter: blur(16px)`.
+
 ### Changed
 
+- Replaced reactive ghost-image choreography with one WAAPI motion controller
+  that decodes the mounted responsive image, stages carousel mounting, and
+  animates only transforms and opacity.
+- Lightboxes initially mount only active and adjacent image media; custom slide
+  renderers mount only while active.
 - The built-in lightbox now combines a full-viewport swipe track with a
   responsive inset photo frame, edge navigation, and an overlaid caption
   gradient. Dragging clips only at the screen boundary while the active image
   retains deliberate gallery-like breathing room.
+
+### Fixed
+
+- Prevented the responsive thumbnail-to-slide handoff from briefly darkening
+  the image by keeping the decoded media opaque beneath a single-sided dissolve.
 
 ## [0.2.0] - 2026-07-10
 

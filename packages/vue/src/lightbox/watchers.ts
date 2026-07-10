@@ -5,13 +5,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import {
-  isUsableRect,
-  loadImage,
-  type AreaMetrics,
-  type ImageAdapter,
-  type PhotoItem,
-} from '../core/index'
+import { isUsableRect, type AreaMetrics, type PhotoItem } from '../core/index'
 import type { DebugLogger } from '../core/debug/logger'
 import { lockBodyScroll } from '../internal/bodyScroll'
 
@@ -34,23 +28,6 @@ export function createKeydownBinding(
   }
 
   return { attach, detach }
-}
-
-/** Preload the active slide and its immediate neighbors. */
-export function createPreloadAround(
-  photos: ComputedRef<PhotoItem[]>,
-  imageAdapter: ComputedRef<ImageAdapter>,
-) {
-  return function preloadAround(index: number) {
-    const candidates = [index - 1, index, index + 1]
-
-    for (const candidate of candidates) {
-      if (candidate < 0 || candidate >= photos.value.length) continue
-      const photo = photos.value[candidate]
-      if (!photo) continue
-      void loadImage(imageAdapter.value(photo, 'slide').src)
-    }
-  }
 }
 
 /** Measure the media area and cache the usable viewport metrics. */

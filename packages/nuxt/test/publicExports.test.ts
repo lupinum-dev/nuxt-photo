@@ -7,7 +7,6 @@ import {
   LightboxComponentKey,
   LightboxControls,
   LightboxDefaultsKey,
-  LightboxGhostImage,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -38,7 +37,6 @@ describe('@nuxt-photo/nuxt app exports', () => {
         'LightboxComponentKey',
         'LightboxControls',
         'LightboxDefaultsKey',
-        'LightboxGhostImage',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -70,7 +68,6 @@ describe('@nuxt-photo/nuxt app exports', () => {
     expect(Lightbox).toBeTypeOf('object')
     expect(LightboxCaption).toBeTypeOf('object')
     expect(LightboxControls).toBeTypeOf('object')
-    expect(LightboxGhostImage).toBeTypeOf('object')
     expect(LightboxOverlay).toBeTypeOf('object')
     expect(LightboxProvider).toBeTypeOf('object')
     expect(LightboxRoot).toBeTypeOf('object')

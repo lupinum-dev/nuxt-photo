@@ -1,5 +1,5 @@
 <template>
-  <div :style="ctx.chromeStyle.value" v-bind="$attrs">
+  <div :ref="ctx.setControlsRef" data-np-motion="controls" v-bind="$attrs">
     <div data-np-sr-only aria-live="polite" aria-atomic="true">
       Photo {{ ctx.activeIndex.value + 1 }} of {{ ctx.count.value }}
     </div>

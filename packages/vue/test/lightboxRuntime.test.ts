@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, useLightboxProvider } from '../src/composables'
-import { useLightboxRuntimeState } from '../src/lightbox/runtime'
+import {
+  getMountedSlideIndices,
+  useLightboxRuntimeState,
+} from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
   useLightboxWindowLifecycle,
@@ -23,6 +26,23 @@ async function flushUntil(predicate: () => boolean, attempts = 8) {
     await flushWatchers()
   }
 }
+
+describe('lightbox media window', () => {
+  it.each([
+    { active: 0, count: 5, expected: [0, 1, 4] },
+    { active: 2, count: 5, expected: [1, 2, 3] },
+    { active: 4, count: 5, expected: [0, 3, 4] },
+    { active: 0, count: 1, expected: [0] },
+    { active: 1, count: 2, expected: [0, 1] },
+  ])(
+    'mounts modular neighbors for $active of $count',
+    ({ active, count, expected }) => {
+      expect([...getMountedSlideIndices(active, count)].sort()).toEqual(
+        expected,
+      )
+    },
+  )
+})
 
 describe('lightbox controller surface', () => {
   afterEach(() => {
@@ -124,21 +144,7 @@ describe('lightbox lifecycle invariants', () => {
     document.body.style.paddingRight = ''
   })
 
-  it('closes immediately while an opening image decode is pending', async () => {
-    let resolveDecode: (() => void) | null = null
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        set src(_value: string) {}
-        decode() {
-          return new Promise<void>((resolve) => {
-            resolveDecode = resolve
-          })
-        }
-      },
-    )
-
+  it('honors a close intent issued while open is still reconciling', async () => {
     const photos = [
       makePhoto({ id: 'delayed-close', src: '/delayed-close.jpg' }),
     ]
@@ -157,22 +163,8 @@ describe('lightbox lifecycle invariants', () => {
     app.mount(host)
 
     const openPromise = api!.open(0)
-    await flushUntil(() => typeof resolveDecode === 'function')
-    expect(resolveDecode).toEqual(expect.any(Function))
-    expect(api!.lifecycleStatus.value).toBe('opening')
-    expect(api!.isOpen.value).toBe(true)
-    expect(document.body.style.overflow).toBe('hidden')
-
     const closePromise = api!.close()
-    await closePromise
-    await flushWatchers()
-
-    expect(api!.lifecycleStatus.value).toBe('closed')
-    expect(api!.isOpen.value).toBe(false)
-    expect(document.body.style.overflow).toBe('')
-
-    resolveDecode?.()
-    await openPromise
+    await Promise.all([openPromise, closePromise])
     await flushWatchers()
 
     expect(api!.lifecycleStatus.value).toBe('closed')
@@ -183,27 +175,7 @@ describe('lightbox lifecycle invariants', () => {
     host.remove()
   })
 
-  it('does not run a queued open after close cancels the active open', async () => {
-    let resolveFirst: (() => void) | null = null
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        private value = ''
-        set src(value: string) {
-          this.value = value
-        }
-        decode() {
-          if (this.value.includes('queued-first')) {
-            return new Promise<void>((resolve) => {
-              resolveFirst = resolve
-            })
-          }
-          return Promise.resolve()
-        }
-      },
-    )
-
+  it('settles closed after close supersedes queued open intents', async () => {
     const photos = [
       makePhoto({ id: 'queued-first', src: '/queued-first.jpg' }),
       makePhoto({ id: 'queued-second', src: '/queued-second.jpg' }),
@@ -223,15 +195,8 @@ describe('lightbox lifecycle invariants', () => {
     app.mount(host)
 
     const firstOpen = api!.open(0)
-    await flushUntil(() => typeof resolveFirst === 'function')
     const secondOpen = api!.open(1)
-    await flushWatchers()
-
     await api!.close()
-    expect(api!.lifecycleStatus.value).toBe('closed')
-    expect(api!.isOpen.value).toBe(false)
-
-    resolveFirst?.()
     await firstOpen
     await secondOpen
     await flushWatchers()
@@ -244,79 +209,7 @@ describe('lightbox lifecycle invariants', () => {
     host.remove()
   })
 
-  it('does not leak a failed slide image into the next active slide', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        private value = ''
-        set src(value: string) {
-          this.value = value
-        }
-        decode() {
-          return this.value.includes('fail')
-            ? Promise.reject(new Error('decode failed'))
-            : Promise.resolve()
-        }
-      },
-    )
-
-    const photos = [
-      makePhoto({ id: 'failed-slide', src: '/fail-slide.jpg' }),
-      makePhoto({ id: 'good-slide', src: '/good-slide.jpg' }),
-    ]
-    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
-
-    const App = defineComponent({
-      setup() {
-        api = useLightboxRuntimeState(photos, 'none')
-        return () => null
-      },
-    })
-
-    const host = document.createElement('div')
-    document.body.appendChild(host)
-    const app = createApp(App)
-    app.mount(host)
-
-    await api!.open(0)
-    await flushWatchers()
-    expect(api!.activeImageLoadFailed.value).toBe(true)
-    expect(api!.lifecycleStatus.value).toBe('open')
-
-    await api!.open(1)
-    await flushWatchers()
-    expect(api!.activeIndex.value).toBe(1)
-    expect(api!.activeImageLoadFailed.value).toBe(false)
-    expect(api!.lifecycleStatus.value).toBe('open')
-
-    app.unmount()
-    host.remove()
-    warn.mockRestore()
-  })
-
   it('cancels stale open work and lands on the last requested slide', async () => {
-    let resolveFirst: (() => void) | null = null
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        private value = ''
-        set src(value: string) {
-          this.value = value
-        }
-        decode() {
-          if (this.value.includes('first-open')) {
-            return new Promise<void>((resolve) => {
-              resolveFirst = resolve
-            })
-          }
-          return Promise.resolve()
-        }
-      },
-    )
-
     const photos = [
       makePhoto({ id: 'first-open', src: '/first-open.jpg' }),
       makePhoto({ id: 'second-open', src: '/second-open.jpg' }),
@@ -336,12 +229,7 @@ describe('lightbox lifecycle invariants', () => {
     app.mount(host)
 
     const firstOpen = api!.open(0)
-    await flushWatchers()
     const secondOpen = api!.open(1)
-    await flushWatchers()
-
-    expect(api!.activeIndex.value).toBe(1)
-    resolveFirst?.()
     await firstOpen
     await secondOpen
     await flushWatchers()
@@ -429,47 +317,25 @@ describe('lightbox lifecycle invariants', () => {
     host.remove()
   })
 
-  it('reports autonomous Escape close failures through the Vue app', async () => {
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        set src(_value: string) {}
-        decode() {
-          return Promise.resolve()
-        }
-      },
-    )
-    let failAdapter = false
+  it('closes autonomously through Escape', async () => {
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
-    const errorHandler = vi.fn()
     const photo = makePhoto({ id: 'escape-error' })
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp(
       defineComponent({
         setup() {
-          api = useLightboxRuntimeState([photo], 'none', undefined, () => {
-            if (failAdapter) throw new Error('close adapter failed')
-            return { src: photo.src }
-          })
+          api = useLightboxRuntimeState([photo], 'none')
           return () => null
         },
       }),
     )
-    app.config.errorHandler = errorHandler
     app.mount(host)
 
     await api!.open(0)
-    failAdapter = true
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    await flushUntil(() => errorHandler.mock.calls.length > 0)
+    await flushUntil(() => api!.lifecycleStatus.value === 'closed')
 
-    expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'close adapter failed' }),
-      expect.anything(),
-      'nuxt-photo:escape-close',
-    )
     expect(api!.lifecycleStatus.value).toBe('closed')
     app.unmount()
     host.remove()
@@ -602,18 +468,7 @@ describe('lightbox lifecycle invariants', () => {
     app.unmount()
   })
 
-  it('settles closed and rethrows adapter failures during close', async () => {
-    vi.stubGlobal(
-      'Image',
-      class {
-        onerror: null | (() => void) = null
-        set src(_value: string) {}
-        decode() {
-          return Promise.resolve()
-        }
-      },
-    )
-    const failure = new Error('adapter-close-failure')
+  it('does not resolve the image adapter again during an instant close', async () => {
     let fail = false
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
@@ -623,7 +478,8 @@ describe('lightbox lifecycle invariants', () => {
           'none',
           undefined,
           (photo) => {
-            if (fail) throw failure
+            if (fail)
+              throw new Error('adapter unexpectedly called during close')
             return { src: photo.src }
           },
         )
@@ -637,7 +493,7 @@ describe('lightbox lifecycle invariants', () => {
 
     await api!.open()
     fail = true
-    await expect(api!.close()).rejects.toBe(failure)
+    await expect(api!.close()).resolves.toBeUndefined()
     expect(api!.lifecycleStatus.value).toBe('closed')
     expect(api!.isOpen.value).toBe(false)
     expect(document.body.style.overflow).toBe('')

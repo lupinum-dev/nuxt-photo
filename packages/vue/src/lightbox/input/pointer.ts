@@ -181,7 +181,7 @@ export function useLightboxInputHandlers(
   }
 
   function onMediaPointerDown(event: PointerEvent) {
-    if (!state.isOpen.value || state.ghostVisible.value) return
+    if (!state.isOpen.value) return
 
     if (state.animating.value) {
       event.stopPropagation()

@@ -7,6 +7,7 @@
       @keydown.capture="handleKeydownCapture"
     >
       <slot />
+      <LightboxTransitionLayer />
     </div>
   </Teleport>
 </template>
@@ -16,6 +17,7 @@ defineOptions({ inheritAttrs: false })
 
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useLightboxInject } from '../lightbox/inject'
+import LightboxTransitionLayer from '../internal/LightboxTransitionLayer.vue'
 
 const ctx = useLightboxInject('LightboxRoot')
 

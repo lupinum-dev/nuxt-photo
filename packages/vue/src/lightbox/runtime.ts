@@ -12,40 +12,46 @@ import {
 import {
   createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
-  loadImage,
   type AreaMetrics,
   type ImageAdapter,
-  type LoadImageResult,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
-import { useGhostTransition } from './transitions/runtime'
+import { useLightboxMotion } from './transitions/runtime'
 import { useLightboxInputHandlers } from './input/pointer'
 import {
   createGeometrySync,
   createKeydownBinding,
-  createPreloadAround,
   useLightboxWindowLifecycle,
   watchPhotoCollection,
 } from './watchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { createDebug } from '../core/debug/logger'
-import { abortable, isAbortError } from './transitions/animation'
+import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
 import {
   acquireLightboxOwnership,
   releaseLightboxOwnership,
 } from '../internal/lightboxOwnership'
 
+export function getMountedSlideIndices(active: number, count: number) {
+  if (count <= 0) return new Set<number>()
+  return new Set([
+    (active - 1 + count) % count,
+    active % count,
+    (active + 1) % count,
+  ])
+}
+
 /**
  * Internal Vue lightbox state.
  *
  * Public customisation should go through `useLightboxProvider`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
- * Embla paging, pan/zoom, gestures, and ghost transitions.
+ * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
  * Lifecycle intent is reconciled by one abortable runner. Status is the sole
  * writable representation of actual lifecycle state; DOM mount is derived.
  */
@@ -90,12 +96,11 @@ export function useLightboxRuntimeState(
   }
 
   // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
-  if (
+  const prefersReducedMotion =
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    transitionConfig.mode !== 'none'
-  ) {
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion && transitionConfig.mode !== 'none') {
     transitionConfig.mode = 'fade'
   }
 
@@ -121,19 +126,19 @@ export function useLightboxRuntimeState(
     resolvedMinZoom,
   )
 
-  const ghost = useGhostTransition(
+  const motion = useLightboxMotion(
     carousel.activeIndex,
     carousel.currentPhoto,
     areaMetrics,
     carousel.getAbsoluteFrameRect,
     debug,
     transitionConfig,
+    prefersReducedMotion,
   )
   isZoomedIn = () => panzoom.isZoomedIn.value
-  isInteractionLocked = () => ghost.animating.value
+  isInteractionLocked = () => motion.animating.value
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
-  const preloadAround = createPreloadAround(photos, resolvedImageAdapter)
 
   type LightboxIntent =
     | { readonly kind: 'closed' }
@@ -163,7 +168,6 @@ export function useLightboxRuntimeState(
     await nextTick()
     syncGeometry()
     panzoom.refreshZoomState(reset)
-    preloadAround(carousel.activeIndex.value)
   }
 
   async function reconcile() {
@@ -175,8 +179,8 @@ export function useLightboxRuntimeState(
           if (lifecycleStatus.value === 'closed') return
 
           lifecycleStatus.value = 'closing'
-          await startRun((signal) => ghost.close(closeCallbacks, signal))
-          ghost.setCloseDragY(0)
+          await startRun((signal) => motion.close(closeCallbacks, signal))
+          motion.setCloseDragY(0)
           keydown.detach()
           lifecycleStatus.value = 'closed'
         } else if (lifecycleStatus.value === 'open') {
@@ -187,15 +191,15 @@ export function useLightboxRuntimeState(
           }
         } else {
           lifecycleStatus.value = 'opening'
-          ghost.setCloseDragY(0)
+          motion.setCloseDragY(0)
           carousel.goTo(target.index, true)
           keydown.attach()
 
           const opened = await startRun((signal) =>
-            ghost.open(target.index, transitionCallbacks, signal),
+            motion.open(target.index, transitionCallbacks, signal),
           )
           if (!opened) {
-            ghost.resetClosedVisualState()
+            motion.resetClosedVisualState()
             keydown.detach()
             lifecycleStatus.value = 'closed'
           } else {
@@ -203,10 +207,10 @@ export function useLightboxRuntimeState(
           }
         }
       } catch (error) {
-        ghost.resetClosedVisualState()
+        if (isAbortError(error)) continue
+        motion.resetClosedVisualState()
         keydown.detach()
         lifecycleStatus.value = 'closed'
-        if (isAbortError(error)) continue
         desired = { kind: 'closed' }
         throw error
       }
@@ -238,6 +242,8 @@ export function useLightboxRuntimeState(
       )
     }
 
+    const photo = currentPhotos[index]!
+    motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
     const target: LightboxIntent = { kind: 'open', index }
     desired = target
     activeRun?.controller.abort()
@@ -268,13 +274,13 @@ export function useLightboxRuntimeState(
   }
 
   function next() {
-    if (lifecycleStatus.value !== 'open' || ghost.transitionInProgress.value)
+    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value)
       return
     carousel.goToNext()
   }
 
   function prev() {
-    if (lifecycleStatus.value !== 'open' || ghost.transitionInProgress.value)
+    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value)
       return
     carousel.goToPrev()
   }
@@ -283,17 +289,16 @@ export function useLightboxRuntimeState(
     {
       state: {
         isOpen,
-        animating: ghost.animating,
-        ghostVisible: ghost.ghostVisible,
+        animating: motion.animating,
         isZoomedIn: panzoom.isZoomedIn,
         zoomAllowed: panzoom.zoomAllowed,
         mediaAreaRef,
         currentPhoto: carousel.currentPhoto,
         areaMetrics,
-        uiVisible: ghost.uiVisible,
+        uiVisible: motion.uiVisible,
         panState: panzoom.panState,
         zoomState: panzoom.zoomState,
-        transitionInProgress: ghost.transitionInProgress,
+        transitionInProgress: motion.transitionInProgress,
       },
       panzoom: {
         getCurrentScale: panzoom.getCurrentScale,
@@ -315,8 +320,8 @@ export function useLightboxRuntimeState(
         selectedSnap: carousel.selectedSnap,
       },
       lifecycle: {
-        setCloseDragY: ghost.setCloseDragY,
-        handleCloseGesture: ghost.handleCloseGesture,
+        setCloseDragY: motion.setCloseDragY,
+        handleCloseGesture: motion.handleCloseGesture,
         close,
         reportAsyncError,
       },
@@ -325,46 +330,23 @@ export function useLightboxRuntimeState(
   )
   const keydown = createKeydownBinding(gestures.onKeydown)
 
-  async function loadActiveSlideImage(
-    photo: PhotoItem,
-    signal: AbortSignal,
-  ): Promise<LoadImageResult> {
-    activeImageLoadFailed.value = false
-
-    const result = await abortable(
-      loadImage(resolvedImageAdapter.value(photo, 'slide').src),
-      signal,
-    )
-
-    activeImageLoadFailed.value = !result.ok
-    if (!result.ok) {
-      debug.warn(
-        'images',
-        `slide image failed to load for "${photo.id}"`,
-        result.error,
-      )
-    }
-
-    return result
-  }
-
   const transitionCallbacks = {
     prepareActiveSlide,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
     getThumbSrc: (photo: PhotoItem) =>
       resolvedImageAdapter.value(photo, 'thumb').src,
-    getSlideSrc: (photo: PhotoItem) =>
-      resolvedImageAdapter.value(photo, 'slide').src,
-    loadSlideImage: loadActiveSlideImage,
-  }
-
-  const closeCallbacks = {
-    ...transitionCallbacks,
+    setImageLoadFailed: (failed: boolean, error?: unknown) => {
+      activeImageLoadFailed.value = failed
+      if (failed)
+        debug.warn('images', 'active slide image failed to decode', error)
+    },
     syncGeometry,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
     isZoomedIn: panzoom.isZoomedIn,
   }
+
+  const closeCallbacks = transitionCallbacks
 
   watchPhotoCollection(photos, {
     activeIndex: carousel.activeIndex,
@@ -391,7 +373,7 @@ export function useLightboxRuntimeState(
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
     gestures.disposeGestureState()
-    ghost.resetClosedVisualState()
+    motion.resetClosedVisualState()
     keydown.detach()
     lifecycleStatus.value = 'closed'
     releaseLightboxOwnership(ownershipId)
@@ -410,30 +392,31 @@ export function useLightboxRuntimeState(
     isZoomedIn: panzoom.isZoomedIn,
     zoomAllowed: panzoom.zoomAllowed,
 
-    animating: ghost.animating,
-    ghostVisible: ghost.ghostVisible,
-    ghostSrc: ghost.ghostSrc,
-    ghostStyle: ghost.ghostStyle,
-    hiddenThumbIndex: ghost.hiddenThumbIndex,
-    overlayOpacity: ghost.overlayOpacity,
-    mediaOpacity: ghost.mediaOpacity,
+    animating: motion.animating,
+    hiddenThumbIndex: motion.hiddenThumbIndex,
     activeImageLoadFailed,
-    chromeOpacity: ghost.chromeOpacity,
-    uiVisible: ghost.uiVisible,
-    closeDragY: ghost.closeDragY,
-    transitionInProgress: ghost.transitionInProgress,
-    chromeStyle: ghost.chromeStyle,
-    closeDragRatio: ghost.closeDragRatio,
-    backdropStyle: ghost.backdropStyle,
-    lightboxUiStyle: ghost.lightboxUiStyle,
+    uiVisible: motion.uiVisible,
+    closeDragY: motion.closeDragY,
+    stageMounted: motion.stageMounted,
+    activeImagePending: motion.activeImagePending,
+    transitionInProgress: motion.transitionInProgress,
 
     gesturePhase: gestures.gesturePhase,
 
     mediaAreaRef,
     emblaRef: carousel.emblaRef,
 
-    setThumbRef: ghost.setThumbRef,
+    setThumbRef: motion.setThumbRef,
     setSlideZoomRef: panzoom.setSlideZoomRef,
+    setSlideFrameRef: motion.setSlideFrameRef,
+    setSlideImageRef: motion.setSlideImageRef,
+    setOverlayRef: motion.setOverlayRef,
+    setViewportRef: motion.setViewportRef,
+    setControlsRef: motion.setControlsRef,
+    setCaptionRef: motion.setCaptionRef,
+    setTransitionFrameRef: motion.setTransitionFrameRef,
+    setTransitionImageRef: motion.setTransitionImageRef,
+    setTransitionShadowRef: motion.setTransitionShadowRef,
 
     onMediaPointerDown: gestures.onMediaPointerDown,
     onMediaPointerMove: gestures.onMediaPointerMove,
@@ -446,7 +429,13 @@ export function useLightboxRuntimeState(
     next,
     prev,
     toggleZoom: panzoom.toggleZoom,
-    handleBackdropClick: () => ghost.handleBackdropClick(close),
+    handleBackdropClick: () => motion.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
+    isSlideMediaMounted: (index: number) => {
+      const count = photos.value.length
+      return getMountedSlideIndices(carousel.activeIndex.value, count).has(
+        index,
+      )
+    },
   }
 }

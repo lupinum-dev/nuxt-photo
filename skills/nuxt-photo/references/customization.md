@@ -268,7 +268,6 @@ useLightboxProvider or <LightboxProvider>
       LightboxSlide
     LightboxControls
     LightboxCaption
-    LightboxGhostImage
 ```
 
 ## SSR and CLS

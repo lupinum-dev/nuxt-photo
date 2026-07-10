@@ -10,7 +10,6 @@ export type GestureInputConfig = {
   state: {
     isOpen: Readonly<Ref<boolean>>
     animating: Readonly<Ref<boolean>>
-    ghostVisible: Readonly<Ref<boolean>>
     isZoomedIn: ComputedRef<boolean>
     zoomAllowed: ComputedRef<boolean>
     mediaAreaRef: Ref<HTMLElement | null>

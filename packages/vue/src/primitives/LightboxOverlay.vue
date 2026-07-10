@@ -1,6 +1,7 @@
 <template>
   <div
-    :style="ctx.backdropStyle.value"
+    :ref="ctx.setOverlayRef"
+    data-np-motion="backdrop"
     v-bind="$attrs"
     @click.self="ctx.handleBackdropClick"
   >

@@ -87,7 +87,7 @@ describe('Photo', () => {
     expect(errorHandler).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'slide adapter failed' }),
       expect.anything(),
-      expect.stringContaining('event handler'),
+      expect.stringContaining('render function'),
     )
     app.unmount()
     host.remove()

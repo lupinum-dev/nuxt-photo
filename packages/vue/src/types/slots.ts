@@ -32,7 +32,6 @@ export interface LightboxSlideSlotProps {
 export interface LightboxViewportSlotProps {
   photos: readonly PhotoItem[]
   viewportRef: Ref<HTMLElement | null | undefined>
-  mediaOpacity: number
   imageLoadFailed: boolean
 }
 

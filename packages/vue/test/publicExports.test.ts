@@ -11,7 +11,6 @@ describe('@nuxt-photo/vue public exports', () => {
         'LightboxComponentKey',
         'LightboxControls',
         'LightboxDefaultsKey',
-        'LightboxGhostImage',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
