@@ -19,6 +19,7 @@ import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
+import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
 
 type AlbumLightboxProps = {
   lightbox?: boolean | Component
@@ -39,13 +40,12 @@ export function useAlbumLightbox(
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
 
-  const hasOwnLightbox = !parentGroup && props.lightbox !== false
+  const resolvedLightboxComponent = !parentGroup
+    ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
+    : null
+  const hasOwnLightbox = resolvedLightboxComponent !== null
   const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)
-  const LightboxComponent: Component | null = !hasOwnLightbox
-    ? null
-    : props.lightbox === true
-      ? (injectedLightbox ?? Lightbox)
-      : (props.lightbox as Component)
+  const LightboxComponent: Component | null = resolvedLightboxComponent
 
   const ownCtx = hasOwnLightbox
     ? useLightboxProvider(photos, {

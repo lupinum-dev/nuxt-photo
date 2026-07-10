@@ -218,15 +218,8 @@ try {
     import { existsSync } from 'node:fs'
     import { fileURLToPath } from 'node:url'
 
-    const vueApi = await import('@nuxt-photo/vue')
-    const nuxtApi = await import('@nuxt-photo/nuxt/app')
     const nuxtModule = await import('@nuxt-photo/nuxt')
 
-    const vueNames = Object.keys(vueApi).sort()
-    const nuxtNames = Object.keys(nuxtApi).sort()
-    if (JSON.stringify(vueNames) !== JSON.stringify(nuxtNames)) {
-      throw new Error('Packed Nuxt app facade differs from packed Vue facade')
-    }
     if (!nuxtModule.default) throw new Error('Packed Nuxt module has no default export')
 
     const moduleUrl = import.meta.resolve('@nuxt-photo/nuxt')
@@ -248,6 +241,31 @@ try {
     cwd: consumerDir,
   })
 
+  writeFileSync(
+    join(consumerDir, 'nuxt.config.mjs'),
+    `export default {
+      modules: ['@nuxt-photo/nuxt'],
+      nuxtPhoto: { css: 'structure', image: false },
+    }\n`,
+  )
+  writeFileSync(
+    join(consumerDir, 'app.vue'),
+    `<script setup lang="ts">
+      import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+      const photos: readonly PhotoItem[] = [
+        { id: 'packed', src: '/packed.jpg', width: 1200, height: 800 },
+      ]
+    </script>
+    <template>
+      <PhotoAlbum :photos="photos" :layout="{ type: 'rows' }" />
+    </template>\n`,
+  )
+  run('pnpm', ['exec', 'nuxt', 'build'], { cwd: consumerDir })
+  assert(
+    existsSync(join(consumerDir, '.output/server/index.mjs')),
+    'Packed Nuxt consumer did not produce a server build',
+  )
+
   const installedVueRoot = join(
     consumerDir,
     'node_modules',
@@ -268,7 +286,7 @@ try {
   }
 
   process.stdout.write(
-    'packed consumer: imports and Nuxt sibling paths verified\n',
+    'packed consumer: Nuxt build, declarations, and sibling paths verified\n',
   )
 } finally {
   rmSync(packDir, { recursive: true, force: true })

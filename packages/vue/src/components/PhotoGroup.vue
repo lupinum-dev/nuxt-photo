@@ -25,6 +25,7 @@ import {
   type PhotoGroupContext,
 } from './photo-group/context'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 const props = withDefaults(
   defineProps<{
@@ -53,7 +54,13 @@ const collectedPhotos = computed<PhotoItem[]>(() => {
 })
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const enabled = props.lightbox !== false
+const lightboxComponent = resolveLightboxComponent(
+  props.lightbox,
+  injectedLightbox,
+  Lightbox,
+  true,
+)
+const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
@@ -161,12 +168,6 @@ const groupContext: PhotoGroupContext = {
   hiddenPhoto,
 }
 provide(PhotoGroupContextKey, groupContext)
-
-const lightboxComponent: Component | null = !enabled
-  ? null
-  : props.lightbox === true
-    ? (injectedLightbox ?? Lightbox)
-    : props.lightbox
 
 defineExpose({ open, openById, close })
 </script>

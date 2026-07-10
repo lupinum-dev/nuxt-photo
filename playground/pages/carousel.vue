@@ -43,12 +43,13 @@
     <section class="demo">
       <h2 class="demo__title">Default carousel</h2>
       <PhotoCarousel
+        :key="`default-carousel-lightbox-${lightbox}`"
         :photos="photos"
         :show-arrows="showArrows"
         :show-thumbnails="showThumbnails"
         :show-counter="showCounter"
         :show-dots="showDots"
-        :autoplay="autoplay ? { delay: 3500 } : false"
+        :autoplay="autoplay ? { delayMs: 3500 } : false"
         :lightbox="lightbox"
         :options="{ loop }"
       />
@@ -114,7 +115,7 @@ const templateCode = computed(
   :show-arrows="${showArrows.value}"
   :show-thumbnails="${showThumbnails.value}"
   :show-counter="${showCounter.value}"
-  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delay: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  :options="{ loop: true }"' : ''}
+  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  :options="{ loop: true }"' : ''}
 />`,
 )
 </script>

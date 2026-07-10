@@ -61,7 +61,12 @@
 
     <!-- PhotoAlbum handles the lightbox automatically — no manual wiring needed -->
     <div class="album-section">
-      <PhotoAlbum :photos="photos" :layout="albumLayout" :spacing="spacing" />
+      <PhotoAlbum
+        :photos="photos"
+        :layout="albumLayout"
+        :spacing="spacing"
+        :default-container-width="1100"
+      />
     </div>
 
     <div class="code-section">
@@ -102,6 +107,7 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
   :photos="photos"
   :layout="albumLayout"
   :spacing="spacing"
+  :default-container-width="1100"
 />
 
 <!-- Layer 2: custom thumbnail with #thumbnail slot — wiring still automatic -->

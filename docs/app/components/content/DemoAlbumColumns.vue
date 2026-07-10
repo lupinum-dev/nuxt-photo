@@ -12,5 +12,6 @@ import { responsive } from '@nuxt-photo/nuxt/app'
     }"
     :spacing="6"
     :breakpoints="[375, 640, 1024, 1280]"
+    :default-container-width="1024"
   />
 </template>

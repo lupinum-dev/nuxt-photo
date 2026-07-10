@@ -52,6 +52,7 @@ import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
 import { resolveRecipePhotos } from '../core/photo/resolve'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 defineOptions({ inheritAttrs: false })
 
@@ -109,7 +110,13 @@ const resolvedPhotos = computed(() =>
 )
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const hasLightbox = props.lightbox !== false
+const lightboxComponent = resolveLightboxComponent(
+  props.lightbox,
+  injectedLightbox,
+  Lightbox,
+  false,
+)
+const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
@@ -121,12 +128,6 @@ const provider = hasLightbox
       imageAdapter: props.imageAdapter,
     })
   : null
-
-const lightboxComponent: Component | null = !hasLightbox
-  ? null
-  : props.lightbox === true
-    ? (injectedLightbox ?? Lightbox)
-    : props.lightbox
 
 async function openSlide(index: number) {
   await provider?.open(index)

@@ -56,9 +56,9 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
-    "nuxt": "^4.4.6",
+    "nuxt": "^4.4.8",
     "typescript": "5.9.3",
-    "vite": "7.3.3",
+    "vite": "7.3.5",
     "vue-tsc": "3.2.7"
   },
   "license": "MIT",

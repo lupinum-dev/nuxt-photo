@@ -1,6 +1,6 @@
 # Nuxt Photo vNext
 
-Status: proposed greenfield refactor  
+Status: implemented greenfield hard cutover on `codex/vnext`
 Baseline: `v0.1.2` / `f29a5fb`  
 Last verified: 2026-07-10
 
@@ -22,6 +22,28 @@ This repository is treated as greenfield. There will be no deprecated aliases,
 dual APIs, migration shims, feature flags, or old/new implementations living
 side by side. Once a vNext path passes its acceptance tests, the old path is
 deleted in the same change.
+
+### Final implementation proof
+
+The hard cutover described below is implemented. Final verification on
+2026-07-10 passed:
+
+- lint and formatting;
+- package builds, public API type fixtures, and all playground/docs typechecks;
+- 221 unit/integration tests across 30 files;
+- 14 browser tests across desktop Chromium, mobile Chromium, Firefox, and
+  WebKit;
+- Vue and Nuxt bundle-size budgets;
+- the playground, Tailwind playground, and 131-route docs production builds;
+- real Vue and Nuxt tarballs installed into a temporary Nuxt consumer and built;
+- a moderate-level dependency audit, with only three low-severity findings;
+- manual in-app browser stories for carousel remount/opt-in, lightbox keyboard
+  navigation and close, PhotoGroup `openById`, and explicit primitive
+  composition, ending with a clean console.
+
+Embla is pinned to `9.0.0-rc02` as the explicitly accepted v9 production
+exception. Its public API, private engine, and types do not cross the Nuxt Photo
+public boundary.
 
 ## 2. Executive decision
 
@@ -58,9 +80,10 @@ branching, even though the refactor itself is large.
 
 ## 3. Evidence and corrections
 
-This plan combines two independent reviews, then checks their claims against the
-current source, tests, build output, and relevant git history. The following are
-facts, not design preferences.
+This plan combined two independent reviews, then checked their claims against
+the baseline source, tests, build output, and relevant git history. The
+following were the verified baseline facts that drove the cutover, not design
+preferences.
 
 Baseline verification completed before this document: `pnpm lint`, the package
 build/typecheck, and all 224 unit/integration tests passed. Browser e2e was not
@@ -507,6 +530,12 @@ Moves are justified only when they clarify ownership:
 Do not split files merely to hit a line count. As a review trigger, production
 files above roughly 450 lines and test files above roughly 600 lines require a
 cohesion justification. No handwritten file may approach 1,000 lines.
+
+`components/photo-carousel/CarouselLayout.vue` remains 475 lines because its
+template and the one private Embla integration form a single recipe boundary;
+splitting its reactive state into a second facade would add indirection without
+creating an independently reusable domain. Every other handwritten production
+file is below the review threshold.
 
 ## 7. Lightbox lifecycle redesign
 

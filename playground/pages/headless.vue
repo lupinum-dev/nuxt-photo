@@ -3,9 +3,10 @@
     <header class="header">
       <h1 class="header__title">PhotoGroup Patterns</h1>
       <p class="header__desc">
-        <code>PhotoGroup</code> is the core primitive. Wrap anything in it —
-        scattered photos, multiple albums, custom layouts — and they share one
-        lightbox.
+        <code>PhotoGroup</code> is the collection recipe. Wrap descendant
+        <code>Photo</code> and <code>PhotoAlbum</code> recipes in it to share
+        one lightbox; fully custom layouts compose the explicit primitives
+        below.
       </p>
     </header>
 
@@ -57,6 +58,7 @@
               :photos="landscapes"
               :layout="{ type: 'masonry', columns: 2 }"
               :spacing="6"
+              :default-container-width="520"
             />
           </div>
           <div class="two-albums__col">
@@ -65,6 +67,7 @@
               :photos="portraits"
               :layout="{ type: 'columns', columns: 2 }"
               :spacing="6"
+              :default-container-width="520"
             />
           </div>
         </div>
@@ -157,13 +160,13 @@ const scatteredCode = `<PhotoGroup>
 
 const twoAlbumsCode = `<!-- Two albums sharing one lightbox -->
 <PhotoGroup>
-  <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
-  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />
+  <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
+  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />
 </PhotoGroup>
 
 <!-- Two albums each with their own lightbox — just remove the wrapper -->
-<PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
-<PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />`
+<PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
+<PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />`
 
 const programmaticCode = `<PhotoGroup ref="gallery">
   <PhotoAlbum :photos="photos" layout="rows" />

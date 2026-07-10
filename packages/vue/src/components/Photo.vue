@@ -46,6 +46,7 @@ import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
+import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -70,8 +71,11 @@ const group = inject(PhotoGroupContextKey, null)
 // Global lightbox override
 const injectedLightbox = inject(LightboxComponentKey, null)
 
-// Standalone mode: lightbox prop set and no parent group
-const hasSoloProvider = !group && !!props.lightbox
+const soloLightboxComponent = !group
+  ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, false)
+  : null
+// Standalone mode: lightbox capability set and no parent group.
+const hasSoloProvider = soloLightboxComponent !== null
 const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
@@ -98,13 +102,6 @@ const soloCtx = isSolo.value
       },
     )
   : null
-
-const soloLightboxComponent: Component = (() => {
-  if (props.lightbox === true || props.lightbox === undefined) {
-    return injectedLightbox ?? Lightbox
-  }
-  return (props.lightbox as Component) ?? Lightbox
-})()
 
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)

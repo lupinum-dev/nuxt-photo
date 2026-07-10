@@ -56,6 +56,7 @@
           :photos="photos.slice(0, 6)"
           :layout="{ type: 'columns', columns: 3 }"
           :spacing="6"
+          :default-container-width="1100"
         >
           <template #thumbnail="{ photo }">
             <div
@@ -122,7 +123,11 @@ const albumCode = `<!-- Layer 1: album with lightbox baked in -->
 />`
 
 const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
-<PhotoAlbum :photos="photos" :layout="{ type: 'columns', columns: 3 }">
+<PhotoAlbum
+  :photos="photos"
+  :layout="{ type: 'columns', columns: 3 }"
+  :default-container-width="1100"
+>
   <template #thumbnail="{ photo }">
     <div class="my-thumb">
       <PhotoImage :photo="photo" context="thumb" />
