@@ -12,7 +12,7 @@
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
   --np-counter-color: rgba(255, 255, 255, 0.72);
-  --np-img-radius: 8px;
+  --np-img-radius: 14px;
   --np-caption-color: white;
   --np-caption-heading-size: 22px;
   --np-caption-secondary: rgba(255, 255, 255, 0.72);
@@ -29,6 +29,7 @@
 
 .np-lightbox__counter {
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: var(--np-counter-color);
 }
@@ -51,6 +52,11 @@
 
 [data-np-slide-img] {
   border-radius: var(--np-img-radius);
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  outline-offset: -1px;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34),
+    0 2px 12px rgba(0, 0, 0, 0.28);
 }
 
 .np-lightbox__caption {

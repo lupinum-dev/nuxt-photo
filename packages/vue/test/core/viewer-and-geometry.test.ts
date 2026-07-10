@@ -12,8 +12,18 @@ import {
   isDoubleTap,
   rubberband,
 } from '../../src/core/index'
+import { getLightboxFrameArea } from '../../src/lightbox/carousel'
 
 describe('geometry and viewer utilities', () => {
+  it('fits desktop photos inside a responsive mat without shrinking the swipe track', () => {
+    expect(
+      getLightboxFrameArea({ left: 0, top: 0, width: 2000, height: 1000 }),
+    ).toEqual({ left: 120, top: 70, width: 1760, height: 860 })
+    expect(
+      getLightboxFrameArea({ left: 0, top: 0, width: 390, height: 844 }),
+    ).toEqual({ left: 12, top: 24, width: 366, height: 796 })
+  })
+
   it('fits rectangles and loops indexes predictably', () => {
     expect(fitRect({ left: 0, top: 0, width: 100, height: 100 }, 2)).toEqual({
       left: 0,

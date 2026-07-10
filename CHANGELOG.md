@@ -8,9 +8,10 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 
 ### Changed
 
-- The built-in lightbox now uses a full-viewport carousel canvas with edge
-  navigation and an overlaid caption gradient, so adjacent slides clip only at
-  the screen boundary while dragging instead of inside a capped media frame.
+- The built-in lightbox now combines a full-viewport swipe track with a
+  responsive inset photo frame, edge navigation, and an overlaid caption
+  gradient. Dragging clips only at the screen boundary while the active image
+  retains deliberate gallery-like breathing room.
 
 ## [0.2.0] - 2026-07-10
 

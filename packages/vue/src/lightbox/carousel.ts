@@ -11,6 +11,24 @@ import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
 import type { DebugLogger } from '../core/debug/logger'
 
+/** Keep the swipe track full-screen while fitting each photo inside a gallery mat. */
+export function getLightboxFrameArea(area: AreaMetrics): AreaMetrics {
+  const compact = area.width < 700
+  const horizontalInset = compact
+    ? 12
+    : Math.min(120, Math.max(48, area.width * 0.06))
+  const verticalInset = compact
+    ? 24
+    : Math.min(80, Math.max(40, area.height * 0.07))
+
+  return {
+    left: area.left + horizontalInset,
+    top: area.top + verticalInset,
+    width: Math.max(0, area.width - horizontalInset * 2),
+    height: Math.max(0, area.height - verticalInset * 2),
+  }
+}
+
 /** Bind Embla-based slide navigation to the active lightbox photo collection. */
 export function useCarousel(
   photos: Readonly<Ref<PhotoItem[]>>,
@@ -56,15 +74,18 @@ export function useCarousel(
 
   function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
     if (!area) return null
-    return fitRect(
-      { left: 0, top: 0, width: area.width, height: area.height },
-      photo.width / photo.height,
-    )
+    const frameArea = getLightboxFrameArea({
+      left: 0,
+      top: 0,
+      width: area.width,
+      height: area.height,
+    })
+    return fitRect(frameArea, photo.width / photo.height)
   }
 
   function getAbsoluteFrameRect(photo: PhotoItem, area = areaMetrics.value) {
     if (!area) return null
-    return fitRect(area, photo.width / photo.height)
+    return fitRect(getLightboxFrameArea(area), photo.width / photo.height)
   }
 
   function getSlideFrameStyle(photo: PhotoItem): CSSProperties {
