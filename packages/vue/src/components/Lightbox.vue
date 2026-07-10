@@ -42,7 +42,7 @@
               :controls-disabled="controlsDisabled"
             >
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--prev"
                 aria-label="Previous"
                 :disabled="controlsDisabled"
                 @click="prev"
@@ -50,7 +50,7 @@
                 &#8592;
               </button>
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--next"
                 aria-label="Next"
                 :disabled="controlsDisabled"
                 @click="next"
@@ -58,7 +58,7 @@
                 &#8594;
               </button>
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--zoom"
                 :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
                 :disabled="controlsDisabled || !zoomAllowed"
                 @click="toggleZoom()"

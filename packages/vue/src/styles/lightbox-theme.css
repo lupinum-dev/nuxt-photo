@@ -12,7 +12,7 @@
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
   --np-counter-color: rgba(255, 255, 255, 0.72);
-  --np-img-radius: 16px;
+  --np-img-radius: 8px;
   --np-caption-color: white;
   --np-caption-heading-size: 22px;
   --np-caption-secondary: rgba(255, 255, 255, 0.72);
@@ -21,6 +21,10 @@
 .np-lightbox__backdrop {
   background: var(--np-backdrop-bg);
   backdrop-filter: blur(var(--np-backdrop-blur));
+}
+
+.np-lightbox__stage::after {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
 }
 
 .np-lightbox__counter {
@@ -51,6 +55,7 @@
 
 .np-lightbox__caption {
   color: var(--np-caption-color);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.72);
 }
 
 .np-lightbox__fallback {
