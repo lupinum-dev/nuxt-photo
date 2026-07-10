@@ -41,8 +41,10 @@ import { useLightboxProvider } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
+import type { LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from '../context/photoGroup'
+import { warnOnSetupOptionChanges } from './shared/staticOptionWarnings'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -51,6 +53,8 @@ const props = defineProps<{
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
   imageAdapter?: ImageAdapter
+  /** Setup-time transition configuration for a standalone lightbox. */
+  transition?: LightboxTransitionOption
   loading?: 'lazy' | 'eager'
   /** Extra classes for the inner img element */
   imgClass?: string
@@ -66,15 +70,20 @@ const group = inject(PhotoGroupContextKey, null)
 const injectedLightbox = inject(LightboxComponentKey, null)
 
 // Standalone mode: lightbox prop set and no parent group
-const isSolo = computed(
-  () => !group && !!props.lightbox && !props.lightboxIgnore,
-)
+const hasSoloProvider = !group && !!props.lightbox && !props.lightboxIgnore
+const isSolo = computed(() => hasSoloProvider)
+warnOnSetupOptionChanges('Photo', {
+  lightbox: () => props.lightbox,
+  transition: () => props.transition,
+  imageAdapter: () => props.imageAdapter,
+})
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
   ? useLightboxProvider(
       computed(() => props.photo),
       {
+        transition: props.transition,
         imageAdapter: props.imageAdapter,
         resolveSlide: (photo) => {
           if (
@@ -89,12 +98,12 @@ const soloCtx = isSolo.value
     )
   : null
 
-const soloLightboxComponent = computed<Component>(() => {
+const soloLightboxComponent: Component = (() => {
   if (props.lightbox === true || props.lightbox === undefined) {
     return injectedLightbox ?? Lightbox
   }
   return (props.lightbox as Component) ?? Lightbox
-})
+})()
 
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
@@ -104,11 +113,7 @@ const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
 
 // Auto-group mode: inside a PhotoGroup with auto-collection
 const isAutoGrouped = computed(
-  () =>
-    !!group &&
-    group.lightboxEnabled.value &&
-    !props.lightboxIgnore &&
-    group.mode.value === 'auto',
+  () => !!group && group.enabled && !props.lightboxIgnore,
 )
 const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
 
@@ -116,7 +121,7 @@ const figureStyle = computed(() => {
   if (isSolo.value) {
     return {
       margin: 0,
-      opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1,
+      opacity: soloCtx && soloCtx.hiddenThumbnailIndex.value === 0 ? 0 : 1,
       cursor: 'pointer',
     }
   }
@@ -128,7 +133,7 @@ const figureStyle = computed(() => {
 
 function handleClick() {
   if (isSolo.value) soloOpen()
-  else if (isAutoGrouped.value) group!.openPhoto(props.photo)
+  else if (isAutoGrouped.value) void group!.openById(props.photo.id)
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -154,13 +159,7 @@ const id = Symbol()
 const registered = ref(false)
 
 function shouldRegisterWithGroup() {
-  return (
-    group &&
-    group.lightboxEnabled.value &&
-    group.mode.value === 'auto' &&
-    !props.lightboxIgnore &&
-    !isSolo.value
-  )
+  return group && group.enabled && !props.lightboxIgnore && !isSolo.value
 }
 
 function unregisterFromGroup() {
@@ -182,19 +181,14 @@ function registerWithGroup() {
 
 onMounted(() => {
   if (soloCtx) {
-    soloCtx.setThumbRef(0)(thumbRef.value)
+    soloCtx.setThumbnailRef(0)(thumbRef.value)
   }
 
   registerWithGroup()
 })
 
 watch(
-  () => [
-    props.photo,
-    props.lightboxIgnore,
-    group?.lightboxEnabled.value,
-    group?.mode.value,
-  ],
+  () => [props.photo, props.lightboxIgnore],
   () => {
     unregisterFromGroup()
     registerWithGroup()
@@ -205,7 +199,7 @@ onBeforeUnmount(unregisterFromGroup)
 
 async function soloOpen() {
   if (!soloCtx) return
-  soloCtx.setThumbRef(0)(thumbRef.value)
+  soloCtx.setThumbnailRef(0)(thumbRef.value)
   await soloCtx.open(0)
 }
 </script>

@@ -197,27 +197,13 @@ describe('PhotoCarousel — DOM', () => {
     m.unmount()
   })
 
-  it('warns in dev when autoplay prop and user Autoplay plugin are both supplied', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fakeAutoplayPlugin = {
-      name: 'autoplay',
-      options: {},
-      init() {},
-      destroy() {},
-      play() {},
-      stop() {},
-      reset() {},
-      isPlaying: () => false,
-      timeUntilNext: () => null,
-    } as any
+  it('accepts library-owned autoplay options', async () => {
     const m = mount(PhotoCarousel, {
       photos,
-      autoplay: { delay: 3000 },
-      plugins: [fakeAutoplayPlugin],
+      autoplay: { delayMs: 3000, stopOnMouseEnter: true },
     })
     await flushUi()
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('PhotoCarousel'))
-    warn.mockRestore()
+    expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
     m.unmount()
   })
 

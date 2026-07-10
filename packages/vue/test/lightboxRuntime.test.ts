@@ -64,22 +64,20 @@ describe('lightbox controller surface', () => {
         'next',
         'open',
         'openById',
-        'openPhoto',
         'photos',
         'prev',
         'toggleZoom',
       ].sort(),
     )
-    expect(consumerApi!.photos).toBe(providerApi!.photos)
-    expect(consumerApi!.activeIndex).toBe(providerApi!.activeIndex)
+    expect(consumerApi!.photos.value).toEqual(providerApi!.photos.value)
+    expect(consumerApi!.activeIndex.value).toBe(providerApi!.activeIndex.value)
     expect(consumerApi!.open).toBe(providerApi!.open)
 
     app.unmount()
     host.remove()
   })
 
-  it('does not open the first photo for missing controller targets', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  it('rejects invalid controller targets without opening', async () => {
     const photos = [makePhoto({ id: 'controller-a' })]
     let providerApi: ReturnType<typeof useLightboxProvider> | null = null
 
@@ -96,16 +94,14 @@ describe('lightbox controller surface', () => {
     app.mount(host)
     await flushWatchers()
 
-    await providerApi!.openPhoto(makePhoto({ id: 'missing-controller' }))
-    await providerApi!.open(-1)
-    await providerApi!.openById('missing-controller')
+    await expect(providerApi!.open(-1)).rejects.toThrow(RangeError)
+    await expect(providerApi!.openById('missing-controller')).rejects.toThrow(
+      RangeError,
+    )
     await flushWatchers()
 
     expect(providerApi!.isOpen.value).toBe(false)
     expect(providerApi!.activeIndex.value).toBe(0)
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('No photo found'))
-
-    warn.mockRestore()
     app.unmount()
     host.remove()
   })

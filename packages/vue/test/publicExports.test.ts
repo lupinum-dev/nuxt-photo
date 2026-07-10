@@ -23,7 +23,6 @@ describe('@nuxt-photo/vue public exports', () => {
         'PhotoGroup',
         'PhotoImage',
         'PhotoTrigger',
-        'photoId',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',

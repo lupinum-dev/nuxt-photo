@@ -71,7 +71,6 @@ export function usePanzoom(
       photo.height,
       area.width,
       area.height,
-      photo,
       minZoom != null ? { minZoom } : undefined,
     )
   }

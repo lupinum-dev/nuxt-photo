@@ -134,14 +134,16 @@ describe('SSR hydration', () => {
     app.unmount()
   })
 
-  it('accepts shorthand layout props without extraneous-attr warnings', async () => {
+  it('accepts object-form responsive layout without hydration warnings', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const { app } = await hydrateAlbum({
       photos,
-      layout: 'rows',
-      targetRowHeight: responsive({ 0: 180, 800: 240 }),
+      layout: {
+        type: 'rows',
+        targetRowHeight: responsive({ 0: 180, 800: 240 }),
+      },
       breakpoints: [320, 800],
       lightbox: false,
     })
@@ -151,7 +153,6 @@ describe('SSR hydration', () => {
       ...error.mock.calls,
     ])
     expect(messages).not.toContain('Extraneous non-props attributes')
-    expect(messages).not.toContain('target-row-height')
 
     app.unmount()
   })

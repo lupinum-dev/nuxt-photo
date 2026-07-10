@@ -2,6 +2,7 @@ import {
   computed,
   inject,
   onBeforeUnmount,
+  onMounted,
   watch,
   type Component,
   type ComponentPublicInstance,
@@ -10,13 +11,13 @@ import {
 import { useLightboxProvider } from '../../composables/index'
 import { PhotoGroupContextKey } from '../../context/photoGroup'
 import {
-  photoId,
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
+import { warnOnSetupOptionChanges } from '../shared/staticOptionWarnings'
 
 type AlbumLightboxProps = {
   lightbox?: boolean | Component
@@ -29,27 +30,21 @@ export function useAlbumLightbox(
   props: AlbumLightboxProps,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
-  const parentAutoGroup = computed(() =>
-    parentGroup?.mode.value === 'auto' && parentGroup.lightboxEnabled.value
-      ? parentGroup
-      : null,
-  )
+  warnOnSetupOptionChanges('PhotoAlbum', {
+    lightbox: () => props.lightbox,
+    transition: () => props.transition,
+    imageAdapter: () => props.imageAdapter,
+  })
+  const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
 
-  const hasLightbox = computed(
-    () =>
-      props.lightbox !== false && (parentGroup?.lightboxEnabled.value ?? true),
-  )
-
-  const hasOwnLightbox =
-    !parentAutoGroup.value &&
-    props.lightbox !== false &&
-    (parentGroup?.lightboxEnabled.value ?? true)
-  const LightboxComponent = computed<Component | null>(() => {
-    if (props.lightbox === false) return null
-    if (props.lightbox === true) return injectedLightbox ?? Lightbox
-    return props.lightbox as Component
-  })
+  const hasOwnLightbox = !parentGroup && props.lightbox !== false
+  const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)
+  const LightboxComponent: Component | null = !hasOwnLightbox
+    ? null
+    : props.lightbox === true
+      ? (injectedLightbox ?? Lightbox)
+      : (props.lightbox as Component)
 
   const ownCtx = hasOwnLightbox
     ? useLightboxProvider(photos, {
@@ -69,13 +64,13 @@ export function useAlbumLightbox(
   function syncOwnThumbRefs() {
     if (!ownCtx) return
     for (const [index, element] of Object.entries(thumbElsMap)) {
-      ownCtx.setThumbRef(Number(index))(element)
+      ownCtx.setThumbnailRef(Number(index))(element)
     }
   }
 
   function openPhoto(photo: PhotoItem, index: number) {
-    if (parentAutoGroup.value) {
-      void parentAutoGroup.value.openPhoto(photo)
+    if (delegatedGroup) {
+      void delegatedGroup.openById(photo.id)
       return
     }
 
@@ -111,11 +106,11 @@ export function useAlbumLightbox(
   }
 
   function isHidden(photo: PhotoItem): boolean {
-    if (parentAutoGroup.value) {
-      return parentAutoGroup.value.hiddenPhoto.value === photo
+    if (delegatedGroup) {
+      return delegatedGroup.hiddenPhoto.value === photo
     }
     if (ownCtx) {
-      const index = ownCtx.hiddenThumbIndex.value
+      const index = ownCtx.hiddenThumbnailIndex.value
       if (index === null) return false
       return photos.value[index] === photo
     }
@@ -134,7 +129,7 @@ export function useAlbumLightbox(
   }
 
   function syncRegistrations(nextPhotos: PhotoItem[]) {
-    const group = parentAutoGroup.value
+    const group = delegatedGroup
     if (!group) {
       clearRegistrations()
       return
@@ -150,7 +145,7 @@ export function useAlbumLightbox(
     clearRegistrations()
 
     registrationIds = nextPhotos.map((photo, index) => {
-      const symbol = Symbol(photoId(photo))
+      const symbol = Symbol(photo.id)
       group.register(symbol, photo, () => thumbElsMap[index] ?? null, null)
       return symbol
     })
@@ -158,12 +153,14 @@ export function useAlbumLightbox(
   }
 
   watch(
-    [photos, parentAutoGroup],
-    ([nextPhotos]) => {
+    photos,
+    (nextPhotos) => {
       syncRegistrations(nextPhotos)
     },
-    { immediate: true, flush: 'post' },
+    { flush: 'post' },
   )
+
+  onMounted(() => syncRegistrations(photos.value))
 
   onBeforeUnmount(clearRegistrations)
 

@@ -1,8 +1,8 @@
 <template>
-  <CarouselLayoutHost
+  <CarouselLayout
     v-bind="{ ...$attrs, ...layoutProps }"
-    :lightbox="resolvedLightbox"
-    :transition="props.transition"
+    :on-slide-activate="provider ? openSlide : undefined"
+    :set-slide-ref="provider?.setThumbnailRef"
   >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
@@ -16,23 +16,24 @@
     <template v-if="$slots.controls" #controls="slotProps">
       <slot name="controls" v-bind="slotProps" />
     </template>
-    <template v-if="$slots.prev" #prev>
-      <slot name="prev" />
-    </template>
-    <template v-if="$slots.next" #next>
-      <slot name="next" />
-    </template>
+    <template v-if="$slots.prev" #prev><slot name="prev" /></template>
+    <template v-if="$slots.next" #next><slot name="next" /></template>
     <template v-if="$slots.dots" #dots="slotProps">
       <slot name="dots" v-bind="slotProps" />
     </template>
-  </CarouselLayoutHost>
+  </CarouselLayout>
+
+  <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
-import Autoplay, { type AutoplayOptionsType } from 'embla-carousel-autoplay'
-import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel'
-import type { PhotoMapper, ImageAdapter, PhotoItem } from '../core/index'
+import { computed, inject, type Component } from 'vue'
+import type {
+  ImageAdapter,
+  PhotoCarouselAutoplayOptions,
+  PhotoCarouselOptions,
+  PhotoItem,
+} from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -45,9 +46,12 @@ import type {
   InvalidPhotosEvent,
   LightboxTransitionOption,
 } from '../core/index'
-import CarouselLayoutHost from './internal/CarouselLayoutHost'
+import { useLightboxProvider } from '../composables/index'
+import { LightboxComponentKey } from '../provide/keys'
+import CarouselLayout from './internal/CarouselLayout.vue'
+import Lightbox from './Lightbox.vue'
 import { resolveRecipePhotos } from '../utils/photos'
-import { devWarn } from '../utils/runtime'
+import { warnOnSetupOptionChanges } from './shared/staticOptionWarnings'
 
 defineOptions({ inheritAttrs: false })
 
@@ -63,30 +67,24 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
-    photos: readonly unknown[]
-    itemMapper?: PhotoMapper
+    photos: readonly PhotoItem[]
     validation?: InvalidPhotoPolicy
     onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     imageAdapter?: ImageAdapter
-
-    options?: EmblaOptionsType
-    plugins?: EmblaPluginType[]
-    thumbsOptions?: EmblaOptionsType
-
+    options?: PhotoCarouselOptions
     showArrows?: boolean
     showThumbnails?: boolean
     showCounter?: boolean
     showDots?: boolean
-    autoplay?: boolean | AutoplayOptionsType
-
+    autoplay?: boolean | PhotoCarouselAutoplayOptions
     slideSize?: string
     slideAspect?: string
     gap?: string
     thumbSize?: string
-
+    /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
+    /** Setup-time transition configuration. Remount to change it. */
     transition?: LightboxTransitionOption
-
     slideClass?: string
     imgClass?: string
     thumbClass?: string
@@ -103,61 +101,42 @@ const props = withDefaults(
   },
 )
 
-const resolvedPhotos = computed<PhotoItem[]>(() =>
-  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoCarousel', {
+const resolvedPhotos = computed(() =>
+  resolveRecipePhotos(props.photos, 'PhotoCarousel', {
     validation: props.validation,
     onInvalidPhotos: props.onInvalidPhotos,
   }),
 )
 
-const hasLightbox = computed(
-  () => props.lightbox !== undefined && props.lightbox !== false,
-)
-const resolvedLightbox = computed(() =>
-  hasLightbox.value ? props.lightbox : false,
-)
-
-const defaultMainOptions: EmblaOptionsType = {
-  loop: false,
-  align: 'start',
-  containScroll: 'trimSnaps',
-}
-const defaultThumbsOptions: EmblaOptionsType = {
-  containScroll: 'keepSnaps',
-  dragFree: true,
-}
-
-const mergedOptions = computed<EmblaOptionsType>(() => ({
-  ...defaultMainOptions,
-  ...(props.options ?? {}),
-}))
-const mergedThumbsOptions = computed<EmblaOptionsType>(() => ({
-  ...defaultThumbsOptions,
-  ...(props.thumbsOptions ?? {}),
-}))
-
-const mergedPlugins = computed<EmblaPluginType[]>(() => {
-  const user = props.plugins ?? []
-  const autoplay = props.autoplay
-  if (!autoplay) return user.slice()
-
-  const filtered = user.filter((p) => p?.name !== 'autoplay')
-  if (filtered.length !== user.length) {
-    devWarn(
-      'PhotoCarousel: `autoplay` prop is set, so a user-supplied Autoplay plugin was dropped. Pass only one of them.',
-    )
-  }
-
-  const opts = typeof autoplay === 'object' ? autoplay : undefined
-  return [Autoplay(opts), ...filtered]
+const injectedLightbox = inject(LightboxComponentKey, null)
+const hasLightbox = props.lightbox !== false
+warnOnSetupOptionChanges('PhotoCarousel', {
+  lightbox: () => props.lightbox,
+  transition: () => props.transition,
+  imageAdapter: () => props.imageAdapter,
 })
+const provider = hasLightbox
+  ? useLightboxProvider(resolvedPhotos, {
+      transition: props.transition,
+      imageAdapter: props.imageAdapter,
+    })
+  : null
+
+const lightboxComponent: Component | null = !hasLightbox
+  ? null
+  : props.lightbox === true
+    ? (injectedLightbox ?? Lightbox)
+    : props.lightbox
+
+async function openSlide(index: number) {
+  await provider?.open(index)
+}
 
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   imageAdapter: props.imageAdapter,
-  options: mergedOptions.value,
-  plugins: mergedPlugins.value,
-  thumbsOptions: mergedThumbsOptions.value,
+  options: props.options ?? {},
+  autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,
   showCounter: props.showCounter,

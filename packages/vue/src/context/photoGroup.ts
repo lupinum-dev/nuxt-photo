@@ -3,21 +3,18 @@ import type { PhotoItem } from '../core/index'
 import type { LightboxSlideRenderer } from '../provide/keys'
 
 export interface PhotoGroupContext {
-  /** 'auto' = photos collected from child Photo registrations; 'explicit' = :photos prop provided */
-  mode: ComputedRef<'auto' | 'explicit'>
-  lightboxEnabled: ComputedRef<boolean>
+  readonly enabled: boolean
   register(
     id: symbol,
     photo: PhotoItem,
-    getThumbEl: () => HTMLElement | null,
+    getThumbnailElement: () => HTMLElement | null,
     renderSlide?: LightboxSlideRenderer | null,
   ): void
   unregister(id: symbol): void
   open(index?: number): Promise<void>
-  openPhoto(photo: PhotoItem): Promise<void>
-  openById(id: string | number): Promise<void>
-  photos: ComputedRef<PhotoItem[]>
-  hiddenPhoto: ComputedRef<PhotoItem | null>
+  openById(id: string): Promise<void>
+  readonly photos: ComputedRef<readonly PhotoItem[]>
+  readonly hiddenPhoto: ComputedRef<PhotoItem | null>
 }
 
 export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(

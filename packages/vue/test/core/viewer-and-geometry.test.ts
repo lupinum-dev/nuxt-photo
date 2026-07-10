@@ -55,33 +55,16 @@ describe('geometry and viewer utilities', () => {
     expect(large.max).toBeCloseTo(3.33, 1)
     expect(large.secondary).toBe(2)
 
-    // Per-photo maxZoom via meta
-    const custom = computeZoomLevels(600, 400, 1200, 800, {
-      id: '1',
-      src: '',
-      width: 600,
-      height: 400,
-      meta: { maxZoom: 3 },
-    })
-    expect(custom.max).toBe(3)
-    expect(custom.secondary).toBe(2)
-
-    // Per-photo minZoom via meta overrides default
-    const metaMin = computeZoomLevels(600, 400, 1200, 800, {
-      id: '1',
-      src: '',
-      width: 600,
-      height: 400,
-      meta: { minZoom: 2.5 },
-    })
-    expect(metaMin.max).toBe(2.5)
-
     // Lightbox-level minZoom via options
-    const optMin = computeZoomLevels(600, 400, 1200, 800, undefined, {
+    const optMin = computeZoomLevels(600, 400, 1200, 800, {
       minZoom: 1,
     })
     expect(optMin.max).toBe(1)
     expect(optMin.secondary).toBe(1)
+
+    // Application metadata never changes viewer behavior.
+    const withMeta = computeZoomLevels(600, 400, 1200, 800)
+    expect(withMeta.max).toBe(DEFAULT_MIN_ZOOM)
   })
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {

@@ -1,23 +1,20 @@
 // ─── Item types ───
 
-export type PhotoItem<
-  TMeta extends Record<string, unknown> = Record<string, unknown>,
-> = {
-  id: string | number
-  src: string
-  thumbSrc?: string
-  width: number
-  height: number
-  alt?: string
-  caption?: string
-  description?: string
-  srcset?: string
-  meta?: TMeta
-}
-
-/** Normalize photo id to string for reliable comparison across string/number types. */
-export function photoId(photo: PhotoItem): string {
-  return String(photo.id)
+export interface PhotoItem<
+  TMeta extends Readonly<Record<string, unknown>> = Readonly<
+    Record<string, unknown>
+  >,
+> {
+  readonly id: string
+  readonly src: string
+  readonly thumbSrc?: string
+  readonly width: number
+  readonly height: number
+  readonly alt?: string
+  readonly caption?: string
+  readonly description?: string
+  readonly srcset?: string
+  readonly meta?: TMeta
 }
 
 // ─── Geometry ───
@@ -149,6 +146,20 @@ export type AlbumLayout =
   | ColumnsAlbumLayout
   | MasonryAlbumLayout
 
+// ─── Carousel ───
+
+export interface PhotoCarouselOptions {
+  readonly loop?: boolean
+  readonly dragFree?: boolean
+  readonly slidesToScroll?: number
+}
+
+export interface PhotoCarouselAutoplayOptions {
+  readonly delayMs?: number
+  readonly stopOnInteraction?: boolean
+  readonly stopOnMouseEnter?: boolean
+}
+
 // ─── Image adapter ───
 
 export type ImageSource = {
@@ -227,7 +238,7 @@ export function getResponsiveBreakpoints<T>(
 
 /** Merge breakpoint metadata from several responsive parameters into one list. */
 export function mergeResponsiveBreakpoints(
-  values: Array<ResponsiveParameter<any> | undefined>,
+  values: ReadonlyArray<ResponsiveParameter<unknown> | undefined>,
 ): readonly number[] | undefined {
   const positive = new Set<number>()
 
@@ -276,7 +287,21 @@ export function responsive<T>(
     )
   }
 
+  const invalidBreakpoint = sorted.find(
+    ([minWidth]) => !Number.isFinite(minWidth) || minWidth < 0,
+  )
+  if (invalidBreakpoint) {
+    throw new RangeError(
+      `[nuxt-photo] responsive() breakpoint "${String(invalidBreakpoint[0])}" must be a finite, non-negative number`,
+    )
+  }
+
   const resolver = ((containerWidth: number) => {
+    if (!Number.isFinite(containerWidth)) {
+      throw new RangeError(
+        '[nuxt-photo] responsive() container width must be finite',
+      )
+    }
     for (const [minWidth, value] of sorted) {
       if (containerWidth >= minWidth) return value
     }
@@ -298,30 +323,6 @@ export function responsive<T>(
 
   return resolver
 }
-
-// ─── Photo mapper ───
-
-/**
- * Transforms external data shapes into `PhotoItem`.
- * Pass to `PhotoAlbum` or `PhotoGroup` via the `:itemMapper` prop so you can
- * feed CMS / API responses directly without manual mapping.
- *
- * @example
- * const fromUnsplash: PhotoMapper<UnsplashPhoto> = (item) => ({
- *   id: item.id,
- *   src: item.urls.regular,
- *   thumbSrc: item.urls.thumb,
- *   width: item.width,
- *   height: item.height,
- *   alt: item.alt_description ?? undefined,
- * })
- */
-export type PhotoMapper<
-  TInput = unknown,
-  TMeta extends Record<string, unknown> = Record<string, unknown>,
-> = {
-  map(item: TInput, index: number): PhotoItem<TMeta>
-}['map']
 
 // ─── Debug ───
 

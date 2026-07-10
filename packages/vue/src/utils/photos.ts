@@ -3,9 +3,7 @@ import {
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
   type PhotoItem,
-  type PhotoMapper,
 } from '../core/index'
-import { devWarn } from './runtime'
 
 export type ResolveRecipePhotosOptions = {
   validation?: InvalidPhotoPolicy
@@ -14,15 +12,13 @@ export type ResolveRecipePhotosOptions = {
 
 export function resolveRecipePhotos(
   rawPhotos: readonly unknown[],
-  mapper: PhotoMapper | undefined,
   owner: string,
   options: ResolveRecipePhotosOptions = {},
 ): PhotoItem[] {
   const validation = options.validation ?? 'throw'
   const result = normalizePhotos(rawPhotos, {
     owner,
-    mapper,
-    onInvalid: validation === 'warn' ? 'drop' : validation,
+    onInvalid: validation,
   })
 
   if (result.issues.length > 0) {
@@ -33,13 +29,6 @@ export function resolveRecipePhotos(
     }
 
     options.onInvalidPhotos?.(event)
-
-    if (validation === 'warn') {
-      devWarn(
-        `${owner}: dropped ${result.issues.length} invalid photo issue(s)`,
-        result.issues,
-      )
-    }
   }
 
   return result.photos

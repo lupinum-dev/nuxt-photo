@@ -10,7 +10,7 @@
       <div class="np-carousel__container">
         <div
           v-for="(photo, index) in photos"
-          :key="photoId(photo)"
+          :key="photo.id"
           class="np-carousel__slide"
           :class="slideClass"
           v-bind="interactiveAttrs(photo, index)"
@@ -126,7 +126,7 @@
         <div class="np-carousel__thumbs-container">
           <button
             v-for="(photo, index) in photos"
-            :key="photoId(photo)"
+            :key="photo.id"
             type="button"
             class="np-carousel__thumb"
             :class="[
@@ -170,11 +170,8 @@ import {
   type ComponentPublicInstance,
 } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
-import type {
-  EmblaCarouselType,
-  EmblaOptionsType,
-  EmblaPluginType,
-} from 'embla-carousel'
+import type { EmblaCarouselType, EmblaOptionsType } from 'embla-carousel'
+import Autoplay from 'embla-carousel-autoplay'
 import { PhotoImage } from '../../primitives/index'
 import type {
   CarouselCaptionSlotProps,
@@ -183,8 +180,13 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import { photoId, type ImageAdapter, type PhotoItem } from '../../core/index'
-import { readEmblaSnapStateUnsafe } from '../../integrations/embla/snapState'
+import type {
+  ImageAdapter,
+  PhotoCarouselAutoplayOptions,
+  PhotoCarouselOptions,
+  PhotoItem,
+} from '../../core/index'
+import { createCarouselGroups } from '../../integrations/embla/groups'
 
 defineOptions({ inheritAttrs: false })
 
@@ -201,9 +203,8 @@ defineSlots<{
 const props = defineProps<{
   photos: PhotoItem[]
   imageAdapter?: ImageAdapter
-  options: EmblaOptionsType
-  plugins: EmblaPluginType[]
-  thumbsOptions: EmblaOptionsType
+  options: PhotoCarouselOptions
+  autoplay: boolean | PhotoCarouselAutoplayOptions
 
   showArrows: boolean
   showThumbnails: boolean
@@ -230,9 +231,28 @@ const props = defineProps<{
 
 const slots = useSlots()
 
-const optionsRef = toRef(props, 'options')
-const pluginsRef = toRef(props, 'plugins')
-const thumbsOptionsRef = toRef(props, 'thumbsOptions')
+const optionsRef = computed<EmblaOptionsType>(() => ({
+  loop: props.options.loop ?? false,
+  dragFree: props.options.dragFree ?? false,
+  slidesToScroll: props.options.slidesToScroll ?? 1,
+  align: 'start',
+  containScroll: 'trimSnaps',
+}))
+const pluginsRef = computed(() => {
+  if (!props.autoplay) return []
+  const options = typeof props.autoplay === 'object' ? props.autoplay : {}
+  return [
+    Autoplay({
+      delay: options.delayMs,
+      stopOnInteraction: options.stopOnInteraction,
+      stopOnMouseEnter: options.stopOnMouseEnter,
+    }),
+  ]
+})
+const thumbsOptionsRef = computed<EmblaOptionsType>(() => ({
+  containScroll: 'keepSnaps',
+  dragFree: true,
+}))
 
 const [emblaRef, emblaApi] = useEmblaCarousel(optionsRef, pluginsRef)
 const [thumbsRef, thumbsApi] = useEmblaCarousel(thumbsOptionsRef)
@@ -265,38 +285,35 @@ const cssVarStyle = computed(() => {
 
 function syncThumbs(api: EmblaCarouselType) {
   if (!props.showThumbnails) return
-  thumbsApi.value?.goTo(selectedIndex.value)
-}
-
-function syncAutoplay(api: EmblaCarouselType) {
-  if (!props.plugins.some((plugin) => plugin?.name === 'autoplay')) return
-  if (api.snapList().length <= 1) return
-  api.plugins().autoplay?.play()
+  thumbsApi.value?.scrollTo(selectedIndex.value)
 }
 
 function syncState(api: EmblaCarouselType, forcedSnap?: number) {
-  const { slidesBySnap, snapTotal } = readEmblaSnapStateUnsafe(
-    api,
+  const { slidesBySnap } = createCarouselGroups(
     props.photos.length,
     props.options.slidesToScroll,
   )
+  const snapTotal = slidesBySnap.length
   const maxSnapIndex = Math.max(0, snapTotal - 1)
-  const selectedSnap = Math.min(forcedSnap ?? api.selectedSnap(), maxSnapIndex)
+  const selectedSnap = Math.min(
+    forcedSnap ?? api.selectedScrollSnap(),
+    maxSnapIndex,
+  )
   const activeSlides = slidesBySnap[selectedSnap] ?? [selectedSnap]
   const loopEnabled = !!props.options.loop
 
   selectedSnapIndex.value = selectedSnap
-  selectedSlides.value = activeSlides
+  selectedSlides.value = [...activeSlides]
   selectedIndex.value = activeSlides[0] ?? 0
   snapCount.value = snapTotal
   snapTargets.value = slidesBySnap.map((slides) => slides[0] ?? 0)
-  canPrev.value = api.snapList().length
-    ? api.canGoToPrev()
+  canPrev.value = api.scrollSnapList().length
+    ? api.canScrollPrev()
     : loopEnabled
       ? snapTotal > 1
       : selectedSnap > 0
-  canNext.value = api.snapList().length
-    ? api.canGoToNext()
+  canNext.value = api.scrollSnapList().length
+    ? api.canScrollNext()
     : loopEnabled
       ? snapTotal > 1
       : selectedSnap < maxSnapIndex
@@ -317,12 +334,11 @@ watch(
     }
     const onReinit = (currentApi: EmblaCarouselType) => {
       handleSelect(currentApi)
-      syncAutoplay(currentApi)
     }
 
     onReinit(api)
     api.on('select', onSelect)
-    api.on('reinit', onReinit)
+    api.on('reInit', onReinit)
   },
   { immediate: true },
 )
@@ -330,7 +346,10 @@ watch(
 watch(
   () => props.photos.length,
   () => {
-    snapTargets.value = Array.from({ length: props.photos.length }, (_, i) => i)
+    snapTargets.value = createCarouselGroups(
+      props.photos.length,
+      props.options.slidesToScroll,
+    ).slidesBySnap.map((slides) => slides[0] ?? 0)
   },
   { immediate: true },
 )
@@ -345,12 +364,9 @@ function goTo(index: number, instant = false) {
   const api = emblaApi.value
   if (api) {
     const targetSnap =
-      readEmblaSnapStateUnsafe(
-        api,
-        props.photos.length,
-        props.options.slidesToScroll,
-      ).snapBySlide[target] ?? target
-    api.goTo(targetSnap, instant)
+      createCarouselGroups(props.photos.length, props.options.slidesToScroll)
+        .snapBySlide[target] ?? target
+    api.scrollTo(targetSnap, instant)
     if (instant) {
       syncState(api, targetSnap)
       syncThumbs(api)
@@ -368,7 +384,7 @@ function goToNext(instant = false) {
     const nextSnap = props.options.loop
       ? (selectedSnapIndex.value + 1) % Math.max(1, snapCount.value)
       : Math.min(selectedSnapIndex.value + 1, Math.max(0, snapCount.value - 1))
-    api.goToNext(instant)
+    api.scrollNext(instant)
     if (instant) {
       syncState(api, nextSnap)
       syncThumbs(api)
@@ -385,7 +401,7 @@ function goToPrev(instant = false) {
       ? (selectedSnapIndex.value - 1 + Math.max(1, snapCount.value)) %
         Math.max(1, snapCount.value)
       : Math.max(selectedSnapIndex.value - 1, 0)
-    api.goToPrev(instant)
+    api.scrollPrev(instant)
     if (instant) {
       syncState(api, prevSnap)
       syncThumbs(api)
@@ -420,11 +436,11 @@ function interactiveAttrs(_photo: PhotoItem, index: number) {
 }
 
 function selectedSnap() {
-  return emblaApi.value?.selectedSnap() ?? selectedIndex.value
+  return emblaApi.value?.selectedScrollSnap() ?? selectedIndex.value
 }
 
-function reInit(options?: EmblaOptionsType, plugins?: EmblaPluginType[]) {
-  emblaApi.value?.reInit(options, plugins)
+function reInit() {
+  emblaApi.value?.reInit()
 }
 
 defineExpose({

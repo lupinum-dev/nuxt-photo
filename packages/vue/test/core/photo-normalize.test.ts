@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePhotos } from '../../src/core/photo/normalize'
+import {
+  normalizePhotos,
+  PhotoValidationError,
+} from '../../src/core/photo/normalize'
 
 describe('photo normalization', () => {
-  it('returns valid mapped photos without issues', () => {
+  it('returns valid photos without transforming application data', () => {
     const result = normalizePhotos(
-      [{ assetId: 'a', url: '/a.jpg', w: 1200, h: 800 }],
-      {
-        owner: 'PhotoAlbum',
-        mapper: (item) => ({
-          id: item.assetId,
-          src: item.url,
-          width: item.w,
-          height: item.h,
-        }),
-      },
+      [{ id: 'a', src: '/a.jpg', width: 1200, height: 800 }],
+      { owner: 'PhotoAlbum' },
     )
 
     expect(result.issues).toEqual([])
@@ -33,8 +28,35 @@ describe('photo normalization', () => {
         { owner: 'PhotoGroup' },
       ),
     ).toThrow(
-      /missing a non-empty id[\s\S]*missing a non-empty src[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
+      /missing a non-empty string id[\s\S]*missing a non-empty src[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
     )
+  })
+
+  it.each([null, undefined, [], 42, 'photo'])(
+    'reports non-object entry %j as a structured issue',
+    (value) => {
+      try {
+        normalizePhotos([value], { owner: 'PhotoAlbum' })
+        throw new Error('expected validation to fail')
+      } catch (error) {
+        expect(error).toBeInstanceOf(PhotoValidationError)
+        expect((error as PhotoValidationError).issues[0]?.code).toBe(
+          'invalid-item',
+        )
+      }
+    },
+  )
+
+  it('marks every duplicate entry invalid when dropping', () => {
+    const result = normalizePhotos(
+      [
+        { id: 'dup', src: '/a.jpg', width: 1, height: 1 },
+        { id: 'dup', src: '/b.jpg', width: 1, height: 1 },
+      ],
+      { owner: 'PhotoGroup', onInvalid: 'drop' },
+    )
+    expect(result.photos).toEqual([])
+    expect(result.issues).toHaveLength(2)
   })
 
   it('can drop invalid photos for production recipe rendering', () => {

@@ -5,6 +5,7 @@ import type {
   CSSProperties,
   InjectionKey,
   Ref,
+  VNodeChild,
 } from 'vue'
 import type {
   GestureMode,
@@ -18,18 +19,24 @@ export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
 /** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
 export interface LightboxController {
-  photos: ComputedRef<PhotoItem[]>
-  count: ComputedRef<number>
-  activeIndex: Ref<number>
-  activePhoto: ComputedRef<PhotoItem | null>
-  isOpen: ComputedRef<boolean>
-  open: (photoOrIndex?: PhotoItem | number) => Promise<void>
-  close: () => Promise<void>
-  next: () => void
-  prev: () => void
-  toggleZoom: () => void
-  openPhoto(photo: PhotoItem): Promise<void>
-  openById(id: string | number): Promise<void>
+  readonly photos: ComputedRef<readonly PhotoItem[]>
+  readonly count: ComputedRef<number>
+  readonly activeIndex: ComputedRef<number>
+  readonly activePhoto: ComputedRef<PhotoItem | null>
+  readonly isOpen: ComputedRef<boolean>
+  open(index?: number): Promise<void>
+  openById(id: string): Promise<void>
+  close(): Promise<void>
+  next(): void
+  prev(): void
+  toggleZoom(): void
+}
+
+export interface LightboxProviderController extends LightboxController {
+  readonly hiddenThumbnailIndex: Readonly<Ref<number | null>>
+  setThumbnailRef(
+    index: number,
+  ): (element: Element | ComponentPublicInstance | null) => void
 }
 
 type LightboxRuntimeState = {
@@ -77,15 +84,17 @@ type LightboxDomBindings = {
 
 export type InternalLightboxContext = Omit<
   LightboxController,
-  'openPhoto' | 'openById'
-> &
-  LightboxRuntimeState &
+  'openById' | 'activeIndex' | 'photos'
+> & {
+  photos: ComputedRef<PhotoItem[]>
+  activeIndex: Ref<number>
+} & LightboxRuntimeState &
   LightboxDomBindings
 
 export type LightboxSlideRenderer = (props: {
   photo: PhotoItem
   index: number
-}) => unknown
+}) => VNodeChild
 
 export const LightboxContextKey: InjectionKey<InternalLightboxContext> = Symbol(
   'nuxt-photo:lightbox',

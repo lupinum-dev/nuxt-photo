@@ -1,7 +1,6 @@
 // Internal framework-free API re-exported by @nuxt-photo/vue.
 
 export {
-  photoId,
   responsive,
   resolveResponsiveParameter,
   mergeResponsiveBreakpoints,
@@ -14,14 +13,16 @@ export {
   type InvalidPhotosEvent,
   type PhotoValidationIssue,
   type PhotoValidationIssueCode,
+  PhotoValidationError,
 } from './photo/normalize'
 export type {
   PhotoItem,
-  PhotoMapper,
   AlbumLayout,
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
+  PhotoCarouselOptions,
+  PhotoCarouselAutoplayOptions,
   ImageAdapter,
   ImageContext,
   ImageSource,

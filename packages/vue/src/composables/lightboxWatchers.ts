@@ -9,7 +9,6 @@ import {
 import {
   isUsableRect,
   loadImage,
-  photoId,
   type AreaMetrics,
   type ImageAdapter,
   type PhotoItem,
@@ -107,9 +106,9 @@ export function watchPhotoCollection(
   watch(photos, (newPhotos, oldPhotos) => {
     if (!newPhotos || !oldPhotos) return
 
-    const newIds = new Set(newPhotos.map(photoId))
+    const newIds = new Set(newPhotos.map((photo) => photo.id))
     const activePhoto = oldPhotos[config.activeIndex.value] ?? null
-    const activeId = activePhoto ? photoId(activePhoto) : null
+    const activeId = activePhoto?.id ?? null
 
     if (!activeId) {
       config.goTo(0, true)
@@ -124,7 +123,7 @@ export function watchPhotoCollection(
       return
     }
 
-    const newIndex = newPhotos.findIndex((photo) => photoId(photo) === activeId)
+    const newIndex = newPhotos.findIndex((photo) => photo.id === activeId)
     if (newIndex !== -1 && newIndex !== config.activeIndex.value) {
       config.goTo(newIndex, true)
     }

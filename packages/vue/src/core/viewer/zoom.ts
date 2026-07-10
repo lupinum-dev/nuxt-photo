@@ -1,4 +1,4 @@
-import type { PanState, PhotoItem, RectLike, ZoomState } from '../types'
+import type { PanState, RectLike, ZoomState } from '../types'
 import { fitRect, rubberband } from '../geometry/rect'
 
 export const DEFAULT_MIN_ZOOM = 1.5
@@ -20,15 +20,14 @@ export function computeFittedFrame(
 
 /**
  * Compute zoom levels for a photo within a given area.
- * Respects per-photo `photo.meta.maxZoom` / `photo.meta.minZoom` overrides,
- * and accepts a lightbox-level `options.minZoom` fallback.
+ * `minZoom` is an explicit provider option; application-owned photo metadata is
+ * never interpreted by the viewer.
  */
 export function computeZoomLevels(
   photoWidth: number,
   photoHeight: number,
   areaWidth: number,
   areaHeight: number,
-  photo?: PhotoItem,
   options?: { minZoom?: number },
 ): ZoomState {
   const frame = computeFittedFrame(
@@ -38,26 +37,17 @@ export function computeZoomLevels(
     photoHeight,
   )
 
-  const metaMax =
-    typeof photo?.meta?.maxZoom === 'number' &&
-    (photo.meta.maxZoom as number) > 0
-      ? (photo.meta.maxZoom as number)
-      : null
-
   const minZoom =
-    (typeof photo?.meta?.minZoom === 'number' &&
-    (photo.meta.minZoom as number) > 0
-      ? (photo.meta.minZoom as number)
-      : null) ??
-    options?.minZoom ??
-    DEFAULT_MIN_ZOOM
+    typeof options?.minZoom === 'number' &&
+    Number.isFinite(options.minZoom) &&
+    options.minZoom > 0
+      ? options.minZoom
+      : DEFAULT_MIN_ZOOM
 
-  const naturalMax =
-    metaMax ??
-    Math.max(
-      minZoom,
-      Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
-    )
+  const naturalMax = Math.max(
+    minZoom,
+    Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
+  )
   const secondary = Math.min(2, naturalMax)
 
   return {

@@ -7,6 +7,7 @@ import {
 import { useLightboxRuntimeState } from './useLightboxRuntimeState'
 import { createLightboxController } from './lightboxController'
 import { type LightboxSlideRenderer } from '../provide/keys'
+import type { LightboxProviderController } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
 
 /**
@@ -37,7 +38,7 @@ export function useLightboxProvider(
     minZoom?: number
     imageAdapter?: ImageAdapter
   },
-) {
+): LightboxProviderController {
   const ctx = useLightboxRuntimeState(
     photosInput,
     options?.transition,
@@ -53,7 +54,7 @@ export function useLightboxProvider(
 
   return {
     ...createLightboxController(ctx),
-    setThumbRef: ctx.setThumbRef,
-    hiddenThumbIndex: ctx.hiddenThumbIndex,
+    setThumbnailRef: ctx.setThumbRef,
+    hiddenThumbnailIndex: ctx.hiddenThumbIndex,
   }
 }

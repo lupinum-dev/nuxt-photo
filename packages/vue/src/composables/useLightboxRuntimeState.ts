@@ -10,7 +10,6 @@ import {
   createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
   loadImage,
-  photoId,
   type AreaMetrics,
   type ImageAdapter,
   type LoadImageResult,
@@ -31,7 +30,7 @@ import {
 } from './lightboxWatchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
-import { createDebug, devWarn } from '../internal/runtime'
+import { createDebug } from '../internal/runtime'
 
 /**
  * Internal Vue lightbox state.
@@ -158,7 +157,7 @@ export function useLightboxRuntimeState(
     }
   }
 
-  async function open(photoOrIndex: PhotoItem | number = 0) {
+  async function open(index = 0) {
     const requestedCloseGeneration = closeGeneration
     await settlePendingOpen()
     if (requestedCloseGeneration !== closeGeneration) return
@@ -166,20 +165,10 @@ export function useLightboxRuntimeState(
     const currentPhotos = photos.value
     if (currentPhotos.length === 0) return
 
-    const index =
-      typeof photoOrIndex === 'number'
-        ? photoOrIndex
-        : currentPhotos.findIndex(
-            (photo) => photoId(photo) === photoId(photoOrIndex as PhotoItem),
-          )
-
     if (index < 0 || index >= currentPhotos.length) {
-      devWarn(
-        typeof photoOrIndex === 'number'
-          ? `No photo found at index ${photoOrIndex}`
-          : `No photo found for id "${photoId(photoOrIndex)}"`,
+      throw new RangeError(
+        `[nuxt-photo] No photo found at index ${String(index)}`,
       )
-      return
     }
 
     const targetIndex = index
