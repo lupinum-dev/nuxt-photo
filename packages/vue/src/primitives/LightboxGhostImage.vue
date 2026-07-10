@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 
 const ctx = useLightboxInject('LightboxGhostImage')
 </script>

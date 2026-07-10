@@ -46,7 +46,7 @@ import type { PhotoItem } from '../core/index'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
 import type { LightboxSlideSlotProps } from '../types/slots'
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 import PhotoImage from './PhotoImage.vue'
 
 defineSlots<{ default?: (props: LightboxSlideSlotProps) => unknown }>()

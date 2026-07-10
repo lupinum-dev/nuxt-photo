@@ -121,4 +121,23 @@ describe('source architecture boundaries', () => {
       read('packages/nuxt/src/runtime/app.ts'),
     )
   })
+
+  it('keeps private Embla APIs and vendor types out of production contracts', () => {
+    const productionFiles = sourceFiles('packages/vue/src')
+    expect(
+      relativeOffenders(productionFiles, (text) =>
+        text.includes('internalEngine()'),
+      ),
+    ).toEqual([])
+
+    const publicContractFiles = [
+      'packages/vue/src/index.ts',
+      'packages/vue/src/core/types.ts',
+      'packages/vue/src/provide/keys.ts',
+      'packages/vue/src/types/slots.ts',
+    ]
+    expect(
+      publicContractFiles.filter((file) => /\bEmbla\w*/.test(read(file))),
+    ).toEqual([])
+  })
 })

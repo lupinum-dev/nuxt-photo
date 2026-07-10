@@ -1,6 +1,6 @@
 import type { CSSProperties, Ref } from 'vue'
-import type { LayoutEntry, LayoutGroup } from '../core/index'
-import { round } from '../utils/runtime'
+import type { LayoutEntry, LayoutGroup } from '../../core/index'
+import { round } from '../../core/utils/math'
 
 export type AlbumStyleContext = {
   containerWidth: number

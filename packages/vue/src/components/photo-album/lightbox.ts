@@ -9,7 +9,7 @@ import {
   type ComputedRef,
 } from 'vue'
 import { useLightboxProvider } from '../../composables/index'
-import { PhotoGroupContextKey } from '../../context/photoGroup'
+import { PhotoGroupContextKey } from '../photo-group/context'
 import {
   type ImageAdapter,
   type LightboxTransitionOption,
@@ -17,7 +17,8 @@ import {
 } from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
-import { warnOnSetupOptionChanges } from '../shared/staticOptionWarnings'
+import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
+import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 
 type AlbumLightboxProps = {
   lightbox?: boolean | Component
@@ -68,7 +69,7 @@ export function useAlbumLightbox(
     }
   }
 
-  function openPhoto(photo: PhotoItem, index: number) {
+  function activatePhoto(photo: PhotoItem, index: number) {
     if (delegatedGroup) {
       void delegatedGroup.openById(photo.id)
       return
@@ -79,29 +80,15 @@ export function useAlbumLightbox(
     void ownCtx.open(index)
   }
 
-  function handleItemKeydown(
-    event: KeyboardEvent,
-    photo: PhotoItem,
-    index: number,
-  ) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      openPhoto(photo, index)
-    }
-  }
-
   function itemBindings(photo: PhotoItem, index: number) {
     const base = { ref: setItemRef(index) }
     if (!hasLightbox.value) return base
 
     return {
       ...base,
-      role: 'button',
-      tabindex: '0',
-      'aria-label': photo.alt || `View photo ${index + 1}`,
-      onClick: () => openPhoto(photo, index),
-      onKeydown: (event: KeyboardEvent) =>
-        handleItemKeydown(event, photo, index),
+      ...createPhotoTriggerBindings(photo, index, () =>
+        activatePhoto(photo, index),
+      ),
     }
   }
 

@@ -11,14 +11,8 @@ import {
   type CloseCallbacks,
   type GhostState,
 } from './types'
-import { MAX_CLOSE_ANIMATION_MS } from './constants'
 import { resetCloseState } from './state'
-import {
-  animateNumber,
-  easeOutCubic,
-  nextFrame,
-  wait,
-} from '../../internal/runtime'
+import { animateNumber, easeOutCubic, nextFrame, wait } from './animation'
 
 async function doInstantClose(s: GhostState) {
   s.debug?.log('transitions', 'close: INSTANT (mode=none)')
@@ -31,6 +25,7 @@ async function doFadeClose(
   s: GhostState,
   slideSrc: string,
   frameRect: RectLike | null,
+  signal: AbortSignal,
 ) {
   const fadeCloseDuration = 300
   const backdropDelayRatio = 0.2
@@ -60,9 +55,9 @@ async function doFadeClose(
       ...makeGhostBaseStyle(frameRect),
     }
 
-    await nextFrame()
+    await nextFrame(signal)
     s.mediaOpacity.value = 0
-    await nextFrame()
+    await nextFrame(signal)
 
     const overlayStart = s.overlayOpacity.value
 
@@ -85,6 +80,7 @@ async function doFadeClose(
         s.overlayOpacity.value = overlayStart * (1 - backdropT)
       },
       easeOutCubic,
+      signal,
     )
   } else {
     s.debug?.log(
@@ -101,6 +97,7 @@ async function doFadeClose(
         s.overlayOpacity.value = v
       },
       easeOutCubic,
+      signal,
     )
   }
 
@@ -114,6 +111,7 @@ async function doFlipClose(
   toRect: DOMRect,
   dragOffsetY: number,
   dragScale: number,
+  signal: AbortSignal,
 ) {
   s.debug?.log('transitions', 'close FLIP: starting')
 
@@ -175,10 +173,10 @@ async function doFlipClose(
     'transitions',
     'close FLIP: ghost visible, waiting for next frame',
   )
-  await nextFrame()
+  await nextFrame(signal)
 
   s.mediaOpacity.value = 0
-  await nextFrame()
+  await nextFrame(signal)
 
   s.debug?.log(
     'transitions',
@@ -192,7 +190,7 @@ async function doFlipClose(
     boxShadow: '0 12px 34px rgba(0, 0, 0, 0.12)',
   }
 
-  await wait(closeDurationMs)
+  await wait(closeDurationMs, signal)
 
   s.hiddenThumbIndex.value = null
   s.ghostStyle.value = {
@@ -200,7 +198,7 @@ async function doFlipClose(
     transition: 'opacity 180ms ease',
     opacity: '0',
   }
-  await wait(180)
+  await wait(180, signal)
 
   s.debug?.log(
     'transitions',
@@ -210,44 +208,12 @@ async function doFlipClose(
 
 /** Create the close-transition controller and recovery guards for ghost animations. */
 export function createCloseTransition(s: GhostState) {
-  let animationGuardId: ReturnType<typeof setTimeout> | null = null
-
-  function clearAnimationGuard() {
-    if (animationGuardId) {
-      clearTimeout(animationGuardId)
-      animationGuardId = null
-    }
-  }
-
-  function startAnimationGuard() {
-    clearAnimationGuard()
-    animationGuardId = setTimeout(() => {
-      if (s.animating.value) {
-        s.debug?.warn(
-          'transitions',
-          `RECOVERY: animating stuck for ${MAX_CLOSE_ANIMATION_MS}ms, forcing resetCloseState`,
-        )
-        resetCloseState(s, clearAnimationGuard)
-      }
-    }, MAX_CLOSE_ANIMATION_MS)
-  }
-
-  async function close(callbacks: CloseCallbacks) {
-    if (!s.lightboxMounted.value || s.animating.value) {
-      s.debug?.warn(
-        'transitions',
-        `close: BLOCKED — lightboxMounted=${s.lightboxMounted.value} animating=${s.animating.value}`,
-      )
-      return
-    }
-
+  async function close(callbacks: CloseCallbacks, signal: AbortSignal) {
     s.debug?.group('transitions', `close(activeIndex=${s.activeIndex.value})`)
     s.debug?.log(
       'transitions',
       `close: pre-state — isZoomedIn=${callbacks.isZoomedIn.value} closeDragY=${s.closeDragY.value.toFixed(1)} ghostVisible=${s.ghostVisible.value} mediaOpacity=${s.mediaOpacity.value.toFixed(2)}`,
     )
-
-    startAnimationGuard()
 
     callbacks.cancelTapTimer()
     callbacks.resetGestureState()
@@ -266,7 +232,7 @@ export function createCloseTransition(s: GhostState) {
       callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
     }
     s.closeDragY.value = 0
-    await nextFrame()
+    await nextFrame(signal)
 
     callbacks.syncGeometry()
 
@@ -277,7 +243,7 @@ export function createCloseTransition(s: GhostState) {
         'close: no active photo, using instant close',
       )
       await doInstantClose(s)
-      resetCloseState(s, clearAnimationGuard)
+      resetCloseState(s)
       s.debug?.groupEnd('transitions')
       return
     }
@@ -331,27 +297,39 @@ export function createCloseTransition(s: GhostState) {
           plan.toRect as DOMRect,
           dragOffsetY,
           dragScale,
+          signal,
         )
       } else {
-        await doFadeClose(s, slideSrc, fromRect)
+        await doFadeClose(s, slideSrc, fromRect, signal)
       }
 
       s.debug?.log('transitions', 'close: complete')
       s.debug?.groupEnd('transitions')
-      resetCloseState(s, clearAnimationGuard)
+      resetCloseState(s)
     } catch (err) {
       s.debug?.warn('transitions', 'close: error, forcing recovery', err)
       s.debug?.groupEnd('transitions')
-      resetCloseState(s, clearAnimationGuard)
+      resetCloseState(s)
       throw err
     }
   }
 
-  async function animateCloseDragTo(target: number, duration = 220) {
+  async function animateCloseDragTo(
+    target: number,
+    duration = 220,
+    signal?: AbortSignal,
+  ) {
     const start = s.closeDragY.value
-    await animateNumber(start, target, duration, (value) => {
-      s.closeDragY.value = value
-    })
+    await animateNumber(
+      start,
+      target,
+      duration,
+      (value) => {
+        s.closeDragY.value = value
+      },
+      undefined,
+      signal,
+    )
   }
 
   async function handleCloseGesture(

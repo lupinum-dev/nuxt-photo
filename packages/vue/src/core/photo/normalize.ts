@@ -9,24 +9,24 @@ export type PhotoValidationIssueCode =
   | 'invalid-item'
 
 export type PhotoValidationIssue = {
-  code: PhotoValidationIssueCode
-  owner: string
-  index: number
-  id?: string
-  message: string
+  readonly code: PhotoValidationIssueCode
+  readonly owner: string
+  readonly index: number
+  readonly id?: string
+  readonly message: string
 }
 
 export type InvalidPhotoPolicy = 'throw' | 'drop'
 
 export type InvalidPhotosEvent = {
-  owner: string
-  issues: PhotoValidationIssue[]
-  rawPhotos: readonly unknown[]
+  readonly owner: string
+  readonly issues: readonly PhotoValidationIssue[]
+  readonly rawPhotos: readonly unknown[]
 }
 
 export type NormalizePhotosResult = {
-  photos: PhotoItem[]
-  issues: PhotoValidationIssue[]
+  readonly photos: PhotoItem[]
+  readonly issues: readonly PhotoValidationIssue[]
 }
 
 export type NormalizePhotosOptions = {

@@ -5,8 +5,7 @@ import { demoPhotos } from '~/composables/demoPhotos'
 <template>
   <PhotoAlbum
     :photos="demoPhotos"
-    layout="rows"
-    :target-row-height="240"
+    :layout="{ type: 'rows', targetRowHeight: 240 }"
     :spacing="6"
     :breakpoints="[375, 600, 900, 1200]"
   />

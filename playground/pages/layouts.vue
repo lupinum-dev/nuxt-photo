@@ -100,8 +100,7 @@ const albumLayout = computed<AlbumLayout>(() => {
 const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 <PhotoAlbum
   :photos="photos"
-  :layout="layout"
-  :columns="columns"
+  :layout="albumLayout"
   :spacing="spacing"
 />
 

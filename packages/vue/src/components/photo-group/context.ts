@@ -1,6 +1,6 @@
 import type { ComputedRef, InjectionKey } from 'vue'
-import type { PhotoItem } from '../core/index'
-import type { LightboxSlideRenderer } from '../provide/keys'
+import type { PhotoItem } from '../../core/index'
+import type { LightboxSlideRenderer } from '../../provide/keys'
 
 export interface PhotoGroupContext {
   readonly enabled: boolean

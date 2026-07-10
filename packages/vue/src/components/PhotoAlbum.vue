@@ -138,14 +138,14 @@ import {
   type InvalidPhotosEvent,
 } from '../core/index'
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
-import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
-import { resolveRecipePhotos } from '../utils/photos'
-import { devWarn } from '../utils/runtime'
-import { useAlbumLightbox } from './photo-album/useAlbumLightbox'
+import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
+import { resolveRecipePhotos } from '../core/photo/resolve'
+import { devWarn } from '../core/env'
+import { useAlbumLightbox } from './photo-album/lightbox'
 
 const props = withDefaults(
   defineProps<{
-    photos: readonly unknown[]
+    photos: readonly PhotoItem[]
     validation?: InvalidPhotoPolicy
     onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     layout?: AlbumLayout | AlbumLayout['type']

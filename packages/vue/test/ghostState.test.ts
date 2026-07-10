@@ -7,14 +7,14 @@ import {
   resetOpenState,
   resetCloseState,
   setThumbRef,
-} from '../src/composables/ghost/state'
-import { openTransition } from '../src/composables/ghost/openTransition'
-import { createCloseTransition } from '../src/composables/ghost/closeTransition'
+} from '../src/lightbox/transitions/state'
+import { openTransition } from '../src/lightbox/transitions/open'
+import { createCloseTransition } from '../src/lightbox/transitions/close'
 import type {
   CloseCallbacks,
   GhostState,
   TransitionCallbacks,
-} from '../src/composables/ghost/types'
+} from '../src/lightbox/transitions/types'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function makeGhostState(
@@ -45,8 +45,7 @@ function usableRect(): DOMRect {
 
 function makeTransitionCallbacks(): TransitionCallbacks {
   return {
-    syncGeometry: () => {},
-    refreshZoomState: () => {},
+    prepareActiveSlide: () => Promise.resolve(),
     resetGestureState: () => {},
     cancelTapTimer: () => {},
     getThumbSrc: (photo) => photo.thumbSrc ?? photo.src,
@@ -58,6 +57,7 @@ function makeTransitionCallbacks(): TransitionCallbacks {
 function makeCloseCallbacks(): CloseCallbacks {
   return {
     ...makeTransitionCallbacks(),
+    syncGeometry: () => {},
     setPanzoomImmediate: () => {},
     isZoomedIn: computed(() => false),
   }
@@ -90,24 +90,12 @@ describe('resetOpenState', () => {
     expect(state.closeDragY.value).toBe(0)
     expect(state.disableBackdropTransition.value).toBe(false)
   })
-
-  it('does not reset lightboxMounted (lightbox should stay open)', () => {
-    const state = makeGhostState()
-    state.lightboxMounted.value = true
-
-    resetOpenState(state)
-
-    expect(state.lightboxMounted.value).toBe(true)
-  })
 })
 
 describe('resetCloseState', () => {
   it('resets all properties to the "lightbox is closed" state', () => {
     const state = makeGhostState()
-    let guardCleared = false
-
     // Simulate a fully-open lightbox
-    state.lightboxMounted.value = true
     state.ghostVisible.value = true
     state.ghostSrc.value = '/some-image.jpg'
     state.hiddenThumbIndex.value = 2
@@ -118,11 +106,8 @@ describe('resetCloseState', () => {
     state.closeDragY.value = 100
     state.disableBackdropTransition.value = true
 
-    resetCloseState(state, () => {
-      guardCleared = true
-    })
+    resetCloseState(state)
 
-    expect(guardCleared).toBe(true)
     expect(state.ghostVisible.value).toBe(false)
     expect(state.ghostSrc.value).toBe('')
     expect(state.hiddenThumbIndex.value).toBeNull()
@@ -132,7 +117,6 @@ describe('resetCloseState', () => {
     expect(state.mediaOpacity.value).toBe(0)
     expect(state.chromeOpacity.value).toBe(0)
     expect(state.animating.value).toBe(false)
-    expect(state.lightboxMounted.value).toBe(false)
   })
 })
 
@@ -185,10 +169,14 @@ describe('error propagation', () => {
     )
 
     await expect(
-      openTransition(state, 0, makeTransitionCallbacks()),
+      openTransition(
+        state,
+        0,
+        makeTransitionCallbacks(),
+        new AbortController().signal,
+      ),
     ).resolves.toBe(false)
 
-    expect(state.lightboxMounted.value).toBe(false)
     expect(state.overlayOpacity.value).toBe(0)
     expect(state.mediaOpacity.value).toBe(0)
     expect(state.chromeOpacity.value).toBe(0)
@@ -201,7 +189,12 @@ describe('error propagation', () => {
     })
 
     await expect(
-      openTransition(state, 0, makeTransitionCallbacks()),
+      openTransition(
+        state,
+        0,
+        makeTransitionCallbacks(),
+        new AbortController().signal,
+      ),
     ).rejects.toBe(boom)
 
     expect(state.animating.value).toBe(false)
@@ -217,14 +210,13 @@ describe('error propagation', () => {
     const state = makeGhostState(() => {
       throw boom
     })
-    state.lightboxMounted.value = true
-
     const { close } = createCloseTransition(state)
 
-    await expect(close(makeCloseCallbacks())).rejects.toBe(boom)
+    await expect(
+      close(makeCloseCallbacks(), new AbortController().signal),
+    ).rejects.toBe(boom)
 
     expect(state.animating.value).toBe(false)
-    expect(state.lightboxMounted.value).toBe(false)
     expect(state.ghostVisible.value).toBe(false)
     expect(state.ghostSrc.value).toBe('')
     expect(state.hiddenThumbIndex.value).toBeNull()
@@ -242,9 +234,10 @@ describe('error propagation', () => {
         Promise.resolve({ ok: false as const, error: new Error('broken') }),
     }
 
-    await expect(openTransition(state, 0, callbacks)).resolves.toBe(true)
+    await expect(
+      openTransition(state, 0, callbacks, new AbortController().signal),
+    ).resolves.toBe(true)
 
-    expect(state.lightboxMounted.value).toBe(true)
     expect(state.overlayOpacity.value).toBe(1)
     expect(state.mediaOpacity.value).toBe(0)
     expect(state.chromeOpacity.value).toBe(1)
@@ -254,7 +247,6 @@ describe('error propagation', () => {
 
   it('uses fade fallback for an off-screen thumbnail without scrolling the page', async () => {
     const state = makeGhostState(() => usableRect())
-    state.lightboxMounted.value = true
     state.mediaOpacity.value = 1
     state.overlayOpacity.value = 1
     state.chromeOpacity.value = 1
@@ -278,10 +270,9 @@ describe('error propagation', () => {
 
     const { close } = createCloseTransition(state)
 
-    await close(makeCloseCallbacks())
+    await close(makeCloseCallbacks(), new AbortController().signal)
 
     expect(scrollIntoView).not.toHaveBeenCalled()
-    expect(state.lightboxMounted.value).toBe(false)
     expect(state.mediaOpacity.value).toBe(0)
   })
 })

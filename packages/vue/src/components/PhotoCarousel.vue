@@ -48,10 +48,10 @@ import type {
 } from '../core/index'
 import { useLightboxProvider } from '../composables/index'
 import { LightboxComponentKey } from '../provide/keys'
-import CarouselLayout from './internal/CarouselLayout.vue'
+import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
-import { resolveRecipePhotos } from '../utils/photos'
-import { warnOnSetupOptionChanges } from './shared/staticOptionWarnings'
+import { resolveRecipePhotos } from '../core/photo/resolve'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 
 defineOptions({ inheritAttrs: false })
 

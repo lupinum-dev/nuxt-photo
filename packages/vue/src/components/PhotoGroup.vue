@@ -23,8 +23,8 @@ import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
   type PhotoGroupContext,
-} from '../context/photoGroup'
-import { warnOnSetupOptionChanges } from './shared/staticOptionWarnings'
+} from './photo-group/context'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 
 const props = withDefaults(
   defineProps<{
@@ -78,9 +78,16 @@ function register(
   getThumbnailElement: () => HTMLElement | null,
   renderSlide?: LightboxSlideRenderer | null,
 ) {
+  const previous = registrations.get(id)
   registrations.set(id, { photo, getThumbnailElement, renderSlide })
-  // Force aggregate validation at the registration boundary.
-  void collectedPhotos.value
+  try {
+    // Force aggregate validation at the registration boundary.
+    void collectedPhotos.value
+  } catch (error) {
+    if (previous) registrations.set(id, previous)
+    else registrations.delete(id)
+    throw error
+  }
 }
 
 function unregister(id: symbol) {
@@ -95,12 +102,20 @@ function syncThumbnailRefs() {
 }
 
 async function open(index = 0) {
+  if (index < 0 || index >= collectedPhotos.value.length) {
+    throw new RangeError(
+      `[nuxt-photo] No photo found at index ${String(index)}`,
+    )
+  }
   if (!provider) return
   syncThumbnailRefs()
   await provider.open(index)
 }
 
 async function openById(id: string) {
+  if (!collectedPhotos.value.some((photo) => photo.id === id)) {
+    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+  }
   if (!provider) return
   syncThumbnailRefs()
   await provider.openById(id)

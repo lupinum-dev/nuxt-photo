@@ -250,6 +250,36 @@ describe('nuxt-photo module', () => {
       { image: null },
       /`nuxtPhoto\.image` must be false or an object/,
     ],
+    [
+      'array auto imports',
+      { autoImports: [] },
+      /`nuxtPhoto\.autoImports` must be a boolean or object/,
+    ],
+    [
+      'array components',
+      { components: [] },
+      /`nuxtPhoto\.components` must be a boolean or object/,
+    ],
+    [
+      'array image',
+      { image: [] },
+      /`nuxtPhoto\.image` must be false or an object/,
+    ],
+    [
+      'array thumb options',
+      { image: { provider: 'native', thumb: [] } },
+      /`nuxtPhoto\.image\.thumb` must be an object/,
+    ],
+    [
+      'array slide options',
+      { image: { provider: 'native', slide: [] } },
+      /`nuxtPhoto\.image\.slide` must be an object/,
+    ],
+    [
+      'array lightbox',
+      { lightbox: [] },
+      /`nuxtPhoto\.lightbox` must be an object/,
+    ],
   ])(
     'validates invalid %s config before setup side effects',
     (_name, config, message) => {

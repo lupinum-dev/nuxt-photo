@@ -21,17 +21,23 @@ const CHANNEL_COLORS: Record<DebugChannel, string> = {
   rects: '#fb923c',
 }
 
+const flags: DebugFlags = {
+  transitions: false,
+  gestures: false,
+  zoom: false,
+  slides: false,
+  images: false,
+  geometry: false,
+  rects: false,
+  all: false,
+}
+let globalExposed = false
+
 /** Create a channel-aware debug logger whose output can be toggled at runtime. */
 export function createDebug(): DebugLogger {
-  const flags: DebugFlags = {
-    transitions: false,
-    gestures: false,
-    zoom: false,
-    slides: false,
-    images: false,
-    geometry: false,
-    rects: false,
-    all: false,
+  if (!globalExposed && typeof window !== 'undefined') {
+    window.__NUXT_PHOTO_DEBUG__ = flags
+    globalExposed = true
   }
 
   function isEnabled(channel: DebugChannel): boolean {

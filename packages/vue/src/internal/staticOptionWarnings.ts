@@ -1,5 +1,5 @@
 import { watch } from 'vue'
-import { devWarn, isDev } from '../../core/env'
+import { devWarn, isDev } from '../core/env'
 
 /** Warn once when a setup-time component option changes without a remount. */
 export function warnOnSetupOptionChanges(

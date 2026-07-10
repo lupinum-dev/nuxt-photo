@@ -2,8 +2,11 @@ import {
   computed,
   getCurrentInstance,
   inject,
+  nextTick,
+  onBeforeUnmount,
   ref,
   toValue,
+  watch,
   type MaybeRef,
 } from 'vue'
 import {
@@ -16,21 +19,21 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
-import { usePanzoom } from './usePanzoom'
-import { useCarousel } from './useCarousel'
-import { useGhostTransition } from './useGhostTransition'
-import { useLightboxInputHandlers } from './useLightboxInputHandlers'
+import { usePanzoom } from './panzoom'
+import { useCarousel } from './carousel'
+import { useGhostTransition } from './transitions/runtime'
+import { useLightboxInputHandlers } from './input/pointer'
 import {
   createGeometrySync,
   createKeydownBinding,
   createPreloadAround,
   useLightboxWindowLifecycle,
-  watchActiveIndexRuntime,
   watchPhotoCollection,
-} from './lightboxWatchers'
+} from './watchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
-import { createDebug } from '../internal/runtime'
+import { createDebug } from '../core/debug/logger'
+import { abortable, isAbortError } from './transitions/animation'
 
 /**
  * Internal Vue lightbox state.
@@ -38,22 +41,11 @@ import { createDebug } from '../internal/runtime'
  * Public customisation should go through `useLightboxProvider`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and ghost transitions.
- *
- * ## `skipActiveIndexWatch` (the one subtle bit)
- *
- * During `open()` we call both `carousel.goTo(index, true)` and
- * `ghost.open(index, …)`. Both would trigger the `watchActiveIndexRuntime`
- * side effects (panzoom reset, preload, zoom refresh) — but at the wrong time,
- * racing the ghost transition's own ordering. We set the flag to `true`
- * around the open sequence so the watcher becomes a no-op; the ghost
- * transition callbacks (`transitionCallbacks`) call the same side effects in
- * the correct order. Cleared to `false` once `ghost.open` resolves.
- *
- * Public API is exported at the bottom (`return { … }`) — everything above
- * the `return` is wiring.
+ * Lifecycle intent is reconciled by one abortable runner. Status is the sole
+ * writable representation of actual lifecycle state; DOM mount is derived.
  */
 export function useLightboxRuntimeState(
-  photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
+  photosInput: MaybeRef<PhotoItem | readonly PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
   imageAdapter?: ImageAdapter,
@@ -100,17 +92,12 @@ export function useLightboxRuntimeState(
     transitionConfig.mode = 'fade'
   }
 
-  if (typeof window !== 'undefined') {
-    window.__NUXT_PHOTO_DEBUG__ = debug.flags
-  }
-
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
   const lifecycleStatus = ref<LightboxLifecycleStatus>('closed')
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
-  let imageLoadToken = 0
 
   const carousel = useCarousel(
     photos,
@@ -140,141 +127,173 @@ export function useLightboxRuntimeState(
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
   const preloadAround = createPreloadAround(photos, resolvedImageAdapter)
-  // Suppresses `watchActiveIndexRuntime` side effects while `open()` runs —
-  // the ghost transition callbacks handle the same work in the right order.
-  const skipActiveIndexWatch = ref(false)
-  let pendingOpen: Promise<boolean> | null = null
-  let openToken = 0
-  let closeGeneration = 0
 
-  async function settlePendingOpen() {
-    if (!pendingOpen) return
+  type LightboxIntent =
+    | { readonly kind: 'closed' }
+    | { readonly kind: 'open'; readonly index: number }
+  type ActiveRun = {
+    readonly controller: AbortController
+    readonly done: Promise<unknown>
+  }
 
-    try {
-      await pendingOpen
-    } catch {
-      // Let close/open recovery continue even when the previous transition threw.
+  const isOpen = computed(() => lifecycleStatus.value !== 'closed')
+  let desired: LightboxIntent = { kind: 'closed' }
+  let activeRun: ActiveRun | null = null
+  let reconcilePromise: Promise<void> | null = null
+
+  function startRun<T>(operation: (signal: AbortSignal) => Promise<T>) {
+    const controller = new AbortController()
+    const done = operation(controller.signal)
+    const run: ActiveRun = { controller, done }
+    activeRun = run
+    return done.finally(() => {
+      if (activeRun === run) activeRun = null
+    })
+  }
+
+  async function prepareActiveSlide(reset: boolean) {
+    panzoom.setActiveSlideIndex(carousel.activeIndex.value)
+    await nextTick()
+    syncGeometry()
+    panzoom.refreshZoomState(reset)
+    preloadAround(carousel.activeIndex.value)
+  }
+
+  async function reconcile() {
+    while (true) {
+      const target = desired
+
+      try {
+        if (target.kind === 'closed') {
+          if (lifecycleStatus.value === 'closed') return
+
+          lifecycleStatus.value = 'closing'
+          await startRun((signal) => ghost.close(closeCallbacks, signal))
+          ghost.setCloseDragY(0)
+          keydown.detach()
+          lifecycleStatus.value = 'closed'
+        } else if (lifecycleStatus.value === 'open') {
+          if (carousel.activeIndex.value !== target.index) {
+            carousel.goTo(target.index, true)
+            activeImageLoadFailed.value = false
+            await prepareActiveSlide(true)
+          }
+        } else {
+          lifecycleStatus.value = 'opening'
+          ghost.setCloseDragY(0)
+          carousel.goTo(target.index, true)
+          keydown.attach()
+
+          const opened = await startRun((signal) =>
+            ghost.open(target.index, transitionCallbacks, signal),
+          )
+          if (!opened) {
+            ghost.resetClosedVisualState()
+            keydown.detach()
+            lifecycleStatus.value = 'closed'
+          } else {
+            lifecycleStatus.value = 'open'
+          }
+        }
+      } catch (error) {
+        ghost.resetClosedVisualState()
+        keydown.detach()
+        lifecycleStatus.value = 'closed'
+        if (isAbortError(error)) continue
+        desired = { kind: 'closed' }
+        throw error
+      }
+
+      const realized =
+        desired === target &&
+        ((target.kind === 'closed' && lifecycleStatus.value === 'closed') ||
+          (target.kind === 'open' &&
+            lifecycleStatus.value === 'open' &&
+            carousel.activeIndex.value === target.index))
+      if (realized) return
     }
   }
 
+  function ensureReconciled() {
+    if (!reconcilePromise) {
+      reconcilePromise = reconcile().finally(() => {
+        reconcilePromise = null
+      })
+    }
+    return reconcilePromise
+  }
+
   async function open(index = 0) {
-    const requestedCloseGeneration = closeGeneration
-    await settlePendingOpen()
-    if (requestedCloseGeneration !== closeGeneration) return
-
     const currentPhotos = photos.value
-    if (currentPhotos.length === 0) return
-
     if (index < 0 || index >= currentPhotos.length) {
       throw new RangeError(
         `[nuxt-photo] No photo found at index ${String(index)}`,
       )
     }
 
-    const targetIndex = index
-
-    lifecycleStatus.value = 'opening'
-    skipActiveIndexWatch.value = true
-    const token = ++openToken
-    let openPromise: Promise<boolean> | null = null
-
-    try {
-      ghost.setCloseDragY(0)
-      carousel.goTo(targetIndex, true)
-      keydown.attach()
-
-      openPromise = ghost.open(targetIndex, transitionCallbacks)
-      pendingOpen = openPromise
-      const opened = await openPromise
-      if (token !== openToken) return
-
-      if (!opened) {
-        lifecycleStatus.value = 'closed'
-        keydown.detach()
-        return
-      }
-
-      lifecycleStatus.value = 'open'
-      preloadAround(targetIndex)
-    } finally {
-      if (token === openToken && pendingOpen === openPromise) {
-        pendingOpen = null
-      }
-      if (token === openToken) {
-        skipActiveIndexWatch.value = false
-      }
-    }
+    desired = { kind: 'open', index }
+    activeRun?.controller.abort()
+    await ensureReconciled()
   }
 
   async function close() {
-    closeGeneration++
-
-    if (lifecycleStatus.value === 'opening') {
-      openToken++
-      pendingOpen = null
-      skipActiveIndexWatch.value = false
-      ghost.abortOpen()
-      keydown.detach()
-      lifecycleStatus.value = 'closed'
-      return
-    }
-
-    await settlePendingOpen()
-
-    if (!ghost.lightboxMounted.value) return
-
-    lifecycleStatus.value = 'closing'
-    try {
-      await ghost.close(closeCallbacks)
-    } finally {
-      ghost.setCloseDragY(0)
-      keydown.detach()
-      lifecycleStatus.value = ghost.lightboxMounted.value ? 'open' : 'closed'
-    }
+    desired = { kind: 'closed' }
+    activeRun?.controller.abort()
+    await ensureReconciled()
   }
 
   function next() {
-    if (ghost.transitionInProgress.value) return
+    if (lifecycleStatus.value !== 'open' || ghost.transitionInProgress.value)
+      return
     carousel.goToNext()
   }
 
   function prev() {
-    if (ghost.transitionInProgress.value) return
+    if (lifecycleStatus.value !== 'open' || ghost.transitionInProgress.value)
+      return
     carousel.goToPrev()
   }
 
   const gestures = useLightboxInputHandlers(
     {
-      lightboxMounted: ghost.lightboxMounted,
-      animating: ghost.animating,
-      ghostVisible: ghost.ghostVisible,
-      isZoomedIn: panzoom.isZoomedIn,
-      zoomAllowed: panzoom.zoomAllowed,
-      mediaAreaRef,
-      currentPhoto: carousel.currentPhoto,
-      areaMetrics,
-      uiVisible: ghost.uiVisible,
-      panState: panzoom.panState,
-      zoomState: panzoom.zoomState,
-      setCloseDragY: ghost.setCloseDragY,
-      transitionInProgress: ghost.transitionInProgress,
-
-      panzoomMotion: panzoom.panzoomMotion,
-      setPanzoomImmediate: panzoom.setPanzoomImmediate,
-      startPanzoomSpring: panzoom.startPanzoomSpring,
-      clampPan: panzoom.clampPan,
-      clampPanWithResistance: panzoom.clampPanWithResistance,
-      applyWheelZoom: panzoom.applyWheelZoom,
-      toggleZoom: panzoom.toggleZoom,
-      getPanBounds: panzoom.getPanBounds,
-
-      goToNext: carousel.goToNext,
-      goToPrev: carousel.goToPrev,
-      goTo: carousel.goTo,
-      selectedSnap: carousel.selectedSnap,
-
-      handleCloseGesture: ghost.handleCloseGesture,
-      close,
+      state: {
+        isOpen,
+        animating: ghost.animating,
+        ghostVisible: ghost.ghostVisible,
+        isZoomedIn: panzoom.isZoomedIn,
+        zoomAllowed: panzoom.zoomAllowed,
+        mediaAreaRef,
+        currentPhoto: carousel.currentPhoto,
+        areaMetrics,
+        uiVisible: ghost.uiVisible,
+        panState: panzoom.panState,
+        zoomState: panzoom.zoomState,
+        transitionInProgress: ghost.transitionInProgress,
+      },
+      panzoom: {
+        getCurrentScale: panzoom.getCurrentScale,
+        getCurrentPan: panzoom.getCurrentPan,
+        setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
+        settleCurrentTransform: panzoom.settleCurrentTransform,
+        setPanzoomImmediate: panzoom.setPanzoomImmediate,
+        startPanzoomSpring: panzoom.startPanzoomSpring,
+        clampPan: panzoom.clampPan,
+        clampPanWithResistance: panzoom.clampPanWithResistance,
+        applyWheelZoom: panzoom.applyWheelZoom,
+        toggleZoom: panzoom.toggleZoom,
+        getPanBounds: panzoom.getPanBounds,
+      },
+      navigation: {
+        goToNext: carousel.goToNext,
+        goToPrev: carousel.goToPrev,
+        goTo: carousel.goTo,
+        selectedSnap: carousel.selectedSnap,
+      },
+      lifecycle: {
+        setCloseDragY: ghost.setCloseDragY,
+        handleCloseGesture: ghost.handleCloseGesture,
+        close,
+      },
     },
     debug,
   )
@@ -282,14 +301,14 @@ export function useLightboxRuntimeState(
 
   async function loadActiveSlideImage(
     photo: PhotoItem,
+    signal: AbortSignal,
   ): Promise<LoadImageResult> {
-    const token = ++imageLoadToken
     activeImageLoadFailed.value = false
 
-    const result = await loadImage(
-      resolvedImageAdapter.value(photo, 'slide').src,
+    const result = await abortable(
+      loadImage(resolvedImageAdapter.value(photo, 'slide').src),
+      signal,
     )
-    if (token !== imageLoadToken) return result
 
     activeImageLoadFailed.value = !result.ok
     if (!result.ok) {
@@ -304,8 +323,7 @@ export function useLightboxRuntimeState(
   }
 
   const transitionCallbacks = {
-    syncGeometry,
-    refreshZoomState: panzoom.refreshZoomState,
+    prepareActiveSlide,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
     getThumbSrc: (photo: PhotoItem) =>
@@ -317,32 +335,38 @@ export function useLightboxRuntimeState(
 
   const closeCallbacks = {
     ...transitionCallbacks,
+    syncGeometry,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
     isZoomedIn: panzoom.isZoomedIn,
   }
 
   watchPhotoCollection(photos, {
     activeIndex: carousel.activeIndex,
-    lightboxMounted: ghost.lightboxMounted,
+    isMounted: isOpen,
     goTo: carousel.goTo,
     close,
   })
-  watchActiveIndexRuntime(carousel.activeIndex, {
-    lightboxMounted: ghost.lightboxMounted,
-    skipActiveIndexWatch,
-    setActiveSlideIndex: panzoom.setActiveSlideIndex,
-    refreshZoomState: panzoom.refreshZoomState,
-    syncGeometry,
-    preloadAround,
-    debug,
+  watch(carousel.activeIndex, (index) => {
+    if (lifecycleStatus.value !== 'open') return
+    debug.log('slides', `activeIndex changed → ${index}`)
+    void prepareActiveSlide(true)
   })
   useLightboxWindowLifecycle({
-    lightboxMounted: ghost.lightboxMounted,
+    isMounted: isOpen,
     cancelTapTimer: gestures.cancelTapTimer,
     detachKeydown: keydown.detach,
     syncGeometry,
     refreshZoomState: panzoom.refreshZoomState,
     debug,
+  })
+
+  onBeforeUnmount(() => {
+    desired = { kind: 'closed' }
+    activeRun?.controller.abort()
+    gestures.disposeGestureState()
+    ghost.resetClosedVisualState()
+    keydown.detach()
+    lifecycleStatus.value = 'closed'
   })
 
   return {
@@ -351,7 +375,7 @@ export function useLightboxRuntimeState(
     lifecycleStatus,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
-    isOpen: computed(() => ghost.lightboxMounted.value),
+    isOpen,
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,

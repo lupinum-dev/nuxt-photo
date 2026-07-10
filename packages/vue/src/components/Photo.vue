@@ -43,8 +43,9 @@ import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
 import type { LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
-import { PhotoGroupContextKey } from '../context/photoGroup'
-import { warnOnSetupOptionChanges } from './shared/staticOptionWarnings'
+import { PhotoGroupContextKey } from './photo-group/context'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -70,7 +71,7 @@ const group = inject(PhotoGroupContextKey, null)
 const injectedLightbox = inject(LightboxComponentKey, null)
 
 // Standalone mode: lightbox prop set and no parent group
-const hasSoloProvider = !group && !!props.lightbox && !props.lightboxIgnore
+const hasSoloProvider = !group && !!props.lightbox
 const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
@@ -136,22 +137,9 @@ function handleClick() {
   else if (isAutoGrouped.value) void group!.openById(props.photo.id)
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    if (e.key === ' ') e.preventDefault()
-    handleClick()
-  }
-}
-
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return {
-    role: 'button' as const,
-    tabindex: 0,
-    'aria-label': props.photo.alt || 'View photo',
-    onClick: handleClick,
-    onKeydown: handleKeydown,
-  }
+  return createPhotoTriggerBindings(props.photo, 0, handleClick)
 })
 
 // Registration with parent group (auto mode only)

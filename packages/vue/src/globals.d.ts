@@ -1,4 +1,4 @@
-import type { DebugFlags } from './internal/runtime'
+import type { DebugFlags } from './core/debug/logger'
 
 declare global {
   interface Window {

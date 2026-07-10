@@ -3,11 +3,11 @@ import type {
   AreaMetrics,
   PhotoItem,
   TransitionModeConfig,
-} from '../core/index'
-import { createGhostState, setThumbRef } from './ghost/state'
-import { openTransition } from './ghost/openTransition'
-import { createCloseTransition } from './ghost/closeTransition'
-import type { DebugLogger } from '../internal/runtime'
+} from '../../core/index'
+import { createGhostState, setThumbRef } from './state'
+import { openTransition } from './open'
+import { createCloseTransition } from './close'
+import type { DebugLogger } from '../../core/debug/logger'
 
 /** Coordinate ghost-image open/close transitions and expose their reactive state. */
 export function useGhostTransition(
@@ -51,7 +51,6 @@ export function useGhostTransition(
   }))
 
   return {
-    lightboxMounted: s.lightboxMounted,
     animating: s.animating,
     ghostVisible: s.ghostVisible,
     ghostSrc: s.ghostSrc,
@@ -72,9 +71,12 @@ export function useGhostTransition(
     setCloseDragY: (val: number) => {
       s.closeDragY.value = val
     },
-    open: (index: number, callbacks: Parameters<typeof openTransition>[2]) =>
-      openTransition(s, index, callbacks),
-    abortOpen: () => {
+    open: (
+      index: number,
+      callbacks: Parameters<typeof openTransition>[2],
+      signal: AbortSignal,
+    ) => openTransition(s, index, callbacks, signal),
+    resetClosedVisualState: () => {
       s.ghostVisible.value = false
       s.ghostSrc.value = ''
       s.hiddenThumbIndex.value = null
@@ -84,9 +86,9 @@ export function useGhostTransition(
       s.animating.value = false
       s.closeDragY.value = 0
       s.disableBackdropTransition.value = false
-      s.lightboxMounted.value = false
     },
-    close,
+    close: (callbacks: Parameters<typeof close>[0], signal: AbortSignal) =>
+      close(callbacks, signal),
     animateCloseDragTo,
     handleCloseGesture,
     handleBackdropClick,

@@ -7,7 +7,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import { useContainerWidth } from './useContainerWidth'
+import { useContainerWidth } from '../../composables/useContainerWidth'
 import {
   computeRowsLayout,
   computeBreakpointStyles,
@@ -18,13 +18,14 @@ import {
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
-} from '../core/index'
+} from '../../core/index'
 import {
   albumGroupStyle,
   albumItemStyle,
   type AlbumStyleContext,
-} from './albumStyles'
-import { devWarn, round } from '../utils/runtime'
+} from './styles'
+import { devWarn } from '../../core/env'
+import { round } from '../../core/utils/math'
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 

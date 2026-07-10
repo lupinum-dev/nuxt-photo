@@ -55,8 +55,7 @@
             <h3 class="two-albums__label">Landscapes</h3>
             <PhotoAlbum
               :photos="landscapes"
-              layout="masonry"
-              :columns="2"
+              :layout="{ type: 'masonry', columns: 2 }"
               :spacing="6"
             />
           </div>
@@ -64,8 +63,7 @@
             <h3 class="two-albums__label">Portraits</h3>
             <PhotoAlbum
               :photos="portraits"
-              layout="columns"
-              :columns="2"
+              :layout="{ type: 'columns', columns: 2 }"
               :spacing="6"
             />
           </div>
@@ -84,8 +82,7 @@
       <PhotoGroup ref="gallery">
         <PhotoAlbum
           :photos="photos.slice(0, 6)"
-          layout="rows"
-          :target-row-height="220"
+          :layout="{ type: 'rows', targetRowHeight: 220 }"
           :spacing="6"
         />
       </PhotoGroup>
@@ -96,8 +93,8 @@
         <button class="open-btn" @click="gallery?.open(3)">
           Open 4th photo
         </button>
-        <button class="open-btn" @click="gallery?.openPhoto(photos[5]!)">
-          Open by reference
+        <button class="open-btn" @click="gallery?.openById(photos[5]!.id)">
+          Open by id
         </button>
       </div>
       <CodeExample :code="programmaticCode" title="Template" />
@@ -107,27 +104,29 @@
     <section class="section">
       <h2 class="section__title">Fully headless layout</h2>
       <p class="section__desc">
-        Pass <code>:photos</code> to <code>PhotoGroup</code> and handle layout
-        yourself. The slot exposes <code>open(i)</code> and
-        <code>setThumbRef(i)</code>.
+        Compose <code>LightboxProvider</code>, <code>PhotoTrigger</code>, and
+        <code>Lightbox</code> when the thumbnail layout is fully custom.
       </p>
-      <PhotoGroup :photos="photos.slice(0, 8)" v-slot="{ open, setThumbRef }">
+      <LightboxProvider :photos="photos.slice(0, 8)">
         <div class="hex-grid">
-          <div
+          <PhotoTrigger
             v-for="(photo, i) in photos.slice(0, 8)"
             :key="photo.id"
-            :ref="setThumbRef(i)"
+            :photo="photo"
+            :index="i"
             class="hex-grid__item"
-            @click="open(i)"
+            v-slot="{ hidden }"
           >
             <img
               :src="photo.thumbSrc || photo.src"
               :alt="photo.alt || ''"
               class="hex-grid__img"
+              :style="{ opacity: hidden ? 0 : 1 }"
             />
-          </div>
+          </PhotoTrigger>
         </div>
-      </PhotoGroup>
+        <Lightbox />
+      </LightboxProvider>
       <CodeExample :code="headlessCode" title="Template" />
     </section>
   </div>
@@ -135,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import { Lightbox, LightboxProvider, PhotoTrigger } from '@nuxt-photo/nuxt/app'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'PhotoGroup — nuxt-photo' })
@@ -145,7 +144,7 @@ const portraits = photos.filter((_, i) => i % 2 === 1).slice(0, 6)
 
 const gallery = ref<{
   open: (index: number) => void
-  openPhoto: (photo: PhotoItem) => void
+  openById: (id: string) => void
 } | null>(null)
 
 const scatteredCode = `<PhotoGroup>
@@ -158,32 +157,34 @@ const scatteredCode = `<PhotoGroup>
 
 const twoAlbumsCode = `<!-- Two albums sharing one lightbox -->
 <PhotoGroup>
-  <PhotoAlbum :photos="landscapes" layout="masonry" :columns="2" />
-  <PhotoAlbum :photos="portraits" layout="columns" :columns="2" />
+  <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
+  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />
 </PhotoGroup>
 
 <!-- Two albums each with their own lightbox — just remove the wrapper -->
-<PhotoAlbum :photos="landscapes" layout="masonry" :columns="2" />
-<PhotoAlbum :photos="portraits" layout="columns" :columns="2" />`
+<PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
+<PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />`
 
 const programmaticCode = `<PhotoGroup ref="gallery">
   <PhotoAlbum :photos="photos" layout="rows" />
 </PhotoGroup>
 <button @click="gallery?.open(0)">Open Gallery</button>
-<button @click="gallery?.openPhoto(photos[3])">Open specific photo</button>`
+<button @click="gallery?.openById(photos[3].id)">Open specific photo</button>`
 
-const headlessCode = `<PhotoGroup :photos="photos" v-slot="{ open, setThumbRef }">
+const headlessCode = `<LightboxProvider :photos="photos">
   <div class="my-layout">
-    <div
+    <PhotoTrigger
       v-for="(photo, i) in photos"
       :key="photo.id"
-      :ref="setThumbRef(i)"
-      @click="open(i)"
+      :photo="photo"
+      :index="i"
+      v-slot="{ hidden }"
     >
-      <img :src="photo.thumbSrc" />
-    </div>
+      <img :src="photo.thumbSrc" :style="{ opacity: hidden ? 0 : 1 }" />
+    </PhotoTrigger>
   </div>
-</PhotoGroup>`
+  <Lightbox />
+</LightboxProvider>`
 </script>
 
 <style scoped>

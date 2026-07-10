@@ -1,40 +1,6 @@
 /**
- * Open-transition choreography for the lightbox ghost element.
- *
- * The public entry point is {@link openTransition}; it selects one of three
- * paths based on `transitionConfig.mode`, the thumbnail rect, and the
- * visibility heuristic in `shouldUseFlip` (from `../../core/index`):
- *
- *   1. `doInstantOpen` — `mode: 'none'` (tests, reduced-motion). Overlay to 1,
- *      wait for the image. Successful loads reveal media + chrome. Failed
- *      loads keep media hidden and let the lightbox render its fallback.
- *
- *   2. `doFadeOpen` — either `mode: 'fade'` or auto fallback when the thumbnail
- *      is off-screen/too small.
- *        • with target rect: place ghost at the target (viewer) rect with
- *          opacity 0 + scale 0.92, then animate scale→1, opacity→1, and
- *          overlay→1 in parallel over 300ms (JS `animateNumber`).
- *        • without target rect: just ramp the overlay.
- *      After the ramp completes, wait for the full image, then reveal media
- *      and hide the ghost.
- *
- *   3. `doFlipOpen` — FLIP morph from thumbnail rect to viewer rect. Position
- *      the ghost at the destination with a `transform` that *inverts* it back
- *      onto the thumb rect, then on the next frame set transform to identity
- *      and let CSS transition (plus border-radius + shadow growth) run.
- *      Image load races the wait in `Promise.all`, then media is revealed.
- *
- * Invariant: `mediaOpacity.value = 1` is only set after
- * `callbacks.loadSlideImage(photo)` returns `{ ok: true }`. Failed loads keep
- * the media layer hidden so broken images are not treated as ready.
- *
- * State mutated (all refs live on `GhostState`): overlayOpacity, mediaOpacity,
- * chromeOpacity, ghostSrc, ghostVisible, ghostStyle, animating, activeIndex,
- * uiVisible, lightboxMounted, hiddenThumbIndex.
- *
- * On any unexpected error the catch block in `openTransition` forces overlay +
- * media to 1 and calls `resetOpenState` so the lightbox is always in a usable
- * state — no half-animated limbo.
+ * Run instant, fade, or FLIP opening choreography. Media is revealed only
+ * after the slide image succeeds, and every async continuation is abortable.
  */
 import { nextTick } from 'vue'
 import {
@@ -55,8 +21,9 @@ import {
   animateNumber,
   easeOutCubic,
   nextFrame,
+  throwIfAborted,
   wait,
-} from '../../internal/runtime'
+} from './animation'
 
 function showImageLoadFallback(s: GhostState) {
   s.ghostVisible.value = false
@@ -74,8 +41,10 @@ async function revealLoadedSlide(
   s: GhostState,
   photo: PhotoItem,
   callbacks: TransitionCallbacks,
+  signal: AbortSignal,
 ): Promise<boolean> {
-  const result = await callbacks.loadSlideImage(photo)
+  const result = await callbacks.loadSlideImage(photo, signal)
+  throwIfAborted(signal)
   if (!result.ok) {
     s.debug?.warn(
       'transitions',
@@ -94,10 +63,11 @@ async function doInstantOpen(
   s: GhostState,
   photo: PhotoItem,
   callbacks: TransitionCallbacks,
+  signal: AbortSignal,
 ) {
   s.debug?.log('transitions', 'open: INSTANT (mode=none)')
   s.overlayOpacity.value = 1
-  await revealLoadedSlide(s, photo, callbacks)
+  await revealLoadedSlide(s, photo, callbacks, signal)
   s.chromeOpacity.value = 1
 }
 
@@ -106,6 +76,7 @@ async function doFadeOpen(
   photo: PhotoItem,
   targetRect: RectLike | null,
   callbacks: TransitionCallbacks,
+  signal: AbortSignal,
 ) {
   const fadeOpenDuration = 300
 
@@ -133,7 +104,7 @@ async function doFadeOpen(
       ...makeGhostBaseStyle(targetRect),
     }
 
-    await nextFrame()
+    await nextFrame(signal)
 
     await animateNumber(
       0,
@@ -149,9 +120,10 @@ async function doFadeOpen(
         s.overlayOpacity.value = t
       },
       easeOutCubic,
+      signal,
     )
 
-    await revealLoadedSlide(s, photo, callbacks)
+    await revealLoadedSlide(s, photo, callbacks, signal)
     s.ghostVisible.value = false
     s.chromeOpacity.value = 1
   } else {
@@ -168,9 +140,10 @@ async function doFadeOpen(
         s.overlayOpacity.value = v
       },
       easeOutCubic,
+      signal,
     )
 
-    await revealLoadedSlide(s, photo, callbacks)
+    await revealLoadedSlide(s, photo, callbacks, signal)
     s.chromeOpacity.value = 1
   }
 
@@ -184,6 +157,7 @@ async function doFlipOpen(
   fromRect: DOMRect,
   toRect: RectLike,
   callbacks: TransitionCallbacks,
+  signal: AbortSignal,
 ) {
   s.debug?.log('transitions', 'open: using FLIP animation')
 
@@ -207,7 +181,7 @@ async function doFlipOpen(
     transform: flipTransform(fromRect, toRect),
   }
 
-  await nextFrame()
+  await nextFrame(signal)
 
   s.overlayOpacity.value = 1
   s.ghostStyle.value = {
@@ -218,8 +192,8 @@ async function doFlipOpen(
   }
 
   const [, loadResult] = await Promise.all([
-    wait(openDurationMs),
-    callbacks.loadSlideImage(photo),
+    wait(openDurationMs, signal),
+    callbacks.loadSlideImage(photo, signal),
   ])
 
   if (!loadResult.ok) {
@@ -233,7 +207,7 @@ async function doFlipOpen(
   }
 
   s.mediaOpacity.value = 1
-  await nextFrame()
+  await nextFrame(signal)
   resetOpenState(s)
 }
 
@@ -242,6 +216,7 @@ export async function openTransition(
   s: GhostState,
   index: number,
   callbacks: TransitionCallbacks,
+  signal: AbortSignal,
 ): Promise<boolean> {
   if (s.animating.value) return false
 
@@ -253,21 +228,20 @@ export async function openTransition(
   s.activeIndex.value = index
   s.uiVisible.value = true
 
-  s.lightboxMounted.value = true
   s.overlayOpacity.value = 0
   s.mediaOpacity.value = 0
   s.chromeOpacity.value = 0
 
   await nextTick()
-  await nextFrame()
+  throwIfAborted(signal)
+  await nextFrame(signal)
 
-  callbacks.syncGeometry()
-  callbacks.refreshZoomState(true)
+  await callbacks.prepareActiveSlide(true)
+  throwIfAborted(signal)
 
   const photo = s.currentPhoto.value
   if (!photo) {
     s.debug?.warn('transitions', 'open: no active photo, aborting')
-    s.lightboxMounted.value = false
     s.overlayOpacity.value = 0
     s.mediaOpacity.value = 0
     s.chromeOpacity.value = 0
@@ -277,7 +251,7 @@ export async function openTransition(
 
   try {
     if (s.transitionConfig?.mode === 'none') {
-      await doInstantOpen(s, photo, callbacks)
+      await doInstantOpen(s, photo, callbacks, signal)
       s.debug?.log('transitions', 'open: complete')
       s.debug?.groupEnd('transitions')
       return true
@@ -295,9 +269,9 @@ export async function openTransition(
         shouldUseFlip(fromRect, s.transitionConfig, s.debug))
 
     if (useFlip) {
-      await doFlipOpen(s, index, photo, fromRect, toRect, callbacks)
+      await doFlipOpen(s, index, photo, fromRect, toRect, callbacks, signal)
     } else {
-      await doFadeOpen(s, photo, toRect, callbacks)
+      await doFadeOpen(s, photo, toRect, callbacks, signal)
     }
 
     s.debug?.log('transitions', 'open: complete')

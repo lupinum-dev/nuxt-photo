@@ -5,12 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, useLightboxProvider } from '../src/composables'
-import { useLightboxRuntimeState } from '../src/composables/useLightboxRuntimeState'
+import { useLightboxRuntimeState } from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
   useLightboxWindowLifecycle,
   watchPhotoCollection,
-} from '../src/composables/lightboxWatchers'
+} from '../src/lightbox/watchers'
 
 async function flushWatchers() {
   await nextTick()
@@ -452,6 +452,117 @@ describe('lightbox lifecycle invariants', () => {
     expect(document.body.style.overflow).toBe('')
     expect(removeKeydown).toHaveBeenCalledWith('keydown', expect.any(Function))
   })
+
+  it('settles closed and rethrows adapter failures during open', async () => {
+    const failure = new Error('adapter-open-failure')
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState(
+          [makePhoto({ id: 'adapter-open' })],
+          'none',
+          undefined,
+          () => {
+            throw failure
+          },
+        )
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    await expect(api!.open()).rejects.toBe(failure)
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(api!.isOpen.value).toBe(false)
+    expect(document.body.style.overflow).toBe('')
+    app.unmount()
+  })
+
+  it('settles closed and rethrows adapter failures during close', async () => {
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: null | (() => void) = null
+        set src(_value: string) {}
+        decode() {
+          return Promise.resolve()
+        }
+      },
+    )
+    const failure = new Error('adapter-close-failure')
+    let fail = false
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState(
+          [makePhoto({ id: 'adapter-close' })],
+          'none',
+          undefined,
+          (photo) => {
+            if (fail) throw failure
+            return { src: photo.src }
+          },
+        )
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    await api!.open()
+    fail = true
+    await expect(api!.close()).rejects.toBe(failure)
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(api!.isOpen.value).toBe(false)
+    expect(document.body.style.overflow).toBe('')
+    app.unmount()
+  })
+
+  it('aborts pending image continuation when the provider unmounts', async () => {
+    let resolveDecode: (() => void) | null = null
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: null | (() => void) = null
+        set src(_value: string) {}
+        decode() {
+          return new Promise<void>((resolve) => {
+            resolveDecode = resolve
+          })
+        }
+      },
+    )
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState(
+          [makePhoto({ id: 'unmount-pending' })],
+          'none',
+        )
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    const opening = api!.open()
+    await flushUntil(() => !!resolveDecode)
+    app.unmount()
+    host.remove()
+    resolveDecode?.()
+    await opening
+    await flushWatchers()
+
+    expect(api!.lifecycleStatus.value).toBe('closed')
+    expect(document.body.style.overflow).toBe('')
+  })
 })
 
 describe('lightbox state collection handling', () => {
@@ -470,7 +581,7 @@ describe('lightbox state collection handling', () => {
       computed(() => photos.value),
       {
         activeIndex,
-        lightboxMounted: ref(true),
+        isMounted: ref(true),
         goTo,
         close,
       },
@@ -499,7 +610,7 @@ describe('lightbox state collection handling', () => {
       computed(() => photos.value),
       {
         activeIndex: ref(1),
-        lightboxMounted: ref(true),
+        isMounted: ref(true),
         goTo,
         close,
       },
@@ -524,14 +635,14 @@ describe('lightbox state scroll lock ownership', () => {
     const mountedA = ref(false)
     const mountedB = ref(false)
 
-    function mountOwner(lightboxMounted: typeof mountedA) {
+    function mountOwner(isMounted: typeof mountedA) {
       const host = document.createElement('div')
       document.body.appendChild(host)
       const app = createApp(
         defineComponent({
           setup() {
             useLightboxWindowLifecycle({
-              lightboxMounted,
+              isMounted,
               cancelTapTimer: vi.fn(),
               detachKeydown: vi.fn(),
               syncGeometry: vi.fn(() => null),

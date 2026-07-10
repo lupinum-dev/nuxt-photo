@@ -78,7 +78,10 @@ const photos: PhotoItem[] = [
 </script>
 
 <template>
-  <PhotoAlbum :photos="photos" layout="rows" :target-row-height="240" />
+  <PhotoAlbum
+    :photos="photos"
+    :layout="{ type: 'rows', targetRowHeight: 240 }"
+  />
 </template>
 ```
 

@@ -187,6 +187,7 @@ import type {
   PhotoItem,
 } from '../../core/index'
 import { createCarouselGroups } from '../../integrations/embla/groups'
+import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 
 defineOptions({ inheritAttrs: false })
 
@@ -244,8 +245,7 @@ const pluginsRef = computed(() => {
   return [
     Autoplay({
       delay: options.delayMs,
-      stopOnInteraction: options.stopOnInteraction,
-      stopOnMouseEnter: options.stopOnMouseEnter,
+      defaultInteraction: options.stopOnInteraction ?? true,
     }),
   ]
 })
@@ -285,7 +285,7 @@ const cssVarStyle = computed(() => {
 
 function syncThumbs(api: EmblaCarouselType) {
   if (!props.showThumbnails) return
-  thumbsApi.value?.scrollTo(selectedIndex.value)
+  thumbsApi.value?.goTo(selectedIndex.value)
 }
 
 function syncState(api: EmblaCarouselType, forcedSnap?: number) {
@@ -295,10 +295,7 @@ function syncState(api: EmblaCarouselType, forcedSnap?: number) {
   )
   const snapTotal = slidesBySnap.length
   const maxSnapIndex = Math.max(0, snapTotal - 1)
-  const selectedSnap = Math.min(
-    forcedSnap ?? api.selectedScrollSnap(),
-    maxSnapIndex,
-  )
+  const selectedSnap = Math.min(forcedSnap ?? api.selectedSnap(), maxSnapIndex)
   const activeSlides = slidesBySnap[selectedSnap] ?? [selectedSnap]
   const loopEnabled = !!props.options.loop
 
@@ -307,13 +304,13 @@ function syncState(api: EmblaCarouselType, forcedSnap?: number) {
   selectedIndex.value = activeSlides[0] ?? 0
   snapCount.value = snapTotal
   snapTargets.value = slidesBySnap.map((slides) => slides[0] ?? 0)
-  canPrev.value = api.scrollSnapList().length
-    ? api.canScrollPrev()
+  canPrev.value = api.snapList().length
+    ? api.canGoToPrev()
     : loopEnabled
       ? snapTotal > 1
       : selectedSnap > 0
-  canNext.value = api.scrollSnapList().length
-    ? api.canScrollNext()
+  canNext.value = api.snapList().length
+    ? api.canGoToNext()
     : loopEnabled
       ? snapTotal > 1
       : selectedSnap < maxSnapIndex
@@ -338,7 +335,28 @@ watch(
 
     onReinit(api)
     api.on('select', onSelect)
-    api.on('reInit', onReinit)
+    api.on('reinit', onReinit)
+
+    const autoplay = typeof props.autoplay === 'object' ? props.autoplay : null
+    const root = api.rootNode()
+    const stopOnMouseEnter = autoplay?.stopOnMouseEnter === true
+    const stopAutoplay = () => api.plugins().autoplay?.stop()
+    const resumeAutoplay = () => {
+      if (autoplay?.stopOnInteraction === false) {
+        api.plugins().autoplay?.play()
+      }
+    }
+    if (stopOnMouseEnter) {
+      root.addEventListener('mouseenter', stopAutoplay)
+      root.addEventListener('mouseleave', resumeAutoplay)
+    }
+
+    return () => {
+      api.off('select', onSelect)
+      api.off('reinit', onReinit)
+      root.removeEventListener('mouseenter', stopAutoplay)
+      root.removeEventListener('mouseleave', resumeAutoplay)
+    }
   },
   { immediate: true },
 )
@@ -366,7 +384,7 @@ function goTo(index: number, instant = false) {
     const targetSnap =
       createCarouselGroups(props.photos.length, props.options.slidesToScroll)
         .snapBySlide[target] ?? target
-    api.scrollTo(targetSnap, instant)
+    api.goTo(targetSnap, instant)
     if (instant) {
       syncState(api, targetSnap)
       syncThumbs(api)
@@ -384,7 +402,7 @@ function goToNext(instant = false) {
     const nextSnap = props.options.loop
       ? (selectedSnapIndex.value + 1) % Math.max(1, snapCount.value)
       : Math.min(selectedSnapIndex.value + 1, Math.max(0, snapCount.value - 1))
-    api.scrollNext(instant)
+    api.goToNext(instant)
     if (instant) {
       syncState(api, nextSnap)
       syncThumbs(api)
@@ -401,7 +419,7 @@ function goToPrev(instant = false) {
       ? (selectedSnapIndex.value - 1 + Math.max(1, snapCount.value)) %
         Math.max(1, snapCount.value)
       : Math.max(selectedSnapIndex.value - 1, 0)
-    api.scrollPrev(instant)
+    api.goToPrev(instant)
     if (instant) {
       syncState(api, prevSnap)
       syncThumbs(api)
@@ -417,26 +435,22 @@ function setSlideElRef(index: number) {
   }
 }
 
-function interactiveAttrs(_photo: PhotoItem, index: number) {
+function interactiveAttrs(photo: PhotoItem, index: number) {
   if (!props.onSlideActivate) return {}
   return {
-    role: 'button',
-    tabindex: 0,
+    ...createPhotoTriggerBindings(
+      photo,
+      index,
+      () => props.onSlideActivate?.(index),
+      `Open slide ${index + 1}`,
+    ),
     style: { cursor: 'pointer' },
-    'aria-label': `Open slide ${index + 1}`,
-    onClick: () => props.onSlideActivate?.(index),
-    onKeydown: (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        props.onSlideActivate?.(index)
-      }
-    },
     'data-index': index,
   }
 }
 
 function selectedSnap() {
-  return emblaApi.value?.selectedScrollSnap() ?? selectedIndex.value
+  return emblaApi.value?.selectedSnap() ?? selectedIndex.value
 }
 
 function reInit() {

@@ -218,6 +218,9 @@ export function resolveResponsiveParameter<T>(
   containerWidth: number,
   fallback: T,
 ): T {
+  if (!Number.isFinite(containerWidth)) {
+    throw new RangeError('[nuxt-photo] container width must be finite')
+  }
   if (value === undefined) return fallback
   return typeof value === 'function'
     ? (value as (w: number) => T)(containerWidth)

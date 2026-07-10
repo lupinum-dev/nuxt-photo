@@ -12,12 +12,12 @@ import type {
   PhotoItem,
 } from '../core/index'
 import { useLightboxProvider } from '../composables/useLightboxProvider'
-import { warnOnSetupOptionChanges } from '../components/shared/staticOptionWarnings'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
-  photos: PhotoItem | PhotoItem[]
+  photos: PhotoItem | readonly PhotoItem[]
   transition?: LightboxTransitionOption
   minZoom?: number
   imageAdapter?: ImageAdapter

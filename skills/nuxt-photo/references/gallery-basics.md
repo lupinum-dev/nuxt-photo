@@ -45,7 +45,8 @@ export default defineNuxtConfig({
 })
 ```
 
-Only install `@nuxt-photo/vue`, `@nuxt-photo/vue`, or `@nuxt-photo/vue` directly when app code imports directly from those packages.
+Install `@nuxt-photo/vue` directly only when a plain Vue app imports that
+package. Nuxt apps use `@nuxt-photo/nuxt` and its `/app` facade.
 
 ## First Styled Result
 
@@ -88,11 +89,9 @@ Rules:
 - `srcset` is an escape hatch for native image loading when the app builds `srcset` itself.
 - `meta` is app-owned data and remains available in slots and adapters.
 
-Map external data with `PhotoMapper` instead of spreading CMS records into components:
+Map external data into the public model at the application boundary:
 
 ```ts
-import type { PhotoMapper } from '@nuxt-photo/nuxt/app'
-
 type Asset = {
   sys: { id: string }
   fields: {
@@ -101,13 +100,15 @@ type Asset = {
   }
 }
 
-export const fromAsset: PhotoMapper<Asset> = (item) => ({
-  id: item.sys.id,
-  src: item.fields.file.url,
-  width: item.fields.file.details.image.width,
-  height: item.fields.file.details.image.height,
-  alt: item.fields.title,
-})
+const photos = assets.map(
+  (item): PhotoItem => ({
+    id: item.sys.id,
+    src: item.fields.file.url,
+    width: item.fields.file.details.image.width,
+    height: item.fields.file.details.image.height,
+    alt: item.fields.title,
+  }),
+)
 ```
 
 ## Components
@@ -129,8 +130,7 @@ Recipe components are auto-registered by the Nuxt module. Composables `useLightb
 <template>
   <PhotoAlbum
     :photos="photos"
-    layout="rows"
-    :target-row-height="240"
+    :layout="{ type: 'rows', targetRowHeight: 240 }"
     :spacing="8"
   />
 </template>
@@ -161,32 +161,35 @@ If the app disables Nuxt Photo auto-imports and imports `responsive` explicitly 
 
 ## PhotoGroup
 
-Auto mode shares one lightbox across child components:
+PhotoGroup collects descendant recipes into one shared lightbox:
 
 ```vue
 <PhotoGroup>
-  <PhotoAlbum :photos="landscapes" layout="rows" />
-  <PhotoAlbum :photos="portraits" layout="columns" />
+  <PhotoAlbum :photos="landscapes" :layout="{ type: 'rows' }" />
+  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns' }" />
 </PhotoGroup>
 ```
 
-Custom layout mode passes `trigger()` and resolved `photos`:
+Custom layouts use the explicit headless primitives:
 
 ```vue
-<PhotoGroup :photos="photos" v-slot="{ trigger, photos }">
+<LightboxProvider :photos="photos">
   <div class="grid">
-    <button
+    <PhotoTrigger
       v-for="(photo, index) in photos"
       :key="photo.id"
-      v-bind="trigger(photo, index)"
+      :photo="photo"
+      :index="index"
     >
       <img :src="photo.thumbSrc ?? photo.src" :alt="photo.alt" />
-    </button>
+    </PhotoTrigger>
   </div>
-</PhotoGroup>
+  <Lightbox />
+</LightboxProvider>
 ```
 
-Use the exposed `open`, `openPhoto`, `openById`, and `close` methods through a template ref for deep links or external buttons.
+PhotoGroup exposes `open`, `openById`, and `close` through a template ref. Inside
+a `LightboxProvider`, descendants use `useLightbox()`.
 
 If the custom layout should still use the configured image adapter, render `<PhotoImage>` instead of a raw `<img>`.
 
@@ -209,7 +212,8 @@ Defaults: arrows, thumbnails, and counter render by default; dots and autoplay a
 Autoplay can be a boolean or options object:
 
 ```vue
-<PhotoCarousel :photos="photos" :autoplay="{ delay: 4000 }" />
+<PhotoCarousel :photos="photos" :autoplay="{ delayMs: 4000 }" />
 ```
 
-Do not pass an Embla Autoplay plugin through `plugins` and also set `autoplay`; choose one path.
+Carousel options are library-owned. Embla plugin objects are intentionally not
+part of the public component API.

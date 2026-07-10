@@ -25,7 +25,7 @@
     "size:analyze": "node scripts/size/run.mjs all --analyze",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck:packages": "pnpm build && pnpm --filter @nuxt-photo/vue exec vue-tsc -p tsconfig.json --noEmit",
+    "typecheck:packages": "pnpm build && pnpm --filter @nuxt-photo/vue exec vue-tsc -p tsconfig.json --noEmit && pnpm --filter @nuxt-photo/vue exec vue-tsc -p tsconfig.public-api.json",
     "typecheck:apps": "pnpm --filter nuxt-photo-playground exec nuxi prepare && pnpm --filter nuxt-photo-playground exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit && pnpm --filter nuxt-photo-playground-tw exec nuxi prepare && pnpm --filter nuxt-photo-playground-tw exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit && pnpm --filter nuxt-photo-docs exec nuxi prepare && pnpm --filter nuxt-photo-docs exec vue-tsc -p .nuxt/tsconfig.app.json --noEmit",
     "typecheck": "pnpm run typecheck:packages && pnpm run typecheck:apps",
     "test:unit": "vitest run",

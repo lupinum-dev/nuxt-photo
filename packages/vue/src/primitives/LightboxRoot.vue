@@ -16,7 +16,7 @@
 defineOptions({ inheritAttrs: false })
 
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 
 const ctx = useLightboxInject('LightboxRoot')
 

@@ -1,5 +1,6 @@
 import {
   computed,
+  onBeforeUnmount,
   type ComputedRef,
   type Ref,
   type ComponentPublicInstance,
@@ -17,8 +18,7 @@ import {
   type PhotoItem,
   type ZoomState,
 } from '../core/index'
-import type { PanzoomMotion } from './lightboxRuntimeTypes'
-import type { DebugLogger } from '../internal/runtime'
+import type { DebugLogger } from '../core/debug/logger'
 
 /**
  * Manage zoom state, pan bounds, and spring-driven transform updates for the
@@ -41,7 +41,7 @@ export function usePanzoom(
   let activeSlideIndex = 0
   const slideZoomRefs = new Map<number, HTMLElement>()
 
-  const panzoomMotion: PanzoomMotion = {
+  const panzoomMotion = {
     x: 0,
     y: 0,
     scale: 1,
@@ -330,6 +330,29 @@ export function usePanzoom(
     activeSlideIndex = index
   }
 
+  function getCurrentScale() {
+    return panzoomMotion.scale
+  }
+
+  function getCurrentPan(): PanState {
+    return { x: panzoomMotion.x, y: panzoomMotion.y }
+  }
+
+  function setCurrentPanImmediate(pan: PanState, syncRefs = false) {
+    setPanzoomImmediate(panzoomMotion.scale, pan, syncRefs)
+  }
+
+  function settleCurrentTransform(options?: {
+    tension?: number
+    friction?: number
+  }) {
+    const photo = currentPhoto.value
+    const pan = photo
+      ? clampPan(getCurrentPan(), panzoomMotion.scale, photo)
+      : { x: 0, y: 0 }
+    startPanzoomSpring(panzoomMotion.scale, pan, options)
+  }
+
   function setSlideZoomRef(slideIndex: number) {
     return (value: Element | ComponentPublicInstance | null) => {
       const element =
@@ -353,14 +376,13 @@ export function usePanzoom(
     }
   }
 
+  onBeforeUnmount(stopPanzoomSpring)
+
   return {
     zoomState,
     panState,
     isZoomedIn,
     zoomAllowed,
-    // Shared mutable spring state for gesture handlers and RAF updates.
-    panzoomMotion,
-
     setActiveSlideIndex,
     setSlideZoomRef,
     computeZoomLevels,
@@ -376,5 +398,9 @@ export function usePanzoom(
     refreshZoomState,
     toggleZoom,
     applyWheelZoom,
+    getCurrentScale,
+    getCurrentPan,
+    setCurrentPanImmediate,
+    settleCurrentTransform,
   }
 }

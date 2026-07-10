@@ -6,7 +6,7 @@ import type { Ref } from 'vue'
 export interface LightboxControlsSlotProps {
   activeIndex: number
   activePhoto: PhotoItem | null
-  photos: PhotoItem[]
+  photos: readonly PhotoItem[]
   count: number
   isZoomedIn: boolean
   zoomAllowed: boolean
@@ -30,7 +30,7 @@ export interface LightboxSlideSlotProps {
 }
 
 export interface LightboxViewportSlotProps {
-  photos: PhotoItem[]
+  photos: readonly PhotoItem[]
   viewportRef: Ref<HTMLElement | null | undefined>
   mediaOpacity: number
   imageLoadFailed: boolean
@@ -69,7 +69,7 @@ export interface CarouselControlsSlotProps {
 }
 
 export interface CarouselDotsSlotProps {
-  snaps: number[]
+  snaps: readonly number[]
   selectedIndex: number
   goTo: (i: number) => void
 }

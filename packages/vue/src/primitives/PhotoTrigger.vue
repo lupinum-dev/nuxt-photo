@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PhotoItem } from '../core/index'
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 
 const props = defineProps<{
   photo: PhotoItem

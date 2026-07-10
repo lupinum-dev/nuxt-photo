@@ -13,8 +13,7 @@
     <div class="gallery-section">
       <PhotoAlbum
         :photos="photos"
-        layout="rows"
-        :target-row-height="280"
+        :layout="{ type: 'rows', targetRowHeight: 280 }"
         :spacing="6"
         :breakpoints="[375, 600, 900, 1200]"
       />
@@ -47,8 +46,7 @@ useHead({ title: 'Gallery — nuxt-photo' })
 const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 <PhotoAlbum
   :photos="photos"
-  layout="rows"
-  :target-row-height="280"
+  :layout="{ type: 'rows', targetRowHeight: 280 }"
   :spacing="6"
   :breakpoints="[375, 600, 900, 1200]"
 />`

@@ -56,9 +56,9 @@
     "dev": "unbuild --stub"
   },
   "dependencies": {
-    "embla-carousel": "8.6.0",
-    "embla-carousel-autoplay": "8.6.0",
-    "embla-carousel-vue": "8.6.0"
+    "embla-carousel": "9.0.0-rc02",
+    "embla-carousel-autoplay": "9.0.0-rc02",
+    "embla-carousel-vue": "9.0.0-rc02"
   },
   "peerDependencies": {
     "vue": "^3.5.0"

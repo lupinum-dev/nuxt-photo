@@ -11,8 +11,9 @@ import type {
   PhotoItem,
   TransitionModeConfig,
 } from '../../core/index'
+import { computeCloseDragRatio } from '../../core/index'
 import type { GhostState } from './types'
-import type { DebugLogger } from '../../internal/runtime'
+import type { DebugLogger } from '../../core/debug/logger'
 
 /** Create the shared reactive state used by ghost open/close transition helpers. */
 export function createGhostState(
@@ -23,7 +24,6 @@ export function createGhostState(
   debug?: DebugLogger,
   transitionConfig?: TransitionModeConfig,
 ): GhostState {
-  const lightboxMounted = ref(false)
   const animating = ref(false)
   const ghostVisible = ref(false)
   const ghostSrc = ref('')
@@ -40,16 +40,12 @@ export function createGhostState(
 
   const closeDragRatio = computed(() => {
     const height = areaMetrics.value?.height || 1
-    return Math.min(
-      0.75,
-      Math.abs(closeDragY.value) / Math.max(240, height * 0.85),
-    )
+    return computeCloseDragRatio(closeDragY.value, height)
   })
 
   const thumbRefs = new Map<number, HTMLElement>()
 
   return {
-    lightboxMounted,
     animating,
     ghostVisible,
     ghostSrc,
@@ -104,9 +100,8 @@ export function resetOpenState(state: GhostState) {
 }
 
 /** Reset the close-transition state and unmount the lightbox cleanly. */
-export function resetCloseState(state: GhostState, clearGuard: () => void) {
-  state.debug?.log('transitions', 'resetCloseState: unmounting lightbox')
-  clearGuard()
+export function resetCloseState(state: GhostState) {
+  state.debug?.log('transitions', 'resetCloseState: clearing visual state')
   state.ghostVisible.value = false
   state.ghostSrc.value = ''
   state.hiddenThumbIndex.value = null
@@ -116,5 +111,4 @@ export function resetCloseState(state: GhostState, clearGuard: () => void) {
   state.mediaOpacity.value = 0
   state.chromeOpacity.value = 0
   state.animating.value = false
-  state.lightboxMounted.value = false
 }

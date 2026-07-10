@@ -1,1 +1,0 @@
-export const MAX_CLOSE_ANIMATION_MS = 2000

@@ -2,75 +2,109 @@
 
 import { computed, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { useLightboxInputHandlers } from '../src/composables/useLightboxInputHandlers'
+import { useLightboxInputHandlers } from '../src/lightbox/input/pointer'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
   const isZoomedIn = ref(zoomedIn)
-  const currentScale = zoomedIn ? 2 : 1
+  let currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
   const mediaArea = document.createElement('div')
   mediaArea.setPointerCapture = vi.fn()
   mediaArea.releasePointerCapture = vi.fn()
-  const panzoomMotion = {
-    x: currentPan.value.x,
-    y: currentPan.value.y,
-    scale: currentScale,
-    targetX: currentPan.value.x,
-    targetY: currentPan.value.y,
-    targetScale: currentScale,
-    velocityX: 0,
-    velocityY: 0,
-    velocityScale: 0,
-    tension: 170,
-    friction: 17,
-    rafId: 0,
-  }
-
   const setPanzoomImmediate = vi.fn(
     (scale: number, pan: { x: number; y: number }) => {
-      panzoomMotion.scale = scale
-      panzoomMotion.x = pan.x
-      panzoomMotion.y = pan.y
+      currentScale = scale
       currentPan.value = pan
     },
   )
+  const setCurrentPanImmediate = vi.fn((pan: { x: number; y: number }) => {
+    currentPan.value = pan
+  })
+
+  const config = {
+    isOpen: ref(true),
+    animating: ref(false),
+    ghostVisible: ref(false),
+    isZoomedIn: computed(() => isZoomedIn.value),
+    zoomAllowed: computed(() => zoomAllowed),
+    mediaAreaRef: ref(mediaArea),
+    currentPhoto: computed(() => createPhotoSet()[0]!),
+    areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
+    uiVisible: ref(true),
+    panState: currentPan,
+    zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
+    closeDragY: ref(0),
+    setCloseDragY: vi.fn(),
+    transitionInProgress: computed(() => false),
+
+    getCurrentScale: () => currentScale,
+    getCurrentPan: () => currentPan.value,
+    setCurrentPanImmediate,
+    settleCurrentTransform: vi.fn(),
+    setPanzoomImmediate,
+    startPanzoomSpring: vi.fn(),
+    clampPan: vi.fn((pan: { x: number; y: number }) => pan),
+    clampPanWithResistance: vi.fn((pan: { x: number; y: number }) => pan),
+    applyWheelZoom: vi.fn(),
+    toggleZoom: vi.fn(),
+    getPanBounds: vi.fn(() => ({ x: 220, y: 120 })),
+
+    goToNext: vi.fn(),
+    goToPrev: vi.fn(),
+    goTo: vi.fn(),
+    selectedSnap: vi.fn(() => 0),
+
+    handleCloseGesture: vi.fn(() => Promise.resolve()),
+    close: vi.fn(() => Promise.resolve()),
+  }
+
+  const input = {
+    state: {
+      isOpen: config.isOpen,
+      animating: config.animating,
+      ghostVisible: config.ghostVisible,
+      isZoomedIn: config.isZoomedIn,
+      zoomAllowed: config.zoomAllowed,
+      mediaAreaRef: config.mediaAreaRef,
+      currentPhoto: config.currentPhoto,
+      areaMetrics: config.areaMetrics,
+      uiVisible: config.uiVisible,
+      panState: config.panState,
+      zoomState: config.zoomState,
+      transitionInProgress: config.transitionInProgress,
+    },
+    panzoom: {
+      getCurrentScale: config.getCurrentScale,
+      getCurrentPan: config.getCurrentPan,
+      setCurrentPanImmediate: config.setCurrentPanImmediate,
+      settleCurrentTransform: config.settleCurrentTransform,
+      setPanzoomImmediate: config.setPanzoomImmediate,
+      startPanzoomSpring: config.startPanzoomSpring,
+      clampPan: config.clampPan,
+      clampPanWithResistance: config.clampPanWithResistance,
+      applyWheelZoom: config.applyWheelZoom,
+      toggleZoom: config.toggleZoom,
+      getPanBounds: config.getPanBounds,
+    },
+    navigation: {
+      goToNext: config.goToNext,
+      goToPrev: config.goToPrev,
+      goTo: config.goTo,
+      selectedSnap: config.selectedSnap,
+    },
+    lifecycle: {
+      setCloseDragY: config.setCloseDragY,
+      handleCloseGesture: config.handleCloseGesture,
+      close: config.close,
+    },
+  }
 
   return {
-    config: {
-      lightboxMounted: ref(true),
-      animating: ref(false),
-      ghostVisible: ref(false),
-      isZoomedIn: computed(() => isZoomedIn.value),
-      zoomAllowed: computed(() => zoomAllowed),
-      mediaAreaRef: ref(mediaArea),
-      currentPhoto: computed(() => createPhotoSet()[0]!),
-      areaMetrics: ref({ left: 0, top: 0, width: 1200, height: 800 }),
-      uiVisible: ref(true),
-      panState: currentPan,
-      zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
-      closeDragY: ref(0),
-      setCloseDragY: vi.fn(),
-      transitionInProgress: computed(() => false),
-
-      panzoomMotion,
-      setPanzoomImmediate,
-      startPanzoomSpring: vi.fn(),
-      clampPan: vi.fn((pan: { x: number; y: number }) => pan),
-      clampPanWithResistance: vi.fn((pan: { x: number; y: number }) => pan),
-      applyWheelZoom: vi.fn(),
-      toggleZoom: vi.fn(),
-      getPanBounds: vi.fn(() => ({ x: 220, y: 120 })),
-
-      goToNext: vi.fn(),
-      goToPrev: vi.fn(),
-      goTo: vi.fn(),
-      selectedSnap: vi.fn(() => 0),
-
-      handleCloseGesture: vi.fn(() => Promise.resolve()),
-      close: vi.fn(() => Promise.resolve()),
-    },
+    config: Object.assign(config, input),
+    input,
     setPanzoomImmediate,
+    setCurrentPanImmediate,
   }
 }
 
@@ -97,7 +131,7 @@ describe('useLightboxInputHandlers', () => {
   })
 
   it('pans with arrow keys instead of navigating when zoomed in', () => {
-    const { config, setPanzoomImmediate } = createGestureConfig(true)
+    const { config, setCurrentPanImmediate } = createGestureConfig(true)
     const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
@@ -105,8 +139,8 @@ describe('useLightboxInputHandlers', () => {
 
     expect(config.goToNext).not.toHaveBeenCalled()
     expect(config.goToPrev).not.toHaveBeenCalled()
-    expect(setPanzoomImmediate).toHaveBeenNthCalledWith(1, 2, { x: -80, y: 0 })
-    expect(setPanzoomImmediate).toHaveBeenNthCalledWith(2, 2, { x: 0, y: 0 })
+    expect(setCurrentPanImmediate).toHaveBeenNthCalledWith(1, { x: -80, y: 0 })
+    expect(setCurrentPanImmediate).toHaveBeenNthCalledWith(2, { x: 0, y: 0 })
   })
 
   it('ignores keydown events that were already handled', () => {
@@ -365,6 +399,39 @@ describe('useLightboxInputHandlers', () => {
     expect(
       config.mediaAreaRef.value?.releasePointerCapture,
     ).toHaveBeenCalledWith(2)
+  })
+
+  it('totally resets an active pinch when its owner is disposed', () => {
+    const { config } = createGestureConfig(false)
+    const gestures = useLightboxInputHandlers(config)
+
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 11,
+        pointerType: 'touch',
+        clientX: 100,
+        clientY: 100,
+      }),
+    )
+    gestures.onMediaPointerDown(
+      new PointerEvent('pointerdown', {
+        pointerId: 12,
+        pointerType: 'touch',
+        clientX: 200,
+        clientY: 100,
+      }),
+    )
+    expect(gestures.gesturePhase.value).toBe('pinch')
+
+    gestures.disposeGestureState()
+
+    expect(gestures.gesturePhase.value).toBe('idle')
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(11)
+    expect(
+      config.mediaAreaRef.value?.releasePointerCapture,
+    ).toHaveBeenCalledWith(12)
   })
 
   it('ignores multi-touch when pinch zoom is disabled', async () => {

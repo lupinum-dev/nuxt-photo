@@ -7,23 +7,26 @@ import type {
   RectLike,
   TransitionModeConfig,
 } from '../../core/index'
-import type { DebugLogger } from '../../internal/runtime'
+import type { DebugLogger } from '../../core/debug/logger'
 
 export const openDurationMs = 420
 export const closeDurationMs = 380
 export const fadeDurationMs = 200
 
 export type TransitionCallbacks = {
-  syncGeometry: () => void
-  refreshZoomState: (reset: boolean) => void
+  prepareActiveSlide: (reset: boolean) => Promise<void>
   resetGestureState: () => void
   cancelTapTimer: () => void
   getThumbSrc: (photo: PhotoItem) => string
   getSlideSrc: (photo: PhotoItem) => string
-  loadSlideImage: (photo: PhotoItem) => Promise<LoadImageResult>
+  loadSlideImage: (
+    photo: PhotoItem,
+    signal: AbortSignal,
+  ) => Promise<LoadImageResult>
 }
 
 export type CloseCallbacks = TransitionCallbacks & {
+  syncGeometry: () => void
   setPanzoomImmediate: (scale: number, pan: PanState) => void
   isZoomedIn: ComputedRef<boolean>
 }
@@ -31,7 +34,6 @@ export type CloseCallbacks = TransitionCallbacks & {
 /** Shared reactive state passed between ghost transition submodules. */
 export interface GhostState {
   // Core state
-  lightboxMounted: Ref<boolean>
   animating: Ref<boolean>
   ghostVisible: Ref<boolean>
   ghostSrc: Ref<string>

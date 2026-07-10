@@ -1,5 +1,4 @@
 import {
-  nextTick,
   onBeforeUnmount,
   onMounted,
   watch,
@@ -13,11 +12,8 @@ import {
   type ImageAdapter,
   type PhotoItem,
 } from '../core/index'
-import {
-  lockBodyScroll,
-  nextFrame,
-  type DebugLogger,
-} from '../internal/runtime'
+import type { DebugLogger } from '../core/debug/logger'
+import { lockBodyScroll } from '../internal/bodyScroll'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
 export function createKeydownBinding(
@@ -98,7 +94,7 @@ export function watchPhotoCollection(
   photos: ComputedRef<PhotoItem[]>,
   config: {
     activeIndex: Ref<number>
-    lightboxMounted: Ref<boolean>
+    isMounted: Readonly<Ref<boolean>>
     goTo: (index: number, instant?: boolean) => void
     close: () => Promise<void>
   },
@@ -116,7 +112,7 @@ export function watchPhotoCollection(
     }
 
     if (!newIds.has(activeId)) {
-      if (config.lightboxMounted.value) {
+      if (config.isMounted.value) {
         void config.close()
       }
       config.goTo(0, true)
@@ -130,38 +126,9 @@ export function watchPhotoCollection(
   })
 }
 
-/** Refresh geometry, zoom bounds, and preloading when the active slide changes. */
-export function watchActiveIndexRuntime(
-  activeIndex: Ref<number>,
-  config: {
-    lightboxMounted: Ref<boolean>
-    skipActiveIndexWatch: Ref<boolean>
-    setActiveSlideIndex: (index: number) => void
-    refreshZoomState: (preserveCurrent?: boolean) => void
-    syncGeometry: () => AreaMetrics | null
-    preloadAround: (index: number) => void
-    debug?: DebugLogger
-  },
-) {
-  watch(activeIndex, async (newIndex) => {
-    if (!config.lightboxMounted.value || config.skipActiveIndexWatch.value) {
-      return
-    }
-
-    config.debug?.log('slides', `activeIndex changed → ${newIndex}`)
-    config.setActiveSlideIndex(newIndex)
-
-    await nextTick()
-    await nextFrame()
-    config.syncGeometry()
-    config.refreshZoomState(true)
-    config.preloadAround(newIndex)
-  })
-}
-
 /** Attach the window-level listeners and cleanup used by lightbox state. */
 export function useLightboxWindowLifecycle(config: {
-  lightboxMounted: Ref<boolean>
+  isMounted: Readonly<Ref<boolean>>
   cancelTapTimer: () => void
   detachKeydown: () => void
   syncGeometry: () => AreaMetrics | null
@@ -171,14 +138,14 @@ export function useLightboxWindowLifecycle(config: {
   let didLock = false
 
   function onResize() {
-    if (!config.lightboxMounted.value) return
+    if (!config.isMounted.value) return
     config.debug?.log('geometry', 'window resize')
     config.syncGeometry()
     config.refreshZoomState(false)
   }
 
-  watch(config.lightboxMounted, (mounted) => {
-    config.debug?.log('transitions', `lightboxMounted → ${mounted}`)
+  watch(config.isMounted, (mounted) => {
+    config.debug?.log('transitions', `mounted → ${mounted}`)
     if (mounted) {
       if (!didLock) {
         lockBodyScroll(true)

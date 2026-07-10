@@ -702,8 +702,9 @@ The public behavior is defined by Nuxt Photo:
 - Grouping is computed canonically from the library's constrained options, then
   Embla is configured to implement that model.
 - Integration tests compare real Embla selection against the canonical groups.
-- The chosen Embla release must be non-prerelease before production, unless a
-  written exception explains why no supported release can meet the contract.
+- Embla 9 RC is an explicit production exception accepted for vNext. Its risk
+  stays contained behind library-owned options, canonical snap groups, and
+  integration tests; no RC/vendor type crosses the public API.
 - Dependency upgrades do not change public types.
 
 If the constrained contract cannot be implemented without private state, the
@@ -889,7 +890,7 @@ Each phase is a hard cutover. Do not merge a phase with both old and new paths.
 | **2 — photo/group boundary** | Validate `unknown` honestly; add `PhotoValidationError`; route every list through it; make PhotoGroup auto-only with a shallow-reactive registry; migrate custom layouts to primitives; remove PhotoGroup from carousel provider wiring. | No explicit/auto branch or version counter remains; custom layout, nesting, reorder, and duplicates pass.  |
 | **3 — lifecycle**            | Add desired intent, actual status, one cancellable reconciler, abortable animation, and one active-index effect; then delete the five old lifecycle guards/state values.                                                                 | All interleaving/error/cleanup tests pass; no watcher suppression; orchestration is materially smaller.    |
 | **4 — input/panzoom**        | Introduce one `GestureSession`; delete `emblaStolen`; hide live motion inside panzoom; split pointer from keyboard/wheel; make reset/unmount cleanup total.                                                                              | Every session resets cleanly; unit/browser gestures pass; input never mutates raw panzoom motion.          |
-| **5 — carousel**             | Own snap groups and public options; remove plugins, vendor declarations, private engine reads, and unsafe fallback; verify a supported non-prerelease dependency.                                                                        | No production `internalEngine` match or public Embla type; every carousel consumer uses one snap model.    |
+| **5 — carousel**             | Own snap groups and public options; remove plugins, vendor declarations, private engine reads, and unsafe fallback; contain the explicitly accepted Embla 9 RC dependency.                                                               | No production `internalEngine` match or public Embla type; every carousel consumer uses one snap model.    |
 | **6 — structure**            | Move domain internals to their target homes; consolidate helpers; delete ambiguous/empty folders; simplify Nuxt facades/options and obsolete comments.                                                                                   | One helper definition each; architecture tests pass; no public manifest, bridge, or barrel cycle appears.  |
 | **7 — release proof**        | Split oversized tests, rewrite docs/examples as vNext-only, add packed-consumer validation, and run section 14.3.                                                                                                                        | No removed API remains in active text; every unit/browser/SSR/type/size/package gate passes.               |
 

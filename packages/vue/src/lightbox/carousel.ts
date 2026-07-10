@@ -9,7 +9,7 @@ import {
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
-import type { DebugLogger } from '../internal/runtime'
+import type { DebugLogger } from '../core/debug/logger'
 
 /** Bind Embla-based slide navigation to the active lightbox photo collection. */
 export function useCarousel(
@@ -34,12 +34,12 @@ export function useCarousel(
       if (!api) return
 
       api.on('select', (_api: EmblaCarouselType) => {
-        const newIndex = _api.selectedScrollSnap()
+        const newIndex = _api.selectedSnap()
         debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
         activeIndex.value = newIndex
       })
 
-      api.on('pointerDown', () => {
+      api.on('pointerdown', () => {
         const zoomed = isZoomedIn()
         const locked = isInteractionLocked()
         if (zoomed || locked) {
@@ -76,21 +76,21 @@ export function useCarousel(
   }
 
   function goToNext() {
-    emblaApi.value?.scrollNext()
+    emblaApi.value?.goToNext()
   }
 
   function goToPrev() {
-    emblaApi.value?.scrollPrev()
+    emblaApi.value?.goToPrev()
   }
 
   function goTo(index: number, instant = false) {
     emblaOptions.value = { ...emblaOptions.value, startSnap: index }
     activeIndex.value = index
-    emblaApi.value?.scrollTo(index, instant)
+    emblaApi.value?.goTo(index, instant)
   }
 
   function selectedSnap(): number {
-    return emblaApi.value?.selectedScrollSnap() ?? activeIndex.value
+    return emblaApi.value?.selectedSnap() ?? activeIndex.value
   }
 
   onBeforeUnmount(() => {

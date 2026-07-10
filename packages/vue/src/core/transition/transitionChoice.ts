@@ -1,7 +1,7 @@
 import type { TransitionMode, CloseTransitionPlan, RectLike } from '../types'
 import type { DebugLogger } from '../debug/logger'
 import { isUsableRect } from '../geometry/rect'
-import { getWindowDimensions } from '../utils/dom'
+import { getWindowDimensions } from '../geometry/viewport'
 import {
   CLOSE_FADE_DURATION_MS,
   CLOSE_FLIP_DURATION_MS,

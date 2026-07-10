@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { computed, ref } from 'vue'
-import { describe, expect, it } from 'vitest'
+import { computed, createApp, defineComponent, ref } from 'vue'
+import { describe, expect, it, vi } from 'vitest'
 import { computeZoomLevels } from '../src/core/index'
-import { usePanzoom } from '../src/composables/usePanzoom'
+import { usePanzoom } from '../src/lightbox/panzoom'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 describe('usePanzoom', () => {
@@ -69,5 +69,34 @@ describe('usePanzoom', () => {
 
     expect(inactive.style.transform).toBe('translate3d(0px, 0px, 0) scale(1)')
     expect(active.style.transform).toBe('translate3d(30px, -40px, 0) scale(2)')
+  })
+
+  it('cancels an active spring RAF when its component unmounts', () => {
+    const cancelAnimationFrame = vi.fn()
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 41),
+    )
+    vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrame)
+
+    let panzoom: ReturnType<typeof usePanzoom> | null = null
+    const App = defineComponent({
+      setup() {
+        panzoom = usePanzoom(
+          computed(() => createPhotoSet()[0]!),
+          ref({ left: 0, top: 0, width: 1200, height: 800 }),
+        )
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    const app = createApp(App)
+    app.mount(host)
+
+    panzoom!.startPanzoomSpring(2, { x: 100, y: 50 })
+    app.unmount()
+
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(41)
+    vi.unstubAllGlobals()
   })
 })

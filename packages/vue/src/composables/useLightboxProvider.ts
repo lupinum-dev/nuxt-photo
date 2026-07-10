@@ -4,8 +4,8 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
-import { useLightboxRuntimeState } from './useLightboxRuntimeState'
-import { createLightboxController } from './lightboxController'
+import { useLightboxRuntimeState } from '../lightbox/runtime'
+import { createLightboxController } from '../lightbox/controller'
 import { type LightboxSlideRenderer } from '../provide/keys'
 import type { LightboxProviderController } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -31,7 +31,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * ```
  */
 export function useLightboxProvider(
-  photosInput: MaybeRef<PhotoItem | PhotoItem[]>,
+  photosInput: MaybeRef<PhotoItem | readonly PhotoItem[]>,
   options?: {
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
