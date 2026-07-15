@@ -226,7 +226,7 @@ try {
     `overrides:\n  '@nuxt-photo/vue': ${JSON.stringify(`file:${packedTarballs.get('@nuxt-photo/vue')}`)}\n`,
   )
 
-  run('pnpm', ['install', '--offline', '--ignore-scripts'], {
+  run('pnpm', ['install', '--ignore-scripts'], {
     cwd: consumerDir,
   })
 
