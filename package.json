@@ -19,6 +19,9 @@
     "dev:docs": "pnpm run build && pnpm --filter nuxt-photo-docs dev",
     "build:playground": "pnpm run build && pnpm --filter nuxt-photo-playground build",
     "build:docs": "pnpm --filter nuxt-photo-docs build",
+    "docs:agent": "node scripts/docs/generate-skill-references.mjs",
+    "docs:agent:check": "node scripts/docs/generate-skill-references.mjs --check",
+    "docs:validate": "node scripts/docs/validate.mjs",
     "size": "node scripts/size/run.mjs",
     "size:vue": "node scripts/size/run.mjs vue",
     "size:nuxt": "node scripts/size/run.mjs nuxt",
@@ -33,7 +36,7 @@
     "test:e2e": "pnpm run build:playground && playwright test",
     "test": "pnpm test:unit && pnpm test:module-package && pnpm test:e2e",
     "release:pack": "node scripts/release/pack-dry-run.mjs",
-    "lint": "eslint . && pnpm run format:check",
+    "lint": "eslint . && pnpm run format:check && pnpm run docs:validate && pnpm run docs:agent:check",
     "lint:fix": "eslint . --fix && pnpm run format"
   },
   "engines": {

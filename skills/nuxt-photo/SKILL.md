@@ -27,7 +27,7 @@ Read only what the task needs:
 - `references/customization.md`: CSS strategy, image providers, custom adapters, lightbox replacement, responsive tuning, SSR/CLS.
 - `references/troubleshooting.md`: common agent mistakes, symptoms, and verification commands.
 
-If this skill lives inside the Nuxt Photo repo, treat `docs/content/docs/**` and `packages/**/src` as the source of truth when a detail appears stale.
+The website Markdown under `docs/content/docs/**` is the canonical usage documentation. Reference files in this skill are generated with `pnpm docs:agent`; never edit them directly. Package source remains canonical for implementation behavior.
 
 ## Implementation Rules
 
