@@ -9,7 +9,7 @@
     "preview": "nuxi preview"
   },
   "dependencies": {
-    "@lupinum/ginko-docs": "file:/Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.2.0.tgz",
+    "@lupinum/ginko-docs": "file:/Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.2.1.tgz",
     "@nuxt-photo/nuxt": "workspace:*",
     "nuxt": "^4.4.8"
   },
