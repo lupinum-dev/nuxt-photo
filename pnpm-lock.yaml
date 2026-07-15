@@ -74,7 +74,7 @@ importers:
     dependencies:
       '@lupinum/ginko-docs':
         specifier: file:/Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz
-        version: file:../../../Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz(b9067a46641e3406298f018321e6c03d)
+        version: file:../../2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz(03637e3bff1d6f23ef602e28e8aaaec3)
       '@nuxt-photo/nuxt':
         specifier: workspace:*
         version: link:../packages/nuxt
@@ -1342,8 +1342,8 @@ packages:
       vitest:
         optional: true
 
-  '@lupinum/ginko-docs@file:../../../Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz':
-    resolution: {integrity: sha512-T8ygW0PjJwH8U6uEuCmX0alNFwGGiXSh2tgzcwu1dkoStSkbQ8mA1LXKD8bgulG1Q3F2rqGfnG4ZXLYyzPPJWw==, tarball: file:../../../Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz}
+  '@lupinum/ginko-docs@file:../../2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz':
+    resolution: {integrity: sha512-TvLWNdVwzE2qRbZhC9565eBkKy/4D1PmL786gqxV6WNPuRaxziSPE/Dl/LbUN2HTSnXtns3avnTisECgVNIOTA==, tarball: file:../../2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz}
     version: 0.1.0
     peerDependencies:
       nuxt: ^4.4.6
@@ -7638,7 +7638,7 @@ snapshots:
       - vite
       - xml2js
 
-  '@lupinum/ginko-docs@file:../../../Users/matthias/Git/2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz(b9067a46641e3406298f018321e6c03d)':
+  '@lupinum/ginko-docs@file:../../2_sites/ginko-docs/layer/.pack/lupinum-ginko-docs-0.1.0.tgz(03637e3bff1d6f23ef602e28e8aaaec3)':
     dependencies:
       '@iconify-json/circle-flags': 1.2.10
       '@iconify-json/logos': 1.2.11

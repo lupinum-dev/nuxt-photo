@@ -5,8 +5,7 @@ export default {
       name: { en: 'Nuxt Photo' },
       description: { en: 'Photo galleries, lightboxes, and carousels for Nuxt.' },
       logo: { light: '/icon.png', dark: '/icon.png' },
-      localeSwitcher: 'dropdown',
-      docsSidebarSwitcher: 'list'
+      localeSwitcher: 'dropdown'
     },
     social: { github: 'https://github.com/lupinum-dev/nuxt-photo' },
     repository: {
