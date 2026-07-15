@@ -13,7 +13,7 @@ This repo has two library packages, two playground apps, and a docs app. The mos
 
 ## Prerequisites
 
-- Node.js `^22.12.0 || ^24.11.0 || >=26.0.0`
+- Node.js `^22.13.0 || ^24.11.0 || >=26.0.0`
 - `pnpm` `11.x`
 
 The repo declares both in the root [`package.json`](./package.json).

@@ -18,6 +18,7 @@ The format follows Keep a Changelog.
 - `PhotoGroup` now requires one explicit `photos` collection. Descendants contribute thumbnail and slide-renderer capabilities without owning collection order.
 - Carousel and autoplay props use library-owned option types. Embla remains an internal exact-version dependency.
 - Provider configuration is setup-time; remount a provider to change lightbox capability, transitions, zoom defaults, or image adapters.
+- The Node.js 22 support floor is 22.13; Node 24.11 and Node 26 remain supported.
 
 ### Changed
 
