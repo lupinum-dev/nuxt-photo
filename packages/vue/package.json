@@ -65,8 +65,8 @@
   },
   "devDependencies": {
     "typescript": "5.9.3",
-    "unbuild": "^3.5.0",
-    "vue": "3.5.33",
+    "unbuild": "^3.6.1",
+    "vue": "3.5.39",
     "vue-tsc": "3.2.7"
   },
   "license": "MIT",

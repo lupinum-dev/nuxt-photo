@@ -9,7 +9,6 @@ import {
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
-import type { DebugLogger } from '../core/debug/logger'
 
 /** Keep the swipe track full-screen while fitting each photo inside a gallery mat. */
 export function getLightboxFrameArea(area: AreaMetrics): AreaMetrics {
@@ -35,7 +34,6 @@ export function useCarousel(
   areaMetrics: Ref<AreaMetrics | null>,
   isZoomedIn: () => boolean,
   isInteractionLocked: () => boolean,
-  debug?: DebugLogger,
 ) {
   const activeIndex = ref(0)
   const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
@@ -53,20 +51,11 @@ export function useCarousel(
 
       api.on('select', (_api: EmblaCarouselType) => {
         const newIndex = _api.selectedSnap()
-        debug?.log('slides', `embla select: ${activeIndex.value}→${newIndex}`)
         activeIndex.value = newIndex
       })
 
       api.on('pointerdown', () => {
-        const zoomed = isZoomedIn()
-        const locked = isInteractionLocked()
-        if (zoomed || locked) {
-          debug?.log(
-            'gestures',
-            `embla pointerdown blocked (zoomed=${zoomed} locked=${locked})`,
-          )
-          return false
-        }
+        if (isZoomedIn() || isInteractionLocked()) return false
       })
     },
     { immediate: true },

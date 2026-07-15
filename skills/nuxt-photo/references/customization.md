@@ -346,7 +346,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 [Build a custom lightbox](/docs/guides/customize-the-lightbox)
 
-[Stability contract](/docs/help/stability)
+[Public API and stability](/docs/api/public-api)
 
 _Source: `docs/content/docs/3.concepts/7.customization-layers.md`_
 

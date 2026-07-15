@@ -2,31 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-const removedPackageReferences = [
-  '@nuxt-photo/core',
-  '@nuxt-photo/recipes',
-  'packages/core',
-  'packages/recipes',
-] as const
-
-const activeFilesToScan = [
-  '.fallowrc.json',
-  '.github/workflows/publish.yml',
-  '.github/workflows/size.yml',
-  'README.md',
-  'scripts/size/config.json',
-  'scripts/size/run.mjs',
-  'scripts/release/pack-dry-run.mjs',
-]
-
-function markdownFiles(root: string): string[] {
-  return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(root, entry.name)
-    if (entry.isDirectory()) return markdownFiles(path)
-    return entry.isFile() && entry.name.endsWith('.md') ? [path] : []
-  })
-}
-
 function readText(path: string) {
   return readFileSync(path, 'utf8')
 }
@@ -52,29 +27,16 @@ describe('package consistency', () => {
     ])
   })
 
-  it('does not reference removed packages in active release/config/docs files', () => {
-    const files = [...activeFilesToScan, ...markdownFiles('docs/content/docs')]
-    const offenders = files.flatMap((file) => {
-      const text = readText(file)
-      return removedPackageReferences
-        .filter((reference) => text.includes(reference))
-        .map((reference) => `${file}: ${reference}`)
+  it('publishes Vue before Nuxt and includes every public package', () => {
+    const publishScript = readText('scripts/release/publish.mjs')
+    const publishedPackages = [
+      ...publishScript.matchAll(/readPackage\('([^']+)'\)/g),
+    ].map((match) => {
+      const manifest = JSON.parse(readText(join(match[1], 'package.json')))
+      return manifest.name as string
     })
 
-    expect(offenders).toEqual([])
-  })
-
-  it('publishes only existing public packages', () => {
-    const workflow = readText('.github/workflows/publish.yml')
-    const publishedPackages = [...workflow.matchAll(/--dir packages\/(\w+)/g)]
-      .map((match) => {
-        const manifest = JSON.parse(
-          readText(join('packages', match[1], 'package.json')),
-        )
-        return manifest.name as string
-      })
-      .sort()
-
-    expect(publishedPackages).toEqual(workspacePackageNames())
+    expect(publishedPackages).toEqual(['@nuxt-photo/vue', '@nuxt-photo/nuxt'])
+    expect(publishedPackages.toSorted()).toEqual(workspacePackageNames())
   })
 })

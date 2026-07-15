@@ -1,4 +1,4 @@
-// Internal framework-free API re-exported by @nuxt-photo/vue.
+// Internal framework-free barrel used by the Vue implementation.
 
 export {
   responsive,
@@ -53,8 +53,6 @@ export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
 export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
-export { loadImage, type LoadImageResult } from './image/loader'
-
 export {
   isUsableRect,
   getLoopedIndex,
@@ -73,11 +71,7 @@ export {
   clientToAreaPoint,
   computeTargetPanForZoom,
 } from './viewer/zoom'
-export {
-  classifyGesture,
-  isDoubleTap,
-  computeCloseDragRatio,
-} from './viewer/gestures'
+export { classifyGesture, isDoubleTap } from './viewer/gestures'
 
 export {
   DEFAULT_TRANSITION_CONFIG,

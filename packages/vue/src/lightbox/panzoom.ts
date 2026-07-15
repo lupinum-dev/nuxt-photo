@@ -18,7 +18,6 @@ import {
   type PhotoItem,
   type ZoomState,
 } from '../core/index'
-import type { DebugLogger } from '../core/debug/logger'
 
 /**
  * Manage zoom state, pan bounds, and spring-driven transform updates for the
@@ -27,7 +26,6 @@ import type { DebugLogger } from '../core/debug/logger'
 export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
-  debug?: DebugLogger,
   minZoom?: number,
 ) {
   const zoomState = ref<ZoomState>({
@@ -191,10 +189,6 @@ export function usePanzoom(
     targetPan: PanState,
     options?: { tension?: number; friction?: number },
   ) {
-    debug?.log(
-      'zoom',
-      `spring start: scale=${panzoomMotion.scale.toFixed(3)}→${targetScale.toFixed(3)} pan=(${targetPan.x.toFixed(1)},${targetPan.y.toFixed(1)})`,
-    )
     panzoomMotion.targetScale = targetScale
     panzoomMotion.targetX = targetPan.x
     panzoomMotion.targetY = targetPan.y
@@ -246,10 +240,6 @@ export function usePanzoom(
         applyActivePanzoomTransform()
         panzoomMotion.rafId = 0
         syncPanzoomRefs()
-        debug?.log(
-          'zoom',
-          `spring settled: scale=${panzoomMotion.scale.toFixed(3)} pan=(${panzoomMotion.x.toFixed(1)},${panzoomMotion.y.toFixed(1)})`,
-        )
         return
       }
 
@@ -276,11 +266,6 @@ export function usePanzoom(
             photo ?? undefined,
           )
 
-    debug?.log(
-      'zoom',
-      `refreshZoomState(reset=${reset}): fit=${next.fit.toFixed(3)} secondary=${next.secondary.toFixed(3)} max=${next.max.toFixed(3)} current=${current.toFixed(3)}`,
-    )
-
     zoomState.value = {
       fit: next.fit,
       secondary: next.secondary,
@@ -297,10 +282,6 @@ export function usePanzoom(
     const targetZoom = isZoomedIn.value
       ? zoomState.value.fit
       : zoomState.value.secondary
-    debug?.log(
-      'zoom',
-      `toggleZoom: ${isZoomedIn.value ? 'zoom out' : 'zoom in'} → ${targetZoom.toFixed(3)}`,
-    )
     const targetPan = getTargetPanForZoom(targetZoom, clientPoint)
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
   }

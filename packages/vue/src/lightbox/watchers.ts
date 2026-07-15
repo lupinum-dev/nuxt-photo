@@ -6,7 +6,6 @@ import {
   type Ref,
 } from 'vue'
 import { isUsableRect, type AreaMetrics, type PhotoItem } from '../core/index'
-import type { DebugLogger } from '../core/debug/logger'
 import { lockBodyScroll } from '../internal/bodyScroll'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
@@ -34,23 +33,13 @@ export function createKeydownBinding(
 export function createGeometrySync(
   mediaAreaRef: Ref<HTMLElement | null>,
   areaMetrics: Ref<AreaMetrics | null>,
-  debug?: DebugLogger,
 ) {
   return function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
-    if (!mediaAreaEl) {
-      debug?.warn('geometry', 'syncGeometry: mediaAreaRef is null')
-      return null
-    }
+    if (!mediaAreaEl) return null
 
     const rect = mediaAreaEl.getBoundingClientRect()
     if (!isUsableRect(rect)) {
-      debug?.warn('geometry', 'syncGeometry: rect not usable', {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-      })
       return null
     }
 
@@ -61,7 +50,6 @@ export function createGeometrySync(
       height: rect.height,
     }
 
-    debug?.log('geometry', 'syncGeometry:', areaMetrics.value)
     return areaMetrics.value
   }
 }
@@ -111,19 +99,16 @@ export function useLightboxWindowLifecycle(config: {
   detachKeydown: () => void
   syncGeometry: () => AreaMetrics | null
   refreshZoomState: (preserveCurrent?: boolean) => void
-  debug?: DebugLogger
 }) {
   let didLock = false
 
   function onResize() {
     if (!config.isMounted.value) return
-    config.debug?.log('geometry', 'window resize')
     config.syncGeometry()
     config.refreshZoomState(false)
   }
 
   watch(config.isMounted, (mounted) => {
-    config.debug?.log('transitions', `mounted → ${mounted}`)
     if (mounted) {
       if (!didLock) {
         lockBodyScroll(true)

@@ -1,29 +1,22 @@
-import type { NuxtPhotoImageAdapterConfig } from '../image-adapter'
-
-type NuxtPhotoLightboxAppConfig = {
-  image?: NuxtPhotoImageAdapterConfig
-  lightbox?: {
-    minZoom?: number
-  }
-}
+import type { NuxtPhotoRuntimeConfig } from '../../module.mjs'
 
 declare module '@nuxt/schema' {
   interface CustomAppConfig {
-    nuxtPhoto?: NuxtPhotoLightboxAppConfig
+    nuxtPhoto?: NuxtPhotoRuntimeConfig
   }
 
   interface AppConfig {
-    nuxtPhoto?: NuxtPhotoLightboxAppConfig
+    nuxtPhoto?: NuxtPhotoRuntimeConfig
   }
 }
 
 declare module 'nuxt/schema' {
   interface CustomAppConfig {
-    nuxtPhoto?: NuxtPhotoLightboxAppConfig
+    nuxtPhoto?: NuxtPhotoRuntimeConfig
   }
 
   interface AppConfig {
-    nuxtPhoto?: NuxtPhotoLightboxAppConfig
+    nuxtPhoto?: NuxtPhotoRuntimeConfig
   }
 }
 

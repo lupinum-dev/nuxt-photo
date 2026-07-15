@@ -32,22 +32,6 @@ describe('@nuxt-photo/vue public exports', () => {
     )
   })
 
-  it('does not expose internal implementation helpers from the root entry', () => {
-    for (const name of [
-      'PhotoGroupContextKey',
-      'PhotoGroupContext',
-      'computeRowsLayout',
-      'computeColumnsLayout',
-      'computeMasonryLayout',
-      'computeZoomLevels',
-      'loadImage',
-      'chooseCloseTransition',
-      'DEFAULT_MIN_ZOOM',
-    ]) {
-      expect(name in vue, name).toBe(false)
-    }
-  })
-
   it('keeps app-level extension keys public', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')

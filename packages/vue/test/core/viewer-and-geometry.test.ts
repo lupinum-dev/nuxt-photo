@@ -3,7 +3,6 @@ import {
   DEFAULT_MIN_ZOOM,
   clampPanToBounds,
   classifyGesture,
-  computeCloseDragRatio,
   computePanBounds,
   computeTargetPanForZoom,
   computeZoomLevels,
@@ -117,14 +116,12 @@ describe('gesture helpers', () => {
     ).toBe('slide')
   })
 
-  it('detects double taps and close-drag ratios', () => {
+  it('detects double taps', () => {
     expect(
       isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14),
     ).toBe(true)
     expect(
       isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60),
     ).toBe(false)
-    expect(computeCloseDragRatio(100, 1000)).toBeCloseTo(100 / 850, 6)
-    expect(computeCloseDragRatio(1000, 300)).toBe(0.75)
   })
 })

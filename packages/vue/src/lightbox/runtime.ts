@@ -29,7 +29,7 @@ import {
 } from './watchers'
 import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
-import { createDebug } from '../core/debug/logger'
+import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
 import {
@@ -79,7 +79,6 @@ export function useLightboxRuntimeState(
     () => imageAdapter ?? injectedImageAdapter ?? createNativeImageAdapter(),
   )
 
-  const debug = createDebug()
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
   const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
@@ -116,13 +115,11 @@ export function useLightboxRuntimeState(
     areaMetrics,
     () => isZoomedIn(),
     () => isInteractionLocked(),
-    debug,
   )
 
   const panzoom = usePanzoom(
     carousel.currentPhoto,
     areaMetrics,
-    debug,
     resolvedMinZoom,
   )
 
@@ -131,14 +128,13 @@ export function useLightboxRuntimeState(
     carousel.currentPhoto,
     areaMetrics,
     carousel.getAbsoluteFrameRect,
-    debug,
     transitionConfig,
     prefersReducedMotion,
   )
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
 
-  const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, debug)
+  const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics)
 
   type LightboxIntent =
     | { readonly kind: 'closed' }
@@ -285,49 +281,46 @@ export function useLightboxRuntimeState(
     carousel.goToPrev()
   }
 
-  const gestures = useLightboxInputHandlers(
-    {
-      state: {
-        isOpen,
-        animating: motion.animating,
-        isZoomedIn: panzoom.isZoomedIn,
-        zoomAllowed: panzoom.zoomAllowed,
-        mediaAreaRef,
-        currentPhoto: carousel.currentPhoto,
-        areaMetrics,
-        uiVisible: motion.uiVisible,
-        panState: panzoom.panState,
-        zoomState: panzoom.zoomState,
-        transitionInProgress: motion.transitionInProgress,
-      },
-      panzoom: {
-        getCurrentScale: panzoom.getCurrentScale,
-        getCurrentPan: panzoom.getCurrentPan,
-        setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
-        settleCurrentTransform: panzoom.settleCurrentTransform,
-        setPanzoomImmediate: panzoom.setPanzoomImmediate,
-        startPanzoomSpring: panzoom.startPanzoomSpring,
-        clampPan: panzoom.clampPan,
-        clampPanWithResistance: panzoom.clampPanWithResistance,
-        applyWheelZoom: panzoom.applyWheelZoom,
-        toggleZoom: panzoom.toggleZoom,
-        getPanBounds: panzoom.getPanBounds,
-      },
-      navigation: {
-        goToNext: carousel.goToNext,
-        goToPrev: carousel.goToPrev,
-        goTo: carousel.goTo,
-        selectedSnap: carousel.selectedSnap,
-      },
-      lifecycle: {
-        setCloseDragY: motion.setCloseDragY,
-        handleCloseGesture: motion.handleCloseGesture,
-        close,
-        reportAsyncError,
-      },
+  const gestures = useLightboxInputHandlers({
+    state: {
+      isOpen,
+      animating: motion.animating,
+      isZoomedIn: panzoom.isZoomedIn,
+      zoomAllowed: panzoom.zoomAllowed,
+      mediaAreaRef,
+      currentPhoto: carousel.currentPhoto,
+      areaMetrics,
+      uiVisible: motion.uiVisible,
+      panState: panzoom.panState,
+      zoomState: panzoom.zoomState,
+      transitionInProgress: motion.transitionInProgress,
     },
-    debug,
-  )
+    panzoom: {
+      getCurrentScale: panzoom.getCurrentScale,
+      getCurrentPan: panzoom.getCurrentPan,
+      setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
+      settleCurrentTransform: panzoom.settleCurrentTransform,
+      setPanzoomImmediate: panzoom.setPanzoomImmediate,
+      startPanzoomSpring: panzoom.startPanzoomSpring,
+      clampPan: panzoom.clampPan,
+      clampPanWithResistance: panzoom.clampPanWithResistance,
+      applyWheelZoom: panzoom.applyWheelZoom,
+      toggleZoom: panzoom.toggleZoom,
+      getPanBounds: panzoom.getPanBounds,
+    },
+    navigation: {
+      goToNext: carousel.goToNext,
+      goToPrev: carousel.goToPrev,
+      goTo: carousel.goTo,
+      selectedSnap: carousel.selectedSnap,
+    },
+    lifecycle: {
+      setCloseDragY: motion.setCloseDragY,
+      handleCloseGesture: motion.handleCloseGesture,
+      close,
+      reportAsyncError,
+    },
+  })
   const keydown = createKeydownBinding(gestures.onKeydown)
 
   const transitionCallbacks = {
@@ -338,8 +331,7 @@ export function useLightboxRuntimeState(
       resolvedImageAdapter.value(photo, 'thumb').src,
     setImageLoadFailed: (failed: boolean, error?: unknown) => {
       activeImageLoadFailed.value = failed
-      if (failed)
-        debug.warn('images', 'active slide image failed to decode', error)
+      if (failed) devWarn('Active slide image failed to decode', error)
     },
     syncGeometry,
     setPanzoomImmediate: panzoom.setPanzoomImmediate,
@@ -355,9 +347,8 @@ export function useLightboxRuntimeState(
     close,
     reportAsyncError,
   })
-  watch(carousel.activeIndex, (index) => {
+  watch(carousel.activeIndex, () => {
     if (lifecycleStatus.value !== 'open') return
-    debug.log('slides', `activeIndex changed → ${index}`)
     reportAsyncError('prepare-active-slide', prepareActiveSlide(true))
   })
   useLightboxWindowLifecycle({
@@ -366,7 +357,6 @@ export function useLightboxRuntimeState(
     detachKeydown: keydown.detach,
     syncGeometry,
     refreshZoomState: panzoom.refreshZoomState,
-    debug,
   })
 
   onBeforeUnmount(() => {

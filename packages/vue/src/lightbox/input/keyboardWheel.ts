@@ -1,6 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
 import type { PanState } from '../../core/types'
-import type { DebugLogger } from '../../core/debug/logger'
 
 const TRACKPAD_WHEEL_THROTTLE_MS = 200
 const MOUSE_WHEEL_THROTTLE_MS = 45
@@ -33,10 +32,7 @@ function isEditableKeyTarget(target: EventTarget | null) {
 }
 
 /** Keyboard and wheel input are stateless with respect to pointer sessions. */
-export function createKeyboardWheelHandlers(
-  config: KeyboardWheelConfig,
-  debug?: DebugLogger,
-) {
+export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
   let lastWheelTime = 0
 
   function onWheel(event: WheelEvent) {
@@ -55,10 +51,6 @@ export function createKeyboardWheelHandlers(
 
     lastWheelTime = now
     event.preventDefault()
-    debug?.log(
-      'zoom',
-      `wheel: deltaY=${event.deltaY.toFixed(1)} isTrackpad=${isTrackpad}`,
-    )
     config.applyWheelZoom(event)
   }
 
@@ -67,13 +59,11 @@ export function createKeyboardWheelHandlers(
     if (event.defaultPrevented || isEditableKeyTarget(event.target)) return
 
     if (event.key === 'Escape') {
-      debug?.log('gestures', 'key: Escape → close')
       config.reportAsyncError('escape-close', config.close())
       return
     }
     if (config.animating.value) return
     if (event.key === 'z' || event.key === 'Z') {
-      debug?.log('gestures', 'key: Z → toggleZoom')
       config.toggleZoom()
       return
     }

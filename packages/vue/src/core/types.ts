@@ -67,14 +67,6 @@ export type CloseTransitionPlan = {
   fromRect?: RectLike
   toRect?: RectLike
   durationMs: number
-  reason:
-    | 'ok'
-    | 'missing-thumb-ref'
-    | 'thumb-off-screen'
-    | 'missing-frame-rect'
-    | 'mode-forced-fade'
-    | 'mode-forced-none'
-    | 'visibility-below-threshold'
 }
 
 // ─── Layout ───
@@ -324,14 +316,3 @@ export function responsive<T>(
 
   return resolver
 }
-
-// ─── Debug ───
-
-export type DebugChannel =
-  | 'transitions'
-  | 'gestures'
-  | 'zoom'
-  | 'slides'
-  | 'images'
-  | 'geometry'
-  | 'rects'

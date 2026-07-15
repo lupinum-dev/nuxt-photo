@@ -35,7 +35,7 @@ The website Markdown under `docs/content/docs/**` is the canonical usage documen
 - Do not use array indexes as `PhotoItem.id` for dynamic lists.
 - Do not add direct sibling dependencies unless app code imports them directly:
   - Common app imports can come from `@nuxt-photo/nuxt`.
-  - Direct imports from `@nuxt-photo/vue`, `@nuxt-photo/vue`, or `@nuxt-photo/vue` require that package in the app's own dependencies.
+  - Direct imports from `@nuxt-photo/vue` or its public subpaths require that package in the app's own dependencies.
 - Do not set `nuxtPhoto.css: 'none'` unless the app provides a complete replacement for structure CSS.
 - Do not call `useLightboxProvider()` inside a recipe lightbox override passed through `:lightbox` or `LightboxComponentKey`; the recipe already owns that provider.
 - Do not generate nondeterministic adapter URLs during SSR render. Pre-sign URLs before rendering or store signed URLs on the `PhotoItem`.

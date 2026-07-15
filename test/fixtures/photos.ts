@@ -32,16 +32,3 @@ export function createPhotoSet(): PhotoItem[] {
     makePhoto({ id: 'redwoods', width: 1500, height: 1900, alt: 'Redwoods' }),
   ]
 }
-
-export function createPlainPhotoSet(): PhotoItem[] {
-  return [
-    makePhoto({ id: 'one', width: 1600, height: 900 }),
-    makePhoto({ id: 'two', width: 1200, height: 1600 }),
-    makePhoto({ id: 'three', width: 1500, height: 1000 }),
-    makePhoto({ id: 'four', width: 1400, height: 1400 }),
-    makePhoto({ id: 'five', width: 1300, height: 1700 }),
-    makePhoto({ id: 'six', width: 1800, height: 1200 }),
-    makePhoto({ id: 'seven', width: 1600, height: 1000 }),
-    makePhoto({ id: 'eight', width: 1100, height: 1500 }),
-  ]
-}

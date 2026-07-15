@@ -90,7 +90,7 @@ describe('transition planning', () => {
         thumbRefExists: true,
         config: { mode: 'none', autoThreshold: 0.55 },
       }),
-    ).toMatchObject({ mode: 'instant', reason: 'mode-forced-none' })
+    ).toMatchObject({ mode: 'instant' })
 
     expect(
       chooseCloseTransition({
@@ -99,7 +99,7 @@ describe('transition planning', () => {
         thumbRefExists: true,
         config: { mode: 'fade', autoThreshold: 0.55 },
       }),
-    ).toMatchObject({ mode: 'fade', reason: 'mode-forced-fade' })
+    ).toMatchObject({ mode: 'fade' })
 
     expect(
       chooseCloseTransition({
@@ -108,7 +108,7 @@ describe('transition planning', () => {
         thumbRefExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
-    ).toMatchObject({ mode: 'fade', reason: 'thumb-off-screen' })
+    ).toMatchObject({ mode: 'fade' })
 
     expect(
       chooseCloseTransition({
@@ -122,7 +122,7 @@ describe('transition planning', () => {
         thumbRefExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
-    ).toMatchObject({ mode: 'fade', reason: 'visibility-below-threshold' })
+    ).toMatchObject({ mode: 'fade' })
 
     expect(
       chooseCloseTransition({
@@ -131,6 +131,6 @@ describe('transition planning', () => {
         thumbRefExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
-    ).toMatchObject({ mode: 'flip', reason: 'ok' })
+    ).toMatchObject({ mode: 'flip' })
   })
 })

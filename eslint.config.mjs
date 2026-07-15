@@ -76,20 +76,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['.size-limit.cjs'],
-    languageOptions: {
-      sourceType: 'commonjs',
-    },
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
-  },
-  {
-    files: [
-      'packages/vue/src/core/debug/logger.ts',
-      'scripts/size/run.mjs',
-      'test/size/**/*.ts',
-    ],
+    files: ['scripts/size/run.mjs', 'test/size/**/*.ts'],
     rules: {
       'no-console': 'off',
     },

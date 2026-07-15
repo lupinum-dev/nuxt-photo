@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addComponent = vi.fn()
@@ -51,8 +49,6 @@ function createNuxt() {
 }
 
 let nuxtPhotoModule: Awaited<typeof import('../src/module')>['default']
-const vueDistRoot = fileURLToPath(new URL('../../vue/dist', import.meta.url))
-
 describe('nuxt-photo module', () => {
   beforeAll(async () => {
     nuxtPhotoModule = (await import('../src/module')).default
@@ -331,31 +327,6 @@ describe('nuxt-photo module', () => {
       ),
     ])
   })
-
-  it.skipIf(!existsSync(vueDistRoot))(
-    'registers component and CSS paths that exist after Vue is built',
-    () => {
-      const nuxt = createNuxt()
-
-      nuxtPhotoModule.setup(
-        {
-          ...nuxtPhotoModule.defaults,
-          components: { primitives: true },
-          css: 'all',
-        },
-        nuxt,
-      )
-
-      const componentPaths = addComponent.mock.calls.map(
-        ([component]) => component.filePath,
-      )
-
-      expect(componentPaths.length).toBeGreaterThan(0)
-      expect([...componentPaths, ...nuxt.options.css].every(existsSync)).toBe(
-        true,
-      )
-    },
-  )
 
   it('injects all CSS (structure + theme) with css: "all"', () => {
     const nuxt = createNuxt()

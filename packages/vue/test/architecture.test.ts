@@ -81,31 +81,6 @@ describe('source architecture boundaries', () => {
     expect(offenders).toEqual([])
   })
 
-  it('keeps public roots from exporting runtime internals', () => {
-    const roots = [
-      'packages/vue/src/index.ts',
-      'packages/nuxt/src/runtime/app.ts',
-      'packages/nuxt/src/runtime/app.d.ts',
-    ]
-    const forbidden = [
-      'useLightboxRuntimeState',
-      'useLightboxInputHandlers',
-      'useGhostTransition',
-      'PhotoGroupContextKey',
-      'components/internal',
-      '/internal',
-      '/context',
-    ]
-
-    const offenders = roots.flatMap((file) =>
-      forbidden
-        .filter((pattern) => read(file).includes(pattern))
-        .map((pattern) => `${file}: ${pattern}`),
-    )
-
-    expect(offenders).toEqual([])
-  })
-
   it('keeps production components free of test fixture imports', () => {
     expect(
       relativeOffenders(

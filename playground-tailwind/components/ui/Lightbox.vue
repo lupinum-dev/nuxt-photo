@@ -66,14 +66,10 @@
         class="flex flex-1 flex-col items-center justify-center overflow-hidden"
       >
         <LightboxViewport
-          v-slot="{ photos, viewportRef, mediaOpacity }"
+          v-slot="{ photos, viewportRef }"
           class="w-full flex-1"
         >
-          <div
-            class="h-full"
-            :ref="viewportRef"
-            :style="{ opacity: mediaOpacity }"
-          >
+          <div class="h-full" :ref="viewportRef">
             <div class="flex h-full">
               <LightboxSlide
                 v-for="(photo, i) in photos"
@@ -97,8 +93,6 @@
         </LightboxCaption>
       </div>
     </div>
-
-    <LightboxGhostImage class="pointer-events-none fixed inset-0 z-50" />
   </LightboxRoot>
 </template>
 
@@ -107,7 +101,6 @@ import {
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
-  LightboxGhostImage,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,

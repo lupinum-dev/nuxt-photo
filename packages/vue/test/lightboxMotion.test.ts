@@ -32,14 +32,13 @@ function callbacks() {
   }
 }
 
-function setup(mode: 'flip' | 'fade' | 'none' = 'flip') {
+function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   const photo = createPhotoSet()[0]!
   const motion = useLightboxMotion(
     ref(0),
     computed(() => photo),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     () => rect(200, 100, 800, 500),
-    undefined,
     { mode, autoThreshold: 0.55 },
   )
 
@@ -59,7 +58,14 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip') {
   Object.defineProperty(slideImage, 'currentSrc', {
     value: '/selected-1600.jpg',
   })
-  slideImage.decode = vi.fn(() => Promise.resolve())
+  if (supportsDecode) {
+    slideImage.decode = vi.fn(() => Promise.resolve())
+  } else {
+    Object.defineProperty(slideImage, 'decode', {
+      configurable: true,
+      value: undefined,
+    })
+  }
 
   for (const element of [
     overlay,
@@ -110,6 +116,25 @@ describe('lightbox motion controller', () => {
 
     expect(motion.stageMounted.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBeNull()
+    expect(motion.transitionInProgress.value).toBe(false)
+  })
+
+  it('aborts the load-event fallback without waiting for its timeout', async () => {
+    const { motion, slideImage, callbacks } = setup('none', false)
+    const addEventListener = vi.spyOn(slideImage, 'addEventListener')
+    const controller = new AbortController()
+    const opening = motion.open(0, callbacks, controller.signal)
+
+    await vi.waitFor(() => {
+      expect(addEventListener).toHaveBeenCalledWith(
+        'load',
+        expect.any(Function),
+        { once: true },
+      )
+    })
+    controller.abort()
+
+    await expect(opening).rejects.toMatchObject({ name: 'AbortError' })
     expect(motion.transitionInProgress.value).toBe(false)
   })
 

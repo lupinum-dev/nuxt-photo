@@ -12,16 +12,12 @@ import {
   NUXT_PHOTO_DEFAULTS,
   validateNuxtPhotoOptions,
   type NuxtPhotoOptions,
+  type NuxtPhotoRuntimeConfig,
 } from './options'
-export type { NuxtPhotoOptions } from './options'
+export type { NuxtPhotoOptions, NuxtPhotoRuntimeConfig } from './options'
 
 type NuxtPhotoAppConfig = {
-  nuxtPhoto?: {
-    image?: Exclude<NuxtPhotoOptions['image'], false>
-    lightbox?: {
-      minZoom?: number
-    }
-  }
+  nuxtPhoto?: NuxtPhotoRuntimeConfig
 }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)

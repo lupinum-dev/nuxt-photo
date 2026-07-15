@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import {
+  copyFileSync,
   existsSync,
   mkdtempSync,
   mkdirSync,
@@ -9,9 +10,18 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 
 const requiredPackageFiles = ['package.json', 'README.md', 'LICENSE']
+
+function readOutputDirectory(args) {
+  if (args.length === 0) return null
+  assert(
+    args.length === 2 && args[0] === '--output-dir' && args[1],
+    'Usage: pack-dry-run.mjs [--output-dir <directory>]',
+  )
+  return resolve(args[1])
+}
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -118,6 +128,7 @@ function discoverPackages() {
 
 const packages = discoverPackages()
 assert(packages.length > 0, 'No @nuxt-photo packages found in packages/*')
+const outputDirectory = readOutputDirectory(process.argv.slice(2))
 
 const packDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-pack-'))
 const packedTarballs = new Map()
@@ -202,17 +213,17 @@ try {
           '@nuxt-photo/nuxt': `file:${packedTarballs.get('@nuxt-photo/nuxt')}`,
           '@nuxt-photo/vue': `file:${packedTarballs.get('@nuxt-photo/vue')}`,
           nuxt: nuxtManifest.devDependencies.nuxt,
+          typescript: nuxtManifest.devDependencies.typescript,
           vue: rootManifest.devDependencies.vue,
-        },
-        pnpm: {
-          overrides: {
-            '@nuxt-photo/vue': `file:${packedTarballs.get('@nuxt-photo/vue')}`,
-          },
         },
       },
       null,
       2,
     ),
+  )
+  writeFileSync(
+    join(consumerDir, 'pnpm-workspace.yaml'),
+    `overrides:\n  '@nuxt-photo/vue': ${JSON.stringify(`file:${packedTarballs.get('@nuxt-photo/vue')}`)}\n`,
   )
 
   run('pnpm', ['install', '--offline', '--ignore-scripts'], {
@@ -243,6 +254,41 @@ try {
     }
   `
   run('node', ['--input-type=module', '--eval', smokeScript], {
+    cwd: consumerDir,
+  })
+
+  writeFileSync(
+    join(consumerDir, 'tsconfig.declarations.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          baseUrl: '.',
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          paths: {
+            '@nuxt/schema': ['./nuxt-schema-stub.d.ts'],
+            'nuxt/schema': ['./nuxt-schema-stub.d.ts'],
+          },
+          skipLibCheck: false,
+          strict: true,
+          target: 'ES2022',
+        },
+        files: [
+          'node_modules/@nuxt-photo/nuxt/dist/runtime/types/app-config.d.ts',
+        ],
+      },
+      null,
+      2,
+    ),
+  )
+  writeFileSync(
+    join(consumerDir, 'nuxt-schema-stub.d.ts'),
+    `export interface NuxtModule<T> { readonly __options?: T }
+export interface CustomAppConfig {}
+export interface AppConfig {}
+`,
+  )
+  run('pnpm', ['exec', 'tsc', '-p', 'tsconfig.declarations.json', '--noEmit'], {
     cwd: consumerDir,
   })
 
@@ -299,8 +345,16 @@ try {
   }
 
   process.stdout.write(
-    'packed consumer: Nuxt build, declarations, and sibling paths verified\n',
+    'packed consumer: Nuxt build, strict declarations, and sibling paths verified\n',
   )
+
+  if (outputDirectory) {
+    mkdirSync(outputDirectory, { recursive: true })
+    for (const tarball of packedTarballs.values()) {
+      copyFileSync(tarball, join(outputDirectory, basename(tarball)))
+    }
+    process.stdout.write(`verified tarballs: ${outputDirectory}\n`)
+  }
 } finally {
   rmSync(packDir, { recursive: true, force: true })
 }

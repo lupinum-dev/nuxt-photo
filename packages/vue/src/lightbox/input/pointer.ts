@@ -5,7 +5,6 @@ import {
   computeTargetPanForZoom,
   type GestureMode,
 } from '../../core/index'
-import type { DebugLogger } from '../../core/debug/logger'
 import { VelocityTracker } from './velocity'
 import { createKeyboardWheelHandlers } from './keyboardWheel'
 import type { GestureInputConfig, GestureSession } from './types'
@@ -19,10 +18,7 @@ import { createTapHandler } from './tap'
  * Classify pointer and wheel input into slide, pan, zoom, and close gestures,
  * then dispatch the appropriate runtime side effects.
  */
-export function useLightboxInputHandlers(
-  config: GestureInputConfig,
-  debug?: DebugLogger,
-) {
+export function useLightboxInputHandlers(config: GestureInputConfig) {
   const { state, panzoom, navigation, lifecycle } = config
   const session = shallowRef<GestureSession>({ kind: 'idle' })
   const gesturePhase = computed<GestureMode>(() =>
@@ -33,32 +29,25 @@ export function useLightboxInputHandlers(
   const { activePointers, capturedPointers } = pointers
 
   const velocityTracker = new VelocityTracker(100)
-  const tap = createTapHandler(
-    () => {
-      state.uiVisible.value = !state.uiVisible.value
-    },
-    panzoom.toggleZoom,
-    debug,
-  )
-  const keyboardWheel = createKeyboardWheelHandlers(
-    {
-      isOpen: state.isOpen,
-      animating: state.animating,
-      isZoomedIn: state.isZoomedIn,
-      transitionInProgress: state.transitionInProgress,
-      getCurrentScale: panzoom.getCurrentScale,
-      getCurrentPan: panzoom.getCurrentPan,
-      setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
-      clampPan: panzoom.clampPan,
-      applyWheelZoom: panzoom.applyWheelZoom,
-      toggleZoom: panzoom.toggleZoom,
-      goToNext: navigation.goToNext,
-      goToPrev: navigation.goToPrev,
-      close: lifecycle.close,
-      reportAsyncError: lifecycle.reportAsyncError,
-    },
-    debug,
-  )
+  const tap = createTapHandler(() => {
+    state.uiVisible.value = !state.uiVisible.value
+  }, panzoom.toggleZoom)
+  const keyboardWheel = createKeyboardWheelHandlers({
+    isOpen: state.isOpen,
+    animating: state.animating,
+    isZoomedIn: state.isZoomedIn,
+    transitionInProgress: state.transitionInProgress,
+    getCurrentScale: panzoom.getCurrentScale,
+    getCurrentPan: panzoom.getCurrentPan,
+    setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
+    clampPan: panzoom.clampPan,
+    applyWheelZoom: panzoom.applyWheelZoom,
+    toggleZoom: panzoom.toggleZoom,
+    goToNext: navigation.goToNext,
+    goToPrev: navigation.goToPrev,
+    close: lifecycle.close,
+    reportAsyncError: lifecycle.reportAsyncError,
+  })
 
   function resetGestureState() {
     pointers.releaseAll()
@@ -106,10 +95,6 @@ export function useLightboxInputHandlers(
     for (const pointer of activePointers.values()) {
       pointers.capture(pointer.id)
     }
-    debug?.log(
-      'gestures',
-      `pinch start: distance=${distance.toFixed(1)} scale=${pinch.startScale.toFixed(3)}`,
-    )
     return true
   }
 
@@ -268,10 +253,6 @@ export function useLightboxInputHandlers(
     if (pointer.kind === 'tap') {
       const mode = classifyGesture(deltaX, deltaY, pointer.pointerType)
       if (mode !== 'idle') {
-        debug?.log(
-          'gestures',
-          `classified: ${mode} (deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} pointer=${pointer.pointerType})`,
-        )
         if (mode === 'pinch') return
         session.value = { ...pointer, kind: mode }
         pointer = session.value as typeof pointer
@@ -349,22 +330,16 @@ export function useLightboxInputHandlers(
       pointers.release(event.pointerId)
     }
 
-    const deltaX = event.clientX - currentSession.startX
     const deltaY = event.clientY - currentSession.startY
     const mode = currentSession.kind === 'tap' ? 'idle' : currentSession.kind
 
-    const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity()
+    const { vy: velocityY } = velocityTracker.getVelocity()
 
     resetGestureState()
 
     if (mode === 'close' || mode === 'pan') {
       event.stopPropagation()
     }
-
-    debug?.log(
-      'gestures',
-      `pointerUp: mode=${mode} moved=${currentSession.moved} deltaX=${deltaX.toFixed(1)} deltaY=${deltaY.toFixed(1)} vX=${velocityX.toFixed(3)} vY=${velocityY.toFixed(3)}`,
-    )
 
     if (!currentSession.moved || mode === 'idle') {
       tap.handle(event.clientX, event.clientY)

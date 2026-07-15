@@ -18,7 +18,6 @@ import {
   type TransitionModeConfig,
 } from '../../core/index'
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
-import type { DebugLogger } from '../../core/debug/logger'
 import { flipTransform } from '../../core/geometry/rect'
 import { nextFrame, throwIfAborted, wait } from './animation'
 
@@ -172,7 +171,6 @@ export function useLightboxMotion(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
-  debug?: DebugLogger,
   transitionConfig?: TransitionModeConfig,
   reducedMotion = false,
 ) {
@@ -313,28 +311,43 @@ export function useLightboxMotion(
       if (element.complete && element.naturalWidth > 0)
         return { ok: true as const }
       return new Promise<{ ok: true } | { ok: false; error: unknown }>(
-        (resolve) => {
+        (resolve, reject) => {
+          let settled = false
+          const cleanup = () => {
+            clearTimeout(timeout)
+            signal.removeEventListener('abort', abort)
+            element.removeEventListener('load', loaded)
+            element.removeEventListener('error', failed)
+          }
+          const finish = (
+            result: { ok: true } | { ok: false; error: unknown },
+          ) => {
+            if (settled) return
+            settled = true
+            cleanup()
+            resolve(result)
+          }
+          const abort = () => {
+            if (settled) return
+            settled = true
+            cleanup()
+            reject(
+              signal.reason ??
+                new DOMException('Operation aborted', 'AbortError'),
+            )
+          }
+          const loaded = () => finish({ ok: true })
+          const failed = () =>
+            finish({ ok: false, error: new Error('Image failed to load') })
           const timeout = setTimeout(
             () =>
-              resolve({ ok: false, error: new Error('Image load timed out') }),
+              finish({ ok: false, error: new Error('Image load timed out') }),
             IMAGE_LOAD_TIMEOUT_MS,
           )
-          element.addEventListener(
-            'load',
-            () => {
-              clearTimeout(timeout)
-              resolve({ ok: true })
-            },
-            { once: true },
-          )
-          element.addEventListener(
-            'error',
-            () => {
-              clearTimeout(timeout)
-              resolve({ ok: false, error: new Error('Image failed to load') })
-            },
-            { once: true },
-          )
+          signal.addEventListener('abort', abort, { once: true })
+          element.addEventListener('load', loaded, { once: true })
+          element.addEventListener('error', failed, { once: true })
+          if (signal.aborted) abort()
         },
       )
     }
@@ -523,7 +536,7 @@ export function useLightboxMotion(
       fromRect &&
       toRect &&
       (config.mode === 'flip' ||
-        (isUsableRect(fromRect) && shouldUseFlip(fromRect, config, debug)))
+        (isUsableRect(fromRect) && shouldUseFlip(fromRect, config)))
 
     try {
       if (!useFlip || !fromRect || !toRect) {
@@ -743,7 +756,6 @@ export function useLightboxMotion(
       toRect,
       thumbRefExists: !!thumb,
       config,
-      debug,
     })
     const dragProgress = Math.min(
       1,

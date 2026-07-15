@@ -27,11 +27,16 @@ function routeFor(file) {
 const files = await markdownFiles(contentRoot)
 const routes = new Set(files.map(routeFor))
 const failures = []
+const publicReadmes = [
+  resolve(root, 'README.md'),
+  resolve(root, 'packages/nuxt/README.md'),
+  resolve(root, 'packages/vue/README.md'),
+]
 
-for (const file of files) {
+for (const file of [...files, ...publicReadmes]) {
   const source = await readFile(file, 'utf8')
   const links = source.matchAll(
-    /(?:to=["']|\]\()(?<url>\/docs\/[^"')#}]+)(?:#[^"')}]+)?/g,
+    /(?:to=["']|\]\()(?:https:\/\/nuxt-photo\.lupinum\.com)?(?<url>\/docs\/[^"')#}]+)(?:#[^"')}]+)?/g,
   )
   for (const match of links) {
     const url = match.groups?.url
@@ -39,7 +44,7 @@ for (const file of files) {
       failures.push(`${relative(root, file)} links to missing route ${url}`)
     }
   }
-  if (/[—–]/u.test(source)) {
+  if (file.startsWith(contentRoot) && /[—–]/u.test(source)) {
     failures.push(
       `${relative(root, file)} contains a disallowed dash character`,
     )
@@ -71,6 +76,6 @@ if (failures.length) {
   process.exitCode = 1
 } else {
   process.stdout.write(
-    `Validated ${files.length} documentation pages and ${routes.size} routes.\n`,
+    `Validated ${files.length} documentation pages, ${publicReadmes.length} public READMEs, and ${routes.size} routes.\n`,
   )
 }

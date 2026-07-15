@@ -1,4 +1,23 @@
-import type { NuxtPhotoImageAdapterConfig } from './runtime/image-adapter'
+export type NuxtPhotoImageAdapterConfig = {
+  thumb?: {
+    sizes?: string
+    quality?: number
+  }
+  slide?: {
+    widths?: number[]
+    maxWidth?: number
+    maxDensity?: number
+    sizes?: string
+    quality?: number
+  }
+}
+
+export type NuxtPhotoRuntimeConfig = {
+  image?: NuxtPhotoImageAdapterConfig
+  lightbox?: {
+    minZoom?: number
+  }
+}
 
 type NuxtPhotoImageOptions =
   | false
@@ -11,7 +30,7 @@ export interface NuxtPhotoOptions {
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?: NuxtPhotoImageOptions
-  lightbox?: { minZoom?: number }
+  lightbox?: NuxtPhotoRuntimeConfig['lightbox']
 }
 
 export const NUXT_PHOTO_DEFAULTS = {

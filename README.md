@@ -109,7 +109,7 @@ they are visible in the package output.
 
 ## Links
 
-- [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/introduction)
+- [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/installation)
 - [Live examples](https://nuxt-photo.lupinum.com)
 - [Nuxt package guide](./packages/nuxt/README.md)
 - [Vue package guide](./packages/vue/README.md)

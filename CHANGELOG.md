@@ -2,9 +2,9 @@
 
 All notable user-facing changes to this project will be documented in this file.
 
-The format follows Keep a Changelog, with an `Unreleased` section at the top while the project is still moving quickly.
+The format follows Keep a Changelog.
 
-## [Unreleased]
+## [0.2.0] - 2026-07-15
 
 ### Breaking
 
@@ -13,6 +13,11 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
   from `LightboxViewport` slots.
 - Replaced `--np-backdrop-blur` with `--np-backdrop-filter`. The default is
   `none`; themes can opt in with `--np-backdrop-filter: blur(16px)`.
+- Photo IDs are required non-empty strings and public photo/controller models are readonly.
+- Removed `PhotoMapper`, `itemMapper`, `photoId`, object-identity opening, `openPhoto`, raw Embla options/plugins, and duplicate album layout props.
+- `PhotoGroup` now requires one explicit `photos` collection. Descendants contribute thumbnail and slide-renderer capabilities without owning collection order.
+- Carousel and autoplay props use library-owned option types. Embla remains an internal exact-version dependency.
+- Provider configuration is setup-time; remount a provider to change lightbox capability, transitions, zoom defaults, or image adapters.
 
 ### Changed
 
@@ -25,24 +30,6 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
   responsive inset photo frame, edge navigation, and an overlaid caption
   gradient. Dragging clips only at the screen boundary while the active image
   retains deliberate gallery-like breathing room.
-
-### Fixed
-
-- Prevented the responsive thumbnail-to-slide handoff from briefly darkening
-  the image by keeping the decoded media opaque beneath a single-sided dissolve.
-
-## [0.2.0] - 2026-07-10
-
-### Breaking
-
-- Photo IDs are required non-empty strings and public photo/controller models are readonly.
-- Removed `PhotoMapper`, `itemMapper`, `photoId`, object-identity opening, `openPhoto`, raw Embla options/plugins, and duplicate album layout props.
-- `PhotoGroup` now requires one explicit `photos` collection. Descendants contribute thumbnail and slide-renderer capabilities without owning collection order.
-- Carousel and autoplay props use library-owned option types. Embla remains an internal exact-version dependency.
-- Provider configuration is setup-time; remount a provider to change lightbox capability, transitions, zoom defaults, or image adapters.
-
-### Changed
-
 - Centralized lightbox lifecycle intent, abortable transitions, modal ownership, body-scroll ownership, gesture sessions, and pan/zoom orchestration.
 - Carousel dots, thumbnails, counters, and navigation now derive from Embla's real geometry-dependent snap registry.
 - Invalid photo data and unknown Nuxt module options fail at their public boundaries with structured, namespaced errors.
@@ -54,12 +41,14 @@ The format follows Keep a Changelog, with an `Unreleased` section at the top whi
 
 ### Fixed
 
+- Prevented the responsive thumbnail-to-slide handoff from briefly darkening
+  the image by keeping the decoded media opaque beneath a single-sided dissolve.
 - Fixed close-during-open, open-during-close, stale queued intent, and cross-provider modal races.
 - Fixed non-atomic group registration, registration-order drift, and carousel snap mismatches for multiple visible slides.
 - Fixed built-in interactions losing rejected lifecycle promises.
 - Fixed runtime export and packed-consumer coverage for `PhotoValidationError`.
 
-## [0.1.0] - 2026-04-26
+## [0.1.2] - 2026-06-07
 
 ### Added
 
