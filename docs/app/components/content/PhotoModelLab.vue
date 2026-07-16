@@ -21,12 +21,8 @@ const photo = computed(
       height: height.value,
     }) as PhotoItem,
 )
-const photos = computed(() =>
-  duplicate.value ? [photo.value, { ...photo.value }] : [photo.value],
-)
-const code = computed(
-  () => `const photos: PhotoItem[] = ${JSON.stringify(photos.value, null, 2)}`,
-)
+const photos = computed(() => (duplicate.value ? [photo.value, { ...photo.value }] : [photo.value]))
+const code = computed(() => `const photos: PhotoItem[] = ${JSON.stringify(photos.value, null, 2)}`)
 
 watch([id, src, width, height, duplicate], () => {
   error.value = null
@@ -51,17 +47,10 @@ function reset() {
     @reset="reset"
   >
     <div class="photo-model-preview">
-      <PhotoValidationProbe
-        :key="revision"
-        :photos="photos"
-        @error="error = $event.message"
-      />
-      <p v-if="error" role="alert">
-        <strong>Validation failed</strong>{{ error }}
-      </p>
+      <PhotoValidationProbe :key="revision" :photos="photos" @error="error = $event.message" />
+      <p v-if="error" role="alert"><strong>Validation failed</strong>{{ error }}</p>
       <p v-else class="validation-ok">
-        <strong>Valid collection</strong>The album can calculate geometry before
-        loading images.
+        <strong>Valid collection</strong>The album can calculate geometry before loading images.
       </p>
     </div>
     <template #controls>
@@ -78,14 +67,10 @@ function reset() {
         ><span>Height</span><input v-model.number="height" type="number"
       /></label>
       <label class="docs-control"
-        ><input v-model="duplicate" type="checkbox" /><span
-          >Duplicate the ID</span
-        ></label
+        ><input v-model="duplicate" type="checkbox" /><span>Duplicate the ID</span></label
       >
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state
-      ><DemoState :value="{ valid: !error, error, photos }"
-    /></template>
+    <template #state><DemoState :value="{ valid: !error, error, photos }" /></template>
   </InteractiveExample>
 </template>

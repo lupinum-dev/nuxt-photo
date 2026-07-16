@@ -14,10 +14,7 @@ function describe(element: Element | null) {
   )
 }
 function onFocus(event: FocusEvent) {
-  events.value = [
-    ...events.value.slice(-7),
-    `Focus: ${describe(event.target as Element)}`,
-  ]
+  events.value = [...events.value.slice(-7), `Focus: ${describe(event.target as Element)}`]
 }
 function focusFirst() {
   root.value?.querySelector<HTMLElement>('[role="button"]')?.focus()

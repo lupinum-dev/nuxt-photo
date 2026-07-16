@@ -7,9 +7,7 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <component :is="'style'">{{
-          renderBranch.containerQueryCss
-        }}</component>
+        <component :is="'style'">{{ renderBranch.containerQueryCss }}</component>
       </template>
 
       <div :style="renderBranch.wrapperStyle">
@@ -18,9 +16,7 @@
           :key="item.photo.id"
           class="np-album__item"
           :class="[
-            renderBranch.containerQueriesActive
-              ? `np-item-${item.index}`
-              : undefined,
+            renderBranch.containerQueriesActive ? `np-item-${item.index}` : undefined,
             itemClass,
           ]"
           :style="item.style"
@@ -43,13 +39,7 @@
         </div>
 
         <span
-          style="
-            flex-grow: 9999;
-            flex-basis: 0;
-            height: 0;
-            margin: 0;
-            padding: 0;
-          "
+          style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0"
           aria-hidden="true"
         />
       </div>
@@ -119,10 +109,7 @@
     </div>
   </div>
 
-  <component
-    :is="LightboxComponent"
-    v-if="hasOwnLightbox && LightboxComponent"
-  />
+  <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
 </template>
 
 <script setup lang="ts">
@@ -189,9 +176,7 @@ const normalizedLayout = computed<AlbumLayout>(() => {
 })
 
 if (props.defaultContainerWidth === 0) {
-  devWarn(
-    'defaultContainerWidth=0 has no effect; omit it or use a positive value',
-  )
+  devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
 const photos = computed<PhotoItem[]>(() =>
@@ -201,13 +186,10 @@ const photos = computed<PhotoItem[]>(() =>
   }),
 )
 
-const {
-  hasLightbox,
-  hasOwnLightbox,
-  LightboxComponent,
-  itemBindings,
-  isHidden,
-} = useAlbumLightbox(photos, props)
+const { hasLightbox, hasOwnLightbox, LightboxComponent, itemBindings, isHidden } = useAlbumLightbox(
+  photos,
+  props,
+)
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {

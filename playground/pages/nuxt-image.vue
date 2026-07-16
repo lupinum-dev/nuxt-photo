@@ -4,10 +4,9 @@
       <p class="hero__eyebrow">@nuxt/image Integration</p>
       <h1 class="hero__title">First-class NuxtImage support.</h1>
       <p class="hero__lede">
-        Set <code>nuxtPhoto.image.provider = 'nuxt-image'</code> and nuxt-photo
-        routes all images through Nuxt Image's optimization pipeline. Thumbnails
-        get responsive <code>srcset</code>, lightbox slides get full-viewport
-        <code>srcset</code>, and no adapter prop is needed.
+        Set <code>nuxtPhoto.image.provider = 'nuxt-image'</code> and nuxt-photo routes all images
+        through Nuxt Image's optimization pipeline. Thumbnails get responsive <code>srcset</code>,
+        lightbox slides get full-viewport <code>srcset</code>, and no adapter prop is needed.
       </p>
     </header>
 
@@ -29,9 +28,8 @@
     <section class="section">
       <h2 class="section__title">Layer 1 — Album with lightbox</h2>
       <p class="section__desc">
-        <code>&lt;PhotoAlbum&gt;</code> handles layout + lightbox. Every
-        thumbnail and slide is served through the configured
-        <code>@nuxt/image</code> provider.
+        <code>&lt;PhotoAlbum&gt;</code> handles layout + lightbox. Every thumbnail and slide is
+        served through the configured <code>@nuxt/image</code> provider.
       </p>
       <div class="gallery-wrap">
         <PhotoAlbum
@@ -47,9 +45,8 @@
     <section class="section">
       <h2 class="section__title">Layer 2 — Custom thumbnail</h2>
       <p class="section__desc">
-        Override just the thumbnail via <code>#thumbnail</code> slot. Click
-        handling, ref registration, and opacity during transitions are
-        automatic.
+        Override just the thumbnail via <code>#thumbnail</code> slot. Click handling, ref
+        registration, and opacity during transitions are automatic.
       </p>
       <div class="gallery-wrap">
         <PhotoAlbum
@@ -59,15 +56,8 @@
           :default-container-width="1100"
         >
           <template #thumbnail="{ photo }">
-            <div
-              class="custom-thumb"
-              :style="{ aspectRatio: `${photo.width} / ${photo.height}` }"
-            >
-              <PhotoImage
-                :photo="photo"
-                context="thumb"
-                class="custom-thumb__img"
-              />
+            <div class="custom-thumb" :style="{ aspectRatio: `${photo.width} / ${photo.height}` }">
+              <PhotoImage :photo="photo" context="thumb" class="custom-thumb__img" />
               <div class="custom-thumb__overlay">
                 <span class="custom-thumb__caption">{{ photo.caption }}</span>
               </div>

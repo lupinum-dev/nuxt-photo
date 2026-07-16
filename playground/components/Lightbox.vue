@@ -18,9 +18,7 @@
         }"
       >
         <div class="np-lightbox__topbar">
-          <div class="np-lightbox__counter">
-            {{ activeIndex + 1 }} / {{ count }}
-          </div>
+          <div class="np-lightbox__counter">{{ activeIndex + 1 }} / {{ count }}</div>
 
           <div class="np-lightbox__actions">
             <button
@@ -59,10 +57,7 @@
       </LightboxControls>
 
       <div class="np-lightbox__stage">
-        <LightboxViewport
-          v-slot="{ photos, viewportRef }"
-          class="np-lightbox__media"
-        >
+        <LightboxViewport v-slot="{ photos, viewportRef }" class="np-lightbox__media">
           <div class="np-lightbox__viewport" :ref="viewportRef">
             <div class="np-lightbox__container">
               <LightboxSlide

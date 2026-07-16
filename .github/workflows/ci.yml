@@ -1,0 +1,171 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: Compatibility (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.18.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          run-install: false
+          cache: false
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Verify runtime compatibility
+        run: vp run test:compat
+
+  verify:
+    name: Verify
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+        with:
+          node-version-file: .node-version
+          run-install: false
+          cache: false
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Install browser runtimes
+        run: vp exec playwright install --with-deps chromium firefox webkit
+
+      - name: Run the complete pull-request gate
+        run: vp run verify
+
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: playwright-pr-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  release-candidate:
+    name: Release candidate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Vite+
+        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+        with:
+          node-version-file: .node-version
+          run-install: false
+          cache: false
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Install browser runtimes
+        run: vp exec playwright install --with-deps chromium firefox webkit
+
+      - name: Build and certify the exact release candidate
+        run: vp run release:verify
+
+      - name: Revalidate retained artifact metadata
+        run: >-
+          node scripts/verify-release-artifact.mjs .release
+          --expected-sha "${{ github.sha }}"
+          --publishable
+
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: playwright-main-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload exact release candidate
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-candidate
+          path: |
+            .release/*.tgz
+            .release/release-artifact.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+
+  pr-gate:
+    name: PR gate
+    if: always() && github.event_name == 'pull_request'
+    needs:
+      - compatibility
+      - verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Authorize pull request
+        env:
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          test "$COMPATIBILITY_RESULT" = "success"
+          test "$VERIFY_RESULT" = "success"
+
+  main-healthy:
+    name: Main healthy
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs:
+      - compatibility
+      - release-candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Authorize main
+        env:
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          RELEASE_CANDIDATE_RESULT: ${{ needs.release-candidate.result }}
+        run: |
+          test "$COMPATIBILITY_RESULT" = "success"
+          test "$RELEASE_CANDIDATE_RESULT" = "success"

@@ -1,8 +1,6 @@
 // ─── Item types ───
 
-export interface PhotoItem<
-  TMeta extends object = Readonly<Record<string, unknown>>,
-> {
+export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly id: string
   readonly src: string
   readonly thumbSrc?: string
@@ -131,10 +129,7 @@ export type MasonryAlbumLayout = {
  * @example
  * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
  */
-export type AlbumLayout =
-  | RowsAlbumLayout
-  | ColumnsAlbumLayout
-  | MasonryAlbumLayout
+export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
 
 // ─── Carousel ───
 
@@ -167,10 +162,7 @@ export type ImageSource = {
  */
 export type ImageContext = 'thumb' | 'slide'
 
-export type ImageAdapter = (
-  photo: PhotoItem,
-  context: ImageContext,
-) => ImageSource
+export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
 
 // ─── Responsive parameters ───
 
@@ -189,9 +181,7 @@ export type ImageAdapter = (
  * // Breakpoint map via responsive() helper — declarative shorthand
  * :spacing="responsive({ 0: 4, 600: 8, 900: 12 })"
  */
-export type ResponsiveParameter<T = number> =
-  | T
-  | ((containerWidth: number) => T)
+export type ResponsiveParameter<T = number> = T | ((containerWidth: number) => T)
 
 const responsiveBreakpointsKey = Symbol('nuxt-photo:responsive-breakpoints')
 
@@ -212,9 +202,7 @@ export function resolveResponsiveParameter<T>(
     throw new RangeError('[nuxt-photo] container width must be finite')
   }
   if (value === undefined) return fallback
-  return typeof value === 'function'
-    ? (value as (w: number) => T)(containerWidth)
-    : value
+  return typeof value === 'function' ? (value as (w: number) => T)(containerWidth) : value
 }
 
 /** Read breakpoint metadata from a `responsive()` resolver when present. */
@@ -224,9 +212,7 @@ export function getResponsiveBreakpoints<T>(
   if (typeof value !== 'function') return undefined
 
   const breakpoints = (value as ResponsiveResolver<T>)[responsiveBreakpointsKey]
-  return Array.isArray(breakpoints) && breakpoints.length > 0
-    ? breakpoints
-    : undefined
+  return Array.isArray(breakpoints) && breakpoints.length > 0 ? breakpoints : undefined
 }
 
 /** Merge breakpoint metadata from several responsive parameters into one list. */
@@ -267,22 +253,16 @@ export function mergeResponsiveBreakpoints(
  *   :spacing="responsive({ 0: 4, 768: 8, 1200: 12 })"
  * />
  */
-export function responsive<T>(
-  breakpoints: Record<number, T>,
-): ResponsiveResolver<T> {
+export function responsive<T>(breakpoints: Record<number, T>): ResponsiveResolver<T> {
   const sorted = Object.entries(breakpoints)
     .map(([k, v]) => [Number(k), v] as [number, T])
     .sort((a, b) => b[0] - a[0])
 
   if (sorted.length === 0) {
-    throw new Error(
-      '[nuxt-photo] responsive() requires at least one breakpoint',
-    )
+    throw new Error('[nuxt-photo] responsive() requires at least one breakpoint')
   }
 
-  const invalidBreakpoint = sorted.find(
-    ([minWidth]) => !Number.isFinite(minWidth) || minWidth < 0,
-  )
+  const invalidBreakpoint = sorted.find(([minWidth]) => !Number.isFinite(minWidth) || minWidth < 0)
   if (invalidBreakpoint) {
     throw new RangeError(
       `[nuxt-photo] responsive() breakpoint "${String(invalidBreakpoint[0])}" must be a finite, non-negative number`,
@@ -291,9 +271,7 @@ export function responsive<T>(
 
   const resolver = ((containerWidth: number) => {
     if (!Number.isFinite(containerWidth)) {
-      throw new RangeError(
-        '[nuxt-photo] responsive() container width must be finite',
-      )
+      throw new RangeError('[nuxt-photo] responsive() container width must be finite')
     }
     for (const [minWidth, value] of sorted) {
       if (containerWidth >= minWidth) return value

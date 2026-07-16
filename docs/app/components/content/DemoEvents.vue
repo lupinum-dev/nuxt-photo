@@ -9,7 +9,5 @@ defineProps<{ events: readonly string[] }>()
       >{{ event }}
     </li>
   </ol>
-  <p v-else class="demo-events__empty">
-    Interact with the preview to record events.
-  </p>
+  <p v-else class="demo-events__empty">Interact with the preview to record events.</p>
 </template>

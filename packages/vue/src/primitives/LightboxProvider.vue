@@ -6,11 +6,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type {
-  ImageAdapter,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../core/index'
+import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../core/index'
 import { useLightboxProvider } from '../composables/useLightboxProvider'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 

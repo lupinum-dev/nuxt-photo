@@ -1,9 +1,6 @@
 <template>
   <div :ref="ctx.setCaptionRef" data-np-motion="caption" v-bind="$attrs">
-    <slot
-      :photo="ctx.activePhoto.value"
-      :active-index="ctx.activeIndex.value"
-    />
+    <slot :photo="ctx.activePhoto.value" :active-index="ctx.activeIndex.value" />
   </div>
 </template>
 

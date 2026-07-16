@@ -15,8 +15,7 @@ export function isUsableRect(
   if (rect.width < 24 || rect.height < 24) return false
   if (rect.bottom < 0 || rect.right < 0) return false
   if (typeof window !== 'undefined') {
-    if (rect.top > window.innerHeight || rect.left > window.innerWidth)
-      return false
+    if (rect.top > window.innerHeight || rect.left > window.innerWidth) return false
   }
   return true
 }

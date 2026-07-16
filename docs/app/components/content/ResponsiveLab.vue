@@ -8,15 +8,9 @@ const width = ref(defaults.width)
 const snap = ref(defaults.snap)
 const columnsResolver = responsive({ 0: 2, 560: 3, 900: 4 })
 const spacingResolver = responsive({ 0: 4, 560: 8, 900: 12 })
-const columns = computed(() =>
-  resolveResponsiveParameter(columnsResolver, width.value, 3),
-)
-const spacing = computed(() =>
-  resolveResponsiveParameter(spacingResolver, width.value, 8),
-)
-const activeBreakpoint = computed(() =>
-  width.value >= 900 ? 900 : width.value >= 560 ? 560 : 0,
-)
+const columns = computed(() => resolveResponsiveParameter(columnsResolver, width.value, 3))
+const spacing = computed(() => resolveResponsiveParameter(spacingResolver, width.value, 8))
+const activeBreakpoint = computed(() => (width.value >= 900 ? 900 : width.value >= 560 ? 560 : 0))
 const code = `<PhotoAlbum
   :photos="photos"
   :layout="{

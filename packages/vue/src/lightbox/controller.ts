@@ -1,12 +1,7 @@
 import { computed } from 'vue'
-import type {
-  LightboxController,
-  InternalLightboxContext,
-} from '../provide/keys'
+import type { LightboxController, InternalLightboxContext } from '../provide/keys'
 
-export function createLightboxController(
-  context: InternalLightboxContext,
-): LightboxController {
+export function createLightboxController(context: InternalLightboxContext): LightboxController {
   async function openById(id: string) {
     const index = context.photos.value.findIndex((photo) => photo.id === id)
     if (index < 0) {

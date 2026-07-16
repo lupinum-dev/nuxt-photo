@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 const addComponent = vi.fn()
 const addImports = vi.fn()
@@ -64,7 +64,7 @@ describe('nuxt-photo module', () => {
 
   it('declares Nuxt compatibility through module metadata', () => {
     expect(nuxtPhotoModule.meta.compatibility).toEqual({
-      nuxt: '^4.0.0',
+      nuxt: '^4.4.8',
     })
   })
 
@@ -186,11 +186,7 @@ describe('nuxt-photo module', () => {
   })
 
   it.each([
-    [
-      'css',
-      { css: 'everything' },
-      /`nuxtPhoto\.css` must be "none", "structure", or "all"/,
-    ],
+    ['css', { css: 'everything' }, /`nuxtPhoto\.css` must be "none", "structure", or "all"/],
     [
       'image provider',
       { image: { provider: 'cloud' } },
@@ -241,26 +237,14 @@ describe('nuxt-photo module', () => {
       { components: null },
       /`nuxtPhoto\.components` must be a boolean or object/,
     ],
-    [
-      'null image',
-      { image: null },
-      /`nuxtPhoto\.image` must be false or an object/,
-    ],
+    ['null image', { image: null }, /`nuxtPhoto\.image` must be false or an object/],
     [
       'array auto imports',
       { autoImports: [] },
       /`nuxtPhoto\.autoImports` must be a boolean or object/,
     ],
-    [
-      'array components',
-      { components: [] },
-      /`nuxtPhoto\.components` must be a boolean or object/,
-    ],
-    [
-      'array image',
-      { image: [] },
-      /`nuxtPhoto\.image` must be false or an object/,
-    ],
+    ['array components', { components: [] }, /`nuxtPhoto\.components` must be a boolean or object/],
+    ['array image', { image: [] }, /`nuxtPhoto\.image` must be false or an object/],
     [
       'array thumb options',
       { image: { provider: 'native', thumb: [] } },
@@ -271,11 +255,7 @@ describe('nuxt-photo module', () => {
       { image: { provider: 'native', slide: [] } },
       /`nuxtPhoto\.image\.slide` must be an object/,
     ],
-    [
-      'array lightbox',
-      { lightbox: [] },
-      /`nuxtPhoto\.lightbox` must be an object/,
-    ],
+    ['array lightbox', { lightbox: [] }, /`nuxtPhoto\.lightbox` must be an object/],
     ['unknown root option', { csss: 'all' }, /Unknown `nuxtPhoto\.csss`/],
     [
       'unknown component option',
@@ -287,26 +267,23 @@ describe('nuxt-photo module', () => {
       { image: { provider: 'native', slied: {} } },
       /Unknown `nuxtPhoto\.image\.slied`/,
     ],
-  ])(
-    'validates invalid %s config before setup side effects',
-    (_name, config, message) => {
-      const nuxt = createNuxt()
+  ])('validates invalid %s config before setup side effects', (_name, config, message) => {
+    const nuxt = createNuxt()
 
-      expect(() =>
-        nuxtPhotoModule.setup(
-          {
-            ...nuxtPhotoModule.defaults,
-            ...(config as any),
-          },
-          nuxt,
-        ),
-      ).toThrow(message)
+    expect(() =>
+      nuxtPhotoModule.setup(
+        {
+          ...nuxtPhotoModule.defaults,
+          ...(config as any),
+        },
+        nuxt,
+      ),
+    ).toThrow(message)
 
-      expect(addComponent).not.toHaveBeenCalled()
-      expect(addImports).not.toHaveBeenCalled()
-      expect(addPlugin).not.toHaveBeenCalled()
-    },
-  )
+    expect(addComponent).not.toHaveBeenCalled()
+    expect(addImports).not.toHaveBeenCalled()
+    expect(addPlugin).not.toHaveBeenCalled()
+  })
 
   it('injects structure-only CSS by default (no theme)', () => {
     const nuxt = createNuxt()
@@ -315,16 +292,10 @@ describe('nuxt-photo module', () => {
     nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/lightbox-structure\.css$/,
-      ),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/lightbox-structure\.css$/),
       expect.stringMatching(/packages\/vue\/dist\/styles\/album\.css$/),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/photo-structure\.css$/,
-      ),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/carousel-structure\.css$/,
-      ),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/photo-structure\.css$/),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/carousel-structure\.css$/),
     ])
   })
 
@@ -334,23 +305,13 @@ describe('nuxt-photo module', () => {
     nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css: 'all' }, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/lightbox-structure\.css$/,
-      ),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/lightbox-structure\.css$/),
       expect.stringMatching(/packages\/vue\/dist\/styles\/album\.css$/),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/photo-structure\.css$/,
-      ),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/carousel-structure\.css$/,
-      ),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/lightbox-theme\.css$/,
-      ),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/photo-structure\.css$/),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/carousel-structure\.css$/),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/lightbox-theme\.css$/),
       expect.stringMatching(/packages\/vue\/dist\/styles\/photo\.css$/),
-      expect.stringMatching(
-        /packages\/vue\/dist\/styles\/carousel-theme\.css$/,
-      ),
+      expect.stringMatching(/packages\/vue\/dist\/styles\/carousel-theme\.css$/),
     ])
   })
 
@@ -365,9 +326,7 @@ describe('nuxt-photo module', () => {
       expect.stringMatching(/packages\/nuxt\/?$/),
       expect.stringMatching(/packages\/vue\/?$/),
     ])
-    expect(nuxt.options.vite.optimizeDeps.include).toEqual([
-      'existing-dependency',
-    ])
+    expect(nuxt.options.vite.optimizeDeps.include).toEqual(['existing-dependency'])
   })
 
   it('skips component registration when disabled', () => {
@@ -392,17 +351,13 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Photo',
-        filePath: expect.stringMatching(
-          /packages\/vue\/dist\/components\/Photo\.vue$/,
-        ),
+        filePath: expect.stringMatching(/packages\/vue\/dist\/components\/Photo\.vue$/),
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoAlbum',
-        filePath: expect.stringMatching(
-          /packages\/vue\/dist\/components\/PhotoAlbum\.vue$/,
-        ),
+        filePath: expect.stringMatching(/packages\/vue\/dist\/components\/PhotoAlbum\.vue$/),
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(
@@ -415,9 +370,7 @@ describe('nuxt-photo module', () => {
         name: 'LightboxProvider',
       }),
     )
-    expect(addComponent).not.toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Lightbox' }),
-    )
+    expect(addComponent).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'Lightbox' }))
   })
 
   it('registers primitives only when explicitly enabled', () => {
@@ -434,17 +387,13 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'LightboxRoot',
-        filePath: expect.stringMatching(
-          /packages\/vue\/dist\/primitives\/LightboxRoot\.vue$/,
-        ),
+        filePath: expect.stringMatching(/packages\/vue\/dist\/primitives\/LightboxRoot\.vue$/),
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoImage',
-        filePath: expect.stringMatching(
-          /packages\/vue\/dist\/primitives\/PhotoImage\.vue$/,
-        ),
+        filePath: expect.stringMatching(/packages\/vue\/dist\/primitives\/PhotoImage\.vue$/),
       }),
     )
   })
@@ -463,9 +412,7 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'NpPhoto',
-        filePath: expect.stringMatching(
-          /packages\/vue\/dist\/components\/Photo\.vue$/,
-        ),
+        filePath: expect.stringMatching(/packages\/vue\/dist\/components\/Photo\.vue$/),
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(

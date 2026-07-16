@@ -5,10 +5,7 @@ import { round } from '../utils/math'
  * Default native image adapter — uses photo src/thumbSrc directly.
  * Returns the same singleton instance on every call.
  */
-const _nativeAdapter: ImageAdapter = (
-  photo: PhotoItem,
-  context,
-): ImageSource => {
+const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource => {
   if (context === 'thumb' && photo.thumbSrc) {
     return {
       src: photo.thumbSrc,
@@ -63,9 +60,7 @@ export function computePhotoSizes(
 
   if (!responsiveSizes.sizes?.length) return defaultSize
 
-  const parts = responsiveSizes.sizes.map(
-    ({ viewport, size }) => `${viewport} ${size}`,
-  )
+  const parts = responsiveSizes.sizes.map(({ viewport, size }) => `${viewport} ${size}`)
   parts.push(defaultSize)
   return parts.join(', ')
 }

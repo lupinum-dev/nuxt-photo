@@ -1,14 +1,10 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
 import type { ImageContext, PhotoItem } from '../../src/core/types'
-import {
-  flushUi,
-  installBrowserStubs,
-  mountComponent,
-} from '../support/runtime'
+import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 describe('Photo', () => {
   beforeEach(installBrowserStubs)
@@ -36,9 +32,7 @@ describe('Photo', () => {
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp(
-      defineComponent(
-        () => () => h(Photo, { photo, lightbox: lightbox.value }),
-      ),
+      defineComponent(() => () => h(Photo, { photo, lightbox: lightbox.value })),
     )
     app.mount(host)
     lightbox.value = true

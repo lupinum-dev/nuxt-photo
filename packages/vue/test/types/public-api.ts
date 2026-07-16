@@ -75,9 +75,7 @@ void groupInstance.openById('one')
 // @ts-expect-error Thumbnail-source plumbing is internal to grouped recipes.
 void groupInstance.openById('one', document.body)
 
-type GroupDefaultSlot = NonNullable<
-  InstanceType<typeof PhotoGroup>['$slots']['default']
->
+type GroupDefaultSlot = NonNullable<InstanceType<typeof PhotoGroup>['$slots']['default']>
 declare const groupSlot: Parameters<GroupDefaultSlot>[0]
 // @ts-expect-error Group slot collections are readonly.
 groupSlot.photos.push(readonlyPhotos[0])

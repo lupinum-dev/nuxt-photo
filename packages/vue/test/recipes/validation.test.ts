@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import { PhotoValidationError } from '../../src/core/photo/normalize'
@@ -28,11 +28,7 @@ describe('recipe validation', () => {
     const onInvalidPhotos = vi.fn()
     const mounted = await mountComponent(PhotoAlbum, {
       props: {
-        photos: [
-          makePhoto({ id: 'valid' }),
-          null,
-          { id: 'bad', src: '', width: 10, height: 10 },
-        ],
+        photos: [makePhoto({ id: 'valid' }), null, { id: 'bad', src: '', width: 10, height: 10 }],
         validation: 'drop',
         onInvalidPhotos,
         lightbox: false,

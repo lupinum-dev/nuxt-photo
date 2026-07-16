@@ -1,10 +1,5 @@
 <template>
-  <LightboxRoot
-    class="np-lightbox"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Photo viewer"
-  >
+  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">
@@ -24,9 +19,7 @@
       >
         <div class="np-lightbox__topbar">
           <slot name="counter" :active-index="activeIndex" :count="count">
-            <div class="np-lightbox__counter">
-              {{ activeIndex + 1 }} / {{ count }}
-            </div>
+            <div class="np-lightbox__counter">{{ activeIndex + 1 }} / {{ count }}</div>
           </slot>
 
           <div class="np-lightbox__actions">
@@ -98,19 +91,12 @@
               </LightboxSlide>
             </div>
           </div>
-          <div
-            v-if="imageLoadFailed"
-            class="np-lightbox__fallback"
-            role="status"
-          >
+          <div v-if="imageLoadFailed" class="np-lightbox__fallback" role="status">
             Image could not be loaded.
           </div>
         </LightboxViewport>
 
-        <LightboxCaption
-          class="np-lightbox__caption"
-          v-slot="{ photo, activeIndex }"
-        >
+        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
           <slot name="caption" :photo="photo" :index="activeIndex">
             <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
             <p v-if="photo?.description">{{ photo.description }}</p>

@@ -17,14 +17,8 @@ const codeBlocks = computed(() =>
 
 <template>
   <ProseCodeGroup sync="pm">
-    <ProsePre
-      v-for="codeBlock in codeBlocks"
-      :key="codeBlock.filename"
-      v-bind="codeBlock"
-    >
-      <span style="color: var(--ui-primary)">{{
-        codeBlock.code.split(' ')[0]
-      }}</span>
+    <ProsePre v-for="codeBlock in codeBlocks" :key="codeBlock.filename" v-bind="codeBlock">
+      <span style="color: var(--ui-primary)">{{ codeBlock.code.split(' ')[0] }}</span>
       <span style="color: var(--ui-text)"
         >&nbsp;{{ codeBlock.code.split(' ').slice(1).join(' ') }}</span
       >

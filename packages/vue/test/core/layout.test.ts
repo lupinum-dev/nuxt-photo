@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
   computeBreakpointStyles,
   computeColumnsLayout,
@@ -9,24 +9,16 @@ import {
 } from '../../src/core/index'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function totalGroupHeight(
-  group: { entries: Array<{ height: number }> },
-  spacing: number,
-) {
+function totalGroupHeight(group: { entries: Array<{ height: number }> }, spacing: number) {
   return (
     group.entries.reduce((sum, entry) => sum + entry.height, 0) +
     spacing * Math.max(0, group.entries.length - 1)
   )
 }
 
-function rowsBadness(
-  groups: ReturnType<typeof computeRowsLayout>,
-  targetRowHeight: number,
-) {
+function rowsBadness(groups: ReturnType<typeof computeRowsLayout>, targetRowHeight: number) {
   return groups.reduce(
-    (sum, group) =>
-      sum +
-      (group.entries[0]!.height - targetRowHeight) ** 2 * group.entries.length,
+    (sum, group) => sum + (group.entries[0]!.height - targetRowHeight) ** 2 * group.entries.length,
     0,
   )
 }
@@ -47,10 +39,7 @@ function greedyRows(
 
     while (end <= photos.length) {
       const row = photos.slice(start, end)
-      const ratioSum = row.reduce(
-        (sum, photo) => sum + photo.width / photo.height,
-        0,
-      )
+      const ratioSum = row.reduce((sum, photo) => sum + photo.width / photo.height, 0)
       const height = (containerWidth - spacing * (row.length - 1)) / ratioSum
       const delta = Math.abs(height - targetRowHeight)
       if (delta <= bestDelta) {
@@ -63,10 +52,7 @@ function greedyRows(
     }
 
     const row = photos.slice(start, bestEnd)
-    const ratioSum = row.reduce(
-      (sum, photo) => sum + photo.width / photo.height,
-      0,
-    )
+    const ratioSum = row.reduce((sum, photo) => sum + photo.width / photo.height, 0)
     const height = (containerWidth - spacing * (row.length - 1)) / ratioSum
     groups.push({
       type: 'row',
@@ -88,8 +74,7 @@ function greedyRows(
 
 function parseItemWidths(css: string) {
   const widths = new Map<number, { gaps: number; divisor: number }>()
-  const pattern =
-    /\.np-item-(\d+)\{[^}]*width:calc\(\(100% - ([\d.]+)px\) \/ ([\d.]+)\)/g
+  const pattern = /\.np-item-(\d+)\{[^}]*width:calc\(\(100% - ([\d.]+)px\) \/ ([\d.]+)\)/g
   for (const match of css.matchAll(pattern)) {
     widths.set(Number(match[1]), {
       gaps: Number(match[2]),
@@ -118,9 +103,7 @@ describe('layout algorithms', () => {
         row.entries.reduce((sum, entry) => sum + entry.width, 0) +
         spacing * (row.entries.length - 1)
       expect(totalWidth).toBeCloseTo(containerWidth, 4)
-      expect(
-        row.entries.every((entry) => entry.width > 0 && entry.height > 0),
-      ).toBe(true)
+      expect(row.entries.every((entry) => entry.width > 0 && entry.height > 0)).toBe(true)
     }
   })
 
@@ -222,11 +205,9 @@ describe('layout algorithms', () => {
     expect(columns).toHaveLength(3)
 
     for (const column of columns) {
-      expect(
-        column.entries.every((entry) => entry.width > 0 && entry.height > 0),
-      ).toBe(true)
+      expect(column.entries.every((entry) => entry.width > 0 && entry.height > 0)).toBe(true)
       expect(column.entries.map((entry) => entry.index)).toEqual(
-        [...column.entries.map((entry) => entry.index)].sort((a, b) => a - b),
+        column.entries.map((entry) => entry.index).sort((a, b) => a - b),
       )
     }
 
@@ -270,9 +251,7 @@ describe('layout algorithms', () => {
     })
 
     expect(columns).toHaveLength(2)
-    expect(
-      columns.map((column) => column.entries.map((entry) => entry.index)),
-    ).toEqual([[0], [1]])
+    expect(columns.map((column) => column.entries.map((entry) => entry.index))).toEqual([[0], [1]])
   })
 
   it('rejects invalid photo dimensions instead of inventing fallback geometry', () => {
@@ -333,17 +312,13 @@ describe('layout algorithms', () => {
     })
 
     for (const column of masonry) {
-      expect(
-        column.entries.every((entry) => entry.width > 0 && entry.height > 0),
-      ).toBe(true)
+      expect(column.entries.every((entry) => entry.width > 0 && entry.height > 0)).toBe(true)
       expect(column.entries.map((entry) => entry.index)).toEqual(
-        [...column.entries.map((entry) => entry.index)].sort((a, b) => a - b),
+        column.entries.map((entry) => entry.index).sort((a, b) => a - b),
       )
     }
 
-    expect(
-      masonry.map((column) => column.entries.map((entry) => entry.index)),
-    ).toEqual([
+    expect(masonry.map((column) => column.entries.map((entry) => entry.index))).toEqual([
       [0, 3, 6, 9, 11],
       [1, 5, 8, 10],
       [2, 4, 7],

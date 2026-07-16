@@ -39,11 +39,8 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
     if (!config.isOpen.value || config.animating.value) return
 
     const now = performance.now()
-    const isTrackpad =
-      Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
-    const throttleMs = isTrackpad
-      ? TRACKPAD_WHEEL_THROTTLE_MS
-      : MOUSE_WHEEL_THROTTLE_MS
+    const isTrackpad = Math.abs(event.deltaY) < 100 && Math.abs(event.deltaX) < 100
+    const throttleMs = isTrackpad ? TRACKPAD_WHEEL_THROTTLE_MS : MOUSE_WHEEL_THROTTLE_MS
     if (now - lastWheelTime < throttleMs) {
       event.preventDefault()
       return
@@ -68,17 +65,13 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
       return
     }
 
-    const direction =
-      event.key === 'ArrowRight' ? -1 : event.key === 'ArrowLeft' ? 1 : 0
+    const direction = event.key === 'ArrowRight' ? -1 : event.key === 'ArrowLeft' ? 1 : 0
     if (!direction) return
 
     if (config.isZoomedIn.value) {
       const pan = config.getCurrentPan()
       config.setCurrentPanImmediate(
-        config.clampPan(
-          { x: pan.x + direction * 80, y: pan.y },
-          config.getCurrentScale(),
-        ),
+        config.clampPan({ x: pan.x + direction * 80, y: pan.y }, config.getCurrentScale()),
       )
       return
     }

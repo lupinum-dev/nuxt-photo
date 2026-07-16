@@ -28,14 +28,10 @@ test('thumbnail click syncs to main carousel', async ({ page }) => {
 
   const carousel = page.locator('.np-carousel').first()
   await carousel.locator('.np-carousel__thumb').nth(3).click()
-  await expect(carousel.locator('.np-carousel__counter')).toContainText(
-    '4 / 12',
-  )
+  await expect(carousel.locator('.np-carousel__counter')).toContainText('4 / 12')
 })
 
-test('toggling lightbox enables slide click to open dialog', async ({
-  page,
-}) => {
+test('toggling lightbox enables slide click to open dialog', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page, '/carousel')
 
@@ -50,9 +46,7 @@ test('toggling lightbox enables slide click to open dialog', async ({
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
-test('hiding arrows via control removes them from the DOM', async ({
-  page,
-}) => {
+test('hiding arrows via control removes them from the DOM', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page, '/carousel')
 

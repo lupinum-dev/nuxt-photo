@@ -40,8 +40,7 @@ const props = withDefaults(
 const injectedAdapter = inject(ImageAdapterKey, null)
 
 const resolveImage = computed(
-  (): ImageAdapter =>
-    props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter(),
+  (): ImageAdapter => props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter(),
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))

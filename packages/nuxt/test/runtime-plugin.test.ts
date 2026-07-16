@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '@nuxt-photo/vue'
 import {
   createNuxtImageAdapter,
@@ -12,13 +12,11 @@ function createImageMock() {
       `/_ipx/w_${options.width},q_${options.quality}${src}`,
   ) as NuxtImageFunction & ReturnType<typeof vi.fn>
 
-  image.getSizes = vi.fn(
-    (src: string, options: { sizes: string; quality: number }) => ({
-      src: `/_ipx/thumb,q_${options.quality}${src}`,
-      srcset: `/_ipx/thumb-400,q_${options.quality}${src} 400w`,
-      sizes: options.sizes,
-    }),
-  )
+  image.getSizes = vi.fn((src: string, options: { sizes: string; quality: number }) => ({
+    src: `/_ipx/thumb,q_${options.quality}${src}`,
+    srcset: `/_ipx/thumb-400,q_${options.quality}${src} 400w`,
+    sizes: options.sizes,
+  }))
 
   return image
 }

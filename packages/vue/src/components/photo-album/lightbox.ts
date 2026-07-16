@@ -9,11 +9,7 @@ import {
 } from 'vue'
 import { useLightboxProvider } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
-import {
-  type ImageAdapter,
-  type LightboxTransitionOption,
-  type PhotoItem,
-} from '../../core/index'
+import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
@@ -26,10 +22,7 @@ type AlbumLightboxProps = {
   imageAdapter?: ImageAdapter
 }
 
-export function useAlbumLightbox(
-  photos: ComputedRef<PhotoItem[]>,
-  props: AlbumLightboxProps,
-) {
+export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumLightboxProps) {
   const parentGroup = inject(PhotoGroupContextKey, null)
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
@@ -80,17 +73,11 @@ export function useAlbumLightbox(
 
   function itemBindings(photo: PhotoItem, index: number) {
     const base = { ref: setItemRef(index) }
-    if (
-      !hasLightbox.value ||
-      (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))
-    )
-      return base
+    if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
 
     return {
       ...base,
-      ...createPhotoTriggerBindings(photo, index, () =>
-        activatePhoto(photo, index),
-      ),
+      ...createPhotoTriggerBindings(photo, index, () => activatePhoto(photo, index)),
     }
   }
 

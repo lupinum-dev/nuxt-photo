@@ -1,14 +1,11 @@
 // @vitest-environment jsdom
 
 import { computed, createApp, defineComponent, h, nextTick, ref } from 'vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, useLightboxProvider } from '../src/composables'
-import {
-  getMountedSlideIndices,
-  useLightboxRuntimeState,
-} from '../src/lightbox/runtime'
+import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
   useLightboxWindowLifecycle,
@@ -34,14 +31,9 @@ describe('lightbox media window', () => {
     { active: 4, count: 5, expected: [0, 3, 4] },
     { active: 0, count: 1, expected: [0] },
     { active: 1, count: 2, expected: [0, 1] },
-  ])(
-    'mounts modular neighbors for $active of $count',
-    ({ active, count, expected }) => {
-      expect([...getMountedSlideIndices(active, count)].sort()).toEqual(
-        expected,
-      )
-    },
-  )
+  ])('mounts modular neighbors for $active of $count', ({ active, count, expected }) => {
+    expect([...getMountedSlideIndices(active, count)].sort((a, b) => a - b)).toEqual(expected)
+  })
 })
 
 describe('lightbox controller surface', () => {
@@ -115,9 +107,7 @@ describe('lightbox controller surface', () => {
     await flushWatchers()
 
     await expect(providerApi!.open(-1)).rejects.toThrow(RangeError)
-    await expect(providerApi!.openById('missing-controller')).rejects.toThrow(
-      RangeError,
-    )
+    await expect(providerApi!.openById('missing-controller')).rejects.toThrow(RangeError)
     await flushWatchers()
 
     expect(providerApi!.isOpen.value).toBe(false)
@@ -145,9 +135,7 @@ describe('lightbox lifecycle invariants', () => {
   })
 
   it('honors a close intent issued while open is still reconciling', async () => {
-    const photos = [
-      makePhoto({ id: 'delayed-close', src: '/delayed-close.jpg' }),
-    ]
+    const photos = [makePhoto({ id: 'delayed-close', src: '/delayed-close.jpg' })]
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
 
     const App = defineComponent({
@@ -253,10 +241,7 @@ describe('lightbox lifecycle invariants', () => {
         }
       },
     )
-    const photos = [
-      makePhoto({ id: 'reopen-a' }),
-      makePhoto({ id: 'reopen-b' }),
-    ]
+    const photos = [makePhoto({ id: 'reopen-a' }), makePhoto({ id: 'reopen-b' })]
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const host = document.createElement('div')
     document.body.appendChild(host)
@@ -367,9 +352,7 @@ describe('lightbox lifecycle invariants', () => {
       },
     )
 
-    const photos = [
-      makePhoto({ id: 'cleanup-thumb', src: '/cleanup-thumb.jpg' }),
-    ]
+    const photos = [makePhoto({ id: 'cleanup-thumb', src: '/cleanup-thumb.jpg' })]
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
 
     const App = defineComponent({
@@ -478,8 +461,7 @@ describe('lightbox lifecycle invariants', () => {
           'none',
           undefined,
           (photo) => {
-            if (fail)
-              throw new Error('adapter unexpectedly called during close')
+            if (fail) throw new Error('adapter unexpectedly called during close')
             return { src: photo.src }
           },
         )
@@ -517,10 +499,7 @@ describe('lightbox lifecycle invariants', () => {
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(
-          [makePhoto({ id: 'unmount-pending' })],
-          'none',
-        )
+        api = useLightboxRuntimeState([makePhoto({ id: 'unmount-pending' })], 'none')
         return () => null
       },
     })

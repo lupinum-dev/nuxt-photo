@@ -47,21 +47,11 @@ function reset() {
     description="More control also means more markup and accessibility ownership."
     @reset="reset"
   >
-    <PhotoAlbum
-      v-if="layer === 'recipe'"
-      :photos="demoPhotos.slice(0, 6)"
-      layout="rows"
-    />
-    <PhotoAlbum
-      v-else-if="layer === 'slots'"
-      :photos="demoPhotos.slice(0, 6)"
-      layout="rows"
-    >
+    <PhotoAlbum v-if="layer === 'recipe'" :photos="demoPhotos.slice(0, 6)" layout="rows" />
+    <PhotoAlbum v-else-if="layer === 'slots'" :photos="demoPhotos.slice(0, 6)" layout="rows">
       <template #thumbnail="{ photo }"
         ><div class="custom-thumb">
-          <PhotoImage :photo="photo" context="thumb" /><span>{{
-            photo.caption
-          }}</span>
+          <PhotoImage :photo="photo" context="thumb" /><span>{{ photo.caption }}</span>
         </div></template
       >
     </PhotoAlbum>
@@ -93,8 +83,6 @@ function reset() {
       </fieldset>
     </template>
     <template #code><DemoCode :code="snippets[layer]" /></template>
-    <template #state
-      ><DemoState :value="{ layer, libraryOwns: selected.owns }"
-    /></template>
+    <template #state><DemoState :value="{ layer, libraryOwns: selected.owns }" /></template>
   </InteractiveExample>
 </template>

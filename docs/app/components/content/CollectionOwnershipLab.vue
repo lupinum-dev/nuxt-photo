@@ -55,9 +55,7 @@ function reset() {
         <input v-model="reverseCollection" type="checkbox" />
         <span>Reverse the canonical collection</span>
       </label>
-      <p class="docs-control-note">
-        Only the second control changes lightbox navigation.
-      </p>
+      <p class="docs-control-note">Only the second control changes lightbox navigation.</p>
     </template>
     <template #code><DemoCode :code="code" /></template>
     <template #state

@@ -4,6 +4,11 @@ Nuxt module for Nuxt Photo.
 
 Install this package when you want the default Nuxt experience: auto-registered components, auto-imported helpers, and CSS wiring from one module entry.
 
+## Requirements
+
+- Nuxt 4.4.8 or newer within Nuxt 4
+- Node 22.18 or newer within Node 22, or Node 24.11 or newer within Node 24
+
 ## Install
 
 ```bash

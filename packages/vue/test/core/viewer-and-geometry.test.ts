@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
   DEFAULT_MIN_ZOOM,
   clampPanToBounds,
@@ -15,12 +15,18 @@ import { getLightboxFrameArea } from '../../src/lightbox/carousel'
 
 describe('geometry and viewer utilities', () => {
   it('fits desktop photos inside a responsive mat without shrinking the swipe track', () => {
-    expect(
-      getLightboxFrameArea({ left: 0, top: 0, width: 2000, height: 1000 }),
-    ).toEqual({ left: 120, top: 70, width: 1760, height: 860 })
-    expect(
-      getLightboxFrameArea({ left: 0, top: 0, width: 390, height: 844 }),
-    ).toEqual({ left: 12, top: 24, width: 366, height: 796 })
+    expect(getLightboxFrameArea({ left: 0, top: 0, width: 2000, height: 1000 })).toEqual({
+      left: 120,
+      top: 70,
+      width: 1760,
+      height: 860,
+    })
+    expect(getLightboxFrameArea({ left: 0, top: 0, width: 390, height: 844 })).toEqual({
+      left: 12,
+      top: 24,
+      width: 366,
+      height: 796,
+    })
   })
 
   it('fits rectangles and loops indexes predictably', () => {
@@ -78,14 +84,7 @@ describe('geometry and viewer utilities', () => {
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
     expect(
-      computeTargetPanForZoom(
-        1,
-        2,
-        { x: 120, y: -80 },
-        { x: 240, y: -160 },
-        1,
-        { x: 600, y: 400 },
-      ),
+      computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, { x: 600, y: 400 }),
     ).toEqual({ x: 0, y: 0 })
 
     expect(
@@ -99,29 +98,15 @@ describe('geometry and viewer utilities', () => {
 
 describe('gesture helpers', () => {
   it('classifies idle, slide, close, pan, and edge-slide gestures', () => {
-    expect(
-      classifyGesture(4, 4, 'mouse', false, { x: 0, y: 0 }, { x: 0, y: 0 }),
-    ).toBe('idle')
-    expect(
-      classifyGesture(40, 5, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 }),
-    ).toBe('slide')
-    expect(
-      classifyGesture(6, 40, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 }),
-    ).toBe('close')
-    expect(
-      classifyGesture(15, 12, 'touch', true, { x: 80, y: 40 }, { x: 0, y: 0 }),
-    ).toBe('pan')
-    expect(
-      classifyGesture(24, 2, 'touch', true, { x: 80, y: 40 }, { x: 79, y: 0 }),
-    ).toBe('slide')
+    expect(classifyGesture(4, 4, 'mouse', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('idle')
+    expect(classifyGesture(40, 5, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('slide')
+    expect(classifyGesture(6, 40, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('close')
+    expect(classifyGesture(15, 12, 'touch', true, { x: 80, y: 40 }, { x: 0, y: 0 })).toBe('pan')
+    expect(classifyGesture(24, 2, 'touch', true, { x: 80, y: 40 }, { x: 79, y: 0 })).toBe('slide')
   })
 
   it('detects double taps', () => {
-    expect(
-      isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14),
-    ).toBe(true)
-    expect(
-      isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60),
-    ).toBe(false)
+    expect(isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14)).toBe(true)
+    expect(isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60)).toBe(false)
   })
 })

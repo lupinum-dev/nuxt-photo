@@ -11,14 +11,10 @@ import { readEmblaSnapModel } from '../../integrations/embla/snapModel'
 
 export function validatePhotoCarouselOptions(options: PhotoCarouselOptions) {
   if (options.loop !== undefined && typeof options.loop !== 'boolean') {
-    throw new TypeError(
-      '[nuxt-photo] PhotoCarousel options.loop must be boolean',
-    )
+    throw new TypeError('[nuxt-photo] PhotoCarousel options.loop must be boolean')
   }
   if (options.dragFree !== undefined && typeof options.dragFree !== 'boolean') {
-    throw new TypeError(
-      '[nuxt-photo] PhotoCarousel options.dragFree must be boolean',
-    )
+    throw new TypeError('[nuxt-photo] PhotoCarousel options.dragFree must be boolean')
   }
   if (
     options.slidesToScroll !== undefined &&
@@ -44,9 +40,7 @@ export function validatePhotoCarouselAutoplayOptions(
   }
   for (const field of ['stopOnInteraction', 'stopOnMouseEnter'] as const) {
     if (autoplay[field] !== undefined && typeof autoplay[field] !== 'boolean') {
-      throw new TypeError(
-        `[nuxt-photo] PhotoCarousel autoplay.${field} must be boolean`,
-      )
+      throw new TypeError(`[nuxt-photo] PhotoCarousel autoplay.${field} must be boolean`)
     }
   }
 }
@@ -110,10 +104,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   function syncState(api: EmblaCarouselType, forcedSnap?: number) {
     const model = readEmblaSnapModel(api)
     const maxSnapIndex = Math.max(0, model.slidesBySnap.length - 1)
-    const selectedSnap = Math.min(
-      Math.max(forcedSnap ?? api.selectedSnap(), 0),
-      maxSnapIndex,
-    )
+    const selectedSnap = Math.min(Math.max(forcedSnap ?? api.selectedSnap(), 0), maxSnapIndex)
     const activeSlides = model.slidesBySnap[selectedSnap] ?? []
 
     selectedSnapIndex.value = selectedSnap
@@ -146,8 +137,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       api.on('select', onSelect)
       api.on('reinit', onReinit)
 
-      const autoplay =
-        typeof config.autoplay.value === 'object' ? config.autoplay.value : null
+      const autoplay = typeof config.autoplay.value === 'object' ? config.autoplay.value : null
       const root = api.rootNode()
       const stopOnMouseEnter = autoplay?.stopOnMouseEnter === true
       const stopAutoplay = () => api.plugins().autoplay?.stop()

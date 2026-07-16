@@ -8,9 +8,7 @@ export function requireInjection<T>(
 ): T {
   const context = inject(key, null)
   if (context == null) {
-    throw new Error(
-      `[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`,
-    )
+    throw new Error(`[nuxt-photo] \`${componentName}\` requires ${providerDescription}.`)
   }
 
   return context

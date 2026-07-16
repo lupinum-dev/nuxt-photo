@@ -115,4 +115,5 @@ they are visible in the package output.
 - [Vue package guide](./packages/vue/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Maintainer and release guide](./MAINTAINING.md)
 - [Security policy](./SECURITY.md)

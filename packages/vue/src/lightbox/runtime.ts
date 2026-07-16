@@ -32,18 +32,11 @@ import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
-import {
-  acquireLightboxOwnership,
-  releaseLightboxOwnership,
-} from '../internal/lightboxOwnership'
+import { acquireLightboxOwnership, releaseLightboxOwnership } from '../internal/lightboxOwnership'
 
 export function getMountedSlideIndices(active: number, count: number) {
   if (count <= 0) return new Set<number>()
-  return new Set([
-    (active - 1 + count) % count,
-    active % count,
-    (active + 1) % count,
-  ])
+  return new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
 }
 
 /**
@@ -62,9 +55,7 @@ export function useLightboxRuntimeState(
   imageAdapter?: ImageAdapter,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
-    console.warn(
-      '[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()',
-    )
+    console.warn('[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()')
   }
 
   const photos = computed(() => {
@@ -117,11 +108,7 @@ export function useLightboxRuntimeState(
     () => isInteractionLocked(),
   )
 
-  const panzoom = usePanzoom(
-    carousel.currentPhoto,
-    areaMetrics,
-    resolvedMinZoom,
-  )
+  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, resolvedMinZoom)
 
   const motion = useLightboxMotion(
     carousel.activeIndex,
@@ -233,9 +220,7 @@ export function useLightboxRuntimeState(
   async function open(index = 0) {
     const currentPhotos = photos.value
     if (index < 0 || index >= currentPhotos.length) {
-      throw new RangeError(
-        `[nuxt-photo] No photo found at index ${String(index)}`,
-      )
+      throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
     }
 
     const photo = currentPhotos[index]!
@@ -270,14 +255,12 @@ export function useLightboxRuntimeState(
   }
 
   function next() {
-    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value)
-      return
+    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value) return
     carousel.goToNext()
   }
 
   function prev() {
-    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value)
-      return
+    if (lifecycleStatus.value !== 'open' || motion.transitionInProgress.value) return
     carousel.goToPrev()
   }
 
@@ -327,8 +310,7 @@ export function useLightboxRuntimeState(
     prepareActiveSlide,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
-    getThumbSrc: (photo: PhotoItem) =>
-      resolvedImageAdapter.value(photo, 'thumb').src,
+    getThumbSrc: (photo: PhotoItem) => resolvedImageAdapter.value(photo, 'thumb').src,
     setImageLoadFailed: (failed: boolean, error?: unknown) => {
       activeImageLoadFailed.value = failed
       if (failed) devWarn('Active slide image failed to decode', error)
@@ -423,9 +405,7 @@ export function useLightboxRuntimeState(
     getSlideFrameStyle: carousel.getSlideFrameStyle,
     isSlideMediaMounted: (index: number) => {
       const count = photos.value.length
-      return getMountedSlideIndices(carousel.activeIndex.value, count).has(
-        index,
-      )
+      return getMountedSlideIndices(carousel.activeIndex.value, count).has(index)
     },
   }
 }

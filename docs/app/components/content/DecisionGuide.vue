@@ -28,18 +28,12 @@ const choices = [
     to: '/docs/guides/create-a-custom-thumbnail-layout',
   },
 ]
-const selected = computed(
-  () => choices.find((choice) => choice.id === need.value)!,
-)
+const selected = computed(() => choices.find((choice) => choice.id === need.value)!)
 </script>
 
 <template>
   <div class="decision-guide not-prose">
-    <div
-      class="decision-guide__choices"
-      role="radiogroup"
-      aria-label="Gallery goal"
-    >
+    <div class="decision-guide__choices" role="radiogroup" aria-label="Gallery goal">
       <button
         v-for="choice in choices"
         :key="choice.id"

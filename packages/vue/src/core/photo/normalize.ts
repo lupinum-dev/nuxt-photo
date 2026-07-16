@@ -165,13 +165,7 @@ export function normalizePhotos(
       invalidIndexes.add(index)
     }
 
-    for (const field of [
-      'thumbSrc',
-      'alt',
-      'caption',
-      'description',
-      'srcset',
-    ] as const) {
+    for (const field of ['thumbSrc', 'alt', 'caption', 'description', 'srcset'] as const) {
       const value = rawPhoto[field]
       if (value !== undefined && typeof value !== 'string') {
         issues.push(
@@ -230,12 +224,7 @@ export function normalizePhotos(
   return {
     photos: candidates.filter(
       (photo, index): photo is PhotoItem =>
-        photo !== null &&
-        !(
-          issues.length > 0 &&
-          onInvalid === 'drop' &&
-          invalidIndexes.has(index)
-        ),
+        photo !== null && !(issues.length > 0 && onInvalid === 'drop' && invalidIndexes.has(index)),
     ),
     issues,
   }

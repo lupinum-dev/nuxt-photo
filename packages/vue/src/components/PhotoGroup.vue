@@ -8,10 +8,7 @@ defineOptions({ inheritAttrs: false })
 
 import { computed, inject, provide, shallowRef, type Component } from 'vue'
 import { useLightboxProvider } from '../composables/index'
-import {
-  LightboxComponentKey,
-  type LightboxProviderController,
-} from '../provide/keys'
+import { LightboxComponentKey, type LightboxProviderController } from '../provide/keys'
 import {
   normalizePhotos,
   type ImageAdapter,
@@ -47,24 +44,15 @@ const canonicalPhotos = computed<readonly PhotoItem[]>(
       onInvalid: 'throw',
     }).photos,
 )
-const capabilityBatches = shallowRef(
-  new Map<symbol, readonly PhotoGroupCapability[]>(),
-)
-const capabilities = computed(() =>
-  [...capabilityBatches.value.values()].flat(),
-)
+const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
+const capabilities = computed(() => [...capabilityBatches.value.values()].flat())
 
 function hasPhoto(id: string) {
   return canonicalPhotos.value.some((photo) => photo.id === id)
 }
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(
-  props.lightbox,
-  injectedLightbox,
-  Lightbox,
-  true,
-)
+const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
@@ -86,9 +74,7 @@ const provider = enabled
     })
   : null
 
-function validateCapabilityIds(
-  batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>,
-) {
+function validateCapabilityIds(batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>) {
   const canonicalIds = new Set(canonicalPhotos.value.map((photo) => photo.id))
   for (const batch of batches.values()) {
     for (const entry of batch) {
@@ -101,10 +87,7 @@ function validateCapabilityIds(
   }
 }
 
-function replaceCapabilities(
-  owner: symbol,
-  entries: readonly PhotoGroupCapability[],
-) {
+function replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]) {
   const next = new Map(capabilityBatches.value)
   if (entries.length === 0) next.delete(owner)
   else next.set(owner, [...entries])
@@ -152,9 +135,7 @@ function syncThumbnailRefs() {
 
 async function open(index = 0) {
   if (index < 0 || index >= canonicalPhotos.value.length) {
-    throw new RangeError(
-      `[nuxt-photo] No photo found at index ${String(index)}`,
-    )
+    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
   if (!provider) return
   syncThumbnailRefs()

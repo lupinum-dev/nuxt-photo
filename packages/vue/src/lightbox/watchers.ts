@@ -1,17 +1,9 @@
-import {
-  onBeforeUnmount,
-  onMounted,
-  watch,
-  type ComputedRef,
-  type Ref,
-} from 'vue'
+import { onBeforeUnmount, onMounted, watch, type ComputedRef, type Ref } from 'vue'
 import { isUsableRect, type AreaMetrics, type PhotoItem } from '../core/index'
 import { lockBodyScroll } from '../internal/bodyScroll'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
-export function createKeydownBinding(
-  onKeydown: (event: KeyboardEvent) => void,
-) {
+export function createKeydownBinding(onKeydown: (event: KeyboardEvent) => void) {
   let attached = false
 
   function attach() {

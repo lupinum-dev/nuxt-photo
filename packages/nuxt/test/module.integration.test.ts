@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
 
 const execFileAsync = promisify(execFile)
@@ -24,20 +24,10 @@ describe('nuxt-photo module integration', async () => {
   it('type-checks fixture access to augmented app config', async () => {
     const execOptions = { cwd: packageRoot }
 
+    await execFileAsync('pnpm', ['exec', 'nuxi', 'prepare', fixtureRoot], execOptions)
     await execFileAsync(
       'pnpm',
-      ['exec', 'nuxi', 'prepare', fixtureRoot],
-      execOptions,
-    )
-    await execFileAsync(
-      'pnpm',
-      [
-        'exec',
-        'vue-tsc',
-        '-p',
-        `${fixtureRoot}/.nuxt/tsconfig.app.json`,
-        '--noEmit',
-      ],
+      ['exec', 'vue-tsc', '-p', `${fixtureRoot}/.nuxt/tsconfig.app.json`, '--noEmit'],
       execOptions,
     )
   }, 30_000)

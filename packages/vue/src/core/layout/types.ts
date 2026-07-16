@@ -12,9 +12,7 @@ export function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
       continue
     }
 
-    throw new Error(
-      `Photo "${photo.id}" has invalid dimensions (${photo.width}x${photo.height})`,
-    )
+    throw new Error(`Photo "${photo.id}" has invalid dimensions (${photo.width}x${photo.height})`)
   }
 
   return photos
@@ -25,10 +23,7 @@ export function normalizeColumnCount(columns: number | undefined): number {
   return Math.max(1, Math.floor(columns))
 }
 
-export function normalizeLayoutNumber(
-  value: number | undefined,
-  fallback: number,
-): number {
+export function normalizeLayoutNumber(value: number | undefined, fallback: number): number {
   if (!Number.isFinite(value)) return fallback
   return Math.max(0, value!)
 }

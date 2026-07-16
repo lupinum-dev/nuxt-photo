@@ -8,7 +8,6 @@ dist
 .env.test.local
 .env.production.local
 .DS_Store
-.vscode
 .idea
 .history
 .cursor
@@ -20,3 +19,5 @@ test-results
 .release
 .content
 .data
+coverage
+*.log

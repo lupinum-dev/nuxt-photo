@@ -13,11 +13,7 @@
       class="np-photo__img"
       :class="imgClass"
     />
-    <figcaption
-      v-if="photo.caption"
-      class="np-photo__caption"
-      :class="captionClass"
-    >
+    <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">
       {{ photo.caption }}
     </figcaption>
   </figure>
@@ -98,8 +94,7 @@ const soloCtx = isSolo.value
         imageAdapter: props.imageAdapter,
         resolveSlide: (photo) => {
           if (
-            (photo !== props.photo &&
-              String(photo.id) !== String(props.photo.id)) ||
+            (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
             !slots.slide
           )
             return null
@@ -117,11 +112,7 @@ const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
 
 // Group mode: the parent owns the canonical collection; this photo is a trigger.
 const isGrouped = computed(
-  () =>
-    !!group &&
-    group.enabled &&
-    group.hasPhoto(props.photo.id) &&
-    !props.lightboxIgnore,
+  () => !!group && group.enabled && group.hasPhoto(props.photo.id) && !props.lightboxIgnore,
 )
 const isInteractive = computed(() => isSolo.value || isGrouped.value)
 
@@ -141,8 +132,7 @@ const figureStyle = computed(() => {
 
 function handleClick() {
   if (isSolo.value) return soloOpen()
-  else if (isGrouped.value)
-    return group!.activateById(props.photo.id, thumbRef.value)
+  else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
 }
 
 const interactiveAttrs = computed(() => {
@@ -170,9 +160,7 @@ function registerWithGroup() {
     {
       id: props.photo.id,
       getThumbnailElement: () => thumbRef.value,
-      renderSlide: slots.slide
-        ? (slotProps) => slots.slide?.(slotProps) ?? null
-        : null,
+      renderSlide: slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
     },
   ])
   registered.value = true

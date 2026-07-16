@@ -54,12 +54,8 @@ export function usePanzoom(
     rafId: 0,
   }
 
-  const isZoomedIn = computed(
-    () => zoomState.value.current > zoomState.value.fit + 0.01,
-  )
-  const zoomAllowed = computed(
-    () => zoomState.value.max > zoomState.value.fit + 0.05,
-  )
+  const isZoomedIn = computed(() => zoomState.value.current > zoomState.value.fit + 0.01)
+  const zoomAllowed = computed(() => zoomState.value.max > zoomState.value.fit + 0.05)
 
   function computeZoomLevels(photo: PhotoItem): ZoomState {
     const area = areaMetrics.value
@@ -76,13 +72,7 @@ export function usePanzoom(
   function getPanBounds(photo: PhotoItem, zoom: number) {
     const area = areaMetrics.value
     if (!area) return { x: 0, y: 0 }
-    return computePanBounds(
-      photo.width,
-      photo.height,
-      area.width,
-      area.height,
-      zoom,
-    )
+    return computePanBounds(photo.width, photo.height, area.width, area.height, zoom)
   }
 
   function clampPan(
@@ -108,20 +98,10 @@ export function usePanzoom(
   function getPointFromClient(clientX: number, clientY: number) {
     const area = areaMetrics.value
     if (!area) return { x: 0, y: 0 }
-    return clientToAreaPoint(
-      clientX,
-      clientY,
-      area.left,
-      area.top,
-      area.width,
-      area.height,
-    )
+    return clientToAreaPoint(clientX, clientY, area.left, area.top, area.width, area.height)
   }
 
-  function getTargetPanForZoom(
-    targetZoom: number,
-    clientPoint?: { x: number; y: number },
-  ) {
+  function getTargetPanForZoom(targetZoom: number, clientPoint?: { x: number; y: number }) {
     if (targetZoom <= zoomState.value.fit + 0.01) {
       return { x: 0, y: 0 }
     }
@@ -129,9 +109,7 @@ export function usePanzoom(
     const photo = currentPhoto.value
     if (!photo) return { x: 0, y: 0 }
 
-    const point = clientPoint
-      ? getPointFromClient(clientPoint.x, clientPoint.y)
-      : { x: 0, y: 0 }
+    const point = clientPoint ? getPointFromClient(clientPoint.x, clientPoint.y) : { x: 0, y: 0 }
     const bounds = getPanBounds(photo, targetZoom)
 
     return computeTargetPanForZoom(
@@ -214,10 +192,8 @@ export function usePanzoom(
 
       panzoomMotion.velocityScale +=
         (scaleDistance * spring - panzoomMotion.velocityScale * damping) * dt
-      panzoomMotion.velocityX +=
-        (xDistance * spring - panzoomMotion.velocityX * damping) * dt
-      panzoomMotion.velocityY +=
-        (yDistance * spring - panzoomMotion.velocityY * damping) * dt
+      panzoomMotion.velocityX += (xDistance * spring - panzoomMotion.velocityX * damping) * dt
+      panzoomMotion.velocityY += (yDistance * spring - panzoomMotion.velocityY * damping) * dt
 
       panzoomMotion.scale += panzoomMotion.velocityScale * dt
       panzoomMotion.x += panzoomMotion.velocityX * dt
@@ -251,9 +227,7 @@ export function usePanzoom(
 
   function refreshZoomState(reset = false) {
     const photo = currentPhoto.value
-    const next = photo
-      ? computeZoomLevels(photo)
-      : { fit: 1, secondary: 1, max: 1, current: 1 }
+    const next = photo ? computeZoomLevels(photo) : { fit: 1, secondary: 1, max: 1, current: 1 }
     const current = reset
       ? next.fit
       : Math.min(next.max, Math.max(next.fit, panzoomMotion.targetScale))
@@ -279,9 +253,7 @@ export function usePanzoom(
   function toggleZoom(clientPoint?: { x: number; y: number }) {
     if (!zoomAllowed.value) return
 
-    const targetZoom = isZoomedIn.value
-      ? zoomState.value.fit
-      : zoomState.value.secondary
+    const targetZoom = isZoomedIn.value ? zoomState.value.fit : zoomState.value.secondary
     const targetPan = getTargetPanForZoom(targetZoom, clientPoint)
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
   }
@@ -323,14 +295,9 @@ export function usePanzoom(
     setPanzoomImmediate(panzoomMotion.scale, pan, syncRefs)
   }
 
-  function settleCurrentTransform(options?: {
-    tension?: number
-    friction?: number
-  }) {
+  function settleCurrentTransform(options?: { tension?: number; friction?: number }) {
     const photo = currentPhoto.value
-    const pan = photo
-      ? clampPan(getCurrentPan(), panzoomMotion.scale, photo)
-      : { x: 0, y: 0 }
+    const pan = photo ? clampPan(getCurrentPan(), panzoomMotion.scale, photo) : { x: 0, y: 0 }
     startPanzoomSpring(panzoomMotion.scale, pan, options)
   }
 

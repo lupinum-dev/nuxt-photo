@@ -36,18 +36,11 @@ const panels = computed(() =>
       </button>
     </header>
 
-    <div
-      class="docs-lab__workspace"
-      :class="{ 'docs-lab__workspace--solo': !slots.controls }"
-    >
+    <div class="docs-lab__workspace" :class="{ 'docs-lab__workspace--solo': !slots.controls }">
       <div class="docs-lab__preview">
         <slot />
       </div>
-      <aside
-        v-if="slots.controls"
-        class="docs-lab__controls"
-        aria-label="Example controls"
-      >
+      <aside v-if="slots.controls" class="docs-lab__controls" aria-label="Example controls">
         <slot name="controls" />
       </aside>
     </div>

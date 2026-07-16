@@ -26,13 +26,7 @@
 
       <div v-if="layout !== 'rows'" class="control-group">
         <label class="control-label">Columns: {{ columns }}</label>
-        <input
-          type="range"
-          :min="2"
-          :max="6"
-          v-model.number="columns"
-          class="control-range"
-        />
+        <input type="range" :min="2" :max="6" v-model.number="columns" class="control-range" />
       </div>
 
       <div v-if="layout === 'rows'" class="control-group">
@@ -49,13 +43,7 @@
 
       <div class="control-group">
         <label class="control-label">Spacing: {{ spacing }}px</label>
-        <input
-          type="range"
-          :min="0"
-          :max="24"
-          v-model.number="spacing"
-          class="control-range"
-        />
+        <input type="range" :min="0" :max="24" v-model.number="spacing" class="control-range" />
       </div>
     </div>
 

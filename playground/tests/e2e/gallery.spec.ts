@@ -8,12 +8,7 @@ async function dispatchPointerPinch(
 ) {
   await media.evaluate(
     (el, { start, end }) => {
-      const dispatch = (
-        type: string,
-        pointerId: number,
-        clientX: number,
-        clientY: number,
-      ) => {
+      const dispatch = (type: string, pointerId: number, clientX: number, clientY: number) => {
         el.dispatchEvent(
           new PointerEvent(type, {
             bubbles: true,
@@ -61,9 +56,7 @@ async function waitForSpringFrame() {
   await new Promise((resolve) => setTimeout(resolve, 50))
 }
 
-test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({
-  page,
-}) => {
+test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page)
 
@@ -74,9 +67,7 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({
   await expect(page.locator('[data-np-slide-frame]')).toHaveCount(12)
   await expect(page.locator('[data-np-slide-img]')).toHaveCount(3)
   await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
-  await expect
-    .poll(() => page.evaluate(() => document.body.style.overflow))
-    .toBe('hidden')
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
 
   const nextButton = page.getByRole('button', { name: 'Next' })
   await expect(nextButton).toBeEnabled()
@@ -92,14 +83,10 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({
 
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect
-    .poll(() => page.evaluate(() => document.body.style.overflow))
-    .toBe('')
+  await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('')
 })
 
-test('lightbox motion exposes one deterministic WAAPI timeline', async ({
-  page,
-}) => {
+test('lightbox motion exposes one deterministic WAAPI timeline', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page)
 
@@ -109,9 +96,7 @@ test('lightbox motion exposes one deterministic WAAPI timeline', async ({
     .evaluate(async (trigger) => {
       ;(trigger as HTMLElement).click()
       for (let frame = 0; frame < 10; frame += 1) {
-        await new Promise<void>((resolve) =>
-          requestAnimationFrame(() => resolve()),
-        )
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
         if (document.getAnimations().length >= 5) break
       }
 
@@ -131,9 +116,7 @@ test('lightbox motion exposes one deterministic WAAPI timeline', async ({
       })
     })
 
-  const byTarget = Object.fromEntries(
-    tracks.map((track) => [track.target, track]),
-  )
+  const byTarget = Object.fromEntries(tracks.map((track) => [track.target, track]))
   expect(byTarget.frame).toMatchObject({ delay: 0, duration: 420 })
   expect(byTarget.backdrop).toMatchObject({ delay: 0, duration: 294 })
   expect(byTarget.shadow).toMatchObject({ delay: 147, duration: 210 })
@@ -150,20 +133,15 @@ test('responsive-image handoff preserves full luminance', async ({ page }) => {
     document.getAnimations().some((animation) => {
       const effect = animation.effect as KeyframeEffect
       return (
-        (effect.target as HTMLElement)?.hasAttribute(
-          'data-np-transition-image',
-        ) && Number(effect.getTiming().duration) === 100
+        (effect.target as HTMLElement)?.hasAttribute('data-np-transition-image') &&
+        Number(effect.getTiming().duration) === 100
       )
     }),
   )
 
   const handoff = await page.evaluate(() => {
-    const transitionImage = document.querySelector<HTMLElement>(
-      '[data-np-transition-image]',
-    )!
-    const viewport = document.querySelector<HTMLElement>(
-      '[data-np-motion="viewport"]',
-    )!
+    const transitionImage = document.querySelector<HTMLElement>('[data-np-transition-image]')!
+    const viewport = document.querySelector<HTMLElement>('[data-np-motion="viewport"]')!
     const animation = document.getAnimations().find((candidate) => {
       const effect = candidate.effect as KeyframeEffect
       return effect.target === transitionImage
@@ -177,8 +155,7 @@ test('responsive-image handoff preserves full luminance', async ({ page }) => {
     return {
       transitionOpacity,
       mediaOpacity,
-      effectiveCoverage:
-        transitionOpacity + mediaOpacity * (1 - transitionOpacity),
+      effectiveCoverage: transitionOpacity + mediaOpacity * (1 - transitionOpacity),
     }
   })
 
@@ -194,9 +171,7 @@ test.describe('touch gestures', () => {
     viewport: { width: 390, height: 844 },
   })
 
-  test('recipe lightbox supports automated two-finger pinch zoom', async ({
-    page,
-  }) => {
+  test('recipe lightbox supports automated two-finger pinch zoom', async ({ page }) => {
     await stubImageRequests(page)
     await gotoPlayground(page)
 

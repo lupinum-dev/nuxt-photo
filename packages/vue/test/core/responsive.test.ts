@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import {
   getResponsiveBreakpoints,
   mergeResponsiveBreakpoints,
@@ -60,9 +60,7 @@ describe('responsive()', () => {
     const spacing = responsive({ 0: 4, 600: 8 })
     const columns = responsive({ 0: 1, 840: 3, 1120: 4 })
 
-    expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([
-      600, 840, 1120,
-    ])
+    expect(mergeResponsiveBreakpoints([spacing, columns])).toEqual([600, 840, 1120])
   })
 
   it('does not invent synthetic breakpoints below the smallest explicit width', () => {
@@ -72,11 +70,7 @@ describe('responsive()', () => {
 
   it('returns undefined when no responsive metadata is available', () => {
     expect(
-      mergeResponsiveBreakpoints([
-        8,
-        undefined,
-        (width: number) => (width > 600 ? 8 : 4),
-      ]),
+      mergeResponsiveBreakpoints([8, undefined, (width: number) => (width > 600 ? 8 : 4)]),
     ).toBeUndefined()
   })
 })

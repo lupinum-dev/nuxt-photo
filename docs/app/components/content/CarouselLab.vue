@@ -48,13 +48,9 @@ function reset() {
       slide-aspect="16/9"
     />
     <template #controls>
+      <label class="docs-control"><input v-model="loop" type="checkbox" /><span>Loop</span></label>
       <label class="docs-control"
-        ><input v-model="loop" type="checkbox" /><span>Loop</span></label
-      >
-      <label class="docs-control"
-        ><input v-model="dragFree" type="checkbox" /><span
-          >Drag free</span
-        ></label
+        ><input v-model="dragFree" type="checkbox" /><span>Drag free</span></label
       >
       <label class="docs-control docs-control--stacked"
         ><span
@@ -62,22 +58,14 @@ function reset() {
         ><input v-model.number="slidesToScroll" type="range" min="1" max="3"
       /></label>
       <label class="docs-control"
-        ><input v-model="autoplay" type="checkbox" /><span
-          >Autoplay</span
-        ></label
+        ><input v-model="autoplay" type="checkbox" /><span>Autoplay</span></label
       >
       <label class="docs-control"
-        ><input v-model="thumbnails" type="checkbox" /><span
-          >Thumbnails</span
-        ></label
+        ><input v-model="thumbnails" type="checkbox" /><span>Thumbnails</span></label
       >
+      <label class="docs-control"><input v-model="dots" type="checkbox" /><span>Dots</span></label>
       <label class="docs-control"
-        ><input v-model="dots" type="checkbox" /><span>Dots</span></label
-      >
-      <label class="docs-control"
-        ><input v-model="lightbox" type="checkbox" /><span
-          >Open lightbox</span
-        ></label
+        ><input v-model="lightbox" type="checkbox" /><span>Open lightbox</span></label
       >
     </template>
     <template #code><DemoCode :code="code" /></template>

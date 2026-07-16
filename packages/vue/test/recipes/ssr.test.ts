@@ -2,7 +2,7 @@
 
 import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import { responsive } from '../../src/core/index'
 import { computeBreakpointStyles } from '../../src/core/index'
@@ -159,9 +159,7 @@ describe('SSR', () => {
       expect(html).not.toContain('np-album__ssr-variant')
       expect(html).not.toContain('data-bp')
       expect(html).not.toContain('@container')
-      expect(html).not.toMatch(
-        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
-      )
+      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
       expect(html).toContain('ssr-1')
     })
 
@@ -180,9 +178,7 @@ describe('SSR', () => {
       expect(html).not.toContain('np-album__ssr-variant')
       expect(html).not.toContain('data-bp')
       expect(html).not.toContain('@container')
-      expect(html).not.toMatch(
-        /grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/,
-      )
+      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
       expect(html).toContain('ssr-1')
     })
 
@@ -295,8 +291,7 @@ describe('SSR', () => {
           PhotoGroup,
           { photos },
           {
-            default: () =>
-              h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+            default: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
           },
         ),
     })
@@ -338,9 +333,7 @@ describe('SSR', () => {
 
     expect(html).toContain('@container')
     expect(html).toContain('np-item-0')
-    expect(html).toContain(
-      'class="np-album__item np-item-0" style="overflow:hidden;"',
-    )
+    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
     expect(html).not.toContain('style="flex-grow:1.777')
   })
 })

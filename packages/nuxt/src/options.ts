@@ -41,27 +41,18 @@ export const NUXT_PHOTO_DEFAULTS = {
 } satisfies NuxtPhotoOptions
 
 function configError(path: string, expected: string) {
-  return new TypeError(
-    `[nuxt-photo] \`nuxtPhoto.${path}\` must be ${expected}.`,
-  )
+  return new TypeError(`[nuxt-photo] \`nuxtPhoto.${path}\` must be ${expected}.`)
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function assertPlainRecord(
-  value: unknown,
-  path: string,
-): asserts value is Record<string, unknown> {
+function assertPlainRecord(value: unknown, path: string): asserts value is Record<string, unknown> {
   if (!isPlainRecord(value)) throw configError(path, 'an object')
 }
 
-function assertKnownKeys(
-  value: Record<string, unknown>,
-  allowed: readonly string[],
-  path: string,
-) {
+function assertKnownKeys(value: Record<string, unknown>, allowed: readonly string[], path: string) {
   const unknown = Object.keys(value).find((key) => !allowed.includes(key))
   if (!unknown) return
   const fullPath = path ? `${path}.${unknown}` : unknown
@@ -81,10 +72,7 @@ function assertBoolean(value: unknown, path: string) {
 }
 
 function assertFiniteNumber(value: unknown, path: string) {
-  if (
-    value !== undefined &&
-    (typeof value !== 'number' || !Number.isFinite(value))
-  ) {
+  if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value))) {
     throw configError(path, 'a finite number')
   }
 }
@@ -108,10 +96,7 @@ function assertWidths(value: unknown, path: string) {
   if (
     !Array.isArray(value) ||
     value.length === 0 ||
-    value.some(
-      (item) =>
-        typeof item !== 'number' || !Number.isInteger(item) || item <= 0,
-    )
+    value.some((item) => typeof item !== 'number' || !Number.isInteger(item) || item <= 0)
   ) {
     throw configError(path, 'a non-empty array of positive integers')
   }
@@ -120,11 +105,7 @@ function assertWidths(value: unknown, path: string) {
 function validateToggleRecord(value: unknown, path: string) {
   if (value === undefined || typeof value === 'boolean') return
   if (!isPlainRecord(value)) throw configError(path, 'a boolean or object')
-  assertKnownKeys(
-    value,
-    path === 'components' ? ['prefix', 'primitives'] : ['prefix'],
-    path,
-  )
+  assertKnownKeys(value, path === 'components' ? ['prefix', 'primitives'] : ['prefix'], path)
   assertString(value.prefix, `${path}.prefix`)
   if (path === 'components') {
     assertBoolean(value.primitives, 'components.primitives')
@@ -132,20 +113,11 @@ function validateToggleRecord(value: unknown, path: string) {
 }
 
 /** Validate all runtime configuration before the module mutates Nuxt state. */
-export function validateNuxtPhotoOptions(
-  options: unknown,
-): asserts options is NuxtPhotoOptions {
+export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
   assertPlainRecord(options, '')
-  assertKnownKeys(
-    options,
-    ['autoImports', 'components', 'css', 'image', 'lightbox'],
-    '',
-  )
+  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox'], '')
 
-  if (
-    options.css !== undefined &&
-    !['none', 'structure', 'all'].includes(String(options.css))
-  ) {
+  if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
     throw configError('css', '"none", "structure", or "all"')
   }
 
@@ -180,10 +152,7 @@ export function validateNuxtPhotoOptions(
       )
       assertWidths(options.image.slide.widths, 'image.slide.widths')
       assertPositiveNumber(options.image.slide.maxWidth, 'image.slide.maxWidth')
-      assertPositiveNumber(
-        options.image.slide.maxDensity,
-        'image.slide.maxDensity',
-      )
+      assertPositiveNumber(options.image.slide.maxDensity, 'image.slide.maxDensity')
       assertString(options.image.slide.sizes, 'image.slide.sizes')
       assertQuality(options.image.slide.quality, 'image.slide.quality')
     }

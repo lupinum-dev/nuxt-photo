@@ -6,11 +6,8 @@ import { demoPhotos } from '~/composables/demoPhotos'
 const serverWidth = ref(720)
 const clientWidth = ref(760)
 const columns = responsive({ 0: 2, 640: 3, 960: 4 })
-const breakpoint = (width: number) =>
-  width >= 960 ? 960 : width >= 640 ? 640 : 0
-const stable = computed(
-  () => breakpoint(serverWidth.value) === breakpoint(clientWidth.value),
-)
+const breakpoint = (width: number) => (width >= 960 ? 960 : width >= 640 ? 640 : 0)
+const stable = computed(() => breakpoint(serverWidth.value) === breakpoint(clientWidth.value))
 const code = computed(
   () => `<PhotoAlbum
   :photos="photos"
@@ -43,9 +40,7 @@ function reset() {
       />
     </div>
     <p class="stability-result" :data-stable="stable">
-      <strong>{{
-        stable ? 'Stable breakpoint' : 'Breakpoint mismatch'
-      }}</strong>
+      <strong>{{ stable ? 'Stable breakpoint' : 'Breakpoint mismatch' }}</strong>
       Server resolves to {{ breakpoint(serverWidth) }}px; client resolves to
       {{ breakpoint(clientWidth) }}px.
     </p>

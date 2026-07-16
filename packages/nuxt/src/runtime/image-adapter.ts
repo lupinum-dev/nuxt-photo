@@ -1,9 +1,4 @@
-import type {
-  ImageAdapter,
-  ImageContext,
-  ImageSource,
-  PhotoItem,
-} from '@nuxt-photo/vue'
+import type { ImageAdapter, ImageContext, ImageSource, PhotoItem } from '@nuxt-photo/vue'
 import type { NuxtPhotoImageAdapterConfig } from '../options'
 
 export type { NuxtPhotoImageAdapterConfig } from '../options'
@@ -38,27 +33,20 @@ function resolveConfig(config?: NuxtPhotoImageAdapterConfig) {
   return {
     thumb: {
       ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb,
-      ...(config?.thumb ?? {}),
+      ...config?.thumb,
     },
     slide: {
       ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide,
-      ...(config?.slide ?? {}),
+      ...config?.slide,
     },
   }
 }
 
-function slideWidths(
-  photo: PhotoItem,
-  config: ReturnType<typeof resolveConfig>,
-) {
+function slideWidths(photo: PhotoItem, config: ReturnType<typeof resolveConfig>) {
   const maxSourceWidth = photo.width * config.slide.maxDensity
-  const widths = config.slide.widths.filter(
-    (width) => width > 0 && width <= maxSourceWidth,
-  )
+  const widths = config.slide.widths.filter((width) => width > 0 && width <= maxSourceWidth)
 
-  return widths.length > 0
-    ? widths
-    : [Math.min(config.slide.maxWidth, photo.width)]
+  return widths.length > 0 ? widths : [Math.min(config.slide.maxWidth, photo.width)]
 }
 
 export function createNuxtImageAdapter(
@@ -68,15 +56,12 @@ export function createNuxtImageAdapter(
   const resolvedConfig = resolveConfig(config)
 
   return (photo: PhotoItem, context: ImageContext): ImageSource => {
-    const src =
-      context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
+    const src = context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
 
     if (context === 'slide') {
       const widths = slideWidths(photo, resolvedConfig)
       const quality = resolvedConfig.slide.quality
-      const srcset = widths
-        .map((width) => `${image(src, { width, quality })} ${width}w`)
-        .join(', ')
+      const srcset = widths.map((width) => `${image(src, { width, quality })} ${width}w`).join(', ')
 
       return {
         src: image(src, {

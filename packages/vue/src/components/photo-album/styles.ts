@@ -10,14 +10,10 @@ export type AlbumStyleContext = {
   layoutType: 'rows' | 'columns' | 'masonry'
 }
 
-export function albumGroupStyle(
-  group: LayoutGroup,
-  ctx: AlbumStyleContext,
-): CSSProperties {
+export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSSProperties {
   if (group.type === 'row') {
     return {
-      marginBottom:
-        group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
+      marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
     }
   }
 
@@ -35,19 +31,14 @@ export function albumGroupStyle(
   const totalRatio = group.columnsRatios.reduce((acc, v) => acc + v, 0)
   const totalAdjustedGaps = group.columnsRatios.reduce(
     (acc, v, ratioIndex) =>
-      acc +
-      ((group.columnsGaps![group.index] ?? 0) -
-        (group.columnsGaps![ratioIndex] ?? 0)) *
-        v,
+      acc + ((group.columnsGaps![group.index] ?? 0) - (group.columnsGaps![ratioIndex] ?? 0)) * v,
     0,
   )
 
   return {
     marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
     width: `calc((100% - ${round(
-      (ctx.columnsCount - 1) * ctx.spacing +
-        2 * ctx.columnsCount * ctx.padding +
-        totalAdjustedGaps,
+      (ctx.columnsCount - 1) * ctx.spacing + 2 * ctx.columnsCount * ctx.padding + totalAdjustedGaps,
       3,
     )}px) * ${round((group.columnsRatios[group.index] ?? 0) / totalRatio, 5)} + ${
       2 * ctx.padding
@@ -64,8 +55,7 @@ export function albumItemStyle(
   const cursor = interactive.value ? { cursor: 'pointer' } : {}
 
   if (group.type === 'row') {
-    const gaps =
-      ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
+    const gaps = ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
     return {
       ...cursor,
       boxSizing: 'content-box',

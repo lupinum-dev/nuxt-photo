@@ -1,8 +1,4 @@
-import {
-  normalizePhotos,
-  type InvalidPhotoPolicy,
-  type InvalidPhotosEvent,
-} from './normalize'
+import { normalizePhotos, type InvalidPhotoPolicy, type InvalidPhotosEvent } from './normalize'
 import type { PhotoItem } from '../types'
 
 export type ResolveRecipePhotosOptions = {

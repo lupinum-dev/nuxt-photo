@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createApp, defineComponent, h } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import {
   LightboxCaption,
   LightboxControls,
@@ -73,9 +73,7 @@ describe('primitive injection guards', () => {
         photo: makePhoto({ id: 'guarded-trigger' }),
         index: 0,
       }),
-    ).toThrow(
-      /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
-    )
+    ).toThrow(/\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/)
   })
 
   it('supports every lightbox primitive from the single internal context', () => {

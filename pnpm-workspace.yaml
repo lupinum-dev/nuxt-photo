@@ -4,14 +4,40 @@ packages:
   - 'playground-tailwind'
   - 'docs'
 
+catalog:
+  nuxt: 4.4.8
+  rolldown: 1.1.4
+  typescript: 5.9.3
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.4
+  vite-plus: 0.2.4
+  vitest: 4.1.10
+  vue: 3.5.39
+  vue-tsc: 3.2.7
+
 overrides:
   js-yaml: 4.3.0
+  'read-yaml-file>js-yaml': 3.14.2
   launch-editor: 2.14.1
   tar: 7.5.19
   undici: 7.28.0
+  vite: 'catalog:'
+  vitest: 'catalog:'
   ws: 8.21.0
 
+autoInstallPeers: false
+enableGlobalVirtualStore: false
+preferFrozenLockfile: true
+strictPeerDependencies: true
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: '*'
+minimumReleaseAge: 2880
+
 minimumReleaseAgeExclude:
+  # Existing lockfile entry; remove after 2026-07-16T16:42:00Z.
+  - 'autoprefixer@10.5.3'
   - '@iconify/collections@1.0.710'
   - '@lupinum/ginko-content@0.3.0-rc.2 || 0.3.0-rc.3'
   - 'electron-to-chromium@1.5.392'

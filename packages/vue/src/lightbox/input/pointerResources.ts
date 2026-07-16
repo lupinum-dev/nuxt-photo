@@ -45,9 +45,7 @@ export function createPointerResources(mediaAreaRef: Ref<HTMLElement | null>) {
   }
 }
 
-export function getPointerPairGeometry(
-  pair: readonly [TrackedPointer, TrackedPointer],
-) {
+export function getPointerPairGeometry(pair: readonly [TrackedPointer, TrackedPointer]) {
   const [a, b] = pair
   const dx = b.clientX - a.clientX
   const dy = b.clientY - a.clientY

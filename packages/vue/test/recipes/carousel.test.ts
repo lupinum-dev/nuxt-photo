@@ -1,16 +1,8 @@
 // @vitest-environment jsdom
 
-import {
-  createApp,
-  createSSRApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  ref,
-} from 'vue'
+import { createApp, createSSRApp, defineComponent, h, nextTick, reactive, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import type { PhotoItem } from '../../src/core/index'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
@@ -30,11 +22,7 @@ async function flushUi(iterations = 6) {
   }
 }
 
-function mount(
-  component: any,
-  props: Record<string, any> = {},
-  slots: Record<string, any> = {},
-) {
+function mount(component: any, props: Record<string, any> = {}, slots: Record<string, any> = {}) {
   const container = document.createElement('div')
   document.body.appendChild(container)
 
@@ -84,10 +72,8 @@ describe('PhotoCarousel — DOM', () => {
     }
     vi.stubGlobal('ResizeObserver', NoopObserver)
     // Embla looks these up on the element's ownerWindow — jsdom needs them installed there too.
-    window.ResizeObserver =
-      NoopObserver as unknown as typeof window.ResizeObserver
-    window.IntersectionObserver =
-      NoopObserver as unknown as typeof window.IntersectionObserver
+    window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
+    window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
     if (!window.matchMedia) {
       window.matchMedia = ((query: string) => ({
         matches: false,
@@ -110,18 +96,14 @@ describe('PhotoCarousel — DOM', () => {
   it('renders one slide element per photo', async () => {
     const m = mount(PhotoCarousel, { photos })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(
-      photos.length,
-    )
+    expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(photos.length)
     m.unmount()
   })
 
   it('renders thumbnails by default', async () => {
     const m = mount(PhotoCarousel, { photos })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(
-      photos.length,
-    )
+    expect(m.container.querySelectorAll('.np-carousel__thumb').length).toBe(photos.length)
     m.unmount()
   })
 
@@ -166,14 +148,11 @@ describe('PhotoCarousel — DOM', () => {
       PhotoCarousel,
       { photos },
       {
-        thumb: ({ photo }: { photo: PhotoItem }) =>
-          h('span', { class: 'custom-thumb' }, photo.id),
+        thumb: ({ photo }: { photo: PhotoItem }) => h('span', { class: 'custom-thumb' }, photo.id),
       },
     )
     await flushUi()
-    expect(m.container.querySelectorAll('.custom-thumb').length).toBe(
-      photos.length,
-    )
+    expect(m.container.querySelectorAll('.custom-thumb').length).toBe(photos.length)
     m.unmount()
   })
 
@@ -232,9 +211,7 @@ describe('PhotoCarousel — DOM', () => {
     await flushUi()
     const root = m.container.querySelector('.np-carousel') as HTMLElement
     expect(root.style.getPropertyValue('--np-carousel-slide-size')).toBe('80%')
-    expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe(
-      '4 / 3',
-    )
+    expect(root.style.getPropertyValue('--np-carousel-slide-aspect')).toBe('4 / 3')
     expect(root.style.getPropertyValue('--np-carousel-gap')).toBe('2rem')
     expect(root.style.getPropertyValue('--np-carousel-thumb-size')).toBe('8rem')
     m.unmount()
@@ -271,10 +248,8 @@ describe('PhotoCarousel — DOM', () => {
       PhotoCarousel,
       { photos, lightbox, showDots: true, transition: 'none' },
       {
-        slide: ({ photo }: { photo: PhotoItem }) =>
-          h('span', { class: 'slot-slide' }, photo.id),
-        thumb: ({ photo }: { photo: PhotoItem }) =>
-          h('span', { class: 'slot-thumb' }, photo.id),
+        slide: ({ photo }: { photo: PhotoItem }) => h('span', { class: 'slot-slide' }, photo.id),
+        thumb: ({ photo }: { photo: PhotoItem }) => h('span', { class: 'slot-thumb' }, photo.id),
         caption: () => h('span', { class: 'slot-caption' }, 'caption'),
         controls: () => h('span', { class: 'slot-controls' }, 'controls'),
         dots: () => h('span', { class: 'slot-dots' }, 'dots'),
@@ -282,12 +257,8 @@ describe('PhotoCarousel — DOM', () => {
     )
     await flushUi()
 
-    expect(m.container.querySelectorAll('.slot-slide').length).toBe(
-      photos.length,
-    )
-    expect(m.container.querySelectorAll('.slot-thumb').length).toBe(
-      photos.length,
-    )
+    expect(m.container.querySelectorAll('.slot-slide').length).toBe(photos.length)
+    expect(m.container.querySelectorAll('.slot-thumb').length).toBe(photos.length)
     expect(m.container.querySelector('.slot-caption')).not.toBeNull()
     expect(m.container.querySelector('.slot-controls')).not.toBeNull()
     expect(m.container.querySelector('.slot-dots')).not.toBeNull()
@@ -331,13 +302,7 @@ describe('PhotoCarousel — DOM', () => {
       PhotoCarousel,
       { photos, lightbox: true, transition: 'none' },
       {
-        slide: ({
-          index,
-          open,
-        }: {
-          index: number
-          open: () => Promise<void> | void
-        }) =>
+        slide: ({ index, open }: { index: number; open: () => Promise<void> | void }) =>
           h(
             'button',
             {
@@ -349,15 +314,11 @@ describe('PhotoCarousel — DOM', () => {
       },
     )
     await flushUi()
-    ;(
-      m.container.querySelectorAll('.slot-open')[1] as HTMLButtonElement
-    ).click()
+    ;(m.container.querySelectorAll('.slot-open')[1] as HTMLButtonElement).click()
     await flushUi()
 
     expect(document.body.querySelector('.np-lightbox')).not.toBeNull()
-    expect(
-      document.body.querySelector('.np-lightbox__counter')?.textContent,
-    ).toContain('2 / 4')
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain('2 / 4')
 
     m.unmount()
   })

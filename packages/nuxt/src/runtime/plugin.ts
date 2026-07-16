@@ -9,9 +9,6 @@ export default defineNuxtPlugin({
     const image = useImage()
     const config = useAppConfig().nuxtPhoto?.image
 
-    nuxtApp.vueApp.provide(
-      ImageAdapterKey,
-      createNuxtImageAdapter(image, config),
-    )
+    nuxtApp.vueApp.provide(ImageAdapterKey, createNuxtImageAdapter(image, config))
   },
 })

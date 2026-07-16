@@ -45,9 +45,7 @@ for (const file of [...files, ...publicReadmes]) {
     }
   }
   if (file.startsWith(contentRoot) && /[—–]/u.test(source)) {
-    failures.push(
-      `${relative(root, file)} contains a disallowed dash character`,
-    )
+    failures.push(`${relative(root, file)} contains a disallowed dash character`)
   }
 }
 
@@ -66,9 +64,7 @@ const actualSections = topLevel
   .map((entry) => entry.name)
   .sort()
 if (JSON.stringify(actualSections) !== JSON.stringify(expectedSections)) {
-  failures.push(
-    `Unexpected documentation sections: ${actualSections.join(', ')}`,
-  )
+  failures.push(`Unexpected documentation sections: ${actualSections.join(', ')}`)
 }
 
 if (failures.length) {

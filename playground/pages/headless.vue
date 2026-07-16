@@ -3,10 +3,9 @@
     <header class="header">
       <h1 class="header__title">PhotoGroup Patterns</h1>
       <p class="header__desc">
-        <code>PhotoGroup</code> is the collection recipe. Wrap descendant
-        <code>Photo</code> and <code>PhotoAlbum</code> recipes in it to share
-        one lightbox; fully custom layouts compose the explicit primitives
-        below.
+        <code>PhotoGroup</code> is the collection recipe. Wrap descendant <code>Photo</code> and
+        <code>PhotoAlbum</code> recipes in it to share one lightbox; fully custom layouts compose
+        the explicit primitives below.
       </p>
     </header>
 
@@ -14,15 +13,12 @@
     <section class="section">
       <h2 class="section__title">Scattered photos sharing one lightbox</h2>
       <p class="section__desc">
-        <code>PhotoGroup</code> owns the canonical navigation order while each
-        descendant contributes its thumbnail and optional slide renderer.
+        <code>PhotoGroup</code> owns the canonical navigation order while each descendant
+        contributes its thumbnail and optional slide renderer.
       </p>
       <PhotoGroup :photos="scatteredPhotos" class="scattered">
         <div class="scattered__grid">
-          <Photo
-            :photo="photos[0]!"
-            class="scattered__img scattered__img--wide"
-          />
+          <Photo :photo="photos[0]!" class="scattered__img scattered__img--wide" />
           <Photo :photo="photos[1]!" class="scattered__img" />
           <Photo :photo="photos[2]!" class="scattered__img" />
           <Photo :photo="photos[3]!" class="scattered__img" />
@@ -35,8 +31,8 @@
         </div>
       </PhotoGroup>
       <p class="note">
-        The middle photo in the bottom row has <code>lightbox-ignore</code> — it
-        renders but is not part of the lightbox.
+        The middle photo in the bottom row has <code>lightbox-ignore</code> — it renders but is not
+        part of the lightbox.
       </p>
       <CodeExample :code="scatteredCode" title="Template" />
     </section>
@@ -45,9 +41,8 @@
     <section class="section">
       <h2 class="section__title">Two albums, one shared lightbox</h2>
       <p class="section__desc">
-        Wrap multiple <code>PhotoAlbum</code> components in a
-        <code>PhotoGroup</code> — they join one lightbox. Navigate across all
-        photos from both albums seamlessly.
+        Wrap multiple <code>PhotoAlbum</code> components in a <code>PhotoGroup</code> — they join
+        one lightbox. Navigate across all photos from both albums seamlessly.
       </p>
       <PhotoGroup :photos="groupedPhotos">
         <div class="two-albums">
@@ -78,8 +73,8 @@
     <section class="section">
       <h2 class="section__title">Programmatic open</h2>
       <p class="section__desc">
-        Use <code>ref</code> on <code>PhotoGroup</code> to open the lightbox
-        from outside — e.g., from a button or after a route change.
+        Use <code>ref</code> on <code>PhotoGroup</code> to open the lightbox from outside — e.g.,
+        from a button or after a route change.
       </p>
       <PhotoGroup ref="gallery" :photos="programmaticPhotos">
         <PhotoAlbum
@@ -89,15 +84,9 @@
         />
       </PhotoGroup>
       <div class="btn-row">
-        <button class="open-btn" @click="gallery?.open(0)">
-          Open first photo
-        </button>
-        <button class="open-btn" @click="gallery?.open(3)">
-          Open 4th photo
-        </button>
-        <button class="open-btn" @click="gallery?.openById(photos[5]!.id)">
-          Open by id
-        </button>
+        <button class="open-btn" @click="gallery?.open(0)">Open first photo</button>
+        <button class="open-btn" @click="gallery?.open(3)">Open 4th photo</button>
+        <button class="open-btn" @click="gallery?.openById(photos[5]!.id)">Open by id</button>
       </div>
       <CodeExample :code="programmaticCode" title="Template" />
     </section>
@@ -143,13 +132,7 @@ useHead({ title: 'PhotoGroup — nuxt-photo' })
 
 const landscapes = photos.filter((_, i) => i % 2 === 0).slice(0, 6)
 const portraits = photos.filter((_, i) => i % 2 === 1).slice(0, 6)
-const scatteredPhotos = [
-  photos[0]!,
-  photos[1]!,
-  photos[2]!,
-  photos[3]!,
-  photos[5]!,
-]
+const scatteredPhotos = [photos[0]!, photos[1]!, photos[2]!, photos[3]!, photos[5]!]
 const groupedPhotos = [...landscapes, ...portraits]
 const programmaticPhotos = photos.slice(0, 6)
 

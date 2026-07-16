@@ -8,10 +8,7 @@ import {
 import { VelocityTracker } from './velocity'
 import { createKeyboardWheelHandlers } from './keyboardWheel'
 import type { GestureInputConfig, GestureSession } from './types'
-import {
-  createPointerResources,
-  getPointerPairGeometry,
-} from './pointerResources'
+import { createPointerResources, getPointerPairGeometry } from './pointerResources'
 import { createTapHandler } from './tap'
 
 /**
@@ -55,11 +52,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     activePointers.clear()
   }
 
-  function classifyGesture(
-    deltaX: number,
-    deltaY: number,
-    pointerType: string,
-  ): GestureMode {
+  function classifyGesture(deltaX: number, deltaY: number, pointerType: string): GestureMode {
     const photo = state.currentPhoto.value
     if (!photo) return 'idle'
 
@@ -247,8 +240,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
 
     pointer.lastX = event.clientX
     pointer.lastY = event.clientY
-    pointer.moved =
-      pointer.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
+    pointer.moved = pointer.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
 
     if (pointer.kind === 'tap') {
       const mode = classifyGesture(deltaX, deltaY, pointer.pointerType)

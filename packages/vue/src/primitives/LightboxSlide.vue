@@ -7,11 +7,7 @@
         :style="frameStyle"
         :ref="ctx.setSlideFrameRef(index)"
       >
-        <div
-          data-np-slide-zoom
-          :class="zoomClass"
-          :ref="ctx.setSlideZoomRef(index)"
-        >
+        <div data-np-slide-zoom :class="zoomClass" :ref="ctx.setSlideZoomRef(index)">
           <slot
             v-if="$slots.default && isActive"
             :photo="photo"
@@ -43,13 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  defineComponent,
-  inject,
-  type PropType,
-  type VNodeChild,
-} from 'vue'
+import { computed, defineComponent, inject, type PropType, type VNodeChild } from 'vue'
 import type { PhotoItem } from '../core/index'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
@@ -78,12 +68,8 @@ const mediaMounted = computed(() => ctx.isSlideMediaMounted(props.index))
 const frameStyle = computed(() => ctx.getSlideFrameStyle(props.photo))
 
 // Extract pixel dimensions from frame style for slot props
-const frameWidth = computed(
-  () => Number.parseInt(frameStyle.value.width as string) || 0,
-)
-const frameHeight = computed(
-  () => Number.parseInt(frameStyle.value.height as string) || 0,
-)
+const frameWidth = computed(() => Number.parseInt(frameStyle.value.width as string) || 0)
+const frameHeight = computed(() => Number.parseInt(frameStyle.value.height as string) || 0)
 
 // Stable wrapper component defined ONCE — never recreated on each render
 const CustomSlideRenderer = defineComponent({

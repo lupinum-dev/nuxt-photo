@@ -19,9 +19,7 @@ const nativeAdapter: ImageAdapter = (item, imageContext) => ({
   height: item.height,
 })
 
-const adapter = computed(() =>
-  mode.value === 'native' ? nativeAdapter : undefined,
-)
+const adapter = computed(() => (mode.value === 'native' ? nativeAdapter : undefined))
 const code = computed(() =>
   mode.value === 'native'
     ? `<PhotoImage :photo="photo" context="${context.value}" :image-adapter="nativeAdapter" />`
@@ -66,34 +64,20 @@ function reset() {
     <template #controls>
       <fieldset class="docs-control">
         <legend>Adapter</legend>
+        <label><input v-model="mode" type="radio" value="native" /><span>Native image</span></label>
         <label
-          ><input v-model="mode" type="radio" value="native" /><span
-            >Native image</span
-          ></label
-        >
-        <label
-          ><input v-model="mode" type="radio" value="nuxt-image" /><span
-            >Nuxt Image</span
-          ></label
+          ><input v-model="mode" type="radio" value="nuxt-image" /><span>Nuxt Image</span></label
         >
       </fieldset>
       <fieldset class="docs-control">
         <legend>Context</legend>
+        <label><input v-model="context" type="radio" value="thumb" /><span>Thumbnail</span></label>
         <label
-          ><input v-model="context" type="radio" value="thumb" /><span
-            >Thumbnail</span
-          ></label
-        >
-        <label
-          ><input v-model="context" type="radio" value="slide" /><span
-            >Lightbox slide</span
-          ></label
+          ><input v-model="context" type="radio" value="slide" /><span>Lightbox slide</span></label
         >
       </fieldset>
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state
-      ><DemoState :value="{ adapter: mode, context, rendered }"
-    /></template>
+    <template #state><DemoState :value="{ adapter: mode, context, rendered }" /></template>
   </InteractiveExample>
 </template>
