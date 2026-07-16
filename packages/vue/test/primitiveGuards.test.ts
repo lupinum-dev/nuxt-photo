@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   LightboxCaption,
   LightboxControls,
-  LightboxGhostImage,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -94,7 +93,6 @@ describe('primitive injection guards', () => {
             h(LightboxCaption, null, { default: () => null }),
             h(LightboxViewport, null, { default: () => null }),
             h(LightboxSlide, { photo: photos[0], index: 0 }),
-            h(LightboxGhostImage),
             h(PhotoTrigger, { photo: photos[0], index: 0 }),
           ])
       },

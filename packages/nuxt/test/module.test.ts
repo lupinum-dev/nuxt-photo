@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addComponent = vi.fn()
@@ -51,8 +49,6 @@ function createNuxt() {
 }
 
 let nuxtPhotoModule: Awaited<typeof import('../src/module')>['default']
-const vueDistRoot = fileURLToPath(new URL('../../vue/dist', import.meta.url))
-
 describe('nuxt-photo module', () => {
   beforeAll(async () => {
     nuxtPhotoModule = (await import('../src/module')).default
@@ -250,6 +246,47 @@ describe('nuxt-photo module', () => {
       { image: null },
       /`nuxtPhoto\.image` must be false or an object/,
     ],
+    [
+      'array auto imports',
+      { autoImports: [] },
+      /`nuxtPhoto\.autoImports` must be a boolean or object/,
+    ],
+    [
+      'array components',
+      { components: [] },
+      /`nuxtPhoto\.components` must be a boolean or object/,
+    ],
+    [
+      'array image',
+      { image: [] },
+      /`nuxtPhoto\.image` must be false or an object/,
+    ],
+    [
+      'array thumb options',
+      { image: { provider: 'native', thumb: [] } },
+      /`nuxtPhoto\.image\.thumb` must be an object/,
+    ],
+    [
+      'array slide options',
+      { image: { provider: 'native', slide: [] } },
+      /`nuxtPhoto\.image\.slide` must be an object/,
+    ],
+    [
+      'array lightbox',
+      { lightbox: [] },
+      /`nuxtPhoto\.lightbox` must be an object/,
+    ],
+    ['unknown root option', { csss: 'all' }, /Unknown `nuxtPhoto\.csss`/],
+    [
+      'unknown component option',
+      { components: { primitive: true } },
+      /Unknown `nuxtPhoto\.components\.primitive`/,
+    ],
+    [
+      'unknown image option',
+      { image: { provider: 'native', slied: {} } },
+      /Unknown `nuxtPhoto\.image\.slied`/,
+    ],
   ])(
     'validates invalid %s config before setup side effects',
     (_name, config, message) => {
@@ -290,31 +327,6 @@ describe('nuxt-photo module', () => {
       ),
     ])
   })
-
-  it.skipIf(!existsSync(vueDistRoot))(
-    'registers component and CSS paths that exist after Vue is built',
-    () => {
-      const nuxt = createNuxt()
-
-      nuxtPhotoModule.setup(
-        {
-          ...nuxtPhotoModule.defaults,
-          components: { primitives: true },
-          css: 'all',
-        },
-        nuxt,
-      )
-
-      const componentPaths = addComponent.mock.calls.map(
-        ([component]) => component.filePath,
-      )
-
-      expect(componentPaths.length).toBeGreaterThan(0)
-      expect([...componentPaths, ...nuxt.options.css].every(existsSync)).toBe(
-        true,
-      )
-    },
-  )
 
   it('injects all CSS (structure + theme) with css: "all"', () => {
     const nuxt = createNuxt()

@@ -53,16 +53,6 @@ export function flipTransform(from: RectLike, to: RectLike): string {
   return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`
 }
 
-/** Create the fixed-position style block shared by ghost-image transitions. */
-export function makeGhostBaseStyle(to: RectLike): Record<string, string> {
-  return {
-    left: `${to.left}px`,
-    top: `${to.top}px`,
-    width: `${to.width}px`,
-    height: `${to.height}px`,
-  }
-}
-
 /** Apply a simple rubberband effect when a value moves beyond its allowed range. */
 export function rubberband(value: number, min: number, max: number): number {
   if (value < min) {

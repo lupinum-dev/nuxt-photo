@@ -9,6 +9,7 @@
 
     <div class="np-lightbox__ui">
       <LightboxControls
+        class="np-lightbox__controls"
         v-slot="{
           activeIndex,
           count,
@@ -42,7 +43,7 @@
               :controls-disabled="controlsDisabled"
             >
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--prev"
                 aria-label="Previous"
                 :disabled="controlsDisabled"
                 @click="prev"
@@ -50,7 +51,7 @@
                 &#8592;
               </button>
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--next"
                 aria-label="Next"
                 :disabled="controlsDisabled"
                 @click="next"
@@ -58,7 +59,7 @@
                 &#8594;
               </button>
               <button
-                class="np-lightbox__btn"
+                class="np-lightbox__btn np-lightbox__btn--zoom"
                 :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
                 :disabled="controlsDisabled || !zoomAllowed"
                 @click="toggleZoom()"
@@ -68,7 +69,6 @@
               <button
                 class="np-lightbox__btn np-lightbox__btn--close"
                 aria-label="Close"
-                :disabled="controlsDisabled"
                 @click="close"
               >
                 &#10005;
@@ -80,14 +80,10 @@
 
       <div class="np-lightbox__stage">
         <LightboxViewport
-          v-slot="{ photos, viewportRef, mediaOpacity, imageLoadFailed }"
+          v-slot="{ photos, viewportRef, imageLoadFailed }"
           class="np-lightbox__media"
         >
-          <div
-            class="np-lightbox__viewport"
-            :ref="viewportRef"
-            :style="{ opacity: mediaOpacity }"
-          >
+          <div class="np-lightbox__viewport" :ref="viewportRef">
             <div class="np-lightbox__container">
               <LightboxSlide
                 v-for="(photo, i) in photos"
@@ -122,8 +118,6 @@
         </LightboxCaption>
       </div>
     </div>
-
-    <LightboxGhostImage class="np-lightbox__ghost" />
   </LightboxRoot>
 </template>
 
@@ -132,7 +126,6 @@ import {
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
-  LightboxGhostImage,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,

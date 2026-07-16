@@ -1,145 +1,84 @@
 <template>
-  <slot
-    :open="open"
-    :open-photo="openPhoto"
-    :open-by-id="openById"
-    :photos="collectedPhotos"
-    :set-thumb-ref="setThumbRef"
-    :trigger="trigger"
-  />
-  <component :is="LightboxComponent" v-if="LightboxComponent" />
+  <slot :photos="canonicalPhotos" :controller="controller" />
+  <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-import {
-  ref,
-  computed,
-  inject,
-  provide,
-  type Component,
-  type ComponentPublicInstance,
-} from 'vue'
+import { computed, inject, provide, shallowRef, type Component } from 'vue'
 import { useLightboxProvider } from '../composables/index'
 import {
   LightboxComponentKey,
-  type LightboxSlideRenderer,
+  type LightboxProviderController,
 } from '../provide/keys'
 import {
-  photoId,
+  normalizePhotos,
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
-  type PhotoMapper,
-  type InvalidPhotoPolicy,
-  type InvalidPhotosEvent,
 } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
+  type PhotoGroupCapability,
   type PhotoGroupContext,
-} from '../context/photoGroup'
-import { resolveRecipePhotos } from '../utils/photos'
-import { devWarn } from '../utils/runtime'
+} from './photo-group/context'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 const props = withDefaults(
   defineProps<{
-    /** Explicit photos list for custom layout/programmatic use. If omitted, photos auto-collect from child Photo components. */
-    photos?: readonly unknown[]
-    /** Transforms each item in `photos` into a `PhotoItem`. Use when feeding CMS/API data directly. */
-    itemMapper?: PhotoMapper
-    validation?: InvalidPhotoPolicy
-    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
+    /** Canonical photo collection and navigation order. */
+    photos: readonly PhotoItem[]
     imageAdapter?: ImageAdapter
-    /** Lightbox to render: true = default, false = none, Component = custom */
+    /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
-    /** Transition mode for open/close animations */
+    /** Setup-time transition configuration. Remount to change it. */
     transition?: LightboxTransitionOption
   }>(),
-  {
-    lightbox: true,
-  },
+  { lightbox: true },
 )
 
-// Global lightbox override (set via provide(LightboxComponentKey, MyLightbox) in app.vue)
+const canonicalPhotos = computed<readonly PhotoItem[]>(
+  () =>
+    normalizePhotos(props.photos, {
+      owner: 'PhotoGroup',
+      onInvalid: 'throw',
+    }).photos,
+)
+const capabilityBatches = shallowRef(
+  new Map<symbol, readonly PhotoGroupCapability[]>(),
+)
+const capabilities = computed(() =>
+  [...capabilityBatches.value.values()].flat(),
+)
+
+function hasPhoto(id: string) {
+  return canonicalPhotos.value.some((photo) => photo.id === id)
+}
+
 const injectedLightbox = inject(LightboxComponentKey, null)
-
-// Registration storage: Map preserves insertion order (O(1) register/unregister)
-type Registration = {
-  photo: PhotoItem
-  getThumbEl: () => HTMLElement | null
-  renderSlide?: LightboxSlideRenderer | null
-}
-
-const registrationMap = new Map<symbol, Registration>()
-const registrationVersion = ref(0)
-let warnedIgnoredRegistrations = false
-
-// 'explicit' when :photos prop is provided; 'auto' when collecting from children
-const groupMode = computed<'auto' | 'explicit'>(() =>
-  props.photos !== undefined ? 'explicit' : 'auto',
+const lightboxComponent = resolveLightboxComponent(
+  props.lightbox,
+  injectedLightbox,
+  Lightbox,
+  true,
 )
-// The Vue provider can only be created during setup; a group mounted disabled
-// must stay inert instead of later exposing controls with no backing context.
-const hasLightboxProvider: boolean = props.lightbox !== false
-const lightboxEnabled = computed(
-  () => hasLightboxProvider && props.lightbox !== false,
-)
-
-function register(
-  id: symbol,
-  photo: PhotoItem,
-  getThumbEl: () => HTMLElement | null,
-  renderSlide?: LightboxSlideRenderer | null,
-) {
-  if (props.photos !== undefined) {
-    if (!warnedIgnoredRegistrations) {
-      warnedIgnoredRegistrations = true
-      devWarn(
-        'PhotoGroup has both a :photos prop and child registrations. The :photos prop is the only photo source; child registrations are ignored. Remove :photos to use auto-collection.',
-      )
-    }
-    return
-  }
-  for (const [existingId, entry] of registrationMap) {
-    if (existingId !== id && photoId(entry.photo) === photoId(photo)) {
-      devWarn(`Duplicate photo id "${photo.id}" registered in PhotoGroup`)
-      break
-    }
-  }
-  registrationMap.set(id, { photo, getThumbEl, renderSlide })
-  registrationVersion.value++
-}
-
-function unregister(id: symbol) {
-  if (registrationMap.delete(id)) {
-    registrationVersion.value++
-  }
-}
-
-// Collected photos (reactive) — either from :photos prop or auto-registered children
-const collectedPhotos = computed<PhotoItem[]>(() => {
-  void registrationVersion.value // reactive dependency
-  if (props.photos !== undefined) {
-    return resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoGroup', {
-      validation: props.validation,
-      onInvalidPhotos: props.onInvalidPhotos,
-    })
-  }
-  return Array.from(registrationMap.values()).map((r) => r.photo)
+const enabled = lightboxComponent !== null
+warnOnSetupOptionChanges('PhotoGroup', {
+  lightbox: () => props.lightbox,
+  transition: () => props.transition,
+  imageAdapter: () => props.imageAdapter,
 })
-
-// Full lightbox context — creates and provides to children
-const ctx = hasLightboxProvider
-  ? useLightboxProvider(collectedPhotos, {
+const provider = enabled
+  ? useLightboxProvider(canonicalPhotos, {
       transition: props.transition,
       imageAdapter: props.imageAdapter,
       resolveSlide: (photo) => {
-        if (groupMode.value !== 'auto') return null
-        for (const entry of registrationMap.values()) {
-          if (photoId(entry.photo) === photoId(photo)) {
-            return entry.renderSlide ?? null
+        for (const entry of capabilities.value) {
+          if (entry.id === photo.id && entry.renderSlide) {
+            return entry.renderSlide
           }
         }
         return null
@@ -147,177 +86,137 @@ const ctx = hasLightboxProvider
     })
   : null
 
-const ignoreThumbRef = (_el: Element | ComponentPublicInstance | null) => {
-  // no lightbox means no transition anchor is needed
-}
-
-function setThumbRef(index: number) {
-  return ctx?.setThumbRef(index) ?? ignoreThumbRef
-}
-
-function findPhotoIndex(photo: PhotoItem) {
-  return collectedPhotos.value.findIndex((p) => photoId(p) === photoId(photo))
-}
-
-function findPhotoIndexById(id: string | number) {
-  return collectedPhotos.value.findIndex(
-    (photo) => photoId(photo) === String(id),
-  )
-}
-
-function warnMissingPhoto(photoOrIndex: number | string) {
-  if (typeof photoOrIndex === 'number') {
-    devWarn(`No photo found at index ${photoOrIndex}`)
-    return
-  }
-
-  devWarn(`No photo found for id "${String(photoOrIndex)}"`)
-}
-
-function resolveTriggerPhoto(
-  photoOrIndex: PhotoItem | number,
-  maybeIndex?: number,
+function validateCapabilityIds(
+  batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>,
 ) {
-  const photos = collectedPhotos.value
-  const index =
-    typeof photoOrIndex === 'number'
-      ? photoOrIndex
-      : typeof maybeIndex === 'number'
-        ? maybeIndex
-        : findPhotoIndex(photoOrIndex)
-
-  return {
-    index,
-    hasValidIndex: index >= 0 && index < photos.length,
-    photo: typeof photoOrIndex === 'number' ? photos[index] : photoOrIndex,
-  }
-}
-
-async function openResolvedIndex(index: number) {
-  if (!lightboxEnabled.value || !ctx) return
-
-  if (index < 0 || index >= collectedPhotos.value.length) {
-    warnMissingPhoto(index)
-    return
-  }
-
-  syncThumbRefs()
-  await ctx.open(index)
-}
-
-function buildDisabledTrigger(photoOrIndex: PhotoItem | number) {
-  const photo =
-    typeof photoOrIndex === 'number'
-      ? collectedPhotos.value[photoOrIndex]
-      : photoOrIndex
-
-  return photo
-    ? { 'data-nuxt-photo-trigger': photoId(photo) }
-    : { 'data-nuxt-photo-trigger': String(photoOrIndex) }
-}
-
-function buildEnabledTrigger(
-  photoOrIndex: PhotoItem | number,
-  maybeIndex?: number,
-) {
-  const { index, hasValidIndex, photo } = resolveTriggerPhoto(
-    photoOrIndex,
-    maybeIndex,
-  )
-  const labelIndex = hasValidIndex ? index + 1 : 0
-
-  return {
-    ref: hasValidIndex ? setThumbRef(index) : undefined,
-    role: 'button',
-    tabindex: 0,
-    'aria-label': photo?.alt || `View photo ${labelIndex}`,
-    'data-nuxt-photo-trigger': photo ? photoId(photo) : String(index),
-    onClick: () => openResolvedIndex(index),
-    onKeydown: (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        void openResolvedIndex(index)
+  const canonicalIds = new Set(canonicalPhotos.value.map((photo) => photo.id))
+  for (const batch of batches.values()) {
+    for (const entry of batch) {
+      if (!canonicalIds.has(entry.id)) {
+        throw new Error(
+          `[nuxt-photo] PhotoGroup descendant photo "${entry.id}" is missing from the canonical photos collection`,
+        )
       }
-    },
+    }
   }
 }
 
-// Which photo's thumb is currently hidden during transitions
-const hiddenPhoto = computed<PhotoItem | null>(() => {
-  if (!ctx) return null
-  const idx = ctx.hiddenThumbIndex.value
-  if (idx === null) return null
-  return collectedPhotos.value[idx] ?? null
-})
+function replaceCapabilities(
+  owner: symbol,
+  entries: readonly PhotoGroupCapability[],
+) {
+  const next = new Map(capabilityBatches.value)
+  if (entries.length === 0) next.delete(owner)
+  else next.set(owner, [...entries])
 
-function syncThumbRefs() {
-  if (!ctx) return
-  // Wire current thumb elements from registrations (auto mode only)
-  if (props.photos === undefined) {
-    Array.from(registrationMap.values()).forEach((reg, i) => {
-      ctx.setThumbRef(i)(reg.getThumbEl())
-    })
+  validateCapabilityIds(next)
+
+  const rendererOwner = new Map<string, symbol>()
+  for (const [batchOwner, batch] of next) {
+    for (const entry of batch) {
+      if (!entry.renderSlide) continue
+      const existingOwner = rendererOwner.get(entry.id)
+      if (existingOwner && existingOwner !== batchOwner) {
+        throw new Error(
+          `[nuxt-photo] Multiple custom slide renderers registered for photo "${entry.id}"`,
+        )
+      }
+      rendererOwner.set(entry.id, batchOwner)
+    }
   }
+
+  capabilityBatches.value = next
+}
+
+function removeCapabilities(owner: symbol) {
+  if (!capabilityBatches.value.has(owner)) return
+  const next = new Map(capabilityBatches.value)
+  next.delete(owner)
+  capabilityBatches.value = next
+}
+
+function syncThumbnailRefs() {
+  if (!provider) return
+  canonicalPhotos.value.forEach((photo, index) => {
+    let element: HTMLElement | null = null
+    for (const candidate of capabilities.value) {
+      if (candidate.id !== photo.id) continue
+      const current = candidate.getThumbnailElement()
+      if (!current?.isConnected) continue
+      element = current
+      break
+    }
+    provider.setThumbnailRef(index)(element)
+  })
 }
 
 async function open(index = 0) {
-  await openResolvedIndex(index)
+  if (index < 0 || index >= canonicalPhotos.value.length) {
+    throw new RangeError(
+      `[nuxt-photo] No photo found at index ${String(index)}`,
+    )
+  }
+  if (!provider) return
+  syncThumbnailRefs()
+  await provider.open(index)
 }
 
-async function openPhoto(photo: PhotoItem) {
-  if (!lightboxEnabled.value || !ctx) return
-
-  const index = findPhotoIndex(photo)
+async function activateById(id: string, source?: HTMLElement | null) {
+  const index = canonicalPhotos.value.findIndex((photo) => photo.id === id)
   if (index < 0) {
-    warnMissingPhoto(photoId(photo))
-    return
+    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
-  await open(index)
+  if (!provider) return
+  syncThumbnailRefs()
+  if (source) provider.setThumbnailRef(index)(source)
+  await provider.openById(id)
 }
 
-async function openById(id: string | number) {
-  if (!lightboxEnabled.value || !ctx) return
-
-  const index = findPhotoIndexById(id)
-  if (index < 0) {
-    warnMissingPhoto(id)
-    return
-  }
-  await open(index)
+async function openById(id: string) {
+  await activateById(id)
 }
 
 async function close() {
-  if (!ctx) return
-  await ctx.close()
+  await provider?.close()
 }
 
-function trigger(photoOrIndex: PhotoItem | number, maybeIndex?: number) {
-  return lightboxEnabled.value && ctx
-    ? buildEnabledTrigger(photoOrIndex, maybeIndex)
-    : buildDisabledTrigger(photoOrIndex)
-}
-
-// Group context for child Photo/PhotoAlbum components
-const groupContext: PhotoGroupContext = {
-  mode: groupMode,
-  lightboxEnabled,
-  register,
-  unregister,
+const disabledController: LightboxProviderController = {
+  photos: computed(() => canonicalPhotos.value),
+  count: computed(() => canonicalPhotos.value.length),
+  activeIndex: computed(() => 0),
+  activePhoto: computed(() => null),
+  isOpen: computed(() => false),
   open,
-  openPhoto,
   openById,
-  photos: collectedPhotos,
-  hiddenPhoto,
+  close,
+  next() {},
+  prev() {},
+  toggleZoom() {},
+  hiddenThumbnailIndex: computed(() => null),
+  setThumbnailRef: () => () => {},
 }
 
-provide(PhotoGroupContextKey, groupContext)
+const controller: LightboxProviderController = provider
+  ? { ...provider, open, openById }
+  : disabledController
 
-// Which lightbox component to render
-const LightboxComponent = computed<Component | null>(() => {
-  if (!lightboxEnabled.value) return null
-  if (props.lightbox === true) return injectedLightbox ?? Lightbox
-  return props.lightbox as Component
+const hiddenPhoto = computed<PhotoItem | null>(() => {
+  if (!provider) return null
+  const index = provider.hiddenThumbnailIndex.value
+  return index === null ? null : (canonicalPhotos.value[index] ?? null)
 })
 
-defineExpose({ open, openPhoto, openById, close })
+const groupContext: PhotoGroupContext = {
+  enabled,
+  hasPhoto,
+  replaceCapabilities,
+  removeCapabilities,
+  open,
+  activateById,
+  photos: canonicalPhotos,
+  hiddenPhoto,
+}
+provide(PhotoGroupContextKey, groupContext)
+
+defineExpose({ open, openById, close })
 </script>

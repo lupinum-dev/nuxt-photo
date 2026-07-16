@@ -1,30 +1,38 @@
 <template>
   <div v-bind="$attrs">
     <div data-np-slide-effect :class="effectClass">
-      <div data-np-slide-frame :class="frameClass" :style="frameStyle">
+      <div
+        data-np-slide-frame
+        :class="frameClass"
+        :style="frameStyle"
+        :ref="ctx.setSlideFrameRef(index)"
+      >
         <div
           data-np-slide-zoom
           :class="zoomClass"
           :ref="ctx.setSlideZoomRef(index)"
         >
           <slot
-            v-if="$slots.default"
+            v-if="$slots.default && isActive"
             :photo="photo"
             :index="index"
             :width="frameWidth"
             :height="frameHeight"
           />
           <CustomSlideRenderer
-            v-else-if="slideRenderer"
+            v-else-if="slideRenderer && isActive"
             :renderer="slideRenderer"
             :photo="photo"
             :index="index"
           />
           <PhotoImage
-            v-else
+            v-else-if="mediaMounted"
+            :ref="ctx.setSlideImageRef(index)"
             :photo="photo"
             context="slide"
-            :loading="isActive ? 'eager' : 'lazy'"
+            loading="eager"
+            decoding="async"
+            :fetchpriority="isActive ? 'high' : 'low'"
             data-np-slide-img
             :class="imgClass"
           />
@@ -46,7 +54,7 @@ import type { PhotoItem } from '../core/index'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
 import type { LightboxSlideSlotProps } from '../types/slots'
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 import PhotoImage from './PhotoImage.vue'
 
 defineSlots<{ default?: (props: LightboxSlideSlotProps) => unknown }>()
@@ -65,6 +73,7 @@ const resolveSlide = inject(LightboxSlideRendererKey, () => null)
 
 const slideRenderer = computed(() => resolveSlide(props.photo))
 const isActive = computed(() => ctx.activeIndex.value === props.index)
+const mediaMounted = computed(() => ctx.isSlideMediaMounted(props.index))
 
 const frameStyle = computed(() => ctx.getSlideFrameStyle(props.photo))
 

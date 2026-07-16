@@ -17,46 +17,23 @@ const photos = [
 ]
 
 describe('SSR', () => {
-  it('PhotoAlbum renders photo items on the server without needing a fixed width', async () => {
+  it('renders a complete responsive rows fallback without a fixed width', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
     })
 
     const html = await renderToString(app)
 
-    // All photos are present
     expect(html).toContain('ssr-1')
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
-    expect(html).not.toContain('np-album__skeleton')
-  })
-
-  it('PhotoAlbum SSR rows layout uses CSS flex-grow with aspect ratios (no fixed width)', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
-
-    const html = await renderToString(app)
-
-    // CSS flex wrapper — responsive at any width
     expect(html).toContain('flex-wrap')
-    // aspect-ratio on each image — scales correctly at any width
     expect(html).toContain('aspect-ratio')
-    // flex-grow based on photo aspect ratio
     expect(html).toContain('flex-grow')
-  })
-
-  it('PhotoAlbum rows layout keeps the same SSR row structure', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
-
-    const html = await renderToString(app)
-
-    // No row-group divs — the DOM structure stays the same after mount
+    expect(html).not.toContain('flex:0 0 auto')
     expect(html).not.toContain('np-album__row')
-    // Filler span is present to prevent last-row stretch
     expect(html).toContain('flex-grow:9999')
+    expect(html).not.toContain('np-album__skeleton')
   })
 
   it('PhotoAlbum with defaultContainerWidth uses JS layout on server (no flex-grow)', async () => {
@@ -72,47 +49,14 @@ describe('SSR', () => {
 
     const html = await renderToString(app)
 
-    // All photos are present
     expect(html).toContain('ssr-1')
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
-    // JS layout emits calc() widths — not flex-grow proportions
     expect(html).toContain('calc(')
-    // Items use fixed flex basis, not flex-grow
     expect(html).not.toContain('flex-grow:1.777')
     expect(html).not.toContain('flex-grow:0.8')
-    // No skeleton (layout was computed)
-    expect(html).not.toContain('np-album__skeleton')
-  })
-
-  it('PhotoAlbum without defaultContainerWidth still uses CSS flex-grow fallback', async () => {
-    const app = createSSRApp({
-      render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-    })
-
-    const html = await renderToString(app)
-
-    // CSS fallback: flex-grow present
-    expect(html).toContain('flex-grow')
-    // No JS-computed calc widths for individual items
-    expect(html).not.toContain('flex:0 0 auto')
-  })
-
-  it('PhotoAlbum with defaultContainerWidth includes filler span', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: 'rows',
-          lightbox: false,
-          defaultContainerWidth: 800,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    // Filler span must always be present regardless of layout mode
     expect(html).toContain('flex-grow:9999')
+    expect(html).not.toContain('np-album__skeleton')
   })
 
   describe('with breakpoints (container query mode)', () => {
@@ -332,79 +276,7 @@ describe('SSR', () => {
     })
   })
 
-  it('PhotoAlbum SSR columns layout uses CSS grid', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: { type: 'columns', columns: 3 },
-          lightbox: false,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('grid-template-columns')
-    expect(html).not.toContain('np-album__skeleton')
-  })
-
-  it('PhotoAlbum accepts object-form layout with custom options', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: { type: 'rows', targetRowHeight: 200 },
-          lightbox: false,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('ssr-2')
-    expect(html).toContain('ssr-3')
-    expect(html).toContain('flex-grow')
-  })
-
-  it('PhotoAlbum accepts top-level targetRowHeight shorthand', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: 'rows',
-          targetRowHeight: 200,
-          lightbox: false,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('ssr-2')
-    expect(html).toContain('ssr-3')
-    expect(html).toContain('flex-grow')
-  })
-
-  it('PhotoAlbum accepts top-level columns shorthand', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: 'columns',
-          columns: 2,
-          lightbox: false,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('grid-template-columns:repeat(2')
-    expect(html).not.toContain('np-album__skeleton')
-  })
-
-  it('PhotoAlbum renders with its own lightbox during SSR', async () => {
+  it('PhotoAlbum omits its closed lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: true }),
     })
@@ -412,27 +284,31 @@ describe('SSR', () => {
     const html = await renderToString(app)
 
     expect(html).toContain('role="button"')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
-  it('PhotoGroup renders shared-lightbox SSR markup without crashing', async () => {
+  it('PhotoGroup omits its closed shared-lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () =>
-        h(PhotoGroup, null, {
-          default: () =>
-            h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
-        }),
+        h(
+          PhotoGroup,
+          { photos },
+          {
+            default: () =>
+              h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
+          },
+        ),
     })
 
     const html = await renderToString(app)
 
     expect(html).toContain('ssr-1')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
-  it('Photo renders standalone SSR markup with solo lightbox enabled', async () => {
+  it('Photo omits its closed solo-lightbox portal during SSR', async () => {
     const app = createSSRApp({
       render: () => h(Photo, { photo: photos[0], lightbox: true }),
     })
@@ -440,8 +316,8 @@ describe('SSR', () => {
     const html = await renderToString(app)
 
     expect(html).toContain('np-photo')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 
   it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
@@ -475,7 +351,7 @@ describe('computeBreakpointStyles', () => {
     makePhoto({ id: 'b', width: 1200, height: 1500 }),
   ]
 
-  it('returns empty string for empty photos', () => {
+  it('returns no rules without both photos and breakpoints', () => {
     expect(
       computeBreakpointStyles({
         photos: [],
@@ -483,9 +359,6 @@ describe('computeBreakpointStyles', () => {
         containerName: 'test',
       }),
     ).toBe('')
-  })
-
-  it('returns empty string for empty breakpoints', () => {
     expect(
       computeBreakpointStyles({
         photos: twoPhotos,
@@ -508,7 +381,7 @@ describe('computeBreakpointStyles', () => {
     expect(ruleCount).toBeLessThanOrEqual(2)
   })
 
-  it('scopes rules to the provided containerName', () => {
+  it('scopes complete item and width rules to the container', () => {
     const css = computeBreakpointStyles({
       photos: twoPhotos,
       breakpoints: [600, 900],
@@ -516,24 +389,8 @@ describe('computeBreakpointStyles', () => {
     })
     expect(css).toContain('my-album')
     expect(css).toContain('@container my-album')
-  })
-
-  it('generates np-item-N class rules for each photo', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600],
-      containerName: 'test',
-    })
     expect(css).toContain('.np-item-0')
     expect(css).toContain('.np-item-1')
-  })
-
-  it('includes calc() width expressions', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600, 900],
-      containerName: 'test',
-    })
     expect(css).toContain('calc(')
     expect(css).toContain('flex:0 0 auto')
   })

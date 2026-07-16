@@ -13,8 +13,8 @@ This repo has two library packages, two playground apps, and a docs app. The mos
 
 ## Prerequisites
 
-- Node.js `^22.12.0 || ^24.11.0 || >=26.0.0`
-- `pnpm` `10.x`
+- Node.js `^22.13.0 || ^24.11.0 || >=26.0.0`
+- `pnpm` `11.x`
 
 The repo declares both in the root [`package.json`](./package.json).
 
@@ -32,16 +32,21 @@ The main workspaces are:
 
 ## Setup
 
-Clone the repo, install dependencies, and build the packages once:
+Clone the repo, install the portable workspaces, and build the packages once:
 
 ```bash
 git clone https://github.com/lupinum-dev/nuxt-photo.git
 cd nuxt-photo
-pnpm install
+corepack pnpm install --filter '!nuxt-photo-docs'
 pnpm build
 ```
 
 `pnpm build` compiles the workspace packages in dependency order: `vue` → `nuxt`.
+
+The docs app intentionally consumes a local Ginko Docs tarball. Maintainers who
+have that tarball at the path declared in `docs/package.json` can run an
+unfiltered `corepack pnpm install` and the docs-specific commands below. The
+library packages and playgrounds do not require it.
 
 ## Local development
 
@@ -87,16 +92,10 @@ If you touch docs, check for hidden setup, stale facts, and pages that try to do
 
 Run the narrowest checks that prove your change while iterating. Before opening a PR, run the full relevant gate.
 
-Main checks:
+Run the normal broad gate before review:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test:unit
-pnpm test:module-package
-pnpm audit --audit-level moderate
-pnpm size
-pnpm release:pack
+pnpm verify
 ```
 
 Use these when needed:
@@ -115,32 +114,39 @@ Notes:
 - `pnpm release:pack` packs every public workspace package with pnpm and verifies rewritten workspace dependencies and tarball metadata.
 - `pnpm test` includes e2e, so it is heavier than the normal pre-PR loop.
 
-## Release dry run
+## Release verification
 
 Use pnpm for packaging. The workspace packages use `workspace:*` internally, and
 pnpm is the supported tool that rewrites those ranges for packed tarballs.
 
-Before publishing:
+The authoritative final-SHA gate is:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test:unit
-pnpm test:module-package
-pnpm audit --audit-level moderate
-pnpm size
-pnpm build:playground
-pnpm --filter nuxt-photo-playground-tw build
-pnpm build:docs
-pnpm test:e2e
-pnpm release:pack
+pnpm run release:verify
 ```
 
+It includes lint, types, unit and package tests, audit, size budgets, both
+playgrounds, docs, browser tests, release identity, and packed-consumer checks.
+
+Remote CI uses `pnpm run release:verify:library`. It validates the libraries,
+playgrounds, textual documentation, package contracts, and browsers while
+excluding the Ginko-backed docs app installation and build. The complete
+docs-inclusive `release:verify` remains the authoritative maintainer-local gate
+until the Ginko dependency is portable.
+
 Do not publish these packages with `npm publish` from a workspace package
-directory; it does not apply the same workspace dependency rewrite. The
-`.github/workflows/publish.yml` publishes tag builds only. It publishes the
-pnpm-packed tarballs in dependency order with npm provenance enabled. Configure
-npm trusted publishing for this repository before pushing the release tag.
+directory; it does not apply the same workspace dependency rewrite. A maintainer
+publishes a confirmed version from a clean, synchronized `main` checkout with:
+
+```bash
+corepack pnpm run release:publish -- --confirm <version>
+```
+
+The guarded command runs the complete local release gate, creates verified
+tarballs under `.release/v<version>`, checks npm authentication and registry
+state, then publishes Vue before Nuxt. It can resume safely if Vue published but
+Nuxt did not. Create the version tag and GitHub release only after both packages
+are confirmed on npm.
 
 ## When code changes require doc changes
 

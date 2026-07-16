@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { responsive } from '../../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
+import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
 
 const photos = [
   makePhoto({ id: 'hydrate-1', width: 1600, height: 900 }),
@@ -16,6 +17,12 @@ const photos = [
 class ResizeObserverMock {
   observe() {}
   disconnect() {}
+}
+
+class IntersectionObserverMock {
+  observe() {}
+  disconnect() {}
+  unobserve() {}
 }
 
 function stringifyConsoleArgs(calls: unknown[][]) {
@@ -32,6 +39,17 @@ function stringifyConsoleArgs(calls: unknown[][]) {
       }
     })
     .join('\n')
+}
+
+function expectNoHydrationWarnings(
+  warn: ReturnType<typeof vi.spyOn>,
+  error: ReturnType<typeof vi.spyOn>,
+) {
+  const messages = stringifyConsoleArgs([
+    ...warn.mock.calls,
+    ...error.mock.calls,
+  ])
+  expect(messages).not.toMatch(/hydration|hydrated.*mismatch|node mismatch/i)
 }
 
 async function hydrateAlbum(props: Record<string, unknown>) {
@@ -55,6 +73,20 @@ async function hydrateAlbum(props: Record<string, unknown>) {
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock)
+  vi.stubGlobal('IntersectionObserver', IntersectionObserverMock)
+  window.ResizeObserver = ResizeObserverMock
+  window.IntersectionObserver =
+    IntersectionObserverMock as unknown as typeof window.IntersectionObserver
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
     () => ({
       x: 0,
@@ -93,14 +125,7 @@ describe('SSR hydration', () => {
     const firstItem = host.querySelector('.np-album__item')
     expect(firstItem).not.toBeNull()
 
-    const messages = stringifyConsoleArgs([
-      ...warn.mock.calls,
-      ...error.mock.calls,
-    ])
-    expect(messages).not.toContain('Hydration text mismatch')
-    expect(messages).not.toContain(
-      'Hydration completed but contains mismatches',
-    )
+    expectNoHydrationWarnings(warn, error)
 
     app.unmount()
   })
@@ -122,26 +147,21 @@ describe('SSR hydration', () => {
     const firstItem = host.querySelector('.np-album__item')
     expect(firstItem).not.toBeNull()
 
-    const messages = stringifyConsoleArgs([
-      ...warn.mock.calls,
-      ...error.mock.calls,
-    ])
-    expect(messages).not.toContain('Hydration text mismatch')
-    expect(messages).not.toContain(
-      'Hydration completed but contains mismatches',
-    )
+    expectNoHydrationWarnings(warn, error)
 
     app.unmount()
   })
 
-  it('accepts shorthand layout props without extraneous-attr warnings', async () => {
+  it('accepts object-form responsive layout without hydration warnings', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const { app } = await hydrateAlbum({
       photos,
-      layout: 'rows',
-      targetRowHeight: responsive({ 0: 180, 800: 240 }),
+      layout: {
+        type: 'rows',
+        targetRowHeight: responsive({ 0: 180, 800: 240 }),
+      },
       breakpoints: [320, 800],
       lightbox: false,
     })
@@ -151,8 +171,34 @@ describe('SSR hydration', () => {
       ...error.mock.calls,
     ])
     expect(messages).not.toContain('Extraneous non-props attributes')
-    expect(messages).not.toContain('target-row-height')
+    expectNoHydrationWarnings(warn, error)
 
+    app.unmount()
+  })
+
+  it('hydrates the carousel before reconciling client snap geometry', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const props = {
+      photos,
+      slideSize: '50%',
+      showDots: true,
+      lightbox: true,
+      transition: 'none' as const,
+    }
+    const ssrApp = createSSRApp({ render: () => h(PhotoCarousel, props) })
+    const html = await renderToString(ssrApp)
+    const host = document.createElement('div')
+    host.innerHTML = html
+    document.body.appendChild(host)
+    const app = createSSRApp({ render: () => h(PhotoCarousel, props) })
+    app.mount(host)
+    await nextTick()
+
+    expect(host.querySelectorAll('.np-carousel__slide')).toHaveLength(
+      photos.length,
+    )
+    expectNoHydrationWarnings(warn, error)
     app.unmount()
   })
 })

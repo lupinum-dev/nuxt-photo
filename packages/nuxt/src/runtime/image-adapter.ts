@@ -4,6 +4,9 @@ import type {
   ImageSource,
   PhotoItem,
 } from '@nuxt-photo/vue'
+import type { NuxtPhotoImageAdapterConfig } from '../options'
+
+export type { NuxtPhotoImageAdapterConfig } from '../options'
 
 export type NuxtImageFunction = {
   (src: string, options: { width: number; quality: number }): string
@@ -14,20 +17,6 @@ export type NuxtImageFunction = {
     src: string
     srcset?: string
     sizes?: string
-  }
-}
-
-export type NuxtPhotoImageAdapterConfig = {
-  thumb?: {
-    sizes?: string
-    quality?: number
-  }
-  slide?: {
-    widths?: number[]
-    maxWidth?: number
-    maxDensity?: number
-    sizes?: string
-    quality?: number
   }
 }
 

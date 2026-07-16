@@ -35,6 +35,16 @@ describe('responsive()', () => {
     expect(() => responsive({})).toThrow('at least one breakpoint')
   })
 
+  it('rejects negative and non-finite breakpoint keys', () => {
+    expect(() => responsive({ [-1]: 1 })).toThrow(/non-negative/)
+    expect(() => responsive({ [Number.NaN]: 1 })).toThrow(/finite/)
+  })
+
+  it('rejects non-finite container widths', () => {
+    const fn = responsive({ 0: 1 })
+    expect(() => fn(Number.POSITIVE_INFINITY)).toThrow(/width must be finite/)
+  })
+
   it('integrates with resolveResponsiveParameter', () => {
     const fn = responsive({ 0: 4, 600: 8 })
     expect(resolveResponsiveParameter(fn, 300, 0)).toBe(4)

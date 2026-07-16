@@ -13,8 +13,7 @@
     <div class="gallery-section">
       <PhotoAlbum
         :photos="photos"
-        layout="rows"
-        :target-row-height="280"
+        :layout="{ type: 'rows', targetRowHeight: 280 }"
         :spacing="6"
         :breakpoints="[375, 600, 900, 1200]"
       />
@@ -27,10 +26,8 @@
 
     <footer class="footer">
       <p class="footer__line">
-        Built with <span class="footer__pkg">@nuxt-photo/nuxt/app</span>,
-        <span class="footer__pkg">@nuxt-photo/nuxt/app</span>,
-        <span class="footer__pkg">@nuxt-photo/nuxt/app</span>, and
-        <span class="footer__pkg">@nuxt-photo/nuxt</span>.
+        Built with <span class="footer__pkg">@nuxt-photo/nuxt</span> and its
+        <span class="footer__pkg">@nuxt-photo/nuxt/app</span> facade.
       </p>
       <p class="footer__sub">
         Carousel powered by Embla. Images from Lorem Picsum.
@@ -47,8 +44,7 @@ useHead({ title: 'Gallery — nuxt-photo' })
 const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 <PhotoAlbum
   :photos="photos"
-  layout="rows"
-  :target-row-height="280"
+  :layout="{ type: 'rows', targetRowHeight: 280 }"
   :spacing="6"
   :breakpoints="[375, 600, 900, 1200]"
 />`

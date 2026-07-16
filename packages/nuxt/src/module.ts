@@ -8,31 +8,16 @@ import {
   hasNuxtModule,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
-import type { NuxtPhotoImageAdapterConfig } from './runtime/image-adapter'
-
-type NuxtPhotoImageOptions =
-  | false
-  | ({
-      provider?: 'auto' | 'nuxt-image' | 'native'
-    } & NuxtPhotoImageAdapterConfig)
-
-export interface NuxtPhotoOptions {
-  autoImports?: boolean | { prefix?: string }
-  components?: boolean | { prefix?: string; primitives?: boolean }
-  css?: 'none' | 'structure' | 'all'
-  image?: NuxtPhotoImageOptions
-  lightbox?: {
-    minZoom?: number
-  }
-}
+import {
+  NUXT_PHOTO_DEFAULTS,
+  validateNuxtPhotoOptions,
+  type NuxtPhotoOptions,
+  type NuxtPhotoRuntimeConfig,
+} from './options'
+export type { NuxtPhotoOptions, NuxtPhotoRuntimeConfig } from './options'
 
 type NuxtPhotoAppConfig = {
-  nuxtPhoto?: {
-    image?: Exclude<NuxtPhotoOptions['image'], false>
-    lightbox?: {
-      minZoom?: number
-    }
-  }
+  nuxtPhoto?: NuxtPhotoRuntimeConfig
 }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
@@ -51,7 +36,6 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxSlide', name: 'LightboxSlide' },
   { export: 'LightboxControls', name: 'LightboxControls' },
   { export: 'LightboxCaption', name: 'LightboxCaption' },
-  { export: 'LightboxGhostImage', name: 'LightboxGhostImage' },
   { export: 'PhotoTrigger', name: 'PhotoTrigger' },
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
@@ -95,117 +79,6 @@ function resolveAutoImportAlias(name: string, prefix: string) {
   return `${prefix.charAt(0).toLowerCase()}${prefix.slice(1)}${capitalize(name)}`
 }
 
-function configError(path: string, expected: string) {
-  return new Error(`[nuxt-photo] \`nuxtPhoto.${path}\` must be ${expected}.`)
-}
-
-function assertStringPrefix(value: unknown, path: string) {
-  if (value != null && typeof value !== 'string') {
-    throw configError(path, 'a string')
-  }
-}
-
-function assertBooleanOrObject(value: unknown, path: string) {
-  if (
-    value != null &&
-    typeof value !== 'boolean' &&
-    typeof value !== 'object'
-  ) {
-    throw configError(path, 'a boolean or object')
-  }
-  if (value === null) {
-    throw configError(path, 'a boolean or object')
-  }
-}
-
-function assertFalseOrObject(value: unknown, path: string) {
-  if (value !== undefined && value !== false && typeof value !== 'object') {
-    throw configError(path, 'false or an object')
-  }
-  if (value === null) {
-    throw configError(path, 'false or an object')
-  }
-}
-
-function assertFiniteNumber(value: unknown, path: string) {
-  if (value != null && (typeof value !== 'number' || !Number.isFinite(value))) {
-    throw configError(path, 'a finite number')
-  }
-}
-
-function assertPositiveNumber(value: unknown, path: string) {
-  assertFiniteNumber(value, path)
-  if (value != null && (value as number) <= 0) {
-    throw configError(path, 'greater than 0')
-  }
-}
-
-function assertQuality(value: unknown, path: string) {
-  assertFiniteNumber(value, path)
-  if (value != null && ((value as number) < 1 || (value as number) > 100)) {
-    throw configError(path, 'between 1 and 100')
-  }
-}
-
-function assertPositiveIntegerArray(value: unknown, path: string) {
-  if (value == null) return
-  if (
-    !Array.isArray(value) ||
-    value.length === 0 ||
-    value.some(
-      (item) =>
-        typeof item !== 'number' || !Number.isInteger(item) || item <= 0,
-    )
-  ) {
-    throw configError(path, 'a non-empty array of positive integers')
-  }
-}
-
-function validateNuxtPhotoOptions(options: NuxtPhotoOptions) {
-  if (
-    options.css != null &&
-    !['none', 'structure', 'all'].includes(options.css)
-  ) {
-    throw configError('css', '"none", "structure", or "all"')
-  }
-
-  assertBooleanOrObject(options.autoImports, 'autoImports')
-  assertBooleanOrObject(options.components, 'components')
-  assertFalseOrObject(options.image, 'image')
-
-  if (options.autoImports && typeof options.autoImports === 'object') {
-    assertStringPrefix(options.autoImports.prefix, 'autoImports.prefix')
-  }
-
-  if (options.components && typeof options.components === 'object') {
-    assertStringPrefix(options.components.prefix, 'components.prefix')
-  }
-
-  if (options.image && typeof options.image === 'object') {
-    const provider = options.image.provider
-    if (
-      provider != null &&
-      !['auto', 'nuxt-image', 'native'].includes(provider)
-    ) {
-      throw configError('image.provider', '"auto", "nuxt-image", or "native"')
-    }
-
-    assertQuality(options.image.thumb?.quality, 'image.thumb.quality')
-    assertQuality(options.image.slide?.quality, 'image.slide.quality')
-    assertPositiveIntegerArray(
-      options.image.slide?.widths,
-      'image.slide.widths',
-    )
-    assertPositiveNumber(options.image.slide?.maxWidth, 'image.slide.maxWidth')
-    assertPositiveNumber(
-      options.image.slide?.maxDensity,
-      'image.slide.maxDensity',
-    )
-  }
-
-  assertPositiveNumber(options.lightbox?.minZoom, 'lightbox.minZoom')
-}
-
 export default defineNuxtModule<NuxtPhotoOptions>({
   meta: {
     name: '@nuxt-photo/nuxt',
@@ -214,16 +87,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       nuxt: '^4.0.0',
     },
   },
-  defaults: {
-    autoImports: true,
-    components: {
-      prefix: '',
-    },
-    css: 'structure',
-    image: {
-      provider: 'auto',
-    },
-  },
+  defaults: NUXT_PHOTO_DEFAULTS,
   setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 

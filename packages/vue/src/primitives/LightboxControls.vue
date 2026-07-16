@@ -1,5 +1,5 @@
 <template>
-  <div :style="ctx.chromeStyle.value" v-bind="$attrs">
+  <div :ref="ctx.setControlsRef" data-np-motion="controls" v-bind="$attrs">
     <div data-np-sr-only aria-live="polite" aria-atomic="true">
       Photo {{ ctx.activeIndex.value + 1 }} of {{ ctx.count.value }}
     </div>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
 import type { LightboxControlsSlotProps } from '../types/slots'
 
 defineSlots<{ default?: (props: LightboxControlsSlotProps) => unknown }>()

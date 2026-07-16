@@ -41,8 +41,13 @@ import { useLightboxProvider } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
+import type { LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
-import { PhotoGroupContextKey } from '../context/photoGroup'
+import { PhotoGroupContextKey } from './photo-group/context'
+import { normalizePhotos } from '../core/photo/normalize'
+import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
+import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -51,6 +56,8 @@ const props = defineProps<{
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
   imageAdapter?: ImageAdapter
+  /** Setup-time transition configuration for a standalone lightbox. */
+  transition?: LightboxTransitionOption
   loading?: 'lazy' | 'eager'
   /** Extra classes for the inner img element */
   imgClass?: string
@@ -59,22 +66,35 @@ const props = defineProps<{
 }>()
 const slots = useSlots()
 
+function validatePhoto() {
+  normalizePhotos([props.photo], { owner: 'Photo', onInvalid: 'throw' })
+}
+validatePhoto()
+
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
 
 // Global lightbox override
 const injectedLightbox = inject(LightboxComponentKey, null)
 
-// Standalone mode: lightbox prop set and no parent group
-const isSolo = computed(
-  () => !group && !!props.lightbox && !props.lightboxIgnore,
-)
+const soloLightboxComponent = !group
+  ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, false)
+  : null
+// Standalone mode: lightbox capability set and no parent group.
+const hasSoloProvider = soloLightboxComponent !== null
+const isSolo = computed(() => hasSoloProvider)
+warnOnSetupOptionChanges('Photo', {
+  lightbox: () => props.lightbox,
+  transition: () => props.transition,
+  imageAdapter: () => props.imageAdapter,
+})
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
   ? useLightboxProvider(
       computed(() => props.photo),
       {
+        transition: props.transition,
         imageAdapter: props.imageAdapter,
         resolveSlide: (photo) => {
           if (
@@ -89,113 +109,87 @@ const soloCtx = isSolo.value
     )
   : null
 
-const soloLightboxComponent = computed<Component>(() => {
-  if (props.lightbox === true || props.lightbox === undefined) {
-    return injectedLightbox ?? Lightbox
-  }
-  return (props.lightbox as Component) ?? Lightbox
-})
-
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
 
 // Is this photo's thumb hidden during a transition?
-const isHidden = computed(() => group?.hiddenPhoto.value === props.photo)
+const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
 
-// Auto-group mode: inside a PhotoGroup with auto-collection
-const isAutoGrouped = computed(
+// Group mode: the parent owns the canonical collection; this photo is a trigger.
+const isGrouped = computed(
   () =>
     !!group &&
-    group.lightboxEnabled.value &&
-    !props.lightboxIgnore &&
-    group.mode.value === 'auto',
+    group.enabled &&
+    group.hasPhoto(props.photo.id) &&
+    !props.lightboxIgnore,
 )
-const isInteractive = computed(() => isSolo.value || isAutoGrouped.value)
+const isInteractive = computed(() => isSolo.value || isGrouped.value)
 
 const figureStyle = computed(() => {
   if (isSolo.value) {
     return {
       margin: 0,
-      opacity: soloCtx && soloCtx.hiddenThumbIndex.value === 0 ? 0 : 1,
+      opacity: soloCtx && soloCtx.hiddenThumbnailIndex.value === 0 ? 0 : 1,
       cursor: 'pointer',
     }
   }
-  if (isAutoGrouped.value) {
+  if (isGrouped.value) {
     return { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
   }
   return { margin: 0 }
 })
 
 function handleClick() {
-  if (isSolo.value) soloOpen()
-  else if (isAutoGrouped.value) group!.openPhoto(props.photo)
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    if (e.key === ' ') e.preventDefault()
-    handleClick()
-  }
+  if (isSolo.value) return soloOpen()
+  else if (isGrouped.value)
+    return group!.activateById(props.photo.id, thumbRef.value)
 }
 
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return {
-    role: 'button' as const,
-    tabindex: 0,
-    'aria-label': props.photo.alt || 'View photo',
-    onClick: handleClick,
-    onKeydown: handleKeydown,
-  }
+  return createPhotoTriggerBindings(props.photo, 0, handleClick)
 })
 
-// Registration with parent group (auto mode only)
+// Capability registration with the parent group.
 const id = Symbol()
 const registered = ref(false)
 
 function shouldRegisterWithGroup() {
-  return (
-    group &&
-    group.lightboxEnabled.value &&
-    group.mode.value === 'auto' &&
-    !props.lightboxIgnore &&
-    !isSolo.value
-  )
+  return group && group.enabled && !props.lightboxIgnore && !isSolo.value
 }
 
 function unregisterFromGroup() {
   if (!group || !registered.value) return
-  group.unregister(id)
+  group.removeCapabilities(id)
   registered.value = false
 }
 
 function registerWithGroup() {
   if (!shouldRegisterWithGroup()) return
-  group!.register(
-    id,
-    props.photo,
-    () => thumbRef.value,
-    slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
-  )
+  group!.replaceCapabilities(id, [
+    {
+      id: props.photo.id,
+      getThumbnailElement: () => thumbRef.value,
+      renderSlide: slots.slide
+        ? (slotProps) => slots.slide?.(slotProps) ?? null
+        : null,
+    },
+  ])
   registered.value = true
 }
 
 onMounted(() => {
   if (soloCtx) {
-    soloCtx.setThumbRef(0)(thumbRef.value)
+    soloCtx.setThumbnailRef(0)(thumbRef.value)
   }
-
-  registerWithGroup()
 })
 
+registerWithGroup()
+
 watch(
-  () => [
-    props.photo,
-    props.lightboxIgnore,
-    group?.lightboxEnabled.value,
-    group?.mode.value,
-  ],
+  () => [props.photo, props.lightboxIgnore],
   () => {
+    validatePhoto()
     unregisterFromGroup()
     registerWithGroup()
   },
@@ -205,7 +199,7 @@ onBeforeUnmount(unregisterFromGroup)
 
 async function soloOpen() {
   if (!soloCtx) return
-  soloCtx.setThumbRef(0)(thumbRef.value)
+  soloCtx.setThumbnailRef(0)(thumbRef.value)
   await soloCtx.open(0)
 }
 </script>

@@ -5,6 +5,7 @@ import type {
   CSSProperties,
   InjectionKey,
   Ref,
+  VNodeChild,
 } from 'vue'
 import type {
   GestureMode,
@@ -18,18 +19,24 @@ export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
 /** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
 export interface LightboxController {
-  photos: ComputedRef<PhotoItem[]>
-  count: ComputedRef<number>
-  activeIndex: Ref<number>
-  activePhoto: ComputedRef<PhotoItem | null>
-  isOpen: ComputedRef<boolean>
-  open: (photoOrIndex?: PhotoItem | number) => Promise<void>
-  close: () => Promise<void>
-  next: () => void
-  prev: () => void
-  toggleZoom: () => void
-  openPhoto(photo: PhotoItem): Promise<void>
-  openById(id: string | number): Promise<void>
+  readonly photos: ComputedRef<readonly PhotoItem[]>
+  readonly count: ComputedRef<number>
+  readonly activeIndex: ComputedRef<number>
+  readonly activePhoto: ComputedRef<PhotoItem | null>
+  readonly isOpen: ComputedRef<boolean>
+  open(index?: number): Promise<void>
+  openById(id: string): Promise<void>
+  close(): Promise<void>
+  next(): void
+  prev(): void
+  toggleZoom(): void
+}
+
+export interface LightboxProviderController extends LightboxController {
+  readonly hiddenThumbnailIndex: Readonly<Ref<number | null>>
+  setThumbnailRef(
+    index: number,
+  ): (element: Element | ComponentPublicInstance | null) => void
 }
 
 type LightboxRuntimeState = {
@@ -39,23 +46,16 @@ type LightboxRuntimeState = {
   isZoomedIn: ComputedRef<boolean>
   zoomAllowed: ComputedRef<boolean>
   animating: Ref<boolean>
-  ghostVisible: Ref<boolean>
-  ghostSrc: Ref<string>
-  ghostStyle: Ref<CSSProperties>
   hiddenThumbIndex: Ref<number | null>
-  overlayOpacity: Ref<number>
-  mediaOpacity: Ref<number>
   activeImageLoadFailed: Ref<boolean>
-  chromeOpacity: Ref<number>
   uiVisible: Ref<boolean>
   closeDragY: Ref<number>
+  stageMounted: Ref<boolean>
+  activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
-  chromeStyle: ComputedRef<CSSProperties>
-  closeDragRatio: ComputedRef<number>
-  backdropStyle: ComputedRef<CSSProperties>
-  lightboxUiStyle: ComputedRef<CSSProperties>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  isSlideMediaMounted: (index: number) => boolean
 }
 
 type LightboxDomBindings = {
@@ -67,25 +67,40 @@ type LightboxDomBindings = {
   setSlideZoomRef: (
     index: number,
   ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideFrameRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideImageRef: (
+    index: number,
+  ) => (el: Element | ComponentPublicInstance | null) => void
+  setOverlayRef: (el: Element | ComponentPublicInstance | null) => void
+  setViewportRef: (el: Element | ComponentPublicInstance | null) => void
+  setControlsRef: (el: Element | ComponentPublicInstance | null) => void
+  setCaptionRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionFrameRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionImageRef: (el: Element | ComponentPublicInstance | null) => void
+  setTransitionShadowRef: (el: Element | ComponentPublicInstance | null) => void
   onMediaPointerDown: (e: PointerEvent) => void
   onMediaPointerMove: (e: PointerEvent) => void
   onMediaPointerUp: (e: PointerEvent) => void
   onMediaPointerCancel: (e: PointerEvent) => void
   onWheel: (e: WheelEvent) => void
-  handleBackdropClick: () => void
+  handleBackdropClick: () => Promise<void> | undefined
 }
 
 export type InternalLightboxContext = Omit<
   LightboxController,
-  'openPhoto' | 'openById'
-> &
-  LightboxRuntimeState &
+  'openById' | 'activeIndex' | 'photos'
+> & {
+  photos: ComputedRef<PhotoItem[]>
+  activeIndex: Ref<number>
+} & LightboxRuntimeState &
   LightboxDomBindings
 
 export type LightboxSlideRenderer = (props: {
   photo: PhotoItem
   index: number
-}) => unknown
+}) => VNodeChild
 
 export const LightboxContextKey: InjectionKey<InternalLightboxContext> = Symbol(
   'nuxt-photo:lightbox',

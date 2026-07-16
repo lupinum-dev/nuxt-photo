@@ -1,13 +1,13 @@
 <template>
-  <Teleport to="body">
+  <Teleport v-if="ctx.isOpen.value" to="body">
     <div
-      v-if="ctx.isOpen.value"
       ref="rootRef"
       tabindex="-1"
       v-bind="$attrs"
       @keydown.capture="handleKeydownCapture"
     >
       <slot />
+      <LightboxTransitionLayer />
     </div>
   </Teleport>
 </template>
@@ -16,7 +16,8 @@
 defineOptions({ inheritAttrs: false })
 
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { useLightboxInject } from '../composables/useLightboxInject'
+import { useLightboxInject } from '../lightbox/inject'
+import LightboxTransitionLayer from '../internal/LightboxTransitionLayer.vue'
 
 const ctx = useLightboxInject('LightboxRoot')
 

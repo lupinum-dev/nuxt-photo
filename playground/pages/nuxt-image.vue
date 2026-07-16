@@ -36,8 +36,7 @@
       <div class="gallery-wrap">
         <PhotoAlbum
           :photos="photos"
-          layout="rows"
-          :target-row-height="260"
+          :layout="{ type: 'rows', targetRowHeight: 260 }"
           :spacing="6"
         />
       </div>
@@ -55,9 +54,9 @@
       <div class="gallery-wrap">
         <PhotoAlbum
           :photos="photos.slice(0, 6)"
-          layout="columns"
-          :columns="3"
+          :layout="{ type: 'columns', columns: 3 }"
           :spacing="6"
+          :default-container-width="1100"
         >
           <template #thumbnail="{ photo }">
             <div
@@ -86,18 +85,16 @@
         Wrap two <code>PhotoAlbum</code> components in <code>PhotoGroup</code>
         to share one lightbox with navigation across both.
       </p>
-      <PhotoGroup class="gallery-wrap">
+      <PhotoGroup :photos="photos" class="gallery-wrap">
         <PhotoAlbum
           :photos="photos.slice(0, 6)"
-          layout="rows"
-          :target-row-height="200"
+          :layout="{ type: 'rows', targetRowHeight: 200 }"
           :spacing="6"
         />
         <div style="margin-top: 8px">
           <PhotoAlbum
             :photos="photos.slice(6)"
-            layout="rows"
-            :target-row-height="200"
+            :layout="{ type: 'rows', targetRowHeight: 200 }"
             :spacing="6"
           />
         </div>
@@ -121,13 +118,16 @@ const singleCode = `<!-- Layer 0: one photo, one prop -->
 const albumCode = `<!-- Layer 1: album with lightbox baked in -->
 <PhotoAlbum
   :photos="photos"
-  layout="rows"
-  :target-row-height="260"
+  :layout="{ type: 'rows', targetRowHeight: 260 }"
   :spacing="6"
 />`
 
 const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
-<PhotoAlbum :photos="photos" layout="columns" :columns="3">
+<PhotoAlbum
+  :photos="photos"
+  :layout="{ type: 'columns', columns: 3 }"
+  :default-container-width="1100"
+>
   <template #thumbnail="{ photo }">
     <div class="my-thumb">
       <PhotoImage :photo="photo" context="thumb" />
@@ -137,7 +137,7 @@ const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
 </PhotoAlbum>`
 
 const groupCode = `<!-- Layer 3: two albums, one shared lightbox -->
-<PhotoGroup>
+<PhotoGroup :photos="[...set1, ...set2]">
   <PhotoAlbum :photos="set1" layout="rows" />
   <PhotoAlbum :photos="set2" layout="rows" />
 </PhotoGroup>`

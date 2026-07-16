@@ -1,4 +1,4 @@
-import { photoId, type PhotoItem, type PhotoMapper } from '../types'
+import type { PhotoItem } from '../types'
 
 export type PhotoValidationIssueCode =
   | 'missing-id'
@@ -6,32 +6,47 @@ export type PhotoValidationIssueCode =
   | 'invalid-width'
   | 'invalid-height'
   | 'duplicate-id'
+  | 'invalid-item'
+  | 'invalid-optional-field'
+  | 'invalid-meta'
 
 export type PhotoValidationIssue = {
-  code: PhotoValidationIssueCode
-  owner: string
-  index: number
-  id?: string
-  message: string
+  readonly code: PhotoValidationIssueCode
+  readonly owner: string
+  readonly index: number
+  readonly id?: string
+  readonly message: string
 }
 
-export type InvalidPhotoPolicy = 'throw' | 'drop' | 'warn'
+export type InvalidPhotoPolicy = 'throw' | 'drop'
 
 export type InvalidPhotosEvent = {
-  owner: string
-  issues: PhotoValidationIssue[]
-  rawPhotos: readonly unknown[]
+  readonly owner: string
+  readonly issues: readonly PhotoValidationIssue[]
+  readonly rawPhotos: readonly unknown[]
 }
 
 export type NormalizePhotosResult = {
-  photos: PhotoItem[]
-  issues: PhotoValidationIssue[]
+  readonly photos: PhotoItem[]
+  readonly issues: readonly PhotoValidationIssue[]
 }
 
-export type NormalizePhotosOptions<T = unknown> = {
+export type NormalizePhotosOptions = {
   owner: string
-  mapper?: PhotoMapper<T>
   onInvalid?: InvalidPhotoPolicy | 'return'
+}
+
+/** A structured public boundary error for invalid photo collections. */
+export class PhotoValidationError extends Error {
+  readonly owner: string
+  readonly issues: readonly PhotoValidationIssue[]
+
+  constructor(owner: string, issues: readonly PhotoValidationIssue[]) {
+    super(issues.map((issue) => issue.message).join('\n'))
+    this.name = 'PhotoValidationError'
+    this.owner = owner
+    this.issues = issues
+  }
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -46,106 +61,182 @@ function createIssue(
   code: PhotoValidationIssueCode,
   owner: string,
   index: number,
-  photo: Partial<PhotoItem>,
+  id: unknown,
   message: string,
 ): PhotoValidationIssue {
-  const id =
-    photo.id === undefined || photo.id === null ? undefined : String(photo.id)
-  return { code, owner, index, id, message: `${owner}: ${message}` }
+  const normalizedId = id === undefined || id === null ? undefined : String(id)
+  return {
+    code,
+    owner,
+    index,
+    id: normalizedId,
+    message: `${owner}: ${message}`,
+  }
 }
 
-export function normalizePhotos<T = unknown>(
-  rawPhotos: readonly T[],
-  options: NormalizePhotosOptions<T>,
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false
+  }
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
+}
+
+export function normalizePhotos(
+  rawPhotos: readonly unknown[],
+  options: NormalizePhotosOptions,
 ): NormalizePhotosResult {
   const onInvalid = options.onInvalid ?? 'throw'
   const issues: PhotoValidationIssue[] = []
-  const mapped = rawPhotos.map((item, index) =>
-    options.mapper ? options.mapper(item, index) : item,
-  ) as PhotoItem[]
-  const seen = new Map<string, number>()
+  const candidates: Array<PhotoItem | null> = []
+  const indexesById = new Map<string, number[]>()
   const invalidIndexes = new Set<number>()
 
-  mapped.forEach((photo, index) => {
-    if (photo.id === undefined || photo.id === null || photoId(photo) === '') {
+  rawPhotos.forEach((rawPhoto, index) => {
+    if (!isPlainRecord(rawPhoto)) {
+      issues.push(
+        createIssue(
+          'invalid-item',
+          options.owner,
+          index,
+          undefined,
+          `photo at index ${index} must be a plain object`,
+        ),
+      )
+      invalidIndexes.add(index)
+      candidates.push(null)
+      return
+    }
+
+    const id = rawPhoto.id
+    if (!isNonEmptyString(id)) {
       issues.push(
         createIssue(
           'missing-id',
           options.owner,
           index,
-          photo,
-          `photo at index ${index} is missing a non-empty id`,
+          id,
+          `photo at index ${index} is missing a non-empty string id`,
         ),
       )
       invalidIndexes.add(index)
+    } else {
+      const indexes = indexesById.get(id) ?? []
+      indexes.push(index)
+      indexesById.set(id, indexes)
     }
 
-    if (!isNonEmptyString(photo.src)) {
+    if (!isNonEmptyString(rawPhoto.src)) {
       issues.push(
         createIssue(
           'missing-src',
           options.owner,
           index,
-          photo,
-          `photo "${photoId(photo)}" is missing a non-empty src`,
+          id,
+          `photo "${String(id ?? '')}" is missing a non-empty src`,
         ),
       )
       invalidIndexes.add(index)
     }
 
-    if (!isFinitePositiveNumber(photo.width)) {
+    if (!isFinitePositiveNumber(rawPhoto.width)) {
       issues.push(
         createIssue(
           'invalid-width',
           options.owner,
           index,
-          photo,
-          `photo "${photoId(photo)}" has invalid width`,
+          id,
+          `photo "${String(id ?? '')}" has invalid width`,
         ),
       )
       invalidIndexes.add(index)
     }
 
-    if (!isFinitePositiveNumber(photo.height)) {
+    if (!isFinitePositiveNumber(rawPhoto.height)) {
       issues.push(
         createIssue(
           'invalid-height',
           options.owner,
           index,
-          photo,
-          `photo "${photoId(photo)}" has invalid height`,
+          id,
+          `photo "${String(id ?? '')}" has invalid height`,
         ),
       )
       invalidIndexes.add(index)
     }
 
-    const id = photoId(photo)
-    const previousIndex = seen.get(id)
-    if (previousIndex !== undefined) {
+    for (const field of [
+      'thumbSrc',
+      'alt',
+      'caption',
+      'description',
+      'srcset',
+    ] as const) {
+      const value = rawPhoto[field]
+      if (value !== undefined && typeof value !== 'string') {
+        issues.push(
+          createIssue(
+            'invalid-optional-field',
+            options.owner,
+            index,
+            id,
+            `photo "${String(id ?? '')}" field "${field}" must be a string`,
+          ),
+        )
+        invalidIndexes.add(index)
+      }
+    }
+
+    if (
+      rawPhoto.meta !== undefined &&
+      (typeof rawPhoto.meta !== 'object' || rawPhoto.meta === null)
+    ) {
+      issues.push(
+        createIssue(
+          'invalid-meta',
+          options.owner,
+          index,
+          id,
+          `photo "${String(id ?? '')}" field "meta" must be an object`,
+        ),
+      )
+      invalidIndexes.add(index)
+    }
+
+    // Every consumed field has been checked above; preserve unknown app fields.
+    candidates.push(rawPhoto as unknown as PhotoItem)
+  })
+
+  for (const [id, indexes] of indexesById) {
+    if (indexes.length < 2) continue
+    for (const index of indexes) {
       issues.push(
         createIssue(
           'duplicate-id',
           options.owner,
           index,
-          photo,
-          `duplicate photo id "${id}" also used at index ${previousIndex}`,
+          id,
+          `duplicate photo id "${id}" used at indexes ${indexes.join(', ')}`,
         ),
       )
       invalidIndexes.add(index)
-      invalidIndexes.add(previousIndex)
     }
-    seen.set(id, index)
-  })
+  }
 
   if (issues.length > 0 && onInvalid === 'throw') {
-    throw new Error(issues.map((issue) => issue.message).join('\n'))
+    throw new PhotoValidationError(options.owner, issues)
   }
 
   return {
-    photos:
-      issues.length > 0 && onInvalid === 'drop'
-        ? mapped.filter((_, index) => !invalidIndexes.has(index))
-        : mapped,
+    photos: candidates.filter(
+      (photo, index): photo is PhotoItem =>
+        photo !== null &&
+        !(
+          issues.length > 0 &&
+          onInvalid === 'drop' &&
+          invalidIndexes.has(index)
+        ),
+    ),
     issues,
   }
 }

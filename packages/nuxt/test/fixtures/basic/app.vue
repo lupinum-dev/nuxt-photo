@@ -27,9 +27,8 @@ const minZoom = useAppConfig().nuxtPhoto?.lightbox?.minZoom
     <p id="nuxt-photo-min-zoom">{{ minZoom }}</p>
     <PhotoAlbum
       :photos="photos"
-      layout="rows"
+      :layout="{ type: 'rows', targetRowHeight: 220 }"
       :spacing="spacing"
-      :target-row-height="220"
     />
   </main>
 </template>

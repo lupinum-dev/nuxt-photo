@@ -2,7 +2,7 @@
 /* Override any --np-* variable on .np-lightbox to customize the theme */
 .np-lightbox {
   --np-backdrop-bg: rgba(0, 0, 0, 0.85);
-  --np-backdrop-blur: 16px;
+  --np-backdrop-filter: none;
   --np-btn-radius: 999px;
   --np-btn-bg: rgba(255, 255, 255, 0.1);
   --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
@@ -12,19 +12,24 @@
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
   --np-counter-color: rgba(255, 255, 255, 0.72);
-  --np-img-radius: 16px;
+  --np-img-radius: 14px;
+  --np-img-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34), 0 2px 12px rgba(0, 0, 0, 0.28);
   --np-caption-color: white;
   --np-caption-heading-size: 22px;
   --np-caption-secondary: rgba(255, 255, 255, 0.72);
 }
 
 .np-lightbox__backdrop {
-  background: var(--np-backdrop-bg);
-  backdrop-filter: blur(var(--np-backdrop-blur));
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent 36vh),
+    var(--np-backdrop-bg);
+  backdrop-filter: var(--np-backdrop-filter);
 }
 
 .np-lightbox__counter {
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: var(--np-counter-color);
 }
@@ -47,10 +52,14 @@
 
 [data-np-slide-img] {
   border-radius: var(--np-img-radius);
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  outline-offset: -1px;
+  box-shadow: var(--np-img-shadow);
 }
 
 .np-lightbox__caption {
   color: var(--np-caption-color);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.72);
 }
 
 .np-lightbox__fallback {

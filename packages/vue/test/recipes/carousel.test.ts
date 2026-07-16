@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 
-import { createApp, createSSRApp, defineComponent, h, nextTick, ref } from 'vue'
+import {
+  createApp,
+  createSSRApp,
+  defineComponent,
+  h,
+  nextTick,
+  reactive,
+  ref,
+} from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makePhoto } from '@test-fixtures/photos'
@@ -50,6 +58,17 @@ function mount(
       app.unmount()
       container.remove()
     },
+  }
+}
+
+function setCarouselRect(element: Element, left: number, width: number) {
+  for (const [name, value] of Object.entries({
+    offsetLeft: left,
+    offsetTop: 0,
+    offsetWidth: width,
+    offsetHeight: 400,
+  })) {
+    Object.defineProperty(element, name, { configurable: true, value })
   }
 }
 
@@ -172,9 +191,33 @@ describe('PhotoCarousel — DOM', () => {
       showThumbnails: false,
     })
     await flushUi()
-    expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(
-      photos.length,
-    )
+    expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(1)
+    m.unmount()
+  })
+
+  it('reconciles dot count from real geometry after Embla reinitializes', async () => {
+    const fivePhotos = [...photos, makePhoto({ id: 'c-5' })]
+    const props = reactive({
+      photos: fivePhotos,
+      showDots: true,
+      showThumbnails: false,
+      slideSize: '33.333%',
+      options: {} as Record<string, unknown>,
+    })
+    const m = mount(PhotoCarousel, props)
+    await flushUi()
+
+    const viewport = m.container.querySelector('.np-carousel__viewport')!
+    const container = m.container.querySelector('.np-carousel__container')!
+    const slides = [...m.container.querySelectorAll('.np-carousel__slide')]
+    setCarouselRect(viewport, 0, 600)
+    setCarouselRect(container, 0, 600)
+    slides.forEach((slide, index) => setCarouselRect(slide, index * 200, 200))
+
+    props.options = { dragFree: true }
+    await flushUi(10)
+
+    expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(3)
     m.unmount()
   })
 
@@ -197,27 +240,13 @@ describe('PhotoCarousel — DOM', () => {
     m.unmount()
   })
 
-  it('warns in dev when autoplay prop and user Autoplay plugin are both supplied', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fakeAutoplayPlugin = {
-      name: 'autoplay',
-      options: {},
-      init() {},
-      destroy() {},
-      play() {},
-      stop() {},
-      reset() {},
-      isPlaying: () => false,
-      timeUntilNext: () => null,
-    } as any
+  it('accepts library-owned autoplay options', async () => {
     const m = mount(PhotoCarousel, {
       photos,
-      autoplay: { delay: 3000 },
-      plugins: [fakeAutoplayPlugin],
+      autoplay: { delayMs: 3000, stopOnMouseEnter: true },
     })
     await flushUi()
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('PhotoCarousel'))
-    warn.mockRestore()
+    expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
     m.unmount()
   })
 
@@ -355,13 +384,13 @@ describe('PhotoCarousel — SSR', () => {
     expect(html).not.toContain('np-carousel__thumb ')
   })
 
-  it('SSR with lightbox enabled includes PhotoGroup teleport markers', async () => {
+  it('SSR with lightbox enabled omits the closed modal portal', async () => {
     const app = createSSRApp({
       render: () => h(PhotoCarousel, { photos, lightbox: true }),
     })
     const html = await renderToString(app)
     expect(html).toContain('np-carousel')
-    expect(html).toContain('teleport start')
-    expect(html).toContain('teleport end')
+    expect(html).not.toContain('teleport start')
+    expect(html).not.toContain('role="dialog"')
   })
 })

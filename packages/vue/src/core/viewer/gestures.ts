@@ -61,17 +61,3 @@ export function isDoubleTap(
     Math.abs(clientY - lastTap.clientY) < maxDistance
   )
 }
-
-/**
- * Compute the close-drag ratio (0 to 0.75) from vertical drag distance.
- *
- * Divisor floor of 240px keeps tiny overlays from being a hair-trigger close;
- * 0.85 × area height keeps the close gesture feeling deliberate on large
- * viewports instead of triggering at a third of the way down.
- */
-export function computeCloseDragRatio(
-  closeDragY: number,
-  areaHeight: number,
-): number {
-  return Math.min(0.75, Math.abs(closeDragY) / Math.max(240, areaHeight * 0.85))
-}

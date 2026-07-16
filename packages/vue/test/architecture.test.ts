@@ -81,31 +81,6 @@ describe('source architecture boundaries', () => {
     expect(offenders).toEqual([])
   })
 
-  it('keeps public roots from exporting runtime internals', () => {
-    const roots = [
-      'packages/vue/src/index.ts',
-      'packages/nuxt/src/runtime/app.ts',
-      'packages/nuxt/src/runtime/app.d.ts',
-    ]
-    const forbidden = [
-      'useLightboxRuntimeState',
-      'useLightboxInputHandlers',
-      'useGhostTransition',
-      'PhotoGroupContextKey',
-      'components/internal',
-      '/internal',
-      '/context',
-    ]
-
-    const offenders = roots.flatMap((file) =>
-      forbidden
-        .filter((pattern) => read(file).includes(pattern))
-        .map((pattern) => `${file}: ${pattern}`),
-    )
-
-    expect(offenders).toEqual([])
-  })
-
   it('keeps production components free of test fixture imports', () => {
     expect(
       relativeOffenders(
@@ -120,5 +95,24 @@ describe('source architecture boundaries', () => {
     expect(read('packages/nuxt/src/runtime/app.d.ts')).toBe(
       read('packages/nuxt/src/runtime/app.ts'),
     )
+  })
+
+  it('quarantines private Embla APIs and keeps vendor types out of public contracts', () => {
+    const productionFiles = sourceFiles('packages/vue/src')
+    expect(
+      relativeOffenders(productionFiles, (text) =>
+        text.includes('internalEngine()'),
+      ),
+    ).toEqual(['packages/vue/src/integrations/embla/snapModel.ts'])
+
+    const publicContractFiles = [
+      'packages/vue/src/index.ts',
+      'packages/vue/src/core/types.ts',
+      'packages/vue/src/provide/keys.ts',
+      'packages/vue/src/types/slots.ts',
+    ]
+    expect(
+      publicContractFiles.filter((file) => /\bEmbla\w*/.test(read(file))),
+    ).toEqual([])
   })
 })

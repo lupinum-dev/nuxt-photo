@@ -19,7 +19,6 @@ export {
   LightboxSlide,
   LightboxControls,
   LightboxCaption,
-  LightboxGhostImage,
   PhotoTrigger,
   PhotoImage,
 } from './primitives'
@@ -39,17 +38,19 @@ export {
   LightboxComponentKey,
   LightboxDefaultsKey,
   type LightboxController,
+  type LightboxProviderController,
   type LightboxDefaults,
   type LightboxSlideRenderer,
 } from './provide/keys'
-export { photoId, responsive, resolveResponsiveParameter } from './core/types'
+export { responsive, resolveResponsiveParameter } from './core/types'
 export type {
   PhotoItem,
-  PhotoMapper,
   AlbumLayout,
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
+  PhotoCarouselOptions,
+  PhotoCarouselAutoplayOptions,
   ImageAdapter,
   ImageContext,
   ImageSource,
@@ -64,3 +65,4 @@ export type {
   PhotoValidationIssue,
   PhotoValidationIssueCode,
 } from './core/photo/normalize'
+export { PhotoValidationError } from './core/photo/normalize'

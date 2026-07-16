@@ -15,7 +15,7 @@
       <div :style="renderBranch.wrapperStyle">
         <div
           v-for="item in renderBranch.items"
-          :key="photoId(item.photo)"
+          :key="item.photo.id"
           class="np-album__item"
           :class="[
             renderBranch.containerQueriesActive
@@ -96,7 +96,7 @@
     <div v-else :style="renderBranch.wrapperStyle">
       <div
         v-for="(photo, index) in renderBranch.photos"
-        :key="photoId(photo)"
+        :key="photo.id"
         class="np-album__item"
         :class="itemClass"
         :style="ssrItemStyle(photo)"
@@ -129,31 +129,26 @@
 import { computed, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
-  photoId,
   type AlbumLayout,
   type ImageAdapter,
   type LightboxTransitionOption,
-  type PhotoMapper,
   type PhotoItem,
   type ResponsiveParameter,
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
 } from '../core/index'
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
-import { usePhotoAlbumLayoutState } from '../composables/usePhotoAlbumLayoutState'
-import { resolveRecipePhotos } from '../utils/photos'
-import { devWarn } from '../utils/runtime'
-import { useAlbumLightbox } from './photo-album/useAlbumLightbox'
+import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
+import { resolveRecipePhotos } from '../core/photo/resolve'
+import { devWarn } from '../core/env'
+import { useAlbumLightbox } from './photo-album/lightbox'
 
 const props = withDefaults(
   defineProps<{
-    photos: readonly unknown[]
-    itemMapper?: PhotoMapper
+    photos: readonly PhotoItem[]
     validation?: InvalidPhotoPolicy
     onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     layout?: AlbumLayout | AlbumLayout['type']
-    targetRowHeight?: ResponsiveParameter<number>
-    columns?: ResponsiveParameter<number>
     spacing?: ResponsiveParameter<number>
     padding?: ResponsiveParameter<number>
     defaultContainerWidth?: number
@@ -178,29 +173,18 @@ const props = withDefaults(
 
 const normalizedLayout = computed<AlbumLayout>(() => {
   const raw = props.layout
-  if (typeof raw === 'object') {
-    switch (raw.type) {
-      case 'rows':
-        return {
-          ...raw,
-          targetRowHeight: raw.targetRowHeight ?? props.targetRowHeight,
-        }
-      case 'columns':
-      case 'masonry':
-        return { ...raw, columns: raw.columns ?? props.columns }
-    }
-  }
+  if (typeof raw === 'object') return raw
 
   switch (raw) {
     case 'rows':
-      return { type: 'rows', targetRowHeight: props.targetRowHeight }
+      return { type: 'rows' }
     case 'columns':
-      return { type: 'columns', columns: props.columns }
+      return { type: 'columns' }
     case 'masonry':
-      return { type: 'masonry', columns: props.columns }
+      return { type: 'masonry' }
     default:
       devWarn(`Unknown layout type "${raw}", falling back to "rows"`)
-      return { type: 'rows', targetRowHeight: props.targetRowHeight }
+      return { type: 'rows' }
   }
 })
 
@@ -211,7 +195,7 @@ if (props.defaultContainerWidth === 0) {
 }
 
 const photos = computed<PhotoItem[]>(() =>
-  resolveRecipePhotos(props.photos, props.itemMapper, 'PhotoAlbum', {
+  resolveRecipePhotos(props.photos, 'PhotoAlbum', {
     validation: props.validation,
     onInvalidPhotos: props.onInvalidPhotos,
   }),

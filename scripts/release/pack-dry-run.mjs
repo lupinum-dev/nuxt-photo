@@ -1,9 +1,27 @@
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync, readdirSync, readFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 
 const requiredPackageFiles = ['package.json', 'README.md', 'LICENSE']
+
+function readOutputDirectory(args) {
+  if (args.length === 0) return null
+  assert(
+    args.length === 2 && args[0] === '--output-dir' && args[1],
+    'Usage: pack-dry-run.mjs [--output-dir <directory>]',
+  )
+  return resolve(args[1])
+}
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -110,8 +128,10 @@ function discoverPackages() {
 
 const packages = discoverPackages()
 assert(packages.length > 0, 'No @nuxt-photo packages found in packages/*')
+const outputDirectory = readOutputDirectory(process.argv.slice(2))
 
 const packDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-pack-'))
+const packedTarballs = new Map()
 
 try {
   for (const { name: packageName, version, dir: packageDir } of packages) {
@@ -124,6 +144,7 @@ try {
     assert(tarballName, `No tarball produced for ${packageName}`)
 
     const tarball = join(packDir, tarballName)
+    packedTarballs.set(packageName, tarball)
     const packageJson = readPackedPackageJson(tarball)
     const files = listPackedFiles(tarball)
 
@@ -174,6 +195,165 @@ try {
     }
 
     process.stdout.write(`packed ${packageName}: ${tarballName}\n`)
+  }
+
+  const consumerDir = join(packDir, 'consumer')
+  mkdirSync(consumerDir)
+  const rootManifest = readPackageManifest('.')
+  const nuxtManifest = readPackageManifest('packages/nuxt')
+  writeFileSync(
+    join(consumerDir, 'package.json'),
+    JSON.stringify(
+      {
+        name: 'nuxt-photo-packed-consumer',
+        private: true,
+        type: 'module',
+        packageManager: rootManifest.packageManager,
+        dependencies: {
+          '@nuxt-photo/nuxt': `file:${packedTarballs.get('@nuxt-photo/nuxt')}`,
+          '@nuxt-photo/vue': `file:${packedTarballs.get('@nuxt-photo/vue')}`,
+          nuxt: nuxtManifest.devDependencies.nuxt,
+          typescript: nuxtManifest.devDependencies.typescript,
+          vue: rootManifest.devDependencies.vue,
+        },
+      },
+      null,
+      2,
+    ),
+  )
+  writeFileSync(
+    join(consumerDir, 'pnpm-workspace.yaml'),
+    `overrides:\n  '@nuxt-photo/vue': ${JSON.stringify(`file:${packedTarballs.get('@nuxt-photo/vue')}`)}\n`,
+  )
+
+  run('pnpm', ['install', '--ignore-scripts'], {
+    cwd: consumerDir,
+  })
+
+  const smokeScript = `
+    import { existsSync } from 'node:fs'
+    import { fileURLToPath } from 'node:url'
+
+    const nuxtModule = await import('@nuxt-photo/nuxt')
+
+    if (!nuxtModule.default) throw new Error('Packed Nuxt module has no default export')
+
+    const moduleUrl = import.meta.resolve('@nuxt-photo/nuxt')
+    const requiredSiblingFiles = [
+      '../../vue/dist/components/Photo.vue',
+      '../../vue/dist/components/PhotoAlbum.vue',
+      '../../vue/dist/components/PhotoCarousel.vue',
+      '../../vue/dist/components/PhotoGroup.vue',
+      '../../vue/dist/styles/lightbox-structure.css',
+    ]
+    for (const relativePath of requiredSiblingFiles) {
+      const path = fileURLToPath(new URL(relativePath, moduleUrl))
+      if (!existsSync(path)) {
+        throw new Error('Packed Nuxt relative package resolution failed: ' + path)
+      }
+    }
+  `
+  run('node', ['--input-type=module', '--eval', smokeScript], {
+    cwd: consumerDir,
+  })
+
+  writeFileSync(
+    join(consumerDir, 'tsconfig.declarations.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          baseUrl: '.',
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          paths: {
+            '@nuxt/schema': ['./nuxt-schema-stub.d.ts'],
+            'nuxt/schema': ['./nuxt-schema-stub.d.ts'],
+          },
+          skipLibCheck: false,
+          strict: true,
+          target: 'ES2022',
+        },
+        files: [
+          'node_modules/@nuxt-photo/nuxt/dist/runtime/types/app-config.d.ts',
+        ],
+      },
+      null,
+      2,
+    ),
+  )
+  writeFileSync(
+    join(consumerDir, 'nuxt-schema-stub.d.ts'),
+    `export interface NuxtModule<T> { readonly __options?: T }
+export interface CustomAppConfig {}
+export interface AppConfig {}
+`,
+  )
+  run('pnpm', ['exec', 'tsc', '-p', 'tsconfig.declarations.json', '--noEmit'], {
+    cwd: consumerDir,
+  })
+
+  writeFileSync(
+    join(consumerDir, 'nuxt.config.mjs'),
+    `export default {
+      modules: ['@nuxt-photo/nuxt'],
+      nuxtPhoto: { css: 'structure', image: false },
+    }\n`,
+  )
+  writeFileSync(
+    join(consumerDir, 'app.vue'),
+    `<script setup lang="ts">
+      import { PhotoValidationError, type PhotoItem } from '@nuxt-photo/nuxt/app'
+      import { responsive } from '@nuxt-photo/vue'
+      import { useContainerWidth } from '@nuxt-photo/vue/composables'
+      import type { LightboxCaptionSlotProps } from '@nuxt-photo/vue/types'
+      const photos: readonly PhotoItem[] = [
+        { id: 'packed', src: '/packed.jpg', width: 1200, height: 800 },
+      ]
+      const spacing = responsive({ 0: 4, 800: 8 })
+      void PhotoValidationError
+      void useContainerWidth
+      const caption: LightboxCaptionSlotProps['photo'] = photos[0] ?? null
+      void caption
+    </script>
+    <template>
+      <PhotoAlbum :photos="photos" :layout="{ type: 'rows' }" :spacing="spacing" />
+    </template>\n`,
+  )
+  run('pnpm', ['exec', 'nuxt', 'build'], { cwd: consumerDir })
+  assert(
+    existsSync(join(consumerDir, '.output/server/index.mjs')),
+    'Packed Nuxt consumer did not produce a server build',
+  )
+
+  const installedVueRoot = join(
+    consumerDir,
+    'node_modules',
+    '@nuxt-photo',
+    'vue',
+  )
+  const publicDeclarations = [
+    'dist/index.d.ts',
+    'dist/components/PhotoCarousel.vue.d.ts',
+  ]
+  for (const declaration of publicDeclarations) {
+    const path = join(installedVueRoot, declaration)
+    assert(existsSync(path), `Packed consumer is missing ${declaration}`)
+    assert(
+      !/\bEmbla\w*/.test(readFileSync(path, 'utf8')),
+      `${declaration} leaks an Embla type through the public package`,
+    )
+  }
+
+  process.stdout.write(
+    'packed consumer: Nuxt build, strict declarations, and sibling paths verified\n',
+  )
+
+  if (outputDirectory) {
+    mkdirSync(outputDirectory, { recursive: true })
+    for (const tarball of packedTarballs.values()) {
+      copyFileSync(tarball, join(outputDirectory, basename(tarball)))
+    }
+    process.stdout.write(`verified tarballs: ${outputDirectory}\n`)
   }
 } finally {
   rmSync(packDir, { recursive: true, force: true })

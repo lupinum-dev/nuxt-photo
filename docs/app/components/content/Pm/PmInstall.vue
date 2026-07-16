@@ -11,7 +11,6 @@ const codeBlocks = computed(() =>
   packageManagers.map((pm) => ({
     filename: pm.name,
     code: `${pm.command} ${props.dev ? pm.devInstall : pm.install}${props.name}`,
-    key: pm.name,
   })),
 )
 </script>
@@ -19,8 +18,8 @@ const codeBlocks = computed(() =>
 <template>
   <ProseCodeGroup sync="pm">
     <ProsePre
-      v-for="(codeBlock, index) in codeBlocks"
-      :key="index"
+      v-for="codeBlock in codeBlocks"
+      :key="codeBlock.filename"
       v-bind="codeBlock"
     >
       <span style="color: var(--ui-primary)">{{

@@ -3,7 +3,6 @@ import {
   DEFAULT_MIN_ZOOM,
   clampPanToBounds,
   classifyGesture,
-  computeCloseDragRatio,
   computePanBounds,
   computeTargetPanForZoom,
   computeZoomLevels,
@@ -12,8 +11,18 @@ import {
   isDoubleTap,
   rubberband,
 } from '../../src/core/index'
+import { getLightboxFrameArea } from '../../src/lightbox/carousel'
 
 describe('geometry and viewer utilities', () => {
+  it('fits desktop photos inside a responsive mat without shrinking the swipe track', () => {
+    expect(
+      getLightboxFrameArea({ left: 0, top: 0, width: 2000, height: 1000 }),
+    ).toEqual({ left: 120, top: 70, width: 1760, height: 860 })
+    expect(
+      getLightboxFrameArea({ left: 0, top: 0, width: 390, height: 844 }),
+    ).toEqual({ left: 12, top: 24, width: 366, height: 796 })
+  })
+
   it('fits rectangles and loops indexes predictably', () => {
     expect(fitRect({ left: 0, top: 0, width: 100, height: 100 }, 2)).toEqual({
       left: 0,
@@ -55,33 +64,16 @@ describe('geometry and viewer utilities', () => {
     expect(large.max).toBeCloseTo(3.33, 1)
     expect(large.secondary).toBe(2)
 
-    // Per-photo maxZoom via meta
-    const custom = computeZoomLevels(600, 400, 1200, 800, {
-      id: '1',
-      src: '',
-      width: 600,
-      height: 400,
-      meta: { maxZoom: 3 },
-    })
-    expect(custom.max).toBe(3)
-    expect(custom.secondary).toBe(2)
-
-    // Per-photo minZoom via meta overrides default
-    const metaMin = computeZoomLevels(600, 400, 1200, 800, {
-      id: '1',
-      src: '',
-      width: 600,
-      height: 400,
-      meta: { minZoom: 2.5 },
-    })
-    expect(metaMin.max).toBe(2.5)
-
     // Lightbox-level minZoom via options
-    const optMin = computeZoomLevels(600, 400, 1200, 800, undefined, {
+    const optMin = computeZoomLevels(600, 400, 1200, 800, {
       minZoom: 1,
     })
     expect(optMin.max).toBe(1)
     expect(optMin.secondary).toBe(1)
+
+    // Application metadata never changes viewer behavior.
+    const withMeta = computeZoomLevels(600, 400, 1200, 800)
+    expect(withMeta.max).toBe(DEFAULT_MIN_ZOOM)
   })
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
@@ -124,14 +116,12 @@ describe('gesture helpers', () => {
     ).toBe('slide')
   })
 
-  it('detects double taps and close-drag ratios', () => {
+  it('detects double taps', () => {
     expect(
       isDoubleTap(200, { time: 0, clientX: 10, clientY: 10 }, 18, 14),
     ).toBe(true)
     expect(
       isDoubleTap(300, { time: 0, clientX: 10, clientY: 10 }, 60, 60),
     ).toBe(false)
-    expect(computeCloseDragRatio(100, 1000)).toBeCloseTo(100 / 850, 6)
-    expect(computeCloseDragRatio(1000, 300)).toBe(0.75)
   })
 })
