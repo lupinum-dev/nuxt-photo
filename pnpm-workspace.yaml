@@ -39,9 +39,7 @@ minimumReleaseAgeExclude:
   # Existing lockfile entry; remove after 2026-07-16T16:42:00Z.
   - 'autoprefixer@10.5.3'
   - '@iconify/collections@1.0.710'
-  - '@lupinum/ginko-content@0.3.0-rc.2 || 0.3.0-rc.3'
   - 'electron-to-chromium@1.5.392'
-  - '@lupinum/ginko-docs@0.2.2'
 
 allowBuilds:
   '@parcel/watcher': false

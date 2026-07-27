@@ -10,8 +10,8 @@
     "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },
   "dependencies": {
-    "@lupinum/ginko-content": "0.3.0-rc.3",
-    "@lupinum/ginko-docs": "0.2.2",
+    "@lupinum/ginko-content": "0.3.2",
+    "@lupinum/ginko-docs": "0.2.3",
     "@nuxt-photo/nuxt": "workspace:*",
     "nuxt": "catalog:"
   },
