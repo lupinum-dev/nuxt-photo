@@ -82,6 +82,7 @@ describe('nuxt-photo module', () => {
       nuxt,
     )
 
+    expect(addPlugin).not.toHaveBeenCalled()
     nuxt.callHook('modules:done')
 
     expect(addPlugin).not.toHaveBeenCalled()
@@ -133,6 +134,9 @@ describe('nuxt-photo module', () => {
       nuxt,
     )
 
+    expect(nuxt.options.appConfig.nuxtPhoto).toBeUndefined()
+    nuxt.callHook('modules:done')
+
     expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
       thumb: { sizes: 'sm:100vw lg:320px', quality: 70 },
       slide: {
@@ -173,19 +177,19 @@ describe('nuxt-photo module', () => {
     })
   })
 
-  it('throws when nuxt image mode is requested without @nuxt/image', async () => {
+  it('throws after module installation when explicit nuxt image mode is unavailable', async () => {
     const nuxt = createNuxt()
     hasNuxtModule.mockReturnValue(false)
 
-    await expect(
-      nuxtPhotoModule.setup(
-        {
-          ...nuxtPhotoModule.defaults,
-          image: { provider: 'nuxt-image' },
-        },
-        nuxt,
-      ),
-    ).rejects.toThrow(/requires `@nuxt\/image`/)
+    await nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        image: { provider: 'nuxt-image' },
+      },
+      nuxt,
+    )
+
+    expect(() => nuxt.callHook('modules:done')).toThrow(/requires `@nuxt\/image`/)
   })
 
   it.each([
@@ -443,6 +447,28 @@ describe('nuxt-photo module', () => {
       },
     )
   })
+
+  it.each(['auto', 'nuxt-image'] as const)(
+    'detects @nuxt/image at modules:done in %s mode',
+    async (provider) => {
+      const nuxt = createNuxt()
+      hasNuxtModule.mockReturnValue(false)
+
+      await nuxtPhotoModule.setup(
+        {
+          ...nuxtPhotoModule.defaults,
+          image: { provider },
+        },
+        nuxt,
+      )
+
+      expect(addPlugin).not.toHaveBeenCalled()
+      hasNuxtModule.mockReturnValue(true)
+      nuxt.callHook('modules:done')
+
+      expect(addPlugin).toHaveBeenCalledOnce()
+    },
+  )
 
   it('falls back to native when @nuxt/image is not installed (auto mode)', async () => {
     const nuxt = createNuxt()

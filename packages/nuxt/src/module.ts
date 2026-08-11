@@ -84,36 +84,36 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
-      const imageProvider =
-        explicit === 'auto' ? (hasNuxtModule('@nuxt/image') ? 'nuxt-image' : 'native') : explicit
-
-      if (imageProvider === 'nuxt-image') {
-        if (!hasNuxtModule('@nuxt/image')) {
-          throw new Error(
-            '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
-          )
-        }
-
+      if (explicit !== 'native') {
         nuxt.hook('modules:done', () => {
+          const hasImageModule = hasNuxtModule('@nuxt/image')
+          if (explicit === 'nuxt-image' && !hasImageModule) {
+            throw new Error(
+              '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
+            )
+          }
+
+          if (!hasImageModule) return
+
           addPlugin(
             {
               src: resolver.resolve('./runtime/plugin'),
             },
             { append: true },
           )
-        })
-      }
 
-      if (imageProvider === 'nuxt-image' && typeof options.image === 'object') {
-        const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
-        appConfig.nuxtPhoto = {
-          ...appConfig.nuxtPhoto,
-          image: {
-            ...appConfig.nuxtPhoto?.image,
-            thumb: options.image.thumb,
-            slide: options.image.slide,
-          },
-        }
+          if (typeof options.image !== 'object') return
+
+          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+          appConfig.nuxtPhoto = {
+            ...appConfig.nuxtPhoto,
+            image: {
+              ...appConfig.nuxtPhoto?.image,
+              thumb: options.image.thumb,
+              slide: options.image.slide,
+            },
+          }
+        })
       }
     }
 
