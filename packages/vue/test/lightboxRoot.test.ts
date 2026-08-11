@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createApp, defineComponent, h } from 'vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightboxProvider } from '../src/composables/useLightboxProvider'
 import LightboxRoot from '../src/primitives/LightboxRoot.vue'
@@ -44,12 +44,8 @@ describe('LightboxRoot modal ownership', () => {
     await flushUi()
     expect(host.inert).toBe(true)
     expect(host.getAttribute('aria-hidden')).toBe('true')
-    expect(document.activeElement?.getAttribute('data-testid')).toBe(
-      'lightbox-root',
-    )
-    const root = document.querySelector(
-      '[data-testid="lightbox-root"]',
-    ) as HTMLElement
+    expect(document.activeElement?.getAttribute('data-testid')).toBe('lightbox-root')
+    const root = document.querySelector('[data-testid="lightbox-root"]') as HTMLElement
     root.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: 'Tab',

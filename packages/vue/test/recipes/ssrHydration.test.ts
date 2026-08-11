@@ -2,7 +2,7 @@
 
 import { createSSRApp, h, nextTick } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { responsive } from '../../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
@@ -45,10 +45,7 @@ function expectNoHydrationWarnings(
   warn: ReturnType<typeof vi.spyOn>,
   error: ReturnType<typeof vi.spyOn>,
 ) {
-  const messages = stringifyConsoleArgs([
-    ...warn.mock.calls,
-    ...error.mock.calls,
-  ])
+  const messages = stringifyConsoleArgs([...warn.mock.calls, ...error.mock.calls])
   expect(messages).not.toMatch(/hydration|hydrated.*mismatch|node mismatch/i)
 }
 
@@ -87,19 +84,17 @@ beforeEach(() => {
     removeListener() {},
     dispatchEvent: () => false,
   })) as typeof window.matchMedia
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-    () => ({
-      x: 0,
-      y: 0,
-      top: 0,
-      left: 0,
-      right: 900,
-      bottom: 600,
-      width: 900,
-      height: 600,
-      toJSON: () => ({}),
-    }),
-  )
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 900,
+    bottom: 600,
+    width: 900,
+    height: 600,
+    toJSON: () => ({}),
+  }))
 })
 
 afterEach(() => {
@@ -166,10 +161,7 @@ describe('SSR hydration', () => {
       lightbox: false,
     })
 
-    const messages = stringifyConsoleArgs([
-      ...warn.mock.calls,
-      ...error.mock.calls,
-    ])
+    const messages = stringifyConsoleArgs([...warn.mock.calls, ...error.mock.calls])
     expect(messages).not.toContain('Extraneous non-props attributes')
     expectNoHydrationWarnings(warn, error)
 
@@ -195,9 +187,7 @@ describe('SSR hydration', () => {
     app.mount(host)
     await nextTick()
 
-    expect(host.querySelectorAll('.np-carousel__slide')).toHaveLength(
-      photos.length,
-    )
+    expect(host.querySelectorAll('.np-carousel__slide')).toHaveLength(photos.length)
     expectNoHydrationWarnings(warn, error)
     app.unmount()
   })

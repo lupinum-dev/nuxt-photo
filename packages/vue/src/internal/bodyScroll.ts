@@ -12,12 +12,8 @@ export function lockBodyScroll(locked: boolean): void {
 
     savedOverflow = document.body.style.overflow
     savedPaddingRight = document.body.style.paddingRight
-    const scrollbarWidth = Math.max(
-      0,
-      window.innerWidth - document.documentElement.clientWidth,
-    )
-    const padding =
-      Number.parseFloat(getComputedStyle(document.body).paddingRight) || 0
+    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth)
+    const padding = Number.parseFloat(getComputedStyle(document.body).paddingRight) || 0
     document.body.style.overflow = 'hidden'
     document.body.style.paddingRight = `${padding + scrollbarWidth}px`
     return

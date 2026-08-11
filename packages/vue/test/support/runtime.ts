@@ -1,12 +1,5 @@
-import {
-  createApp,
-  h,
-  nextTick,
-  provide,
-  type Component,
-  type InjectionKey,
-} from 'vue'
-import { vi } from 'vitest'
+import { createApp, h, nextTick, provide, type Component, type InjectionKey } from 'vue'
+import { vi } from 'vite-plus/test'
 
 export function installBrowserStubs() {
   class Observer {

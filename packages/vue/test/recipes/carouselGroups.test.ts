@@ -1,17 +1,14 @@
 // @vitest-environment jsdom
 
 import EmblaCarousel from 'embla-carousel'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import { readEmblaSnapModel } from '../../src/integrations/embla/snapModel'
 import {
   validatePhotoCarouselAutoplayOptions,
   validatePhotoCarouselOptions,
 } from '../../src/components/photo-carousel/usePhotoCarouselRuntime'
 
-function setRect(
-  element: HTMLElement,
-  rect: { left: number; width: number; height?: number },
-) {
+function setRect(element: HTMLElement, rect: { left: number; width: number; height?: number }) {
   for (const [name, value] of Object.entries({
     offsetLeft: rect.left,
     offsetTop: 0,
@@ -22,18 +19,13 @@ function setRect(
   }
 }
 
-function createCarousel(
-  slideCount: number,
-  slideWidth: number,
-  groupSize: number,
-) {
+function createCarousel(slideCount: number, slideWidth: number, groupSize: number) {
   class NoopObserver {
     observe() {}
     disconnect() {}
     unobserve() {}
   }
-  window.IntersectionObserver =
-    NoopObserver as unknown as typeof window.IntersectionObserver
+  window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
@@ -91,9 +83,7 @@ describe('Embla snap model', () => {
       expect(model.slidesBySnap).toEqual(expectedGroups)
       expect(model.snapBySlide).toEqual(
         Object.fromEntries(
-          expectedGroups.flatMap((slides, snap) =>
-            slides.map((slide) => [slide, snap]),
-          ),
+          expectedGroups.flatMap((slides, snap) => slides.map((slide) => [slide, snap])),
         ),
       )
 
@@ -104,13 +94,9 @@ describe('Embla snap model', () => {
 
   it('rejects invalid public grouping values before Embla sees them', () => {
     for (const slidesToScroll of [0, -1, 0.5, Number.NaN]) {
-      expect(() => validatePhotoCarouselOptions({ slidesToScroll })).toThrow(
-        /positive integer/,
-      )
+      expect(() => validatePhotoCarouselOptions({ slidesToScroll })).toThrow(/positive integer/)
     }
-    expect(() =>
-      validatePhotoCarouselOptions({ slidesToScroll: 2 }),
-    ).not.toThrow()
+    expect(() => validatePhotoCarouselOptions({ slidesToScroll: 2 })).not.toThrow()
   })
 
   it('rejects unsafe autoplay values before the plugin sees them', () => {

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createApp, defineComponent, h } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import {
   LightboxCaption,
   LightboxControls,
@@ -65,6 +65,36 @@ describe('primitive injection guards', () => {
     ).not.toThrow()
   })
 
+  it('renders its children without adding a wrapper element', () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const app = createApp({
+      render: () =>
+        h(
+          LightboxProvider,
+          {
+            photos: [makePhoto({ id: 'renderless-provider' })],
+            'data-provider-wrapper': '',
+          },
+          {
+            default: () => [
+              h('span', { 'data-provider-child': 'first' }),
+              h('span', { 'data-provider-child': 'second' }),
+            ],
+          },
+        ),
+    })
+
+    app.mount(container)
+
+    expect(container.querySelectorAll('[data-provider-child]')).toHaveLength(2)
+    expect(container.querySelector('[data-provider-wrapper]')).toBeNull()
+    expect(container.children).toHaveLength(2)
+
+    app.unmount()
+    container.remove()
+  })
+
   it('throws an actionable error when PhotoTrigger is used without a provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -73,9 +103,7 @@ describe('primitive injection guards', () => {
         photo: makePhoto({ id: 'guarded-trigger' }),
         index: 0,
       }),
-    ).toThrow(
-      /\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/,
-    )
+    ).toThrow(/\[nuxt-photo\] `PhotoTrigger` requires an active lightbox context/)
   })
 
   it('supports every lightbox primitive from the single internal context', () => {

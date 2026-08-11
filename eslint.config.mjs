@@ -1,4 +1,3 @@
-import js from '@eslint/js'
 import eslintConfigPrettier from 'eslint-config-prettier'
 import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
@@ -16,38 +15,6 @@ export default tseslint.config(
       '**/test-results/**',
       'docs/server/routes/raw/**',
     ],
-  },
-  {
-    files: ['**/*.{js,mjs,cjs}'],
-    ...js.configs.recommended,
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-    },
-    rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-    },
-  },
-  {
-    files: ['**/*.{ts,mts,cts}'],
-    extends: tseslint.configs.recommended,
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-    },
-    rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-undef': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-    },
   },
   {
     files: ['**/*.vue'],
@@ -73,12 +40,6 @@ export default tseslint.config(
       'vue/multi-word-component-names': 'off',
       'vue/one-component-per-file': 'off',
       'vue/require-default-prop': 'off',
-    },
-  },
-  {
-    files: ['scripts/size/run.mjs', 'test/size/**/*.ts'],
-    rules: {
-      'no-console': 'off',
     },
   },
   eslintConfigPrettier,

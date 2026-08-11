@@ -43,11 +43,7 @@ export function getVisibilityRatio(rect: ViewportRect | null): number {
   if (!rect || rect.width <= 0 || rect.height <= 0) return 0
 
   const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(
-    rect,
-    vw,
-    vh,
-  )
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
   const visibleArea = visibleWidth * visibleHeight
   const totalArea = rect.width * rect.height
 
@@ -69,10 +65,7 @@ export function getVisibilityRatio(rect: ViewportRect | null): number {
  * large rect clipped to a thin sliver passes the ratio check; a tiny rect that
  * happens to be fully visible passes the dimension check.
  */
-export function shouldUseFlip(
-  rect: ViewportRect | null,
-  config: TransitionModeConfig,
-): boolean {
+export function shouldUseFlip(rect: ViewportRect | null, config: TransitionModeConfig): boolean {
   if (config.mode === 'none') return false
 
   if (config.mode === 'fade') return false
@@ -83,11 +76,7 @@ export function shouldUseFlip(
   if (!rect) return false
 
   const { width: vw, height: vh } = getWindowDimensions()
-  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(
-    rect,
-    vw,
-    vh,
-  )
+  const { width: visibleWidth, height: visibleHeight } = getVisibleDimensions(rect, vw, vh)
 
   if (
     visibleWidth < TRANSITION_AUTO_MIN_VISIBLE_DIMENSION ||

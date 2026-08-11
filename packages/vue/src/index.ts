@@ -1,16 +1,6 @@
 // @nuxt-photo/vue — Vue components, composables, and photo utilities
-export {
-  Lightbox,
-  Photo,
-  PhotoAlbum,
-  PhotoCarousel,
-  PhotoGroup,
-} from './components'
-export {
-  useLightbox,
-  useLightboxProvider,
-  useContainerWidth,
-} from './composables'
+export { Lightbox, Photo, PhotoAlbum, PhotoCarousel, PhotoGroup } from './components'
+export { useLightbox, useLightboxProvider, useContainerWidth } from './composables'
 export {
   LightboxProvider,
   LightboxRoot,
@@ -41,7 +31,7 @@ export {
   type LightboxProviderController,
   type LightboxDefaults,
   type LightboxSlideRenderer,
-} from './provide/keys'
+} from './provide'
 export { responsive, resolveResponsiveParameter } from './core/types'
 export type {
   PhotoItem,

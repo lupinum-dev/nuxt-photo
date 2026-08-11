@@ -1,10 +1,6 @@
 // Internal framework-free barrel used by the Vue implementation.
 
-export {
-  responsive,
-  resolveResponsiveParameter,
-  mergeResponsiveBreakpoints,
-} from './types'
+export { responsive, resolveResponsiveParameter, mergeResponsiveBreakpoints } from './types'
 export {
   normalizePhotos,
   type NormalizePhotosOptions,
@@ -53,13 +49,7 @@ export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
 export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
-export {
-  isUsableRect,
-  getLoopedIndex,
-  fitRect,
-  flipTransform,
-  rubberband,
-} from './geometry/rect'
+export { isUsableRect, getLoopedIndex, fitRect, flipTransform, rubberband } from './geometry/rect'
 
 export {
   DEFAULT_MIN_ZOOM,

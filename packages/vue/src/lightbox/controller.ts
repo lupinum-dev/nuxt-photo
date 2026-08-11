@@ -1,12 +1,10 @@
 import { computed } from 'vue'
-import type {
-  LightboxController,
-  InternalLightboxContext,
-} from '../provide/keys'
+import type { PhotoItem } from '../core/index'
+import type { LightboxController, InternalLightboxContext } from '../provide/keys'
 
-export function createLightboxController(
+export function createLightboxController<TMeta extends object = Readonly<Record<string, unknown>>>(
   context: InternalLightboxContext,
-): LightboxController {
+): LightboxController<TMeta> {
   async function openById(id: string) {
     const index = context.photos.value.findIndex((photo) => photo.id === id)
     if (index < 0) {
@@ -16,10 +14,10 @@ export function createLightboxController(
   }
 
   return {
-    photos: computed(() => context.photos.value),
+    photos: computed(() => context.photos.value as readonly PhotoItem<TMeta>[]),
     count: computed(() => context.count.value),
     activeIndex: computed(() => context.activeIndex.value),
-    activePhoto: computed(() => context.activePhoto.value),
+    activePhoto: computed(() => context.activePhoto.value as PhotoItem<TMeta> | null),
     isOpen: computed(() => context.isOpen.value),
     open: context.open,
     openById,

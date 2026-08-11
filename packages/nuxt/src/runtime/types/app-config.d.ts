@@ -1,22 +1,14 @@
-import type { NuxtPhotoRuntimeConfig } from '../../module.mjs'
+import type { NuxtPhotoAppConfig } from '../../module.mjs'
 
 declare module '@nuxt/schema' {
-  interface CustomAppConfig {
-    nuxtPhoto?: NuxtPhotoRuntimeConfig
-  }
-
   interface AppConfig {
-    nuxtPhoto?: NuxtPhotoRuntimeConfig
+    nuxtPhoto?: NuxtPhotoAppConfig
   }
 }
 
 declare module 'nuxt/schema' {
-  interface CustomAppConfig {
-    nuxtPhoto?: NuxtPhotoRuntimeConfig
-  }
-
   interface AppConfig {
-    nuxtPhoto?: NuxtPhotoRuntimeConfig
+    nuxtPhoto?: NuxtPhotoAppConfig
   }
 }
 

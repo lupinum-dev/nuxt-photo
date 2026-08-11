@@ -30,8 +30,7 @@ export function classifyGesture(
     const atLeftEdge = currentPan.x >= panBounds.x - 1
     const atRightEdge = currentPan.x <= -panBounds.x + 1
     const wantsOutwardSlide =
-      horizontalIntent &&
-      (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
+      horizontalIntent && (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
 
     if (!wantsOutwardSlide && (canPanX || canPanY)) return 'pan'
     if (horizontalIntent) return 'slide'

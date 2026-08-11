@@ -1,11 +1,6 @@
 <template>
   <Teleport v-if="ctx.isOpen.value" to="body">
-    <div
-      ref="rootRef"
-      tabindex="-1"
-      v-bind="$attrs"
-      @keydown.capture="handleKeydownCapture"
-    >
+    <div ref="rootRef" tabindex="-1" v-bind="$attrs" @keydown.capture="handleKeydownCapture">
       <slot />
       <LightboxTransitionLayer />
     </div>
@@ -28,10 +23,7 @@ let restoreSiblings: (() => void) | null = null
 function isolatePageSiblings(root: HTMLElement) {
   restoreSiblings?.()
 
-  const previous = new Map<
-    HTMLElement,
-    { inert: boolean; ariaHidden: string | null }
-  >()
+  const previous = new Map<HTMLElement, { inert: boolean; ariaHidden: string | null }>()
   const observer = new MutationObserver(() => {
     isolateCurrentSiblings()
   })
@@ -76,10 +68,7 @@ function getFocusableElements(root: HTMLElement) {
     root.querySelectorAll<HTMLElement>(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
-  ).filter(
-    (el) =>
-      !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
-  )
+  ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true')
 }
 
 function handleKeydownCapture(event: KeyboardEvent) {
@@ -117,10 +106,7 @@ watch(
   () => ctx.isOpen.value,
   async (isOpen) => {
     if (isOpen) {
-      restoreFocusEl =
-        document.activeElement instanceof HTMLElement
-          ? document.activeElement
-          : null
+      restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
       await nextTick()
       if (rootRef.value) {
         isolatePageSiblings(rootRef.value)

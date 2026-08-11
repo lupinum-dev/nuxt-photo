@@ -3,8 +3,8 @@
     <header class="header">
       <h1 class="header__title">PhotoCarousel</h1>
       <p class="header__desc">
-        A swipeable inline carousel for blogs and docs. Thumbnails, arrows,
-        counter, caption — all optional. Lightbox opt-in. Powered by
+        A swipeable inline carousel for blogs and docs. Thumbnails, arrows, counter, caption — all
+        optional. Lightbox opt-in. Powered by
         <code>embla-carousel-vue</code>.
       </p>
     </header>
@@ -57,11 +57,7 @@
 
     <section class="demo">
       <h2 class="demo__title">With custom slide slot</h2>
-      <PhotoCarousel
-        :photos="photos.slice(0, 4)"
-        :show-thumbnails="false"
-        :show-counter="false"
-      >
+      <PhotoCarousel :photos="photos.slice(0, 4)" :show-thumbnails="false" :show-counter="false">
         <template #slide="{ photo, selected }">
           <div class="custom-slide">
             <img :src="photo.src" :alt="photo.alt" class="custom-slide__img" />

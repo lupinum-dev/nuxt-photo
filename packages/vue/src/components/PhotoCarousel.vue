@@ -26,8 +26,8 @@
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
-<script setup lang="ts">
-import { computed, inject, type Component } from 'vue'
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
+import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
 import type {
   ImageAdapter,
   PhotoCarouselAutoplayOptions,
@@ -57,9 +57,9 @@ import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 defineOptions({ inheritAttrs: false })
 
 defineSlots<{
-  slide?: (props: CarouselSlideSlotProps) => unknown
-  thumb?: (props: CarouselThumbSlotProps) => unknown
-  caption?: (props: CarouselCaptionSlotProps) => unknown
+  slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
+  thumb?: (props: CarouselThumbSlotProps<TMeta>) => unknown
+  caption?: (props: CarouselCaptionSlotProps<TMeta>) => unknown
   controls?: (props: CarouselControlsSlotProps) => unknown
   prev?: () => unknown
   next?: () => unknown
@@ -68,10 +68,9 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
-    photos: readonly PhotoItem[]
+    photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
-    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
-    imageAdapter?: ImageAdapter
+    imageAdapter?: ImageAdapter<TMeta>
     options?: PhotoCarouselOptions
     showArrows?: boolean
     showThumbnails?: boolean
@@ -102,11 +101,28 @@ const props = withDefaults(
   },
 )
 
-const resolvedPhotos = computed(() =>
-  resolveRecipePhotos(props.photos, 'PhotoCarousel', {
+const emit = defineEmits<{
+  invalidPhotos: [event: InvalidPhotosEvent]
+}>()
+
+const resolution = computed(() =>
+  resolveRecipePhotos<TMeta>(props.photos, 'PhotoCarousel', {
     validation: props.validation,
-    onInvalidPhotos: props.onInvalidPhotos,
   }),
+)
+const resolvedPhotos = computed(() => resolution.value.photos)
+const reportingReady = ref(false)
+
+onMounted(() => {
+  reportingReady.value = true
+})
+
+watch(
+  [() => resolution.value.invalidPhotos, reportingReady],
+  ([event, ready]) => {
+    if (ready && event) emit('invalidPhotos', event)
+  },
+  { flush: 'post' },
 )
 
 const injectedLightbox = inject(LightboxComponentKey, null)
@@ -120,12 +136,11 @@ const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 const provider = hasLightbox
   ? useLightboxProvider(resolvedPhotos, {
       transition: props.transition,
-      imageAdapter: props.imageAdapter,
+      imageAdapter: computed(() => props.imageAdapter),
     })
   : null
 

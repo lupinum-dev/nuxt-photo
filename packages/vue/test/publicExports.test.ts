@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 import * as vue from '../src'
 
 describe('@nuxt-photo/vue public exports', () => {
@@ -36,8 +36,6 @@ describe('@nuxt-photo/vue public exports', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')
     expect(vue.LightboxDefaultsKey).toBeTypeOf('symbol')
-    expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(
-      vue.PhotoValidationError,
-    )
+    expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(vue.PhotoValidationError)
   })
 })

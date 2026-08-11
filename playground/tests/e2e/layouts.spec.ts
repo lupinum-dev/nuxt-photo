@@ -1,8 +1,6 @@
 import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
-test('layout explorer switches layouts and still opens the lightbox', async ({
-  page,
-}) => {
+test('layout explorer switches layouts and still opens the lightbox', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page, '/layouts')
 
@@ -11,9 +9,7 @@ test('layout explorer switches layouts and still opens the lightbox', async ({
     await expect(page.locator('.np-album__item')).toHaveCount(12)
   }
 
-  await page
-    .getByRole('button', { name: 'Ocean waves reflecting light' })
-    .click()
+  await page.getByRole('button', { name: 'Ocean waves reflecting light' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(page.locator('.np-lightbox__counter')).toContainText('2 / 12')

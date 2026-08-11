@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { computed, ref } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxInputHandlers } from '../src/lightbox/input/pointer'
 import { createPhotoSet } from '@test-fixtures/photos'
 
@@ -12,12 +12,10 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
   const mediaArea = document.createElement('div')
   mediaArea.setPointerCapture = vi.fn()
   mediaArea.releasePointerCapture = vi.fn()
-  const setPanzoomImmediate = vi.fn(
-    (scale: number, pan: { x: number; y: number }) => {
-      currentScale = scale
-      currentPan.value = pan
-    },
-  )
+  const setPanzoomImmediate = vi.fn((scale: number, pan: { x: number; y: number }) => {
+    currentScale = scale
+    currentPan.value = pan
+  })
   const setCurrentPanImmediate = vi.fn((pan: { x: number; y: number }) => {
     currentPan.value = pan
   })
@@ -162,12 +160,8 @@ describe('useLightboxInputHandlers', () => {
     const input = document.createElement('input')
     input.addEventListener('keydown', gestures.onKeydown)
 
-    input.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
-    )
-    input.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'z', bubbles: true }),
-    )
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', bubbles: true }))
 
     expect(config.goToNext).not.toHaveBeenCalled()
     expect(config.toggleZoom).not.toHaveBeenCalled()
@@ -284,12 +278,8 @@ describe('useLightboxInputHandlers', () => {
       expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
       { tension: 190, friction: 20 },
     )
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(1)
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(2)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(1)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(2)
     expect(gestures.gesturePhase.value).toBe('idle')
   })
 
@@ -333,9 +323,7 @@ describe('useLightboxInputHandlers', () => {
 
     expect(gestures.gesturePhase.value).toBe('pinch')
     expect(config.startPanzoomSpring).not.toHaveBeenCalled()
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(3)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(3)
 
     gestures.onMediaPointerMove(
       new PointerEvent('pointermove', {
@@ -392,12 +380,8 @@ describe('useLightboxInputHandlers', () => {
       expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
       { tension: 190, friction: 20 },
     )
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(1)
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(2)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(1)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(2)
   })
 
   it('totally resets an active pinch when its owner is disposed', () => {
@@ -425,12 +409,8 @@ describe('useLightboxInputHandlers', () => {
     gestures.disposeGestureState()
 
     expect(gestures.gesturePhase.value).toBe('idle')
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(11)
-    expect(
-      config.mediaAreaRef.value?.releasePointerCapture,
-    ).toHaveBeenCalledWith(12)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(11)
+    expect(config.mediaAreaRef.value?.releasePointerCapture).toHaveBeenCalledWith(12)
   })
 
   it('ignores multi-touch when pinch zoom is disabled', async () => {

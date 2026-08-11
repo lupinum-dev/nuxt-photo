@@ -31,24 +31,24 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { PhotoImage } from '../../primitives/index'
 import type { ImageAdapter, PhotoItem } from '../../core/index'
 
 defineProps<{
-  photo: PhotoItem
+  photo: PhotoItem<TMeta>
   index: number
   width: number
   height: number
   hidden: boolean
-  imageAdapter?: ImageAdapter
+  imageAdapter?: ImageAdapter<TMeta>
   imgClass?: string
   sizes?: string
 }>()
 
 defineSlots<{
   thumbnail?: (props: {
-    photo: PhotoItem
+    photo: PhotoItem<TMeta>
     index: number
     width: number
     height: number

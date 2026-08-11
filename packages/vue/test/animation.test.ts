@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { nextFrame } from '../src/lightbox/transitions/animation'
 
 describe('abortable animation', () => {

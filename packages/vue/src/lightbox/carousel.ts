@@ -1,11 +1,4 @@
-import {
-  computed,
-  onBeforeUnmount,
-  ref,
-  watch,
-  type CSSProperties,
-  type Ref,
-} from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type CSSProperties, type Ref } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
@@ -13,12 +6,8 @@ import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
 /** Keep the swipe track full-screen while fitting each photo inside a gallery mat. */
 export function getLightboxFrameArea(area: AreaMetrics): AreaMetrics {
   const compact = area.width < 700
-  const horizontalInset = compact
-    ? 12
-    : Math.min(120, Math.max(48, area.width * 0.06))
-  const verticalInset = compact
-    ? 24
-    : Math.min(80, Math.max(40, area.height * 0.07))
+  const horizontalInset = compact ? 12 : Math.min(120, Math.max(48, area.width * 0.06))
+  const verticalInset = compact ? 24 : Math.min(80, Math.max(40, area.height * 0.07))
 
   return {
     left: area.left + horizontalInset,

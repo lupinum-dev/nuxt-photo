@@ -1,68 +1,68 @@
 {
   "name": "@nuxt-photo/nuxt",
   "version": "0.2.0",
-  "type": "module",
   "description": "Photo galleries, lightboxes, and provider-aware image rendering for Nuxt.",
   "keywords": [
-    "nuxt-photo",
-    "nuxt",
-    "photos",
     "gallery",
-    "lightbox"
+    "lightbox",
+    "nuxt",
+    "nuxt-photo",
+    "photos"
   ],
   "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
     "directory": "packages/nuxt"
   },
-  "bugs": {
-    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/module.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.mts",
+      "import": "./dist/module.mjs"
+    },
+    "./app": {
+      "types": "./dist/runtime/app.d.ts",
+      "import": "./dist/runtime/app.js"
+    }
   },
   "publishConfig": {
     "access": "public"
   },
-  "exports": {
-    ".": {
-      "import": "./dist/module.mjs",
-      "types": "./dist/module.d.mts"
-    },
-    "./app": {
-      "import": "./dist/runtime/app.js",
-      "types": "./dist/runtime/app.d.ts"
-    }
-  },
-  "main": "./dist/module.mjs",
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "nuxt-module-build build",
     "dev": "nuxt-module-build build --stub"
   },
   "dependencies": {
     "@nuxt-photo/vue": "workspace:*",
-    "@nuxt/kit": "^4.4.8",
-    "@nuxt/schema": "^4.4.8"
+    "@nuxt/kit": "4.4.8",
+    "@nuxt/schema": "4.4.8"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "^1.0.2",
+    "nuxt": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
   },
   "peerDependencies": {
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^4.0.0"
+    "nuxt": "^4.4.8"
   },
   "peerDependenciesMeta": {
     "@nuxt/image": {
       "optional": true
     }
   },
-  "devDependencies": {
-    "@nuxt/module-builder": "^1.0.2",
-    "nuxt": "^4.4.8",
-    "typescript": "5.9.3",
-    "vite": "7.3.5",
-    "vue-tsc": "3.2.7"
-  },
-  "license": "MIT",
   "engines": {
-    "node": "^22.13.0 || ^24.11.0 || >=26.0.0"
+    "node": "^22.18.0 || ^24.11.0"
   }
 }

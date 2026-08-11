@@ -16,9 +16,7 @@ export function readEmblaSnapModel(api: EmblaCarouselType): EmblaSnapModel {
   const { slidesBySnap, snapBySlide } = api.internalEngine().scrollSnapList
 
   if (slidesBySnap.length !== api.snapList().length) {
-    throw new Error(
-      '[nuxt-photo] Embla snap registry does not match its public snap list',
-    )
+    throw new Error('[nuxt-photo] Embla snap registry does not match its public snap list')
   }
 
   return {

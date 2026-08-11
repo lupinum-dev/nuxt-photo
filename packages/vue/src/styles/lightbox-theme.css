@@ -7,23 +7,19 @@
   --np-btn-bg: rgba(255, 255, 255, 0.1);
   --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
   --np-btn-color: white;
-  --np-btn-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
+  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
   --np-btn-blur: 8px;
   --np-btn-disabled-opacity: 0.45;
   --np-counter-color: rgba(255, 255, 255, 0.72);
   --np-img-radius: 14px;
-  --np-img-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.34), 0 2px 12px rgba(0, 0, 0, 0.28);
+  --np-img-shadow: 0 24px 80px rgba(0, 0, 0, 0.34), 0 2px 12px rgba(0, 0, 0, 0.28);
   --np-caption-color: white;
   --np-caption-heading-size: 22px;
   --np-caption-secondary: rgba(255, 255, 255, 0.72);
 }
 
 .np-lightbox__backdrop {
-  background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent 36vh),
-    var(--np-backdrop-bg);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent 36vh), var(--np-backdrop-bg);
   backdrop-filter: var(--np-backdrop-filter);
 }
 

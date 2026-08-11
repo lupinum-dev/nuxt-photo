@@ -4,10 +4,7 @@ import type { LightboxSlideRenderer } from '../../provide/keys'
 
 export interface PhotoGroupContext {
   readonly enabled: boolean
-  replaceCapabilities(
-    owner: symbol,
-    entries: readonly PhotoGroupCapability[],
-  ): void
+  replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]): void
   removeCapabilities(owner: symbol): void
   open(index?: number): Promise<void>
   activateById(id: string, source?: HTMLElement | null): Promise<void>
@@ -22,6 +19,5 @@ export interface PhotoGroupCapability {
   readonly renderSlide?: LightboxSlideRenderer | null
 }
 
-export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> = Symbol(
-  'nuxt-photo:photo-group',
-)
+export const PhotoGroupContextKey: InjectionKey<PhotoGroupContext> =
+  Symbol('nuxt-photo:photo-group')

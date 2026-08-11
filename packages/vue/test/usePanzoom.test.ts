@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { computed, createApp, defineComponent, ref } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { computeZoomLevels } from '../src/core/index'
 import { usePanzoom } from '../src/lightbox/panzoom'
 import { createPhotoSet } from '@test-fixtures/photos'
@@ -14,9 +14,7 @@ describe('usePanzoom', () => {
 
     panzoom.refreshZoomState(true)
 
-    expect(panzoom.zoomState.value).toEqual(
-      computeZoomLevels(1600, 1000, 1200, 800),
-    )
+    expect(panzoom.zoomState.value).toEqual(computeZoomLevels(1600, 1000, 1200, 800))
     expect(panzoom.panState.value).toEqual({ x: 0, y: 0 })
   })
 
@@ -48,10 +46,7 @@ describe('usePanzoom', () => {
     })
     panzoom.refreshZoomState(false)
 
-    const bounds = panzoom.getPanBounds(
-      currentPhoto.value,
-      panzoom.zoomState.value.max,
-    )
+    const bounds = panzoom.getPanBounds(currentPhoto.value, panzoom.zoomState.value.max)
     expect(panzoom.panState.value).toEqual({ x: bounds.x, y: -bounds.y })
   })
 

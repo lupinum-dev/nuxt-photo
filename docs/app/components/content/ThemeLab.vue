@@ -36,11 +36,7 @@ function reset() {
         '--np-lightbox-bg': overlay,
       }"
     >
-      <PhotoAlbum
-        :photos="demoPhotos.slice(0, 6)"
-        layout="rows"
-        :spacing="spacing"
-      />
+      <PhotoAlbum :photos="demoPhotos.slice(0, 6)" layout="rows" :spacing="spacing" />
     </div>
     <template #controls>
       <label class="docs-control docs-control--stacked"
@@ -58,8 +54,6 @@ function reset() {
       /></label>
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state
-      ><DemoState :value="{ radius, spacing, overlay }"
-    /></template>
+    <template #state><DemoState :value="{ radius, spacing, overlay }" /></template>
   </InteractiveExample>
 </template>

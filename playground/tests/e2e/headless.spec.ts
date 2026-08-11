@@ -1,8 +1,6 @@
 import { expect, test } from './helpers'
 
-test('headless playground wiring works through useLightbox', async ({
-  request,
-}) => {
+test('headless playground wiring works through useLightbox', async ({ request }) => {
   const response = await request.get('/headless')
   expect(response.ok()).toBe(true)
   const html = await response.text()

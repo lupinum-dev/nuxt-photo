@@ -4,10 +4,7 @@ import { getCurrentInstance } from 'vue'
 export function useAsyncErrorReporter() {
   const instance = getCurrentInstance()
 
-  return function reportAsyncError(
-    operation: string,
-    task: Promise<unknown>,
-  ): void {
+  return function reportAsyncError(operation: string, task: Promise<unknown>): void {
     void task.catch((error: unknown) => {
       const info = `nuxt-photo:${operation}`
       const handler = instance?.appContext.config.errorHandler
@@ -15,13 +12,10 @@ export function useAsyncErrorReporter() {
         try {
           handler(error, instance?.proxy ?? null, info)
         } catch (handlerError) {
-          console.error(
-            `[nuxt-photo] Vue error handler failed for ${operation}`,
-            {
-              error,
-              handlerError,
-            },
-          )
+          console.error(`[nuxt-photo] Vue error handler failed for ${operation}`, {
+            error,
+            handlerError,
+          })
         }
         return
       }

@@ -63,10 +63,7 @@ function reset() {
     <template #controls>
       <fieldset class="docs-control">
         <legend>Layout</legend>
-        <label
-          v-for="value in ['rows', 'columns', 'masonry'] as Layout[]"
-          :key="value"
-        >
+        <label v-for="value in ['rows', 'columns', 'masonry'] as Layout[]" :key="value">
           <input v-model="layout" type="radio" :value="value" />
           <span>{{ value }}</span>
         </label>
@@ -77,20 +74,11 @@ function reset() {
         >
         <input v-model.number="spacing" type="range" min="0" max="24" />
       </label>
-      <label
-        v-if="layout === 'rows'"
-        class="docs-control docs-control--stacked"
-      >
+      <label v-if="layout === 'rows'" class="docs-control docs-control--stacked">
         <span
           >Target row height <output>{{ rowHeight }}px</output></span
         >
-        <input
-          v-model.number="rowHeight"
-          type="range"
-          min="120"
-          max="360"
-          step="10"
-        />
+        <input v-model.number="rowHeight" type="range" min="120" max="360" step="10" />
       </label>
       <label v-else class="docs-control docs-control--stacked">
         <span

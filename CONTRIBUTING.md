@@ -2,166 +2,255 @@
 
 Thanks for contributing to Nuxt Photo.
 
-This repo has two library packages, two playground apps, and a docs app. The most reliable way to make a good change is to work against the smallest surface that proves the behavior, then run the same checks the repo uses in CI.
-
-## What kinds of contributions help
-
-- Bug fixes in the Nuxt module, Vue components, primitives, or photo helpers
-- Documentation improvements for the README, docs site, package READMEs, changelog entries, or contributor workflow
-- Tests that lock down a bug, regression, or edge case
-- Focused performance or bundle-size improvements with a measurable payoff
-
-## Prerequisites
-
-- Node.js `^22.13.0 || ^24.11.0 || >=26.0.0`
-- `pnpm` `11.x`
-
-The repo declares both in the root [`package.json`](./package.json).
-
-## Repo layout
-
-The main workspaces are:
-
-- `packages/vue` — Vue components, composables, primitives, styles, and shared photo helpers
-- `packages/nuxt` — Nuxt module integration
-- `playground` — main demo app used for development and e2e coverage
-- `playground-tailwind` — Tailwind-focused demo app
-- `docs` — the public docs app
-- `docs/content/docs` — the active docs site content
-- `test/fixtures` — shared test helpers
+The repository publishes a coordinated Vue package and Nuxt module, and keeps
+two playgrounds plus the docs application as real consumers. Work against the
+smallest surface that proves your change, then run the complete gate once before
+handoff.
 
 ## Setup
 
-Clone the repo, install the portable workspaces, and build the packages once:
+Use:
 
-```bash
-git clone https://github.com/lupinum-dev/nuxt-photo.git
-cd nuxt-photo
-corepack pnpm install --filter '!nuxt-photo-docs'
-pnpm build
+- the maintainer Node release in `.node-version`;
+- Vite+ (`vp`);
+- the exact pnpm release declared by `packageManager`.
+
+Install the complete workspace:
+
+```sh
+vp install
+vp run build
 ```
 
-`pnpm build` compiles the workspace packages in dependency order: `vue` → `nuxt`.
+The committed lockfile is authoritative. Do not regenerate it with npm, Yarn,
+Bun, or another pnpm release.
 
-The docs app intentionally consumes a local Ginko Docs tarball. Maintainers who
-have that tarball at the path declared in `docs/package.json` can run an
-unfiltered `corepack pnpm install` and the docs-specific commands below. The
-library packages and playgrounds do not require it.
+All workspaces must install without the deleted docs-only hoisting workaround.
+If a clean install exposes a missing dependency, declare it in the package that
+imports it instead of restoring hoisting.
 
-## Local development
+## Repository layout
 
-Choose the smallest dev loop that matches your change:
+- `packages/vue` — Vue components, composables, primitives, styles, layout
+  logic, and shared photo types.
+- `packages/nuxt` — Nuxt module, runtime plugins, app exports, and generated
+  Nuxt integration.
+- `playground` — main development and browser-test application.
+- `playground-tailwind` — distinct Tailwind integration consumer.
+- `docs` — public Ginko-based documentation application and real consumer.
+- `test/fixtures` — shared test data and size fixtures.
+- `internal/migration` — removable historical migration research, not active
+  policy.
 
-```bash
-pnpm dev
-pnpm dev:playground
-pnpm dev:playground-tw
-pnpm dev:docs
+## Daily commands
+
+```sh
+vp check
+vp test
 ```
 
-- `pnpm dev` watches the workspace packages.
-- `pnpm dev:playground` builds packages and starts the main Nuxt playground.
-- `pnpm dev:playground-tw` does the same for the Tailwind playground.
-- `pnpm dev:docs` builds packages and starts the docs site.
+- `vp check` is the fastest formatting and Oxlint loop.
+- `vp test` runs repository behavior without the complete Playwright matrix.
 
-## Where docs live
+Apply formatting and safe lint fixes explicitly:
 
-Use the active docs tree, not stale copies or generated output:
-
-- Root `README.md` for the front door
-- `packages/*/README.md` for package-specific orientation
-- `docs/content/docs/**` for the public docs site
-- `CHANGELOG.md` for user-visible release notes
-- `CONTRIBUTING.md` for contributor workflow
-
-If you change public API, behavior, defaults, examples, or stability guarantees, update the relevant docs in the same change.
-
-## Documentation standards
-
-Docs in this repo should follow these rules:
-
-- Each page should have one primary job: quickstart, guide, reference, explanation, changelog, or contributing.
-- Start with the useful thing. Do not open with generic background paragraphs.
-- Keep examples runnable and explicit about setup.
-- Prefer task-first guides and neutral reference pages.
-- Do not invent defaults, limits, version behavior, or CLI steps. Verify them in code, tests, or config first.
-
-If you touch docs, check for hidden setup, stale facts, and pages that try to do multiple jobs at once.
-
-## Tests and checks
-
-Run the narrowest checks that prove your change while iterating. Before opening a PR, run the full relevant gate.
-
-Run the normal broad gate before review:
-
-```bash
-pnpm verify
+```sh
+vp check --fix
 ```
 
-Use these when needed:
+Before requesting review:
 
-```bash
-pnpm test:e2e
-pnpm build:docs
-pnpm build:playground
+```sh
+vp run verify
+git status --short
 ```
 
-Notes:
+`vp run verify` is the complete local pull-request gate. It includes framework
+typechecks, Vue-template lint, packed-package certification, real application
+builds, size budgets, and browser tests. It is intentionally heavier than the
+daily loop.
 
-- `pnpm test:e2e` builds the main playground first and then runs Playwright across Chromium plus Firefox/WebKit smoke projects.
-- `pnpm audit --audit-level moderate` is a release gate.
-- `pnpm size` is the source of truth for documented size numbers.
-- `pnpm release:pack` packs every public workspace package with pnpm and verifies rewritten workspace dependencies and tarball metadata.
-- `pnpm test` includes e2e, so it is heavier than the normal pre-PR loop.
+Useful focused commands:
 
-## Release verification
-
-Use pnpm for packaging. The workspace packages use `workspace:*` internally, and
-pnpm is the supported tool that rewrites those ranges for packed tarballs.
-
-The authoritative final-SHA gate is:
-
-```bash
-pnpm run release:verify
+```sh
+vp test packages/vue/test/core/layout.test.ts
+vp test packages/nuxt/test/module.test.ts
+vp run typecheck
+vp run lint:vue-template
+vp run test:browser
+vp run build:playground-tailwind
+vp run build:docs
+vp run release:pack
 ```
 
-It includes lint, types, unit and package tests, audit, size budgets, both
-playgrounds, docs, browser tests, release identity, and packed-consumer checks.
+## Why typechecking is separate from `vp check`
 
-Remote CI uses `pnpm run release:verify:library`. It validates the libraries,
-playgrounds, textual documentation, package contracts, and browsers while
-excluding the Ginko-backed docs app installation and build. The complete
-docs-inclusive `release:verify` remains the authoritative maintainer-local gate
-until the Ginko dependency is portable.
+Oxlint provides the fast general and type-aware lint path. Vue and Nuxt still
+require framework-aware compiler verification:
 
-Do not publish these packages with `npm publish` from a workspace package
-directory; it does not apply the same workspace dependency rewrite. A maintainer
-publishes a confirmed version from a clean, synchronized `main` checkout with:
+- `vue-tsc` understands Vue SFCs;
+- Nuxt preparation creates `#app`, `#imports`, and application tsconfigs;
+- Nuxt Module Builder validates the published module output.
 
-```bash
-corepack pnpm run release:publish -- --confirm <version>
+Generic TS-Go compiler diagnostics cannot currently model all of those
+contracts without false missing-module errors. Do not treat `vp check` as a
+replacement for `vp run typecheck` or the complete `verify` gate.
+
+`eslint-plugin-vue` remains only for Vue template semantics. Do not add general
+JavaScript or TypeScript ESLint rules beside Oxlint.
+
+## Development
+
+Choose the consumer that owns the behavior:
+
+```sh
+vp run dev
+vp run dev:playground
+vp run dev:playground-tw
+vp run dev:docs
 ```
 
-The guarded command runs the complete local release gate, creates verified
-tarballs under `.release/v<version>`, checks npm authentication and registry
-state, then publishes Vue before Nuxt. It can resume safely if Vue published but
-Nuxt did not. Create the version tag and GitHub release only after both packages
-are confirmed on npm.
+- Use the main playground for ordinary package and browser behavior.
+- Use the Tailwind playground only for the distinct Tailwind/CSS contract.
+- Use the docs app for documentation components, examples, navigation, and
+  Ginko integration.
 
-## When code changes require doc changes
+Avoid adding another fixture when an existing consumer can prove the contract.
 
-Update docs in the same change when you modify:
+## Tests
 
-- public imports or package boundaries
-- component props, composable signatures, or type contracts
-- configuration defaults or stability guarantees
-- examples used in the docs or READMEs
-- measured bundle-size numbers referenced in public docs
+Add tests for the contract being changed:
 
-If the change is breaking or high-friction, add a clear entry to `CHANGELOG.md` that explains the user impact and any required follow-up.
+- unit tests for framework-free helpers and layout algorithms;
+- Vue component or composable tests for UI state and SSR behavior;
+- Nuxt tests for module setup, generated aliases, CSS registration, and app
+  exports;
+- packed consumers for installation, dependencies, declarations, exports, and
+  registry-like behavior;
+- browser tests only for behavior that requires an actual browser;
+- docs or Tailwind builds only for their distinct contracts.
 
-## Small fixes
+Fixture setup failure must fail the suite. Do not turn a required test into a
+silent skip.
 
-Small fixes are welcome.
+Keep browser coverage asymmetric. Full cross-engine duplication is not useful
+unless an engine-specific defect demonstrates the need.
 
-If you spot a typo, stale example, broken link, or unclear sentence, open a focused PR with the docs or test update directly. You do not need to batch unrelated cleanup into one change.
+## Public API and package changes
+
+Public API is owned by declared package exports:
+
+- `@nuxt-photo/vue`;
+- its documented subpath exports;
+- `@nuxt-photo/nuxt`;
+- `@nuxt-photo/nuxt/app`.
+
+Do not encourage deep imports into source or generated internals.
+
+When exports, files, dependencies, peer ranges, declarations, or package
+behavior change, run:
+
+```sh
+vp run release:pack
+```
+
+The packed consumer, not workspace source resolution, is the proof that a
+consumer can install the release.
+
+## Changesets
+
+The already-prepared `0.2.0` migration release is a maintainer-owned one-time
+exception because npm is still on `0.1.2`. Do not add an empty Changeset for
+that transition or edit its versions. After `0.2.0` is published, the normal
+rule below applies to every later public change.
+
+Add a Changeset for every user-visible package change:
+
+```sh
+vp run changeset
+```
+
+The two packages are a coordinated release set. Describe:
+
+- the affected user contract;
+- why the version change is appropriate;
+- required migration steps for breaking changes.
+
+Internal refactors, tests, or documentation with no published effect may omit a
+Changeset when the pull request explains why.
+
+Do not edit package versions or changelog release headings by hand. The version
+pull request owns them.
+
+## Documentation
+
+Update documentation in the same change when modifying:
+
+- public imports or package boundaries;
+- components, composables, module options, or public types;
+- defaults, support promises, or sharp edges;
+- examples used by the README or docs;
+- documented bundle-size numbers.
+
+Active documentation lives in:
+
+- `README.md`;
+- `packages/*/README.md`;
+- `docs/content/docs/**`;
+- `packages/vue/CHANGELOG.md` and `packages/nuxt/CHANGELOG.md`, generated by
+  Changesets;
+- root `CHANGELOG.md`, which is an index only;
+- `CONTRIBUTING.md`;
+- `MAINTAINING.md`.
+
+Do not treat generated `.nuxt`, `.output`, or raw build output as editable
+documentation.
+
+## Pull-request scope
+
+A pull request should represent one review and rollback decision. Required
+tests, documentation, and cleanup stay with the outcome.
+
+When another idea appears:
+
+1. Ask whether the original change is incomplete or incorrect without it.
+2. Keep it only when it is required.
+3. Defer it when it can ship independently or changes another public contract.
+4. Record the follow-up instead of silently expanding scope.
+
+If the summary needs “and,” identify whether it contains two independent
+outcomes. Do not use arbitrary line or commit limits, and do not rewrite
+reviewed history merely for cosmetic tidiness.
+
+## Dependencies
+
+- Declare dependencies in the workspace that imports them.
+- Do not rely on hoisting.
+- Do not add Git, URL-tarball, `file:`, `link:`, `portal:`, local tarball, or
+  absolute-path dependencies.
+- Keep runtime imports external so packed consumers expose missing
+  dependencies.
+- Keep peer ranges no broader than verified compatibility.
+- Update `allowBuilds` only after reviewing the dependency's install script.
+- Let Renovate own routine dependency-update pull requests.
+
+## Security reports
+
+Do not include undisclosed exploit details in a public issue. Follow
+`SECURITY.md`.
+
+## Publication
+
+Contributors and agents do not publish from local machines.
+
+Never run:
+
+```sh
+npm publish
+pnpm publish
+```
+
+After Changesets prepares a reviewed version, main CI creates the exact
+two-package candidate. The protected GitHub workflow stages those retained
+bytes, and the maintainer personally performs npm 2FA approvals and channel
+promotion. See `MAINTAINING.md`.

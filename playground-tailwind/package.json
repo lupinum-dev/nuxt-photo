@@ -5,16 +5,17 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },
   "dependencies": {
     "@nuxt-photo/nuxt": "workspace:*",
     "@tailwindcss/vite": "^4.3.2",
-    "nuxt": "^4.4.8",
+    "nuxt": "catalog:",
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
-    "vite": "7.3.5",
-    "vue-tsc": "3.2.7"
+    "vite": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

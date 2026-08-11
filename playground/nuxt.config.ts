@@ -1,5 +1,9 @@
+import NuxtImage from '@nuxt/image'
+import NuxtPhoto from '@nuxt-photo/nuxt'
+
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt', 'nuxt-shiki'],
+  // Imported modules exercise the order-sensitive case that setup-time detection misses.
+  modules: [NuxtPhoto, NuxtImage, 'nuxt-shiki'],
 
   nuxtPhoto: {
     css: 'all',

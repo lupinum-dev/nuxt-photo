@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-if="photos.length === 0"
-    class="np-carousel np-carousel--empty"
-    v-bind="$attrs"
-  />
+  <div v-if="photos.length === 0" class="np-carousel np-carousel--empty" v-bind="$attrs" />
 
   <div v-else class="np-carousel" :style="cssVarStyle" v-bind="$attrs">
     <div ref="emblaRef" class="np-carousel__viewport">
@@ -81,11 +77,7 @@
         </template>
       </div>
 
-      <div
-        v-if="showMultiControls && showCounter"
-        class="np-carousel__counter"
-        aria-live="polite"
-      >
+      <div v-if="showMultiControls && showCounter" class="np-carousel__counter" aria-live="polite">
         {{ selectedIndex + 1 }} / {{ photos.length }}
       </div>
     </div>
@@ -102,12 +94,7 @@
     </div>
 
     <div v-if="showMultiControls && showDots" class="np-carousel__dots">
-      <slot
-        name="dots"
-        :snaps="snaps"
-        :selected-index="selectedSnapIndex"
-        :go-to="goTo"
-      >
+      <slot name="dots" :snaps="snaps" :selected-index="selectedSnapIndex" :go-to="goTo">
         <button
           v-for="(slideIndex, i) in snaps"
           :key="i"
@@ -129,10 +116,7 @@
             :key="photo.id"
             type="button"
             class="np-carousel__thumb"
-            :class="[
-              { 'np-carousel__thumb--selected': selectedSlideSet.has(index) },
-              thumbClass,
-            ]"
+            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
             :aria-label="`Go to slide ${index + 1}`"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
@@ -159,7 +143,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, toRef, useSlots, type ComponentPublicInstance } from 'vue'
 import { PhotoImage } from '../../primitives/index'
 import type {
@@ -181,18 +165,18 @@ import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 defineOptions({ inheritAttrs: false })
 
 defineSlots<{
-  slide?: (props: CarouselSlideSlotProps) => unknown
+  slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
   controls?: (props: CarouselControlsSlotProps) => unknown
-  caption?: (props: CarouselCaptionSlotProps) => unknown
+  caption?: (props: CarouselCaptionSlotProps<TMeta>) => unknown
   dots?: (props: CarouselDotsSlotProps) => unknown
-  thumb?: (props: CarouselThumbSlotProps) => unknown
+  thumb?: (props: CarouselThumbSlotProps<TMeta>) => unknown
   prev?: () => unknown
   next?: () => unknown
 }>()
 
 const props = defineProps<{
-  photos: PhotoItem[]
-  imageAdapter?: ImageAdapter
+  photos: PhotoItem<TMeta>[]
+  imageAdapter?: ImageAdapter<TMeta>
   options: PhotoCarouselOptions
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
@@ -214,9 +198,7 @@ const props = defineProps<{
 
   // Optional lightbox activation and transition-source integration.
   onSlideActivate?: (index: number) => void | Promise<void>
-  setSlideRef?: (
-    index: number,
-  ) => (el: Element | ComponentPublicInstance | null) => void
+  setSlideRef?: (index: number) => (el: Element | ComponentPublicInstance | null) => void
 }>()
 
 const slots = useSlots()
@@ -266,7 +248,7 @@ function setSlideElRef(index: number) {
   }
 }
 
-function interactiveAttrs(photo: PhotoItem, index: number) {
+function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
   if (!props.onSlideActivate) return {}
   return {
     ...createPhotoTriggerBindings(

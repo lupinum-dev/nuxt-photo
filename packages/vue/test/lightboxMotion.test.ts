@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { computed, ref } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxMotion } from '../src/lightbox/transitions/runtime'
 import { createPhotoSet } from '@test-fixtures/photos'
 
@@ -67,15 +67,7 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
     })
   }
 
-  for (const element of [
-    overlay,
-    viewport,
-    controls,
-    caption,
-    frame,
-    transitionImage,
-    shadow,
-  ]) {
+  for (const element of [overlay, viewport, controls, caption, frame, transitionImage, shadow]) {
     document.body.appendChild(element)
   }
 
@@ -98,9 +90,7 @@ describe('lightbox motion controller', () => {
     const { motion, slideImage, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
 
-    await expect(
-      motion.open(0, callbacks, new AbortController().signal),
-    ).resolves.toBe(true)
+    await expect(motion.open(0, callbacks, new AbortController().signal)).resolves.toBe(true)
 
     expect(slideImage.decode).toHaveBeenCalledOnce()
     expect(motion.stageMounted.value).toBe(true)
@@ -126,11 +116,7 @@ describe('lightbox motion controller', () => {
     const opening = motion.open(0, callbacks, controller.signal)
 
     await vi.waitFor(() => {
-      expect(addEventListener).toHaveBeenCalledWith(
-        'load',
-        expect.any(Function),
-        { once: true },
-      )
+      expect(addEventListener).toHaveBeenCalledWith('load', expect.any(Function), { once: true })
     })
     controller.abort()
 

@@ -40,12 +40,7 @@ const presets = [
       :max="props.max"
       step="1"
       aria-label="Preview container width"
-      @input="
-        emit(
-          'update:modelValue',
-          Number(($event.target as HTMLInputElement).value),
-        )
-      "
+      @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
     />
     <div class="demo-viewport__stage">
       <div class="demo-viewport__canvas" :style="{ width: `${modelValue}px` }">

@@ -41,8 +41,7 @@ function reset() {
     </div>
     <template #controls>
       <p class="gesture-instructions">
-        Open a photo. Drag to navigate, pinch to zoom, pan a zoomed image, or
-        swipe down to close.
+        Open a photo. Drag to navigate, pinch to zoom, pan a zoomed image, or swipe down to close.
       </p>
     </template>
     <template #code><DemoCode :code="code" /></template>

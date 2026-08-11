@@ -2,7 +2,7 @@ type VelocitySample = { x: number; y: number; time: number }
 
 /** Fixed-size velocity estimator for pointer gesture completion. */
 export class VelocityTracker {
-  private readonly buffer: (VelocitySample | undefined)[] = new Array(32)
+  private readonly buffer = Array.from({ length: 32 }, (): VelocitySample | undefined => undefined)
   private head = 0
   private count = 0
 
@@ -25,8 +25,7 @@ export class VelocityTracker {
     const newestSlot = (this.head - 1 + this.buffer.length) % this.buffer.length
     const newest = this.buffer[newestSlot]!
     const cutoff = newest.time - this.windowMs
-    const startSlot =
-      (this.head - this.count + this.buffer.length) % this.buffer.length
+    const startSlot = (this.head - this.count + this.buffer.length) % this.buffer.length
     let oldest = newest
 
     for (let index = 0; index < this.count; index++) {

@@ -19,11 +19,7 @@ import {
   type LayoutGroup,
   type ResponsiveParameter,
 } from '../../core/index'
-import {
-  albumGroupStyle,
-  albumItemStyle,
-  type AlbumStyleContext,
-} from './styles'
+import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
 import { round } from '../../core/utils/math'
 
@@ -47,7 +43,9 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
+  sizes: ComputedRef<
+    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
+  >
   interactive: Ref<boolean>
 }
 
@@ -68,9 +66,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const containerRef = ref<HTMLElement | null>(null)
   const isMounted = ref(false)
   const albumId = useId()
-  const containerName = computed(
-    () => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`,
-  )
+  const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const containerQueriesActive = computed(() => !!breakpoints.value?.length)
 
@@ -170,14 +166,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(
-            entry.width,
-            w,
-            entry.itemsCount,
-            sp,
-            pd,
-            sizes,
-          ),
+          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes.value),
           style: {
             ...cursor,
             flex: '0 0 auto',
@@ -272,10 +261,8 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     ssrWrapperStyle,
     ssrItemStyle,
     groupStyle: (group: LayoutGroup) => albumGroupStyle(group, liveCtx()),
-    itemStyle: (
-      entry: Parameters<typeof albumItemStyle>[0],
-      group: LayoutGroup,
-    ) => albumItemStyle(entry, group, liveCtx(), interactive),
+    itemStyle: (entry: Parameters<typeof albumItemStyle>[0], group: LayoutGroup) =>
+      albumItemStyle(entry, group, liveCtx(), interactive),
     maybeWarnApproximate,
   }
 }

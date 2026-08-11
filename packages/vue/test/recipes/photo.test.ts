@@ -1,14 +1,10 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
 import type { ImageContext, PhotoItem } from '../../src/core/types'
-import {
-  flushUi,
-  installBrowserStubs,
-  mountComponent,
-} from '../support/runtime'
+import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 describe('Photo', () => {
   beforeEach(installBrowserStubs)
@@ -28,6 +24,36 @@ describe('Photo', () => {
     mounted.unmount()
   })
 
+  it('merges consumer attrs and listeners with interactive trigger behavior', async () => {
+    const onClick = vi.fn()
+    const mounted = await mountComponent(Photo, {
+      props: {
+        photo: makePhoto({ id: 'interactive' }),
+        lightbox: true,
+        transition: 'none',
+        id: 'reviewed-photo',
+        class: 'consumer-photo',
+        'data-test-id': 'photo-root',
+        'aria-label': 'Open the reviewed photo',
+        onClick,
+      },
+    })
+    const figure = mounted.container.querySelector('figure') as HTMLElement
+
+    expect(figure.id).toBe('reviewed-photo')
+    expect(figure.classList).toContain('np-photo')
+    expect(figure.classList).toContain('consumer-photo')
+    expect(figure.getAttribute('data-test-id')).toBe('photo-root')
+    expect(figure.getAttribute('aria-label')).toBe('Open the reviewed photo')
+
+    figure.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushUi()
+
+    expect(onClick).toHaveBeenCalledOnce()
+    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
+    mounted.unmount()
+  })
+
   it('keeps setup-time lightbox capability stable and warns on changes', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const photo = makePhoto({ id: 'static-photo' })
@@ -36,9 +62,7 @@ describe('Photo', () => {
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp(
-      defineComponent(
-        () => () => h(Photo, { photo, lightbox: lightbox.value }),
-      ),
+      defineComponent(() => () => h(Photo, { photo, lightbox: lightbox.value })),
     )
     app.mount(host)
     lightbox.value = true

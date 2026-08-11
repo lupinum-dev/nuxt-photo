@@ -32,9 +32,12 @@ Add `@nuxt/image` when you want provider-backed image rendering and generated `s
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+  modules: ['@nuxt-photo/nuxt', '@nuxt/image'],
 })
 ```
+
+Module order does not matter. Nuxt Photo detects Nuxt Image after configured
+modules finish installing.
 
 ## Where next
 

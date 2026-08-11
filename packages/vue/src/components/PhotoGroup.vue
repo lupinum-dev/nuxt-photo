@@ -3,15 +3,10 @@
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
-<script setup lang="ts">
-defineOptions({ inheritAttrs: false })
-
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, provide, shallowRef, type Component } from 'vue'
 import { useLightboxProvider } from '../composables/index'
-import {
-  LightboxComponentKey,
-  type LightboxProviderController,
-} from '../provide/keys'
+import { LightboxComponentKey, type LightboxProviderController } from '../provide/keys'
 import {
   normalizePhotos,
   type ImageAdapter,
@@ -27,11 +22,20 @@ import {
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
+defineOptions({ inheritAttrs: false })
+
+defineSlots<{
+  default?: (props: {
+    photos: readonly PhotoItem<TMeta>[]
+    controller: LightboxProviderController<TMeta>
+  }) => unknown
+}>()
+
 const props = withDefaults(
   defineProps<{
     /** Canonical photo collection and navigation order. */
-    photos: readonly PhotoItem[]
-    imageAdapter?: ImageAdapter
+    photos: readonly PhotoItem<TMeta>[]
+    imageAdapter?: ImageAdapter<TMeta>
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
     /** Setup-time transition configuration. Remount to change it. */
@@ -40,41 +44,31 @@ const props = withDefaults(
   { lightbox: true },
 )
 
-const canonicalPhotos = computed<readonly PhotoItem[]>(
+const canonicalPhotos = computed<readonly PhotoItem<TMeta>[]>(
   () =>
-    normalizePhotos(props.photos, {
+    normalizePhotos<TMeta>(props.photos, {
       owner: 'PhotoGroup',
       onInvalid: 'throw',
     }).photos,
 )
-const capabilityBatches = shallowRef(
-  new Map<symbol, readonly PhotoGroupCapability[]>(),
-)
-const capabilities = computed(() =>
-  [...capabilityBatches.value.values()].flat(),
-)
+const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
+const capabilities = computed(() => [...capabilityBatches.value.values()].flat())
 
 function hasPhoto(id: string) {
   return canonicalPhotos.value.some((photo) => photo.id === id)
 }
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(
-  props.lightbox,
-  injectedLightbox,
-  Lightbox,
-  true,
-)
+const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 const provider = enabled
   ? useLightboxProvider(canonicalPhotos, {
       transition: props.transition,
-      imageAdapter: props.imageAdapter,
+      imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => {
         for (const entry of capabilities.value) {
           if (entry.id === photo.id && entry.renderSlide) {
@@ -86,9 +80,7 @@ const provider = enabled
     })
   : null
 
-function validateCapabilityIds(
-  batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>,
-) {
+function validateCapabilityIds(batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>) {
   const canonicalIds = new Set(canonicalPhotos.value.map((photo) => photo.id))
   for (const batch of batches.values()) {
     for (const entry of batch) {
@@ -101,10 +93,7 @@ function validateCapabilityIds(
   }
 }
 
-function replaceCapabilities(
-  owner: symbol,
-  entries: readonly PhotoGroupCapability[],
-) {
+function replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]) {
   const next = new Map(capabilityBatches.value)
   if (entries.length === 0) next.delete(owner)
   else next.set(owner, [...entries])
@@ -152,9 +141,7 @@ function syncThumbnailRefs() {
 
 async function open(index = 0) {
   if (index < 0 || index >= canonicalPhotos.value.length) {
-    throw new RangeError(
-      `[nuxt-photo] No photo found at index ${String(index)}`,
-    )
+    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
   if (!provider) return
   syncThumbnailRefs()
@@ -180,7 +167,7 @@ async function close() {
   await provider?.close()
 }
 
-const disabledController: LightboxProviderController = {
+const disabledController: LightboxProviderController<TMeta> = {
   photos: computed(() => canonicalPhotos.value),
   count: computed(() => canonicalPhotos.value.length),
   activeIndex: computed(() => 0),
@@ -196,11 +183,11 @@ const disabledController: LightboxProviderController = {
   setThumbnailRef: () => () => {},
 }
 
-const controller: LightboxProviderController = provider
+const controller: LightboxProviderController<TMeta> = provider
   ? { ...provider, open, openById }
   : disabledController
 
-const hiddenPhoto = computed<PhotoItem | null>(() => {
+const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
   if (!provider) return null
   const index = provider.hiddenThumbnailIndex.value
   return index === null ? null : (canonicalPhotos.value[index] ?? null)

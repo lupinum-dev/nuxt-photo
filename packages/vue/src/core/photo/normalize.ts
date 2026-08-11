@@ -26,8 +26,8 @@ export type InvalidPhotosEvent = {
   readonly rawPhotos: readonly unknown[]
 }
 
-export type NormalizePhotosResult = {
-  readonly photos: PhotoItem[]
+export type NormalizePhotosResult<TMeta extends object = Readonly<Record<string, unknown>>> = {
+  readonly photos: PhotoItem<TMeta>[]
   readonly issues: readonly PhotoValidationIssue[]
 }
 
@@ -82,13 +82,13 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null
 }
 
-export function normalizePhotos(
+export function normalizePhotos<TMeta extends object = Readonly<Record<string, unknown>>>(
   rawPhotos: readonly unknown[],
   options: NormalizePhotosOptions,
-): NormalizePhotosResult {
+): NormalizePhotosResult<TMeta> {
   const onInvalid = options.onInvalid ?? 'throw'
   const issues: PhotoValidationIssue[] = []
-  const candidates: Array<PhotoItem | null> = []
+  const candidates: Array<PhotoItem<TMeta> | null> = []
   const indexesById = new Map<string, number[]>()
   const invalidIndexes = new Set<number>()
 
@@ -165,13 +165,7 @@ export function normalizePhotos(
       invalidIndexes.add(index)
     }
 
-    for (const field of [
-      'thumbSrc',
-      'alt',
-      'caption',
-      'description',
-      'srcset',
-    ] as const) {
+    for (const field of ['thumbSrc', 'alt', 'caption', 'description', 'srcset'] as const) {
       const value = rawPhoto[field]
       if (value !== undefined && typeof value !== 'string') {
         issues.push(
@@ -204,7 +198,7 @@ export function normalizePhotos(
     }
 
     // Every consumed field has been checked above; preserve unknown app fields.
-    candidates.push(rawPhoto as unknown as PhotoItem)
+    candidates.push(rawPhoto as unknown as PhotoItem<TMeta>)
   })
 
   for (const [id, indexes] of indexesById) {
@@ -229,13 +223,8 @@ export function normalizePhotos(
 
   return {
     photos: candidates.filter(
-      (photo, index): photo is PhotoItem =>
-        photo !== null &&
-        !(
-          issues.length > 0 &&
-          onInvalid === 'drop' &&
-          invalidIndexes.has(index)
-        ),
+      (photo, index): photo is PhotoItem<TMeta> =>
+        photo !== null && !(issues.length > 0 && onInvalid === 'drop' && invalidIndexes.has(index)),
     ),
     issues,
   }

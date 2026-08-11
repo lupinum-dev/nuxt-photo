@@ -2,7 +2,7 @@
   <figure
     ref="thumbRef"
     class="np-photo"
-    v-bind="{ ...$attrs, ...interactiveAttrs }"
+    v-bind="mergeProps(interactiveAttrs, $attrs)"
     :style="figureStyle"
   >
     <PhotoImage
@@ -13,18 +13,14 @@
       class="np-photo__img"
       :class="imgClass"
     />
-    <figcaption
-      v-if="photo.caption"
-      class="np-photo__caption"
-      :class="captionClass"
-    >
+    <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">
       {{ photo.caption }}
     </figcaption>
   </figure>
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import {
   ref,
   computed,
@@ -32,11 +28,11 @@ import {
   onMounted,
   onBeforeUnmount,
   watch,
-  useSlots,
+  mergeProps,
   type Component,
+  type VNodeChild,
 } from 'vue'
 
-defineOptions({ inheritAttrs: false })
 import { useLightboxProvider } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
@@ -49,13 +45,15 @@ import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps<{
-  photo: PhotoItem
+  photo: PhotoItem<TMeta>
   /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
   lightbox?: boolean | Component
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
-  imageAdapter?: ImageAdapter
+  imageAdapter?: ImageAdapter<TMeta>
   /** Setup-time transition configuration for a standalone lightbox. */
   transition?: LightboxTransitionOption
   loading?: 'lazy' | 'eager'
@@ -64,10 +62,12 @@ const props = defineProps<{
   /** Extra classes for the caption element */
   captionClass?: string
 }>()
-const slots = useSlots()
+const slots = defineSlots<{
+  slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
+}>()
 
 function validatePhoto() {
-  normalizePhotos([props.photo], { owner: 'Photo', onInvalid: 'throw' })
+  normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
 }
 validatePhoto()
 
@@ -86,7 +86,6 @@ const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 
 // Solo lightbox context — only created when solo (outside group)
@@ -95,11 +94,10 @@ const soloCtx = isSolo.value
       computed(() => props.photo),
       {
         transition: props.transition,
-        imageAdapter: props.imageAdapter,
+        imageAdapter: computed(() => props.imageAdapter),
         resolveSlide: (photo) => {
           if (
-            (photo !== props.photo &&
-              String(photo.id) !== String(props.photo.id)) ||
+            (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
             !slots.slide
           )
             return null
@@ -117,11 +115,7 @@ const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
 
 // Group mode: the parent owns the canonical collection; this photo is a trigger.
 const isGrouped = computed(
-  () =>
-    !!group &&
-    group.enabled &&
-    group.hasPhoto(props.photo.id) &&
-    !props.lightboxIgnore,
+  () => !!group && group.enabled && group.hasPhoto(props.photo.id) && !props.lightboxIgnore,
 )
 const isInteractive = computed(() => isSolo.value || isGrouped.value)
 
@@ -141,8 +135,7 @@ const figureStyle = computed(() => {
 
 function handleClick() {
   if (isSolo.value) return soloOpen()
-  else if (isGrouped.value)
-    return group!.activateById(props.photo.id, thumbRef.value)
+  else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
 }
 
 const interactiveAttrs = computed(() => {
@@ -171,7 +164,8 @@ function registerWithGroup() {
       id: props.photo.id,
       getThumbnailElement: () => thumbRef.value,
       renderSlide: slots.slide
-        ? (slotProps) => slots.slide?.(slotProps) ?? null
+        ? (slotProps) =>
+            slots.slide?.({ ...slotProps, photo: slotProps.photo as PhotoItem<TMeta> }) ?? null
         : null,
     },
   ])

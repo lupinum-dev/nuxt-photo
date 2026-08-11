@@ -1,0 +1,647 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Numeric run ID of the current successful main `ci` workflow
+        required: true
+        type: string
+
+concurrency:
+  group: npm-publication
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Prepare staged publication
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      branch: ${{ steps.ci.outputs.branch }}
+      channel: ${{ steps.release.outputs.channel }}
+      package_matrix: ${{ steps.release.outputs.package_matrix }}
+      sha: ${{ steps.ci.outputs.sha }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - name: Validate authoritative current-main CI run
+        id: ci
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+        with:
+          script: |
+            const runId = Number(process.env.CI_RUN_ID)
+            if (!Number.isSafeInteger(runId) || runId <= 0) {
+              core.setFailed('ci_run_id must be a positive integer')
+              return
+            }
+
+            const { data: repository } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            const defaultBranch = repository.default_branch
+            const requiredRef = `refs/heads/${defaultBranch}`
+            if (context.ref !== requiredRef) {
+              core.setFailed(`Dispatch release.yml from ${requiredRef}, not ${context.ref}`)
+              return
+            }
+            if (repository.visibility !== 'public') {
+              core.setFailed(
+                'npm provenance requires a public GitHub repository. Make the repository public before publication.',
+              )
+              return
+            }
+
+            const { data: run } = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+            })
+            const { data: currentMain } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${defaultBranch}`,
+            })
+
+            if (run.path !== '.github/workflows/ci.yml') {
+              core.setFailed(`Run ${runId} belongs to ${run.path}, not ci.yml`)
+              return
+            }
+            if (run.event !== 'push' || run.head_branch !== defaultBranch) {
+              core.setFailed(`Run ${runId} is not a push on ${defaultBranch}`)
+              return
+            }
+            if (run.conclusion !== 'success') {
+              core.setFailed(`Run ${runId} concluded with ${run.conclusion}`)
+              return
+            }
+            if (run.head_sha !== currentMain.object.sha) {
+              core.setFailed(
+                `Run ${runId} verified ${run.head_sha}, but current ${defaultBranch} is ${currentMain.object.sha}`,
+              )
+              return
+            }
+
+            let environment
+            try {
+              const response = await github.request(
+                'GET /repos/{owner}/{repo}/environments/{environment_name}',
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  environment_name: 'npm',
+                },
+              )
+              environment = response.data
+            } catch (error) {
+              if (error.status === 404) {
+                core.setFailed(
+                  'The protected npm environment does not exist. Create it and add a required reviewer before publication.',
+                )
+                return
+              }
+              throw error
+            }
+
+            const reviewerRule = (environment.protection_rules ?? []).find(
+              rule => rule.type === 'required_reviewers',
+            )
+            if (!reviewerRule?.reviewers?.length) {
+              core.setFailed(
+                'The npm environment must require at least one human reviewer before publication.',
+              )
+              return
+            }
+
+            core.setOutput('sha', run.head_sha)
+            core.setOutput('branch', defaultBranch)
+
+      - name: Checkout certified SHA
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ steps.ci.outputs.sha }}
+
+      - name: Set up publication-planning Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Download retained release candidate
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: release-candidate
+          path: .release
+          run-id: ${{ inputs.ci_run_id }}
+
+      - name: Verify publication authorization
+        run: >-
+          node scripts/verify-release-artifact.mjs .release
+          --expected-sha "${{ steps.ci.outputs.sha }}"
+          --publishable
+
+      - name: Show reviewed release contents
+        run: node scripts/release-notes.mjs
+
+      - name: Prepare package-set record and approval summary
+        id: release
+        run: >-
+          node scripts/prepare-release.mjs .release
+          --expected-sha "${{ steps.ci.outputs.sha }}"
+          --ci-run-id "${{ inputs.ci_run_id }}"
+          --summary "$GITHUB_STEP_SUMMARY"
+          --github-output "$GITHUB_OUTPUT"
+
+      - name: Upload immutable staging plan
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-plan
+          path: |
+            .release/*.tgz
+            .release/release-artifact.json
+            .release/release-record.json
+            .release/github-release-notes.md
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90
+
+  stage:
+    name: Stage ${{ matrix.name }}
+    needs:
+      - prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.package_matrix) }}
+    steps:
+      - name: Checkout certified SHA
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up staging Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Download approved staging plan
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: release-plan
+          path: .release
+
+      - name: Recheck staging boundary
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          DEFAULT_BRANCH: ${{ needs.prepare.outputs.branch }}
+          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            if (repository.visibility !== 'public') {
+              core.setFailed('npm provenance requires a public GitHub repository.')
+              return
+            }
+            if (repository.default_branch !== process.env.DEFAULT_BRANCH) {
+              core.setFailed(
+                `Default branch changed from ${process.env.DEFAULT_BRANCH} to ${repository.default_branch}.`,
+              )
+              return
+            }
+
+            const { data: currentMain } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${repository.default_branch}`,
+            })
+            if (currentMain.object.sha !== process.env.EXPECTED_SHA) {
+              core.setFailed(
+                `Current ${repository.default_branch} is ${currentMain.object.sha}, not certified SHA ${process.env.EXPECTED_SHA}.`,
+              )
+              return
+            }
+
+            const { data: environment } = await github.request(
+              'GET /repos/{owner}/{repo}/environments/{environment_name}',
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                environment_name: 'npm',
+              },
+            )
+            const reviewerRule = (environment.protection_rules ?? []).find(
+              rule => rule.type === 'required_reviewers',
+            )
+            if (!reviewerRule?.reviewers?.length) {
+              core.setFailed('The npm environment no longer has a required human reviewer.')
+            }
+
+      - name: Revalidate exact package-set artifact
+        run: >-
+          node scripts/verify-release-artifact.mjs .release
+          --expected-sha "${{ needs.prepare.outputs.sha }}"
+          --publishable
+
+      - name: Stage exact tarball with npm trusted publishing
+        env:
+          PACKAGE_NAME: ${{ matrix.name }}
+        run: >-
+          node scripts/stage-package.mjs .release
+          --package "$PACKAGE_NAME"
+          --expected-sha "${{ needs.prepare.outputs.sha }}"
+
+      - name: Upload staging evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: stage-${{ matrix.slug }}
+          path: .release/stages/${{ matrix.slug }}.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90
+
+  prepare-finalization:
+    name: Prepare npm approval instructions
+    needs:
+      - prepare
+      - stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout certified SHA
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up release-planning Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Download approved staging plan
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: release-plan
+          path: .release
+
+      - name: Download package staging evidence
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          pattern: stage-*
+          path: .release/stages
+          merge-multiple: true
+
+      - name: Prepare durable stage record and human instructions
+        run: >-
+          node scripts/prepare-stage-record.mjs .release
+          --expected-sha "${{ needs.prepare.outputs.sha }}"
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload finalization plan
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-finalization-plan
+          path: |
+            .release/*.tgz
+            .release/release-artifact.json
+            .release/release-record.json
+            .release/github-release-notes.md
+            .release/stage-record.json
+            .release/stages/*.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90
+
+  verify-promoted:
+    name: Verify promoted package set
+    needs:
+      - prepare
+      - prepare-finalization
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout certified SHA
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up registry-verification Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Download finalization plan
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: release-finalization-plan
+          path: .release
+
+      - name: Verify npm approvals, provenance, promotion, and staging-tag cleanup
+        run: >-
+          node scripts/verify-registry-release.mjs .release
+          --wait
+          --expected-sha "${{ needs.prepare.outputs.sha }}"
+
+  record-release:
+    name: Record GitHub Release
+    needs:
+      - prepare
+      - verify-promoted
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout certified SHA
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up release-recording Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Download finalization plan
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: release-finalization-plan
+          path: .release
+
+      - name: Reconfirm final npm package set
+        run: >-
+          node scripts/verify-registry-release.mjs .release
+          --expected-sha "${{ needs.prepare.outputs.sha }}"
+
+      - name: Inspect existing GitHub release state
+        id: github_release
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        with:
+          script: |
+            async function tagTarget() {
+              try {
+                const { data: ref } = await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `tags/${process.env.TAG}`,
+                })
+                if (ref.object.type !== 'tag') return ref.object.sha
+                const { data: tag } = await github.rest.git.getTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag_sha: ref.object.sha,
+                })
+                return tag.object.sha
+              } catch (error) {
+                if (error.status === 404) return null
+                throw error
+              }
+            }
+
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              },
+            )
+            const release = releases.find(item => item.tag_name === process.env.TAG)
+            if (!release) {
+              const targetSha = await tagTarget()
+              if (targetSha && targetSha !== process.env.EXPECTED_SHA) {
+                core.setFailed(
+                  `Existing tag ${process.env.TAG} targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
+                )
+                return
+              }
+              core.setOutput('exists', 'false')
+              core.setOutput('draft', 'false')
+              return
+            }
+
+            if (release.draft) {
+              if (release.target_commitish !== process.env.EXPECTED_SHA) {
+                core.setFailed(
+                  `Draft release targets ${release.target_commitish}, not ${process.env.EXPECTED_SHA}`,
+                )
+                return
+              }
+            } else {
+              const targetSha = await tagTarget()
+              if (targetSha !== process.env.EXPECTED_SHA) {
+                core.setFailed(
+                  `Existing tag ${process.env.TAG} targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
+                )
+                return
+              }
+            }
+
+            core.setOutput('exists', 'true')
+            core.setOutput('draft', release.draft ? 'true' : 'false')
+
+      - name: Create draft GitHub Release with durable evidence
+        if: steps.github_release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES_FILE: .release/github-release-notes.md
+          SHA: ${{ needs.prepare.outputs.sha }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          ASSETS=(
+            .release/*.tgz
+            .release/release-artifact.json
+            .release/release-record.json
+            .release/stage-record.json
+          )
+          gh release create "$TAG" "${ASSETS[@]}" \
+            --draft \
+            --target "$SHA" \
+            --title "$TAG" \
+            --notes-file "$NOTES_FILE"
+
+      - name: Repair existing draft assets and notes
+        if: steps.github_release.outputs.draft == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES_FILE: .release/github-release-notes.md
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          gh release upload "$TAG" \
+            .release/*.tgz \
+            .release/release-artifact.json \
+            .release/release-record.json \
+            .release/stage-record.json \
+            --clobber
+          gh release edit "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+
+      - name: Publish GitHub Release
+        if: steps.github_release.outputs.exists != 'true' || steps.github_release.outputs.draft == 'true'
+        env:
+          CHANNEL: ${{ needs.prepare.outputs.channel }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if [ "$CHANNEL" = "next" ]; then
+            gh release edit "$TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$TAG" --draft=false --prerelease=false --latest
+          fi
+
+      - name: Verify public GitHub Release metadata
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          CHANNEL: ${{ needs.prepare.outputs.channel }}
+          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
+          NOTES_FILE: .release/github-release-notes.md
+          TAG: ${{ needs.prepare.outputs.tag }}
+        with:
+          script: |
+            const fs = require('node:fs')
+            const path = require('node:path')
+            const artifact = JSON.parse(
+              fs.readFileSync('.release/release-artifact.json', 'utf8'),
+            )
+
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              },
+            )
+            const release = releases.find(item => item.tag_name === process.env.TAG)
+            if (!release || release.draft) {
+              core.setFailed(`Public release ${process.env.TAG} does not exist`)
+              return
+            }
+
+            const { data: ref } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `tags/${process.env.TAG}`,
+            })
+            let targetSha = ref.object.sha
+            if (ref.object.type === 'tag') {
+              const { data: tag } = await github.rest.git.getTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_sha: ref.object.sha,
+              })
+              targetSha = tag.object.sha
+            }
+            if (targetSha !== process.env.EXPECTED_SHA) {
+              core.setFailed(
+                `Release tag targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
+              )
+              return
+            }
+
+            const expectedPrerelease = process.env.CHANNEL === 'next'
+            const expectedNotes = fs.readFileSync(process.env.NOTES_FILE, 'utf8').trimEnd()
+            if (release.name !== process.env.TAG) {
+              core.setFailed(`Release title is ${release.name}, not ${process.env.TAG}`)
+              return
+            }
+            if ((release.body ?? '').trimEnd() !== expectedNotes) {
+              core.setFailed('Public release notes differ from the approved release plan')
+              return
+            }
+            if (release.prerelease !== expectedPrerelease) {
+              core.setFailed('Public release prerelease state is incorrect')
+              return
+            }
+
+            const requiredAssets = [
+              ...artifact.packages.map(pkg => path.basename(pkg.tarball)),
+              'release-artifact.json',
+              'release-record.json',
+              'stage-record.json',
+            ]
+            for (const name of requiredAssets) {
+              if (!release.assets.some(asset => asset.name === name)) {
+                core.setFailed(`Public release is missing durable asset ${name}`)
+                return
+              }
+            }
+
+            if (!expectedPrerelease) {
+              const { data: latest } = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              })
+              if (latest.tag_name !== process.env.TAG) {
+                core.setFailed(
+                  `GitHub Latest is ${latest.tag_name}, not ${process.env.TAG}`,
+                )
+              }
+            }
+
+      - name: Verify public GitHub Release asset bytes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          ASSET_DIR=".release/github-assets"
+          mkdir "$ASSET_DIR"
+          gh release download "$TAG" --dir "$ASSET_DIR"
+          for file in \
+            .release/*.tgz \
+            .release/release-artifact.json \
+            .release/release-record.json \
+            .release/stage-record.json
+          do
+            cmp "$file" "$ASSET_DIR/$(basename "$file")"
+          done
+
+      - name: Reconfirm registry after release recording
+        run: >-
+          node scripts/verify-registry-release.mjs .release
+          --expected-sha "${{ needs.prepare.outputs.sha }}"

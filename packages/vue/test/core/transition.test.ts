@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import {
   DEFAULT_TRANSITION_CONFIG,
   getVisibilityRatio,
@@ -35,12 +35,8 @@ describe('transition planning', () => {
   it('computes visibility ratios against the viewport', () => {
     vi.stubGlobal('window', { innerWidth: 1200, innerHeight: 800 })
 
-    expect(
-      getVisibilityRatio(rect({ left: 0, top: 0, width: 200, height: 100 })),
-    ).toBe(1)
-    expect(
-      getVisibilityRatio(rect({ left: -100, top: 0, width: 200, height: 100 })),
-    ).toBe(0.5)
+    expect(getVisibilityRatio(rect({ left: 0, top: 0, width: 200, height: 100 }))).toBe(1)
+    expect(getVisibilityRatio(rect({ left: -100, top: 0, width: 200, height: 100 }))).toBe(0.5)
   })
 
   it('uses transition mode rules for FLIP eligibility', () => {

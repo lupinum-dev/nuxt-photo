@@ -27,9 +27,7 @@ export default defineNuxtConfig({
   extends: ['@lupinum/ginko-docs'],
   modules: ['@nuxt-photo/nuxt'],
   site: { url: siteUrl },
-  components: [
-    { path: '~/components/content', pathPrefix: false, global: true },
-  ],
+  components: [{ path: '~/components/content', pathPrefix: false, global: true }],
   css: ['~/assets/main.css'],
   nuxtPhoto: { css: 'all' },
   content: {

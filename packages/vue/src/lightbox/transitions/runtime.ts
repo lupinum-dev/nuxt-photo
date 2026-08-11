@@ -108,9 +108,7 @@ function animationPromise(animation: Animation, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
     const abort = () => {
       signal.removeEventListener('abort', abort)
-      reject(
-        signal.reason ?? new DOMException('Operation aborted', 'AbortError'),
-      )
+      reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
     }
     signal.addEventListener('abort', abort, { once: true })
     animation.finished.then(
@@ -127,8 +125,7 @@ function animationPromise(animation: Animation, signal: AbortSignal) {
 }
 
 function imageSource(element: HTMLElement | null, fallback: string) {
-  if (element instanceof HTMLImageElement)
-    return element.currentSrc || element.src || fallback
+  if (element instanceof HTMLImageElement) return element.currentSrc || element.src || fallback
   const image = element?.querySelector('img')
   return image?.currentSrc || image?.src || fallback
 }
@@ -142,9 +139,7 @@ function rectStyle(element: HTMLElement, rect: RectLike) {
 
 function visible(element: HTMLElement | null) {
   return (
-    !!element &&
-    element.style.display !== 'none' &&
-    Number(getComputedStyle(element).opacity) > 0
+    !!element && element.style.display !== 'none' && Number(getComputedStyle(element).opacity) > 0
   )
 }
 
@@ -180,9 +175,7 @@ export function useLightboxMotion(
   const closeDragY = ref(0)
   const stageMounted = ref(false)
   const activeImagePending = ref(false)
-  const transitionInProgress = computed(
-    () => animating.value || activeImagePending.value,
-  )
+  const transitionInProgress = computed(() => animating.value || activeImagePending.value)
 
   const overlayRef = ref<HTMLElement | null>(null)
   const viewportRef = ref<HTMLElement | null>(null)
@@ -205,9 +198,7 @@ export function useLightboxMotion(
     captions,
     transitionFrame: transitionFrameRef.value,
     transitionImage:
-      transitionImageRef.value instanceof HTMLImageElement
-        ? transitionImageRef.value
-        : null,
+      transitionImageRef.value instanceof HTMLImageElement ? transitionImageRef.value : null,
     transitionShadow: transitionShadowRef.value,
   })
 
@@ -308,57 +299,45 @@ export function useLightboxMotion(
 
     const decode = element.decode?.bind(element)
     if (!decode) {
-      if (element.complete && element.naturalWidth > 0)
-        return { ok: true as const }
-      return new Promise<{ ok: true } | { ok: false; error: unknown }>(
-        (resolve, reject) => {
-          let settled = false
-          const cleanup = () => {
-            clearTimeout(timeout)
-            signal.removeEventListener('abort', abort)
-            element.removeEventListener('load', loaded)
-            element.removeEventListener('error', failed)
-          }
-          const finish = (
-            result: { ok: true } | { ok: false; error: unknown },
-          ) => {
-            if (settled) return
-            settled = true
-            cleanup()
-            resolve(result)
-          }
-          const abort = () => {
-            if (settled) return
-            settled = true
-            cleanup()
-            reject(
-              signal.reason ??
-                new DOMException('Operation aborted', 'AbortError'),
-            )
-          }
-          const loaded = () => finish({ ok: true })
-          const failed = () =>
-            finish({ ok: false, error: new Error('Image failed to load') })
-          const timeout = setTimeout(
-            () =>
-              finish({ ok: false, error: new Error('Image load timed out') }),
-            IMAGE_LOAD_TIMEOUT_MS,
-          )
-          signal.addEventListener('abort', abort, { once: true })
-          element.addEventListener('load', loaded, { once: true })
-          element.addEventListener('error', failed, { once: true })
-          if (signal.aborted) abort()
-        },
-      )
+      if (element.complete && element.naturalWidth > 0) return { ok: true as const }
+      return new Promise<{ ok: true } | { ok: false; error: unknown }>((resolve, reject) => {
+        let settled = false
+        const cleanup = () => {
+          clearTimeout(timeout)
+          signal.removeEventListener('abort', abort)
+          element.removeEventListener('load', loaded)
+          element.removeEventListener('error', failed)
+        }
+        const finish = (result: { ok: true } | { ok: false; error: unknown }) => {
+          if (settled) return
+          settled = true
+          cleanup()
+          resolve(result)
+        }
+        const abort = () => {
+          if (settled) return
+          settled = true
+          cleanup()
+          reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
+        }
+        const loaded = () => finish({ ok: true })
+        const failed = () => finish({ ok: false, error: new Error('Image failed to load') })
+        const timeout = setTimeout(
+          () => finish({ ok: false, error: new Error('Image load timed out') }),
+          IMAGE_LOAD_TIMEOUT_MS,
+        )
+        signal.addEventListener('abort', abort, { once: true })
+        element.addEventListener('load', loaded, { once: true })
+        element.addEventListener('error', failed, { once: true })
+        if (signal.aborted) abort()
+      })
     }
 
     try {
       await Promise.race([
         decode(),
         wait(IMAGE_LOAD_TIMEOUT_MS, signal).then(() => {
-          throw new Error(
-            `Image decode timed out: ${element.currentSrc || element.src}`,
-          )
+          throw new Error(`Image decode timed out: ${element.currentSrc || element.src}`)
         }),
       ])
       return { ok: true as const }
@@ -433,10 +412,7 @@ export function useLightboxMotion(
     if (e.viewport) e.viewport.style.opacity = '1'
     await animate(
       e.transitionImage,
-      [
-        { opacity: Number(getComputedStyle(e.transitionImage!).opacity) },
-        { opacity: 0 },
-      ],
+      [{ opacity: Number(getComputedStyle(e.transitionImage!).opacity) }, { opacity: 0 }],
       { duration: HANDOFF_DURATION_MS, easing: 'linear' },
       ['opacity'],
       signal,
@@ -445,11 +421,7 @@ export function useLightboxMotion(
     e.transitionFrame.style.opacity = '0'
   }
 
-  async function runFadeOpen(
-    duration: number,
-    callbacks: MotionCallbacks,
-    signal: AbortSignal,
-  ) {
+  async function runFadeOpen(duration: number, callbacks: MotionCallbacks, signal: AbortSignal) {
     const e = elements()
     stageMounted.value = true
     const decodePromise = callbacks
@@ -474,10 +446,7 @@ export function useLightboxMotion(
       ),
     ])
     const media = decodePromise.then((decode) => {
-      callbacks.setImageLoadFailed(
-        !decode.ok,
-        decode.ok ? undefined : decode.error,
-      )
+      callbacks.setImageLoadFailed(!decode.ok, decode.ok ? undefined : decode.error)
       return animate(
         e.viewport,
         [{ opacity: 0 }, { opacity: decode.ok ? 1 : 0 }],
@@ -489,11 +458,7 @@ export function useLightboxMotion(
     await Promise.all([shell, media])
   }
 
-  async function open(
-    index: number,
-    callbacks: MotionCallbacks,
-    signal: AbortSignal,
-  ) {
+  async function open(index: number, callbacks: MotionCallbacks, signal: AbortSignal) {
     callbacks.resetGestureState()
     callbacks.cancelTapTimer()
     animating.value = true
@@ -526,17 +491,13 @@ export function useLightboxMotion(
       ? transitionFrameRef.value!.getBoundingClientRect()
       : null
     const fromRect =
-      interruptedRect ??
-      captured?.rect ??
-      thumbRefs.get(index)?.getBoundingClientRect() ??
-      null
+      interruptedRect ?? captured?.rect ?? thumbRefs.get(index)?.getBoundingClientRect() ?? null
     const toRect = getAbsoluteFrameRect(photo)
     const useFlip =
       config.mode !== 'none' &&
       fromRect &&
       toRect &&
-      (config.mode === 'flip' ||
-        (isUsableRect(fromRect) && shouldUseFlip(fromRect, config)))
+      (config.mode === 'flip' || (isUsableRect(fromRect) && shouldUseFlip(fromRect, config)))
 
     try {
       if (!useFlip || !fromRect || !toRect) {
@@ -585,10 +546,7 @@ export function useLightboxMotion(
         const flight = Promise.all([
           animate(
             e.transitionFrame,
-            [
-              { transform: e.transitionFrame?.style.transform || 'none' },
-              { transform: 'none' },
-            ],
+            [{ transform: e.transitionFrame?.style.transform || 'none' }, { transform: 'none' }],
             { duration: OPEN_DURATION_MS, easing: EASING },
             ['transform'],
             signal,
@@ -659,10 +617,7 @@ export function useLightboxMotion(
           .then(() => decodeActiveImage(index, signal))
           .then((result) => {
             decodeState.result = result
-            callbacks.setImageLoadFailed(
-              !result.ok,
-              result.ok ? undefined : result.error,
-            )
+            callbacks.setImageLoadFailed(!result.ok, result.ok ? undefined : result.error)
             return result
           })
         void decode.catch(() => {})
@@ -716,10 +671,7 @@ export function useLightboxMotion(
       ...[...controls, ...captions].map((element) =>
         animate(
           element,
-          [
-            { opacity: Number(getComputedStyle(element).opacity) },
-            { opacity: 0 },
-          ],
+          [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: 0 }],
           { duration, easing: EASING },
           ['opacity'],
           signal,
@@ -734,8 +686,7 @@ export function useLightboxMotion(
     animating.value = true
     activeImagePending.value = false
 
-    if (callbacks.isZoomedIn.value)
-      callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
+    if (callbacks.isZoomedIn.value) callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
     callbacks.syncGeometry()
     const photo = currentPhoto.value
     if (!photo) {
@@ -757,10 +708,7 @@ export function useLightboxMotion(
       thumbRefExists: !!thumb,
       config,
     })
-    const dragProgress = Math.min(
-      1,
-      Math.abs(closeDragY.value) / (areaMetrics.value?.height || 1),
-    )
+    const dragProgress = Math.min(1, Math.abs(closeDragY.value) / (areaMetrics.value?.height || 1))
     const closeDuration = Math.max(180, CLOSE_DURATION_MS * (1 - dragProgress))
 
     try {
@@ -787,10 +735,7 @@ export function useLightboxMotion(
         }
         if (!(await prepareTransitionImage(signal))) {
           if (e.transitionFrame) e.transitionFrame.style.display = 'none'
-          await runFadeClose(
-            reducedMotion ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
-            signal,
-          )
+          await runFadeClose(reducedMotion ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS, signal)
           resetClosedVisualState()
           return
         }
@@ -831,10 +776,7 @@ export function useLightboxMotion(
           ...[...controls, ...captions].map((element) =>
             animate(
               element,
-              [
-                { opacity: Number(getComputedStyle(element).opacity) },
-                { opacity: 0 },
-              ],
+              [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: 0 }],
               { duration: closeDuration * 0.35, easing: EASING },
               ['opacity'],
               signal,
@@ -926,10 +868,7 @@ export function useLightboxMotion(
     for (const element of [...controls, ...captions]) {
       void animate(
         element,
-        [
-          { opacity: Number(getComputedStyle(element).opacity) },
-          { opacity: target },
-        ],
+        [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: target }],
         { duration: REDUCED_MOTION_DURATION_MS, easing: EASING },
         ['opacity'],
         controller.signal,

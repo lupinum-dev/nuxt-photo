@@ -1,0 +1,71 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "timezone": "Europe/Vienna",
+  "schedule": ["before 6am on Monday"],
+  "minimumReleaseAge": "2 days",
+  "internalChecksFilter": "strict",
+  "automerge": false,
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "postUpdateOptions": ["pnpmDedupe"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on Monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Keep GitHub Actions reviewable as one maintenance unit.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Keep the Vite+, TypeScript, and test toolchain compatible.",
+      "matchPackageNames": [
+        "@types/node",
+        "@voidzero-dev/vite-plus-core",
+        "rolldown",
+        "typescript",
+        "vite",
+        "vite-plus",
+        "vitest"
+      ],
+      "groupName": "Vite+ toolchain"
+    },
+    {
+      "description": "Keep Changesets packages on one compatible release line.",
+      "matchPackageNames": ["@changesets/**"],
+      "groupName": "Changesets"
+    },
+    {
+      "description": "Review the Nuxt framework and module toolchain together.",
+      "matchPackageNames": [
+        "@nuxt/kit",
+        "@nuxt/module-builder",
+        "@nuxt/schema",
+        "@nuxt/test-utils",
+        "nuxt"
+      ],
+      "groupName": "Nuxt toolchain"
+    },
+    {
+      "description": "Review Vue compiler, runtime, and type tooling together.",
+      "matchPackageNames": ["@vitejs/plugin-vue", "@vue/server-renderer", "vue", "vue-tsc"],
+      "groupName": "Vue toolchain"
+    },
+    {
+      "description": "Keep the exact Embla prerelease tuple synchronized.",
+      "matchPackageNames": ["embla-carousel", "embla-carousel-autoplay", "embla-carousel-vue"],
+      "groupName": "Embla carousel",
+      "rangeStrategy": "pin"
+    },
+    {
+      "description": "Review the Ginko documentation stack as one consumer change.",
+      "matchPackageNames": ["@lupinum/ginko-content", "@lupinum/ginko-docs"],
+      "groupName": "Ginko docs stack"
+    }
+  ]
+}

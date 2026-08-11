@@ -12,7 +12,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
-import { basename, dirname, extname, join, relative, resolve } from 'node:path'
+import { dirname, extname, join, relative, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
@@ -28,6 +28,7 @@ const nuxiBin = resolve(nuxtPackageRoot, 'node_modules', '.bin', 'nuxi')
 
 const args = process.argv.slice(2)
 const analyze = args.includes('--analyze')
+const skipBuild = args.includes('--skip-build')
 const target = ['vue', 'nuxt'].find((arg) => args.includes(arg)) ?? 'all'
 
 const vueScenarios = [
@@ -43,13 +44,13 @@ const nuxtScenarios = [
   { id: 'usage', name: 'nuxt:usage' },
 ]
 
-main()
+void main()
 
 async function main() {
   prepareDir(resultsRoot)
   if (analyze) prepareDir(analyzeRoot)
 
-  ensureBuild(target)
+  if (!skipBuild) ensureBuild(target)
 
   const failures = []
 
@@ -68,11 +69,7 @@ async function main() {
         passed ? 'PASS' : 'FAIL',
       ])
     }
-    printTable(
-      'Vue',
-      ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'],
-      rows,
-    )
+    printTable('Vue', ['Scenario', 'Raw', 'Gzip', 'Brotli', 'Limit(br)', 'Status'], rows)
   }
 
   if (target === 'all' || target === 'nuxt') {
@@ -86,8 +83,7 @@ async function main() {
 
     const moduleDelta = diffSizes(moduleResult, baseline)
     const usageDelta = diffSizes(usageResult, baseline)
-    const modulePassed =
-      moduleDelta.brotli <= limits.nuxt.module.brotliDeltaLimit
+    const modulePassed = moduleDelta.brotli <= limits.nuxt.module.brotliDeltaLimit
     const usagePassed = usageDelta.brotli <= limits.nuxt.usage.brotliDeltaLimit
 
     if (!modulePassed) failures.push('nuxt:module')
@@ -129,9 +125,7 @@ async function main() {
   }
 
   if (analyze) {
-    console.log(
-      `\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`,
-    )
+    console.log(`\nAnalyze output written to ${relative(root, analyzeRoot) || analyzeRoot}`)
   }
 
   if (failures.length > 0) {
@@ -178,13 +172,7 @@ async function measureViteFixture(fixtureId) {
     ].filter(Boolean),
     resolve: {
       alias: {
-        '@nuxt-photo/vue': resolve(
-          root,
-          'packages',
-          'vue',
-          'dist',
-          'index.mjs',
-        ),
+        '@nuxt-photo/vue': resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
       },
       preserveSymlinks: false,
     },
@@ -211,11 +199,7 @@ async function measureViteFixture(fixtureId) {
 
 function runNuxtFixture(fixtureId) {
   const tempDir = prepareFixture('nuxt', fixtureId)
-  symlinkSync(
-    resolve(nuxtPackageRoot, 'node_modules'),
-    resolve(tempDir, 'node_modules'),
-    'dir',
-  )
+  symlinkSync(resolve(nuxtPackageRoot, 'node_modules'), resolve(tempDir, 'node_modules'), 'dir')
   runCommand(nuxiBin, ['build', tempDir], {
     cwd: nuxtPackageRoot,
     env: {
@@ -260,12 +244,7 @@ function collectAssets(dir) {
       // Nuxt occasionally leaves a stale entry in the directory listing while
       // hashed client chunks are still settling. Treat that as a transient miss,
       // not a failed size run.
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'ENOENT'
-      ) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         return
       }
       throw error
@@ -321,8 +300,7 @@ function printTable(title, headers, rows) {
     Math.max(header.length, ...rows.map((row) => String(row[index]).length)),
   )
 
-  const line = (cells) =>
-    cells.map((cell, index) => String(cell).padEnd(widths[index])).join('  ')
+  const line = (cells) => cells.map((cell, index) => String(cell).padEnd(widths[index])).join('  ')
 
   console.log(`\n${title}`)
   console.log(line(headers))
@@ -339,9 +317,7 @@ function formatBytes(bytes) {
 }
 
 function formatSignedBytes(bytes) {
-  return bytes >= 0
-    ? `+${formatBytes(bytes)}`
-    : `-${formatBytes(Math.abs(bytes))}`
+  return bytes >= 0 ? `+${formatBytes(bytes)}` : `-${formatBytes(Math.abs(bytes))}`
 }
 
 function runCommand(command, commandArgs, options = {}) {

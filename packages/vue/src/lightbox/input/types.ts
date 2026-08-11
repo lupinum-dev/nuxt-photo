@@ -1,10 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import type {
-  AreaMetrics,
-  PanState,
-  PhotoItem,
-  ZoomState,
-} from '../../core/index'
+import type { AreaMetrics, PanState, PhotoItem, ZoomState } from '../../core/index'
 
 export type GestureInputConfig = {
   state: {
@@ -24,26 +19,15 @@ export type GestureInputConfig = {
     getCurrentScale: () => number
     getCurrentPan: () => PanState
     setCurrentPanImmediate: (pan: PanState, syncRefs?: boolean) => void
-    settleCurrentTransform: (options?: {
-      tension?: number
-      friction?: number
-    }) => void
-    setPanzoomImmediate: (
-      scale: number,
-      pan: PanState,
-      syncRefs?: boolean,
-    ) => void
+    settleCurrentTransform: (options?: { tension?: number; friction?: number }) => void
+    setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
     startPanzoomSpring: (
       targetScale: number,
       targetPan: PanState,
       options?: { tension?: number; friction?: number },
     ) => void
     clampPan: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
-    clampPanWithResistance: (
-      pan: PanState,
-      zoom?: number,
-      photo?: PhotoItem,
-    ) => PanState
+    clampPanWithResistance: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
     applyWheelZoom: (event: WheelEvent) => void
     toggleZoom: (clientPoint?: { x: number; y: number }) => void
     getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }

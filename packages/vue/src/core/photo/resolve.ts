@@ -1,35 +1,35 @@
-import {
-  normalizePhotos,
-  type InvalidPhotoPolicy,
-  type InvalidPhotosEvent,
-} from './normalize'
+import { normalizePhotos, type InvalidPhotoPolicy, type InvalidPhotosEvent } from './normalize'
 import type { PhotoItem } from '../types'
 
 export type ResolveRecipePhotosOptions = {
   validation?: InvalidPhotoPolicy
-  onInvalidPhotos?: (event: InvalidPhotosEvent) => void
 }
 
-export function resolveRecipePhotos(
+export type ResolveRecipePhotosResult<TMeta extends object = Readonly<Record<string, unknown>>> = {
+  readonly photos: PhotoItem<TMeta>[]
+  readonly invalidPhotos: InvalidPhotosEvent | null
+}
+
+export function resolveRecipePhotos<TMeta extends object = Readonly<Record<string, unknown>>>(
   rawPhotos: readonly unknown[],
   owner: string,
   options: ResolveRecipePhotosOptions = {},
-): PhotoItem[] {
+): ResolveRecipePhotosResult<TMeta> {
   const validation = options.validation ?? 'throw'
-  const result = normalizePhotos(rawPhotos, {
+  const result = normalizePhotos<TMeta>(rawPhotos, {
     owner,
     onInvalid: validation,
   })
 
-  if (result.issues.length > 0) {
-    const event = {
-      owner,
-      issues: result.issues,
-      rawPhotos,
-    }
-
-    options.onInvalidPhotos?.(event)
+  return {
+    photos: result.photos,
+    invalidPhotos:
+      result.issues.length > 0
+        ? {
+            owner,
+            issues: result.issues,
+            rawPhotos,
+          }
+        : null,
   }
-
-  return result.photos
 }

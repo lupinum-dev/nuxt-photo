@@ -1,9 +1,5 @@
 <template>
-  <LightboxRoot
-    class="fixed inset-0 z-50 flex flex-col"
-    role="dialog"
-    aria-modal="true"
-  >
+  <LightboxRoot class="fixed inset-0 z-50 flex flex-col" role="dialog" aria-modal="true">
     <LightboxOverlay class="absolute inset-0 bg-black/90" />
 
     <div class="relative z-10 flex flex-1 flex-col">
@@ -62,13 +58,8 @@
         </div>
       </LightboxControls>
 
-      <div
-        class="flex flex-1 flex-col items-center justify-center overflow-hidden"
-      >
-        <LightboxViewport
-          v-slot="{ photos, viewportRef }"
-          class="w-full flex-1"
-        >
+      <div class="flex flex-1 flex-col items-center justify-center overflow-hidden">
+        <LightboxViewport v-slot="{ photos, viewportRef }" class="w-full flex-1">
           <div class="h-full" :ref="viewportRef">
             <div class="flex h-full">
               <LightboxSlide

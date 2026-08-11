@@ -1,20 +1,14 @@
-import { describe, expect, it } from 'vitest'
-import {
-  normalizePhotos,
-  PhotoValidationError,
-} from '../../src/core/photo/normalize'
+import { describe, expect, it } from 'vite-plus/test'
+import { normalizePhotos, PhotoValidationError } from '../../src/core/photo/normalize'
 
 describe('photo normalization', () => {
   it('returns valid photos without transforming application data', () => {
-    const result = normalizePhotos(
-      [{ id: 'a', src: '/a.jpg', width: 1200, height: 800 }],
-      { owner: 'PhotoAlbum' },
-    )
+    const result = normalizePhotos([{ id: 'a', src: '/a.jpg', width: 1200, height: 800 }], {
+      owner: 'PhotoAlbum',
+    })
 
     expect(result.issues).toEqual([])
-    expect(result.photos).toEqual([
-      { id: 'a', src: '/a.jpg', width: 1200, height: 800 },
-    ])
+    expect(result.photos).toEqual([{ id: 'a', src: '/a.jpg', width: 1200, height: 800 }])
   })
 
   it('throws for missing ids, empty src, invalid dimensions, and duplicate ids by default', () => {
@@ -40,9 +34,7 @@ describe('photo normalization', () => {
         throw new Error('expected validation to fail')
       } catch (error) {
         expect(error).toBeInstanceOf(PhotoValidationError)
-        expect((error as PhotoValidationError).issues[0]?.code).toBe(
-          'invalid-item',
-        )
+        expect((error as PhotoValidationError).issues[0]?.code).toBe('invalid-item')
       }
     },
   )
@@ -99,10 +91,9 @@ describe('photo normalization', () => {
     'rejects non-finite or negative dimensions',
     (width) => {
       expect(() =>
-        normalizePhotos(
-          [{ id: 'bad-size', src: '/x.jpg', width, height: 10 }],
-          { owner: 'PhotoAlbum' },
-        ),
+        normalizePhotos([{ id: 'bad-size', src: '/x.jpg', width, height: 10 }], {
+          owner: 'PhotoAlbum',
+        }),
       ).toThrow(/invalid width/)
     },
   )
@@ -114,9 +105,9 @@ describe('photo normalization', () => {
       width = 10
       height = 10
     }
-    expect(() =>
-      normalizePhotos([new PhotoRecord()], { owner: 'PhotoAlbum' }),
-    ).toThrow(/plain object/)
+    expect(() => normalizePhotos([new PhotoRecord()], { owner: 'PhotoAlbum' })).toThrow(
+      /plain object/,
+    )
   })
 
   it('preserves arbitrary non-null metadata objects', () => {
@@ -130,10 +121,9 @@ describe('photo normalization', () => {
 
   it.each([null, 42, 'meta'])('rejects primitive metadata %j', (meta) => {
     expect(() =>
-      normalizePhotos(
-        [{ id: 'meta', src: '/meta.jpg', width: 10, height: 10, meta }],
-        { owner: 'Photo' },
-      ),
+      normalizePhotos([{ id: 'meta', src: '/meta.jpg', width: 10, height: 10, meta }], {
+        owner: 'Photo',
+      }),
     ).toThrow(/field "meta" must be an object/)
   })
 })

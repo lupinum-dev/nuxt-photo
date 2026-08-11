@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { computed, defineComponent, h, inject, reactive } from 'vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import type { PhotoItem } from '../../src/core/index'
 import { useLightbox } from '../../src/composables'
@@ -12,11 +12,7 @@ import {
   PhotoGroupContextKey,
   type PhotoGroupContext,
 } from '../../src/components/photo-group/context'
-import {
-  flushUi,
-  installBrowserStubs,
-  mountComponent,
-} from '../support/runtime'
+import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 const ProbeLightbox = defineComponent(() => {
   const controller = useLightbox()
@@ -41,17 +37,13 @@ describe('PhotoGroup registration', () => {
     const mounted = await mountComponent(PhotoGroup, {
       props: { photos: [first, ...album], lightbox: ProbeLightbox },
       slots: {
-        default: () => [
-          h(PhotoAlbum, { photos: album }),
-          h(Photo, { photo: first }),
-        ],
+        default: () => [h(PhotoAlbum, { photos: album }), h(Photo, { photo: first })],
       },
     })
     await flushUi()
-    expect(
-      mounted.container.querySelector('[data-testid="group-photos"]')
-        ?.textContent,
-    ).toBe('first,second,third')
+    expect(mounted.container.querySelector('[data-testid="group-photos"]')?.textContent).toBe(
+      'first,second,third',
+    )
     mounted.unmount()
   })
 
@@ -65,19 +57,15 @@ describe('PhotoGroup registration', () => {
     const mounted = await mountComponent(PhotoGroup, {
       props,
       slots: {
-        default: () => [
-          h(Photo, { photo: first }),
-          h(Photo, { photo: second }),
-        ],
+        default: () => [h(Photo, { photo: first }), h(Photo, { photo: second })],
       },
     })
 
     props.photos = [second, first]
     await flushUi()
-    expect(
-      mounted.container.querySelector('[data-testid="group-photos"]')
-        ?.textContent,
-    ).toBe('second,first')
+    expect(mounted.container.querySelector('[data-testid="group-photos"]')?.textContent).toBe(
+      'second,first',
+    )
 
     props.photos = [first]
     await flushUi()
@@ -97,10 +85,7 @@ describe('PhotoGroup registration', () => {
           lightbox: ProbeLightbox,
         },
         slots: {
-          default: () => [
-            h(Photo, { photo: duplicate }),
-            h(PhotoAlbum, { photos: [duplicate] }),
-          ],
+          default: () => [h(Photo, { photo: duplicate }), h(PhotoAlbum, { photos: [duplicate] })],
         },
       }),
     ).rejects.toThrow(/duplicate photo id "duplicate"/)
@@ -150,12 +135,12 @@ describe('PhotoGroup registration', () => {
 
     context!.replaceCapabilities(first, [capability('a')])
     context!.replaceCapabilities(second, [capability('b')])
-    expect(() =>
-      context!.replaceCapabilities(second, [capability('a')]),
-    ).toThrow(/Multiple custom slide renderers.*"a"/)
-    expect(() =>
-      context!.replaceCapabilities(third, [capability('b')]),
-    ).toThrow(/Multiple custom slide renderers.*"b"/)
+    expect(() => context!.replaceCapabilities(second, [capability('a')])).toThrow(
+      /Multiple custom slide renderers.*"a"/,
+    )
+    expect(() => context!.replaceCapabilities(third, [capability('b')])).toThrow(
+      /Multiple custom slide renderers.*"b"/,
+    )
 
     mounted.unmount()
   })
@@ -165,9 +150,7 @@ describe('PhotoGroup registration', () => {
       props: { photos: [makePhoto({ id: 'inert' })], lightbox: false },
       slots: { default: () => h(Photo, { photo: makePhoto({ id: 'inert' }) }) },
     })
-    expect(
-      mounted.container.querySelector('figure')?.getAttribute('role'),
-    ).toBeNull()
+    expect(mounted.container.querySelector('figure')?.getAttribute('role')).toBeNull()
     expect(mounted.container.querySelector('[role="dialog"]')).toBeNull()
     mounted.unmount()
   })
@@ -190,9 +173,7 @@ describe('PhotoGroup registration', () => {
       provideValues: [[PhotoGroupContextKey, context]],
     })
 
-    expect(
-      (mounted.container.querySelector('figure') as HTMLElement).style.opacity,
-    ).toBe('0')
+    expect((mounted.container.querySelector('figure') as HTMLElement).style.opacity).toBe('0')
     mounted.unmount()
   })
 })

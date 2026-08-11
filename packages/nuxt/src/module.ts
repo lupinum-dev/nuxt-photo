@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import {
   addComponent,
   addImports,
@@ -11,14 +11,12 @@ import type { NuxtModule } from '@nuxt/schema'
 import {
   NUXT_PHOTO_DEFAULTS,
   validateNuxtPhotoOptions,
+  type NuxtPhotoAppConfig,
   type NuxtPhotoOptions,
-  type NuxtPhotoRuntimeConfig,
 } from './options'
-export type { NuxtPhotoOptions, NuxtPhotoRuntimeConfig } from './options'
+export type { NuxtPhotoAppConfig, NuxtPhotoOptions } from './options'
 
-type NuxtPhotoAppConfig = {
-  nuxtPhoto?: NuxtPhotoRuntimeConfig
-}
+type NuxtPhotoAppConfigState = { nuxtPhoto?: NuxtPhotoAppConfig }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
@@ -40,27 +38,14 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = [
-  'useLightbox',
-  'useLightboxProvider',
-  'responsive',
-] as const
+const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
 
-const packageRoots = [
-  fileURLToPath(new URL('..', import.meta.url)),
-  fileURLToPath(new URL('../../vue', import.meta.url)),
-]
-
-function resolveRecipeComponent(name: string) {
-  return fileURLToPath(
-    new URL(`../../vue/dist/components/${name}.vue`, import.meta.url),
-  )
+function resolveRecipeComponent(vueDistDir: string, name: string) {
+  return resolve(vueDistDir, 'components', `${name}.vue`)
 }
 
-function resolvePrimitiveComponent(name: string) {
-  return fileURLToPath(
-    new URL(`../../vue/dist/primitives/${name}.vue`, import.meta.url),
-  )
+function resolvePrimitiveComponent(vueDistDir: string, name: string) {
+  return resolve(vueDistDir, 'primitives', `${name}.vue`)
 }
 
 function capitalize(name: string) {
@@ -84,69 +69,54 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     name: '@nuxt-photo/nuxt',
     configKey: 'nuxtPhoto',
     compatibility: {
-      nuxt: '^4.0.0',
+      nuxt: '^4.4.8',
     },
   },
   defaults: NUXT_PHOTO_DEFAULTS,
-  setup(options, nuxt) {
+  async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
-    const { resolve } = createResolver(import.meta.url)
+    const resolver = createResolver(import.meta.url)
+    const vueDistDir = dirname(await resolver.resolvePath('@nuxt-photo/vue'))
     const minZoom = options.lightbox?.minZoom
-
-    nuxt.options.vite.server ??= {}
-    nuxt.options.vite.server.fs ??= {}
-    const allow = nuxt.options.vite.server.fs.allow ?? []
-
-    for (const root of packageRoots) {
-      if (!allow.includes(root)) {
-        allow.push(root)
-      }
-    }
-
-    nuxt.options.vite.server.fs.allow = allow
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
-      const imageProvider =
-        explicit === 'auto'
-          ? hasNuxtModule('@nuxt/image')
-            ? 'nuxt-image'
-            : 'native'
-          : explicit
-
-      if (imageProvider === 'nuxt-image') {
-        if (!hasNuxtModule('@nuxt/image')) {
-          throw new Error(
-            '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
-          )
-        }
-
+      if (explicit !== 'native') {
         nuxt.hook('modules:done', () => {
+          const hasImageModule = hasNuxtModule('@nuxt/image')
+          if (explicit === 'nuxt-image' && !hasImageModule) {
+            throw new Error(
+              '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
+            )
+          }
+
+          if (!hasImageModule) return
+
           addPlugin(
             {
-              src: resolve('./runtime/plugin'),
+              src: resolver.resolve('./runtime/plugin'),
             },
             { append: true },
           )
-        })
-      }
 
-      if (imageProvider === 'nuxt-image' && typeof options.image === 'object') {
-        const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
-        appConfig.nuxtPhoto = {
-          ...appConfig.nuxtPhoto,
-          image: {
-            ...appConfig.nuxtPhoto?.image,
-            thumb: options.image.thumb,
-            slide: options.image.slide,
-          },
-        }
+          if (typeof options.image !== 'object') return
+
+          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
+          appConfig.nuxtPhoto = {
+            ...appConfig.nuxtPhoto,
+            image: {
+              ...appConfig.nuxtPhoto?.image,
+              thumb: options.image.thumb,
+              slide: options.image.slide,
+            },
+          }
+        })
       }
     }
 
     if (minZoom != null) {
-      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
 
       appConfig.nuxtPhoto = {
         ...appConfig.nuxtPhoto,
@@ -158,22 +128,19 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
       addPlugin(
         {
-          src: resolve('./runtime/defaults-plugin'),
+          src: resolver.resolve('./runtime/defaults-plugin'),
         },
         { append: true },
       )
     }
 
     if (options.components !== false) {
-      const prefix =
-        typeof options.components === 'object'
-          ? (options.components.prefix ?? '')
-          : ''
+      const prefix = typeof options.components === 'object' ? (options.components.prefix ?? '') : ''
 
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
           name: `${prefix}${component.name}`,
-          filePath: resolveRecipeComponent(component.export),
+          filePath: resolveRecipeComponent(vueDistDir, component.export),
         })
       }
 
@@ -184,7 +151,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         for (const component of PRIMITIVE_COMPONENTS) {
           addComponent({
             name: `${prefix}${component.name}`,
-            filePath: resolvePrimitiveComponent(component.export),
+            filePath: resolvePrimitiveComponent(vueDistDir, component.export),
           })
         }
       }
@@ -192,9 +159,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
     if (options.autoImports) {
       const prefix =
-        typeof options.autoImports === 'object'
-          ? (options.autoImports.prefix ?? '')
-          : ''
+        typeof options.autoImports === 'object' ? (options.autoImports.prefix ?? '') : ''
 
       addImports(
         AUTO_IMPORTS.map((name) => ({
@@ -206,35 +171,15 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     const structureCSS = [
-      fileURLToPath(
-        new URL(
-          '../../vue/dist/styles/lightbox-structure.css',
-          import.meta.url,
-        ),
-      ),
-      fileURLToPath(
-        new URL('../../vue/dist/styles/album.css', import.meta.url),
-      ),
-      fileURLToPath(
-        new URL('../../vue/dist/styles/photo-structure.css', import.meta.url),
-      ),
-      fileURLToPath(
-        new URL(
-          '../../vue/dist/styles/carousel-structure.css',
-          import.meta.url,
-        ),
-      ),
+      resolve(vueDistDir, 'styles/lightbox-structure.css'),
+      resolve(vueDistDir, 'styles/album.css'),
+      resolve(vueDistDir, 'styles/photo-structure.css'),
+      resolve(vueDistDir, 'styles/carousel-structure.css'),
     ]
     const themeCSS = [
-      fileURLToPath(
-        new URL('../../vue/dist/styles/lightbox-theme.css', import.meta.url),
-      ),
-      fileURLToPath(
-        new URL('../../vue/dist/styles/photo.css', import.meta.url),
-      ),
-      fileURLToPath(
-        new URL('../../vue/dist/styles/carousel-theme.css', import.meta.url),
-      ),
+      resolve(vueDistDir, 'styles/lightbox-theme.css'),
+      resolve(vueDistDir, 'styles/photo.css'),
+      resolve(vueDistDir, 'styles/carousel-theme.css'),
     ]
 
     const cssFiles =

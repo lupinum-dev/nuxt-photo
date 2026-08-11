@@ -1,14 +1,5 @@
-import type {
-  ColumnsLayoutOptions,
-  LayoutEntry,
-  LayoutGroup,
-  PhotoItem,
-} from '../types'
-import {
-  normalizeColumnCount,
-  normalizeLayoutNumber,
-  validatePhotoDimensions,
-} from './types'
+import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } from './types'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
@@ -45,26 +36,18 @@ function findColumnBreaks(
     columns
 
   const costs: number[][] = Array.from({ length: columns + 1 }, () =>
-    new Array(count + 1).fill(Infinity),
+    Array.from({ length: count + 1 }, () => Infinity),
   )
   const previous: number[][] = Array.from({ length: columns + 1 }, () =>
-    new Array(count + 1).fill(-1),
+    Array.from({ length: count + 1 }, () => -1),
   )
   costs[0]![0] = 0
 
   for (let column = 1; column <= columns; column++) {
     for (let end = column; end <= count; end++) {
       for (let start = column - 1; start < end; start++) {
-        const height = columnHeight(
-          items,
-          start,
-          end,
-          targetColumnWidth,
-          spacing,
-          padding,
-        )
-        const nextCost =
-          costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
+        const height = columnHeight(items, start, end, targetColumnWidth, spacing, padding)
+        const nextCost = costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
         if (nextCost < costs[column]![end]!) {
           costs[column]![end] = nextCost
           previous[column]![end] = start
@@ -109,20 +92,12 @@ function partitionColumns(
     return { columnsGaps, columnsRatios, columnGroups }
   }
 
-  const path = findColumnBreaks(
-    items,
-    columns,
-    targetColumnWidth,
-    spacing,
-    padding,
-  )
+  const path = findColumnBreaks(items, columns, targetColumnWidth, spacing, padding)
 
   for (let col = 0; col < path.length - 1; col++) {
     const columnItems = items.slice(path[col], path[col + 1])
-    columnsGaps[col] =
-      spacing * (columnItems.length - 1) + 2 * padding * columnItems.length
-    columnsRatios[col] =
-      1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
+    columnsGaps[col] = spacing * (columnItems.length - 1) + 2 * padding * columnItems.length
+    columnsRatios[col] = 1 / columnItems.reduce((acc, item) => acc + 1 / ratio(item), 0)
   }
 
   const columnGroups = buildColumnGroups(path, items)
@@ -147,9 +122,7 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
  * Returns LayoutGroup[]
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
-export function computeColumnsLayout(
-  options: ColumnsLayoutOptions,
-): LayoutGroup[] {
+export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
   const spacing = normalizeLayoutNumber(options.spacing, 8)
   const padding = normalizeLayoutNumber(options.padding, 0)
@@ -160,13 +133,7 @@ export function computeColumnsLayout(
   const targetColumnWidth =
     (containerWidth - spacing * (columns - 1) - 2 * padding * columns) / columns
 
-  const result = partitionColumns(
-    photos,
-    columns,
-    spacing,
-    padding,
-    targetColumnWidth,
-  )
+  const result = partitionColumns(photos, columns, spacing, padding, targetColumnWidth)
 
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 
@@ -177,10 +144,7 @@ export function computeColumnsLayout(
 
     const totalAdjustedGaps = result.columnsRatios.reduce(
       (acc, colRatio, ratioIndex) =>
-        acc +
-        ((result.columnsGaps[col] ?? 0) -
-          (result.columnsGaps[ratioIndex] ?? 0)) *
-          colRatio,
+        acc + ((result.columnsGaps[col] ?? 0) - (result.columnsGaps[ratioIndex] ?? 0)) * colRatio,
       0,
     )
 
@@ -192,16 +156,14 @@ export function computeColumnsLayout(
         (result.columnsRatios[col] ?? 0)) /
       totalRatio
 
-    const entries: LayoutEntry[] = columnItems.map(
-      ({ photo, index }, positionIndex) => ({
-        index,
-        photo,
-        width: columnWidth,
-        height: columnWidth / ratio(photo),
-        positionIndex,
-        itemsCount: columnItems.length,
-      }),
-    )
+    const entries: LayoutEntry[] = columnItems.map(({ photo, index }, positionIndex) => ({
+      index,
+      photo,
+      width: columnWidth,
+      height: columnWidth / ratio(photo),
+      positionIndex,
+      itemsCount: columnItems.length,
+    }))
 
     if (entries.some((e) => e.width <= 0 || e.height <= 0)) {
       if (columns > 1) {

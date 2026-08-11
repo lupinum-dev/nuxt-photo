@@ -18,9 +18,7 @@ function rowSignature(
   padding: number,
   targetRowHeight: number,
 ): string {
-  const rows = groups
-    .map((g) => g.entries[g.entries.length - 1]!.index)
-    .join(',')
+  const rows = groups.map((g) => g.entries[g.entries.length - 1]!.index).join(',')
   return `${rows}|s:${spacing}|p:${padding}|h:${targetRowHeight}`
 }
 
@@ -53,9 +51,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   const { photos, containerName } = opts
   if (photos.length === 0 || opts.breakpoints.length === 0) return ''
 
-  const sorted = [...opts.breakpoints]
-    .filter((bp) => bp > 0)
-    .sort((a, b) => a - b)
+  const sorted = [...opts.breakpoints].filter((bp) => bp > 0).sort((a, b) => a - b)
   if (sorted.length === 0) return ''
 
   // 1. Compute layout at each breakpoint
@@ -64,11 +60,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   for (const bp of sorted) {
     const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
     const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(
-      opts.targetRowHeight,
-      bp,
-      300,
-    )
+    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
     const groups = computeRowsLayout({
       photos,
       containerWidth: bp,
@@ -141,8 +133,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     const itemRules: string[] = []
     for (const group of span.groups) {
       for (const entry of group.entries) {
-        const gaps =
-          spacing * (entry.itemsCount - 1) + 2 * padding * entry.itemsCount
+        const gaps = spacing * (entry.itemsCount - 1) + 2 * padding * entry.itemsCount
         const divisor = round((sampleBp - gaps) / entry.width, 5)
         const paddingPart = padding > 0 ? `padding:${padding}px;` : ''
         itemRules.push(

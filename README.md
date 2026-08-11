@@ -55,7 +55,7 @@ Add `@nuxt/image` later when you want Nuxt Image provider integration:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+  modules: ['@nuxt-photo/nuxt', '@nuxt/image'],
 })
 ```
 
@@ -115,4 +115,5 @@ they are visible in the package output.
 - [Vue package guide](./packages/vue/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Maintainer and release guide](./MAINTAINING.md)
 - [Security policy](./SECURITY.md)

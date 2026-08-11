@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vite-plus/test'
 
 function sourceFiles(root: string): string[] {
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
@@ -16,19 +16,12 @@ function read(path: string) {
 
 function importSpecifiers(source: string) {
   return [
-    ...source.matchAll(
-      /(?:import|export)\s+(?:type\s+)?(?:[^'"]+?\s+from\s+)?['"]([^'"]+)['"]/g,
-    ),
+    ...source.matchAll(/(?:import|export)\s+(?:type\s+)?(?:[^'"]+?\s+from\s+)?['"]([^'"]+)['"]/g),
   ].map((match) => match[1]!)
 }
 
-function relativeOffenders(
-  files: string[],
-  predicate: (text: string) => boolean,
-) {
-  return files
-    .filter((file) => predicate(read(file)))
-    .map((file) => relative(process.cwd(), file))
+function relativeOffenders(files: string[], predicate: (text: string) => boolean) {
+  return files.filter((file) => predicate(read(file))).map((file) => relative(process.cwd(), file))
 }
 
 describe('source architecture boundaries', () => {
@@ -45,9 +38,7 @@ describe('source architecture boundaries', () => {
           specifier.includes('/internal'),
       )
 
-      return imports.map(
-        (specifier) => `${relative(process.cwd(), file)} -> ${specifier}`,
-      )
+      return imports.map((specifier) => `${relative(process.cwd(), file)} -> ${specifier}`)
     })
 
     expect(offenders).toEqual([])
@@ -63,19 +54,14 @@ describe('source architecture boundaries', () => {
 
     const offenders = sourceFiles('packages/nuxt/src').flatMap((file) => {
       const imports = importSpecifiers(read(file)).filter((specifier) => {
-        if (
-          specifier.includes('/vue/src') ||
-          specifier.includes('../../vue/src')
-        ) {
+        if (specifier.includes('/vue/src') || specifier.includes('../../vue/src')) {
           return true
         }
         if (!specifier.startsWith('@nuxt-photo/vue')) return false
         return !allowedVuePackageImports.has(specifier)
       })
 
-      return imports.map(
-        (specifier) => `${relative(process.cwd(), file)} -> ${specifier}`,
-      )
+      return imports.map((specifier) => `${relative(process.cwd(), file)} -> ${specifier}`)
     })
 
     expect(offenders).toEqual([])
@@ -85,8 +71,7 @@ describe('source architecture boundaries', () => {
     expect(
       relativeOffenders(
         sourceFiles('packages/vue/src/components'),
-        (text) =>
-          text.includes('@test-fixtures') || text.includes('test/fixtures'),
+        (text) => text.includes('@test-fixtures') || text.includes('test/fixtures'),
       ),
     ).toEqual([])
   })
@@ -99,11 +84,9 @@ describe('source architecture boundaries', () => {
 
   it('quarantines private Embla APIs and keeps vendor types out of public contracts', () => {
     const productionFiles = sourceFiles('packages/vue/src')
-    expect(
-      relativeOffenders(productionFiles, (text) =>
-        text.includes('internalEngine()'),
-      ),
-    ).toEqual(['packages/vue/src/integrations/embla/snapModel.ts'])
+    expect(relativeOffenders(productionFiles, (text) => text.includes('internalEngine()'))).toEqual(
+      ['packages/vue/src/integrations/embla/snapModel.ts'],
+    )
 
     const publicContractFiles = [
       'packages/vue/src/index.ts',
@@ -111,8 +94,6 @@ describe('source architecture boundaries', () => {
       'packages/vue/src/provide/keys.ts',
       'packages/vue/src/types/slots.ts',
     ]
-    expect(
-      publicContractFiles.filter((file) => /\bEmbla\w*/.test(read(file))),
-    ).toEqual([])
+    expect(publicContractFiles.filter((file) => /\bEmbla\w*/.test(read(file)))).toEqual([])
   })
 })

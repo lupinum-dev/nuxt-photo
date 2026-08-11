@@ -1,76 +1,77 @@
 {
   "name": "@nuxt-photo/vue",
   "version": "0.2.0",
-  "type": "module",
   "description": "Vue components, composables, and photo utilities for Nuxt Photo.",
   "keywords": [
-    "nuxt-photo",
-    "vue",
-    "photos",
     "gallery",
-    "lightbox"
+    "lightbox",
+    "nuxt-photo",
+    "photos",
+    "vue"
   ],
   "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "bugs": {
+    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
     "directory": "packages/vue"
   },
-  "bugs": {
-    "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
     },
     "./composables": {
-      "import": "./dist/composables/index.mjs",
-      "types": "./dist/composables/index.d.ts"
+      "types": "./dist/composables/index.d.ts",
+      "import": "./dist/composables/index.mjs"
     },
     "./provide": {
-      "import": "./dist/provide/keys.mjs",
-      "types": "./dist/provide/keys.d.ts"
+      "types": "./dist/provide/index.d.ts",
+      "import": "./dist/provide/index.mjs"
     },
     "./types": {
-      "import": "./dist/types/index.mjs",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.mjs"
     },
     "./styles.css": {
       "default": "./dist/styles.css"
     }
   },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "sideEffects": [
-    "**/*.css"
-  ],
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "unbuild",
-    "dev": "unbuild --stub"
+    "dev": "unbuild --stub",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit && vue-tsc -p tsconfig.public-api.json"
   },
   "dependencies": {
     "embla-carousel": "9.0.0-rc02",
     "embla-carousel-autoplay": "9.0.0-rc02",
     "embla-carousel-vue": "9.0.0-rc02"
   },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "unbuild": "^3.6.1",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:"
+  },
   "peerDependencies": {
     "vue": "^3.5.0"
   },
-  "devDependencies": {
-    "typescript": "5.9.3",
-    "unbuild": "^3.6.1",
-    "vue": "3.5.39",
-    "vue-tsc": "3.2.7"
-  },
-  "license": "MIT",
   "engines": {
-    "node": "^22.13.0 || ^24.11.0 || >=26.0.0"
+    "node": "^22.18.0 || ^24.11.0"
   }
 }
