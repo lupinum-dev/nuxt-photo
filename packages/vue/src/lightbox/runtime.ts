@@ -7,7 +7,7 @@ import {
   ref,
   toValue,
   watch,
-  type MaybeRef,
+  type MaybeRefOrGetter,
 } from 'vue'
 import {
   createNativeImageAdapter,
@@ -49,10 +49,10 @@ export function getMountedSlideIndices(active: number, count: number) {
  * writable representation of actual lifecycle state; DOM mount is derived.
  */
 export function useLightboxRuntimeState(
-  photosInput: MaybeRef<PhotoItem | readonly PhotoItem[]>,
+  photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
-  imageAdapter?: ImageAdapter,
+  imageAdapter?: MaybeRefOrGetter<ImageAdapter | undefined>,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn('[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()')
@@ -67,7 +67,7 @@ export function useLightboxRuntimeState(
   const injectedImageAdapter = inject(ImageAdapterKey, null)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
   const resolvedImageAdapter = computed(
-    () => imageAdapter ?? injectedImageAdapter ?? createNativeImageAdapter(),
+    () => toValue(imageAdapter) ?? injectedImageAdapter ?? createNativeImageAdapter(),
   )
 
   const reportAsyncError = useAsyncErrorReporter()
@@ -358,6 +358,7 @@ export function useLightboxRuntimeState(
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,
+    imageAdapter: resolvedImageAdapter,
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,

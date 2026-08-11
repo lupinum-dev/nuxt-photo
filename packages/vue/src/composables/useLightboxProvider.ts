@@ -1,4 +1,4 @@
-import { computed, toValue, type MaybeRef } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../core/index'
 import { normalizePhotos } from '../core/photo/normalize'
 import { useLightboxRuntimeState } from '../lightbox/runtime'
@@ -27,12 +27,12 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * ```
  */
 export function useLightboxProvider<TMeta extends object = Readonly<Record<string, unknown>>>(
-  photosInput: MaybeRef<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
+  photosInput: MaybeRefOrGetter<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
   options?: {
     transition?: LightboxTransitionOption
     resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
     minZoom?: number
-    imageAdapter?: ImageAdapter<TMeta>
+    imageAdapter?: MaybeRefOrGetter<ImageAdapter<TMeta> | undefined>
   },
 ): LightboxProviderController<TMeta> {
   const photos = computed(() => {
@@ -46,7 +46,7 @@ export function useLightboxProvider<TMeta extends object = Readonly<Record<strin
     photos,
     options?.transition,
     options?.minZoom,
-    options?.imageAdapter as ImageAdapter,
+    options?.imageAdapter as MaybeRefOrGetter<ImageAdapter | undefined>,
   )
 
   // Provide the shared lightbox context plus custom slide resolution.
@@ -54,7 +54,6 @@ export function useLightboxProvider<TMeta extends object = Readonly<Record<strin
     resolveSlide: options?.resolveSlide as
       | ((photo: PhotoItem) => LightboxSlideRenderer | null)
       | undefined,
-    imageAdapter: options?.imageAdapter as ImageAdapter | undefined,
   })
 
   return {

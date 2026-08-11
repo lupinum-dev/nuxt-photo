@@ -86,7 +86,6 @@ const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 
 // Solo lightbox context — only created when solo (outside group)
@@ -95,7 +94,7 @@ const soloCtx = isSolo.value
       computed(() => props.photo),
       {
         transition: props.transition,
-        imageAdapter: props.imageAdapter,
+        imageAdapter: () => props.imageAdapter,
         resolveSlide: (photo) => {
           if (
             (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||

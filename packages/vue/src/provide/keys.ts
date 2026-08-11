@@ -47,6 +47,7 @@ type LightboxRuntimeState = {
   stageMounted: Ref<boolean>
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
+  imageAdapter: ComputedRef<ImageAdapter>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
   isSlideMediaMounted: (index: number) => boolean

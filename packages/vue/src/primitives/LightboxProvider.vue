@@ -22,7 +22,6 @@ const props = defineProps<{
 warnOnSetupOptionChanges('LightboxProvider', {
   transition: () => props.transition,
   minZoom: () => props.minZoom,
-  imageAdapter: () => props.imageAdapter,
 })
 
 useLightboxProvider(
@@ -30,7 +29,7 @@ useLightboxProvider(
   {
     transition: props.transition,
     minZoom: props.minZoom,
-    imageAdapter: props.imageAdapter,
+    imageAdapter: () => props.imageAdapter,
   },
 )
 </script>

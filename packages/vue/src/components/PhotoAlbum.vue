@@ -271,7 +271,7 @@ const {
   targetRowHeight: layoutTargetRowHeight,
   defaultContainerWidth: props.defaultContainerWidth,
   breakpoints: effectiveBreakpoints,
-  sizes: props.sizes,
+  sizes: computed(() => props.sizes),
   interactive: hasLightbox,
 })
 

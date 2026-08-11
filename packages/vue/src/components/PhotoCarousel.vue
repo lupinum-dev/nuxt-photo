@@ -136,12 +136,11 @@ const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 const provider = hasLightbox
   ? useLightboxProvider(resolvedPhotos, {
       transition: props.transition,
-      imageAdapter: props.imageAdapter,
+      imageAdapter: () => props.imageAdapter,
     })
   : null
 

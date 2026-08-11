@@ -43,7 +43,9 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes?: { size: string; sizes?: Array<{ viewport: string; size: string }> }
+  sizes: ComputedRef<
+    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
+  >
   interactive: Ref<boolean>
 }
 
@@ -164,7 +166,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes),
+          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes.value),
           style: {
             ...cursor,
             flex: '0 0 auto',

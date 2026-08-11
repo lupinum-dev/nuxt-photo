@@ -30,7 +30,6 @@ export function useAlbumLightbox<TMeta extends object>(
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
     transition: () => props.transition,
-    imageAdapter: () => props.imageAdapter,
   })
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
@@ -45,7 +44,7 @@ export function useAlbumLightbox<TMeta extends object>(
   const ownCtx = hasOwnLightbox
     ? useLightboxProvider(photos, {
         transition: props.transition,
-        imageAdapter: props.imageAdapter,
+        imageAdapter: () => props.imageAdapter,
       })
     : null
 

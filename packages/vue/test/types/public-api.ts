@@ -35,6 +35,8 @@ const readonlyPhotos = [
 
 const controller = useLightboxProvider(readonlyPhotos)
 void controller.openById('one')
+const getterController = useLightboxProvider(() => readonlyPhotos)
+void getterController.openById('one')
 
 // @ts-expect-error Controller read models are readonly.
 controller.activeIndex.value = 1

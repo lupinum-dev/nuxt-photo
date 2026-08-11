@@ -64,12 +64,11 @@ const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
   transition: () => props.transition,
-  imageAdapter: () => props.imageAdapter,
 })
 const provider = enabled
   ? useLightboxProvider(canonicalPhotos, {
       transition: props.transition,
-      imageAdapter: props.imageAdapter,
+      imageAdapter: () => props.imageAdapter,
       resolveSlide: (photo) => {
         for (const entry of capabilities.value) {
           if (entry.id === photo.id && entry.renderSlide) {
