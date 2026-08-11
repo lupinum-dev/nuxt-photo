@@ -7,6 +7,8 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  symlinkSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -209,6 +211,35 @@ function collectListedVersions(value, packageName, versions = []) {
   return versions
 }
 
+function nestNuxtVueDependency(realNuxtRoot, installedVueRoot) {
+  const exactVueRoot = realpathSync(installedVueRoot)
+  const nestedVueRoot = join(realNuxtRoot, 'node_modules', '@nuxt-photo', 'vue')
+
+  mkdirSync(dirname(nestedVueRoot), { recursive: true })
+  symlinkSync(exactVueRoot, nestedVueRoot, 'dir')
+
+  unlinkSync(installedVueRoot)
+  mkdirSync(installedVueRoot)
+  writeJson(join(installedVueRoot, 'package.json'), {
+    name: '@nuxt-photo/vue',
+    version: '0.0.0-incompatible-app-copy',
+    type: 'module',
+    exports: './index.mjs',
+  })
+  writeFileSync(join(installedVueRoot, 'index.mjs'), 'export const incompatible = true\n')
+
+  assert(
+    realpathSync(nestedVueRoot) === exactVueRoot,
+    'Nested Nuxt dependency does not point at the exact packed Vue package.',
+  )
+  assert(
+    readJson(join(installedVueRoot, 'package.json')).version === '0.0.0-incompatible-app-copy',
+    'The duplicate-layout proof did not install its incompatible sibling package.',
+  )
+
+  return nestedVueRoot
+}
+
 function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
   const consumerDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-nuxt-consumer-'))
   const nuxtTarball = copyArtifact(consumerDir, artifactByName.get('@nuxt-photo/nuxt').tarballPath)
@@ -238,6 +269,8 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       '  allowAny:',
       '    - vite',
       '  allowedVersions:',
+      '    # Nuxt 4.4 resolves newer devtools whose optional unctx peer expects a newer parser.',
+      "    oxc-parser: '*'",
       "    vite: '*'",
       'overrides:',
       `  '@nuxt-photo/vue': ${JSON.stringify(`file:${vueTarball}`)}`,
@@ -316,6 +349,8 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       'Nuxt-only consumer resolved the wrong @nuxt-photo/vue version.',
     )
 
+    const exactVueRoot = nestNuxtVueDependency(realNuxtRoot, installedVueRoot)
+
     run('pnpm', ['exec', 'nuxi', 'prepare'], consumerDir)
     run('pnpm', ['exec', 'vue-tsc', '-p', '.nuxt/tsconfig.app.json', '--noEmit'], consumerDir)
     run('pnpm', ['exec', 'nuxt', 'build'], consumerDir)
@@ -326,7 +361,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
 
     const publicDeclarations = ['dist/index.d.ts', 'dist/components/PhotoCarousel.vue.d.ts']
     for (const declaration of publicDeclarations) {
-      const path = join(installedVueRoot, declaration)
+      const path = join(exactVueRoot, declaration)
       assert(existsSync(path), `Packed consumer is missing ${declaration}.`)
       assert(
         !/\bEmbla\w*/.test(readFileSync(path, 'utf8')),

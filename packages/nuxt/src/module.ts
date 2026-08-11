@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import {
   addComponent,
   addImports,
@@ -42,17 +42,12 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
 
 const AUTO_IMPORTS = ['useLightbox', 'useLightboxProvider', 'responsive'] as const
 
-const packageRoots = [
-  fileURLToPath(new URL('..', import.meta.url)),
-  fileURLToPath(new URL('../../vue', import.meta.url)),
-]
-
-function resolveRecipeComponent(name: string) {
-  return fileURLToPath(new URL(`../../vue/dist/components/${name}.vue`, import.meta.url))
+function resolveRecipeComponent(vueDistDir: string, name: string) {
+  return resolve(vueDistDir, 'components', `${name}.vue`)
 }
 
-function resolvePrimitiveComponent(name: string) {
-  return fileURLToPath(new URL(`../../vue/dist/primitives/${name}.vue`, import.meta.url))
+function resolvePrimitiveComponent(vueDistDir: string, name: string) {
+  return resolve(vueDistDir, 'primitives', `${name}.vue`)
 }
 
 function capitalize(name: string) {
@@ -80,23 +75,12 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     },
   },
   defaults: NUXT_PHOTO_DEFAULTS,
-  setup(options, nuxt) {
+  async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
     const resolver = createResolver(import.meta.url)
+    const vueDistDir = dirname(await resolver.resolvePath('@nuxt-photo/vue'))
     const minZoom = options.lightbox?.minZoom
-
-    nuxt.options.vite.server ??= {}
-    nuxt.options.vite.server.fs ??= {}
-    const allow = nuxt.options.vite.server.fs.allow ?? []
-
-    for (const root of packageRoots) {
-      if (!allow.includes(root)) {
-        allow.push(root)
-      }
-    }
-
-    nuxt.options.vite.server.fs.allow = allow
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
@@ -158,7 +142,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
           name: `${prefix}${component.name}`,
-          filePath: resolveRecipeComponent(component.export),
+          filePath: resolveRecipeComponent(vueDistDir, component.export),
         })
       }
 
@@ -169,7 +153,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         for (const component of PRIMITIVE_COMPONENTS) {
           addComponent({
             name: `${prefix}${component.name}`,
-            filePath: resolvePrimitiveComponent(component.export),
+            filePath: resolvePrimitiveComponent(vueDistDir, component.export),
           })
         }
       }
@@ -189,15 +173,15 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     const structureCSS = [
-      fileURLToPath(new URL('../../vue/dist/styles/lightbox-structure.css', import.meta.url)),
-      fileURLToPath(new URL('../../vue/dist/styles/album.css', import.meta.url)),
-      fileURLToPath(new URL('../../vue/dist/styles/photo-structure.css', import.meta.url)),
-      fileURLToPath(new URL('../../vue/dist/styles/carousel-structure.css', import.meta.url)),
+      resolve(vueDistDir, 'styles/lightbox-structure.css'),
+      resolve(vueDistDir, 'styles/album.css'),
+      resolve(vueDistDir, 'styles/photo-structure.css'),
+      resolve(vueDistDir, 'styles/carousel-structure.css'),
     ]
     const themeCSS = [
-      fileURLToPath(new URL('../../vue/dist/styles/lightbox-theme.css', import.meta.url)),
-      fileURLToPath(new URL('../../vue/dist/styles/photo.css', import.meta.url)),
-      fileURLToPath(new URL('../../vue/dist/styles/carousel-theme.css', import.meta.url)),
+      resolve(vueDistDir, 'styles/lightbox-theme.css'),
+      resolve(vueDistDir, 'styles/photo.css'),
+      resolve(vueDistDir, 'styles/carousel-theme.css'),
     ]
 
     const cssFiles =
