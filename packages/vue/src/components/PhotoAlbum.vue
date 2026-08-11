@@ -1,6 +1,7 @@
 <template>
   <div
     ref="containerRef"
+    v-bind="$attrs"
     class="np-album"
     :class="[scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
@@ -129,6 +130,8 @@ import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { resolveRecipePhotos } from '../core/photo/resolve'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+
+defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{

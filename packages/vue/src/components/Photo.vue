@@ -2,7 +2,7 @@
   <figure
     ref="thumbRef"
     class="np-photo"
-    v-bind="{ ...$attrs, ...interactiveAttrs }"
+    v-bind="mergeProps(interactiveAttrs, $attrs)"
     :style="figureStyle"
   >
     <PhotoImage
@@ -29,6 +29,7 @@ import {
   onBeforeUnmount,
   watch,
   useSlots,
+  mergeProps,
   type Component,
 } from 'vue'
 
