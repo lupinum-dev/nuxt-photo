@@ -30,6 +30,7 @@
     "docs:agent:check": "node scripts/docs/generate-skill-references.mjs --check",
     "docs:validate": "node scripts/docs/validate.mjs",
     "lint:vue-template": "eslint --max-warnings=0 \"**/*.vue\"",
+    "prepare:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-playground-tw --filter nuxt-photo-docs --fail-if-no-match prepare",
     "release:notes": "node scripts/release-notes.mjs",
     "release:pack": "node scripts/release-pack.mjs",
     "release:verify": "vp run verify && vp pm audit --production --level high && node scripts/verify-release-artifact.mjs .release --expected-head --publishable",
@@ -46,7 +47,7 @@
     "typecheck:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-playground-tw --filter nuxt-photo-docs --fail-if-no-match typecheck",
     "typecheck:built": "vp run typecheck:packages && vp run typecheck:apps",
     "typecheck:packages": "vp run --filter @nuxt-photo/vue --fail-if-no-match typecheck",
-    "verify": "vp check && vp run lint:vue-template && vp run check:metadata && vp run docs:validate && vp run docs:agent:check && vp run typecheck:packages && vp test && vp run release:pack && vp run typecheck:apps && vp run size:built && vp run build:playground-tailwind:only && vp run build:docs:only && vp run test:browser:built",
+    "verify": "vp run build && vp run prepare:apps && vp check && vp run lint:vue-template && vp run check:metadata && vp run docs:validate && vp run docs:agent:check && vp run typecheck:packages && vp test && vp run release:pack && vp run typecheck:apps && vp run size:built && vp run build:playground-tailwind:only && vp run build:docs:only && vp run test:browser:built",
     "version": "changeset version && vp install --lockfile-only && vp fmt . --write"
   },
   "devDependencies": {
