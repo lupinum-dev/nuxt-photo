@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, type Component } from 'vue'
+import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
 import type {
   ImageAdapter,
   PhotoCarouselAutoplayOptions,
@@ -70,7 +70,6 @@ const props = withDefaults(
   defineProps<{
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
-    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     imageAdapter?: ImageAdapter<TMeta>
     options?: PhotoCarouselOptions
     showArrows?: boolean
@@ -102,11 +101,28 @@ const props = withDefaults(
   },
 )
 
-const resolvedPhotos = computed(() =>
+const emit = defineEmits<{
+  invalidPhotos: [event: InvalidPhotosEvent]
+}>()
+
+const resolution = computed(() =>
   resolveRecipePhotos<TMeta>(props.photos, 'PhotoCarousel', {
     validation: props.validation,
-    onInvalidPhotos: props.onInvalidPhotos,
   }),
+)
+const resolvedPhotos = computed(() => resolution.value.photos)
+const reportingReady = ref(false)
+
+onMounted(() => {
+  reportingReady.value = true
+})
+
+watch(
+  [() => resolution.value.invalidPhotos, reportingReady],
+  ([event, ready]) => {
+    if (ready && event) emit('invalidPhotos', event)
+  },
+  { flush: 'post' },
 )
 
 const injectedLightbox = inject(LightboxComponentKey, null)

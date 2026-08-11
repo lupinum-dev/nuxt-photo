@@ -47,7 +47,7 @@
     </template>
 
     <template v-else-if="renderBranch.kind === 'measured'">
-      <template v-if="renderBranch.groups.length === 0 && photos.length > 0">
+      <template v-if="renderBranch.groups.length === 0 && normalizedPhotos.length > 0">
         <div class="np-album__skeleton" />
       </template>
 
@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, type Component } from 'vue'
+import { computed, onMounted, ref, watch, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
   type AlbumLayout,
@@ -147,7 +147,6 @@ const props = withDefaults(
   defineProps<{
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
-    onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     layout?: AlbumLayout | AlbumLayout['type']
     spacing?: ResponsiveParameter<number>
     padding?: ResponsiveParameter<number>
@@ -170,6 +169,10 @@ const props = withDefaults(
     lightbox: true,
   },
 )
+
+const emit = defineEmits<{
+  invalidPhotos: [event: InvalidPhotosEvent]
+}>()
 
 const normalizedLayout = computed<AlbumLayout>(() => {
   const raw = props.layout
@@ -196,15 +199,28 @@ if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
-const photos = computed<PhotoItem<TMeta>[]>(() =>
+const resolution = computed(() =>
   resolveRecipePhotos<TMeta>(props.photos, 'PhotoAlbum', {
     validation: props.validation,
-    onInvalidPhotos: props.onInvalidPhotos,
   }),
+)
+const normalizedPhotos = computed<PhotoItem<TMeta>[]>(() => resolution.value.photos)
+const reportingReady = ref(false)
+
+onMounted(() => {
+  reportingReady.value = true
+})
+
+watch(
+  [() => resolution.value.invalidPhotos, reportingReady],
+  ([event, ready]) => {
+    if (ready && event) emit('invalidPhotos', event)
+  },
+  { flush: 'post' },
 )
 
 const { hasLightbox, hasOwnLightbox, LightboxComponent, itemBindings, isHidden } = useAlbumLightbox(
-  photos,
+  normalizedPhotos,
   props,
 )
 
@@ -247,7 +263,7 @@ const {
   itemStyle,
   maybeWarnApproximate,
 } = usePhotoAlbumLayoutState({
-  photos,
+  photos: normalizedPhotos,
   layout: layoutType,
   columns: layoutColumns,
   spacing: computed(() => props.spacing),
@@ -282,7 +298,7 @@ const renderBranch = computed(() => {
   return {
     kind: 'fallback-grid' as const,
     wrapperStyle: ssrWrapperStyle.value,
-    photos: photos.value,
+    photos: normalizedPhotos.value,
   }
 })
 </script>
