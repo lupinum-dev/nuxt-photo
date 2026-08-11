@@ -55,7 +55,7 @@ Add `@nuxt/image` later when you want Nuxt Image provider integration:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+  modules: ['@nuxt-photo/nuxt', '@nuxt/image'],
 })
 ```
 
