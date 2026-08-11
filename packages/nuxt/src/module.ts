@@ -11,14 +11,12 @@ import type { NuxtModule } from '@nuxt/schema'
 import {
   NUXT_PHOTO_DEFAULTS,
   validateNuxtPhotoOptions,
+  type NuxtPhotoAppConfig,
   type NuxtPhotoOptions,
-  type NuxtPhotoRuntimeConfig,
 } from './options'
-export type { NuxtPhotoOptions, NuxtPhotoRuntimeConfig } from './options'
+export type { NuxtPhotoAppConfig, NuxtPhotoOptions } from './options'
 
-type NuxtPhotoAppConfig = {
-  nuxtPhoto?: NuxtPhotoRuntimeConfig
-}
+type NuxtPhotoAppConfigState = { nuxtPhoto?: NuxtPhotoAppConfig }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
@@ -104,7 +102,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
           if (typeof options.image !== 'object') return
 
-          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
           appConfig.nuxtPhoto = {
             ...appConfig.nuxtPhoto,
             image: {
@@ -118,7 +116,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     if (minZoom != null) {
-      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfig
+      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
 
       appConfig.nuxtPhoto = {
         ...appConfig.nuxtPhoto,

@@ -12,7 +12,7 @@ export type NuxtPhotoImageAdapterConfig = {
   }
 }
 
-export type NuxtPhotoRuntimeConfig = {
+export type NuxtPhotoAppConfig = {
   image?: NuxtPhotoImageAdapterConfig
   lightbox?: {
     minZoom?: number
@@ -30,7 +30,7 @@ export interface NuxtPhotoOptions {
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?: NuxtPhotoImageOptions
-  lightbox?: NuxtPhotoRuntimeConfig['lightbox']
+  lightbox?: NuxtPhotoAppConfig['lightbox']
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
