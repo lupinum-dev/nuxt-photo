@@ -1,7 +1,5 @@
 <template>
-  <div v-bind="$attrs">
-    <slot />
-  </div>
+  <slot />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">

@@ -65,6 +65,36 @@ describe('primitive injection guards', () => {
     ).not.toThrow()
   })
 
+  it('renders its children without adding a wrapper element', () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const app = createApp({
+      render: () =>
+        h(
+          LightboxProvider,
+          {
+            photos: [makePhoto({ id: 'renderless-provider' })],
+            'data-provider-wrapper': '',
+          },
+          {
+            default: () => [
+              h('span', { 'data-provider-child': 'first' }),
+              h('span', { 'data-provider-child': 'second' }),
+            ],
+          },
+        ),
+    })
+
+    app.mount(container)
+
+    expect(container.querySelectorAll('[data-provider-child]')).toHaveLength(2)
+    expect(container.querySelector('[data-provider-wrapper]')).toBeNull()
+    expect(container.children).toHaveLength(2)
+
+    app.unmount()
+    container.remove()
+  })
+
   it('throws an actionable error when PhotoTrigger is used without a provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
