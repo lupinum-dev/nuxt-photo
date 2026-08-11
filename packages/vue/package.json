@@ -38,8 +38,8 @@
       "import": "./dist/composables/index.mjs"
     },
     "./provide": {
-      "types": "./dist/provide/keys.d.ts",
-      "import": "./dist/provide/keys.mjs"
+      "types": "./dist/provide/index.d.ts",
+      "import": "./dist/provide/index.mjs"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
