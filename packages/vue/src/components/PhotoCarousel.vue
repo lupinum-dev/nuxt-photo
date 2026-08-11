@@ -140,7 +140,7 @@ warnOnSetupOptionChanges('PhotoCarousel', {
 const provider = hasLightbox
   ? useLightboxProvider(resolvedPhotos, {
       transition: props.transition,
-      imageAdapter: () => props.imageAdapter,
+      imageAdapter: computed(() => props.imageAdapter),
     })
   : null
 

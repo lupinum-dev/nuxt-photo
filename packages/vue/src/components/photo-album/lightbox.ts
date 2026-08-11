@@ -44,7 +44,7 @@ export function useAlbumLightbox<TMeta extends object>(
   const ownCtx = hasOwnLightbox
     ? useLightboxProvider(photos, {
         transition: props.transition,
-        imageAdapter: () => props.imageAdapter,
+        imageAdapter: computed(() => props.imageAdapter),
       })
     : null
 

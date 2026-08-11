@@ -18,7 +18,7 @@ describe('nuxt-photo module integration', async () => {
 
     expect(html).toContain('id="nuxt-photo-min-zoom">1.2<')
     expect(html).toContain('Fixture sunrise')
-    expect(html).toContain('class="np-scope')
+    expect(html).toContain('np-scope-')
   })
 
   it('type-checks fixture access to augmented app config', async () => {

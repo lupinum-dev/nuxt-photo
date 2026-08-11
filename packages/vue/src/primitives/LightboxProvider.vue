@@ -27,7 +27,7 @@ useLightboxProvider(
   {
     transition: props.transition,
     minZoom: props.minZoom,
-    imageAdapter: () => props.imageAdapter,
+    imageAdapter: computed(() => props.imageAdapter),
   },
 )
 </script>

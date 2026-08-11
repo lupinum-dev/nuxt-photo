@@ -94,7 +94,7 @@ const soloCtx = isSolo.value
       computed(() => props.photo),
       {
         transition: props.transition,
-        imageAdapter: () => props.imageAdapter,
+        imageAdapter: computed(() => props.imageAdapter),
         resolveSlide: (photo) => {
           if (
             (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||

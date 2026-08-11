@@ -5,8 +5,10 @@ import {
   nextTick,
   onBeforeUnmount,
   ref,
+  unref,
   toValue,
   watch,
+  type MaybeRef,
   type MaybeRefOrGetter,
 } from 'vue'
 import {
@@ -52,7 +54,7 @@ export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
   transitionOption?: LightboxTransitionOption,
   minZoom?: number,
-  imageAdapter?: MaybeRefOrGetter<ImageAdapter | undefined>,
+  imageAdapter?: MaybeRef<ImageAdapter | undefined>,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn('[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()')
@@ -67,7 +69,7 @@ export function useLightboxRuntimeState(
   const injectedImageAdapter = inject(ImageAdapterKey, null)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
   const resolvedImageAdapter = computed(
-    () => toValue(imageAdapter) ?? injectedImageAdapter ?? createNativeImageAdapter(),
+    () => unref(imageAdapter) ?? injectedImageAdapter ?? createNativeImageAdapter(),
   )
 
   const reportAsyncError = useAsyncErrorReporter()

@@ -68,7 +68,7 @@ warnOnSetupOptionChanges('PhotoGroup', {
 const provider = enabled
   ? useLightboxProvider(canonicalPhotos, {
       transition: props.transition,
-      imageAdapter: () => props.imageAdapter,
+      imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => {
         for (const entry of capabilities.value) {
           if (entry.id === photo.id && entry.renderSlide) {
