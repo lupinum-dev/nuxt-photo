@@ -20,7 +20,7 @@
   <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import {
   ref,
   computed,
@@ -28,12 +28,11 @@ import {
   onMounted,
   onBeforeUnmount,
   watch,
-  useSlots,
   mergeProps,
   type Component,
+  type VNodeChild,
 } from 'vue'
 
-defineOptions({ inheritAttrs: false })
 import { useLightboxProvider } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
@@ -46,13 +45,15 @@ import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps<{
-  photo: PhotoItem
+  photo: PhotoItem<TMeta>
   /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
   lightbox?: boolean | Component
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
-  imageAdapter?: ImageAdapter
+  imageAdapter?: ImageAdapter<TMeta>
   /** Setup-time transition configuration for a standalone lightbox. */
   transition?: LightboxTransitionOption
   loading?: 'lazy' | 'eager'
@@ -61,10 +62,12 @@ const props = defineProps<{
   /** Extra classes for the caption element */
   captionClass?: string
 }>()
-const slots = useSlots()
+const slots = defineSlots<{
+  slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
+}>()
 
 function validatePhoto() {
-  normalizePhotos([props.photo], { owner: 'Photo', onInvalid: 'throw' })
+  normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
 }
 validatePhoto()
 
@@ -161,7 +164,10 @@ function registerWithGroup() {
     {
       id: props.photo.id,
       getThumbnailElement: () => thumbRef.value,
-      renderSlide: slots.slide ? (slotProps) => slots.slide?.(slotProps) ?? null : null,
+      renderSlide: slots.slide
+        ? (slotProps) =>
+            slots.slide?.({ ...slotProps, photo: slotProps.photo as PhotoItem<TMeta> }) ?? null
+        : null,
     },
   ])
   registered.value = true

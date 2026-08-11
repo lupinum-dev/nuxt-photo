@@ -162,7 +162,10 @@ export type ImageSource = {
  */
 export type ImageContext = 'thumb' | 'slide'
 
-export type ImageAdapter = (photo: PhotoItem, context: ImageContext) => ImageSource
+export type ImageAdapter<TMeta extends object = Readonly<Record<string, unknown>>> = (
+  photo: PhotoItem<TMeta>,
+  context: ImageContext,
+) => ImageSource
 
 // ─── Responsive parameters ───
 

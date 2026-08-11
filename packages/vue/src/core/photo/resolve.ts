@@ -6,13 +6,13 @@ export type ResolveRecipePhotosOptions = {
   onInvalidPhotos?: (event: InvalidPhotosEvent) => void
 }
 
-export function resolveRecipePhotos(
+export function resolveRecipePhotos<TMeta extends object = Readonly<Record<string, unknown>>>(
   rawPhotos: readonly unknown[],
   owner: string,
   options: ResolveRecipePhotosOptions = {},
-): PhotoItem[] {
+): PhotoItem<TMeta>[] {
   const validation = options.validation ?? 'throw'
-  const result = normalizePhotos(rawPhotos, {
+  const result = normalizePhotos<TMeta>(rawPhotos, {
     owner,
     onInvalid: validation,
   })

@@ -21,14 +21,14 @@
             itemClass,
           ]"
           :style="item.style"
-          v-bind="itemBindings(item.photo, item.index)"
+          v-bind="itemBindings(metadataPhoto(item.photo), item.index)"
         >
           <AlbumThumbnail
-            :photo="item.photo"
+            :photo="metadataPhoto(item.photo)"
             :index="item.index"
             :width="item.width"
             :height="item.height"
-            :hidden="isHidden(item.photo)"
+            :hidden="isHidden(metadataPhoto(item.photo))"
             :image-adapter="imageAdapter"
             :img-class="imgClass"
             :sizes="item.computedSizes"
@@ -64,14 +64,14 @@
             class="np-album__item"
             :class="itemClass"
             :style="itemStyle(entry, group)"
-            v-bind="itemBindings(entry.photo, entry.index)"
+            v-bind="itemBindings(metadataPhoto(entry.photo), entry.index)"
           >
             <AlbumThumbnail
-              :photo="entry.photo"
+              :photo="metadataPhoto(entry.photo)"
               :index="entry.index"
               :width="entry.width"
               :height="entry.height"
-              :hidden="isHidden(entry.photo)"
+              :hidden="isHidden(metadataPhoto(entry.photo))"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
             >
@@ -113,7 +113,7 @@
   <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
@@ -133,9 +133,19 @@ import { useAlbumLightbox } from './photo-album/lightbox'
 
 defineOptions({ inheritAttrs: false })
 
+defineSlots<{
+  thumbnail?: (props: {
+    photo: PhotoItem<TMeta>
+    index: number
+    width: number
+    height: number
+    hidden: boolean
+  }) => unknown
+}>()
+
 const props = withDefaults(
   defineProps<{
-    photos: readonly PhotoItem[]
+    photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     onInvalidPhotos?: (event: InvalidPhotosEvent) => void
     layout?: AlbumLayout | AlbumLayout['type']
@@ -147,7 +157,7 @@ const props = withDefaults(
       size: string
       sizes?: Array<{ viewport: string; size: string }>
     }
-    imageAdapter?: ImageAdapter
+    imageAdapter?: ImageAdapter<TMeta>
     lightbox?: boolean | Component
     transition?: LightboxTransitionOption
     itemClass?: string
@@ -178,12 +188,16 @@ const normalizedLayout = computed<AlbumLayout>(() => {
   }
 })
 
+function metadataPhoto(photo: PhotoItem): PhotoItem<TMeta> {
+  return photo as PhotoItem<TMeta>
+}
+
 if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
-const photos = computed<PhotoItem[]>(() =>
-  resolveRecipePhotos(props.photos, 'PhotoAlbum', {
+const photos = computed<PhotoItem<TMeta>[]>(() =>
+  resolveRecipePhotos<TMeta>(props.photos, 'PhotoAlbum', {
     validation: props.validation,
     onInvalidPhotos: props.onInvalidPhotos,
   }),

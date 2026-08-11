@@ -16,13 +16,16 @@ import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
 
-type AlbumLightboxProps = {
+type AlbumLightboxProps<TMeta extends object> = {
   lightbox?: boolean | Component
   transition?: LightboxTransitionOption
-  imageAdapter?: ImageAdapter
+  imageAdapter?: ImageAdapter<TMeta>
 }
 
-export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumLightboxProps) {
+export function useAlbumLightbox<TMeta extends object>(
+  photos: ComputedRef<PhotoItem<TMeta>[]>,
+  props: AlbumLightboxProps<TMeta>,
+) {
   const parentGroup = inject(PhotoGroupContextKey, null)
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
@@ -61,7 +64,7 @@ export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumL
     }
   }
 
-  function activatePhoto(photo: PhotoItem, index: number) {
+  function activatePhoto(photo: PhotoItem<TMeta>, index: number) {
     if (delegatedGroup) {
       return delegatedGroup.activateById(photo.id, thumbElsMap[index])
     }
@@ -71,7 +74,7 @@ export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumL
     return ownCtx.open(index)
   }
 
-  function itemBindings(photo: PhotoItem, index: number) {
+  function itemBindings(photo: PhotoItem<TMeta>, index: number) {
     const base = { ref: setItemRef(index) }
     if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
 
@@ -81,7 +84,7 @@ export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumL
     }
   }
 
-  function isHidden(photo: PhotoItem): boolean {
+  function isHidden(photo: PhotoItem<TMeta>): boolean {
     if (delegatedGroup) {
       return delegatedGroup.hiddenPhoto.value?.id === photo.id
     }
@@ -99,7 +102,7 @@ export function useAlbumLightbox(photos: ComputedRef<PhotoItem[]>, props: AlbumL
     parentGroup?.removeCapabilities(capabilityOwner)
   }
 
-  function syncCapabilities(nextPhotos: PhotoItem[]) {
+  function syncCapabilities(nextPhotos: PhotoItem<TMeta>[]) {
     const group = delegatedGroup
     if (!group) {
       removeCapabilities()

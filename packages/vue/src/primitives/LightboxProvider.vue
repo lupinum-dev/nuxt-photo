@@ -4,7 +4,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed } from 'vue'
 import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../core/index'
 import { useLightboxProvider } from '../composables/useLightboxProvider'
@@ -13,10 +13,10 @@ import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
-  photos: PhotoItem | readonly PhotoItem[]
+  photos: PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]
   transition?: LightboxTransitionOption
   minZoom?: number
-  imageAdapter?: ImageAdapter
+  imageAdapter?: ImageAdapter<TMeta>
 }>()
 
 warnOnSetupOptionChanges('LightboxProvider', {

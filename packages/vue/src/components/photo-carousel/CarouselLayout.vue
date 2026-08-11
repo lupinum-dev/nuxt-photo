@@ -143,7 +143,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, toRef, useSlots, type ComponentPublicInstance } from 'vue'
 import { PhotoImage } from '../../primitives/index'
 import type {
@@ -165,18 +165,18 @@ import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 defineOptions({ inheritAttrs: false })
 
 defineSlots<{
-  slide?: (props: CarouselSlideSlotProps) => unknown
+  slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
   controls?: (props: CarouselControlsSlotProps) => unknown
-  caption?: (props: CarouselCaptionSlotProps) => unknown
+  caption?: (props: CarouselCaptionSlotProps<TMeta>) => unknown
   dots?: (props: CarouselDotsSlotProps) => unknown
-  thumb?: (props: CarouselThumbSlotProps) => unknown
+  thumb?: (props: CarouselThumbSlotProps<TMeta>) => unknown
   prev?: () => unknown
   next?: () => unknown
 }>()
 
 const props = defineProps<{
-  photos: PhotoItem[]
-  imageAdapter?: ImageAdapter
+  photos: PhotoItem<TMeta>[]
+  imageAdapter?: ImageAdapter<TMeta>
   options: PhotoCarouselOptions
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
@@ -248,7 +248,7 @@ function setSlideElRef(index: number) {
   }
 }
 
-function interactiveAttrs(photo: PhotoItem, index: number) {
+function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
   if (!props.onSlideActivate) return {}
   return {
     ...createPhotoTriggerBindings(

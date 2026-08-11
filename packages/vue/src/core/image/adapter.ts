@@ -23,8 +23,10 @@ const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource =>
 }
 
 /** Return the built-in adapter that uses `src`, `thumbSrc`, and `srcset` directly. */
-export function createNativeImageAdapter(): ImageAdapter {
-  return _nativeAdapter
+export function createNativeImageAdapter<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+>(): ImageAdapter<TMeta> {
+  return _nativeAdapter as ImageAdapter<TMeta>
 }
 
 /**

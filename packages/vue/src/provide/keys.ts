@@ -12,11 +12,11 @@ import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
 /** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
-export interface LightboxController {
-  readonly photos: ComputedRef<readonly PhotoItem[]>
+export interface LightboxController<TMeta extends object = Readonly<Record<string, unknown>>> {
+  readonly photos: ComputedRef<readonly PhotoItem<TMeta>[]>
   readonly count: ComputedRef<number>
   readonly activeIndex: ComputedRef<number>
-  readonly activePhoto: ComputedRef<PhotoItem | null>
+  readonly activePhoto: ComputedRef<PhotoItem<TMeta> | null>
   readonly isOpen: ComputedRef<boolean>
   open(index?: number): Promise<void>
   openById(id: string): Promise<void>
@@ -26,7 +26,9 @@ export interface LightboxController {
   toggleZoom(): void
 }
 
-export interface LightboxProviderController extends LightboxController {
+export interface LightboxProviderController<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> extends LightboxController<TMeta> {
   readonly hiddenThumbnailIndex: Readonly<Ref<number | null>>
   setThumbnailRef(index: number): (element: Element | ComponentPublicInstance | null) => void
 }
@@ -81,7 +83,8 @@ export type InternalLightboxContext = Omit<
 } & LightboxRuntimeState &
   LightboxDomBindings
 
-export type LightboxSlideRenderer = (props: { photo: PhotoItem; index: number }) => VNodeChild
+export type LightboxSlideRenderer<TMeta extends object = Readonly<Record<string, unknown>>> =
+  (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 
 export const LightboxContextKey: InjectionKey<InternalLightboxContext> =
   Symbol('nuxt-photo:lightbox')

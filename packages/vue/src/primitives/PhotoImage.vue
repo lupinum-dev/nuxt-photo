@@ -12,7 +12,7 @@
   />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject } from 'vue'
 import {
   createNativeImageAdapter,
@@ -24,9 +24,9 @@ import { ImageAdapterKey } from '../provide/keys'
 
 const props = withDefaults(
   defineProps<{
-    photo: PhotoItem
+    photo: PhotoItem<TMeta>
     context?: ImageContext
-    imageAdapter?: ImageAdapter
+    imageAdapter?: ImageAdapter<TMeta>
     loading?: 'lazy' | 'eager'
     /** Override the adapter-computed sizes attribute with a layout-computed value. */
     sizes?: string
@@ -40,7 +40,10 @@ const props = withDefaults(
 const injectedAdapter = inject(ImageAdapterKey, null)
 
 const resolveImage = computed(
-  (): ImageAdapter => props.imageAdapter ?? injectedAdapter ?? createNativeImageAdapter(),
+  (): ImageAdapter<TMeta> =>
+    props.imageAdapter ??
+    (injectedAdapter as ImageAdapter<TMeta> | null) ??
+    createNativeImageAdapter<TMeta>(),
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))

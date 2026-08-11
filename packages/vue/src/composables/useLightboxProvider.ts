@@ -26,18 +26,18 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * </template>
  * ```
  */
-export function useLightboxProvider(
-  photosInput: MaybeRef<PhotoItem | readonly PhotoItem[]>,
+export function useLightboxProvider<TMeta extends object = Readonly<Record<string, unknown>>>(
+  photosInput: MaybeRef<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
   options?: {
     transition?: LightboxTransitionOption
-    resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
+    resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
     minZoom?: number
-    imageAdapter?: ImageAdapter
+    imageAdapter?: ImageAdapter<TMeta>
   },
-): LightboxProviderController {
+): LightboxProviderController<TMeta> {
   const photos = computed(() => {
     const value = toValue(photosInput)
-    return normalizePhotos(Array.isArray(value) ? value : [value], {
+    return normalizePhotos<TMeta>(Array.isArray(value) ? value : [value], {
       owner: 'useLightboxProvider',
       onInvalid: 'throw',
     }).photos
@@ -46,17 +46,19 @@ export function useLightboxProvider(
     photos,
     options?.transition,
     options?.minZoom,
-    options?.imageAdapter,
+    options?.imageAdapter as ImageAdapter,
   )
 
   // Provide the shared lightbox context plus custom slide resolution.
   provideLightboxContexts(ctx, {
-    resolveSlide: options?.resolveSlide,
-    imageAdapter: options?.imageAdapter,
+    resolveSlide: options?.resolveSlide as
+      | ((photo: PhotoItem) => LightboxSlideRenderer | null)
+      | undefined,
+    imageAdapter: options?.imageAdapter as ImageAdapter | undefined,
   })
 
   return {
-    ...createLightboxController(ctx),
+    ...createLightboxController<TMeta>(ctx),
     setThumbnailRef: ctx.setThumbRef,
     hiddenThumbnailIndex: ctx.hiddenThumbIndex,
   }

@@ -26,7 +26,7 @@
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, type Component } from 'vue'
 import type {
   ImageAdapter,
@@ -57,9 +57,9 @@ import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 defineOptions({ inheritAttrs: false })
 
 defineSlots<{
-  slide?: (props: CarouselSlideSlotProps) => unknown
-  thumb?: (props: CarouselThumbSlotProps) => unknown
-  caption?: (props: CarouselCaptionSlotProps) => unknown
+  slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
+  thumb?: (props: CarouselThumbSlotProps<TMeta>) => unknown
+  caption?: (props: CarouselCaptionSlotProps<TMeta>) => unknown
   controls?: (props: CarouselControlsSlotProps) => unknown
   prev?: () => unknown
   next?: () => unknown
@@ -68,10 +68,10 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
-    photos: readonly PhotoItem[]
+    photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     onInvalidPhotos?: (event: InvalidPhotosEvent) => void
-    imageAdapter?: ImageAdapter
+    imageAdapter?: ImageAdapter<TMeta>
     options?: PhotoCarouselOptions
     showArrows?: boolean
     showThumbnails?: boolean
@@ -103,7 +103,7 @@ const props = withDefaults(
 )
 
 const resolvedPhotos = computed(() =>
-  resolveRecipePhotos(props.photos, 'PhotoCarousel', {
+  resolveRecipePhotos<TMeta>(props.photos, 'PhotoCarousel', {
     validation: props.validation,
     onInvalidPhotos: props.onInvalidPhotos,
   }),

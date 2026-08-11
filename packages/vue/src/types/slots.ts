@@ -3,10 +3,12 @@ import type { Ref } from 'vue'
 
 // ─── Lightbox primitive slot props ─────────────────────────────────────────
 
-export interface LightboxControlsSlotProps {
+export interface LightboxControlsSlotProps<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> {
   activeIndex: number
-  activePhoto: PhotoItem | null
-  photos: readonly PhotoItem[]
+  activePhoto: PhotoItem<TMeta> | null
+  photos: readonly PhotoItem<TMeta>[]
   count: number
   isZoomedIn: boolean
   zoomAllowed: boolean
@@ -17,42 +19,48 @@ export interface LightboxControlsSlotProps {
   toggleZoom: () => void
 }
 
-export interface LightboxCaptionSlotProps {
-  photo: PhotoItem | null
+export interface LightboxCaptionSlotProps<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> {
+  photo: PhotoItem<TMeta> | null
   activeIndex: number
 }
 
-export interface LightboxSlideSlotProps {
-  photo: PhotoItem
+export interface LightboxSlideSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
+  photo: PhotoItem<TMeta>
   index: number
   width: number
   height: number
 }
 
-export interface LightboxViewportSlotProps {
-  photos: readonly PhotoItem[]
+export interface LightboxViewportSlotProps<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> {
+  photos: readonly PhotoItem<TMeta>[]
   viewportRef: Ref<HTMLElement | null | undefined>
   imageLoadFailed: boolean
 }
 
 // ─── PhotoCarousel slot props ──────────────────────────────────────────────
 
-export interface CarouselSlideSlotProps {
-  photo: PhotoItem
+export interface CarouselSlideSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
+  photo: PhotoItem<TMeta>
   index: number
   selected: boolean
   open: () => void | Promise<void>
 }
 
-export interface CarouselThumbSlotProps {
-  photo: PhotoItem
+export interface CarouselThumbSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
+  photo: PhotoItem<TMeta>
   index: number
   selected: boolean
   goTo: (i: number) => void
 }
 
-export interface CarouselCaptionSlotProps {
-  photo: PhotoItem
+export interface CarouselCaptionSlotProps<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> {
+  photo: PhotoItem<TMeta>
   index: number
   count: number
 }
