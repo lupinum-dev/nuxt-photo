@@ -138,11 +138,11 @@ type ImageSource = {
 
 ## See also
 
-[Integrate @nuxt/image](/docs/concepts/image-pipeline)
+- [Integrate @nuxt/image](/docs/concepts/image-pipeline)
 
-[Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
+- [Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
 
-[ImageAdapter type reference](/docs/api/types)
+- [ImageAdapter type reference](/docs/api/types)
 
 _Source: `docs/content/docs/3.concepts/5.image-pipeline.md`_
 
@@ -196,7 +196,7 @@ Pick a value that matches your **common viewport**:
 
 The trade-off is simple: clients whose actual width matches the assumption should avoid gallery-driven layout shift; clients off from the assumption see one re-layout on hydration (no worse than Level 0).
 
-::callout{icon="i-lucide-triangle-alert"}
+::warning
 A value of `0` is silently ignored and warns in dev - it's almost always a bug. If you want no SSR tuning, omit the prop.
 ::
 
@@ -291,9 +291,9 @@ CLS scores under **0.1** are good; under **0.05** is excellent. A correctly tune
 
 ## See also
 
-[Responsive parameters](/docs/concepts/layouts-and-responsiveness)
+- [Responsive parameters](/docs/concepts/layouts-and-responsiveness)
 
-[Responsive tuning](/docs/guides/tune-a-responsive-album)
+- [Responsive tuning](/docs/guides/tune-a-responsive-album)
 
 _Source: `docs/content/docs/3.concepts/4.ssr-and-layout-stability.md`_
 
@@ -337,13 +337,13 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 ## See also
 
-[Customize the built-in lightbox](/docs/guides/customize-the-lightbox)
+- [Customize the built-in lightbox](/docs/guides/customize-the-lightbox)
 
-[Use a custom lightbox globally](/docs/guides/customize-the-lightbox)
+- [Use a custom lightbox globally](/docs/guides/customize-the-lightbox)
 
-[Build a custom lightbox](/docs/guides/customize-the-lightbox)
+- [Build a custom lightbox](/docs/guides/customize-the-lightbox)
 
-[Public API and stability](/docs/api/public-api)
+- [Public API and stability](/docs/api/public-api)
 
 _Source: `docs/content/docs/3.concepts/7.customization-layers.md`_
 
@@ -490,7 +490,7 @@ Move to [Build a custom lightbox](/docs/guides/customize-the-lightbox) when you 
 
 If most galleries in the app should use the same custom lightbox, set it once globally.
 
-[Use a custom lightbox globally](/docs/guides/customize-the-lightbox)
+- [Use a custom lightbox globally](/docs/guides/customize-the-lightbox)
 
 _Source: `docs/content/docs/4.guides/6.customize-the-lightbox.md`_
 
@@ -679,8 +679,8 @@ describe('cmsAdapter', () => {
 
 ## See also
 
-[Image providers](/docs/concepts/image-pipeline)
+- [Image providers](/docs/concepts/image-pipeline)
 
-[ImageAdapter type reference](/docs/api/types)
+- [ImageAdapter type reference](/docs/api/types)
 
 _Source: `docs/content/docs/4.guides/7.integrate-a-custom-image-service.md`_

@@ -6,6 +6,7 @@ export default defineConfig({
   testDir: './playground/tests/e2e',
   forbidOnly: !!process.env.CI,
   fullyParallel: true,
+  workers: 4,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['list'], ['github']] : 'list',
   use: {

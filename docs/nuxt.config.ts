@@ -1,4 +1,11 @@
+import { realpathSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const siteUrl = 'https://nuxt-photo.lupinum.com'
+const ginkoDocsDir = realpathSync(
+  fileURLToPath(new URL('./node_modules/@lupinum/ginko-docs', import.meta.url)),
+)
 
 const customComponents = [
   'accessibility-lab',
@@ -26,6 +33,13 @@ const components = Object.fromEntries(
 export default defineNuxtConfig({
   extends: ['@lupinum/ginko-docs'],
   modules: ['@nuxt-photo/nuxt'],
+  // Ginko removes these routes when the blog collection is disabled. Keep
+  // vue-tsc aligned with the application Nuxt actually generates.
+  typescript: {
+    tsConfig: {
+      exclude: [join(ginkoDocsDir, 'app/pages/blog/**/*')],
+    },
+  },
   site: { url: siteUrl },
   components: [{ path: '~/components/content', pathPrefix: false, global: true }],
   css: ['~/assets/main.css'],

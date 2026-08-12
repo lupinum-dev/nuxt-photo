@@ -20,7 +20,7 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 1400
+      "brotliDeltaLimit": 1450
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",

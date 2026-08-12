@@ -6,12 +6,12 @@ packages:
 
 catalog:
   nuxt: 4.4.8
-  rolldown: 1.1.4
+  rolldown: 1.1.5
   typescript: 5.9.3
   vite: npm:@voidzero-dev/vite-plus-core@0.2.4
   vite-plus: 0.2.4
   vitest: 4.1.10
-  vue: 3.5.39
+  vue: 3.5.40
   vue-tsc: 3.2.7
 
 overrides:
@@ -36,10 +36,9 @@ peerDependencyRules:
 minimumReleaseAge: 2880
 
 minimumReleaseAgeExclude:
-  # Existing lockfile entry; remove after 2026-07-16T16:42:00Z.
-  - 'autoprefixer@10.5.3'
-  - '@iconify/collections@1.0.710'
-  - 'electron-to-chromium@1.5.392'
+  # Reviewed Lupinum release candidates. Remove after 2026-08-14.
+  - '@lupinum/ginko-content@0.4.0-rc.1'
+  - '@lupinum/ginko-docs@0.3.0-rc.3'
 
 allowBuilds:
   '@parcel/watcher': false

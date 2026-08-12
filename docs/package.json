@@ -4,16 +4,18 @@
   "type": "module",
   "scripts": {
     "dev": "nuxi dev",
+    "types:prepare": "nuxi prepare",
     "generate": "nuxi generate",
     "build": "nuxi build",
     "preview": "nuxi preview",
     "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },
   "dependencies": {
-    "@lupinum/ginko-content": "0.3.2",
-    "@lupinum/ginko-docs": "0.2.3",
+    "@lupinum/ginko-content": "0.4.0-rc.1",
+    "@lupinum/ginko-docs": "0.3.0-rc.3",
     "@nuxt-photo/nuxt": "workspace:*",
-    "nuxt": "catalog:"
+    "nuxt": "catalog:",
+    "vue-router": "5.2.0"
   },
   "devDependencies": {
     "vite": "catalog:",

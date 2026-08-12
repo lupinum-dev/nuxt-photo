@@ -117,3 +117,7 @@ they are visible in the package output.
 - [Contributing](./CONTRIBUTING.md)
 - [Maintainer and release guide](./MAINTAINING.md)
 - [Security policy](./SECURITY.md)
+- [Lupinum OSS Discord](https://discord.gg/RPH6SeA36N)
+
+Nuxt Photo is developed by [Lupinum OG](https://lupinum.com) and released under
+the [MIT License](./LICENSE).
