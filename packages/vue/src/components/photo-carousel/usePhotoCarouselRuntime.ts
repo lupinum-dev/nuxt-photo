@@ -71,7 +71,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     const options = typeof autoplay === 'object' ? autoplay : {}
     return [
       Autoplay({
-        delay: options.delayMs,
+        ...(options.delayMs === undefined ? {} : { delay: options.delayMs }),
         defaultInteraction: options.stopOnInteraction ?? true,
       }),
     ]

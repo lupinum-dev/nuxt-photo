@@ -1,5 +1,33 @@
 import type { PhotoItem } from '@nuxt-photo/nuxt/app'
 
+import alpineFrame from '../../../playground/public/photos/alpine-frame.jpg'
+import amberDetail from '../../../playground/public/photos/amber-detail.jpg'
+import cascade from '../../../playground/public/photos/cascade.jpg'
+import desertLight from '../../../playground/public/photos/desert-light.jpg'
+import eveningCanyon from '../../../playground/public/photos/evening-canyon.jpg'
+import forestHaze from '../../../playground/public/photos/forest-haze.jpg'
+import giants from '../../../playground/public/photos/giants.jpg'
+import lavenderDreams from '../../../playground/public/photos/lavender-dreams.jpg'
+import oceanGlass from '../../../playground/public/photos/ocean-glass.jpg'
+import softCoast from '../../../playground/public/photos/soft-coast.jpg'
+import urbanGlow from '../../../playground/public/photos/urban-glow.jpg'
+import winterRidge from '../../../playground/public/photos/winter-ridge.jpg'
+
+const photoSources: Record<string, string> = {
+  'alpine-frame': alpineFrame,
+  'amber-detail': amberDetail,
+  cascade,
+  'desert-light': desertLight,
+  'evening-canyon': eveningCanyon,
+  'forest-haze': forestHaze,
+  giants,
+  'lavender-dreams': lavenderDreams,
+  'ocean-glass': oceanGlass,
+  'soft-coast': softCoast,
+  'urban-glow': urbanGlow,
+  'winter-ridge': winterRidge,
+}
+
 function localPhoto(
   id: string,
   width: number,
@@ -11,7 +39,7 @@ function localPhoto(
 ): PhotoItem {
   return {
     id,
-    src: `/photos/${id}.jpg`,
+    src: photoSources[id]!,
     width,
     height,
     alt,

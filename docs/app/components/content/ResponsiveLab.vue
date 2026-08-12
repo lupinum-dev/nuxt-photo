@@ -3,54 +3,52 @@ import { computed, ref } from 'vue'
 import { responsive, resolveResponsiveParameter } from '@nuxt-photo/nuxt/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
-const defaults = { width: 720, snap: true }
+const defaults = { width: 640 }
 const width = ref(defaults.width)
-const snap = ref(defaults.snap)
-const columnsResolver = responsive({ 0: 2, 560: 3, 900: 4 })
-const spacingResolver = responsive({ 0: 4, 560: 8, 900: 12 })
-const columns = computed(() => resolveResponsiveParameter(columnsResolver, width.value, 3))
-const spacing = computed(() => resolveResponsiveParameter(spacingResolver, width.value, 8))
-const activeBreakpoint = computed(() => (width.value >= 900 ? 900 : width.value >= 560 ? 560 : 0))
+const measuredWidth = ref(defaults.width)
+const columnsResolver = responsive({ 0: 2, 400: 3, 480: 4 })
+const spacingResolver = responsive({ 0: 4, 400: 8, 480: 12 })
+const columns = computed(() => resolveResponsiveParameter(columnsResolver, measuredWidth.value, 3))
+const spacing = computed(() => resolveResponsiveParameter(spacingResolver, measuredWidth.value, 8))
+const activeBreakpoint = computed(() =>
+  measuredWidth.value >= 480 ? 480 : measuredWidth.value >= 400 ? 400 : 0,
+)
 const code = `<PhotoAlbum
   :photos="photos"
   :layout="{
     type: 'columns',
-    columns: responsive({ 0: 2, 560: 3, 900: 4 }),
+    columns: responsive({ 0: 2, 400: 3, 480: 4 }),
   }"
-  :spacing="responsive({ 0: 4, 560: 8, 900: 12 })"
-  :breakpoints="[560, 900]"
+  :spacing="responsive({ 0: 4, 400: 8, 480: 12 })"
+  :default-container-width="640"
 />
 `
 
 function reset() {
   width.value = defaults.width
-  snap.value = defaults.snap
+  measuredWidth.value = defaults.width
 }
 </script>
 
 <template>
   <InteractiveExample
     title="See container-based responsiveness"
-    description="The album responds to its own width, not the browser viewport."
+    description="Resize the album container and watch each responsive value resolve independently."
+    :heading-level="3"
     @reset="reset"
   >
-    <DemoViewport v-model="width">
-      <div class="breakpoint-ruler" aria-hidden="true">
-        <span :style="{ left: `${(560 / 1120) * 100}%` }">560</span>
-        <span :style="{ left: `${(900 / 1120) * 100}%` }">900</span>
-      </div>
+    <DemoViewport v-model="width" :max="840" @resize="measuredWidth = $event">
       <PhotoAlbum
         :photos="demoPhotos.slice(0, 8)"
         :layout="{ type: 'columns', columns: columnsResolver }"
         :spacing="spacingResolver"
-        :breakpoints="snap ? [560, 900] : undefined"
-        :default-container-width="width"
+        :default-container-width="defaults.width"
       />
     </DemoViewport>
     <template #controls>
-      <div class="resolved-values">
+      <div class="resolved-values" aria-live="polite">
         <span
-          >Active breakpoint<strong>{{ activeBreakpoint }}px</strong></span
+          >Breakpoint<strong>{{ activeBreakpoint }}px</strong></span
         >
         <span
           >Columns<strong>{{ columns }}</strong></span
@@ -59,21 +57,20 @@ function reset() {
           >Spacing<strong>{{ spacing }}px</strong></span
         >
       </div>
-      <label class="docs-control">
-        <input v-model="snap" type="checkbox" />
-        <span>Snap measurement to breakpoints</span>
-      </label>
+      <p class="docs-control-note">
+        Breakpoints come from <code>responsive()</code>; no separate array is required.
+      </p>
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state
-      ><DemoState
+    <template #state>
+      <DemoState
         :value="{
-          containerWidth: width,
+          containerWidth: measuredWidth,
           activeBreakpoint,
           columns,
           spacing,
-          snap,
         }"
-    /></template>
+      />
+    </template>
   </InteractiveExample>
 </template>
