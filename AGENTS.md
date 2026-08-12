@@ -334,9 +334,6 @@ Once npm accepts a version, it is immutable.
 
 ## Security and package constraints
 
-- Use a short branch name that describes the work, such as
-  `fix/carousel-focus`. Do not require an agent or tool prefix such as
-  `codex/`, `claude/`, or `cursor/`.
 - Do not create a second release path.
 - Do not publish from a local machine.
 - Do not edit `dist`, `.release`, `.nuxt`, or `.output` by hand.

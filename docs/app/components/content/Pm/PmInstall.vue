@@ -1,0 +1,27 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { packageManagers } from '#imports'
+
+const props = defineProps<{
+  name: string
+  dev?: boolean
+}>()
+
+const codeBlocks = computed(() =>
+  packageManagers.map((pm) => ({
+    filename: pm.name,
+    code: `${pm.command} ${props.dev ? pm.devInstall : pm.install}${props.name}`,
+  })),
+)
+</script>
+
+<template>
+  <ProseCodeGroup sync="pm">
+    <ProsePre v-for="codeBlock in codeBlocks" :key="codeBlock.filename" v-bind="codeBlock">
+      <span style="color: var(--ui-primary)">{{ codeBlock.code.split(' ')[0] }}</span>
+      <span style="color: var(--ui-text)"
+        >&nbsp;{{ codeBlock.code.split(' ').slice(1).join(' ') }}</span
+      >
+    </ProsePre>
+  </ProseCodeGroup>
+</template>

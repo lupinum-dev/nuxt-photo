@@ -39,6 +39,7 @@ export default defineNuxtConfig({
 Module order does not matter. Nuxt Photo detects Nuxt Image after configured
 modules finish installing.
 
-The [quickstart](https://nuxt-photo.lupinum.com/docs/getting-started) builds a
-working album. The [module configuration reference](https://nuxt-photo.lupinum.com/docs/reference/configuration)
-documents every option and default.
+## Where next
+
+- [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
+- [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/installation)

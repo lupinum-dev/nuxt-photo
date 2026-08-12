@@ -13,7 +13,7 @@ without wiring separate gallery, carousel, and lightbox libraries together.
 - Ready-to-use `<PhotoAlbum>`, `<PhotoGroup>`, `<Photo>`, and `<PhotoCarousel>`
 - Built-in shared lightbox with transitions, captions, keyboard, pointer, and
   gesture handling
-- Rows, columns, and masonry album layouts from the Vue package
+- Rows, columns, and masonry album layouts from framework-free Vue package logic
 - Native image fallback, with provider-backed `@nuxt/image` rendering when the
   Nuxt Image module is installed
 - Structure-only CSS by default, with optional theme CSS when you want the
@@ -109,7 +109,7 @@ they are visible in the package output.
 
 ## Links
 
-- [Quickstart](https://nuxt-photo.lupinum.com/docs/getting-started)
+- [Documentation site](https://nuxt-photo.lupinum.com/docs/getting-started/installation)
 - [Live examples](https://nuxt-photo.lupinum.com)
 - [Nuxt package guide](./packages/nuxt/README.md)
 - [Vue package guide](./packages/vue/README.md)
@@ -117,7 +117,3 @@ they are visible in the package output.
 - [Contributing](./CONTRIBUTING.md)
 - [Maintainer and release guide](./MAINTAINING.md)
 - [Security policy](./SECURITY.md)
-- [Lupinum OSS Discord](https://discord.gg/RPH6SeA36N)
-
-Nuxt Photo is developed by [Lupinum OG](https://lupinum.com) and released under
-the [MIT License](./LICENSE).

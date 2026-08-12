@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, ref } from 'vue'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 type Layout = 'rows' | 'columns' | 'masonry'
@@ -10,14 +10,14 @@ const defaults = {
   spacing: 8,
   rowHeight: 220,
   columns: 3,
+  lightbox: true,
 }
 const layout = ref<Layout>(defaults.layout)
-const layoutGroup = `${useId()}-layout`
 const width = ref(defaults.width)
-const measuredWidth = ref(defaults.width)
 const spacing = ref(defaults.spacing)
 const rowHeight = ref(defaults.rowHeight)
 const columns = ref(defaults.columns)
+const lightbox = ref(defaults.lightbox)
 
 const layoutValue = computed(() =>
   layout.value === 'rows'
@@ -30,16 +30,17 @@ const code = computed(
   :photos="photos"
   :layout="${layout.value === 'rows' ? `{ type: 'rows', targetRowHeight: ${rowHeight.value} }` : `{ type: '${layout.value}', columns: ${columns.value} }`}"
   :spacing="${spacing.value}"
+  :lightbox="${lightbox.value}"
 />`,
 )
 
 function reset() {
   layout.value = defaults.layout
   width.value = defaults.width
-  measuredWidth.value = defaults.width
   spacing.value = defaults.spacing
   rowHeight.value = defaults.rowHeight
   columns.value = defaults.columns
+  lightbox.value = defaults.lightbox
 }
 </script>
 
@@ -49,15 +50,21 @@ function reset() {
     description="Resize the container and compare the three layout strategies."
     @reset="reset"
   >
-    <DemoViewport v-model="width" @resize="measuredWidth = $event">
-      <PhotoAlbum :photos="demoPhotos.slice(0, 9)" :layout="layoutValue" :spacing="spacing" />
+    <DemoViewport v-model="width">
+      <PhotoAlbum
+        :photos="demoPhotos.slice(0, 9)"
+        :layout="layoutValue"
+        :spacing="spacing"
+        :default-container-width="width"
+        :lightbox="lightbox"
+      />
     </DemoViewport>
 
     <template #controls>
       <fieldset class="docs-control">
         <legend>Layout</legend>
         <label v-for="value in ['rows', 'columns', 'masonry'] as Layout[]" :key="value">
-          <input v-model="layout" type="radio" :name="layoutGroup" :value="value" />
+          <input v-model="layout" type="radio" :value="value" />
           <span>{{ value }}</span>
         </label>
       </fieldset>
@@ -65,26 +72,23 @@ function reset() {
         <span
           >Spacing <output>{{ spacing }}px</output></span
         >
-        <input v-model.number="spacing" type="range" min="0" max="24" aria-label="Spacing" />
+        <input v-model.number="spacing" type="range" min="0" max="24" />
       </label>
       <label v-if="layout === 'rows'" class="docs-control docs-control--stacked">
         <span
           >Target row height <output>{{ rowHeight }}px</output></span
         >
-        <input
-          v-model.number="rowHeight"
-          type="range"
-          min="120"
-          max="360"
-          step="10"
-          aria-label="Target row height"
-        />
+        <input v-model.number="rowHeight" type="range" min="120" max="360" step="10" />
       </label>
       <label v-else class="docs-control docs-control--stacked">
         <span
           >Columns <output>{{ columns }}</output></span
         >
-        <input v-model.number="columns" type="range" min="1" max="6" aria-label="Columns" />
+        <input v-model.number="columns" type="range" min="1" max="6" />
+      </label>
+      <label class="docs-control">
+        <input v-model="lightbox" type="checkbox" />
+        <span>Open photos in the lightbox</span>
       </label>
     </template>
     <template #code><DemoCode :code="code" /></template>
@@ -92,7 +96,7 @@ function reset() {
       <DemoState
         :value="{
           layout,
-          containerWidth: measuredWidth,
+          containerWidth: width,
           spacing,
           rowHeight: layout === 'rows' ? rowHeight : undefined,
           columns: layout !== 'rows' ? columns : undefined,

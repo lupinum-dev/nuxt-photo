@@ -1,3 +1,3 @@
 <template>
-  <div>nuxt-photo size fixture</div>
+  <div>nuxt-photo module fixture</div>
 </template>

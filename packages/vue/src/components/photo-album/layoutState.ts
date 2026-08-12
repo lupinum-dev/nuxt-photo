@@ -233,7 +233,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     if (warnedApproximateLayouts.has(layout.value)) return
     warnedApproximateLayouts.add(layout.value)
     devWarn(
-      `${layout.value} layout rendered without defaultContainerWidth; SSR uses a simple fallback and recomputes after mount. See https://nuxt-photo.lupinum.com/docs/concepts/server-rendering`,
+      `${layout.value} layout rendered without defaultContainerWidth; SSR uses a simple fallback and recomputes after mount. See https://nuxt-photo.lupinum.com/docs/concepts/ssr-and-layout-stability`,
     )
   }
 

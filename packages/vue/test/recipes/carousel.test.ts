@@ -4,7 +4,7 @@ import { createApp, createSSRApp, defineComponent, h, nextTick, reactive, ref } 
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
-import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../src/core/index'
+import type { PhotoItem } from '../../src/core/index'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
 
 const photos = [
@@ -224,34 +224,6 @@ describe('PhotoCarousel — DOM', () => {
     })
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
-    m.unmount()
-  })
-
-  it.each([
-    ['the boolean shorthand', true],
-    ['options without a delay', { stopOnInteraction: false }],
-  ])('uses the plugin default delay for %s', async (_label, autoplay) => {
-    const props = reactive<{
-      photos: PhotoItem[]
-      autoplay: boolean | PhotoCarouselAutoplayOptions
-    }>({ photos, autoplay: false })
-    const m = mount(PhotoCarousel, props)
-    await flushUi()
-    const errorHandler = vi.fn()
-    m.app.config.errorHandler = errorHandler
-
-    const viewport = m.container.querySelector('.np-carousel__viewport')!
-    const container = m.container.querySelector('.np-carousel__container')!
-    const slides = [...m.container.querySelectorAll('.np-carousel__slide')]
-    setCarouselRect(viewport, 0, 600)
-    setCarouselRect(container, 0, 600)
-    slides.forEach((slide, index) => setCarouselRect(slide, index * 600, 600))
-
-    props.autoplay = autoplay
-    await flushUi(10)
-
-    expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
-    expect(errorHandler).not.toHaveBeenCalled()
     m.unmount()
   })
 

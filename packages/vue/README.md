@@ -1,9 +1,8 @@
 # @nuxt-photo/vue
 
-Responsive photo albums, carousels, and lightboxes for Vue. This is the complete
-Vue library behind the Nuxt module: use its recipe components for normal
-galleries, then move to composables and primitives when the design needs custom
-viewer markup.
+Vue composables and advanced lightbox building blocks for Nuxt Photo.
+
+Use this package when you need custom lightbox UI, lower-level integration than the recipe components, or direct access to the Vue bindings without the Nuxt module.
 
 ## Install
 
@@ -11,50 +10,32 @@ viewer markup.
 pnpm add @nuxt-photo/vue
 ```
 
-## Render an album
+## Example
 
-```vue
-<script setup lang="ts">
-import { PhotoAlbum, type PhotoItem } from '@nuxt-photo/vue'
-import '@nuxt-photo/vue/styles.css'
+`useLightboxProvider()` is the advanced entrypoint for custom lightbox components.
+
+```ts
+import { useLightboxProvider, type PhotoItem } from '@nuxt-photo/vue'
 
 const photos: PhotoItem[] = [
-  {
-    id: 'desert',
-    src: '/photos/desert.jpg',
-    width: 1280,
-    height: 800,
-    alt: 'Dunes at sunset',
-  },
-  {
-    id: 'ocean',
-    src: '/photos/ocean.jpg',
-    width: 960,
-    height: 1200,
-    alt: 'Rocky coast from above',
-  },
+  { id: 'desert', src: '/photos/desert.jpg', width: 1280, height: 800 },
+  { id: 'ocean', src: '/photos/ocean.jpg', width: 960, height: 1200 },
 ]
-</script>
 
-<template>
-  <PhotoAlbum :photos="photos" layout="rows" />
-</template>
+const lightbox = useLightboxProvider(photos, {
+  transition: 'auto',
+})
 ```
 
-Selecting a thumbnail opens the built-in lightbox. Intrinsic `width` and
-`height` values let the album reserve space before each image loads.
+It creates the shared lightbox context that Vue primitives consume.
 
 ## Public surface
 
-The root entrypoint also exports:
+The root entrypoint exports:
 
 - composables like `useLightbox`, `useLightboxProvider`, `useContainerWidth`, and `responsive`
 - lightbox building blocks like `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`
 - documented injection keys like `LightboxComponentKey`, `ImageAdapterKey`, and `LightboxDefaultsKey`
-
-`useLightboxProvider()` is the advanced entrypoint for custom lightbox
-components. Prefer `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel` until the
-viewer needs different markup rather than different styling.
 
 ## Stability
 
@@ -62,6 +43,7 @@ Use the root `@nuxt-photo/vue` entrypoint for both normal usage and advanced cus
 
 Undocumented exports and generated deep paths are internal.
 
-The [component reference](https://nuxt-photo.lupinum.com/docs/components/lightbox-primitives)
-shows the required primitive nesting. The [composables reference](https://nuxt-photo.lupinum.com/docs/reference/composables)
-documents provider context, controller state, and failure behavior.
+## Where next
+
+- [Root documentation](https://github.com/lupinum-dev/nuxt-photo#readme)
+- [Composables documentation](https://nuxt-photo.lupinum.com/docs/api/composables)

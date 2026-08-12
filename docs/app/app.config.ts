@@ -4,30 +4,27 @@ export default {
       url: 'https://nuxt-photo.lupinum.com',
       name: { en: 'Nuxt Photo' },
       description: {
-        en: 'Responsive photo galleries, lightboxes, and carousels for Nuxt.',
+        en: 'Photo galleries, lightboxes, and carousels for Nuxt.',
       },
       logo: { light: '/icon.png', dark: '/icon.png' },
       localeSwitcher: 'dropdown',
       docsSidebarSwitcher: 'tabs',
     },
-    social: {
-      github: 'https://github.com/lupinum-dev/nuxt-photo',
-      discord: 'https://discord.gg/RPH6SeA36N',
-    },
+    social: { github: 'https://github.com/lupinum-dev/nuxt-photo' },
     repository: {
       url: 'https://github.com/lupinum-dev/nuxt-photo',
       branch: 'main',
       contentDirectory: 'docs/content',
     },
     landing: {
-      eyebrow: { en: 'One photo model. Every surface.' },
-      title: { en: 'Photo galleries for Nuxt.' },
+      eyebrow: { en: 'Real image data. Predictable layout.' },
+      title: { en: 'Photo experiences that feel native to Nuxt.' },
       description: {
-        en: 'Render responsive albums, shared lightboxes, and carousels with stable server geometry, accessible interaction, and optional Nuxt Image delivery.',
+        en: 'Build responsive albums, shared lightboxes, and carousels with stable SSR geometry, accessible interaction, and optional Nuxt Image support.',
       },
       primary: {
-        label: { en: 'Start building' },
-        to: { en: '/docs/getting-started' },
+        label: { en: 'Build your first gallery' },
+        to: { en: '/docs/getting-started/first-gallery' },
       },
       secondary: {
         label: { en: 'View on GitHub' },
@@ -35,23 +32,23 @@ export default {
       },
       features: [
         {
-          title: { en: 'Layout before load' },
+          title: { en: 'Stable from SSR' },
           description: {
-            en: 'Intrinsic dimensions produce useful server-rendered geometry before images download.',
+            en: 'Known dimensions produce useful layout before images finish loading.',
           },
           icon: 'lucide:layout-grid',
         },
         {
-          title: { en: 'One collection, one viewer' },
+          title: { en: 'One shared lightbox' },
           description: {
-            en: 'Albums, groups, carousels, and custom triggers share navigation, focus, and gesture behavior.',
+            en: 'Albums, groups, carousels, and custom triggers share keyboard, gesture, and focus behavior.',
           },
           icon: 'lucide:scan',
         },
         {
-          title: { en: 'Recipes when possible' },
+          title: { en: 'Progressively customizable' },
           description: {
-            en: 'Start with ready components and move to primitives only when the design requires new markup.',
+            en: 'Start with ready components and move down to primitives only when your design needs it.',
           },
           icon: 'lucide:layers-3',
         },
