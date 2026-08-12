@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxi dev",
-    "prepare": "nuxi prepare",
+    "types:prepare": "nuxi prepare",
     "generate": "nuxi generate",
     "build": "nuxi build",
     "preview": "nuxi preview",

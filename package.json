@@ -30,7 +30,7 @@
     "docs:agent:check": "node scripts/docs/generate-skill-references.mjs --check",
     "docs:validate": "node scripts/docs/validate.mjs",
     "lint:vue-template": "eslint --max-warnings=0 \"**/*.vue\"",
-    "prepare:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-playground-tw --filter nuxt-photo-docs --fail-if-no-match prepare",
+    "prepare:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-playground-tw --filter nuxt-photo-docs --fail-if-no-match types:prepare",
     "release:notes": "node scripts/release-notes.mjs",
     "release:pack": "node scripts/release-pack.mjs",
     "release:verify": "vp run verify && vp pm audit --production --level high && node scripts/verify-release-artifact.mjs .release --expected-head --publishable",
