@@ -1,5 +1,5 @@
 import NuxtImage from '@nuxt/image'
-import NuxtPhoto from '@nuxt-photo/nuxt'
+import NuxtPhoto from '@lupinum/nuxt-photo'
 
 export default defineNuxtConfig({
   // Imported modules exercise the order-sensitive case that setup-time detection misses.

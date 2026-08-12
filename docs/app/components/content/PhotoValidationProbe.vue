@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 import { onErrorCaptured } from 'vue'
 
 defineProps<{ photos: readonly PhotoItem[] }>()

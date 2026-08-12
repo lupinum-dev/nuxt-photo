@@ -1,3 +1,3 @@
-import * as NuxtPhoto from '@nuxt-photo/vue'
+import * as NuxtPhoto from '@lupinum/vue-photo'
 
 console.log(NuxtPhoto)

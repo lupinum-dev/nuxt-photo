@@ -19,7 +19,7 @@ criterion.
 - `vite.config.ts`: Vite+ formatting, Oxlint, Vitest, and test aliases.
 - `packages/vue/package.json`: the published Vue package contract.
 - `packages/nuxt/package.json`: the published Nuxt module contract and its
-  dependency on `@nuxt-photo/vue`.
+  dependency on `@lupinum/vue-photo`.
 - `packages/*/src/`: package implementation.
 - `packages/*/test/`, `test/`, `playground`, and `playground-tailwind`: behavior,
   browser, package, and consumer contracts.
@@ -251,8 +251,8 @@ RELEASE STATUS: <BLOCKED | READY TO PLAN | AWAITING APPROVAL |
                  PARTIAL FAILURE | COMPLETE>
 
 Package set:
-- @nuxt-photo/vue@<version>
-- @nuxt-photo/nuxt@<version>
+- @lupinum/vue-photo@<version>
+- @lupinum/nuxt-photo@<version>
 Channel:
 Source SHA:
 CI run:
@@ -290,8 +290,8 @@ run: `lupinum-stage-<ci-run-id>`. Use the exact tag and
 shared staging tag. The maintainer must personally approve the npm stages with
 2FA in dependency order:
 
-1. `@nuxt-photo/vue`;
-2. `@nuxt-photo/nuxt`.
+1. `@lupinum/vue-photo`;
+2. `@lupinum/nuxt-photo`.
 
 The workflow summary owns the exact stage IDs and commands. The agent may point
 to them, but must never enter a 2FA code or call an approval API.
@@ -300,8 +300,8 @@ After both staged packages are readable and have provenance, the maintainer
 personally promotes the final channel in the same dependency order:
 
 ```sh
-npm dist-tag add @nuxt-photo/vue@<version> <latest|next>
-npm dist-tag add @nuxt-photo/nuxt@<version> <latest|next>
+npm dist-tag add @lupinum/vue-photo@<version> <latest|next>
+npm dist-tag add @lupinum/nuxt-photo@<version> <latest|next>
 ```
 
 Only after both final tags agree should the candidate-specific temporary tags

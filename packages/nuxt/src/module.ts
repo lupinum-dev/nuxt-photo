@@ -66,7 +66,7 @@ function resolveAutoImportAlias(name: string, prefix: string) {
 
 export default defineNuxtModule<NuxtPhotoOptions>({
   meta: {
-    name: '@nuxt-photo/nuxt',
+    name: '@lupinum/nuxt-photo',
     configKey: 'nuxtPhoto',
     compatibility: {
       nuxt: '^4.4.8',
@@ -77,7 +77,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     validateNuxtPhotoOptions(options)
 
     const resolver = createResolver(import.meta.url)
-    const vueDistDir = dirname(await resolver.resolvePath('@nuxt-photo/vue'))
+    const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
     const minZoom = options.lightbox?.minZoom
 
     if (options.image !== false) {
@@ -165,7 +165,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         AUTO_IMPORTS.map((name) => ({
           name,
           as: resolveAutoImportAlias(name, prefix),
-          from: '@nuxt-photo/nuxt/app',
+          from: '@lupinum/nuxt-photo/app',
         })),
       )
     }

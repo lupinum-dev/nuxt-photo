@@ -1,1 +1,1 @@
-export * from '@nuxt-photo/vue'
+export * from '@lupinum/vue-photo'

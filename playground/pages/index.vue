@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <header class="hero">
-      <p class="hero__eyebrow">@nuxt-photo/nuxt</p>
+      <p class="hero__eyebrow">@lupinum/nuxt-photo</p>
       <h1 class="hero__title">Photo galleries for Nuxt.</h1>
       <p class="hero__lede">
         Click any image. The thumbnail animates into a full lightbox with carousel navigation,
@@ -26,8 +26,8 @@
 
     <footer class="footer">
       <p class="footer__line">
-        Built with <span class="footer__pkg">@nuxt-photo/nuxt</span> and its
-        <span class="footer__pkg">@nuxt-photo/nuxt/app</span> facade.
+        Built with <span class="footer__pkg">@lupinum/nuxt-photo</span> and its
+        <span class="footer__pkg">@lupinum/nuxt-photo/app</span> facade.
       </p>
       <p class="footer__sub">Carousel powered by Embla. Images from Lorem Picsum.</p>
     </footer>

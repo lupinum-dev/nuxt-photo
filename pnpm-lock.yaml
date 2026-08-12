@@ -127,7 +127,7 @@ importers:
       '@lupinum/ginko-docs':
         specifier: 0.3.0-rc.3
         version: 0.3.0-rc.3(d6a3301af97bb7bd9cf46d96e361b6d0)
-      '@nuxt-photo/nuxt':
+      '@lupinum/nuxt-photo':
         specifier: workspace:*
         version: link:../packages/nuxt
       nuxt:
@@ -146,7 +146,7 @@ importers:
 
   packages/nuxt:
     dependencies:
-      '@nuxt-photo/vue':
+      '@lupinum/vue-photo':
         specifier: workspace:*
         version: link:../vue
       '@nuxt/kit':
@@ -199,7 +199,7 @@ importers:
 
   playground:
     dependencies:
-      '@nuxt-photo/nuxt':
+      '@lupinum/nuxt-photo':
         specifier: workspace:*
         version: link:../packages/nuxt
       '@nuxt/image':
@@ -221,7 +221,7 @@ importers:
 
   playground-tailwind:
     dependencies:
-      '@nuxt-photo/nuxt':
+      '@lupinum/nuxt-photo':
         specifier: workspace:*
         version: link:../packages/nuxt
       '@tailwindcss/vite':

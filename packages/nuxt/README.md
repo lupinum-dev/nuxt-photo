@@ -1,4 +1,4 @@
-# @nuxt-photo/nuxt
+# @lupinum/nuxt-photo
 
 Nuxt module for Nuxt Photo.
 
@@ -7,14 +7,14 @@ Install this package when you want the default Nuxt experience: auto-registered 
 ## Install
 
 ```bash
-pnpm add @nuxt-photo/nuxt
+pnpm add @lupinum/nuxt-photo
 ```
 
 Register the module in `nuxt.config.ts`:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
 })
 ```
 
@@ -32,7 +32,7 @@ Add `@nuxt/image` when you want provider-backed image rendering and generated `s
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt', '@nuxt/image'],
+  modules: ['@lupinum/nuxt-photo', '@nuxt/image'],
 })
 ```
 

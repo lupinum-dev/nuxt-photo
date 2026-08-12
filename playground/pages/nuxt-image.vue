@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { PhotoImage } from '@nuxt-photo/nuxt/app'
+import { PhotoImage } from '@lupinum/nuxt-photo/app'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'NuxtImage — nuxt-photo' })

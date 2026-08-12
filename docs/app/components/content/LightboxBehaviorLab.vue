@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { TransitionMode } from '@nuxt-photo/nuxt/app'
+import type { TransitionMode } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 const transition = ref<TransitionMode>('auto')

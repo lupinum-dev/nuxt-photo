@@ -46,10 +46,10 @@ describe('source architecture boundaries', () => {
 
   it('keeps Nuxt source on public Vue package entry points', () => {
     const allowedVuePackageImports = new Set([
-      '@nuxt-photo/vue',
-      '@nuxt-photo/vue/composables',
-      '@nuxt-photo/vue/provide',
-      '@nuxt-photo/vue/types',
+      '@lupinum/vue-photo',
+      '@lupinum/vue-photo/composables',
+      '@lupinum/vue-photo/provide',
+      '@lupinum/vue-photo/types',
     ])
 
     const offenders = sourceFiles('packages/nuxt/src').flatMap((file) => {
@@ -57,7 +57,7 @@ describe('source architecture boundaries', () => {
         if (specifier.includes('/vue/src') || specifier.includes('../../vue/src')) {
           return true
         }
-        if (!specifier.startsWith('@nuxt-photo/vue')) return false
+        if (!specifier.startsWith('@lupinum/vue-photo')) return false
         return !allowedVuePackageImports.has(specifier)
       })
 

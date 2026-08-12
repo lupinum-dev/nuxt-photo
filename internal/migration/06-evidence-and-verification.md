@@ -9,8 +9,8 @@ observations from 2026-07-16, not permanent budgets or CI authority.
 Repository: lupinum-dev/nuxt-photo
 Baseline SHA: 4b4b94a43d08d8fb0f7eaf74ecd374a4c2348ac0
 Published packages:
-- @nuxt-photo/vue
-- @nuxt-photo/nuxt
+- @lupinum/vue-photo
+- @lupinum/nuxt-photo
 Dependency order:
 - Vue before Nuxt
 ```
@@ -188,10 +188,10 @@ The final local dirty-worktree artifact was intentionally not release-eligible.
 It proved byte reproducibility with these local SHA-256 values:
 
 ```text
-@nuxt-photo/vue:
+@lupinum/vue-photo:
 69170ee79339431ac8ecbe2df9bd4c6b7d0a285dcf930450ddbe09883edacffe
 
-@nuxt-photo/nuxt:
+@lupinum/nuxt-photo:
 ff03ec6631d55cd7cdc2c5c13abd7fd18bde596e0dd0f18bab9b8c1534eba7f1
 ```
 

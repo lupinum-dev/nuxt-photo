@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { responsive, resolveResponsiveParameter } from '@nuxt-photo/nuxt/app'
+import { responsive, resolveResponsiveParameter } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 const defaults = { width: 720, snap: true }

@@ -141,8 +141,8 @@ function ensureBuild(surface) {
   }
 
   const buildSets = {
-    vue: ['@nuxt-photo/vue'],
-    nuxt: ['@nuxt-photo/vue', '@nuxt-photo/nuxt'],
+    vue: ['@lupinum/vue-photo'],
+    nuxt: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
   }
 
   for (const pkg of buildSets[surface]) {
@@ -172,7 +172,7 @@ async function measureViteFixture(fixtureId) {
     ].filter(Boolean),
     resolve: {
       alias: {
-        '@nuxt-photo/vue': resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
+        '@lupinum/vue-photo': resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
       },
       preserveSymlinks: false,
     },
@@ -205,6 +205,7 @@ function runNuxtFixture(fixtureId) {
     env: {
       ...process.env,
       NUXT_TELEMETRY_DISABLED: '1',
+      NUXT_PHOTO_SIZE_MODULE_PATH: resolve(nuxtPackageRoot, 'dist', 'module.mjs'),
     },
   })
   const assets = collectAssets(resolve(tempDir, '.output', 'public', '_nuxt'))

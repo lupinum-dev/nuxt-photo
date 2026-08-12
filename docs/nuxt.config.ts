@@ -32,7 +32,7 @@ const components = Object.fromEntries(
 
 export default defineNuxtConfig({
   extends: ['@lupinum/ginko-docs'],
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
   // Ginko removes these routes when the blog collection is disabled. Keep
   // vue-tsc aligned with the application Nuxt actually generates.
   typescript: {

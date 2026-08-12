@@ -27,7 +27,7 @@ details and request a private disclosure channel.
 
 Include:
 
-- affected `@nuxt-photo/vue` and `@nuxt-photo/nuxt` versions;
+- affected `@lupinum/vue-photo` and `@lupinum/nuxt-photo` versions;
 - Node, Nuxt, Vue, and browser versions involved;
 - reproduction or proof of concept;
 - realistic impact;

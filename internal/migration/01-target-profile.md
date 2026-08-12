@@ -11,8 +11,8 @@ Nuxt Photo combines three maintenance profiles:
 Its release unit is one coordinated multi-package set:
 
 ```text
-@nuxt-photo/vue
-  → @nuxt-photo/nuxt
+@lupinum/vue-photo
+  → @lupinum/nuxt-photo
     → playgrounds and docs
 ```
 

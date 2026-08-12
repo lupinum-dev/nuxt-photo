@@ -10,7 +10,7 @@ package exports, runtime compatibility, or user-facing documentation:
 vp run changeset
 ```
 
-`@nuxt-photo/vue` and `@nuxt-photo/nuxt` are a fixed release group. They always
+`@lupinum/vue-photo` and `@lupinum/nuxt-photo` are a fixed release group. They always
 receive the same version even when a change affects only one package.
 
 The source tree already contains the prepared, unpublished `0.2.0` candidate.

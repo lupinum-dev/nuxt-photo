@@ -13,7 +13,7 @@
   "dependencies": {
     "@lupinum/ginko-content": "0.4.0-rc.1",
     "@lupinum/ginko-docs": "0.3.0-rc.3",
-    "@nuxt-photo/nuxt": "workspace:*",
+    "@lupinum/nuxt-photo": "workspace:*",
     "nuxt": "catalog:",
     "vue-router": "5.2.0"
   },

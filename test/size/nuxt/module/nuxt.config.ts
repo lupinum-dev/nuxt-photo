@@ -1,3 +1,3 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
 })

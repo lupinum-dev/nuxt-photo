@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import * as vue from '../src'
 
-describe('@nuxt-photo/vue public exports', () => {
+describe('@lupinum/vue-photo public exports', () => {
   it('exposes the documented root runtime API exactly', () => {
     expect(Object.keys(vue).sort()).toEqual(
       [

@@ -1,4 +1,4 @@
-# @nuxt-photo/nuxt
+# @lupinum/nuxt-photo
 
 ## 0.2.0
 

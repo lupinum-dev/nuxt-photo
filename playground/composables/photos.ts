@@ -1,4 +1,4 @@
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 function localPhoto(
   id: string,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { provide } from 'vue'
-import { LightboxComponentKey } from '@nuxt-photo/nuxt/app'
+import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
 import Lightbox from '~/components/ui/Lightbox.vue'
 import { photos } from '~/composables/photos'
 
@@ -21,7 +21,7 @@ useHead({ title: 'nuxt-photo — Tailwind 4' })
     <main class="mx-auto max-w-5xl px-6 py-16 md:px-12 md:py-20">
       <header class="mb-16">
         <p class="mb-3 text-xs font-medium uppercase tracking-[0.15em] text-amber-600">
-          @nuxt-photo/nuxt
+          @lupinum/nuxt-photo
         </p>
         <h1 class="text-4xl font-light tracking-tight text-stone-100 md:text-6xl">
           Styled with Tailwind.
@@ -44,7 +44,7 @@ useHead({ title: 'nuxt-photo — Tailwind 4' })
       <footer class="mt-20 border-t border-stone-800 pt-8">
         <p class="text-sm text-stone-500">
           Built with
-          <span class="text-amber-600">@nuxt-photo/nuxt</span> +
+          <span class="text-amber-600">@lupinum/nuxt-photo</span> +
           <span class="text-amber-600">Tailwind CSS 4</span>
         </p>
       </footer>

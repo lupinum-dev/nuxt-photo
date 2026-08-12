@@ -38,12 +38,12 @@ without wiring separate gallery, carousel, and lightbox libraries together.
 ## Install
 
 ```bash
-pnpm add @nuxt-photo/nuxt
+pnpm add @lupinum/nuxt-photo
 ```
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
 })
 ```
 
@@ -55,7 +55,7 @@ Add `@nuxt/image` later when you want Nuxt Image provider integration:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt', '@nuxt/image'],
+  modules: ['@lupinum/nuxt-photo', '@nuxt/image'],
 })
 ```
 
@@ -63,7 +63,7 @@ export default defineNuxtConfig({
 
 ```vue
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const photos: PhotoItem[] = [
   {
@@ -93,16 +93,16 @@ albums, groups, carousels, and custom lightbox triggers.
 
 ## Package map
 
-- `@nuxt-photo/nuxt` is the Nuxt module. Nuxt apps install only this package.
-  App/runtime imports use `@nuxt-photo/nuxt/app`.
-- `@nuxt-photo/vue` is the Vue library. Plain Vue apps install this package for
+- `@lupinum/nuxt-photo` is the Nuxt module. Nuxt apps install only this package.
+  App/runtime imports use `@lupinum/nuxt-photo/app`.
+- `@lupinum/vue-photo` is the Vue library. Plain Vue apps install this package for
   components, composables, primitives, styles, common types, and photo helpers.
 
 ## Public API and stability
 
 Nuxt Photo is pre-1.0. The stable public surface is the documented root exports
-from `@nuxt-photo/vue`, the Nuxt module entry `@nuxt-photo/nuxt`, and the Nuxt
-app entry `@nuxt-photo/nuxt/app`.
+from `@lupinum/vue-photo`, the Nuxt module entry `@lupinum/nuxt-photo`, and the Nuxt
+app entry `@lupinum/nuxt-photo/app`.
 
 Generated files, deep imports, and undocumented exports are internal even if
 they are visible in the package output.

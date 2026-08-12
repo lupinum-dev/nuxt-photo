@@ -14,12 +14,12 @@ Source SHA:
 CI run ID:
 Staging tag: lupinum-stage-<ci-run-id>
 
-@nuxt-photo/vue:
+@lupinum/vue-photo:
   version:
   tarball:
   SHA-256:
 
-@nuxt-photo/nuxt:
+@lupinum/nuxt-photo:
   version:
   tarball:
   SHA-256:
@@ -55,8 +55,8 @@ Record the maintainer's exact authorization:
 
 ```text
 Authorize release workflow dispatch for:
-- @nuxt-photo/vue@...
-- @nuxt-photo/nuxt@...
+- @lupinum/vue-photo@...
+- @lupinum/nuxt-photo@...
 - channel ...
 - source SHA ...
 - CI run ID ...
@@ -148,13 +148,13 @@ values prove npm serves the already-certified bytes.
 Promote Vue first:
 
 ```sh
-npm dist-tag add @nuxt-photo/vue@<version> <latest|next>
+npm dist-tag add @lupinum/vue-photo@<version> <latest|next>
 ```
 
 Verify it, then promote Nuxt:
 
 ```sh
-npm dist-tag add @nuxt-photo/nuxt@<version> <latest|next>
+npm dist-tag add @lupinum/nuxt-photo@<version> <latest|next>
 ```
 
 After both final tags agree, run each exact `rollbackStagingCommand` from the
@@ -203,13 +203,13 @@ Rollback required: No | Yes, exact action
 If Vue's final channel moved but Nuxt's did not, restore Vue immediately:
 
 ```sh
-npm dist-tag add @nuxt-photo/vue@<previous-version> <latest|next>
+npm dist-tag add @lupinum/vue-photo@<previous-version> <latest|next>
 ```
 
 If there was no previous target:
 
 ```sh
-npm dist-tag rm @nuxt-photo/vue <latest|next>
+npm dist-tag rm @lupinum/vue-photo <latest|next>
 ```
 
 Then investigate and retry Nuxt using the existing approved bytes. Do not

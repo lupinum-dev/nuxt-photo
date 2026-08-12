@@ -10,7 +10,7 @@
     "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },
   "dependencies": {
-    "@nuxt-photo/nuxt": "workspace:*",
+    "@lupinum/nuxt-photo": "workspace:*",
     "@tailwindcss/vite": "^4.3.2",
     "nuxt": "catalog:",
     "tailwindcss": "^4.3.2"

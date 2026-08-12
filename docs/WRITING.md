@@ -32,8 +32,8 @@ them uses `sidebar: group`. Keep the tree flat enough to scan in one pass.
 - Use one term for one concept.
 - Define a technical term before you use it.
 - Use American English spelling.
-- Use the public Nuxt import path, `@nuxt-photo/nuxt/app`, in explicit app
-  imports. Reserve `@nuxt-photo/vue` for plain Vue documentation.
+- Use the public Nuxt import path, `@lupinum/nuxt-photo/app`, in explicit app
+  imports. Reserve `@lupinum/vue-photo` for plain Vue documentation.
 
 Frontmatter supplies the page title. Do not add a body `#` heading.
 

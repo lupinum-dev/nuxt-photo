@@ -16,21 +16,21 @@ Nuxt Photo is a single Nuxt module. One install and one entry in `modules` auto-
 Use Nuxt's module helper:
 
 ```bash
-npx nuxi module add @nuxt-photo/nuxt
+npx nuxi module add @lupinum/nuxt-photo
 ```
 
-It installs the package and adds `@nuxt-photo/nuxt` to `modules` for you. If you use this command, skip the manual install and registration steps below.
+It installs the package and adds `@lupinum/nuxt-photo` to `modules` for you. If you use this command, skip the manual install and registration steps below.
 
 ## Manual install
 
-::pm-install{name="@nuxt-photo/nuxt"}
+::pm-install{name="@lupinum/nuxt-photo"}
 ::
 
 Then add the module to your `nuxt.config`:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
 })
 ```
 
@@ -42,7 +42,7 @@ The smallest working example:
 
 ```vue [app.vue]
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const photos: PhotoItem[] = [
   {
@@ -71,16 +71,16 @@ Start the dev server and click any photo - the lightbox opens with a FLIP transi
 
 ## What got installed
 
-The `@nuxt-photo/nuxt` package depends on the Vue library internally, so Nuxt
+The `@lupinum/nuxt-photo` package depends on the Vue library internally, so Nuxt
 apps only install the module package.
 
-| Package            | Purpose                                                           |
-| ------------------ | ----------------------------------------------------------------- |
-| `@nuxt-photo/nuxt` | Nuxt module, component registration, auto-imports, image wiring   |
-| `@nuxt-photo/vue`  | Components, composables, primitives, styles, types, photo helpers |
+| Package               | Purpose                                                           |
+| --------------------- | ----------------------------------------------------------------- |
+| `@lupinum/nuxt-photo` | Nuxt module, component registration, auto-imports, image wiring   |
+| `@lupinum/vue-photo`  | Components, composables, primitives, styles, types, photo helpers |
 
 For Nuxt app code, use auto-imports or explicit imports from
-`@nuxt-photo/nuxt/app`. Install `@nuxt-photo/vue` directly only in plain Vue
+`@lupinum/nuxt-photo/app`. Install `@lupinum/vue-photo` directly only in plain Vue
 apps.
 
 ## Add `@nuxt/image` later
@@ -94,7 +94,7 @@ first gallery.
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
 })
 ```
 
@@ -128,7 +128,7 @@ immediately:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
   nuxtPhoto: {
     css: 'all',
   },
@@ -145,7 +145,7 @@ works before you add files to `public/`.
 
 ```vue [app/pages/index.vue]
 <script setup lang="ts">
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const photos: PhotoItem[] = [
   {
@@ -189,7 +189,7 @@ Every photo is a plain object. The required fields are `id`, `src`, `width`,
 and `height`; everything else is optional.
 
 ```ts [app/composables/gallery.ts]
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 export const gallery: PhotoItem[] = [
   {
@@ -229,7 +229,7 @@ _Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
 Nuxt Photo doesn't care where your photos come from - a CMS, a filesystem, an Unsplash query, a static list. Everything funnels through a single shape: the `PhotoItem`.
 
 ```ts
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 ```
 
 ## The shape
@@ -362,7 +362,7 @@ If your API returns something else-Unsplash, Contentful, or Sanity-map it at
 your application boundary. Rendering components accept only `PhotoItem`.
 
 ```ts
-import type { PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 type UnsplashPhoto = {
   id: string

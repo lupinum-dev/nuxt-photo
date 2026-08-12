@@ -11,7 +11,7 @@
     "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },
   "dependencies": {
-    "@nuxt-photo/nuxt": "workspace:*",
+    "@lupinum/nuxt-photo": "workspace:*",
     "@nuxt/image": "^2.0.0",
     "nuxt": "catalog:",
     "nuxt-shiki": "^0.3.2"

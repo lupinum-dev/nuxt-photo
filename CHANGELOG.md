@@ -2,8 +2,8 @@
 
 Release history is maintained by Changesets for each published package:
 
-- [`@nuxt-photo/vue`](./packages/vue/CHANGELOG.md)
-- [`@nuxt-photo/nuxt`](./packages/nuxt/CHANGELOG.md)
+- [`@lupinum/vue-photo`](./packages/vue/CHANGELOG.md)
+- [`@lupinum/nuxt-photo`](./packages/nuxt/CHANGELOG.md)
 
 The repository publishes both packages as one fixed-version release set.
 Reviewed release notes and durable package artifacts are also attached to the

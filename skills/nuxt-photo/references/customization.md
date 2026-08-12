@@ -57,7 +57,7 @@ Fails loudly if `@nuxt/image` isn't installed - use `'auto'` if you want silent 
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@nuxt-photo/nuxt'],
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
   image: {
     provider: 'cloudinary',
     cloudinary: {
@@ -85,8 +85,8 @@ nuxtPhoto: {
 ```
 
 ```ts [plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@nuxt-photo/vue'
-import type { ImageAdapter } from '@nuxt-photo/nuxt/app'
+import { ImageAdapterKey } from '@lupinum/vue-photo'
+import type { ImageAdapter } from '@lupinum/nuxt-photo/app'
 
 const myAdapter: ImageAdapter = (photo, context) => {
   // context is 'thumb' | 'slide'
@@ -108,7 +108,7 @@ Every `<PhotoImage>` in the app now routes through `myAdapter`.
 
 `image: false` is a module-level choice. A standalone `<PhotoImage>` without a provided adapter still has its component-level native fallback, so custom pipelines should provide `ImageAdapterKey` at the app root.
 
-Because `ImageAdapterKey` is exported by the Vue layer, add `@nuxt-photo/vue` as a direct dependency when your Nuxt app imports it from app code.
+Because `ImageAdapterKey` is exported by the Vue layer, add `@lupinum/vue-photo` as a direct dependency when your Nuxt app imports it from app code.
 
 ## Per-component override
 
@@ -303,16 +303,16 @@ Use this page to look up the supported customization surfaces.
 
 ## Surfaces
 
-| Surface                | Import from       | Use it for                                                           | Notes                                            |
-| ---------------------- | ----------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
-| `useLightboxProvider`  | `@nuxt-photo/vue` | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
-| `resolveSlide` option  | `@nuxt-photo/vue` | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
-| Lightbox primitives    | `@nuxt-photo/vue` | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
-| `LightboxComponentKey` | `@nuxt-photo/vue` | Replacing the default recipe lightbox globally                       | Provided through Vue injection                   |
-| `ImageAdapterKey`      | `@nuxt-photo/vue` | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
-| `LightboxDefaultsKey`  | `@nuxt-photo/vue` | Setting shared default lightbox options                              | Vue-only customization hook                      |
-| `PhotoTrigger`         | `@nuxt-photo/vue` | Custom thumbnail layouts that keep the recipe lightbox               | Compose under `LightboxProvider`                 |
-| Recipe slots           | `@nuxt-photo/vue` | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
+| Surface                | Import from          | Use it for                                                           | Notes                                            |
+| ---------------------- | -------------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
+| `useLightboxProvider`  | `@lupinum/vue-photo` | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
+| `resolveSlide` option  | `@lupinum/vue-photo` | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
+| Lightbox primitives    | `@lupinum/vue-photo` | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
+| `LightboxComponentKey` | `@lupinum/vue-photo` | Replacing the default recipe lightbox globally                       | Provided through Vue injection                   |
+| `ImageAdapterKey`      | `@lupinum/vue-photo` | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
+| `LightboxDefaultsKey`  | `@lupinum/vue-photo` | Setting shared default lightbox options                              | Vue-only customization hook                      |
+| `PhotoTrigger`         | `@lupinum/vue-photo` | Custom thumbnail layouts that keep the recipe lightbox               | Compose under `LightboxProvider`                 |
+| Recipe slots           | `@lupinum/vue-photo` | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
 
 ## When to use which
 
@@ -327,7 +327,7 @@ Use this page to look up the supported customization surfaces.
 ### Global lightbox override
 
 ```ts
-import { LightboxComponentKey } from '@nuxt-photo/vue'
+import { LightboxComponentKey } from '@lupinum/vue-photo'
 import MyLightbox from '~/components/MyLightbox.vue'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -366,7 +366,7 @@ Create a lightbox component that renders the recipe `<Lightbox>` and overrides o
 
 ```vue [components/MyLightbox.vue]
 <script setup lang="ts">
-import { Lightbox } from '@nuxt-photo/vue'
+import { Lightbox } from '@lupinum/vue-photo'
 </script>
 
 <template>
@@ -527,7 +527,7 @@ This stops Nuxt Photo from auto-wiring an adapter on app start. You'll provide y
 ## 2. Write the adapter
 
 ```ts [utils/photoAdapter.ts]
-import type { ImageAdapter, PhotoItem } from '@nuxt-photo/nuxt/app'
+import type { ImageAdapter, PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const BASE = 'https://cdn.example.com/transform'
 
@@ -567,7 +567,7 @@ A few principles:
 Use a Nuxt plugin that runs for the app, not a client-only plugin:
 
 ```ts [plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@nuxt-photo/vue'
+import { ImageAdapterKey } from '@lupinum/vue-photo'
 import { cmsAdapter } from '~/utils/photoAdapter'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -577,7 +577,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 Every `<PhotoImage>` in the app now routes through `cmsAdapter` in both SSR and client rendering.
 
-Because `ImageAdapterKey` is exported by the Vue layer, add `@nuxt-photo/vue` as a direct dependency when your Nuxt app imports it from app code.
+Because `ImageAdapterKey` is exported by the Vue layer, add `@lupinum/vue-photo` as a direct dependency when your Nuxt app imports it from app code.
 
 ## 4. Per-instance override
 

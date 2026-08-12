@@ -52,7 +52,7 @@ function catalogVersion(catalog, name) {
 
 function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
   const consumerDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-vue-consumer-'))
-  const vueTarball = copyArtifact(consumerDir, artifactByName.get('@nuxt-photo/vue').tarballPath)
+  const vueTarball = copyArtifact(consumerDir, artifactByName.get('@lupinum/vue-photo').tarballPath)
   const srcDir = join(consumerDir, 'src')
   mkdirSync(srcDir)
 
@@ -62,7 +62,7 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
     type: 'module',
     packageManager: rootManifest.packageManager,
     dependencies: {
-      '@nuxt-photo/vue': `file:${vueTarball}`,
+      '@lupinum/vue-photo': `file:${vueTarball}`,
       vue: catalogVersion(catalog, 'vue'),
     },
     devDependencies: {
@@ -138,10 +138,10 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(srcDir, 'App.vue'),
     [
       '<script setup lang="ts">',
-      "import { PhotoAlbum, PhotoValidationError, responsive, type PhotoItem } from '@nuxt-photo/vue'",
-      "import { useContainerWidth } from '@nuxt-photo/vue/composables'",
-      "import type { LightboxCaptionSlotProps } from '@nuxt-photo/vue/types'",
-      "import '@nuxt-photo/vue/styles.css'",
+      "import { PhotoAlbum, PhotoValidationError, responsive, type PhotoItem } from '@lupinum/vue-photo'",
+      "import { useContainerWidth } from '@lupinum/vue-photo/composables'",
+      "import type { LightboxCaptionSlotProps } from '@lupinum/vue-photo/types'",
+      "import '@lupinum/vue-photo/styles.css'",
       '',
       "const photos: readonly PhotoItem[] = [{ id: 'packed', src: '/packed.jpg', width: 1200, height: 800 }]",
       'const spacing = responsive({ 0: 4, 800: 8 })',
@@ -161,13 +161,13 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
   try {
     run('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], consumerDir)
     assertInstalledOutsideRepository(
-      join(consumerDir, 'node_modules', '@nuxt-photo', 'vue'),
+      join(consumerDir, 'node_modules', '@lupinum', 'vue-photo'),
       rootDir,
-      '@nuxt-photo/vue',
+      '@lupinum/vue-photo',
     )
     assert(
-      !existsSync(join(consumerDir, 'node_modules', '@nuxt-photo', 'nuxt')),
-      'Vue-only consumer unexpectedly installed @nuxt-photo/nuxt.',
+      !existsSync(join(consumerDir, 'node_modules', '@lupinum', 'nuxt-photo')),
+      'Vue-only consumer unexpectedly installed @lupinum/nuxt-photo.',
     )
     run('pnpm', ['exec', 'vue-tsc', '-p', 'tsconfig.json', '--noEmit'], consumerDir)
     run('node', ['build.mjs'], consumerDir)
@@ -213,7 +213,7 @@ function collectListedVersions(value, packageName, versions = []) {
 
 function nestNuxtVueDependency(realNuxtRoot, installedVueRoot) {
   const exactVueRoot = realpathSync(installedVueRoot)
-  const nestedVueRoot = join(realNuxtRoot, 'node_modules', '@nuxt-photo', 'vue')
+  const nestedVueRoot = join(realNuxtRoot, 'node_modules', '@lupinum', 'vue-photo')
 
   mkdirSync(dirname(nestedVueRoot), { recursive: true })
   symlinkSync(exactVueRoot, nestedVueRoot, 'dir')
@@ -221,7 +221,7 @@ function nestNuxtVueDependency(realNuxtRoot, installedVueRoot) {
   unlinkSync(installedVueRoot)
   mkdirSync(installedVueRoot)
   writeJson(join(installedVueRoot, 'package.json'), {
-    name: '@nuxt-photo/vue',
+    name: '@lupinum/vue-photo',
     version: '0.0.0-incompatible-app-copy',
     type: 'module',
     exports: './index.mjs',
@@ -242,8 +242,11 @@ function nestNuxtVueDependency(realNuxtRoot, installedVueRoot) {
 
 function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
   const consumerDir = mkdtempSync(join(tmpdir(), 'nuxt-photo-nuxt-consumer-'))
-  const nuxtTarball = copyArtifact(consumerDir, artifactByName.get('@nuxt-photo/nuxt').tarballPath)
-  const vueTarball = copyArtifact(consumerDir, artifactByName.get('@nuxt-photo/vue').tarballPath)
+  const nuxtTarball = copyArtifact(
+    consumerDir,
+    artifactByName.get('@lupinum/nuxt-photo').tarballPath,
+  )
+  const vueTarball = copyArtifact(consumerDir, artifactByName.get('@lupinum/vue-photo').tarballPath)
 
   writeJson(join(consumerDir, 'package.json'), {
     name: 'nuxt-photo-nuxt-packed-consumer',
@@ -251,7 +254,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     type: 'module',
     packageManager: rootManifest.packageManager,
     dependencies: {
-      '@nuxt-photo/nuxt': `file:${nuxtTarball}`,
+      '@lupinum/nuxt-photo': `file:${nuxtTarball}`,
       nuxt: catalogVersion(catalog, 'nuxt'),
     },
     devDependencies: {
@@ -273,7 +276,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       "    oxc-parser: '*'",
       "    vite: '*'",
       'overrides:',
-      `  '@nuxt-photo/vue': ${JSON.stringify(`file:${vueTarball}`)}`,
+      `  '@lupinum/vue-photo': ${JSON.stringify(`file:${vueTarball}`)}`,
       '',
     ].join('\n'),
   )
@@ -281,7 +284,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(consumerDir, 'nuxt.config.ts'),
     [
       'export default defineNuxtConfig({',
-      "  modules: ['@nuxt-photo/nuxt'],",
+      "  modules: ['@lupinum/nuxt-photo'],",
       "  nuxtPhoto: { css: 'structure', image: false },",
       '})',
       '',
@@ -291,7 +294,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(consumerDir, 'app.vue'),
     [
       '<script setup lang="ts">',
-      "import { PhotoValidationError, type PhotoItem } from '@nuxt-photo/nuxt/app'",
+      "import { PhotoValidationError, type PhotoItem } from '@lupinum/nuxt-photo/app'",
       '',
       "const photos: readonly PhotoItem[] = [{ id: 'packed', src: '/packed.jpg', width: 1200, height: 800 }]",
       'void PhotoValidationError',
@@ -309,44 +312,44 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
 
     const consumerManifest = readJson(join(consumerDir, 'package.json'))
     assert(
-      consumerManifest.dependencies['@nuxt-photo/vue'] === undefined,
-      'Nuxt-only consumer must not declare @nuxt-photo/vue directly.',
+      consumerManifest.dependencies['@lupinum/vue-photo'] === undefined,
+      'Nuxt-only consumer must not declare @lupinum/vue-photo directly.',
     )
-    const installedNuxtRoot = join(consumerDir, 'node_modules', '@nuxt-photo', 'nuxt')
-    assertInstalledOutsideRepository(installedNuxtRoot, rootDir, '@nuxt-photo/nuxt')
+    const installedNuxtRoot = join(consumerDir, 'node_modules', '@lupinum', 'nuxt-photo')
+    assertInstalledOutsideRepository(installedNuxtRoot, rootDir, '@lupinum/nuxt-photo')
     const installedNuxtManifest = readJson(join(installedNuxtRoot, 'package.json'))
     assert(
-      installedNuxtManifest.dependencies['@nuxt-photo/vue'] ===
-        artifactByName.get('@nuxt-photo/vue').packageJson.version,
+      installedNuxtManifest.dependencies['@lupinum/vue-photo'] ===
+        artifactByName.get('@lupinum/vue-photo').packageJson.version,
       'Packed Nuxt package does not depend on the exact Vue package-set version.',
     )
 
     const realNuxtRoot = realpathSync(installedNuxtRoot)
-    const installedVueRoot = join(dirname(realNuxtRoot), 'vue')
-    assertInstalledOutsideRepository(installedVueRoot, rootDir, '@nuxt-photo/vue')
+    const installedVueRoot = join(dirname(realNuxtRoot), 'vue-photo')
+    assertInstalledOutsideRepository(installedVueRoot, rootDir, '@lupinum/vue-photo')
     const installedVueManifest = readJson(join(installedVueRoot, 'package.json'))
     assert(
-      installedVueManifest.version === artifactByName.get('@nuxt-photo/vue').packageJson.version,
-      'Nuxt-only consumer resolved the wrong @nuxt-photo/vue version.',
+      installedVueManifest.version === artifactByName.get('@lupinum/vue-photo').packageJson.version,
+      'Nuxt-only consumer resolved the wrong @lupinum/vue-photo version.',
     )
 
     const listOutput = execFileSync(
       'pnpm',
-      ['list', '@nuxt-photo/vue', '--depth', 'Infinity', '--json'],
+      ['list', '@lupinum/vue-photo', '--depth', 'Infinity', '--json'],
       {
         cwd: consumerDir,
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'inherit'],
       },
     )
-    const listedVersions = collectListedVersions(JSON.parse(listOutput), '@nuxt-photo/vue')
+    const listedVersions = collectListedVersions(JSON.parse(listOutput), '@lupinum/vue-photo')
     assert(
       new Set(listedVersions).size === 1,
-      `Nuxt-only consumer resolved multiple @nuxt-photo/vue versions: ${listedVersions.join(', ')}.`,
+      `Nuxt-only consumer resolved multiple @lupinum/vue-photo versions: ${listedVersions.join(', ')}.`,
     )
     assert(
-      listedVersions[0] === artifactByName.get('@nuxt-photo/vue').packageJson.version,
-      'Nuxt-only consumer resolved the wrong @nuxt-photo/vue version.',
+      listedVersions[0] === artifactByName.get('@lupinum/vue-photo').packageJson.version,
+      'Nuxt-only consumer resolved the wrong @lupinum/vue-photo version.',
     )
 
     const exactVueRoot = nestNuxtVueDependency(realNuxtRoot, installedVueRoot)
@@ -380,7 +383,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
 export function verifyPackedConsumers(rootDir, artifactPackages) {
   const artifactByName = new Map(artifactPackages.map((pkg) => [pkg.packageJson.name, pkg]))
   assert(
-    artifactByName.has('@nuxt-photo/vue') && artifactByName.has('@nuxt-photo/nuxt'),
+    artifactByName.has('@lupinum/vue-photo') && artifactByName.has('@lupinum/nuxt-photo'),
     'Packed consumers require both Nuxt Photo packages.',
   )
 
