@@ -205,6 +205,7 @@ function runNuxtFixture(fixtureId) {
     env: {
       ...process.env,
       NUXT_TELEMETRY_DISABLED: '1',
+      NUXT_PHOTO_SIZE_MODULE_PATH: resolve(nuxtPackageRoot, 'dist', 'module.mjs'),
     },
   })
   const assets = collectAssets(resolve(tempDir, '.output', 'public', '_nuxt'))

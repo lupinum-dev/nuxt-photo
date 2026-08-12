@@ -34,7 +34,7 @@ The website Markdown under `docs/content/docs/**` is the canonical usage documen
 - Do not invent dimensions. If source data lacks width/height, derive them from the image pipeline, CMS metadata, upload processing, or ask the user.
 - Do not use array indexes as `PhotoItem.id` for dynamic lists.
 - Do not add direct sibling dependencies unless app code imports them directly:
-  - Common app imports can come from `@lupinum/nuxt-photo`.
+  - Common app imports can come from `@lupinum/nuxt-photo/app`.
   - Direct imports from `@lupinum/vue-photo` or its public subpaths require that package in the app's own dependencies.
 - Do not set `nuxtPhoto.css: 'none'` unless the app provides a complete replacement for structure CSS.
 - Do not call `useLightboxProvider()` inside a recipe lightbox override passed through `:lightbox` or `LightboxComponentKey`; the recipe already owns that provider.
