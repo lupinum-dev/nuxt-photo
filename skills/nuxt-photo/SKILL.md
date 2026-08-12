@@ -1,6 +1,6 @@
 ---
 name: nuxt-photo
-description: Build, customize, migrate, or debug Nuxt Photo galleries in Nuxt apps. Use when Codex needs to install @nuxt-photo/nuxt, render Photo, PhotoAlbum, PhotoGroup, or PhotoCarousel, map CMS data to PhotoItem, configure @nuxt/image or native image loading, write a custom image adapter, tune responsive/SSR/CLS behavior, customize or replace the lightbox, or fix Nuxt Photo usage issues.
+description: Build, customize, migrate, or debug Nuxt Photo galleries in Nuxt apps. Use when Codex needs to install @lupinum/nuxt-photo, render Photo, PhotoAlbum, PhotoGroup, or PhotoCarousel, map CMS data to PhotoItem, configure @nuxt/image or native image loading, write a custom image adapter, tune responsive/SSR/CLS behavior, customize or replace the lightbox, or fix Nuxt Photo usage issues.
 ---
 
 # Nuxt Photo
@@ -34,8 +34,8 @@ The website Markdown under `docs/content/docs/**` is the canonical usage documen
 - Do not invent dimensions. If source data lacks width/height, derive them from the image pipeline, CMS metadata, upload processing, or ask the user.
 - Do not use array indexes as `PhotoItem.id` for dynamic lists.
 - Do not add direct sibling dependencies unless app code imports them directly:
-  - Common app imports can come from `@nuxt-photo/nuxt`.
-  - Direct imports from `@nuxt-photo/vue` or its public subpaths require that package in the app's own dependencies.
+  - Common app imports can come from `@lupinum/nuxt-photo`.
+  - Direct imports from `@lupinum/vue-photo` or its public subpaths require that package in the app's own dependencies.
 - Do not set `nuxtPhoto.css: 'none'` unless the app provides a complete replacement for structure CSS.
 - Do not call `useLightboxProvider()` inside a recipe lightbox override passed through `:lightbox` or `LightboxComponentKey`; the recipe already owns that provider.
 - Do not generate nondeterministic adapter URLs during SSR render. Pre-sign URLs before rendering or store signed URLs on the `PhotoItem`.

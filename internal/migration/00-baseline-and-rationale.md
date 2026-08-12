@@ -8,7 +8,7 @@ Nuxt Photo was not the smallest possible first pilot. It was selected because
 it exercises the maintenance contracts most likely to fail in real Lupinum
 libraries:
 
-- `@nuxt-photo/vue` must publish before `@nuxt-photo/nuxt`;
+- `@lupinum/vue-photo` must publish before `@lupinum/nuxt-photo`;
 - the Nuxt package must reference the exact released Vue version after packing;
 - Vue SFC output must remain consumable;
 - Nuxt-generated declarations and aliases require framework-aware checks;

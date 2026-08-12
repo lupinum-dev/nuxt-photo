@@ -37,7 +37,7 @@ vp run release:notes
 | Required before staging             | Current-main `Main healthy`, matching artifact digests, and reviewed release plan        |
 | Publication authority               | `.github/workflows/release.yml` using trusted publishing in stage-only mode              |
 | Human publication authority         | Protected GitHub deployment approvals plus personal npm 2FA stage approval and promotion |
-| Public approval and promotion order | `@nuxt-photo/vue` before `@nuxt-photo/nuxt`                                              |
+| Public approval and promotion order | `@lupinum/vue-photo` before `@lupinum/nuxt-photo`                                        |
 | Temporary channel                   | Unique per candidate: `lupinum-stage-<ci-run-id>`                                        |
 | Stable channel                      | `latest`                                                                                 |
 | Prerelease channel                  | `next`                                                                                   |
@@ -246,8 +246,8 @@ Configure these once before the first release:
   the maintainer who dispatched the workflow can perform the deliberate
   approval; enable it only when a second qualified reviewer is actually
   available;
-- configure trusted publishing separately for `@nuxt-photo/vue` and
-  `@nuxt-photo/nuxt`, restricted to `release.yml`, environment `npm`, and
+- configure trusted publishing separately for `@lupinum/vue-photo` and
+  `@lupinum/nuxt-photo`, restricted to `release.yml`, environment `npm`, and
   stage-publish only;
 - keep default workflow permissions read-only;
 - enable private vulnerability reporting, secret scanning, push protection,
@@ -290,8 +290,8 @@ and changelog path.
 1. Every user-visible pull request adds a Changeset.
 2. Successful main CI triggers `.github/workflows/version.yml`.
 3. The workflow opens or updates one version pull request.
-4. The fixed package group versions `@nuxt-photo/vue` and
-   `@nuxt-photo/nuxt` together.
+4. The fixed package group versions `@lupinum/vue-photo` and
+   `@lupinum/nuxt-photo` together.
 5. Maintainers review the generated versions and both package changelogs.
 6. Merging the version pull request creates a new exact-SHA main candidate.
 
@@ -359,8 +359,8 @@ deployment. A `fail-fast: false` matrix submits the two exact package tarballs
 independently so one failed submission can be retried without replacing the
 other package's bytes:
 
-- `@nuxt-photo/vue@<version>`;
-- `@nuxt-photo/nuxt@<version>`.
+- `@lupinum/vue-photo@<version>`;
+- `@lupinum/nuxt-photo@<version>`.
 
 Submission order is not the public dependency-order gate. Neither submitted
 stage becomes public until the maintainer approves it. The required
@@ -406,8 +406,8 @@ serves those same bytes.
 Promote in dependency order:
 
 ```sh
-npm dist-tag add @nuxt-photo/vue@<version> <latest|next>
-npm dist-tag add @nuxt-photo/nuxt@<version> <latest|next>
+npm dist-tag add @lupinum/vue-photo@<version> <latest|next>
+npm dist-tag add @lupinum/nuxt-photo@<version> <latest|next>
 ```
 
 Complete npm 2FA personally for each protected mutation.

@@ -1,3 +1,3 @@
-import { useLightbox } from '@nuxt-photo/vue'
+import { useLightbox } from '@lupinum/vue-photo'
 
 console.log(useLightbox)

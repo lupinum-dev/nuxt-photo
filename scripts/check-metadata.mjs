@@ -106,7 +106,7 @@ for (const requiredPolicy of [
 
 assert(
   JSON.stringify(packageSet.publishOrder) ===
-    JSON.stringify(['@nuxt-photo/vue', '@nuxt-photo/nuxt']),
+    JSON.stringify(['@lupinum/vue-photo', '@lupinum/nuxt-photo']),
   'The public package graph must publish Vue before Nuxt.',
 )
 
@@ -167,10 +167,10 @@ for (const pkg of packageSet.packages) {
   }
 }
 
-const nuxtPackage = packageSet.byName.get('@nuxt-photo/nuxt')
+const nuxtPackage = packageSet.byName.get('@lupinum/nuxt-photo')
 assert(
-  nuxtPackage.manifest.dependencies?.['@nuxt-photo/vue'] === 'workspace:*',
-  '@nuxt-photo/nuxt must directly depend on @nuxt-photo/vue via workspace:*.',
+  nuxtPackage.manifest.dependencies?.['@lupinum/vue-photo'] === 'workspace:*',
+  '@lupinum/nuxt-photo must directly depend on @lupinum/vue-photo via workspace:*.',
 )
 
 for (const { directory, manifest } of workspaceManifests) {

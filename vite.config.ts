@@ -20,29 +20,29 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: '@nuxt-photo/vue/composables',
+        find: '@lupinum/vue-photo/composables',
         replacement: fileURLToPath(
           new URL('./packages/vue/src/composables/index.ts', import.meta.url),
         ),
       },
       {
-        find: '@nuxt-photo/vue/provide',
+        find: '@lupinum/vue-photo/provide',
         replacement: fileURLToPath(new URL('./packages/vue/src/provide/keys.ts', import.meta.url)),
       },
       {
-        find: '@nuxt-photo/vue/types',
+        find: '@lupinum/vue-photo/types',
         replacement: fileURLToPath(new URL('./packages/vue/src/types/index.ts', import.meta.url)),
       },
       {
-        find: '@nuxt-photo/vue',
+        find: '@lupinum/vue-photo',
         replacement: fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
       },
       {
-        find: '@nuxt-photo/nuxt/app',
+        find: '@lupinum/nuxt-photo/app',
         replacement: fileURLToPath(new URL('./packages/nuxt/src/runtime/app.ts', import.meta.url)),
       },
       {
-        find: '@nuxt-photo/nuxt',
+        find: '@lupinum/nuxt-photo',
         replacement: fileURLToPath(new URL('./packages/nuxt/src/module.ts', import.meta.url)),
       },
       {

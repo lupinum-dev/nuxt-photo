@@ -1,4 +1,4 @@
-# @nuxt-photo/vue
+# @lupinum/vue-photo
 
 Vue composables and advanced lightbox building blocks for Nuxt Photo.
 
@@ -7,7 +7,7 @@ Use this package when you need custom lightbox UI, lower-level integration than 
 ## Install
 
 ```bash
-pnpm add @nuxt-photo/vue
+pnpm add @lupinum/vue-photo
 ```
 
 ## Example
@@ -15,7 +15,7 @@ pnpm add @nuxt-photo/vue
 `useLightboxProvider()` is the advanced entrypoint for custom lightbox components.
 
 ```ts
-import { useLightboxProvider, type PhotoItem } from '@nuxt-photo/vue'
+import { useLightboxProvider, type PhotoItem } from '@lupinum/vue-photo'
 
 const photos: PhotoItem[] = [
   { id: 'desert', src: '/photos/desert.jpg', width: 1280, height: 800 },
@@ -39,7 +39,7 @@ The root entrypoint exports:
 
 ## Stability
 
-Use the root `@nuxt-photo/vue` entrypoint for both normal usage and advanced customization.
+Use the root `@lupinum/vue-photo` entrypoint for both normal usage and advanced customization.
 
 Undocumented exports and generated deep paths are internal.
 

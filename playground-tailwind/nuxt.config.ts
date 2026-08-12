@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt-photo/nuxt'],
+  modules: ['@lupinum/nuxt-photo'],
 
   nuxtPhoto: {
     css: 'structure',

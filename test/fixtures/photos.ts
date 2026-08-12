@@ -1,4 +1,4 @@
-import type { PhotoItem } from '@nuxt-photo/vue'
+import type { PhotoItem } from '@lupinum/vue-photo'
 
 export function makePhoto(overrides: Partial<PhotoItem> = {}): PhotoItem {
   const id = overrides.id ?? `photo-${Math.random().toString(36).slice(2, 8)}`

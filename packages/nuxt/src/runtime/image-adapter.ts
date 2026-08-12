@@ -1,4 +1,4 @@
-import type { ImageAdapter, ImageContext, ImageSource, PhotoItem } from '@nuxt-photo/vue'
+import type { ImageAdapter, ImageContext, ImageSource, PhotoItem } from '@lupinum/vue-photo'
 import type { NuxtPhotoImageAdapterConfig } from '../options'
 
 export type { NuxtPhotoImageAdapterConfig } from '../options'

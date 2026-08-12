@@ -1,4 +1,4 @@
-# @nuxt-photo/vue
+# @lupinum/vue-photo
 
 ## 0.2.0
 
@@ -61,7 +61,7 @@
 
 ### Removed
 
-- Removed `@nuxt-photo/vue/extend`.
+- Removed `@lupinum/vue-photo/extend`.
 - Removed injected lightbox slot-override plumbing in favor of root exports and
   global lightbox component overrides.
 

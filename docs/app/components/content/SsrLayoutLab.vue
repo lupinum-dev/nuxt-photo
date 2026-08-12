@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { responsive } from '@nuxt-photo/nuxt/app'
+import { responsive } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 const serverWidth = ref(720)

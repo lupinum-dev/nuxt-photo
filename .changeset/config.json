@@ -7,7 +7,7 @@
     }
   ],
   "commit": false,
-  "fixed": [["@nuxt-photo/vue", "@nuxt-photo/nuxt"]],
+  "fixed": [["@lupinum/vue-photo", "@lupinum/nuxt-photo"]],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

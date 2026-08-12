@@ -140,10 +140,10 @@ unless an engine-specific defect demonstrates the need.
 
 Public API is owned by declared package exports:
 
-- `@nuxt-photo/vue`;
+- `@lupinum/vue-photo`;
 - its documented subpath exports;
-- `@nuxt-photo/nuxt`;
-- `@nuxt-photo/nuxt/app`.
+- `@lupinum/nuxt-photo`;
+- `@lupinum/nuxt-photo/app`.
 
 Do not encourage deep imports into source or generated internals.
 

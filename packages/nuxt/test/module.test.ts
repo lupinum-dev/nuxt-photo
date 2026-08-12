@@ -299,10 +299,10 @@ describe('nuxt-photo module', () => {
     await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      '/resolved/@nuxt-photo/vue/dist/styles/lightbox-structure.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/album.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/photo-structure.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/carousel-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/album.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/photo-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/carousel-structure.css',
     ])
   })
 
@@ -312,13 +312,13 @@ describe('nuxt-photo module', () => {
     await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css: 'all' }, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      '/resolved/@nuxt-photo/vue/dist/styles/lightbox-structure.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/album.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/photo-structure.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/carousel-structure.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/lightbox-theme.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/photo.css',
-      '/resolved/@nuxt-photo/vue/dist/styles/carousel-theme.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/album.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/photo-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/carousel-structure.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-theme.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/photo.css',
+      '/resolved/@lupinum/vue-photo/dist/styles/carousel-theme.css',
     ])
   })
 
@@ -351,17 +351,17 @@ describe('nuxt-photo module', () => {
 
     await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
-    expect(resolvePath).toHaveBeenCalledWith('@nuxt-photo/vue')
+    expect(resolvePath).toHaveBeenCalledWith('@lupinum/vue-photo')
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Photo',
-        filePath: '/resolved/@nuxt-photo/vue/dist/components/Photo.vue',
+        filePath: '/resolved/@lupinum/vue-photo/dist/components/Photo.vue',
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoAlbum',
-        filePath: '/resolved/@nuxt-photo/vue/dist/components/PhotoAlbum.vue',
+        filePath: '/resolved/@lupinum/vue-photo/dist/components/PhotoAlbum.vue',
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(
@@ -391,13 +391,13 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'LightboxRoot',
-        filePath: '/resolved/@nuxt-photo/vue/dist/primitives/LightboxRoot.vue',
+        filePath: '/resolved/@lupinum/vue-photo/dist/primitives/LightboxRoot.vue',
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoImage',
-        filePath: '/resolved/@nuxt-photo/vue/dist/primitives/PhotoImage.vue',
+        filePath: '/resolved/@lupinum/vue-photo/dist/primitives/PhotoImage.vue',
       }),
     )
   })
@@ -416,7 +416,7 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'NpPhoto',
-        filePath: '/resolved/@nuxt-photo/vue/dist/components/Photo.vue',
+        filePath: '/resolved/@lupinum/vue-photo/dist/components/Photo.vue',
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(
@@ -506,17 +506,17 @@ describe('nuxt-photo module', () => {
       {
         name: 'useLightbox',
         as: 'useLightbox',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
       {
         name: 'useLightboxProvider',
         as: 'useLightboxProvider',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
       {
         name: 'responsive',
         as: 'responsive',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
     ])
   })
@@ -536,17 +536,17 @@ describe('nuxt-photo module', () => {
       {
         name: 'useLightbox',
         as: 'useNpLightbox',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
       {
         name: 'useLightboxProvider',
         as: 'useNpLightboxProvider',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
       {
         name: 'responsive',
         as: 'npResponsive',
-        from: '@nuxt-photo/nuxt/app',
+        from: '@lupinum/nuxt-photo/app',
       },
     ])
   })

@@ -27,7 +27,7 @@ import {
 } from '../src/runtime/app'
 import type { LightboxCaptionSlotProps, PhotoItem } from '../src/runtime/app'
 
-describe('@nuxt-photo/nuxt app exports', () => {
+describe('@lupinum/nuxt-photo app exports', () => {
   it('exposes the documented app runtime API exactly', () => {
     expect(Object.keys(app).sort()).toEqual(
       [

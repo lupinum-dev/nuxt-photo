@@ -12,7 +12,7 @@ import {
   LightboxViewport,
   PhotoTrigger,
   useLightboxProvider,
-} from '@nuxt-photo/vue'
+} from '@lupinum/vue-photo'
 import { makePhoto } from '@test-fixtures/photos'
 
 function mountExpectingError(component: any, props?: Record<string, unknown>) {

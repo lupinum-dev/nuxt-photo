@@ -1,3 +1,3 @@
-import { PhotoImage } from '@nuxt-photo/vue'
+import { PhotoImage } from '@lupinum/vue-photo'
 
 console.log(PhotoImage)

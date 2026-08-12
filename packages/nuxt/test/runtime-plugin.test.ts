@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
-import type { PhotoItem } from '@nuxt-photo/vue'
+import type { PhotoItem } from '@lupinum/vue-photo'
 import {
   createNuxtImageAdapter,
   DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG,

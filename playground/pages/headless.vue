@@ -125,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Lightbox, LightboxProvider, PhotoTrigger } from '@nuxt-photo/nuxt/app'
+import { Lightbox, LightboxProvider, PhotoTrigger } from '@lupinum/nuxt-photo/app'
 import { photos } from '~/composables/photos'
 
 useHead({ title: 'PhotoGroup — nuxt-photo' })

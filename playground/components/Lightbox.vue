@@ -88,5 +88,5 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-} from '@nuxt-photo/nuxt/app'
+} from '@lupinum/nuxt-photo/app'
 </script>

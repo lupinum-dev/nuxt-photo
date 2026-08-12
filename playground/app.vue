@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { provide } from 'vue'
-import { LightboxComponentKey } from '@nuxt-photo/nuxt/app'
+import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
 import Lightbox from '~/components/Lightbox.vue'
 
 provide(LightboxComponentKey, Lightbox)
