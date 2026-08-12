@@ -10,7 +10,10 @@ export default {
       localeSwitcher: 'dropdown',
       docsSidebarSwitcher: 'tabs',
     },
-    social: { github: 'https://github.com/lupinum-dev/nuxt-photo' },
+    social: {
+      github: 'https://github.com/lupinum-dev/nuxt-photo',
+      discord: 'https://discord.gg/RPH6SeA36N',
+    },
     repository: {
       url: 'https://github.com/lupinum-dev/nuxt-photo',
       branch: 'main',

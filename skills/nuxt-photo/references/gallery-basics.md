@@ -103,11 +103,11 @@ it. Configure remote domains and provider-specific source rules in the Nuxt
 `image` block; use `nuxtPhoto.image` only for Nuxt Photo's thumb and slide
 defaults.
 
-:read-more{to="/docs/concepts/image-pipeline" title="Image providers"}
+[Image providers](/docs/concepts/image-pipeline)
 
 ## Next step
 
-:read-more{to="/docs/getting-started/first-gallery" title="Build your first gallery"}
+[Build your first gallery](/docs/getting-started/first-gallery)
 
 _Source: `docs/content/docs/2.getting-started/1.installation.md`_
 
@@ -203,7 +203,7 @@ export const gallery: PhotoItem[] = [
 ]
 ```
 
-::callout{icon="i-lucide-triangle-alert"}
+::warning
 `width` and `height` must match the real image. Nuxt Photo uses them to lay out
 thumbnails before images load and to compute the lightbox transition frame.
 Wrong dimensions can still render an image, but the layout and FLIP frame will
@@ -276,7 +276,7 @@ The image's intrinsic pixel dimensions, not its display size. Nuxt Photo uses th
 - Compute the FLIP transition target when opening the lightbox.
 - Pick the right aspect ratio for `object-fit` and lightbox sizing.
 
-::callout{icon="i-lucide-triangle-alert"}
+::warning
 Every rendered photo needs real dimensions - not placeholders. If your CMS doesn't return them, generate them at upload time with [`probe-image-size`](https://www.npmjs.com/package/probe-image-size) or equivalent. Ballpark values ruin the layout.
 ::
 
@@ -393,8 +393,8 @@ keeps rendering behavior deterministic and fully typed.
 
 ## See also
 
-[Types reference](/docs/api/types)
+- [Types reference](/docs/api/types)
 
-[Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
+- [Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
 
 _Source: `docs/content/docs/3.concepts/1.photo-model.md`_
