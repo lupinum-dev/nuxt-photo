@@ -1,12 +1,7 @@
 name: release
 
 on:
-  workflow_dispatch:
-    inputs:
-      ci_run_id:
-        description: Numeric run ID of the current successful main `ci` workflow
-        required: true
-        type: string
+  workflow_dispatch: {}
 
 concurrency:
   group: npm-publication
@@ -25,6 +20,7 @@ jobs:
     outputs:
       branch: ${{ steps.ci.outputs.branch }}
       channel: ${{ steps.release.outputs.channel }}
+      ci_run_id: ${{ steps.ci.outputs.run-id }}
       package_matrix: ${{ steps.release.outputs.package_matrix }}
       sha: ${{ steps.ci.outputs.sha }}
       tag: ${{ steps.release.outputs.tag }}
@@ -32,16 +28,8 @@ jobs:
       - name: Validate authoritative current-main CI run
         id: ci
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        env:
-          CI_RUN_ID: ${{ inputs.ci_run_id }}
         with:
           script: |
-            const runId = Number(process.env.CI_RUN_ID)
-            if (!Number.isSafeInteger(runId) || runId <= 0) {
-              core.setFailed('ci_run_id must be a positive integer')
-              return
-            }
-
             const { data: repository } = await github.rest.repos.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -59,32 +47,29 @@ jobs:
               return
             }
 
-            const { data: run } = await github.rest.actions.getWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            })
             const { data: currentMain } = await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: `heads/${defaultBranch}`,
             })
-
-            if (run.path !== '.github/workflows/ci.yml') {
-              core.setFailed(`Run ${runId} belongs to ${run.path}, not ci.yml`)
-              return
-            }
-            if (run.event !== 'push' || run.head_branch !== defaultBranch) {
-              core.setFailed(`Run ${runId} is not a push on ${defaultBranch}`)
-              return
-            }
-            if (run.conclusion !== 'success') {
-              core.setFailed(`Run ${runId} concluded with ${run.conclusion}`)
-              return
-            }
-            if (run.head_sha !== currentMain.object.sha) {
+            const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              branch: defaultBranch,
+              event: 'push',
+              status: 'completed',
+              per_page: 20,
+            })
+            const run = workflowRuns.workflow_runs.find(
+              candidate =>
+                candidate.conclusion === 'success' &&
+                candidate.head_branch === defaultBranch &&
+                candidate.head_sha === currentMain.object.sha,
+            )
+            if (!run) {
               core.setFailed(
-                `Run ${runId} verified ${run.head_sha}, but current ${defaultBranch} is ${currentMain.object.sha}`,
+                `Current ${defaultBranch} commit ${currentMain.object.sha} has no successful ci.yml push run`,
               )
               return
             }
@@ -122,6 +107,7 @@ jobs:
 
             core.setOutput('sha', run.head_sha)
             core.setOutput('branch', defaultBranch)
+            core.setOutput('run-id', String(run.id))
 
       - name: Checkout certified SHA
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -143,7 +129,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           name: release-candidate
           path: .release
-          run-id: ${{ inputs.ci_run_id }}
+          run-id: ${{ steps.ci.outputs.run-id }}
 
       - name: Verify publication authorization
         run: >-
@@ -159,7 +145,7 @@ jobs:
         run: >-
           node scripts/prepare-release.mjs .release
           --expected-sha "${{ steps.ci.outputs.sha }}"
-          --ci-run-id "${{ inputs.ci_run_id }}"
+          --ci-run-id "${{ steps.ci.outputs.run-id }}"
           --summary "$GITHUB_STEP_SUMMARY"
           --github-output "$GITHUB_OUTPUT"
 
@@ -216,7 +202,7 @@ jobs:
           PREVIOUS_CHANNEL_VERSION: ${{ matrix.previousChannelVersion }}
           PREVIOUS_STAGING_VERSION: ${{ matrix.previousStagingVersion }}
           SOURCE_SHA: ${{ needs.prepare.outputs.sha }}
-          CI_RUN_ID: ${{ inputs.ci_run_id }}
+          CI_RUN_ID: ${{ needs.prepare.outputs.ci_run_id }}
         shell: bash
         run: |
           node --input-type=module <<'NODE'
