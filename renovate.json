@@ -5,7 +5,7 @@
   "labels": ["dependencies"],
   "timezone": "Europe/Vienna",
   "schedule": ["before 6am on Monday"],
-  "minimumReleaseAge": "2 days",
+  "minimumReleaseAge": "1 day",
   "internalChecksFilter": "strict",
   "automerge": false,
   "vulnerabilityAlerts": {

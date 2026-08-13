@@ -61,11 +61,11 @@ vp check --fix
 Before requesting review:
 
 ```sh
-vp run verify
+pnpm verify
 git status --short
 ```
 
-`vp run verify` is the complete local pull-request gate. It includes framework
+`pnpm verify` is the complete local pull-request gate. It includes framework
 typechecks, Vue-template lint, packed-package certification, real application
 builds, size budgets, and browser tests. It is intentionally heavier than the
 daily loop.
@@ -251,6 +251,6 @@ pnpm publish
 ```
 
 After Changesets prepares a reviewed version, main CI creates the exact
-two-package candidate. The protected GitHub workflow stages those retained
-bytes, and the maintainer personally performs npm 2FA approvals and channel
-promotion. See `MAINTAINING.md`.
+two-package candidate. One protected GitHub workflow publishes those retained
+bytes with npm trusted publishing and creates the GitHub release. See
+`MAINTAINING.md`.

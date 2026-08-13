@@ -25,7 +25,7 @@ overrides:
   hono: 4.12.34
   ip-address: 10.3.1
   js-yaml: 4.3.1
-  'read-yaml-file>js-yaml': 3.14.2
+  'read-yaml-file>js-yaml': 3.15.1
   launch-editor: 2.14.1
   nanoid: 3.3.18
   postcss: 8.5.23
@@ -45,10 +45,10 @@ peerDependencyRules:
     - vite
   allowedVersions:
     vite: '*'
-minimumReleaseAge: 2880
+minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
-  # Reviewed Lupinum release candidates. Remove after 2026-08-14.
+  # Reviewed Lupinum release candidates required by this sprint. Remove after 2026-08-15.
   - '@lupinum/ginko-content@0.4.0-rc.1'
   - '@lupinum/ginko-docs@0.3.0-rc.3'
 

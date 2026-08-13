@@ -15,9 +15,12 @@ const maintainerNode = readText('.node-version').trim()
 const catalog = readWorkspaceCatalog(root)
 const requiredRootScripts = [
   'build',
+  'audit:all',
   'changeset',
   'check',
   'check:release-workflow',
+  'check:vercel',
+  'docs:build',
   'release:notes',
   'release:pack',
   'release:verify',
@@ -81,6 +84,10 @@ assert(
   !Object.hasOwn(rootManifest.devDependencies ?? {}, 'prettier'),
   'Oxfmt is the only repository formatter; remove Prettier.',
 )
+assert(
+  rootManifest.devDependencies?.['pkg-pr-new'] === '0.0.87',
+  'pkg-pr-new must remain pinned for reproducible package previews.',
+)
 
 const npmrc = readText('.npmrc')
 assert(npmrc.includes('engine-strict=true'), '.npmrc must reject unsupported Node versions.')
@@ -98,7 +105,7 @@ for (const requiredPolicy of [
   'enableGlobalVirtualStore: false',
   'preferFrozenLockfile: true',
   'strictPeerDependencies: true',
-  'minimumReleaseAge: 2880',
+  'minimumReleaseAge: 1440',
 ]) {
   assert(
     workspacePolicy.includes(requiredPolicy),
@@ -275,8 +282,8 @@ function verifyRenovate() {
     'Renovate must preserve full GitHub Action digest pinning.',
   )
   assert(
-    renovate.minimumReleaseAge === '2 days',
-    'Renovate minimumReleaseAge must match pnpm at two days.',
+    renovate.minimumReleaseAge === '1 day',
+    'Renovate minimumReleaseAge must match pnpm at one day.',
   )
   assert(
     renovate.internalChecksFilter === 'strict',
@@ -303,7 +310,7 @@ function verifyWorkflows() {
   )
   assert(
     workflows.some(({ name }) => name === 'release.yml'),
-    'The staged release.yml workflow is missing.',
+    'The protected release.yml workflow is missing.',
   )
   assert(
     workflows.some(({ name }) => name === 'security.yml'),
@@ -312,6 +319,10 @@ function verifyWorkflows() {
   assert(
     workflows.some(({ name }) => name === 'version.yml'),
     'The Changesets version.yml workflow is missing.',
+  )
+  assert(
+    workflows.some(({ name }) => name === 'package-preview.yml'),
+    'The non-required package-preview.yml workflow is missing.',
   )
 
   for (const workflow of workflows) {
@@ -323,11 +334,12 @@ function verifyWorkflows() {
       !/\b(?:NPM_TOKEN|NODE_AUTH_TOKEN)\b/.test(workflow.text),
       `${workflow.name} must use OIDC rather than a long-lived npm token.`,
     )
-    assert(
-      !/\bnpm\s+publish\b/.test(workflow.text),
-      `${workflow.name} must not directly publish; use npm staged publishing.`,
-    )
-
+    if (workflow.name !== 'release.yml') {
+      assert(
+        !/\bnpm\s+publish\b/.test(workflow.text),
+        `${workflow.name} must not publish packages.`,
+      )
+    }
     for (const match of workflow.text.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
       const reference = match[1]
       if (reference.startsWith('./') || reference.startsWith('docker://')) {
@@ -341,9 +353,9 @@ function verifyWorkflows() {
   }
 
   const releaseWorkflow = workflows.find(({ name }) => name === 'release.yml')?.text ?? ''
-  const stageJob = /^  stage:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(releaseWorkflow)?.[1]
-  assert(stageJob, 'release.yml is missing the npm staging job.')
-  assert(stageJob.includes('id-token: write'), 'The staging job must use npm trusted publishing.')
+  const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(releaseWorkflow)?.[1]
+  assert(publishJob, 'release.yml is missing the npm publish job.')
+  assert(publishJob.includes('id-token: write'), 'The publish job must use npm trusted publishing.')
   for (const forbidden of [
     'actions/checkout@',
     'actions/github-script@',
@@ -354,15 +366,20 @@ function verifyWorkflows() {
     'vp install',
   ]) {
     assert(
-      !stageJob.includes(forbidden),
-      `The token-capable staging job must not contain ${forbidden}.`,
+      !publishJob.includes(forbidden),
+      `The token-capable publish job must not contain ${forbidden}.`,
     )
   }
   assert(
-    stageJob.includes("'stage',\n            'publish'") &&
-      stageJob.includes("'--ignore-scripts'") &&
-      stageJob.includes("'--provenance'"),
-    'The staging job must submit only the retained tarball with scripts disabled and provenance enabled.',
+    publishJob.includes("'publish', tarball") &&
+      publishJob.includes("'--ignore-scripts', '--provenance'") &&
+      publishJob.includes('record.channel'),
+    'The publish job must submit only retained tarballs to next or latest with scripts disabled and provenance enabled.',
+  )
+  assert(
+    /^  github-release:\n([\s\S]*)$/m.test(releaseWorkflow) &&
+      releaseWorkflow.includes('gh release create'),
+    'release.yml must create the GitHub release automatically.',
   )
 }
 

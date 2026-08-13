@@ -62,7 +62,7 @@ vp test
 Before handoff:
 
 ```sh
-vp run verify
+pnpm verify
 git status --short
 ```
 
@@ -118,17 +118,17 @@ Use `vp help` or the version-matched documentation in
 
 ## Test escalation
 
-| Change                                        | First proof                                  | Escalation                          |
-| --------------------------------------------- | -------------------------------------------- | ----------------------------------- |
-| Pure photo/layout helper                      | Targeted `vp test <file>`                    | `vp test`                           |
-| Vue component, composable, or primitive       | Targeted Vue test                            | `vp run typecheck:packages`         |
-| Nuxt module or runtime integration            | Targeted Nuxt test                           | `vp run build` and relevant fixture |
-| Vue template markup                           | Targeted test and `vp run lint:vue-template` | `vp run verify`                     |
-| Browser interaction or accessibility          | Focused Playwright project/file              | `vp run test:browser`               |
-| Tailwind integration                          | Affected test or component check             | `vp run build:playground-tailwind`  |
-| Public docs                                   | `vp run docs:validate`                       | `vp run build:docs`                 |
-| Exports, dependencies, files, or declarations | `vp run release:pack`                        | packed clean consumer               |
-| Release or workflow code                      | Focused script tests/checks                  | `vp run release:verify` on main CI  |
+| Change                                        | First proof                                | Escalation                          |
+| --------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| Pure photo/layout helper                      | Targeted `vp test <file>`                  | `vp test`                           |
+| Vue component, composable, or primitive       | Targeted Vue test                          | `vp run typecheck:packages`         |
+| Nuxt module or runtime integration            | Targeted Nuxt test                         | `vp run build` and relevant fixture |
+| Vue template markup                           | Targeted test and `pnpm lint:vue-template` | `pnpm verify`                       |
+| Browser interaction or accessibility          | Focused Playwright project/file            | `vp run test:browser`               |
+| Tailwind integration                          | Affected test or component check           | `vp run build:playground-tailwind`  |
+| Public docs                                   | `vp run docs:validate`                     | `vp run build:docs`                 |
+| Exports, dependencies, files, or declarations | `vp run release:pack`                      | packed clean consumer               |
+| Release or workflow code                      | Focused script tests/checks                | `pnpm release:verify` on main CI    |
 
 Fixture setup failure must fail the suite. Do not turn a required contract into
 a skip merely because setup is inconvenient.
@@ -195,10 +195,9 @@ Do not:
 - omit a Changeset for a public change without explaining why the change has no
   published effect.
 
-The two packages release as one coordinated set. Candidate creation must honor
-the Nuxt package's exact dependency on Vue. Protected stage-submission jobs may
-run independently for resumability, but the maintainer must approve the Vue npm
-stage before the Nuxt npm stage and promote Vue's final channel before Nuxt's.
+The two packages release as one coordinated set. Candidate creation and
+publication must honor the Nuxt package's exact dependency on Vue. The
+protected workflow publishes Vue before Nuxt.
 
 ## Release boundary
 
@@ -211,9 +210,7 @@ agents must not:
 
 - dispatch the release workflow;
 - approve a GitHub protected environment;
-- approve or reject an npm stage;
-- enter an npm 2FA code;
-- publish or promote a package;
+- publish a package;
 - move or remove an npm dist-tag;
 - create or overwrite a Git tag or GitHub Release;
 - unpublish a version.
@@ -232,12 +229,12 @@ authorize assessment and safe preparation, not publication.
 The agent must:
 
 1. Say immediately that assessment has started and nothing will be published
-   without later exact approval and the maintainer's personal npm 2FA actions.
+   without later exact approval.
 2. Read the release and rollback sections of `MAINTAINING.md`.
 3. Run `vp run release:notes`.
 4. Inspect the worktree, Changesets, version pull request, current-main SHA,
-   `Main healthy`, retained `release-candidate`, active release runs, npm stage
-   state, dist-tags, provenance, tags, and GitHub Releases.
+   `Main healthy`, retained `release-candidate`, active release runs, dist-tags,
+   provenance, tags, and GitHub Releases.
 5. Use authoritative remote evidence instead of repeating a large local gate
    merely for reassurance.
 6. List every known blocker, but recommend exactly one dependency-ordered next
@@ -246,9 +243,8 @@ The agent must:
 Use this status shape:
 
 ```text
-RELEASE STATUS: <BLOCKED | READY TO PLAN | AWAITING APPROVAL |
-                 STAGED | AWAITING 2FA | PROMOTING |
-                 PARTIAL FAILURE | COMPLETE>
+RELEASE STATUS: <BLOCKED | READY | AWAITING APPROVAL |
+                 PUBLISHING | PARTIAL FAILURE | COMPLETE>
 
 Package set:
 - @lupinum/vue-photo@<version>
@@ -280,42 +276,18 @@ to:
 - automatically selected successful `ci` run ID;
 - both retained tarball digests.
 
-Explain that dispatch first prepares a read-only plan. After the plan exists,
-present the exact staging effect and rollback before requesting authorization
-for the protected staging deployment.
-
-The workflow derives one candidate-specific temporary tag from the selected CI
-run: `lupinum-stage-<ci-run-id>`. Use the exact tag and
-`rollbackStagingCommand` recorded by the workflow; never substitute a fixed
-shared staging tag. The maintainer must personally approve the npm stages with
-2FA in dependency order:
-
-1. `@lupinum/vue-photo`;
-2. `@lupinum/nuxt-photo`.
-
-The workflow summary owns the exact stage IDs and commands. The agent may point
-to them, but must never enter a 2FA code or call an approval API.
-
-After both staged packages are readable and have provenance, the maintainer
-personally promotes the final channel in the same dependency order:
-
-```sh
-npm dist-tag add @lupinum/vue-photo@<version> <latest|next>
-npm dist-tag add @lupinum/nuxt-photo@<version> <latest|next>
-```
-
-Only after both final tags agree should the candidate-specific temporary tags
-be restored or removed with the workflow record's exact commands and the
-pending GitHub finalization deployment be approved. The finalizer verifies both
-packages, records one `v<version>` tag and GitHub Release, and attaches the
-package-set evidence.
+Dispatch the workflow with the exact fixed version. It selects the successful
+current-main CI artifact. The protected `npm` environment then requires one
+human approval. The isolated job publishes the certified Vue tarball before the
+certified Nuxt tarball. It uses `next` for a prerelease and `latest` for a stable
+release. It verifies registry bytes, provenance, and both dist-tags before it
+creates the GitHub release.
 
 Stay with the release until a terminal result. `COMPLETE` requires:
 
 - both npm versions readable;
 - provenance present for both;
 - final channel correct for both;
-- temporary staging tags cleaned up;
 - Git tag present;
 - one immutable GitHub Release present with durable evidence.
 
@@ -323,12 +295,9 @@ Stay with the release until a terminal result. `COMPLETE` requires:
 
 Once npm accepts a version, it is immutable.
 
-- Never rebuild or restage already-approved bytes.
-- Continue or rerun the failed jobs in the same workflow run.
-- If one final channel was promoted and the other was not, immediately restore
-  the first package's recorded previous channel target before continuing.
-- If an npm stage is still unapproved and must be abandoned, use the exact
-  stage ID from the plan and the documented reject action.
+- Never rebuild or republish already-accepted bytes.
+- Rerun the same workflow. It skips an existing version only when its SHA-1
+  matches the certified tarball, then continues with the missing package.
 - If registry state is ambiguous, stop and investigate one fact at a time.
 - Rollback mutations require a new exact maintainer authorization.
 

@@ -40,6 +40,22 @@ Frontmatter supplies the page title. Do not add a body `#` heading.
 Do not rewrite license text, code, API identifiers, command output, quotations,
 changelog identifiers, or generated reports to match this profile.
 
+## Structure public READMEs
+
+Use the same public header in the root README and each published package README:
+
+1. Center the 128 px product icon.
+2. Center the product name and one-sentence value proposition.
+3. Show npm, CI, and MIT badges.
+4. State the release status when the package is not stable.
+
+The root README then explains why and when to use the product, requirements,
+installation, the smallest useful example, core concepts, packages,
+documentation, contribution, support, security, and license. Package READMEs
+use a compact version of the same order. Explain user outcomes before internal
+architecture. Keep fixture, benchmark, license, migration, and proof READMEs
+technical and unbranded.
+
 ## Build examples that can be copied
 
 Label application files with a real path:
@@ -107,6 +123,6 @@ and public export tests. Keep these facts aligned:
 - image adapter and SSR behavior;
 - generated agent references.
 
-Run `vp run docs:validate`, regenerate references with `vp run docs:agent`, and
-build the production docs before handoff. Use the in-app browser to test every
+Run `pnpm docs:validate`, regenerate references with `pnpm docs:agent`, and
+run `pnpm docs:build` before handoff. Use the in-app browser to test every
 canonical playground at desktop and phone widths.

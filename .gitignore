@@ -2,6 +2,7 @@ node_modules
 dist
 .output
 .nuxt
+.vercel
 .env
 .env.local
 .env.development.local
@@ -17,6 +18,7 @@ dist
 playwright-report
 test-results
 .release
+.package-preview
 .content
 .data
 coverage

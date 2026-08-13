@@ -1,4 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --global pnpm@11.13.1 && pnpm install --frozen-lockfile"
+  "framework": "nuxtjs",
+  "buildCommand": "pnpm --dir .. docs:build",
+  "outputDirectory": null
 }

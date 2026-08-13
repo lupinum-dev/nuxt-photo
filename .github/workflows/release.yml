@@ -1,113 +1,122 @@
-name: release
+name: Publish
 
 on:
-  workflow_dispatch: {}
-
-concurrency:
-  group: npm-publication
-  cancel-in-progress: false
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact fixed version from both package manifests
+        required: true
+        type: string
 
 permissions: {}
 
+concurrency:
+  group: publish-nuxt-photo
+  cancel-in-progress: false
+
 jobs:
-  prepare:
-    name: Prepare staged publication
-    runs-on: ubuntu-latest
+  verify:
+    name: Verify certified artifacts
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       actions: read
       contents: read
     outputs:
-      branch: ${{ steps.ci.outputs.branch }}
       channel: ${{ steps.release.outputs.channel }}
       ci_run_id: ${{ steps.ci.outputs.run-id }}
-      package_matrix: ${{ steps.release.outputs.package_matrix }}
       sha: ${{ steps.ci.outputs.sha }}
       tag: ${{ steps.release.outputs.tag }}
+
     steps:
-      - name: Validate authoritative current-main CI run
+      - name: Require current main and successful CI
         id: ci
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         with:
           script: |
+            if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(process.env.RELEASE_VERSION)) {
+              core.setFailed('The release version is not valid SemVer.')
+              return
+            }
             const { data: repository } = await github.rest.repos.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
             })
-            const defaultBranch = repository.default_branch
-            const requiredRef = `refs/heads/${defaultBranch}`
-            if (context.ref !== requiredRef) {
-              core.setFailed(`Dispatch release.yml from ${requiredRef}, not ${context.ref}`)
+            if (context.ref !== `refs/heads/${repository.default_branch}`) {
+              core.setFailed(`Dispatch from ${repository.default_branch}.`)
               return
             }
             if (repository.visibility !== 'public') {
-              core.setFailed(
-                'npm provenance requires a public GitHub repository. Make the repository public before publication.',
-              )
+              core.setFailed('npm provenance requires a public repository.')
               return
             }
-
             const { data: currentMain } = await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: `heads/${defaultBranch}`,
+              ref: `heads/${repository.default_branch}`,
             })
-            const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+            if (currentMain.object.sha !== context.sha) {
+              core.setFailed('The dispatch SHA is not current main.')
+              return
+            }
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'ci.yml',
-              branch: defaultBranch,
+              branch: repository.default_branch,
               event: 'push',
               status: 'completed',
               per_page: 20,
             })
-            const run = workflowRuns.workflow_runs.find(
-              candidate =>
-                candidate.conclusion === 'success' &&
-                candidate.head_branch === defaultBranch &&
-                candidate.head_sha === currentMain.object.sha,
+            const run = runs.workflow_runs.find(candidate =>
+              candidate.conclusion === 'success' && candidate.head_sha === context.sha,
             )
             if (!run) {
-              core.setFailed(
-                `Current ${defaultBranch} commit ${currentMain.object.sha} has no successful ci.yml push run`,
-              )
+              core.setFailed(`Current main ${context.sha} has no successful ci.yml push run.`)
               return
             }
-
             let environment
             try {
-              const response = await github.request(
+              environment = (await github.request(
                 'GET /repos/{owner}/{repo}/environments/{environment_name}',
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   environment_name: 'npm',
                 },
-              )
-              environment = response.data
+              )).data
             } catch (error) {
               if (error.status === 404) {
-                core.setFailed(
-                  'The protected npm environment does not exist. Create it and add a required reviewer before publication.',
-                )
+                core.setFailed('Create the protected npm environment before publication.')
                 return
               }
               throw error
             }
-
-            const reviewerRule = (environment.protection_rules ?? []).find(
-              rule => rule.type === 'required_reviewers',
-            )
-            if (!reviewerRule?.reviewers?.length) {
-              core.setFailed(
-                'The npm environment must require at least one human reviewer before publication.',
-              )
+            const reviewers = (environment.protection_rules ?? [])
+              .find(rule => rule.type === 'required_reviewers')?.reviewers ?? []
+            if (reviewers.length === 0) {
+              core.setFailed('The npm environment must require a human reviewer.')
               return
             }
-
-            core.setOutput('sha', run.head_sha)
-            core.setOutput('branch', defaultBranch)
+            core.setOutput('sha', context.sha)
             core.setOutput('run-id', String(run.id))
+
+      - name: Require an unused release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/v$RELEASE_VERSION")
+          case "$status" in
+            404) ;;
+            200) echo "Tag v$RELEASE_VERSION already exists" >&2; exit 1 ;;
+            *) echo "Could not verify tag availability (HTTP $status)" >&2; exit 1 ;;
+          esac
 
       - name: Checkout certified SHA
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -116,7 +125,7 @@ jobs:
           persist-credentials: false
           ref: ${{ steps.ci.outputs.sha }}
 
-      - name: Set up publication-planning Node
+      - name: Set up verification Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .node-version
@@ -126,7 +135,7 @@ jobs:
       - name: Download retained release candidate
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           name: release-candidate
           path: .release
           run-id: ${{ steps.ci.outputs.run-id }}
@@ -137,22 +146,20 @@ jobs:
           --expected-sha "${{ steps.ci.outputs.sha }}"
           --publishable
 
-      - name: Show reviewed release contents
-        run: node scripts/release-notes.mjs
-
-      - name: Prepare package-set record and approval summary
+      - name: Prepare exact release plan
         id: release
         run: >-
           node scripts/prepare-release.mjs .release
           --expected-sha "${{ steps.ci.outputs.sha }}"
           --ci-run-id "${{ steps.ci.outputs.run-id }}"
+          --expected-version "${{ inputs.version }}"
           --summary "$GITHUB_STEP_SUMMARY"
           --github-output "$GITHUB_OUTPUT"
 
-      - name: Upload immutable staging plan
+      - name: Upload verified release plan
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: release-plan
+          name: verified-nuxt-photo-release
           path: |
             .release/*.tgz
             .release/release-artifact.json
@@ -160,582 +167,127 @@ jobs:
             .release/github-release-notes.md
           if-no-files-found: error
           include-hidden-files: true
-          retention-days: 90
+          retention-days: 2
 
-  stage:
-    name: Stage ${{ matrix.name }}
-    needs:
-      - prepare
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+  publish:
+    name: Publish fixed package set to npm
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     environment: npm
     permissions:
       actions: read
+      contents: read
       id-token: write
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.package_matrix) }}
+
     steps:
-      - name: Set up staging Node
+      - name: Set up trusted publishing Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24.18.0
           package-manager-cache: false
           registry-url: https://registry.npmjs.org
 
-      - name: Download approved staging plan
+      - name: Download verified release plan
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: release-plan
+          name: verified-nuxt-photo-release
           path: .release
 
-      - name: Verify and stage exact tarball with npm trusted publishing
+      - name: Publish inert tarballs in dependency order
         env:
-          PACKAGE_NAME: ${{ matrix.name }}
-          PACKAGE_SLUG: ${{ matrix.slug }}
-          PACKAGE_TARBALL: ${{ matrix.tarball }}
-          PACKAGE_VERSION: ${{ matrix.version }}
-          PACKAGE_SHA1: ${{ matrix.sha1 }}
-          PACKAGE_SHA256: ${{ matrix.sha256 }}
-          RELEASE_CHANNEL: ${{ matrix.channel }}
-          STAGING_TAG: ${{ matrix.stagingTag }}
-          PREVIOUS_CHANNEL_VERSION: ${{ matrix.previousChannelVersion }}
-          PREVIOUS_STAGING_VERSION: ${{ matrix.previousStagingVersion }}
-          SOURCE_SHA: ${{ needs.prepare.outputs.sha }}
-          CI_RUN_ID: ${{ needs.prepare.outputs.ci_run_id }}
-        shell: bash
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
           node --input-type=module <<'NODE'
           import { spawnSync } from 'node:child_process'
           import { createHash } from 'node:crypto'
-          import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-          import { basename, join, resolve } from 'node:path'
+          import { readFileSync } from 'node:fs'
+          import { join } from 'node:path'
 
-          function fail(message) {
-            throw new Error(message)
-          }
-
-          function required(name, pattern) {
-            const value = process.env[name]
-            if (!value || (pattern && !pattern.test(value))) {
-              fail(`Invalid ${name}.`)
-            }
-            return value
-          }
-
-          function run(command, args) {
-            const result = spawnSync(command, args, {
-              encoding: 'utf8',
-              stdio: ['ignore', 'pipe', 'pipe'],
-            })
-            return result
-          }
-
-          function parseJson(value, description) {
-            try {
-              return value.trim() ? JSON.parse(value) : null
-            } catch {
-              fail(`${description} did not return valid JSON.`)
-            }
-          }
-
-          function npmView(spec, field, { allowMissing = false } = {}) {
-            const result = run('npm', ['view', spec, field, '--json'])
-            if (result.status === 0) {
-              return parseJson(result.stdout, `npm view ${spec} ${field}`)
-            }
-            if (allowMissing && /(?:E404|404 Not Found)/.test(result.stderr)) {
-              return null
-            }
+          const fail = message => { throw new Error(message) }
+          const run = (args, options = {}) => spawnSync('npm', args, {
+            encoding: 'utf8',
+            stdio: options.inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'],
+          })
+          const view = (spec, field) => {
+            const result = run(['view', spec, field, '--json'])
+            if (result.status === 0) return JSON.parse(result.stdout.trim() || 'null')
+            if (/E404|404 Not Found/.test(result.stderr)) return null
             fail(`npm view failed for ${spec} ${field}: ${result.stderr.trim()}`)
           }
+          const hash = (path, algorithm) => createHash(algorithm).update(readFileSync(path)).digest('hex')
+          const artifact = JSON.parse(readFileSync('.release/release-artifact.json', 'utf8'))
+          const record = JSON.parse(readFileSync('.release/release-record.json', 'utf8'))
+          if (record.schemaVersion !== 2) fail('Unsupported release record.')
+          if (record.sourceSha !== process.env.SOURCE_SHA || artifact.sourceSha !== record.sourceSha) fail('Source SHA differs.')
+          if (record.version !== process.env.RELEASE_VERSION || artifact.packageSetVersion !== record.version) fail('Version differs.')
+          const expectedOrder = ['@lupinum/vue-photo', '@lupinum/nuxt-photo']
+          if (JSON.stringify(record.publishOrder) !== JSON.stringify(expectedOrder)) fail('Publish order differs.')
+          const npmVersion = run(['--version']).stdout.trim().split('.').map(Number)
+          if (npmVersion[0] < 11 || (npmVersion[0] === 11 && npmVersion[1] < 5)) fail('npm 11.5 or newer is required.')
 
-          const packageName = required('PACKAGE_NAME', /^@lupinum\/(?:nuxt|vue)-photo$/)
-          const packageSlug = required('PACKAGE_SLUG', /^lupinum-(?:nuxt|vue)-photo$/)
-          const tarball = required('PACKAGE_TARBALL', /^[A-Za-z0-9._-]+\.tgz$/)
-          const version = required(
-            'PACKAGE_VERSION',
-            /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/,
-          )
-          const sha1 = required('PACKAGE_SHA1', /^[0-9a-f]{40}$/)
-          const sha256 = required('PACKAGE_SHA256', /^[0-9a-f]{64}$/)
-          const channel = required('RELEASE_CHANNEL', /^(?:latest|next)$/)
-          const stagingTag = required('STAGING_TAG', /^lupinum-stage-[1-9]\d*$/)
-          const sourceSha = required('SOURCE_SHA', /^[0-9a-f]{40}$/)
-          const ciRunId = required('CI_RUN_ID', /^[1-9]\d*$/)
-          const expectedPreviousChannel = process.env.PREVIOUS_CHANNEL_VERSION || null
-          const expectedPreviousStaging = process.env.PREVIOUS_STAGING_VERSION || null
-
-          if (stagingTag !== `lupinum-stage-${ciRunId}`) {
-            fail('The staging tag does not match the certified CI run.')
-          }
-
-          const releaseDirectory = resolve('.release')
-          const tarballPath = resolve(releaseDirectory, tarball)
-          if (tarballPath !== join(releaseDirectory, basename(tarball))) {
-            fail('The tarball path escapes the release directory.')
-          }
-          const bytes = readFileSync(tarballPath)
-          if (createHash('sha1').update(bytes).digest('hex') !== sha1) {
-            fail(`SHA-1 differs for ${tarball}.`)
-          }
-          if (createHash('sha256').update(bytes).digest('hex') !== sha256) {
-            fail(`SHA-256 differs for ${tarball}.`)
+          for (const name of expectedOrder) {
+            const pkg = record.packages.find(candidate => candidate.name === name)
+            if (!pkg) fail(`Missing ${name}.`)
+            const tarball = join('.release', pkg.tarball)
+            if (hash(tarball, 'sha1') !== pkg.sha1 || hash(tarball, 'sha256') !== pkg.sha256) fail(`${name} failed digest verification.`)
+            const existing = view(`${name}@${pkg.version}`, 'dist.shasum')
+            if (existing && existing !== pkg.sha1) fail(`${name}@${pkg.version} exists with different bytes.`)
+            if (!existing) {
+              const result = run([
+                'publish', tarball, '--access', 'public', '--tag', record.channel,
+                '--ignore-scripts', '--provenance',
+              ], { inherit: true })
+              if (result.status !== 0) fail(`npm publish failed for ${name}.`)
+            }
           }
 
-          const manifestResult = run('tar', ['-xOf', tarballPath, 'package/package.json'])
-          if (manifestResult.status !== 0) {
-            fail(`Cannot read package.json from ${tarball}: ${manifestResult.stderr.trim()}`)
+          for (const pkg of record.packages) {
+            let verified = false
+            for (let attempt = 0; attempt < 12; attempt += 1) {
+              const shasum = view(`${pkg.name}@${pkg.version}`, 'dist.shasum')
+              const attestations = view(`${pkg.name}@${pkg.version}`, 'dist.attestations')
+              const channel = view(pkg.name, `dist-tags.${record.channel}`)
+              if (shasum === pkg.sha1 && attestations && channel === pkg.version) {
+                verified = true
+                break
+              }
+              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000)
+            }
+            if (!verified) fail(`${pkg.name}@${pkg.version} did not expose matching bytes, provenance, and ${record.channel}.`)
           }
-          const manifest = parseJson(manifestResult.stdout, `${tarball} package.json`)
-          if (manifest?.name !== packageName || manifest?.version !== version) {
-            fail(`Tarball identity differs: received ${manifest?.name}@${manifest?.version}.`)
-          }
-
-          const npmVersionResult = run('npm', ['--version'])
-          if (npmVersionResult.status !== 0) {
-            fail(`Cannot read the npm version: ${npmVersionResult.stderr.trim()}`)
-          }
-          const npmVersion = npmVersionResult.stdout.trim()
-          const npmMatch = /^(\d+)\.(\d+)\.(\d+)(?:-|$)/.exec(npmVersion)
-          if (!npmMatch || Number(npmMatch[1]) < 11 || (Number(npmMatch[1]) === 11 && Number(npmMatch[2]) < 15)) {
-            fail(`npm staged publishing requires npm 11.15.0 or newer, received ${npmVersion}.`)
-          }
-
-          const publishedVersion = npmView(`${packageName}@${version}`, 'version', {
-            allowMissing: true,
-          })
-          if (publishedVersion !== null) {
-            fail(`${packageName}@${version} is already public; resume finalization instead.`)
-          }
-          const distTags = npmView(packageName, 'dist-tags', { allowMissing: true }) ?? {}
-          if ((distTags[channel] ?? null) !== expectedPreviousChannel) {
-            fail(`${packageName} ${channel} changed after release approval.`)
-          }
-          if ((distTags[stagingTag] ?? null) !== expectedPreviousStaging) {
-            fail(`${packageName} ${stagingTag} changed after release approval.`)
-          }
-
-          const stageResult = run('npm', [
-            'stage',
-            'publish',
-            tarballPath,
-            '--tag',
-            stagingTag,
-            '--access',
-            'public',
-            '--ignore-scripts',
-            '--provenance',
-            '--json',
-          ])
-          if (stageResult.status !== 0) {
-            fail(`npm stage publish failed: ${stageResult.stderr.trim()}`)
-          }
-          const parsed = parseJson(stageResult.stdout, 'npm stage publish')
-          const details = parsed?.[packageName] ?? parsed
-          if (
-            typeof details?.stageId !== 'string' ||
-            !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(details.stageId)
-          ) {
-            fail(`npm did not return a valid stage ID for ${packageName}.`)
-          }
-          if (details.name !== undefined && details.name !== packageName) {
-            fail(`npm staged ${details.name}, expected ${packageName}.`)
-          }
-          if (details.version !== undefined && details.version !== version) {
-            fail(`npm staged ${details.version}, expected ${version}.`)
-          }
-          if (details.shasum !== undefined && details.shasum !== sha1) {
-            fail(`npm staged output SHA-1 differs for ${packageName}.`)
-          }
-
-          const stagesDirectory = join(releaseDirectory, 'stages')
-          mkdirSync(stagesDirectory, { recursive: true })
-          writeFileSync(
-            join(stagesDirectory, `${packageSlug}.json`),
-            `${JSON.stringify({
-              schemaVersion: 1,
-              sourceSha,
-              ciRunId,
-              package: packageName,
-              version,
-              stagingTag,
-              stageId: details.stageId,
-              tarball,
-              sha1,
-              sha256,
-            }, null, 2)}\n`,
-          )
           NODE
 
-      - name: Upload staging evidence
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: stage-${{ matrix.slug }}
-          path: .release/stages/${{ matrix.slug }}.json
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 90
-
-  prepare-finalization:
-    name: Prepare npm approval instructions
+  github-release:
+    name: Create GitHub release
     needs:
-      - prepare
-      - stage
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      actions: read
-      contents: read
-    steps:
-      - name: Checkout certified SHA
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ needs.prepare.outputs.sha }}
-
-      - name: Set up release-planning Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-          registry-url: https://registry.npmjs.org
-
-      - name: Download approved staging plan
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
-        with:
-          name: release-plan
-          path: .release
-
-      - name: Download package staging evidence
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
-        with:
-          pattern: stage-*
-          path: .release/stages
-          merge-multiple: true
-
-      - name: Prepare durable stage record and human instructions
-        run: >-
-          node scripts/prepare-stage-record.mjs .release
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
-          --summary "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload finalization plan
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: release-finalization-plan
-          path: |
-            .release/*.tgz
-            .release/release-artifact.json
-            .release/release-record.json
-            .release/github-release-notes.md
-            .release/stage-record.json
-            .release/stages/*.json
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 90
-
-  verify-promoted:
-    name: Verify promoted package set
-    needs:
-      - prepare
-      - prepare-finalization
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: npm
-    permissions:
-      actions: read
-      contents: read
-    steps:
-      - name: Checkout certified SHA
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ needs.prepare.outputs.sha }}
-
-      - name: Set up registry-verification Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-          registry-url: https://registry.npmjs.org
-
-      - name: Download finalization plan
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
-        with:
-          name: release-finalization-plan
-          path: .release
-
-      - name: Verify npm approvals, provenance, promotion, and staging-tag cleanup
-        run: >-
-          node scripts/verify-registry-release.mjs .release
-          --wait
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
-
-  record-release:
-    name: Record GitHub Release
-    needs:
-      - prepare
-      - verify-promoted
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+      - verify
+      - publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       actions: read
       contents: write
+
     steps:
-      - name: Checkout certified SHA
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ needs.prepare.outputs.sha }}
-
-      - name: Set up release-recording Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-          registry-url: https://registry.npmjs.org
-
-      - name: Download finalization plan
+      - name: Download verified release plan
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: release-finalization-plan
+          name: verified-nuxt-photo-release
           path: .release
 
-      - name: Reconfirm final npm package set
-        run: >-
-          node scripts/verify-registry-release.mjs .release
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
-
-      - name: Inspect existing GitHub release state
-        id: github_release
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+      - name: Create release from the exact certified package set
         env:
-          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-        with:
-          script: |
-            async function tagTarget() {
-              try {
-                const { data: ref } = await github.rest.git.getRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: `tags/${process.env.TAG}`,
-                })
-                if (ref.object.type !== 'tag') return ref.object.sha
-                const { data: tag } = await github.rest.git.getTag({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag_sha: ref.object.sha,
-                })
-                return tag.object.sha
-              } catch (error) {
-                if (error.status === 404) return null
-                throw error
-              }
-            }
-
-            const releases = await github.paginate(
-              github.rest.repos.listReleases,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-              },
-            )
-            const release = releases.find(item => item.tag_name === process.env.TAG)
-            if (!release) {
-              const targetSha = await tagTarget()
-              if (targetSha && targetSha !== process.env.EXPECTED_SHA) {
-                core.setFailed(
-                  `Existing tag ${process.env.TAG} targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
-                )
-                return
-              }
-              core.setOutput('exists', 'false')
-              core.setOutput('draft', 'false')
-              return
-            }
-
-            if (release.draft) {
-              if (release.target_commitish !== process.env.EXPECTED_SHA) {
-                core.setFailed(
-                  `Draft release targets ${release.target_commitish}, not ${process.env.EXPECTED_SHA}`,
-                )
-                return
-              }
-            } else {
-              const targetSha = await tagTarget()
-              if (targetSha !== process.env.EXPECTED_SHA) {
-                core.setFailed(
-                  `Existing tag ${process.env.TAG} targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
-                )
-                return
-              }
-            }
-
-            core.setOutput('exists', 'true')
-            core.setOutput('draft', release.draft ? 'true' : 'false')
-
-      - name: Create draft GitHub Release with durable evidence
-        if: steps.github_release.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NOTES_FILE: .release/github-release-notes.md
-          SHA: ${{ needs.prepare.outputs.sha }}
-          TAG: ${{ needs.prepare.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_CHANNEL: ${{ needs.verify.outputs.channel }}
+          RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+          SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
-          ASSETS=(
-            .release/*.tgz
-            .release/release-artifact.json
-            .release/release-record.json
-            .release/stage-record.json
-          )
-          gh release create "$TAG" "${ASSETS[@]}" \
-            --draft \
-            --target "$SHA" \
-            --title "$TAG" \
-            --notes-file "$NOTES_FILE"
-
-      - name: Repair existing draft assets and notes
-        if: steps.github_release.outputs.draft == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NOTES_FILE: .release/github-release-notes.md
-          TAG: ${{ needs.prepare.outputs.tag }}
-        run: |
-          gh release upload "$TAG" \
-            .release/*.tgz \
-            .release/release-artifact.json \
-            .release/release-record.json \
-            .release/stage-record.json \
-            --clobber
-          gh release edit "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
-
-      - name: Publish GitHub Release
-        if: steps.github_release.outputs.exists != 'true' || steps.github_release.outputs.draft == 'true'
-        env:
-          CHANNEL: ${{ needs.prepare.outputs.channel }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-        run: |
-          if [ "$CHANNEL" = "next" ]; then
-            gh release edit "$TAG" --draft=false --prerelease --latest=false
-          else
-            gh release edit "$TAG" --draft=false --prerelease=false --latest
-          fi
-
-      - name: Verify public GitHub Release metadata
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        env:
-          CHANNEL: ${{ needs.prepare.outputs.channel }}
-          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
-          NOTES_FILE: .release/github-release-notes.md
-          TAG: ${{ needs.prepare.outputs.tag }}
-        with:
-          script: |
-            const fs = require('node:fs')
-            const path = require('node:path')
-            const artifact = JSON.parse(
-              fs.readFileSync('.release/release-artifact.json', 'utf8'),
-            )
-
-            const releases = await github.paginate(
-              github.rest.repos.listReleases,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-              },
-            )
-            const release = releases.find(item => item.tag_name === process.env.TAG)
-            if (!release || release.draft) {
-              core.setFailed(`Public release ${process.env.TAG} does not exist`)
-              return
-            }
-
-            const { data: ref } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `tags/${process.env.TAG}`,
-            })
-            let targetSha = ref.object.sha
-            if (ref.object.type === 'tag') {
-              const { data: tag } = await github.rest.git.getTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_sha: ref.object.sha,
-              })
-              targetSha = tag.object.sha
-            }
-            if (targetSha !== process.env.EXPECTED_SHA) {
-              core.setFailed(
-                `Release tag targets ${targetSha}, not ${process.env.EXPECTED_SHA}`,
-              )
-              return
-            }
-
-            const expectedPrerelease = process.env.CHANNEL === 'next'
-            const expectedNotes = fs.readFileSync(process.env.NOTES_FILE, 'utf8').trimEnd()
-            if (release.name !== process.env.TAG) {
-              core.setFailed(`Release title is ${release.name}, not ${process.env.TAG}`)
-              return
-            }
-            if ((release.body ?? '').trimEnd() !== expectedNotes) {
-              core.setFailed('Public release notes differ from the approved release plan')
-              return
-            }
-            if (release.prerelease !== expectedPrerelease) {
-              core.setFailed('Public release prerelease state is incorrect')
-              return
-            }
-
-            const requiredAssets = [
-              ...artifact.packages.map(pkg => path.basename(pkg.tarball)),
-              'release-artifact.json',
-              'release-record.json',
-              'stage-record.json',
-            ]
-            for (const name of requiredAssets) {
-              if (!release.assets.some(asset => asset.name === name)) {
-                core.setFailed(`Public release is missing durable asset ${name}`)
-                return
-              }
-            }
-
-            if (!expectedPrerelease) {
-              const { data: latest } = await github.rest.repos.getLatestRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              })
-              if (latest.tag_name !== process.env.TAG) {
-                core.setFailed(
-                  `GitHub Latest is ${latest.tag_name}, not ${process.env.TAG}`,
-                )
-              }
-            }
-
-      - name: Verify public GitHub Release asset bytes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.prepare.outputs.tag }}
-        run: |
-          ASSET_DIR=".release/github-assets"
-          mkdir "$ASSET_DIR"
-          gh release download "$TAG" --dir "$ASSET_DIR"
-          for file in \
-            .release/*.tgz \
-            .release/release-artifact.json \
-            .release/release-record.json \
-            .release/stage-record.json
-          do
-            cmp "$file" "$ASSET_DIR/$(basename "$file")"
-          done
-
-      - name: Reconfirm registry after release recording
-        run: >-
-          node scripts/verify-registry-release.mjs .release
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
+          prerelease=()
+          if [ "$RELEASE_CHANNEL" = next ]; then prerelease=(--prerelease); fi
+          gh release create "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json \
+            --target "$SOURCE_SHA" \
+            --title "$RELEASE_TAG" \
+            --notes-file .release/github-release-notes.md \
+            "${prerelease[@]}"
