@@ -110,6 +110,20 @@ jobs:
           name: version-patch-${{ needs.prepare-version.outputs.sha }}
           path: ${{ runner.temp }}
 
+      - name: Confirm that the prepared SHA is still current main
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const defaultBranch = context.payload.repository.default_branch
+            const { data: currentMain } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${defaultBranch}`,
+            })
+            if (currentMain.object.sha !== '${{ needs.prepare-version.outputs.sha }}') {
+              core.setFailed('The default branch advanced after the version patch was prepared.')
+            }
+
       - name: Apply the prepared patch
         run: git apply --index "$RUNNER_TEMP/version.patch"
 

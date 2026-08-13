@@ -29,6 +29,12 @@ assert(
   privilegedVersionJob.includes('git apply --index "$RUNNER_TEMP/version.patch"'),
   'The privileged version PR job must consume the inert patch.',
 )
+assert(
+  privilegedVersionJob.includes('Confirm that the prepared SHA is still current main') &&
+    privilegedVersionJob.indexOf('Confirm that the prepared SHA is still current main') <
+      privilegedVersionJob.indexOf('git apply --index "$RUNNER_TEMP/version.patch"'),
+  'The privileged version PR job must revalidate main immediately before it applies the patch.',
+)
 
 const embeddedScript = /node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/.exec(
   workflow,
