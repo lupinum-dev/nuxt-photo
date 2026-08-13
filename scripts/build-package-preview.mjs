@@ -24,7 +24,7 @@ if (initialStatus) throw new Error(`Package preview requires a clean worktree:\n
 
 rmSync(outputDirectory, { force: true, recursive: true })
 mkdirSync(outputDirectory)
-execFileSync('pnpm', ['release:pack'], { cwd: root, stdio: 'inherit' })
+execFileSync('vp', ['run', 'release:pack'], { cwd: root, stdio: 'inherit' })
 
 const artifact = JSON.parse(
   readFileSync(resolve(releaseDirectory, 'release-artifact.json'), 'utf8'),

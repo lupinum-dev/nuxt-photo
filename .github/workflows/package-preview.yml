@@ -49,7 +49,7 @@ jobs:
           PREVIEW_MANIFEST: ${{ steps.artifact.outputs.manifest }}
         run: |
           mapfile -t TARBALLS < <(node -e "const m=require('./' + process.env.PREVIEW_MANIFEST); for (const p of m.packages) console.log(p.tarball)")
-          pnpm exec pkg-pr-new publish \
+          vp exec pkg-pr-new publish \
             --no-compact \
             --comment=update \
             --commentWithSha \
