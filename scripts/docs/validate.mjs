@@ -56,7 +56,7 @@ for (const file of [...files, ...publicReadmes]) {
       failures.push(`${relative(root, file)} contains a generic closing section`)
     }
     if (
-      /\b(?:aren't|can't|couldn't|didn't|doesn't|don't|hadn't|hasn't|haven't|isn't|it's|shouldn't|that's|they're|we're|weren't|won't|wouldn't|you'll|you're)\b/i.test(
+      /\b(?:aren['’]t|can['’]t|couldn['’]t|didn['’]t|doesn['’]t|don['’]t|hadn['’]t|hasn['’]t|haven['’]t|isn['’]t|it['’]s|shouldn['’]t|that['’]s|there['’]s|they['’]re|we['’]re|weren['’]t|what['’]s|won['’]t|wouldn['’]t|you['’]ll|you['’]re)\b/i.test(
         body,
       )
     ) {
