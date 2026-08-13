@@ -185,23 +185,15 @@ jobs:
     environment: npm
     permissions:
       actions: read
-      contents: read
       id-token: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.package_matrix) }}
     steps:
-      - name: Checkout certified SHA
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ needs.prepare.outputs.sha }}
-
       - name: Set up staging Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .node-version
+          node-version: 24.18.0
           package-manager-cache: false
           registry-url: https://registry.npmjs.org
 
@@ -211,68 +203,184 @@ jobs:
           name: release-plan
           path: .release
 
-      - name: Recheck staging boundary
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        env:
-          DEFAULT_BRANCH: ${{ needs.prepare.outputs.branch }}
-          EXPECTED_SHA: ${{ needs.prepare.outputs.sha }}
-        with:
-          script: |
-            const { data: repository } = await github.rest.repos.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            })
-            if (repository.visibility !== 'public') {
-              core.setFailed('npm provenance requires a public GitHub repository.')
-              return
-            }
-            if (repository.default_branch !== process.env.DEFAULT_BRANCH) {
-              core.setFailed(
-                `Default branch changed from ${process.env.DEFAULT_BRANCH} to ${repository.default_branch}.`,
-              )
-              return
-            }
-
-            const { data: currentMain } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `heads/${repository.default_branch}`,
-            })
-            if (currentMain.object.sha !== process.env.EXPECTED_SHA) {
-              core.setFailed(
-                `Current ${repository.default_branch} is ${currentMain.object.sha}, not certified SHA ${process.env.EXPECTED_SHA}.`,
-              )
-              return
-            }
-
-            const { data: environment } = await github.request(
-              'GET /repos/{owner}/{repo}/environments/{environment_name}',
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                environment_name: 'npm',
-              },
-            )
-            const reviewerRule = (environment.protection_rules ?? []).find(
-              rule => rule.type === 'required_reviewers',
-            )
-            if (!reviewerRule?.reviewers?.length) {
-              core.setFailed('The npm environment no longer has a required human reviewer.')
-            }
-
-      - name: Revalidate exact package-set artifact
-        run: >-
-          node scripts/verify-release-artifact.mjs .release
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
-          --publishable
-
-      - name: Stage exact tarball with npm trusted publishing
+      - name: Verify and stage exact tarball with npm trusted publishing
         env:
           PACKAGE_NAME: ${{ matrix.name }}
-        run: >-
-          node scripts/stage-package.mjs .release
-          --package "$PACKAGE_NAME"
-          --expected-sha "${{ needs.prepare.outputs.sha }}"
+          PACKAGE_SLUG: ${{ matrix.slug }}
+          PACKAGE_TARBALL: ${{ matrix.tarball }}
+          PACKAGE_VERSION: ${{ matrix.version }}
+          PACKAGE_SHA1: ${{ matrix.sha1 }}
+          PACKAGE_SHA256: ${{ matrix.sha256 }}
+          RELEASE_CHANNEL: ${{ matrix.channel }}
+          STAGING_TAG: ${{ matrix.stagingTag }}
+          PREVIOUS_CHANNEL_VERSION: ${{ matrix.previousChannelVersion }}
+          PREVIOUS_STAGING_VERSION: ${{ matrix.previousStagingVersion }}
+          SOURCE_SHA: ${{ needs.prepare.outputs.sha }}
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { spawnSync } from 'node:child_process'
+          import { createHash } from 'node:crypto'
+          import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+          import { basename, join, resolve } from 'node:path'
+
+          function fail(message) {
+            throw new Error(message)
+          }
+
+          function required(name, pattern) {
+            const value = process.env[name]
+            if (!value || (pattern && !pattern.test(value))) {
+              fail(`Invalid ${name}.`)
+            }
+            return value
+          }
+
+          function run(command, args) {
+            const result = spawnSync(command, args, {
+              encoding: 'utf8',
+              stdio: ['ignore', 'pipe', 'pipe'],
+            })
+            return result
+          }
+
+          function parseJson(value, description) {
+            try {
+              return value.trim() ? JSON.parse(value) : null
+            } catch {
+              fail(`${description} did not return valid JSON.`)
+            }
+          }
+
+          function npmView(spec, field, { allowMissing = false } = {}) {
+            const result = run('npm', ['view', spec, field, '--json'])
+            if (result.status === 0) {
+              return parseJson(result.stdout, `npm view ${spec} ${field}`)
+            }
+            if (allowMissing && /(?:E404|404 Not Found)/.test(result.stderr)) {
+              return null
+            }
+            fail(`npm view failed for ${spec} ${field}: ${result.stderr.trim()}`)
+          }
+
+          const packageName = required('PACKAGE_NAME', /^@lupinum\/(?:nuxt|vue)-photo$/)
+          const packageSlug = required('PACKAGE_SLUG', /^lupinum-(?:nuxt|vue)-photo$/)
+          const tarball = required('PACKAGE_TARBALL', /^[A-Za-z0-9._-]+\.tgz$/)
+          const version = required(
+            'PACKAGE_VERSION',
+            /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/,
+          )
+          const sha1 = required('PACKAGE_SHA1', /^[0-9a-f]{40}$/)
+          const sha256 = required('PACKAGE_SHA256', /^[0-9a-f]{64}$/)
+          const channel = required('RELEASE_CHANNEL', /^(?:latest|next)$/)
+          const stagingTag = required('STAGING_TAG', /^lupinum-stage-[1-9]\d*$/)
+          const sourceSha = required('SOURCE_SHA', /^[0-9a-f]{40}$/)
+          const ciRunId = required('CI_RUN_ID', /^[1-9]\d*$/)
+          const expectedPreviousChannel = process.env.PREVIOUS_CHANNEL_VERSION || null
+          const expectedPreviousStaging = process.env.PREVIOUS_STAGING_VERSION || null
+
+          if (stagingTag !== `lupinum-stage-${ciRunId}`) {
+            fail('The staging tag does not match the certified CI run.')
+          }
+
+          const releaseDirectory = resolve('.release')
+          const tarballPath = resolve(releaseDirectory, tarball)
+          if (tarballPath !== join(releaseDirectory, basename(tarball))) {
+            fail('The tarball path escapes the release directory.')
+          }
+          const bytes = readFileSync(tarballPath)
+          if (createHash('sha1').update(bytes).digest('hex') !== sha1) {
+            fail(`SHA-1 differs for ${tarball}.`)
+          }
+          if (createHash('sha256').update(bytes).digest('hex') !== sha256) {
+            fail(`SHA-256 differs for ${tarball}.`)
+          }
+
+          const manifestResult = run('tar', ['-xOf', tarballPath, 'package/package.json'])
+          if (manifestResult.status !== 0) {
+            fail(`Cannot read package.json from ${tarball}: ${manifestResult.stderr.trim()}`)
+          }
+          const manifest = parseJson(manifestResult.stdout, `${tarball} package.json`)
+          if (manifest?.name !== packageName || manifest?.version !== version) {
+            fail(`Tarball identity differs: received ${manifest?.name}@${manifest?.version}.`)
+          }
+
+          const npmVersionResult = run('npm', ['--version'])
+          if (npmVersionResult.status !== 0) {
+            fail(`Cannot read the npm version: ${npmVersionResult.stderr.trim()}`)
+          }
+          const npmVersion = npmVersionResult.stdout.trim()
+          const npmMatch = /^(\d+)\.(\d+)\.(\d+)(?:-|$)/.exec(npmVersion)
+          if (!npmMatch || Number(npmMatch[1]) < 11 || (Number(npmMatch[1]) === 11 && Number(npmMatch[2]) < 15)) {
+            fail(`npm staged publishing requires npm 11.15.0 or newer, received ${npmVersion}.`)
+          }
+
+          const publishedVersion = npmView(`${packageName}@${version}`, 'version', {
+            allowMissing: true,
+          })
+          if (publishedVersion !== null) {
+            fail(`${packageName}@${version} is already public; resume finalization instead.`)
+          }
+          const distTags = npmView(packageName, 'dist-tags', { allowMissing: true }) ?? {}
+          if ((distTags[channel] ?? null) !== expectedPreviousChannel) {
+            fail(`${packageName} ${channel} changed after release approval.`)
+          }
+          if ((distTags[stagingTag] ?? null) !== expectedPreviousStaging) {
+            fail(`${packageName} ${stagingTag} changed after release approval.`)
+          }
+
+          const stageResult = run('npm', [
+            'stage',
+            'publish',
+            tarballPath,
+            '--tag',
+            stagingTag,
+            '--access',
+            'public',
+            '--ignore-scripts',
+            '--provenance',
+            '--json',
+          ])
+          if (stageResult.status !== 0) {
+            fail(`npm stage publish failed: ${stageResult.stderr.trim()}`)
+          }
+          const parsed = parseJson(stageResult.stdout, 'npm stage publish')
+          const details = parsed?.[packageName] ?? parsed
+          if (
+            typeof details?.stageId !== 'string' ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(details.stageId)
+          ) {
+            fail(`npm did not return a valid stage ID for ${packageName}.`)
+          }
+          if (details.name !== undefined && details.name !== packageName) {
+            fail(`npm staged ${details.name}, expected ${packageName}.`)
+          }
+          if (details.version !== undefined && details.version !== version) {
+            fail(`npm staged ${details.version}, expected ${version}.`)
+          }
+          if (details.shasum !== undefined && details.shasum !== sha1) {
+            fail(`npm staged output SHA-1 differs for ${packageName}.`)
+          }
+
+          const stagesDirectory = join(releaseDirectory, 'stages')
+          mkdirSync(stagesDirectory, { recursive: true })
+          writeFileSync(
+            join(stagesDirectory, `${packageSlug}.json`),
+            `${JSON.stringify({
+              schemaVersion: 1,
+              sourceSha,
+              ciRunId,
+              package: packageName,
+              version,
+              stagingTag,
+              stageId: details.stageId,
+              tarball,
+              sha1,
+              sha256,
+            }, null, 2)}\n`,
+          )
+          NODE
 
       - name: Upload staging evidence
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

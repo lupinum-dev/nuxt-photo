@@ -154,6 +154,13 @@ export function releasePackageMatrix(record) {
         name,
         slug: name.replace(/^@/, '').replaceAll('/', '-'),
         tarball: pkg.tarball,
+        version: pkg.version,
+        sha1: pkg.sha1,
+        sha256: pkg.sha256,
+        channel: record.channel,
+        stagingTag: record.stagingTag,
+        previousChannelVersion: pkg.previousChannelVersion,
+        previousStagingVersion: pkg.previousStagingVersion,
       }
     }),
   }
