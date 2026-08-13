@@ -20,7 +20,7 @@ nuxtPhoto: {
 | -------------- | ------------------------------------------------------------------- |
 | `'auto'`       | Default. Uses `@nuxt/image` if installed, otherwise `native`.       |
 | `'nuxt-image'` | You want responsive images and are sure `@nuxt/image` is installed. |
-| `'native'`     | You're serving pre-optimized images and want no transformation.     |
+| `'native'`     | You serve pre-optimized images and need no transformation.          |
 | `image: false` | You want to provide your own adapter manually.                      |
 
 ## `'auto'`
@@ -32,10 +32,10 @@ The default. Nuxt Photo checks whether `@nuxt/image` is in the module list. If y
 Uses the browser's `<img>` element with your `src` (and optional `srcset`) unchanged. No server-side transformation, no `@nuxt/image`. The right choice when:
 
 - You serve pre-optimized images from a CDN (Cloudflare Images, Imgix URLs) and generate `srcset` yourself.
-- You don't want `@nuxt/image` in your dependency tree.
+- You do not want `@nuxt/image` in your dependency tree.
 - You need deterministic URLs for caching or signed-URL workflows.
 
-If `photo.thumbSrc` is set, it's used for grid thumbnails; `photo.src` is used for lightbox slides.
+If `photo.thumbSrc` is set, Nuxt Photo uses it for grid thumbnails. Nuxt Photo uses `photo.src` for lightbox slides.
 
 ```ts
 // photo with pre-built srcset
@@ -53,7 +53,7 @@ If `photo.thumbSrc` is set, it's used for grid thumbnails; `photo.src` is used f
 
 Routes images through the configurable built-in [`@nuxt/image`](https://image.nuxt.com/) adapter. It has separate defaults for thumbnails and lightbox slides; tune those defaults in `nuxtPhoto.image` when your layout needs different sizes, widths, or quality.
 
-Fails loudly if `@nuxt/image` isn't installed - use `'auto'` if you want silent fallback.
+This mode reports an error if `@nuxt/image` is not installed. Use `'auto'` if you need an automatic fallback.
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -136,19 +136,11 @@ type ImageSource = {
 
 `context` tells you whether the consumer is a small grid thumbnail or a full lightbox slide. Preloading uses the slide context.
 
-## See also
-
-- [Integrate @nuxt/image](/docs/concepts/image-pipeline)
-
-- [Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
-
-- [ImageAdapter type reference](/docs/api/types)
-
 _Source: `docs/content/docs/3.concepts/5.image-pipeline.md`_
 
 ## SSR and layout stability
 
-Cumulative Layout Shift (CLS) is the web-vitals metric that punishes pages for re-arranging content after load. Image galleries are prime offenders - the server doesn't know the container width, so it can't lay photos out correctly; then the client hydrates and everything moves.
+Cumulative Layout Shift (CLS) measures content movement after a page loads. Image galleries often cause this movement. The server does not know the container width, so it cannot calculate the final photo layout. The client then recalculates the layout during hydration.
 
 Nuxt Photo has three tools for reducing layout shift. Rows are the most SSR-friendly layout. Columns and masonry need an assumed width if you want the server to render their final grouped layout.
 
@@ -174,9 +166,9 @@ Render the component with no SSR tuning:
 <PhotoAlbum :photos="photos" />
 ```
 
-The server emits a CSS-only flex-grow fallback for rows layout. It won't always match the final JS layout exactly - close, but the last row may re-shuffle on hydration.
+The server emits a CSS-only flex-grow fallback for the rows layout. This fallback can differ from the final JavaScript layout, especially in the last row.
 
-That's acceptable for pages where the gallery is below the fold. If it's above the fold (and visible at LCP), tune further.
+This result is acceptable when the gallery is below the fold. If the gallery is above the fold and affects LCP, configure an assumed container width.
 
 ## Level 1 - assumed container width
 
@@ -197,7 +189,7 @@ Pick a value that matches your **common viewport**:
 The trade-off is simple: clients whose actual width matches the assumption should avoid gallery-driven layout shift; clients off from the assumption see one re-layout on hydration (no worse than Level 0).
 
 ::warning
-A value of `0` is silently ignored and warns in dev - it's almost always a bug. If you want no SSR tuning, omit the prop.
+A value of `0` is ignored and causes a development warning. Omit the prop if you do not want SSR tuning.
 ::
 
 ## Level 2 - snapping to breakpoints
@@ -220,7 +212,7 @@ Best practice: set `defaultContainerWidth` to one of your breakpoints. That give
 
 ## `responsive()` tags its own breakpoints
 
-When you use the `responsive()` helper, Nuxt Photo extracts the breakpoint keys automatically - you don't need a separate `:breakpoints` prop:
+When you use the `responsive()` helper, Nuxt Photo extracts the breakpoint keys automatically. You do not need a separate `:breakpoints` prop:
 
 ```vue
 <PhotoAlbum
@@ -248,7 +240,7 @@ Merged breakpoints: `[640, 768, 1024, 1200]`.
 
 ## Columns and masonry
 
-The columns and masonry layouts don't use the rows flex-grow fallback. Without `defaultContainerWidth`, SSR renders a simple grid fallback and the client recomputes the grouped layout after mount.
+The columns and masonry layouts do not use the rows flex-grow fallback. Without `defaultContainerWidth`, SSR renders a simple grid fallback. The client recalculates the grouped layout after mount.
 
 Set `:default-container-width` so the server can compute the real column groups and pick the right column count when `columns` is responsive.
 
@@ -289,12 +281,6 @@ Set `:default-container-width` so the server can compute the real column groups 
 
 CLS scores under **0.1** are good; under **0.05** is excellent. A correctly tuned gallery is designed to avoid layout shift when dimensions and SSR assumptions are correct.
 
-## See also
-
-- [Responsive parameters](/docs/concepts/layouts-and-responsiveness)
-
-- [Responsive tuning](/docs/guides/tune-a-responsive-album)
-
 _Source: `docs/content/docs/3.concepts/4.ssr-and-layout-stability.md`_
 
 ## Customization layers
@@ -334,16 +320,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.provide(LightboxComponentKey, MyLightbox)
 })
 ```
-
-## See also
-
-- [Customize the built-in lightbox](/docs/guides/customize-the-lightbox)
-
-- [Use a custom lightbox globally](/docs/guides/customize-the-lightbox)
-
-- [Build a custom lightbox](/docs/guides/customize-the-lightbox)
-
-- [Public API and stability](/docs/api/public-api)
 
 _Source: `docs/content/docs/3.concepts/7.customization-layers.md`_
 
@@ -496,7 +472,7 @@ _Source: `docs/content/docs/4.guides/6.customize-the-lightbox.md`_
 
 ## Integrate a custom image service
 
-The built-in `'native'` and `'nuxt-image'` providers cover most cases. When they don't - signed URLs with short TTLs, a bespoke image API, WebP + AVIF negotiation with your own logic - you can write a custom **image adapter**.
+The built-in `'native'` and `'nuxt-image'` providers cover most cases. Write a custom **image adapter** when you need signed URLs with short TTLs, a custom image API, or independent WebP and AVIF negotiation.
 
 An adapter is a single function:
 
@@ -522,7 +498,7 @@ nuxtPhoto: {
 }
 ```
 
-This stops Nuxt Photo from auto-wiring an adapter on app start. You'll provide your own.
+This setting stops Nuxt Photo from registering an adapter at application start. You must provide the adapter.
 
 ## 2. Write the adapter
 
@@ -558,7 +534,7 @@ export const cmsAdapter: ImageAdapter = (photo, context) => {
 
 A few principles:
 
-- **Branch on `context`.** Grid thumbnails don't need full-res srcsets. Lightbox slides do.
+- **Branch on `context`.** Grid thumbnails do not need full-resolution source sets. Lightbox slides do.
 - **Keep `PhotoItem.width` and `PhotoItem.height` accurate.** Nuxt Photo uses the photo dimensions for layout and lightbox frame sizing. Adapter `width` and `height` are copied onto the rendered `<img>`.
 - **Always return a concrete `src`.** If your upstream asset should render a placeholder, make that an explicit rule in the adapter.
 
@@ -617,11 +593,11 @@ const signedAdapter: ImageAdapter = (photo, context) => {
 
 ### Format negotiation (AVIF → WebP → JPEG)
 
-Return a `<picture>`-style srcset isn't possible through the image adapter (`<img>` only). Instead, let the server negotiate via the `Accept` header and return one URL per context.
+The image adapter cannot return a `<picture>`-style source set because it renders an `<img>` element. Instead, let the server negotiate through the `Accept` header and return one URL for each context.
 
 ### Cloudinary via hand-written URL
 
-If you don't want to depend on `@nuxt/image` but still want Cloudinary:
+Use this example when you need Cloudinary without a dependency on `@nuxt/image`:
 
 ```ts
 const CLOUD = 'your-cloud'
@@ -676,11 +652,5 @@ describe('cmsAdapter', () => {
   })
 })
 ```
-
-## See also
-
-- [Image providers](/docs/concepts/image-pipeline)
-
-- [ImageAdapter type reference](/docs/api/types)
 
 _Source: `docs/content/docs/4.guides/7.integrate-a-custom-image-service.md`_

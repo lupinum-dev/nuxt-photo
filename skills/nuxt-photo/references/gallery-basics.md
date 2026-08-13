@@ -34,7 +34,7 @@ export default defineNuxtConfig({
 })
 ```
 
-That's it. `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, `<PhotoCarousel>`, plus helpers like `useLightbox`, are now registered for app code. Composables still need the provider context described in their reference pages.
+The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, `<PhotoCarousel>`, and helpers such as `useLightbox`. Composables still need the provider context that their reference pages describe.
 
 ## Use it
 
@@ -210,7 +210,7 @@ Wrong dimensions can still render an image, but the layout and FLIP frame will
 be wrong.
 ::
 
-## You're done
+## Continue your setup
 
 You now have the smallest useful Nuxt Photo page. From here:
 
@@ -226,7 +226,7 @@ _Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
 
 ## The photo model
 
-Nuxt Photo doesn't care where your photos come from - a CMS, a filesystem, an Unsplash query, a static list. Everything funnels through a single shape: the `PhotoItem`.
+Nuxt Photo accepts photos from a CMS, a file system, an Unsplash query, or a static list. Every source maps to one shape: `PhotoItem`.
 
 ```ts
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
@@ -262,7 +262,7 @@ or database identifiers to strings at your application boundary.
 { id: 'desert-01', src: '/photos/desert.jpg', width: 1280, height: 800 }
 ```
 
-Don't use array indices - if the list changes order, the lightbox loses track of the active photo mid-animation.
+Do not use array indices. If the list order changes, the lightbox can lose the active photo during an animation.
 
 ### `src`
 
@@ -277,7 +277,7 @@ The image's intrinsic pixel dimensions, not its display size. Nuxt Photo uses th
 - Pick the right aspect ratio for `object-fit` and lightbox sizing.
 
 ::warning
-Every rendered photo needs real dimensions - not placeholders. If your CMS doesn't return them, generate them at upload time with [`probe-image-size`](https://www.npmjs.com/package/probe-image-size) or equivalent. Ballpark values ruin the layout.
+Every rendered photo needs accurate dimensions. Do not use placeholder values. If your CMS does not return dimensions, generate them at upload time with [`probe-image-size`](https://www.npmjs.com/package/probe-image-size) or an equivalent tool. Approximate values cause incorrect layouts.
 ::
 
 Recipe components validate photo data before layout code sees it. Invalid photos
@@ -313,7 +313,7 @@ A smaller pre-rendered URL for the grid. If set, the native image adapter uses `
 }
 ```
 
-If you're using `@nuxt/image`, `thumbSrc` is usually unnecessary - the provider generates responsive sizes automatically.
+If you use `@nuxt/image`, you usually do not need `thumbSrc`. The provider generates responsive sizes automatically.
 
 ### `srcset`
 
@@ -356,7 +356,7 @@ Then read it in a slot:
 </PhotoAlbum>
 ```
 
-## Don't have this shape?
+## Map data from another shape
 
 If your API returns something else-Unsplash, Contentful, or Sanity-map it at
 your application boundary. Rendering components accept only `PhotoItem`.
@@ -390,11 +390,5 @@ const photos = computed<PhotoItem[]>(() =>
 
 The application owns the source type, refresh policy, and mapping errors. This
 keeps rendering behavior deterministic and fully typed.
-
-## See also
-
-- [Types reference](/docs/api/types)
-
-- [Write a custom image adapter](/docs/guides/integrate-a-custom-image-service)
 
 _Source: `docs/content/docs/3.concepts/1.photo-model.md`_
