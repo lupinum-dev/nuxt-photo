@@ -254,6 +254,7 @@ Configure these once before the first release:
   `@lupinum/nuxt-photo`, restricted to `release.yml`, environment `npm`, and
   stage-publish only;
 - keep default workflow permissions read-only;
+- require every external GitHub Action to use a full commit SHA;
 - keep Issues enabled for public reports, and disable Wikis and Discussions so
   versioned repository documentation remains authoritative;
 - enable private vulnerability reporting, secret scanning, push protection,
