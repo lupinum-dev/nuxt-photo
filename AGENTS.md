@@ -66,6 +66,14 @@ pnpm verify
 git status --short
 ```
 
+Use the canonical repository gates when the change needs them:
+
+```sh
+pnpm docs:build
+pnpm audit:all
+pnpm release:verify
+```
+
 Useful focused commands:
 
 ```sh
