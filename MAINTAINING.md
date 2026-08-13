@@ -49,6 +49,10 @@ Changesets is the only version and committed changelog owner. Use
 `vp run changelog:preview` to inspect Conventional Commits without changing
 versions, tags, or changelog files.
 
+Vercel must deploy `docs/` from `main` to `nuxt-photo.lupinum.com` and create
+pull-request previews. `docs/vercel.json` owns the exact pnpm installer because
+Vercel does not provide pnpm 11 by default.
+
 ## Command contracts
 
 ### `vp check`

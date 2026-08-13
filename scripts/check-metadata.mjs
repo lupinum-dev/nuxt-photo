@@ -8,6 +8,7 @@ import { discoverPackageSet, readWorkspaceCatalog } from './lib/package-set.mjs'
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const packageSet = discoverPackageSet(root)
 const rootManifest = readJson('package.json')
+const canonicalLicense = readText('LICENSE')
 const supportedNode = rootManifest.engines?.node
 const packageManager = /^pnpm@(.+)$/.exec(rootManifest.packageManager ?? '')
 const maintainerNode = readText('.node-version').trim()
@@ -141,6 +142,10 @@ for (const pkg of packageSet.packages) {
   )
   assert(existsSync(join(root, pkg.directory, 'README.md')), `${pkg.name} is missing README.md.`)
   assert(existsSync(join(root, pkg.directory, 'LICENSE')), `${pkg.name} is missing LICENSE.`)
+  assert(
+    readText(join(pkg.directory, 'LICENSE')) === canonicalLicense,
+    `${pkg.name} LICENSE must match the repository LICENSE.`,
+  )
   assert(
     existsSync(join(root, pkg.directory, 'CHANGELOG.md')),
     `${pkg.name} is missing its Changesets-owned changelog.`,
