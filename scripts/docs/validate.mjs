@@ -64,6 +64,21 @@ const readmeContracts = new Map([
   ]),
 ])
 
+const maintaining = await readFile(resolve(root, 'MAINTAINING.md'), 'utf8')
+for (const heading of [
+  'Quick fixes',
+  'Large changes',
+  'Documentation changes',
+  'Publication',
+  'Rollback',
+  'Dependency automation',
+  'Respond to a credential incident',
+]) {
+  if (!maintaining.includes(`## ${heading}`)) {
+    failures.push(`MAINTAINING.md is missing the playbook: ${heading}`)
+  }
+}
+
 for (const file of [...files, ...publicReadmes]) {
   const source = await readFile(file, 'utf8')
   const links = source.matchAll(

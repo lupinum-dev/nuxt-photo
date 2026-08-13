@@ -55,6 +55,21 @@ Vercel must deploy `docs/` from `main` to `nuxt-photo.lupinum.com` and create
 pull-request previews. `docs/vercel.json` owns the exact pnpm installer because
 Vercel does not provide pnpm 11 by default.
 
+## Quick fixes
+
+Keep one cause and one verification path in the pull request. Add a regression
+test when the defect can return. Run `pnpm verify` before handoff.
+
+## Large changes
+
+Open an issue first. Split the work by public behavior and package ownership.
+Keep the core model, Vue package, Nuxt module, tests, and documentation aligned.
+
+## Documentation changes
+
+Follow [docs/WRITING.md](./docs/WRITING.md). Keep examples executable. Run
+`pnpm docs:build` and `pnpm verify` before merge.
+
 ## Command contracts
 
 ### `vp check`
@@ -563,6 +578,13 @@ they still require CI and human review.
   dependency sources from packed manifests.
 - Treat a production audit as a release signal, not proof of safety.
 - Do not add a local publication fallback.
+
+## Respond to a credential incident
+
+Stop release workflows and reject pending npm stages. Revoke the affected
+credential or trusted-publisher binding. Review GitHub audit logs, workflow
+changes, tags, releases, and npm access. Restore publishing only after both
+retained package artifacts are verified.
 
 ## Generated artifacts
 
