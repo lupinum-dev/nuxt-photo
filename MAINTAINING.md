@@ -337,11 +337,8 @@ local build command.
 
 ### 2. Prepare the release plan
 
-Dispatch the `release` workflow from `main` with:
-
-```text
-ci_run_id: <numeric successful current-main ci run>
-```
+Dispatch the `release` workflow from `main`. It automatically selects the
+successful `ci.yml` push run for the current `main` commit.
 
 The prepare job is read-only. It:
 

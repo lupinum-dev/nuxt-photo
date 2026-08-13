@@ -277,7 +277,7 @@ to:
 - both package names and versions;
 - intended channel;
 - exact current-main SHA;
-- numeric successful `ci` run ID;
+- automatically selected successful `ci` run ID;
 - both retained tarball digests.
 
 Explain that dispatch first prepares a read-only plan. After the plan exists,
