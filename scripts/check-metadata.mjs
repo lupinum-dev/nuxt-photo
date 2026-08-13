@@ -16,6 +16,7 @@ const requiredRootScripts = [
   'build',
   'changeset',
   'check',
+  'check:release-workflow',
   'release:notes',
   'release:pack',
   'release:verify',
@@ -223,6 +224,7 @@ for (const obsoletePath of [
   'scripts/release/pack-dry-run.mjs',
   'scripts/release/publish.mjs',
   'scripts/release/verify-version.mjs',
+  'scripts/stage-package.mjs',
 ]) {
   assert(
     !existsSync(join(root, obsoletePath)),
@@ -324,6 +326,31 @@ function verifyWorkflows() {
       )
     }
   }
+
+  const releaseWorkflow = workflows.find(({ name }) => name === 'release.yml')?.text ?? ''
+  const stageJob = /^  stage:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(releaseWorkflow)?.[1]
+  assert(stageJob, 'release.yml is missing the npm staging job.')
+  assert(stageJob.includes('id-token: write'), 'The staging job must use npm trusted publishing.')
+  for (const forbidden of [
+    'actions/checkout@',
+    'actions/github-script@',
+    'node scripts/',
+    'node-version-file:',
+    'npm install',
+    'pnpm install',
+    'vp install',
+  ]) {
+    assert(
+      !stageJob.includes(forbidden),
+      `The token-capable staging job must not contain ${forbidden}.`,
+    )
+  }
+  assert(
+    stageJob.includes("'stage',\n            'publish'") &&
+      stageJob.includes("'--ignore-scripts'") &&
+      stageJob.includes("'--provenance'"),
+    'The staging job must submit only the retained tarball with scripts disabled and provenance enabled.',
+  )
 }
 
 function dependencyMaps(manifest) {
