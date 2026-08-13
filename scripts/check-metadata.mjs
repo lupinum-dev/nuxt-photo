@@ -120,6 +120,14 @@ for (const pkg of packageSet.packages) {
   )
   assert(manifest.license === 'MIT', `${pkg.name} must declare MIT licensing.`)
   assert(
+    manifest.author === 'Lupinum OG <info@lupinum.com> (https://lupinum.com)',
+    `${pkg.name} must identify Lupinum OG as the package author.`,
+  )
+  assert(
+    manifest.homepage === 'https://nuxt-photo.lupinum.com',
+    `${pkg.name} must link to the canonical documentation site.`,
+  )
+  assert(
     manifest.publishConfig?.access === 'public',
     `${pkg.name} must explicitly publish with public access.`,
   )

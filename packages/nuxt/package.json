@@ -9,11 +9,12 @@
     "nuxt-photo",
     "photos"
   ],
-  "homepage": "https://github.com/lupinum-dev/nuxt-photo",
+  "homepage": "https://nuxt-photo.lupinum.com",
   "bugs": {
     "url": "https://github.com/lupinum-dev/nuxt-photo/issues"
   },
   "license": "MIT",
+  "author": "Lupinum OG <info@lupinum.com> (https://lupinum.com)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lupinum-dev/nuxt-photo.git",
