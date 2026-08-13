@@ -7,13 +7,14 @@ export default {
         en: 'Photo galleries, lightboxes, and carousels for Nuxt.',
       },
       logo: { light: '/icon.png', dark: '/icon.png' },
-      localeSwitcher: 'dropdown',
       docsSidebarSwitcher: 'tabs',
     },
     social: {
       github: 'https://github.com/lupinum-dev/nuxt-photo',
       discord: 'https://discord.gg/RPH6SeA36N',
     },
+    feedback: { enabled: true },
+    analytics: { plausible: { scriptId: 'XxT9ZOr0ZLg10B4KV40xH' } },
     repository: {
       url: 'https://github.com/lupinum-dev/nuxt-photo',
       branch: 'main',
