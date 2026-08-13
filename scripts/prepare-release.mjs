@@ -5,11 +5,6 @@ import { fileURLToPath } from 'node:url'
 import { extractPackageSetReleaseNotes, listPendingChangesets } from './lib/changelog.mjs'
 import { compareSemver, readRegistryState, releaseChannel } from './lib/npm-registry.mjs'
 import { assert, discoverPackageSet } from './lib/package-set.mjs'
-import {
-  createPackageReleaseRecord,
-  releasePackageMatrix,
-  stagingTagForRun,
-} from './lib/release-record.mjs'
 import { verifyReleaseArtifact } from './lib/release-artifact.mjs'
 
 const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)))
@@ -20,20 +15,16 @@ const releaseDir =
 function readArgument(name, required = false) {
   const index = args.indexOf(name)
   const value = index === -1 ? undefined : args[index + 1]
-  if (required) {
-    assert(value, `${name} requires a value.`)
-  }
+  if (required) assert(value, `${name} requires a value.`)
   return value
 }
 
 const expectedSha = readArgument('--expected-sha', true)
 const ciRunId = readArgument('--ci-run-id', true)
+const expectedVersion = readArgument('--expected-version', true)
 const summaryPath = readArgument('--summary')
 const outputPath = readArgument('--github-output')
-assert(
-  Number.isSafeInteger(Number(ciRunId)) && Number(ciRunId) > 0,
-  '--ci-run-id must be a positive integer.',
-)
+assert(/^\d+$/.test(ciRunId) && Number(ciRunId) > 0, '--ci-run-id must be a positive integer.')
 
 const artifact = verifyReleaseArtifact(releaseDir, {
   expectedSha,
@@ -41,61 +32,47 @@ const artifact = verifyReleaseArtifact(releaseDir, {
   rootDir,
 })
 const packageSet = discoverPackageSet(rootDir)
-const pendingChangesets = listPendingChangesets(rootDir)
-assert(
-  pendingChangesets.length === 0,
-  `Publication is blocked by pending Changesets: ${pendingChangesets.join(', ')}.`,
-)
+assert(listPendingChangesets(rootDir).length === 0, 'Publication is blocked by pending Changesets.')
 
 const version = artifact.metadata.packageSetVersion
+assert(version === expectedVersion, `Artifact version ${version} differs from ${expectedVersion}.`)
 const channel = releaseChannel(version)
-const stagingTag = stagingTagForRun(ciRunId)
-const releaseNotes = extractPackageSetReleaseNotes(rootDir, packageSet)
-const packageRecords = []
-
-for (const pkg of artifact.packages) {
+const packages = artifact.packages.map((pkg) => {
   const registry = readRegistryState(pkg.metadata.name, pkg.metadata.version)
   assert(
-    !registry.published,
-    `${pkg.metadata.name}@${pkg.metadata.version} already exists. Resume the original release run instead of preparing new bytes.`,
+    !registry.published || registry.shasum === pkg.metadata.sha1,
+    `${pkg.metadata.name}@${pkg.metadata.version} already exists with different bytes.`,
   )
   const currentChannelVersion = registry.distTags[channel] ?? null
-  if (currentChannelVersion) {
+  if (!registry.published && currentChannelVersion) {
     assert(
       compareSemver(pkg.metadata.version, currentChannelVersion) > 0,
       `${pkg.metadata.name} candidate ${pkg.metadata.version} must be newer than ${channel} ${currentChannelVersion}.`,
     )
   }
-  packageRecords.push(createPackageReleaseRecord(pkg, registry, channel, stagingTag))
-}
-
-const previousChannelVersions = new Set(packageRecords.map((pkg) => pkg.previousChannelVersion))
-assert(
-  previousChannelVersions.size === 1,
-  `The ${channel} tags are not aligned across the fixed package set.`,
-)
-const previousStagingVersions = new Set(packageRecords.map((pkg) => pkg.previousStagingVersion))
-assert(
-  previousStagingVersions.size === 1,
-  `The ${stagingTag} tags are not aligned across the fixed package set.`,
-)
+  return {
+    name: pkg.metadata.name,
+    version: pkg.metadata.version,
+    tarball: pkg.metadata.tarball,
+    sha1: pkg.metadata.sha1,
+    sha256: pkg.metadata.sha256,
+  }
+})
 
 const record = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   sourceSha: artifact.metadata.sourceSha,
   ciRunId: String(ciRunId),
   version,
   tag: `v${version}`,
   channel,
-  stagingTag,
   publishOrder: artifact.metadata.publishOrder,
-  packages: packageRecords,
+  packages,
 }
-const recordPath = join(releaseDir, 'release-record.json')
-const releaseNotesPath = join(releaseDir, 'github-release-notes.md')
-writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`)
+writeFileSync(join(releaseDir, 'release-record.json'), `${JSON.stringify(record, null, 2)}\n`)
 
-const evidenceLines = [
+const releaseNotes = extractPackageSetReleaseNotes(rootDir, packageSet)
+const evidence = [
   '---',
   '',
   '## Release evidence',
@@ -103,64 +80,37 @@ const evidenceLines = [
   `- Source SHA: \`${record.sourceSha}\``,
   `- CI run: \`${record.ciRunId}\``,
   `- Package-set version: \`${record.version}\``,
-  `- npm staging tag: \`${record.stagingTag}\``,
-  `- npm final channel: \`${record.channel}\``,
+  `- npm channel: \`${record.channel}\``,
   '',
-  '| Package | Tarball | SHA-1 | SHA-256 |',
-  '|---|---|---|---|',
-  ...record.packages.map(
-    (pkg) => `| \`${pkg.name}\` | \`${pkg.tarball}\` | \`${pkg.sha1}\` | \`${pkg.sha256}\` |`,
-  ),
+  '| Package | Tarball | SHA-256 |',
+  '|---|---|---|',
+  ...record.packages.map((pkg) => `| \`${pkg.name}\` | \`${pkg.tarball}\` | \`${pkg.sha256}\` |`),
   '',
 ]
-writeFileSync(releaseNotesPath, `${releaseNotes.trim()}\n\n${evidenceLines.join('\n')}`)
-
-const previousChannelVersion = [...previousChannelVersions][0] ?? 'not set'
-const previousStagingVersion = [...previousStagingVersions][0] ?? 'not set'
-const summary = [
-  `# Staged release plan: ${record.tag}`,
-  '',
-  '| Field | Value |',
-  '|---|---|',
-  `| Source SHA | \`${record.sourceSha}\` |`,
-  `| CI run | \`${record.ciRunId}\` |`,
-  `| Version | \`${record.version}\` |`,
-  `| Internal staging tag | \`${record.stagingTag}\` |`,
-  `| Final channel | \`${record.channel}\` |`,
-  `| Previous staging target | \`${previousStagingVersion}\` |`,
-  `| Previous final target | \`${previousChannelVersion}\` |`,
-  '',
-  '## Exact package set',
-  '',
-  '| Order | Package | Tarball | SHA-256 |',
-  '|---:|---|---|---|',
-  ...record.publishOrder.map((name, index) => {
-    const pkg = record.packages.find((candidate) => candidate.name === name)
-    return `| ${index + 1} | \`${name}\` | \`${pkg.tarball}\` | \`${pkg.sha256}\` |`
-  }),
-  '',
-  'The OIDC job may submit only these retained tarballs to npm staged publishing.',
-  `No \`${record.channel}\` tag changes during staging.`,
-  '',
-  '## Reviewed release contents',
-  '',
-  releaseNotes.trim(),
-  '',
-]
+writeFileSync(
+  join(releaseDir, 'github-release-notes.md'),
+  `${releaseNotes.trim()}\n\n${evidence.join('\n')}`,
+)
 
 if (summaryPath) {
-  appendFileSync(summaryPath, `${summary.join('\n')}\n`)
+  appendFileSync(
+    summaryPath,
+    `${[
+      `# Release plan: ${record.tag}`,
+      '',
+      `- Source SHA: \`${record.sourceSha}\``,
+      `- CI run: \`${record.ciRunId}\``,
+      `- npm channel: \`${record.channel}\``,
+      '',
+      'The protected job publishes only the retained tarballs in dependency order.',
+      '',
+      ...record.publishOrder.map((name, index) => `${index + 1}. \`${name}@${version}\``),
+      '',
+    ].join('\n')}\n`,
+  )
 }
 if (outputPath) {
-  appendFileSync(
-    outputPath,
-    [
-      `tag=${record.tag}`,
-      `channel=${record.channel}`,
-      `package_matrix=${JSON.stringify(releasePackageMatrix(record))}`,
-      '',
-    ].join('\n'),
-  )
+  appendFileSync(outputPath, `tag=${record.tag}\nchannel=${record.channel}\n`)
 }
 
 process.stdout.write(

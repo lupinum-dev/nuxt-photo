@@ -45,15 +45,13 @@ available.
 - Local publication is unsupported.
 - The release workflow consumes retained exact-SHA tarballs and does not rebuild
   during publication.
-- npm trusted publishing is restricted to stage-only publication.
-- A protected GitHub deployment approval is required before staging.
-- The same protected `npm` environment requires another approval before final
-  registry verification.
-- The maintainer personally approves each npm stage with 2FA.
-- The maintainer personally promotes both package channels with 2FA.
+- npm trusted publishing is restricted to `release.yml` and the protected
+  `npm` environment.
+- One protected GitHub deployment approval is required before publication.
 - npm provenance must be visible for both packages.
-- Stage submissions may run independently, but the maintainer approves the Vue
-  npm stage before the dependent Nuxt stage and promotes Vue before Nuxt.
+- The isolated job publishes the certified Vue tarball before the dependent
+  Nuxt tarball.
+- Prereleases use `next`. Stable releases use `latest`.
 - GitHub release finalization has no npm OIDC authority.
 
 Maintainer npm accounts should require strong 2FA or passkeys and disallow

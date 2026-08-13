@@ -24,6 +24,7 @@
     "check": "vp check",
     "check:metadata": "node scripts/check-metadata.mjs",
     "check:release-workflow": "node scripts/test-release-workflow.mjs",
+    "check:vercel": "node scripts/check-vercel-config.mjs",
     "dev": "vp run --filter '@lupinum/*photo' --fail-if-no-match --parallel dev",
     "dev:docs": "vp run build && vp run --filter nuxt-photo-docs --fail-if-no-match dev",
     "dev:playground": "vp run build && vp run --filter nuxt-photo-playground --fail-if-no-match dev",
@@ -51,7 +52,7 @@
     "typecheck:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-playground-tw --filter nuxt-photo-docs --fail-if-no-match typecheck",
     "typecheck:built": "vp run typecheck:packages && vp run typecheck:apps",
     "typecheck:packages": "vp run --filter @lupinum/vue-photo --fail-if-no-match typecheck",
-    "verify": "pnpm audit:all && vp run build && vp run prepare:apps && vp check && vp run lint:vue-template && vp run check:metadata && vp run check:release-workflow && vp run docs:validate && vp run docs:agent:check && vp run typecheck:packages && vp test && vp run release:pack && vp run typecheck:apps && vp run size:built && vp run build:playground-tailwind:only && vp run build:docs:only && vp run test:browser:built",
+    "verify": "pnpm audit:all && vp run build && vp run prepare:apps && vp check && vp run lint:vue-template && vp run check:metadata && vp run check:release-workflow && vp run check:vercel && vp run docs:validate && vp run docs:agent:check && vp run typecheck:packages && vp test && vp run release:pack && vp run typecheck:apps && vp run size:built && vp run build:playground-tailwind:only && vp run build:docs:only && vp run test:browser:built",
     "version": "changeset version && vp install --lockfile-only && vp fmt . --write"
   },
   "devDependencies": {

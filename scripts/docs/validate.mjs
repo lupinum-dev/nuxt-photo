@@ -27,6 +27,19 @@ function routeFor(file) {
 const files = await markdownFiles(contentRoot)
 const routes = new Set(files.map(routeFor))
 const failures = []
+for (const path of [
+  '.github/ISSUE_TEMPLATE/bug.md',
+  '.github/ISSUE_TEMPLATE/config.yml',
+  '.github/ISSUE_TEMPLATE/documentation.md',
+  '.github/ISSUE_TEMPLATE/proposal.md',
+  '.github/pull_request_template.md',
+]) {
+  try {
+    await readFile(resolve(root, path), 'utf8')
+  } catch {
+    failures.push(`${path} is required.`)
+  }
+}
 const publicReadmes = [
   resolve(root, 'README.md'),
   resolve(root, 'packages/nuxt/README.md'),
