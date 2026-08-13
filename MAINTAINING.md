@@ -45,6 +45,10 @@ vp run release:notes
 | Dependency updater                  | Renovate only                                                                            |
 | Normal rollback                     | Restore both recorded dist-tags, deprecate the bad set, and fix forward                  |
 
+Changesets is the only version and committed changelog owner. Use
+`vp run changelog:preview` to inspect Conventional Commits without changing
+versions, tags, or changelog files.
+
 ## Command contracts
 
 ### `vp check`

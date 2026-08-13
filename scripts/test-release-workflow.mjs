@@ -5,6 +5,37 @@ import { delimiter, join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
 const workflow = readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8')
+const versionWorkflow = readFileSync(
+  new URL('../.github/workflows/version.yml', import.meta.url),
+  'utf8',
+)
+
+assert(
+  versionWorkflow.includes('prepare-version:') &&
+    versionWorkflow.includes('permissions:\n      contents: read'),
+  'Version preparation must run with read-only repository permissions.',
+)
+assert(
+  versionWorkflow.includes('vp install --frozen-lockfile --ignore-scripts'),
+  'Version preparation must disable dependency lifecycle scripts.',
+)
+const privilegedVersionJob = versionWorkflow.split('  version-pr:')[1]
+assert(privilegedVersionJob, 'Version PR creation must use a separate privileged job.')
+assert(
+  !privilegedVersionJob.includes('vp install') && !privilegedVersionJob.includes('vp run version'),
+  'The privileged version PR job must not install dependencies or execute repository tooling.',
+)
+assert(
+  privilegedVersionJob.includes('git apply --index "$RUNNER_TEMP/version.patch"'),
+  'The privileged version PR job must consume the inert patch.',
+)
+assert(
+  privilegedVersionJob.includes('Confirm that the prepared SHA is still current main') &&
+    privilegedVersionJob.indexOf('Confirm that the prepared SHA is still current main') <
+      privilegedVersionJob.indexOf('git apply --index "$RUNNER_TEMP/version.patch"'),
+  'The privileged version PR job must revalidate main immediately before it applies the patch.',
+)
+
 const embeddedScript = /node --input-type=module <<'NODE'\n([\s\S]*?)\n          NODE/.exec(
   workflow,
 )?.[1]
