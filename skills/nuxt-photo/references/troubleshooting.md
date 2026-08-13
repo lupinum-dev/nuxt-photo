@@ -33,12 +33,6 @@ pnpm build
 
 Then test thumbnail opening, next and previous navigation, Escape closing, mobile width, keyboard focus, and visible layout movement.
 
-## Related
-
-- [Intentional sharp edges](/docs/help/sharp-edges)
-- [The photo model](/docs/concepts/photo-model)
-- [Module configuration](/docs/api/configuration)
-
 _Source: `docs/content/docs/6.help/1.troubleshooting.md`_
 
 ## Intentional sharp edges
