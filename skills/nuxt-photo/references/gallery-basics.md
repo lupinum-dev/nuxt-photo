@@ -105,9 +105,7 @@ defaults.
 
 [Image providers](/docs/concepts/image-pipeline)
 
-## Next step
-
-[Build your first gallery](/docs/getting-started/first-gallery)
+Continue with [your first gallery](/docs/getting-started/first-gallery) to render photos with the installed module.
 
 _Source: `docs/content/docs/2.getting-started/1.installation.md`_
 

@@ -52,7 +52,9 @@ for (const file of [...files, ...publicReadmes]) {
     if (/^# /m.test(body)) {
       failures.push(`${relative(root, file)} contains a duplicate body title`)
     }
-    if (/^## (Conclusion|Next|Next steps|Related|See also|Summary)$/m.test(body)) {
+    if (
+      /^## (Conclusion|Next|Next step|Next steps|Related|See also|Summary|What's next)$/m.test(body)
+    ) {
       failures.push(`${relative(root, file)} contains a generic closing section`)
     }
     if (

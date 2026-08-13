@@ -18,7 +18,7 @@ export default {
       discord: 'https://discord.gg/RPH6SeA36N',
     },
     feedback: { enabled: true },
-    analytics: { plausible: { scriptId: 'XxT9ZOr0ZLg10B4KV40xH' } },
+    analytics: { plausible: { scriptId: 'AdOTbq5X_7FOIbPeaHoma' } },
     repository: {
       url: 'https://github.com/lupinum-dev/nuxt-photo',
       branch: 'main',
