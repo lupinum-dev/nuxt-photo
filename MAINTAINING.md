@@ -47,9 +47,12 @@ use:
 - Root Directory: `docs`
 - Include source files outside the Root Directory: enabled
 - Output Directory: no override
+- Environment variable: `ENABLE_EXPERIMENTAL_COREPACK=1` for Production,
+  Preview, and Development
 
 The committed `docs/vercel.json` installs the frozen root workspace and builds
-both packages before it builds the documentation app.
+both packages before it builds the documentation app. The environment variable
+is not secret. It lets Corepack activate the pinned pnpm version.
 
 ## Dependency automation
 
