@@ -32,6 +32,37 @@ const publicReadmes = [
   resolve(root, 'packages/nuxt/README.md'),
   resolve(root, 'packages/vue/README.md'),
 ]
+const readmeContracts = new Map([
+  [
+    resolve(root, 'README.md'),
+    [
+      'Why use Nuxt Photo?',
+      'When to use it',
+      'Requirements',
+      'Installation',
+      'Quick start',
+      'Core concepts',
+      'Packages',
+      'Documentation',
+      'Contributing and development',
+      'Support and security',
+      'License',
+    ],
+  ],
+  ...['packages/nuxt/README.md', 'packages/vue/README.md'].map((path) => [
+    resolve(root, path),
+    [
+      'Purpose',
+      'Requirements',
+      'Installation',
+      'Quick start',
+      'Exports',
+      'Documentation',
+      'Support and security',
+      'License',
+    ],
+  ]),
+])
 
 for (const file of [...files, ...publicReadmes]) {
   const source = await readFile(file, 'utf8')
@@ -63,6 +94,44 @@ for (const file of [...files, ...publicReadmes]) {
       )
     ) {
       failures.push(`${relative(root, file)} contains a contraction`)
+    }
+  }
+  if (readmeContracts.has(file)) {
+    const label = relative(root, file)
+    const headings = [...source.matchAll(/^## (.+)$/gm)].map((match) => match[1])
+    const expected = readmeContracts.get(file)
+    if (JSON.stringify(headings) !== JSON.stringify(expected)) {
+      failures.push(`${label} has the wrong public section order: ${headings.join(' -> ')}`)
+    }
+    if ((source.match(/<h1 align="center">/g) ?? []).length !== 1 || /^# /m.test(source)) {
+      failures.push(`${label} must contain one centered HTML H1 and no Markdown H1`)
+    }
+    if (!/<p align="center">[\s\S]*?<img [^>]*width="128"[^>]*>[\s\S]*?<\/p>/u.test(source)) {
+      failures.push(`${label} must start with a centered 128 px product icon`)
+    }
+    for (const marker of ['img.shields.io/npm/v/', 'actions/workflows/ci.yml', 'license-MIT']) {
+      if (!source.includes(marker)) failures.push(`${label} is missing badge marker ${marker}`)
+    }
+    for (const link of [
+      'https://github.com/lupinum-dev/nuxt-photo',
+      'https://nuxt-photo.lupinum.com',
+      'https://discord.gg/RPH6SeA36N',
+    ]) {
+      if (!source.includes(link)) failures.push(`${label} is missing canonical link ${link}`)
+    }
+    const expectedPackage =
+      label === 'packages/vue/README.md' ? '@lupinum/vue-photo' : '@lupinum/nuxt-photo'
+    if (!source.includes(expectedPackage))
+      failures.push(`${label} does not identify ${expectedPackage}`)
+    if (/\b(?:TODO|TBD|lorem ipsum|placeholder)\b/iu.test(source)) {
+      failures.push(`${label} contains placeholder text`)
+    }
+    if (
+      /^## (?:At a Glance|Quick Start|Public API|Support And Security|What It Provides)$/m.test(
+        source,
+      )
+    ) {
+      failures.push(`${label} contains a title-case heading`)
     }
   }
 }

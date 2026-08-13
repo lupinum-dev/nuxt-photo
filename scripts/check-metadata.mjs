@@ -15,9 +15,11 @@ const maintainerNode = readText('.node-version').trim()
 const catalog = readWorkspaceCatalog(root)
 const requiredRootScripts = [
   'build',
+  'audit:all',
   'changeset',
   'check',
   'check:release-workflow',
+  'docs:build',
   'release:notes',
   'release:pack',
   'release:verify',
@@ -81,6 +83,10 @@ assert(
   !Object.hasOwn(rootManifest.devDependencies ?? {}, 'prettier'),
   'Oxfmt is the only repository formatter; remove Prettier.',
 )
+assert(
+  rootManifest.devDependencies?.['pkg-pr-new'] === '0.0.87',
+  'pkg-pr-new must remain pinned for reproducible package previews.',
+)
 
 const npmrc = readText('.npmrc')
 assert(npmrc.includes('engine-strict=true'), '.npmrc must reject unsupported Node versions.')
@@ -98,7 +104,7 @@ for (const requiredPolicy of [
   'enableGlobalVirtualStore: false',
   'preferFrozenLockfile: true',
   'strictPeerDependencies: true',
-  'minimumReleaseAge: 2880',
+  'minimumReleaseAge: 1440',
 ]) {
   assert(
     workspacePolicy.includes(requiredPolicy),
@@ -275,8 +281,8 @@ function verifyRenovate() {
     'Renovate must preserve full GitHub Action digest pinning.',
   )
   assert(
-    renovate.minimumReleaseAge === '2 days',
-    'Renovate minimumReleaseAge must match pnpm at two days.',
+    renovate.minimumReleaseAge === '1 day',
+    'Renovate minimumReleaseAge must match pnpm at one day.',
   )
   assert(
     renovate.internalChecksFilter === 'strict',
@@ -312,6 +318,10 @@ function verifyWorkflows() {
   assert(
     workflows.some(({ name }) => name === 'version.yml'),
     'The Changesets version.yml workflow is missing.',
+  )
+  assert(
+    workflows.some(({ name }) => name === 'package-preview.yml'),
+    'The non-required package-preview.yml workflow is missing.',
   )
 
   for (const workflow of workflows) {

@@ -17,6 +17,7 @@ dist
 playwright-report
 test-results
 .release
+.package-preview
 .content
 .data
 coverage

@@ -62,7 +62,7 @@ vp test
 Before handoff:
 
 ```sh
-vp run verify
+pnpm verify
 git status --short
 ```
 
@@ -118,17 +118,17 @@ Use `vp help` or the version-matched documentation in
 
 ## Test escalation
 
-| Change                                        | First proof                                  | Escalation                          |
-| --------------------------------------------- | -------------------------------------------- | ----------------------------------- |
-| Pure photo/layout helper                      | Targeted `vp test <file>`                    | `vp test`                           |
-| Vue component, composable, or primitive       | Targeted Vue test                            | `vp run typecheck:packages`         |
-| Nuxt module or runtime integration            | Targeted Nuxt test                           | `vp run build` and relevant fixture |
-| Vue template markup                           | Targeted test and `vp run lint:vue-template` | `vp run verify`                     |
-| Browser interaction or accessibility          | Focused Playwright project/file              | `vp run test:browser`               |
-| Tailwind integration                          | Affected test or component check             | `vp run build:playground-tailwind`  |
-| Public docs                                   | `vp run docs:validate`                       | `vp run build:docs`                 |
-| Exports, dependencies, files, or declarations | `vp run release:pack`                        | packed clean consumer               |
-| Release or workflow code                      | Focused script tests/checks                  | `vp run release:verify` on main CI  |
+| Change                                        | First proof                                | Escalation                          |
+| --------------------------------------------- | ------------------------------------------ | ----------------------------------- |
+| Pure photo/layout helper                      | Targeted `vp test <file>`                  | `vp test`                           |
+| Vue component, composable, or primitive       | Targeted Vue test                          | `vp run typecheck:packages`         |
+| Nuxt module or runtime integration            | Targeted Nuxt test                         | `vp run build` and relevant fixture |
+| Vue template markup                           | Targeted test and `pnpm lint:vue-template` | `pnpm verify`                       |
+| Browser interaction or accessibility          | Focused Playwright project/file            | `vp run test:browser`               |
+| Tailwind integration                          | Affected test or component check           | `vp run build:playground-tailwind`  |
+| Public docs                                   | `vp run docs:validate`                     | `vp run build:docs`                 |
+| Exports, dependencies, files, or declarations | `vp run release:pack`                      | packed clean consumer               |
+| Release or workflow code                      | Focused script tests/checks                | `pnpm release:verify` on main CI    |
 
 Fixture setup failure must fail the suite. Do not turn a required contract into
 a skip merely because setup is inconvenient.

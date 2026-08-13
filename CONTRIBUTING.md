@@ -61,11 +61,11 @@ vp check --fix
 Before requesting review:
 
 ```sh
-vp run verify
+pnpm verify
 git status --short
 ```
 
-`vp run verify` is the complete local pull-request gate. It includes framework
+`pnpm verify` is the complete local pull-request gate. It includes framework
 typechecks, Vue-template lint, packed-package certification, real application
 builds, size budgets, and browser tests. It is intentionally heavier than the
 daily loop.

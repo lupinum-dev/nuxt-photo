@@ -29,7 +29,9 @@ vp run release:notes
 | ----------------------------------- | ---------------------------------------------------------------------------------------- |
 | Fastest useful local check          | `vp check`                                                                               |
 | Repository behavior tests           | `vp test`                                                                                |
-| Complete local handoff gate         | `vp run verify`                                                                          |
+| Complete local handoff gate         | `pnpm verify`                                                                            |
+| Build documentation                 | `pnpm docs:build`                                                                        |
+| Audit the full workspace            | `pnpm audit:all`                                                                         |
 | Required before merge               | `PR gate`                                                                                |
 | Proof that main is healthy          | `Main healthy` on the exact SHA                                                          |
 | Proof package bytes work            | Reproducible package-set pack plus clean packed consumers                                |
@@ -154,7 +156,7 @@ coverage is necessary.
 The output is one coordinated package set. A tarball from another command or
 another SHA is not an equivalent candidate.
 
-### `vp run verify`
+### `pnpm verify`
 
 - Purpose: complete local and pull-request maintainer gate.
 - Mutates: ignored `dist`, `.release`, `.nuxt`, `.output`, and temporary
@@ -178,7 +180,7 @@ another SHA is not an equivalent candidate.
 
 Do not run this after every edit. Use focused commands, then escalate once.
 
-### `vp run release:verify`
+### `pnpm release:verify`
 
 - Purpose: authoritative exact-SHA main release gate.
 - Mutates: ignored and temporary output only.
@@ -211,7 +213,7 @@ Do not run this after every edit. Use focused commands, then escalate once.
 - the minimum-supported Node compatibility lane;
 - the complete `Verify` lane on the maintainer Node release.
 
-The full lane runs `vp run verify`. It proves one reviewable commit satisfies
+The full lane runs `pnpm verify`. It proves one reviewable commit satisfies
 the repository's static, type, test, docs, browser, size, and packed-artifact
 contracts.
 
@@ -232,7 +234,7 @@ aggregates:
 - the minimum-supported Node compatibility lane;
 - the `Release candidate` lane on the maintainer Node release.
 
-The release-candidate lane runs `vp run release:verify` and uploads one retained
+The release-candidate lane runs `pnpm release:verify` and uploads one retained
 `release-candidate` artifact containing both tarballs and their package-set
 manifest. Publication must name the numeric successful `ci` run and consume
 that artifact without rebuilding.
