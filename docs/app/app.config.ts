@@ -8,6 +8,10 @@ export default {
       },
       logo: { light: '/icon.png', dark: '/icon.png' },
       docsSidebarSwitcher: 'tabs',
+      legalLinks: [
+        { label: { en: 'Legal notice' }, to: 'https://lupinum.com/impressum' },
+        { label: { en: 'Privacy' }, to: 'https://lupinum.com/datenschutz' },
+      ],
     },
     social: {
       github: 'https://github.com/lupinum-dev/nuxt-photo',
