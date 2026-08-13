@@ -28,10 +28,14 @@ function routeFor(file) {
 const files = await markdownFiles(contentRoot)
 const routes = new Set(files.map(routeFor))
 const failures = []
-const trackedFiles = new Set(execFileSync('git', ['ls-files'], {
-  cwd: root,
-  encoding: 'utf8',
-}).trim().split('\n'))
+const trackedFiles = new Set(
+  execFileSync('git', ['ls-files'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+    .trim()
+    .split('\n'),
+)
 for (const path of [
   '.github/ISSUE_TEMPLATE/bug.md',
   '.github/ISSUE_TEMPLATE/config.yml',
@@ -41,12 +45,16 @@ for (const path of [
 ]) {
   if (!trackedFiles.has(path)) failures.push(`${path} must be tracked.`)
 }
-const pullRequestTemplate = await readFile(resolve(root, '.github/pull_request_template.md'), 'utf8')
+const pullRequestTemplate = await readFile(
+  resolve(root, '.github/pull_request_template.md'),
+  'utf8',
+)
 for (const marker of [
   '- [ ] I ran `pnpm verify`, or I explained why it does not apply.',
   '- [ ] I updated versions, migration guidance, and compatibility notes when the public contract changed.',
 ]) {
-  if (!pullRequestTemplate.includes(marker)) failures.push(`Pull request template is missing: ${marker}`)
+  if (!pullRequestTemplate.includes(marker))
+    failures.push(`Pull request template is missing: ${marker}`)
 }
 const docsAppConfig = await readFile(resolve(root, 'docs/app/app.config.ts'), 'utf8')
 for (const marker of [
@@ -56,7 +64,8 @@ for (const marker of [
   'https://lupinum.com/impressum',
   'https://lupinum.com/datenschutz',
 ]) {
-  if (!docsAppConfig.includes(marker)) failures.push(`Documentation app config is missing: ${marker}`)
+  if (!docsAppConfig.includes(marker))
+    failures.push(`Documentation app config is missing: ${marker}`)
 }
 const publicReadmes = [
   resolve(root, 'README.md'),
