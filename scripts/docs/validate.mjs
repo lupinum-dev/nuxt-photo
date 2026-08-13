@@ -47,6 +47,15 @@ for (const file of [...files, ...publicReadmes]) {
   if (file.startsWith(contentRoot) && /[—–]/u.test(source)) {
     failures.push(`${relative(root, file)} contains a disallowed dash character`)
   }
+  if (file.startsWith(contentRoot)) {
+    const body = source.replace(/^---\n[\s\S]*?\n---\n/, '')
+    if (/^# /m.test(body)) {
+      failures.push(`${relative(root, file)} contains a duplicate body title`)
+    }
+    if (/^## (Related|Conclusion|Next)$/m.test(body)) {
+      failures.push(`${relative(root, file)} contains a generic closing section`)
+    }
+  }
 }
 
 const expectedSections = [
