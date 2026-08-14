@@ -47,11 +47,6 @@ peerDependencyRules:
     vite: '*'
 minimumReleaseAge: 1440
 
-minimumReleaseAgeExclude:
-  # Reviewed first-party releases required by the docs app. Remove after 2026-08-14 17:36 Europe/Vienna.
-  - '@lupinum/ginko-content@0.4.0-rc.2'
-  - '@lupinum/ginko-docs@0.3.0-rc.5'
-
 allowBuilds:
   '@parcel/watcher': false
   '@tailwindcss/oxide': false
