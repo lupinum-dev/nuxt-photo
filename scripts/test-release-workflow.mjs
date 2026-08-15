@@ -85,6 +85,7 @@ const publishScript = dedent(publishScriptMatch[1]).replace(
 )
 
 runScenario('matching bootstrap bytes', {
+  allowBootstrap: true,
   existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
   expectedBootstrap: true,
   expectedModes: {
@@ -102,6 +103,7 @@ runScenario('missing packages use OIDC', {
   expectedPublishes: 2,
 })
 runScenario('mixed package sets recover safely', {
+  allowBootstrap: true,
   existing: ['@lupinum/vue-photo'],
   expectedBootstrap: true,
   expectedModes: {
@@ -122,14 +124,20 @@ runScenario('wrong dist-tags fail', {
   expectedError: 'did not expose the required bytes',
 })
 runScenario('later provenance-free versions fail', {
+  allowBootstrap: true,
   existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
   extraVersion: '@lupinum/vue-photo',
   expectedError: 'is not the first package version and has no provenance',
 })
 runScenario('a bootstrap package must remain the sole version', {
+  allowBootstrap: true,
   existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
   laterVersionDuringVerification: '@lupinum/vue-photo',
   expectedError: 'did not expose the required bytes',
+})
+runScenario('bootstrap recovery requires explicit authorization', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  expectedError: 'requires explicit bootstrap authorization',
 })
 runScenario('new provenance-free publications fail', {
   publishProvenance: false,
@@ -244,6 +252,7 @@ function runScenario(name, options) {
       encoding: 'utf8',
       env: {
         ...process.env,
+        ALLOW_BOOTSTRAP: options.allowBootstrap ? 'true' : 'false',
         PATH: `${binDir}:${process.env.PATH}`,
         FAKE_NPM_STATE: statePath,
         GITHUB_OUTPUT: outputPath,

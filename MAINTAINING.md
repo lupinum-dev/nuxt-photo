@@ -149,6 +149,9 @@ tarball and it is the package's only published version. It records the missing
 bootstrap provenance in the GitHub release. Every version first published by
 the workflow must expose OIDC provenance.
 
+Set the `allow_bootstrap` dispatch input only for the known first-version
+recovery. The workflow rejects every other existing package without provenance.
+
 Never run `npm publish`, `pnpm publish`, `changelogen --release`, or a manual
 Git tag command. Never rebuild a retained artifact during publication.
 
