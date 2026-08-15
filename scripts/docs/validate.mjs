@@ -36,6 +36,11 @@ const trackedFiles = new Set(
     .trim()
     .split('\n'),
 )
+if (files.includes(resolve(contentRoot, 'index.md'))) {
+  failures.push(
+    'docs/content/docs/index.md must not exist because it creates a self-redirect at /docs.',
+  )
+}
 for (const path of [
   '.github/ISSUE_TEMPLATE/bug.md',
   '.github/ISSUE_TEMPLATE/config.yml',
