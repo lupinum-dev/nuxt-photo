@@ -294,7 +294,8 @@ creates the GitHub release.
 Stay with the release until a terminal result. `COMPLETE` requires:
 
 - both npm versions readable;
-- provenance present for both;
+- provenance present for both, except for a documented first-version bootstrap
+  whose registry bytes match the certified tarballs;
 - final channel correct for both;
 - Git tag present;
 - one immutable GitHub Release present with durable evidence.

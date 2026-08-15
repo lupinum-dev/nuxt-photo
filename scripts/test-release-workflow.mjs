@@ -1,4 +1,8 @@
-import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { basename, join } from 'node:path'
 
 const workflow = readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8')
 const versionWorkflow = readFileSync(
@@ -53,6 +57,10 @@ for (const required of [
   "'--ignore-scripts', '--provenance'",
   'record.channel',
   'dist.attestations',
+  'versions.length !== 1 || versions[0] !== pkg.version',
+  "modes.set(name, attestations ? 'oidc' : 'bootstrap')",
+  "mode === 'bootstrap' || (mode === 'oidc' && attestations)",
+  'bootstrap=${String(bootstrap)}',
 ]) {
   assert(publishJob.includes(required), `The publish job is missing: ${required}`)
 }
@@ -64,9 +72,284 @@ assert(
   'GitHub release creation must wait for npm publication.',
 )
 assert(releaseJob.includes('gh release create'), 'GitHub release creation is not automatic.')
+assert(
+  releaseJob.includes('This first npm version was created from the exact CI-certified artifact'),
+  'Bootstrap releases must record the missing first-version provenance.',
+)
+
+const publishScriptMatch = /node --input-type=module <<'NODE'\n([\s\S]*?)\n\s+NODE/.exec(publishJob)
+assert(publishScriptMatch, 'The publish job must contain one inline Node program.')
+const publishScript = dedent(publishScriptMatch[1]).replace(
+  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000)',
+  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0)',
+)
+
+runScenario('matching bootstrap bytes', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  expectedBootstrap: true,
+  expectedModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'bootstrap',
+  },
+  expectedPublishes: 0,
+})
+runScenario('missing packages use OIDC', {
+  expectedBootstrap: false,
+  expectedModes: {
+    '@lupinum/vue-photo': 'oidc',
+    '@lupinum/nuxt-photo': 'oidc',
+  },
+  expectedPublishes: 2,
+})
+runScenario('mixed package sets recover safely', {
+  existing: ['@lupinum/vue-photo'],
+  expectedBootstrap: true,
+  expectedModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'oidc',
+  },
+  expectedPublishes: 1,
+})
+runScenario('different bytes fail', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  differentBytes: '@lupinum/vue-photo',
+  expectedError: 'exists with different bytes',
+})
+runScenario('wrong dist-tags fail', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  attested: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  wrongTag: '@lupinum/nuxt-photo',
+  expectedError: 'did not expose the required bytes',
+})
+runScenario('later provenance-free versions fail', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  extraVersion: '@lupinum/vue-photo',
+  expectedError: 'is not the first package version and has no provenance',
+})
+runScenario('a bootstrap package must remain the sole version', {
+  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  laterVersionDuringVerification: '@lupinum/vue-photo',
+  expectedError: 'did not expose the required bytes',
+})
+runScenario('new provenance-free publications fail', {
+  publishProvenance: false,
+  expectedError: 'did not expose the required bytes',
+})
 
 process.stdout.write('Release workflow isolation verified.\n')
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
+}
+
+function dedent(value) {
+  const lines = value.split('\n')
+  const indentation = Math.min(...lines.filter(Boolean).map((line) => line.match(/^\s*/)[0].length))
+  return lines.map((line) => line.slice(indentation)).join('\n')
+}
+
+function digest(content, algorithm) {
+  return createHash(algorithm).update(content).digest('hex')
+}
+
+function runScenario(name, options) {
+  const root = mkdtempSync(join(tmpdir(), 'nuxt-photo-release-policy-'))
+  try {
+    const releaseDir = join(root, '.release')
+    const binDir = join(root, 'bin')
+    mkdirSync(releaseDir)
+    mkdirSync(binDir)
+    const sourceSha = 'a'.repeat(40)
+    const version = '0.2.0'
+    const channel = 'latest'
+    const packageNames = ['@lupinum/vue-photo', '@lupinum/nuxt-photo']
+    const packages = packageNames.map((packageName, index) => {
+      const tarball = `package-${index + 1}.tgz`
+      const content = Buffer.from(`${packageName}@${version}`)
+      writeFileSync(join(releaseDir, tarball), content)
+      return {
+        name: packageName,
+        version,
+        tarball,
+        sha1: digest(content, 'sha1'),
+        sha256: digest(content, 'sha256'),
+      }
+    })
+    writeFileSync(
+      join(releaseDir, 'release-record.json'),
+      JSON.stringify({
+        schemaVersion: 2,
+        sourceSha,
+        version,
+        channel,
+        publishOrder: packageNames,
+        packages,
+      }),
+    )
+    writeFileSync(
+      join(releaseDir, 'release-artifact.json'),
+      JSON.stringify({ sourceSha, packageSetVersion: version }),
+    )
+
+    const existing = new Set(options.existing ?? [])
+    const attested = new Set(options.attested ?? [])
+    const registry = Object.fromEntries(
+      packages.map((pkg) => {
+        if (!existing.has(pkg.name)) return [pkg.name, null]
+        const versions = [pkg.version]
+        if (options.extraVersion === pkg.name) versions.push('0.2.1')
+        return [
+          pkg.name,
+          {
+            versions,
+            versionViews: 0,
+            addLaterVersion: options.laterVersionDuringVerification === pkg.name,
+            tags: { [channel]: options.wrongTag === pkg.name ? '0.1.0' : pkg.version },
+            releases: {
+              [pkg.version]: {
+                sha1: options.differentBytes === pkg.name ? '0'.repeat(40) : pkg.sha1,
+                attestations: attested.has(pkg.name)
+                  ? { url: 'https://registry.example/provenance' }
+                  : null,
+              },
+            },
+          },
+        ]
+      }),
+    )
+    const statePath = join(root, 'registry.json')
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        packages: registry,
+        tarballs: Object.fromEntries(
+          packages.map((pkg) => [
+            basename(pkg.tarball),
+            { ...pkg, path: join(releaseDir, pkg.tarball) },
+          ]),
+        ),
+        publishProvenance: options.publishProvenance !== false,
+        publishes: [],
+      }),
+    )
+    const npmPath = join(binDir, 'npm')
+    writeFileSync(npmPath, fakeNpmProgram())
+    chmodSync(npmPath, 0o755)
+    const runnerPath = join(root, 'publish.mjs')
+    writeFileSync(runnerPath, publishScript)
+    const outputPath = join(root, 'output.txt')
+    const summaryPath = join(root, 'summary.md')
+    const result = spawnSync(process.execPath, [runnerPath], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${binDir}:${process.env.PATH}`,
+        FAKE_NPM_STATE: statePath,
+        GITHUB_OUTPUT: outputPath,
+        GITHUB_STEP_SUMMARY: summaryPath,
+        RELEASE_VERSION: version,
+        SOURCE_SHA: sourceSha,
+      },
+    })
+    const diagnostic = `${result.stdout}\n${result.stderr}`
+    if (options.expectedError) {
+      assert(result.status !== 0, `${name} unexpectedly succeeded.`)
+      assert(
+        diagnostic.includes(options.expectedError),
+        `${name} failed for the wrong reason: ${diagnostic}`,
+      )
+      return
+    }
+    assert(result.status === 0, `${name} failed: ${diagnostic}`)
+    const output = readFileSync(outputPath, 'utf8')
+    assert(
+      output.includes(`bootstrap=${String(options.expectedBootstrap)}`),
+      `${name} reported the wrong publication mode.`,
+    )
+    assert(
+      output.includes(`modes=${JSON.stringify(options.expectedModes)}`),
+      `${name} reported the wrong package modes: ${output}`,
+    )
+    const expectedBootstrapPackages = Object.entries(options.expectedModes)
+      .filter(([, mode]) => mode === 'bootstrap')
+      .map(([packageName]) => packageName)
+      .join(',')
+    assert(
+      output.includes(`bootstrap-packages=${expectedBootstrapPackages}`),
+      `${name} reported the wrong bootstrap packages: ${output}`,
+    )
+    const state = JSON.parse(readFileSync(statePath, 'utf8'))
+    assert(
+      state.publishes.length === options.expectedPublishes,
+      `${name} published the wrong package count.`,
+    )
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}
+
+function fakeNpmProgram() {
+  return `#!/usr/bin/env node
+const fs = require('node:fs')
+const path = require('node:path')
+const crypto = require('node:crypto')
+const statePath = process.env.FAKE_NPM_STATE
+const state = JSON.parse(fs.readFileSync(statePath, 'utf8'))
+const args = process.argv.slice(2)
+const save = () => fs.writeFileSync(statePath, JSON.stringify(state))
+const output = value => process.stdout.write(JSON.stringify(value) + '\\n')
+if (args[0] === '--version') {
+  process.stdout.write('11.5.0\\n')
+  process.exit(0)
+}
+if (args[0] === 'view') {
+  const spec = args[1]
+  const field = args[2]
+  const match = /^(@[^/]+\\/[^@]+)@(.+)$/.exec(spec)
+  const name = match ? match[1] : spec
+  const version = match?.[2]
+  const pkg = state.packages[name]
+  const release = version ? pkg?.releases?.[version] : null
+  let value
+  if (field === 'dist.shasum') value = release?.sha1
+  else if (field === 'dist.attestations') value = release?.attestations
+  else if (field === 'versions') {
+    if (pkg?.addLaterVersion && pkg.versionViews > 0 && !pkg.versions.includes('0.2.1')) {
+      pkg.versions.push('0.2.1')
+    }
+    if (pkg) pkg.versionViews += 1
+    save()
+    value = pkg?.versions
+  }
+  else if (field.startsWith('dist-tags.')) value = pkg?.tags?.[field.slice('dist-tags.'.length)]
+  if (value === undefined || value === null) {
+    process.stderr.write('E404 404 Not Found\\n')
+    process.exit(1)
+  }
+  output(value)
+  process.exit(0)
+}
+if (args[0] === 'publish') {
+  const tarball = state.tarballs[path.basename(args[1])]
+  if (!tarball) throw new Error('Unknown tarball')
+  const tag = args[args.indexOf('--tag') + 1]
+  const content = fs.readFileSync(tarball.path)
+  const sha1 = crypto.createHash('sha1').update(content).digest('hex')
+  state.packages[tarball.name] = {
+    versions: [tarball.version],
+    tags: { [tag]: tarball.version },
+    releases: {
+      [tarball.version]: {
+        sha1,
+        attestations: state.publishProvenance ? { url: 'https://registry.example/provenance' } : null,
+      },
+    },
+  }
+  state.publishes.push(tarball.name)
+  save()
+  process.exit(0)
+}
+throw new Error('Unsupported fake npm command: ' + args.join(' '))
+`
 }
