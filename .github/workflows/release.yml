@@ -7,6 +7,11 @@ on:
         description: Exact fixed version from both package manifests
         required: true
         type: string
+      allow_bootstrap:
+        description: Authorize exact first-version recovery without npm provenance
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -201,6 +206,7 @@ jobs:
       - name: Publish inert tarballs in dependency order
         id: publish
         env:
+          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap }}
           RELEASE_VERSION: ${{ inputs.version }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
@@ -246,6 +252,9 @@ jobs:
               const versions = Array.isArray(published) ? published : [published]
               if (!attestations && (versions.length !== 1 || versions[0] !== pkg.version)) {
                 fail(`${name}@${pkg.version} is not the first package version and has no provenance.`)
+              }
+              if (!attestations && process.env.ALLOW_BOOTSTRAP !== 'true') {
+                fail(`${name}@${pkg.version} requires explicit bootstrap authorization.`)
               }
               modes.set(name, attestations ? 'oidc' : 'bootstrap')
             } else {
