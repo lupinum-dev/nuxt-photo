@@ -344,6 +344,7 @@ jobs:
             printf '> Bootstrap packages: %s\n' "$BOOTSTRAP_PACKAGES" >> .release/github-release-notes.md
           fi
           gh release create "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json \
+            --repo "$GITHUB_REPOSITORY" \
             --target "$SOURCE_SHA" \
             --title "$RELEASE_TAG" \
             --notes-file .release/github-release-notes.md \

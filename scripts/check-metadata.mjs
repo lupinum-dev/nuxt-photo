@@ -376,9 +376,11 @@ function verifyWorkflows() {
       publishJob.includes('record.channel'),
     'The publish job must submit only retained tarballs to next or latest with scripts disabled and provenance enabled.',
   )
+  const releaseCreateCommand =
+    releaseWorkflow.match(/gh release create[^\n]*\\\n(?:\s+[^\n]*\\\n)*\s+[^\n]*/u)?.[0] ?? ''
   assert(
     /^  github-release:\n([\s\S]*)$/m.test(releaseWorkflow) &&
-      releaseWorkflow.includes('gh release create'),
+      releaseCreateCommand.includes('--repo "$GITHUB_REPOSITORY"'),
     'release.yml must create the GitHub release automatically.',
   )
 }
