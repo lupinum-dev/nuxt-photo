@@ -73,6 +73,10 @@ assert(
 )
 assert(releaseJob.includes('gh release create'), 'GitHub release creation is not automatic.')
 assert(
+  releaseJob.includes('--repo "$GITHUB_REPOSITORY"'),
+  'GitHub release commands must declare the repository when the job has no checkout.',
+)
+assert(
   releaseJob.includes('This first npm version was created from the exact CI-certified artifact'),
   'Bootstrap releases must record the missing first-version provenance.',
 )

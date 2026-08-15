@@ -378,7 +378,8 @@ function verifyWorkflows() {
   )
   assert(
     /^  github-release:\n([\s\S]*)$/m.test(releaseWorkflow) &&
-      releaseWorkflow.includes('gh release create'),
+      releaseWorkflow.includes('gh release create') &&
+      releaseWorkflow.includes('--repo "$GITHUB_REPOSITORY"'),
     'release.yml must create the GitHub release automatically.',
   )
 }
