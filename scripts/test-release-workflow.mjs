@@ -72,8 +72,10 @@ assert(
   'GitHub release creation must wait for npm publication.',
 )
 assert(releaseJob.includes('gh release create'), 'GitHub release creation is not automatic.')
+const releaseCreateCommand =
+  releaseJob.match(/gh release create[^\n]*\\\n(?:\s+[^\n]*\\\n)*\s+[^\n]*/u)?.[0] ?? ''
 assert(
-  releaseJob.includes('--repo "$GITHUB_REPOSITORY"'),
+  releaseCreateCommand.includes('--repo "$GITHUB_REPOSITORY"'),
   'GitHub release commands must declare the repository when the job has no checkout.',
 )
 assert(
