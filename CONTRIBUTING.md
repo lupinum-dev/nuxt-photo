@@ -39,8 +39,6 @@ imports it instead of restoring hoisting.
 - `playground-tailwind` — distinct Tailwind integration consumer.
 - `docs` — public Ginko-based documentation application and real consumer.
 - `test/fixtures` — shared test data and size fixtures.
-- `internal/migration` — removable historical migration research, not active
-  policy.
 
 ## Daily commands
 
@@ -158,11 +156,6 @@ The packed consumer, not workspace source resolution, is the proof that a
 consumer can install the release.
 
 ## Changesets
-
-The already-prepared `0.2.0` migration release is a maintainer-owned one-time
-exception because npm is still on `0.1.2`. Do not add an empty Changeset for
-that transition or edit its versions. After `0.2.0` is published, the normal
-rule below applies to every later public change.
 
 Add a Changeset for every user-visible package change:
 
