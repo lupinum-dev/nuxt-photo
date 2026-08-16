@@ -31,8 +31,6 @@ jobs:
           persist-credentials: false
       - name: Verify pinned Action commits
         run: node scripts/verify-action-shas.mjs
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Set up Vite+
         uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0

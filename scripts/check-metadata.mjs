@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parse as parseYaml } from 'yaml'
 
 import { isNonRegistryDependencyReference } from './lib/local-reference.mjs'
 import { discoverPackageSet, readWorkspaceCatalog } from './lib/package-set.mjs'
@@ -93,30 +94,37 @@ const npmrc = readText('.npmrc')
 assert(npmrc.includes('engine-strict=true'), '.npmrc must reject unsupported Node versions.')
 assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency versions by default.')
 
-const workspacePolicy = readText('pnpm-workspace.yaml')
-const ciWorkflow = readText('.github/workflows/ci.yml')
+const workspacePolicy = parseYaml(readText('pnpm-workspace.yaml'))
+const ciWorkflow = parseYaml(readText('.github/workflows/ci.yml'))
+const ciSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) => job.steps ?? [])
+const actionVerificationSteps = ciSteps.filter(
+  (step) => step.run === 'node scripts/verify-action-shas.mjs',
+)
+assert(actionVerificationSteps.length > 0, 'CI must verify pinned Action commits upstream.')
 assert(
-  ciWorkflow.includes('node scripts/verify-action-shas.mjs'),
-  'CI must verify pinned Action commits upstream.',
+  actionVerificationSteps.every((step) => !step.env?.GITHUB_TOKEN),
+  'Contributor-controlled Action verification must not receive GITHUB_TOKEN.',
 )
 assert(
   catalog.vite === `npm:@voidzero-dev/vite-plus-core@${catalog['vite-plus']}`,
   'The Vite catalog alias and vite-plus package must use the same pinned version.',
 )
-for (const requiredPolicy of [
-  "vite: 'catalog:'",
-  "vitest: 'catalog:'",
-  'autoInstallPeers: false',
-  'enableGlobalVirtualStore: false',
-  'preferFrozenLockfile: true',
-  'strictPeerDependencies: true',
-  'minimumReleaseAge: 1440',
-  'minimumReleaseAgeStrict: true',
-  'minimumReleaseAgeIgnoreMissingTime: false',
-]) {
+const requiredWorkspacePolicy = {
+  autoInstallPeers: false,
+  enableGlobalVirtualStore: false,
+  preferFrozenLockfile: true,
+  strictPeerDependencies: true,
+  minimumReleaseAge: 1440,
+  minimumReleaseAgeStrict: true,
+  minimumReleaseAgeIgnoreMissingTime: false,
+}
+for (const [name, expected] of Object.entries(requiredWorkspacePolicy)) {
+  assert(workspacePolicy[name] === expected, `pnpm-workspace.yaml must set ${name} to ${expected}.`)
+}
+for (const name of ['vite', 'vitest']) {
   assert(
-    workspacePolicy.includes(requiredPolicy),
-    `pnpm-workspace.yaml is missing policy: ${requiredPolicy}`,
+    workspacePolicy.overrides?.[name] === 'catalog:',
+    `pnpm-workspace.yaml must resolve ${name} from the catalog.`,
   )
 }
 

@@ -80,7 +80,8 @@
     "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
-    "vue-eslint-parser": "^10.4.1"
+    "vue-eslint-parser": "^10.4.1",
+    "yaml": "2.9.0"
   },
   "browserslist": [
     "last 2 versions",
