@@ -13,7 +13,7 @@
 </p>
 
 > [!WARNING]
-> Nuxt Photo is pre-1.0. The first scoped `0.2.0` release is in preparation.
+> Nuxt Photo is pre-1.0. Review the changelog before each upgrade.
 
 ## Why use Nuxt Photo?
 

@@ -142,16 +142,6 @@ and tarball digests. It publishes Vue before Nuxt with npm trusted publishing,
 provenance, and `next` or `latest` tags. Finally, it creates one GitHub release
 from the certified notes and attaches both tarballs and the release evidence.
 
-For the first scoped version only, npm requires an interactive package
-bootstrap before trusted publishing can be configured. The protected workflow
-may resume that version only when each registry SHA-1 matches the certified
-tarball and it is the package's only published version. It records the missing
-bootstrap provenance in the GitHub release. Every version first published by
-the workflow must expose OIDC provenance.
-
-Set the `allow_bootstrap` dispatch input only for the known first-version
-recovery. The workflow rejects every other existing package without provenance.
-
 Never run `npm publish`, `pnpm publish`, `changelogen --release`, or a manual
 Git tag command. Never rebuild a retained artifact during publication.
 

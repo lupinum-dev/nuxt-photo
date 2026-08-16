@@ -1,6 +1,7 @@
 name: security
 
 on:
+  pull_request:
   push:
     branches:
       - main

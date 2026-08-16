@@ -85,10 +85,7 @@ assert(
 
 const publishScriptMatch = /node --input-type=module <<'NODE'\n([\s\S]*?)\n\s+NODE/.exec(publishJob)
 assert(publishScriptMatch, 'The publish job must contain one inline Node program.')
-const publishScript = dedent(publishScriptMatch[1]).replace(
-  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000)',
-  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0)',
-)
+const publishScript = dedent(publishScriptMatch[1])
 
 runScenario('matching bootstrap bytes', {
   allowBootstrap: true,
@@ -101,6 +98,7 @@ runScenario('matching bootstrap bytes', {
   expectedPublishes: 0,
 })
 runScenario('missing packages use OIDC', {
+  useProductionPollingDefaults: true,
   expectedBootstrap: false,
   expectedModes: {
     '@lupinum/vue-photo': 'oidc',
@@ -149,6 +147,34 @@ runScenario('new provenance-free publications fail', {
   publishProvenance: false,
   expectedError: 'did not expose the required bytes',
 })
+runScenario('one polling attempt with no delay is valid', {
+  pollAttempts: '1',
+  pollDelayMs: '0',
+  expectedBootstrap: false,
+  expectedModes: {
+    '@lupinum/vue-photo': 'oidc',
+    '@lupinum/nuxt-photo': 'oidc',
+  },
+  expectedPublishes: 2,
+})
+for (const [name, pollAttempts, pollDelayMs, expectedError] of [
+  ['zero attempts', '0', '0', 'Invalid registry poll attempt count.'],
+  ['negative attempts', '-1', '0', 'Invalid registry poll attempt count.'],
+  ['fractional attempts', '1.5', '0', 'Invalid registry poll attempt count.'],
+  ['unsafe attempts', '9007199254740992', '0', 'Invalid registry poll attempt count.'],
+  ['excessive attempts', '9007199254740991', '0', 'Invalid registry poll attempt limit.'],
+  ['negative delay', '1', '-1', 'Invalid registry poll delay.'],
+  ['fractional delay', '1', '0.5', 'Invalid registry poll delay.'],
+  ['unsafe delay', '1', '9007199254740992', 'Invalid registry poll delay.'],
+  ['unsafe total budget', '240', '6000', 'Invalid registry poll budget.'],
+]) {
+  runScenario(name, {
+    pollAttempts,
+    pollDelayMs,
+    expectedError,
+    expectNoPublishes: true,
+  })
+}
 
 process.stdout.write('Release workflow isolation verified.\n')
 
@@ -265,6 +291,12 @@ function runScenario(name, options) {
         GITHUB_STEP_SUMMARY: summaryPath,
         RELEASE_VERSION: version,
         SOURCE_SHA: sourceSha,
+        ...(options.useProductionPollingDefaults
+          ? {}
+          : {
+              REGISTRY_POLL_ATTEMPTS: options.pollAttempts ?? '5',
+              REGISTRY_POLL_DELAY_MS: options.pollDelayMs ?? '0',
+            }),
       },
     })
     const diagnostic = `${result.stdout}\n${result.stderr}`
@@ -274,6 +306,10 @@ function runScenario(name, options) {
         diagnostic.includes(options.expectedError),
         `${name} failed for the wrong reason: ${diagnostic}`,
       )
+      if (options.expectNoPublishes) {
+        const state = JSON.parse(readFileSync(statePath, 'utf8'))
+        assert(state.publishes.length === 0, `${name} published before validation failed.`)
+      }
       return
     }
     assert(result.status === 0, `${name} failed: ${diagnostic}`)

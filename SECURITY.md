@@ -48,7 +48,8 @@ available.
 - npm trusted publishing is restricted to `release.yml` and the protected
   `npm` environment.
 - One protected GitHub deployment approval is required before publication.
-- npm provenance must be visible for both packages.
+- npm provenance must be visible for every version published by the protected
+  workflow. The `0.2.0` bootstrap exception is recorded in its GitHub release.
 - The isolated job publishes the certified Vue tarball before the dependent
   Nuxt tarball.
 - Prereleases use `next`. Stable releases use `latest`.

@@ -13,7 +13,7 @@
 </p>
 
 > [!WARNING]
-> This package is pre-1.0. The first scoped `0.2.0` release is in preparation.
+> This package is pre-1.0. Review the changelog before each upgrade.
 
 ## Purpose
 

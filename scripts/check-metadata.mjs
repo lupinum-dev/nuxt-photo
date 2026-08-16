@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parse as parseYaml } from 'yaml'
 
 import { isNonRegistryDependencyReference } from './lib/local-reference.mjs'
 import { discoverPackageSet, readWorkspaceCatalog } from './lib/package-set.mjs'
@@ -93,23 +94,41 @@ const npmrc = readText('.npmrc')
 assert(npmrc.includes('engine-strict=true'), '.npmrc must reject unsupported Node versions.')
 assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency versions by default.')
 
-const workspacePolicy = readText('pnpm-workspace.yaml')
+const workspacePolicy = parseYaml(readText('pnpm-workspace.yaml'))
+const ciWorkflow = parseYaml(readText('.github/workflows/ci.yml'))
+const actionVerificationSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) =>
+  (job.steps ?? [])
+    .filter((step) => step.run === 'node scripts/verify-action-shas.mjs')
+    .map((step) => ({ job, step })),
+)
+assert(actionVerificationSteps.length > 0, 'CI must verify pinned Action commits upstream.')
+assert(
+  actionVerificationSteps.every(
+    ({ job, step }) =>
+      !ciWorkflow.env?.GITHUB_TOKEN && !job.env?.GITHUB_TOKEN && !step.env?.GITHUB_TOKEN,
+  ),
+  'Contributor-controlled Action verification must not receive GITHUB_TOKEN.',
+)
 assert(
   catalog.vite === `npm:@voidzero-dev/vite-plus-core@${catalog['vite-plus']}`,
   'The Vite catalog alias and vite-plus package must use the same pinned version.',
 )
-for (const requiredPolicy of [
-  "vite: 'catalog:'",
-  "vitest: 'catalog:'",
-  'autoInstallPeers: false',
-  'enableGlobalVirtualStore: false',
-  'preferFrozenLockfile: true',
-  'strictPeerDependencies: true',
-  'minimumReleaseAge: 1440',
-]) {
+const requiredWorkspacePolicy = {
+  autoInstallPeers: false,
+  enableGlobalVirtualStore: false,
+  preferFrozenLockfile: true,
+  strictPeerDependencies: true,
+  minimumReleaseAge: 1440,
+  minimumReleaseAgeStrict: true,
+  minimumReleaseAgeIgnoreMissingTime: false,
+}
+for (const [name, expected] of Object.entries(requiredWorkspacePolicy)) {
+  assert(workspacePolicy[name] === expected, `pnpm-workspace.yaml must set ${name} to ${expected}.`)
+}
+for (const name of ['vite', 'vitest']) {
   assert(
-    workspacePolicy.includes(requiredPolicy),
-    `pnpm-workspace.yaml is missing policy: ${requiredPolicy}`,
+    workspacePolicy.overrides?.[name] === 'catalog:',
+    `pnpm-workspace.yaml must resolve ${name} from the catalog.`,
   )
 }
 
@@ -299,10 +318,10 @@ function verifyWorkflows() {
   const workflowDirectory = join(root, '.github', 'workflows')
   const workflows = readdirSync(workflowDirectory)
     .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'))
-    .map((name) => ({
-      name,
-      text: readFileSync(join(workflowDirectory, name), 'utf8'),
-    }))
+    .map((name) => {
+      const text = readFileSync(join(workflowDirectory, name), 'utf8')
+      return { name, text, workflow: parseYaml(text) }
+    })
 
   assert(
     workflows.some(({ name }) => name === 'ci.yml'),
@@ -340,8 +359,13 @@ function verifyWorkflows() {
         `${workflow.name} must not publish packages.`,
       )
     }
-    for (const match of workflow.text.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
-      const reference = match[1]
+    const references = Object.values(workflow.workflow?.jobs ?? {}).flatMap((job) => [
+      job?.uses,
+      ...(job?.steps ?? []).map((step) => step?.uses),
+    ])
+    for (const value of references) {
+      const reference = String(value ?? '')
+      if (!reference) continue
       if (reference.startsWith('./') || reference.startsWith('docker://')) {
         continue
       }
