@@ -33,6 +33,10 @@ assert(
   privilegedVersionJob.includes('git apply --index "$RUNNER_TEMP/version.patch"'),
   'The privileged version PR job must consume the inert patch.',
 )
+assert(
+  privilegedVersionJob.includes('base: main'),
+  'Version PR creation must declare main when checkout uses an exact detached SHA.',
+)
 
 const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
 assert(publishJob, 'release.yml is missing the isolated publish job.')
