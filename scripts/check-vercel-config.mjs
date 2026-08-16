@@ -10,7 +10,10 @@ const check = (condition, message) => {
 
 check(!existsSync(resolve(root, 'vercel.json')), 'Keep vercel.json in the deployable docs app.')
 check(config.framework === 'nuxtjs', 'Select the Nuxt framework explicitly.')
-check(config.git?.deploymentEnabled === true, 'Create a Vercel status for every pull-request commit.')
+check(
+  config.git?.deploymentEnabled === true,
+  'Create a Vercel status for every pull-request commit.',
+)
 check(config.outputDirectory === null, 'Let Nuxt and Vercel detect .vercel/output.')
 check(
   config.buildCommand === 'pnpm --dir .. docs:build',
