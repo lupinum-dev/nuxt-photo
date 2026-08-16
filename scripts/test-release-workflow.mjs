@@ -98,6 +98,7 @@ runScenario('matching bootstrap bytes', {
   expectedPublishes: 0,
 })
 runScenario('missing packages use OIDC', {
+  useProductionPollingDefaults: true,
   expectedBootstrap: false,
   expectedModes: {
     '@lupinum/vue-photo': 'oidc',
@@ -161,6 +162,7 @@ for (const [name, pollAttempts, pollDelayMs, expectedError] of [
   ['negative attempts', '-1', '0', 'Invalid registry poll attempt count.'],
   ['fractional attempts', '1.5', '0', 'Invalid registry poll attempt count.'],
   ['unsafe attempts', '9007199254740992', '0', 'Invalid registry poll attempt count.'],
+  ['excessive attempts', '9007199254740991', '0', 'Invalid registry poll attempt limit.'],
   ['negative delay', '1', '-1', 'Invalid registry poll delay.'],
   ['fractional delay', '1', '0.5', 'Invalid registry poll delay.'],
   ['unsafe delay', '1', '9007199254740992', 'Invalid registry poll delay.'],
@@ -289,8 +291,12 @@ function runScenario(name, options) {
         GITHUB_STEP_SUMMARY: summaryPath,
         RELEASE_VERSION: version,
         SOURCE_SHA: sourceSha,
-        REGISTRY_POLL_ATTEMPTS: options.pollAttempts ?? '5',
-        REGISTRY_POLL_DELAY_MS: options.pollDelayMs ?? '0',
+        ...(options.useProductionPollingDefaults
+          ? {}
+          : {
+              REGISTRY_POLL_ATTEMPTS: options.pollAttempts ?? '5',
+              REGISTRY_POLL_DELAY_MS: options.pollDelayMs ?? '0',
+            }),
       },
     })
     const diagnostic = `${result.stdout}\n${result.stderr}`

@@ -233,6 +233,7 @@ jobs:
           const pollAttempts = Number(process.env.REGISTRY_POLL_ATTEMPTS ?? 240)
           const pollDelayMs = Number(process.env.REGISTRY_POLL_DELAY_MS ?? 5000)
           if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1) fail('Invalid registry poll attempt count.')
+          if (pollAttempts > 240) fail('Invalid registry poll attempt limit.')
           if (!Number.isSafeInteger(pollDelayMs) || pollDelayMs < 0) fail('Invalid registry poll delay.')
           if (pollAttempts * pollDelayMs > 20 * 60 * 1000) fail('Invalid registry poll budget.')
           if (record.schemaVersion !== 2) fail('Unsupported release record.')

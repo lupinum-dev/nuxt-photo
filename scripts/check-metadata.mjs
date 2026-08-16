@@ -96,13 +96,17 @@ assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency ver
 
 const workspacePolicy = parseYaml(readText('pnpm-workspace.yaml'))
 const ciWorkflow = parseYaml(readText('.github/workflows/ci.yml'))
-const ciSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) => job.steps ?? [])
-const actionVerificationSteps = ciSteps.filter(
-  (step) => step.run === 'node scripts/verify-action-shas.mjs',
+const actionVerificationSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) =>
+  (job.steps ?? [])
+    .filter((step) => step.run === 'node scripts/verify-action-shas.mjs')
+    .map((step) => ({ job, step })),
 )
 assert(actionVerificationSteps.length > 0, 'CI must verify pinned Action commits upstream.')
 assert(
-  actionVerificationSteps.every((step) => !step.env?.GITHUB_TOKEN),
+  actionVerificationSteps.every(
+    ({ job, step }) =>
+      !ciWorkflow.env?.GITHUB_TOKEN && !job.env?.GITHUB_TOKEN && !step.env?.GITHUB_TOKEN,
+  ),
   'Contributor-controlled Action verification must not receive GITHUB_TOKEN.',
 )
 assert(
