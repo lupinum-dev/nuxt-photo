@@ -314,10 +314,10 @@ function verifyWorkflows() {
   const workflowDirectory = join(root, '.github', 'workflows')
   const workflows = readdirSync(workflowDirectory)
     .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'))
-    .map((name) => ({
-      name,
-      text: readFileSync(join(workflowDirectory, name), 'utf8'),
-    }))
+    .map((name) => {
+      const text = readFileSync(join(workflowDirectory, name), 'utf8')
+      return { name, text, workflow: parseYaml(text) }
+    })
 
   assert(
     workflows.some(({ name }) => name === 'ci.yml'),
@@ -355,8 +355,13 @@ function verifyWorkflows() {
         `${workflow.name} must not publish packages.`,
       )
     }
-    for (const match of workflow.text.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
-      const reference = match[1]
+    const references = Object.values(workflow.workflow?.jobs ?? {}).flatMap((job) => [
+      job?.uses,
+      ...(job?.steps ?? []).map((step) => step?.uses),
+    ])
+    for (const value of references) {
+      const reference = String(value ?? '')
+      if (!reference) continue
       if (reference.startsWith('./') || reference.startsWith('docker://')) {
         continue
       }
