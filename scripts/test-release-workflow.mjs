@@ -19,6 +19,10 @@ assert(
   versionWorkflow.includes('vp install --frozen-lockfile --ignore-scripts'),
   'Version preparation must disable dependency lifecycle scripts.',
 )
+assert(
+  versionWorkflow.includes('GITHUB_TOKEN: ${{ github.token }}'),
+  'Changesets must receive the job-scoped read-only token for GitHub changelog metadata.',
+)
 const privilegedVersionJob = versionWorkflow.split('  version-pr:')[1]
 assert(privilegedVersionJob, 'Version PR creation must use a separate privileged job.')
 assert(

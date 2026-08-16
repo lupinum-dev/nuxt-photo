@@ -68,6 +68,8 @@ jobs:
       - name: Generate the version patch without write credentials
         if: steps.freshness.outputs.current == 'true'
         id: patch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           vp run version
           git add --intent-to-add .
