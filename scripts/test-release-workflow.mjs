@@ -85,10 +85,7 @@ assert(
 
 const publishScriptMatch = /node --input-type=module <<'NODE'\n([\s\S]*?)\n\s+NODE/.exec(publishJob)
 assert(publishScriptMatch, 'The publish job must contain one inline Node program.')
-const publishScript = dedent(publishScriptMatch[1]).replace(
-  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000)',
-  'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 0)',
-)
+const publishScript = dedent(publishScriptMatch[1])
 
 runScenario('matching bootstrap bytes', {
   allowBootstrap: true,
@@ -265,6 +262,8 @@ function runScenario(name, options) {
         GITHUB_STEP_SUMMARY: summaryPath,
         RELEASE_VERSION: version,
         SOURCE_SHA: sourceSha,
+        REGISTRY_POLL_ATTEMPTS: '5',
+        REGISTRY_POLL_DELAY_MS: '0',
       },
     })
     const diagnostic = `${result.stdout}\n${result.stderr}`

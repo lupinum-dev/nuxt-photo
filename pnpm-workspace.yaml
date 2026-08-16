@@ -46,6 +46,8 @@ peerDependencyRules:
   allowedVersions:
     vite: '*'
 minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
 
 allowBuilds:
   '@parcel/watcher': false

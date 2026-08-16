@@ -94,6 +94,11 @@ assert(npmrc.includes('engine-strict=true'), '.npmrc must reject unsupported Nod
 assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency versions by default.')
 
 const workspacePolicy = readText('pnpm-workspace.yaml')
+const ciWorkflow = readText('.github/workflows/ci.yml')
+assert(
+  ciWorkflow.includes('node scripts/verify-action-shas.mjs'),
+  'CI must verify pinned Action commits upstream.',
+)
 assert(
   catalog.vite === `npm:@voidzero-dev/vite-plus-core@${catalog['vite-plus']}`,
   'The Vite catalog alias and vite-plus package must use the same pinned version.',
@@ -106,6 +111,8 @@ for (const requiredPolicy of [
   'preferFrozenLockfile: true',
   'strictPeerDependencies: true',
   'minimumReleaseAge: 1440',
+  'minimumReleaseAgeStrict: true',
+  'minimumReleaseAgeIgnoreMissingTime: false',
 ]) {
   assert(
     workspacePolicy.includes(requiredPolicy),

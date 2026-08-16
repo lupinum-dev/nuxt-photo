@@ -178,7 +178,7 @@ jobs:
     name: Publish fixed package set to npm
     needs: verify
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: npm
     permissions:
       actions: read
@@ -230,6 +230,10 @@ jobs:
           const hash = (path, algorithm) => createHash(algorithm).update(readFileSync(path)).digest('hex')
           const artifact = JSON.parse(readFileSync('.release/release-artifact.json', 'utf8'))
           const record = JSON.parse(readFileSync('.release/release-record.json', 'utf8'))
+          const pollAttempts = Number(process.env.REGISTRY_POLL_ATTEMPTS ?? 240)
+          const pollDelayMs = Number(process.env.REGISTRY_POLL_DELAY_MS ?? 5000)
+          if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1) fail('Invalid registry poll attempt count.')
+          if (!Number.isSafeInteger(pollDelayMs) || pollDelayMs < 0) fail('Invalid registry poll delay.')
           if (record.schemaVersion !== 2) fail('Unsupported release record.')
           if (record.sourceSha !== process.env.SOURCE_SHA || artifact.sourceSha !== record.sourceSha) fail('Source SHA differs.')
           if (record.version !== process.env.RELEASE_VERSION || artifact.packageSetVersion !== record.version) fail('Version differs.')
@@ -269,7 +273,7 @@ jobs:
 
           for (const pkg of record.packages) {
             let verified = false
-            for (let attempt = 0; attempt < 12; attempt += 1) {
+            for (let attempt = 0; attempt < pollAttempts; attempt += 1) {
               const shasum = view(`${pkg.name}@${pkg.version}`, 'dist.shasum')
               const attestations = view(`${pkg.name}@${pkg.version}`, 'dist.attestations')
               const channel = view(pkg.name, `dist-tags.${record.channel}`)
@@ -288,7 +292,7 @@ jobs:
                 verified = true
                 break
               }
-              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5000)
+              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pollDelayMs)
             }
             if (!verified) fail(`${pkg.name}@${pkg.version} did not expose the required bytes, provenance mode, and ${record.channel}.`)
           }
