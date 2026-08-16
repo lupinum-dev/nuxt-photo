@@ -234,6 +234,7 @@ jobs:
           const pollDelayMs = Number(process.env.REGISTRY_POLL_DELAY_MS ?? 5000)
           if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1) fail('Invalid registry poll attempt count.')
           if (!Number.isSafeInteger(pollDelayMs) || pollDelayMs < 0) fail('Invalid registry poll delay.')
+          if (pollAttempts * pollDelayMs > 20 * 60 * 1000) fail('Invalid registry poll budget.')
           if (record.schemaVersion !== 2) fail('Unsupported release record.')
           if (record.sourceSha !== process.env.SOURCE_SHA || artifact.sourceSha !== record.sourceSha) fail('Source SHA differs.')
           if (record.version !== process.env.RELEASE_VERSION || artifact.packageSetVersion !== record.version) fail('Version differs.')
@@ -271,9 +272,10 @@ jobs:
             }
           }
 
-          for (const pkg of record.packages) {
-            let verified = false
-            for (let attempt = 0; attempt < pollAttempts; attempt += 1) {
+          const verifiedPackages = new Set()
+          for (let attempt = 0; attempt < pollAttempts; attempt += 1) {
+            for (const pkg of record.packages) {
+              if (verifiedPackages.has(pkg.name)) continue
               const shasum = view(`${pkg.name}@${pkg.version}`, 'dist.shasum')
               const attestations = view(`${pkg.name}@${pkg.version}`, 'dist.attestations')
               const channel = view(pkg.name, `dist-tags.${record.channel}`)
@@ -289,12 +291,18 @@ jobs:
                 remainsFirstVersion &&
                 (mode === 'bootstrap' || (mode === 'oidc' && attestations))
               ) {
-                verified = true
-                break
+                verifiedPackages.add(pkg.name)
               }
+            }
+            if (verifiedPackages.size === record.packages.length) break
+            if (attempt + 1 < pollAttempts) {
               Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pollDelayMs)
             }
-            if (!verified) fail(`${pkg.name}@${pkg.version} did not expose the required bytes, provenance mode, and ${record.channel}.`)
+          }
+          for (const pkg of record.packages) {
+            if (!verifiedPackages.has(pkg.name)) {
+              fail(`${pkg.name}@${pkg.version} did not expose the required bytes, provenance mode, and ${record.channel}.`)
+            }
           }
           const publicationModes = Object.fromEntries(modes)
           const bootstrapPackages = [...modes]
