@@ -13,6 +13,11 @@ const versionWorkflow = readFileSync(
 const versionConfig = parse(versionWorkflow)
 const ciWorkflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
 const ciConfig = parse(ciWorkflow)
+const securityWorkflow = readFileSync(
+  new URL('../.github/workflows/security.yml', import.meta.url),
+  'utf8',
+)
+const securityConfig = parse(securityWorkflow)
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
 assert(
@@ -53,14 +58,16 @@ assert(
 )
 assert(
   versionConfig.jobs['version-pr'].permissions.actions === 'write' &&
-    Object.hasOwn(ciConfig.on, 'workflow_dispatch'),
-  'CI must permit the version workflow to dispatch branch verification.',
+    Object.hasOwn(ciConfig.on, 'workflow_dispatch') &&
+    Object.hasOwn(securityConfig.on, 'workflow_dispatch'),
+  'CI and security must permit the version workflow to dispatch branch verification.',
 )
 const versionVerificationStep = versionConfig.jobs['version-pr'].steps.find(
   (step) => step.name === 'Verify the version branch',
 )
 assert(
-  versionVerificationStep?.run === 'gh workflow run ci.yml --ref changeset-release/main',
+  versionVerificationStep?.run ===
+    'gh workflow run ci.yml --ref changeset-release/main\ngh workflow run security.yml --ref changeset-release/main\n',
   'The version workflow must dispatch verification for the exact generated branch.',
 )
 for (const [jobName, expectedCondition] of Object.entries({
