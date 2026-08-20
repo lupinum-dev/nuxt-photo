@@ -24,7 +24,7 @@ const versionAuthorizationJob = ciConfig.jobs['authorize-version-pr']
 assert(versionAuthorizationJob, 'Version CI must authorize the required PR gate directly.')
 assert(
   normalizeCondition(versionAuthorizationJob.if) ===
-    "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'",
+    "always() && needs.pr-gate.result == 'success' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'",
   'Only successful dispatched CI for the generated version branch may authorize the PR gate.',
 )
 assert(
