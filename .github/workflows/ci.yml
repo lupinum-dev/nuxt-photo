@@ -239,6 +239,8 @@ jobs:
   authorize-version-pr:
     name: Authorize generated PR
     if: >-
+      always() &&
+      needs.pr-gate.result == 'success' &&
       github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/changeset-release/main'
     needs: pr-gate
