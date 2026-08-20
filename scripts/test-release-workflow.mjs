@@ -52,15 +52,25 @@ assert(
 )
 assert(
   versionConfig.jobs['version-pr'].permissions.actions === 'write' &&
-    privilegedVersionJob.includes('gh workflow run ci.yml --ref changeset-release/main'),
-  'The version workflow must dispatch verification for the bot-updated branch.',
+    Object.hasOwn(ciConfig.on, 'workflow_dispatch'),
+  'CI must permit the version workflow to dispatch branch verification.',
 )
-for (const jobName of ['verify', 'pr-gate']) {
-  const condition = ciConfig.jobs[jobName].if
+const versionVerificationStep = versionConfig.jobs['version-pr'].steps.find(
+  (step) => step.name === 'Verify the version branch',
+)
+assert(
+  versionVerificationStep?.run === 'gh workflow run ci.yml --ref changeset-release/main',
+  'The version workflow must dispatch verification for the exact generated branch.',
+)
+for (const [jobName, expectedCondition] of Object.entries({
+  verify:
+    "github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main')",
+  'pr-gate':
+    "always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))",
+})) {
   assert(
-    condition.includes("github.event_name == 'workflow_dispatch'") &&
-      condition.includes("github.ref == 'refs/heads/changeset-release/main'"),
-    `${jobName} must verify an explicitly dispatched version branch.`,
+    normalizeCondition(ciConfig.jobs[jobName].if) === expectedCondition,
+    `${jobName} must restrict dispatch verification to the generated version branch.`,
   )
 }
 
@@ -214,6 +224,10 @@ process.stdout.write('Release workflow isolation verified.\n')
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
+}
+
+function normalizeCondition(value) {
+  return value.replace(/\s+/gu, ' ').trim()
 }
 
 function dedent(value) {

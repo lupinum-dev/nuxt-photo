@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      actions: write
+      actions: write # Required only to dispatch ci.yml for the generated version branch.
       contents: write
       pull-requests: write
     steps:
