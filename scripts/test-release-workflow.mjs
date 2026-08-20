@@ -13,6 +13,7 @@ const versionWorkflow = readFileSync(
 const versionConfig = parse(versionWorkflow)
 const ciWorkflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
 const ciConfig = parse(ciWorkflow)
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
 assert(
   versionWorkflow.includes('prepare-version:') &&
@@ -64,7 +65,7 @@ assert(
 )
 for (const [jobName, expectedCondition] of Object.entries({
   verify:
-    "github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main')",
+    "needs.classify.outputs.full == 'true' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))",
   'pr-gate':
     "always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))",
 })) {
@@ -73,6 +74,68 @@ for (const [jobName, expectedCondition] of Object.entries({
     `${jobName} must restrict dispatch verification to the generated version branch.`,
   )
 }
+assert(
+  normalizeCondition(ciConfig.jobs.compatibility.if) === "needs.classify.outputs.full == 'true'" &&
+    normalizeCondition(ciConfig.jobs.docs.if) ===
+      "github.event_name == 'pull_request' && needs.classify.outputs.full == 'false'",
+  'Only public documentation changes may skip the complete pull-request lanes.',
+)
+const classifyScript = ciConfig.jobs.classify.steps.find(
+  (step) => step.name === 'Select required lanes',
+)?.with?.script
+assert(classifyScript, 'CI must classify pull-request paths before selecting expensive lanes.')
+for (const scenario of [
+  {
+    name: 'documentation',
+    event: 'pull_request',
+    paths: ['docs/content/docs/1.getting-started.md'],
+    full: 'false',
+  },
+  {
+    name: 'top-level public prose',
+    event: 'pull_request',
+    paths: ['README.md'],
+    full: 'false',
+  },
+  {
+    name: 'package source',
+    event: 'pull_request',
+    paths: ['packages/nuxt/src/module.ts'],
+    full: 'true',
+  },
+  {
+    name: 'workflow policy',
+    event: 'pull_request',
+    paths: ['.github/workflows/ci.yml'],
+    full: 'true',
+  },
+  { name: 'main certification', event: 'push', paths: [], full: 'true' },
+]) {
+  const outputs = new Map()
+  await new AsyncFunction('context', 'github', 'core', classifyScript)(
+    {
+      eventName: scenario.event,
+      issue: { number: 1 },
+      repo: { owner: 'lupinum-dev', repo: 'nuxt-photo' },
+    },
+    {
+      paginate: async () => scenario.paths.map((filename) => ({ filename })),
+      rest: { pulls: { listFiles() {} } },
+    },
+    { setOutput: (name, value) => outputs.set(name, value) },
+  )
+  assert(
+    outputs.get('full') === scenario.full,
+    `CI classifier failed the ${scenario.name} fixture.`,
+  )
+}
+assert(
+  ciConfig.jobs['pr-gate'].needs.includes('classify') &&
+    ciConfig.jobs['pr-gate'].needs.includes('docs') &&
+    ciConfig.jobs['pr-gate'].steps[0].run.includes('test "$DOCS_RESULT" = "success"') &&
+    ciConfig.jobs['pr-gate'].steps[0].run.includes('test "$VERIFY_RESULT" = "success"'),
+  'The aggregate pull-request gate must authorize exactly the selected lane.',
+)
 
 const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
 assert(publishJob, 'release.yml is missing the isolated publish job.')
