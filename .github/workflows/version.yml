@@ -149,4 +149,6 @@ jobs:
         if: steps.version-pr.outputs.pull-request-operation == 'created' || steps.version-pr.outputs.pull-request-operation == 'updated'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run ci.yml --ref changeset-release/main
+        run: |
+          gh workflow run ci.yml --ref changeset-release/main
+          gh workflow run security.yml --ref changeset-release/main
