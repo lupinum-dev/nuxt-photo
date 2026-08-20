@@ -1,5 +1,10 @@
 export default {
   ginkoDocs: {
+    theme: {
+      neutral: 'custom',
+      primary: 'custom',
+      codeBlocks: 'adaptive',
+    },
     site: {
       url: 'https://nuxt-photo.lupinum.com',
       name: { en: 'Nuxt Photo' },

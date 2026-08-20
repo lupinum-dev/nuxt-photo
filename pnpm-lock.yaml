@@ -134,8 +134,8 @@ importers:
         specifier: 0.4.0-rc.2
         version: 0.4.0-rc.2(@voidzero-dev/vite-plus-core@0.2.4(@types/node@22.18.0)(esbuild@0.28.1)(jiti@2.7.0)(publint@0.3.21)(terser@5.49.0)(typescript@5.9.3)(yaml@2.9.0))(@vue/compiler-sfc@3.5.41)(db0@0.3.4)(esbuild@0.28.1)(ioredis@5.11.1)(magic-string@1.1.0)(magicast@0.5.4)(nuxt@4.5.2(41d1673f0c8a2b65b8565a58558c8451))(oxc-parser@0.143.0)(rolldown@1.2.1)(rollup@4.62.2)(srvx@0.12.5)(unplugin@3.3.0(@voidzero-dev/vite-plus-core@0.2.4(@types/node@22.18.0)(esbuild@0.28.1)(jiti@2.7.0)(publint@0.3.21)(terser@5.49.0)(typescript@5.9.3)(yaml@2.9.0))(esbuild@0.28.1)(rolldown@1.2.1)(rollup@4.62.2))(vitest@4.1.10)(vue@3.5.40(typescript@5.9.3))
       '@lupinum/ginko-docs':
-        specifier: 0.3.0-rc.5
-        version: 0.3.0-rc.5(5b760f09eb53615b782029fa269853bf)
+        specifier: 0.3.0
+        version: 0.3.0(5b760f09eb53615b782029fa269853bf)
       '@lupinum/nuxt-photo':
         specifier: workspace:*
         version: link:../packages/nuxt
@@ -1174,8 +1174,8 @@ packages:
       vitest:
         optional: true
 
-  '@lupinum/ginko-docs@0.3.0-rc.5':
-    resolution: {integrity: sha512-+HDreLmP1W8TqaXB0pxG/zzIt0a8wLuJ27Gn8FhaaieTm9t/Zy2BNk945p6PN68GJ4dhFtfjq6v5aHnqIAg6/A==}
+  '@lupinum/ginko-docs@0.3.0':
+    resolution: {integrity: sha512-DmNyM/l2/oVkL20w8+Ju1KMteLsg6HhLHP5+BdhikJthz92s/I1MhnLCeglCVaV5J8SID+uYozNsPWxb7A0sHA==}
     engines: {node: ^22.18.0 || ^24.11.0 || >=26.0.0}
     peerDependencies:
       '@lupinum/ginko-content': '>=0.4.0-rc.2 <0.5.0'
@@ -8522,7 +8522,7 @@ snapshots:
       - webpack
       - xml2js
 
-  '@lupinum/ginko-docs@0.3.0-rc.5(5b760f09eb53615b782029fa269853bf)':
+  '@lupinum/ginko-docs@0.3.0(5b760f09eb53615b782029fa269853bf)':
     dependencies:
       '@iconify-json/circle-flags': 1.2.10
       '@iconify-json/logos': 1.2.12

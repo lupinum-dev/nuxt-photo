@@ -1,54 +1,25 @@
 @source "../../content/docs/**/*";
 
-.dark {
-  --background: oklch(0.15 0.012 75);
-}
-
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
   --container-8xl: 90rem;
   --breakpoint-3xl: 1920px;
-
-  --color-green-50: #effdf5;
-  --color-green-100: #d9fbe8;
-  --color-green-200: #b3f5d1;
-  --color-green-300: #75edae;
-  --color-green-400: #00dc82;
-  --color-green-500: #00c16a;
-  --color-green-600: #00a155;
-  --color-green-700: #007f45;
-  --color-green-800: #016538;
-  --color-green-900: #0a5331;
-  --color-green-950: #052e16;
 }
 
 :root {
-  --primary: oklch(0.68 0.17 65);
-  --primary-foreground: oklch(0.16 0.02 65);
-  --ring: oklch(0.68 0.17 65);
-  --radius: 0.75rem;
-  --ui-bg: var(--background);
-  --ui-bg-muted: var(--muted);
-  --ui-bg-elevated: var(--card);
-  --ui-text-highlighted: var(--foreground);
-  --ui-text-muted: var(--muted-foreground);
-  --ui-text-toned: var(--muted-foreground);
-  --docs-surface: #f4f5f7;
-  --docs-surface-strong: #e9ebef;
+  --docs-surface: var(--color-slate-50);
+  --docs-surface-strong: var(--color-slate-100);
   --docs-line: rgba(15, 23, 42, 0.12);
-  --docs-code: #11151c;
-  --docs-accent: #d97706;
+  --docs-code: var(--color-slate-900);
+  --docs-accent: var(--nuxt-green-700);
 }
 
 .dark {
-  --primary: oklch(0.77 0.15 70);
-  --primary-foreground: oklch(0.16 0.02 65);
-  --ring: oklch(0.77 0.15 70);
-  --docs-surface: #11151c;
-  --docs-surface-strong: #171b23;
+  --docs-surface: var(--color-slate-900);
+  --docs-surface-strong: var(--color-slate-800);
   --docs-line: rgba(255, 255, 255, 0.12);
-  --docs-code: #090b0f;
-  --docs-accent: #f59e0b;
+  --docs-code: var(--color-slate-950);
+  --docs-accent: var(--nuxt-green-400);
 }
 
 html {

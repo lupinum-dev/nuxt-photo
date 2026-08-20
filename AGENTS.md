@@ -65,6 +65,7 @@ Use the canonical repository gates when the change needs them:
 
 ```sh
 pnpm docs:build
+pnpm docs:theme
 pnpm audit:all
 pnpm release:verify
 ```
