@@ -3,12 +3,14 @@ import { createHash } from 'node:crypto'
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
+import { parse } from 'yaml'
 
 const workflow = readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8')
 const versionWorkflow = readFileSync(
   new URL('../.github/workflows/version.yml', import.meta.url),
   'utf8',
 )
+const versionConfig = parse(versionWorkflow)
 
 assert(
   versionWorkflow.includes('prepare-version:') &&
@@ -22,6 +24,15 @@ assert(
 assert(
   versionWorkflow.includes('GITHUB_TOKEN: ${{ github.token }}'),
   'Changesets must receive the job-scoped read-only token for GitHub changelog metadata.',
+)
+const versionPatchStep = versionConfig.jobs['prepare-version'].steps.find(
+  (step) => step.name === 'Generate the version patch without write credentials',
+)
+assert(versionPatchStep, 'The version workflow must prepare an inert patch.')
+assert(
+  versionPatchStep.run.includes('git diff HEAD --binary --full-index') &&
+    versionPatchStep.run.includes('git diff HEAD --quiet'),
+  'The version patch must include staged Changeset deletions and new files.',
 )
 const privilegedVersionJob = versionWorkflow.split('  version-pr:')[1]
 assert(privilegedVersionJob, 'Version PR creation must use a separate privileged job.')
