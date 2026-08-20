@@ -20,12 +20,16 @@ const securityWorkflow = readFileSync(
 const securityConfig = parse(securityWorkflow)
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
-const versionAuthorizationJob = versionConfig.jobs['authorize-version-pr']
-assert(versionAuthorizationJob, 'Version CI completion must authorize the required PR gate.')
+const versionAuthorizationJob = ciConfig.jobs['authorize-version-pr']
+assert(versionAuthorizationJob, 'Version CI must authorize the required PR gate directly.')
 assert(
   normalizeCondition(versionAuthorizationJob.if) ===
-    "github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_branch == 'changeset-release/main'",
+    "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'",
   'Only successful dispatched CI for the generated version branch may authorize the PR gate.',
+)
+assert(
+  versionAuthorizationJob.needs === 'pr-gate',
+  'Version PR authorization must wait for the aggregate CI gate.',
 )
 assert(
   versionAuthorizationJob.permissions.contents === 'read' &&
