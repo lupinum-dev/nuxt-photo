@@ -32,13 +32,14 @@ assert(
   'Version PR authorization must wait for the aggregate CI gate.',
 )
 assert(
-  versionAuthorizationJob.permissions.contents === 'read' &&
+  versionAuthorizationJob.permissions.checks === 'write' &&
+    versionAuthorizationJob.permissions.contents === 'read' &&
     versionAuthorizationJob.permissions['pull-requests'] === 'read' &&
-    versionAuthorizationJob.permissions.statuses === 'write',
-  'Version PR authorization must receive only the permissions needed to verify and publish status.',
+    !Object.hasOwn(versionAuthorizationJob.permissions, 'statuses'),
+  'Version PR authorization must receive only the permissions needed to verify and publish a check.',
 )
 const versionAuthorizationScript = versionAuthorizationJob.steps.find(
-  (step) => step.name === 'Publish the exact verified commit status',
+  (step) => step.name === 'Publish the exact verified check',
 )?.with?.script
 assert(versionAuthorizationScript, 'Version PR authorization must use the trusted GitHub API.')
 for (const required of [
@@ -46,8 +47,10 @@ for (const required of [
   'currentBranch.object.sha !== verifiedSha',
   'pullRequests.length !== 1',
   'pullRequests[0].head.sha !== verifiedSha',
-  "context: 'PR gate'",
-  "state: 'success'",
+  'github.rest.checks.create',
+  "name: 'PR gate'",
+  "status: 'completed'",
+  "conclusion: 'success'",
 ]) {
   assert(
     versionAuthorizationScript.includes(required),
