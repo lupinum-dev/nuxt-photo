@@ -11,6 +11,8 @@ const versionWorkflow = readFileSync(
   'utf8',
 )
 const versionConfig = parse(versionWorkflow)
+const ciWorkflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
+const ciConfig = parse(ciWorkflow)
 
 assert(
   versionWorkflow.includes('prepare-version:') &&
@@ -48,6 +50,29 @@ assert(
   privilegedVersionJob.includes('base: main'),
   'Version PR creation must declare main when checkout uses an exact detached SHA.',
 )
+assert(
+  versionConfig.jobs['version-pr'].permissions.actions === 'write' &&
+    Object.hasOwn(ciConfig.on, 'workflow_dispatch'),
+  'CI must permit the version workflow to dispatch branch verification.',
+)
+const versionVerificationStep = versionConfig.jobs['version-pr'].steps.find(
+  (step) => step.name === 'Verify the version branch',
+)
+assert(
+  versionVerificationStep?.run === 'gh workflow run ci.yml --ref changeset-release/main',
+  'The version workflow must dispatch verification for the exact generated branch.',
+)
+for (const [jobName, expectedCondition] of Object.entries({
+  verify:
+    "github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main')",
+  'pr-gate':
+    "always() && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))",
+})) {
+  assert(
+    normalizeCondition(ciConfig.jobs[jobName].if) === expectedCondition,
+    `${jobName} must restrict dispatch verification to the generated version branch.`,
+  )
+}
 
 const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
 assert(publishJob, 'release.yml is missing the isolated publish job.')
@@ -199,6 +224,10 @@ process.stdout.write('Release workflow isolation verified.\n')
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
+}
+
+function normalizeCondition(value) {
+  return value.replace(/\s+/gu, ' ').trim()
 }
 
 function dedent(value) {
