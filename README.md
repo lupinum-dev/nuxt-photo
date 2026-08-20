@@ -1,15 +1,27 @@
 <p align="center">
-  <img src="docs/public/icon.png" width="128" alt="Nuxt Photo icon">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/public/icon-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/public/icon-light.svg">
+    <img src="docs/public/icon-light.svg" width="128" alt="Nuxt Photo icon">
+  </picture>
 </p>
 
-<h1 align="center">Nuxt Photo</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/public/wordmark-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/public/wordmark-light.svg">
+    <img src="docs/public/wordmark-light.svg" width="256" alt="Nuxt Photo">
+  </picture>
+</h1>
 
 <p align="center">Build responsive photo galleries, shared lightboxes, and carousels from one predictable photo model.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@lupinum/nuxt-photo"><img src="https://img.shields.io/npm/v/@lupinum/nuxt-photo?color=00DC82" alt="npm version"></a>
   <a href="https://github.com/lupinum-dev/nuxt-photo/actions/workflows/ci.yml"><img src="https://github.com/lupinum-dev/nuxt-photo/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-00DC82" alt="MIT license"></a>
+  <a href="https://discord.gg/RPH6SeA36N"><img src="https://img.shields.io/badge/Discord-18181B?logo=discord" alt="Discord"></a>
+  <a href="https://deepwiki.com/lupinum-dev/nuxt-photo"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 > [!WARNING]
@@ -85,6 +97,21 @@ const photos: PhotoItem[] = [
 ```
 
 Select a photo to open the shared lightbox. The same array works with albums, groups, carousels, and custom triggers.
+
+## Discord
+
+Join the Lupinum OSS community to discuss Nuxt Photo, ask questions, and share
+what you build.
+
+<p align="center">
+  <a href="https://discord.gg/RPH6SeA36N">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/public/discord-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="docs/public/discord-light.svg">
+      <img src="docs/public/discord-light.svg" width="500" alt="Join the Lupinum OSS Discord">
+    </picture>
+  </a>
+</p>
 
 ## Core concepts
 

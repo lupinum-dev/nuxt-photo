@@ -11,7 +11,7 @@ export default {
       description: {
         en: 'Photo galleries, lightboxes, and carousels for Nuxt.',
       },
-      logo: { light: '/icon.png', dark: '/icon.png' },
+      logo: { light: '/logo-light.svg', dark: '/logo-dark.svg' },
       docsSidebarSwitcher: 'tabs',
       legalLinks: [
         { label: { en: 'Legal notice' }, to: 'https://lupinum.com/impressum' },
