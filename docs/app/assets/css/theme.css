@@ -135,11 +135,7 @@ html[data-primary='custom'] {
   --hero-mint-dark: var(--nuxt-green-400);
   --hero-yellow-dark: var(--nuxt-green-400);
   --hero-coral-dark: var(--nuxt-green-400);
-  --hero-blue-muted: color-mix(
-    in oklab,
-    var(--nuxt-green-400) 12%,
-    var(--color-slate-900)
-  );
+  --hero-blue-muted: color-mix(in oklab, var(--nuxt-green-400) 12%, var(--color-slate-900));
   --hero-mint-muted: var(--hero-blue-muted);
   --hero-yellow-muted: var(--hero-blue-muted);
   --hero-coral-muted: var(--hero-blue-muted);
