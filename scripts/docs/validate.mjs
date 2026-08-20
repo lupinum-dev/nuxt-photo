@@ -86,6 +86,7 @@ const readmeContracts = new Map([
       'Requirements',
       'Installation',
       'Quick start',
+      'Discord',
       'Core concepts',
       'Packages',
       'Documentation',
@@ -176,6 +177,7 @@ for (const file of [...files, ...publicReadmes]) {
       'https://github.com/lupinum-dev/nuxt-photo',
       'https://nuxt-photo.lupinum.com',
       'https://discord.gg/RPH6SeA36N',
+      ...(label === 'README.md' ? ['https://deepwiki.com/lupinum-dev/nuxt-photo'] : []),
     ]) {
       if (!source.includes(link)) failures.push(`${label} is missing canonical link ${link}`)
     }
