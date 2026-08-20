@@ -20,6 +20,41 @@ const securityWorkflow = readFileSync(
 const securityConfig = parse(securityWorkflow)
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
+const versionAuthorizationJob = versionConfig.jobs['authorize-version-pr']
+assert(versionAuthorizationJob, 'Version CI completion must authorize the required PR gate.')
+assert(
+  normalizeCondition(versionAuthorizationJob.if) ===
+    "github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.head_branch == 'changeset-release/main'",
+  'Only successful dispatched CI for the generated version branch may authorize the PR gate.',
+)
+assert(
+  versionAuthorizationJob.permissions.contents === 'read' &&
+    versionAuthorizationJob.permissions['pull-requests'] === 'read' &&
+    versionAuthorizationJob.permissions.statuses === 'write',
+  'Version PR authorization must receive only the permissions needed to verify and publish status.',
+)
+const versionAuthorizationScript = versionAuthorizationJob.steps.find(
+  (step) => step.name === 'Publish the exact verified commit status',
+)?.with?.script
+assert(versionAuthorizationScript, 'Version PR authorization must use the trusted GitHub API.')
+for (const required of [
+  "const branch = 'changeset-release/main'",
+  'currentBranch.object.sha !== verifiedSha',
+  'pullRequests.length !== 1',
+  'pullRequests[0].head.sha !== verifiedSha',
+  "context: 'PR gate'",
+  "state: 'success'",
+]) {
+  assert(
+    versionAuthorizationScript.includes(required),
+    `Version PR authorization is missing: ${required}`,
+  )
+}
+assert(
+  !JSON.stringify(versionAuthorizationJob).includes('actions/checkout') &&
+    !JSON.stringify(versionAuthorizationJob).includes('vp install'),
+  'The status-writing job must not checkout or run repository code.',
+)
 assert(
   versionWorkflow.includes('prepare-version:') &&
     versionWorkflow.includes('permissions:\n      contents: read'),
