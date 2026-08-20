@@ -11,6 +11,8 @@ const versionWorkflow = readFileSync(
   'utf8',
 )
 const versionConfig = parse(versionWorkflow)
+const ciWorkflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8')
+const ciConfig = parse(ciWorkflow)
 
 assert(
   versionWorkflow.includes('prepare-version:') &&
@@ -48,6 +50,19 @@ assert(
   privilegedVersionJob.includes('base: main'),
   'Version PR creation must declare main when checkout uses an exact detached SHA.',
 )
+assert(
+  versionConfig.jobs['version-pr'].permissions.actions === 'write' &&
+    privilegedVersionJob.includes('gh workflow run ci.yml --ref changeset-release/main'),
+  'The version workflow must dispatch verification for the bot-updated branch.',
+)
+for (const jobName of ['verify', 'pr-gate']) {
+  const condition = ciConfig.jobs[jobName].if
+  assert(
+    condition.includes("github.event_name == 'workflow_dispatch'") &&
+      condition.includes("github.ref == 'refs/heads/changeset-release/main'"),
+    `${jobName} must verify an explicitly dispatched version branch.`,
+  )
+}
 
 const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
 assert(publishJob, 'release.yml is missing the isolated publish job.')

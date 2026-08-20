@@ -96,6 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -130,6 +131,7 @@ jobs:
         run: git apply --index "$RUNNER_TEMP/version.patch"
 
       - name: Create or update the draft version pull request
+        id: version-pr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           base: main
@@ -142,3 +144,9 @@ jobs:
             Review package versions and changelog entries. Merge only after all required checks pass.
           draft: true
           delete-branch: true
+
+      - name: Verify the version branch
+        if: steps.version-pr.outputs.pull-request-operation == 'created' || steps.version-pr.outputs.pull-request-operation == 'updated'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref changeset-release/main
