@@ -1,5 +1,11 @@
 # @lupinum/vue-photo
 
+## 0.2.1
+
+### Patch Changes
+
+- [#20](https://github.com/lupinum-dev/nuxt-photo/pull/20) [`f9149eb`](https://github.com/lupinum-dev/nuxt-photo/commit/f9149eb6d4aae5f26ab27a1a2e533fead1d790f3) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Clarify the package status in the npm README.
+
 ## 0.2.0
 
 ### Breaking
