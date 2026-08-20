@@ -14,55 +14,6 @@ concurrency:
 permissions: {}
 
 jobs:
-  authorize-version-pr:
-    name: Authorize version PR gate
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'workflow_dispatch' &&
-      github.event.workflow_run.head_branch == 'changeset-release/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      contents: read
-      pull-requests: read
-      statuses: write
-    steps:
-      - name: Publish the exact verified commit status
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const verifiedSha = context.payload.workflow_run.head_sha
-            const branch = 'changeset-release/main'
-            const { data: currentBranch } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `heads/${branch}`,
-            })
-            const { data: pullRequests } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              base: context.payload.repository.default_branch,
-              head: `${context.repo.owner}:${branch}`,
-            })
-            if (
-              currentBranch.object.sha !== verifiedSha ||
-              pullRequests.length !== 1 ||
-              pullRequests[0].head.sha !== verifiedSha
-            ) {
-              core.setFailed('The successful CI run is not for the exact open version PR head.')
-              return
-            }
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: verifiedSha,
-              state: 'success',
-              context: 'PR gate',
-              description: 'The exact generated version commit passed CI.',
-              target_url: context.payload.workflow_run.html_url,
-            })
-
   prepare-version:
     name: Prepare version patch
     if: >-
