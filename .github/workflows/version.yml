@@ -73,8 +73,8 @@ jobs:
         run: |
           vp run version
           git add --intent-to-add .
-          git diff --binary --full-index --output="$RUNNER_TEMP/version.patch"
-          if git diff --quiet; then
+          git diff HEAD --binary --full-index --output="$RUNNER_TEMP/version.patch"
+          if git diff HEAD --quiet; then
             echo 'has_changes=false' >> "$GITHUB_OUTPUT"
           else
             echo 'has_changes=true' >> "$GITHUB_OUTPUT"
