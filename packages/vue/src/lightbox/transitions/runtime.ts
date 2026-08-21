@@ -2,12 +2,16 @@ import { computed, ref, watch, type ComputedRef, type MaybeRefOrGetter, type Ref
 import type { AreaMetrics, PhotoItem, RectLike, TransitionModeConfig } from '../../core/index'
 import { runCloseTransition } from './close'
 import { runOpenTransition } from './open'
-import type { CapturedOpen, MotionCallbacks, MotionTransitionContext } from './types'
+import type {
+  CapturedOpen,
+  CloseTransitionContext,
+  MotionCallbacks,
+  OpenTransitionContext,
+} from './types'
 import { createMotionVisualState, imageSource, opacityOf, transformOf } from './visual-state'
+import { REDUCED_MOTION_DURATION_MS, TRANSITION_EASING } from './timing'
 
-const REDUCED_MOTION_DURATION_MS = 160
 const DRAG_SETTLE_MS = 180
-const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 /** Coordinate transition ownership, cancellation, gestures, and the public motion contract. */
 export function useLightboxMotion(
@@ -15,7 +19,7 @@ export function useLightboxMotion(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
-  transitionConfig?: TransitionModeConfig,
+  transitionConfig: MaybeRefOrGetter<TransitionModeConfig>,
   reducedMotion: MaybeRefOrGetter<boolean> = false,
 ) {
   const animating = ref(false)
@@ -56,25 +60,31 @@ export function useLightboxMotion(
     animating.value = false
   }
 
-  const transitionContext: MotionTransitionContext = {
+  const sharedTransitionContext = {
     activeIndex,
     currentPhoto,
-    areaMetrics,
     getAbsoluteFrameRect,
     transitionConfig,
     reducedMotion,
     animating,
     hiddenThumbIndex,
-    uiVisible,
-    closeDragY,
-    stageMounted,
     activeImagePending,
     visual,
+    resetClosedVisualState,
+  }
+  const openTransitionContext: OpenTransitionContext = {
+    ...sharedTransitionContext,
+    uiVisible,
+    stageMounted,
     getCapturedOpen: () => capturedOpen,
     clearCapturedOpen: () => {
       capturedOpen = null
     },
-    resetClosedVisualState,
+  }
+  const closeTransitionContext: CloseTransitionContext = {
+    ...sharedTransitionContext,
+    areaMetrics,
+    closeDragY,
   }
 
   function captureOpen(index: number, fallbackSrc: string) {
@@ -111,14 +121,14 @@ export function useLightboxMotion(
       visual.animate(
         current.viewport,
         [{ transform: transformOf(current.viewport) }, { transform: 'none' }],
-        { duration: DRAG_SETTLE_MS, easing: EASING },
+        { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
         ['transform'],
         activeSignal,
       ),
       visual.animate(
         current.overlay,
         [{ opacity: opacityOf(current.overlay, 1) }, { opacity: 1 }],
-        { duration: DRAG_SETTLE_MS, easing: EASING },
+        { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
         ['opacity'],
         activeSignal,
       ),
@@ -129,7 +139,7 @@ export function useLightboxMotion(
             { opacity: Number(getComputedStyle(element).opacity) },
             { opacity: uiVisible.value ? 1 : 0 },
           ],
-          { duration: DRAG_SETTLE_MS, easing: EASING },
+          { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
           ['opacity'],
           activeSignal,
         ),
@@ -164,7 +174,7 @@ export function useLightboxMotion(
       void visual.animate(
         element,
         [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: target }],
-        { duration: REDUCED_MOTION_DURATION_MS, easing: EASING },
+        { duration: REDUCED_MOTION_DURATION_MS, easing: TRANSITION_EASING },
         ['opacity'],
         controller.signal,
       )
@@ -184,9 +194,9 @@ export function useLightboxMotion(
     getThumbRef: (index: number) => visual.thumbRefs.get(index) ?? null,
     captureOpen,
     open: (index: number, callbacks: MotionCallbacks, signal: AbortSignal) =>
-      runOpenTransition(transitionContext, index, callbacks, signal),
+      runOpenTransition(openTransitionContext, index, callbacks, signal),
     close: (callbacks: MotionCallbacks, signal: AbortSignal) =>
-      runCloseTransition(transitionContext, callbacks, signal),
+      runCloseTransition(closeTransitionContext, callbacks, signal),
     cancel,
     resetClosedVisualState,
     setCloseDragY: applyDrag,

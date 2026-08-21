@@ -19,21 +19,27 @@ export type MotionCallbacks = {
   isZoomedIn: ComputedRef<boolean>
 }
 
-export type MotionTransitionContext = {
+type SharedTransitionContext = {
   activeIndex: Ref<number>
   currentPhoto: ComputedRef<PhotoItem | null>
-  areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
-  transitionConfig?: TransitionModeConfig
+  transitionConfig: MaybeRefOrGetter<TransitionModeConfig>
   reducedMotion: MaybeRefOrGetter<boolean>
   animating: Ref<boolean>
   hiddenThumbIndex: Ref<number | null>
-  uiVisible: Ref<boolean>
-  closeDragY: Ref<number>
-  stageMounted: Ref<boolean>
   activeImagePending: Ref<boolean>
   visual: MotionVisualState
+  resetClosedVisualState: () => void
+}
+
+export type OpenTransitionContext = SharedTransitionContext & {
+  uiVisible: Ref<boolean>
+  stageMounted: Ref<boolean>
   getCapturedOpen: () => CapturedOpen | null
   clearCapturedOpen: () => void
-  resetClosedVisualState: () => void
+}
+
+export type CloseTransitionContext = SharedTransitionContext & {
+  areaMetrics: Ref<AreaMetrics | null>
+  closeDragY: Ref<number>
 }

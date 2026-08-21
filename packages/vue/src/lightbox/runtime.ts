@@ -18,7 +18,7 @@ import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
-  type TransitionMode,
+  type TransitionModeConfig,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
@@ -40,6 +40,21 @@ import { acquireLightboxOwnership, releaseLightboxOwnership } from '../internal/
 export function getMountedSlideIndices(active: number, count: number) {
   if (count <= 0) return new Set<number>()
   return new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
+}
+
+export function resolveTransitionConfig(
+  option: LightboxTransitionOption | undefined,
+  prefersReducedMotion: boolean,
+): TransitionModeConfig {
+  const requestedMode =
+    typeof option === 'string' ? option : (option?.mode ?? DEFAULT_TRANSITION_CONFIG.mode)
+  return {
+    autoThreshold:
+      typeof option === 'object'
+        ? (option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold)
+        : DEFAULT_TRANSITION_CONFIG.autoThreshold,
+    mode: prefersReducedMotion && requestedMode !== 'none' ? 'fade' : requestedMode,
+  }
 }
 
 /**
@@ -75,9 +90,6 @@ export function useLightboxRuntimeState(
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
-  const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
-  let requestedTransitionMode: TransitionMode = DEFAULT_TRANSITION_CONFIG.mode
-
   const reducedMotionQuery =
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -85,32 +97,12 @@ export function useLightboxRuntimeState(
   const prefersReducedMotion = ref(!!reducedMotionQuery?.matches)
   const restoreFocusTarget = ref<HTMLElement | null>(null)
 
-  function refreshTransitionConfig() {
-    const option = toValue(transitionOption)
-    requestedTransitionMode =
-      typeof option === 'string' ? option : (option?.mode ?? DEFAULT_TRANSITION_CONFIG.mode)
-    transitionConfig.autoThreshold =
-      typeof option === 'object'
-        ? (option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold)
-        : DEFAULT_TRANSITION_CONFIG.autoThreshold
-    transitionConfig.mode =
-      prefersReducedMotion.value && requestedTransitionMode !== 'none'
-        ? 'fade'
-        : requestedTransitionMode
-  }
-
-  watch(
-    () => {
-      const option = toValue(transitionOption)
-      return typeof option === 'object' ? [option.mode, option.autoThreshold] : option
-    },
-    refreshTransitionConfig,
-    { immediate: true },
-  )
+  const transitionConfig = computed(() => {
+    return resolveTransitionConfig(toValue(transitionOption), prefersReducedMotion.value)
+  })
 
   const onReducedMotionChange = (event: MediaQueryListEvent) => {
     prefersReducedMotion.value = event.matches
-    refreshTransitionConfig()
   }
   reducedMotionQuery?.addEventListener('change', onReducedMotionChange)
   onBeforeUnmount(() => reducedMotionQuery?.removeEventListener('change', onReducedMotionChange))

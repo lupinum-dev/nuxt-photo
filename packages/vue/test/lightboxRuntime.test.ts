@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
-import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
+import {
+  getMountedSlideIndices,
+  resolveTransitionConfig,
+  useLightboxRuntimeState,
+} from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
   useLightboxWindowLifecycle,
@@ -33,6 +37,27 @@ describe('lightbox media window', () => {
     { active: 1, count: 2, expected: [0, 1] },
   ])('mounts modular neighbors for $active of $count', ({ active, count, expected }) => {
     expect([...getMountedSlideIndices(active, count)].sort((a, b) => a - b)).toEqual(expected)
+  })
+})
+
+describe('transition option resolution', () => {
+  it('restores defaults when overrides are removed and applies reduced motion live', () => {
+    expect(resolveTransitionConfig({ mode: 'flip', autoThreshold: 0.8 }, false)).toEqual({
+      mode: 'flip',
+      autoThreshold: 0.8,
+    })
+    expect(resolveTransitionConfig(undefined, false)).toEqual({
+      mode: 'auto',
+      autoThreshold: 0.55,
+    })
+    expect(resolveTransitionConfig({ mode: 'flip', autoThreshold: 0.2 }, true)).toEqual({
+      mode: 'fade',
+      autoThreshold: 0.2,
+    })
+    expect(resolveTransitionConfig('none', true)).toEqual({
+      mode: 'none',
+      autoThreshold: 0.55,
+    })
   })
 })
 

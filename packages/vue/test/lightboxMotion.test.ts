@@ -32,14 +32,18 @@ function callbacks() {
   }
 }
 
-function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
+function setup(
+  mode: 'flip' | 'fade' | 'none' = 'flip',
+  supportsDecode = true,
+  transitionConfig = ref({ mode, autoThreshold: 0.55 }),
+) {
   const photo = createPhotoSet()[0]!
   const motion = useLightboxMotion(
     ref(0),
     computed(() => photo),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     () => rect(200, 100, 800, 500),
-    { mode, autoThreshold: 0.55 },
+    transitionConfig,
   )
 
   const overlay = document.createElement('div')
@@ -131,5 +135,24 @@ describe('lightbox motion controller', () => {
     setter(thumb)
     setter(null)
     expect(() => motion.captureOpen(3, '/fallback.jpg')).not.toThrow()
+  })
+
+  it('reads replacement and nested transition changes when each transition starts', async () => {
+    const transition = ref<{ mode: 'flip' | 'none'; autoThreshold: number }>({
+      mode: 'flip',
+      autoThreshold: 0.55,
+    })
+    const { motion, callbacks } = setup('flip', true, transition)
+
+    transition.value = { mode: 'none', autoThreshold: 0.8 }
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    await motion.open(0, callbacks, new AbortController().signal)
+    expect(motion.hiddenThumbIndex.value).toBeNull()
+
+    await motion.close(callbacks, new AbortController().signal)
+    transition.value.mode = 'flip'
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    await motion.open(0, callbacks, new AbortController().signal)
+    expect(motion.hiddenThumbIndex.value).toBe(0)
   })
 })
