@@ -84,6 +84,44 @@ function parseItemWidths(css: string) {
   return widths
 }
 
+function referenceRowBreaks(
+  photos: PhotoItem[],
+  containerWidth: number,
+  targetRowHeight: number,
+  spacing: number,
+  padding: number,
+) {
+  const costs = Array.from({ length: photos.length + 1 }, () => Infinity)
+  const previous = Array.from({ length: photos.length + 1 }, () => 0)
+  costs[0] = 0
+
+  for (let end = 1; end <= photos.length; end++) {
+    for (let start = 0; start < end; start++) {
+      const count = end - start
+      const ratios = photos
+        .slice(start, end)
+        .reduce((sum, photo) => sum + photo.width / photo.height, 0)
+      const width = containerWidth - spacing * (count - 1) - 2 * padding * count
+      const height = width / ratios
+      if (height <= 0) continue
+      const candidate = costs[start]! + (height - targetRowHeight) ** 2 * count
+      if (candidate < costs[end]!) {
+        costs[end] = candidate
+        previous[end] = start
+      }
+    }
+  }
+
+  const path: number[] = []
+  for (let cursor = photos.length; cursor > 0; cursor = previous[cursor]!) path.push(cursor)
+  path.push(0)
+  return path.reverse()
+}
+
+function layoutBreaks(groups: ReturnType<typeof computeRowsLayout>) {
+  return [0, ...groups.map((group) => group.entries.at(-1)!.index + 1)]
+}
+
 describe('layout algorithms', () => {
   it('justifies rows to the container width and returns no invalid entries', () => {
     const containerWidth = 1000
@@ -117,7 +155,7 @@ describe('layout algorithms', () => {
     ).toEqual([])
   })
 
-  it('keeps bounded row DP at least as good as greedy on awkward ratios', () => {
+  it('keeps exact row DP at least as good as greedy on awkward ratios', () => {
     const photos: PhotoItem[] = [
       { id: 'wide-1', src: '/1.jpg', width: 1800, height: 700 },
       { id: 'tall-1', src: '/2.jpg', width: 650, height: 1300 },
@@ -139,9 +177,59 @@ describe('layout algorithms', () => {
     })
     const greedy = greedyRows(photos, containerWidth, targetRowHeight, spacing)
 
-    expect(rowsBadness(bounded, targetRowHeight)).toBeLessThanOrEqual(
-      rowsBadness(greedy, targetRowHeight),
-    )
+    expect(
+      rowsBadness(bounded, targetRowHeight) - rowsBadness(greedy, targetRowHeight),
+    ).toBeLessThan(1e-8)
+  })
+
+  it('keeps a panorama and tall portrait together when that is globally optimal', () => {
+    const photos: PhotoItem[] = [
+      { id: 'panorama', src: '/panorama.jpg', width: 2000, height: 100 },
+      { id: 'portrait', src: '/portrait.jpg', width: 10, height: 100 },
+    ]
+    const rows = computeRowsLayout({
+      photos,
+      containerWidth: 1000,
+      targetRowHeight: 300,
+      spacing: 8,
+    })
+
+    expect(layoutBreaks(rows)).toEqual([0, 2])
+  })
+
+  it('matches an exhaustive reference across randomized small photo sets', () => {
+    let seed = 0x51f15e
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0
+      return seed / 4294967296
+    }
+
+    for (let sample = 0; sample < 40; sample++) {
+      const photos: PhotoItem[] = Array.from(
+        { length: 2 + Math.floor(random() * 9) },
+        (_, index) => ({
+          id: `${sample}-${index}`,
+          src: `/${sample}-${index}.jpg`,
+          width: 40 + Math.round(random() * 3960),
+          height: 40 + Math.round(random() * 3960),
+        }),
+      )
+      const containerWidth = 300 + Math.round(random() * 1300)
+      const targetRowHeight = 120 + Math.round(random() * 380)
+      const spacing = Math.round(random() * 20)
+      const padding = Math.round(random() * 10)
+
+      const actual = computeRowsLayout({
+        photos,
+        containerWidth,
+        targetRowHeight,
+        spacing,
+        padding,
+      })
+      expect(layoutBreaks(actual)).toEqual(
+        referenceRowBreaks(photos, containerWidth, targetRowHeight, spacing, padding),
+      )
+    }
   })
 
   it('emits container-query widths that match row layout math inside a stable span', () => {
@@ -187,10 +275,25 @@ describe('layout algorithms', () => {
       containerName: 'responsive-test',
     })
 
-    expect(css).toContain('max-width: 799px')
-    expect(css).toContain('min-width: 800px')
+    expect(css).toContain('width < 800px')
+    expect(css).toContain('width >= 800px')
     expect(css).toContain('52px')
     expect(css).toContain('padding:8px')
+  })
+
+  it('uses exact range boundaries for fractional container breakpoints', () => {
+    const css = computeBreakpointStyles({
+      photos: createPhotoSet().slice(0, 4),
+      breakpoints: [400.5, 800.25],
+      spacing: responsive({ 0: 4, 800.25: 20 }),
+      targetRowHeight: 220,
+      containerName: 'fractional-test',
+    })
+
+    expect(css).toContain('width < 800.25px')
+    expect(css).toContain('width >= 800.25px')
+    expect(css).not.toContain('max-width')
+    expect(css).not.toContain('min-width')
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {

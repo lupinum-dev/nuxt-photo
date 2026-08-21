@@ -36,4 +36,21 @@ describe('PhotoAlbum', () => {
     expect(onClick).toHaveBeenCalledOnce()
     mounted.unmount()
   })
+
+  it('does not emit dead container-query CSS when inline widths own rendering', async () => {
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [makePhoto({ id: 'one' }), makePhoto({ id: 'two' })],
+        lightbox: false,
+        breakpoints: [400, 800],
+        defaultContainerWidth: 800,
+      },
+    })
+
+    expect(mounted.container.querySelector('style')).toBeNull()
+    expect(mounted.container.querySelector('.np-album__item')?.getAttribute('style')).toContain(
+      'calc(',
+    )
+    mounted.unmount()
+  })
 })

@@ -1,5 +1,5 @@
 import { computeRowsLayout } from './index'
-import { round } from '../../utils/math'
+import { computeGaps, computeWidthDivisor } from '../constants'
 import { resolveResponsiveParameter } from '../../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
@@ -120,21 +120,21 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
       condition = containerName
     } else if (isFirst) {
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (max-width: ${nextBp - 1}px)`
+      condition = `${containerName} (width < ${nextBp}px)`
     } else if (isLast) {
       const fromBp = bpEntries[span.fromIdx]!.bp
-      condition = `${containerName} (min-width: ${fromBp}px)`
+      condition = `${containerName} (width >= ${fromBp}px)`
     } else {
       const fromBp = bpEntries[span.fromIdx]!.bp
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (min-width: ${fromBp}px) and (max-width: ${nextBp - 1}px)`
+      condition = `${containerName} (width >= ${fromBp}px) and (width < ${nextBp}px)`
     }
 
     const itemRules: string[] = []
     for (const group of span.groups) {
       for (const entry of group.entries) {
-        const gaps = spacing * (entry.itemsCount - 1) + 2 * padding * entry.itemsCount
-        const divisor = round((sampleBp - gaps) / entry.width, 5)
+        const gaps = computeGaps(spacing, padding, entry.itemsCount)
+        const divisor = computeWidthDivisor(sampleBp, gaps, entry.width)
         const paddingPart = padding > 0 ? `padding:${padding}px;` : ''
         itemRules.push(
           `.np-item-${entry.index}{flex:0 0 auto;box-sizing:content-box;${paddingPart}overflow:hidden;width:calc((100% - ${gaps}px) / ${divisor})}`,
