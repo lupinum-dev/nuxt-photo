@@ -1,6 +1,13 @@
-import { computed, onBeforeUnmount, ref, watch, type CSSProperties, type Ref } from 'vue'
-import useEmblaCarousel from 'embla-carousel-vue'
-import type { EmblaCarouselType } from 'embla-carousel'
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  shallowRef,
+  watch,
+  type CSSProperties,
+  type Ref,
+} from 'vue'
+import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
 
 /** Keep the swipe track full-screen while fitting each photo inside a gallery mat. */
@@ -27,28 +34,27 @@ export function useCarousel(
   const activeIndex = ref(0)
   const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions)
+  const emblaRef = shallowRef<HTMLElement>()
+  const emblaApi = shallowRef<EmblaCarouselType>()
 
   const currentPhoto = computed<PhotoItem | null>(
     () => photos.value[activeIndex.value] ?? photos.value[0] ?? null,
   )
 
-  watch(
-    emblaApi,
-    (api) => {
-      if (!api) return
+  watch(emblaRef, (node) => {
+    emblaApi.value?.destroy()
+    emblaApi.value = undefined
+    if (!node) return
 
-      api.on('select', (_api: EmblaCarouselType) => {
-        const newIndex = _api.selectedScrollSnap()
-        activeIndex.value = newIndex
-      })
-
-      api.on('pointerDown', () => {
-        if (isZoomedIn() || isInteractionLocked()) return false
-      })
-    },
-    { immediate: true },
-  )
+    const api = EmblaCarousel(node, emblaOptions.value)
+    api.on('select', (_api) => {
+      activeIndex.value = _api.selectedScrollSnap()
+    })
+    api.on('pointerDown', () => {
+      if (isZoomedIn() || isInteractionLocked()) return false
+    })
+    emblaApi.value = api
+  })
 
   function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
     if (!area) return null
@@ -75,17 +81,25 @@ export function useCarousel(
   }
 
   function goToNext() {
-    emblaApi.value?.scrollNext()
+    const api = emblaApi.value
+    if (api) api.scrollNext()
+    else goTo(activeIndex.value + 1)
   }
 
   function goToPrev() {
-    emblaApi.value?.scrollPrev()
+    const api = emblaApi.value
+    if (api) api.scrollPrev()
+    else goTo(activeIndex.value - 1)
   }
 
   function goTo(index: number, instant = false) {
-    emblaOptions.value = { ...emblaOptions.value, startSnap: index }
-    activeIndex.value = index
-    emblaApi.value?.scrollTo(index, instant)
+    const count = photos.value.length
+    if (count === 0) return
+    const target = ((index % count) + count) % count
+    activeIndex.value = target
+    const api = emblaApi.value
+    if (api) api.scrollTo(target, instant)
+    else emblaOptions.value = { ...emblaOptions.value, startSnap: target }
   }
 
   function selectedSnap(): number {

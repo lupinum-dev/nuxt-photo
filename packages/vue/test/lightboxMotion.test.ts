@@ -82,12 +82,12 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   motion.setSlideImageRef(0)(slideImage)
   motion.setThumbRef(0)(thumb)
 
-  return { motion, slideImage, callbacks: callbacks() }
+  return { motion, slideImage, controls, callbacks: callbacks() }
 }
 
 describe('lightbox motion controller', () => {
   it('decodes the mounted responsive image and lands on canonical open styles', async () => {
-    const { motion, slideImage, callbacks } = setup()
+    const { motion, slideImage, controls, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
 
     await expect(motion.open(0, callbacks, new AbortController().signal)).resolves.toBe(true)
@@ -96,6 +96,7 @@ describe('lightbox motion controller', () => {
     expect(motion.stageMounted.value).toBe(true)
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
+    expect(controls.style.pointerEvents).toBe('auto')
   })
 
   it('cleans every visual state after close', async () => {

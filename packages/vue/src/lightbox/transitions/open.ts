@@ -335,6 +335,7 @@ export async function runOpenTransition(
       }
     }
 
+    visual.setChromeOpacity(1)
     context.activeImagePending.value = false
     context.animating.value = false
     context.clearCapturedOpen()
