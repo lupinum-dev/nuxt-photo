@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import {
   computeBreakpointStyles,
   computeColumnsLayout,
@@ -191,6 +191,44 @@ describe('layout algorithms', () => {
     expect(css).toContain('min-width: 800px')
     expect(css).toContain('52px')
     expect(css).toContain('padding:8px')
+  })
+
+  it('covers fractional breakpoints without leaving uncovered windows', () => {
+    const photos = createPhotoSet().slice(0, 4)
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [400.5, 800.25],
+      spacing: 10,
+      padding: 2,
+      targetRowHeight: 220,
+      containerName: 'fractional-test',
+    })
+
+    // Integer breakpoints keep the clean n-1 form; fractional ones subtract
+    // inside calc so no width between spans is left unmatched.
+    expect(css).toContain('max-width: calc(800.25px - 0.01px)')
+    expect(css).toContain('min-width: 800.25px')
+    expect(css).not.toContain('799px')
+    expect(css).not.toContain('799.25px')
+  })
+
+  it('warns when every breakpoint produces an empty layout', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const photos = createPhotoSet().slice(0, 3)
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [320],
+      spacing: 8,
+      padding: 500,
+      targetRowHeight: 220,
+      containerName: 'empty-test',
+    })
+
+    expect(css).toBe('')
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('every breakpoint produced an empty rows layout'),
+    )
+    warn.mockRestore()
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {

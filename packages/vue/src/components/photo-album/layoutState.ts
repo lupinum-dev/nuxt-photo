@@ -31,8 +31,6 @@ import {
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
 
-const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
-
 export type RowItem = {
   photo: PhotoItem
   index: number
@@ -76,8 +74,15 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const containerQueriesActive = computed(() => !!breakpoints.value?.length)
 
+  // When defaultContainerWidth is set, items render inline calc widths and the
+  // observed width snaps at breakpoints — inline styles would outrank any
+  // @container rules, so generating both would ship a dead stylesheet.
+  const containerQueriesRender = computed(
+    () => containerQueriesActive.value && !defaultContainerWidth,
+  )
+
   const containerQueryCSS = computed(() => {
-    if (!containerQueriesActive.value || layout.value !== 'rows') return ''
+    if (!containerQueriesRender.value || layout.value !== 'rows') return ''
     return computeBreakpointStyles({
       photos: photos.value,
       breakpoints: breakpoints.value!,
@@ -136,7 +141,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
     const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
 
-    if (containerQueriesActive.value && !defaultContainerWidth) {
+    if (containerQueriesRender.value) {
       return photos.value.map((photo, index) => ({
         photo,
         index,
@@ -228,7 +233,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   }
 
   const containerStyle = computed<CSSProperties>(() => {
-    if (layout.value === 'rows' && containerQueriesActive.value) {
+    if (layout.value === 'rows' && containerQueriesRender.value) {
       return {
         width: '100%',
         containerType: 'inline-size',
@@ -238,11 +243,15 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     return { width: '100%' }
   })
 
+  // Warned once per album instance, not once per module: module-level state
+  // survives HMR and silences warnings for albums mounted later.
+  let warnedApproximate = false
+
   function maybeWarnApproximate() {
     if (layout.value === 'rows') return
     if (defaultContainerWidth && defaultContainerWidth > 0) return
-    if (warnedApproximateLayouts.has(layout.value)) return
-    warnedApproximateLayouts.add(layout.value)
+    if (warnedApproximate) return
+    warnedApproximate = true
     devWarn(
       `${layout.value} layout rendered without defaultContainerWidth; SSR uses a simple fallback and recomputes after mount. See https://nuxt-photo.lupinum.com/docs/concepts/ssr-and-layout-stability`,
     )
@@ -266,7 +275,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     scopeClass,
     containerStyle,
     containerQueryCSS,
-    containerQueriesActive,
+    containerQueriesRender,
     groups,
     rowItems,
     ssrWrapperStyle,

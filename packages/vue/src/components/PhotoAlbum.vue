@@ -17,7 +17,7 @@
           :key="item.photo.id"
           class="np-album__item"
           :class="[
-            renderBranch.containerQueriesActive ? `np-item-${item.index}` : undefined,
+            renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
             itemClass,
           ]"
           :style="item.style"
@@ -278,7 +278,7 @@ const {
   scopeClass,
   containerStyle,
   containerQueryCSS,
-  containerQueriesActive,
+  containerQueriesRender,
   groups,
   rowItems,
   ssrWrapperStyle,
@@ -308,7 +308,7 @@ const renderBranch = computed(() => {
       containerQueryCss: containerQueryCSS.value,
       wrapperStyle: ssrWrapperStyle.value,
       items: rowItems.value,
-      containerQueriesActive: containerQueriesActive.value,
+      containerQueriesRender: containerQueriesRender.value,
     }
   }
 

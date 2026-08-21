@@ -7,6 +7,7 @@ import {
   computeWidthDivisor,
 } from '../constants'
 import { resolveResponsiveParameter } from '../../types'
+import { devWarn } from '../../env'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
 export interface BreakpointStylesOptions {
@@ -26,6 +27,18 @@ function rowSignature(
 ): string {
   const rows = groups.map((g) => g.entries[g.entries.length - 1]!.index).join(',')
   return `${rows}|s:${spacing}|p:${padding}|h:${targetRowHeight}`
+}
+
+/**
+ * Exclusive upper bound for a span whose next breakpoint starts at `nextBp`.
+ *
+ * CSS has no exclusive upper bound, so the span must match "just below" the
+ * next breakpoint. Integer breakpoints (the documented contract) use the clean
+ * `n - 1` form; fractional breakpoints would otherwise leave a 1px window with
+ * no applicable rule, so they fall back to a subtractive calc.
+ */
+function spanUpperBound(nextBp: number): string {
+  return Number.isInteger(nextBp) ? `${nextBp - 1}px` : `calc(${nextBp}px - 0.01px)`
 }
 
 /**
@@ -85,7 +98,12 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
       groups,
     })
   }
-  if (bpEntries.length === 0) return ''
+  if (bpEntries.length === 0) {
+    devWarn(
+      'container-query styles are empty because every breakpoint produced an empty rows layout. Check that spacing and padding leave room for photos at the smallest breakpoint.',
+    )
+    return ''
+  }
 
   // 2. Collapse adjacent identical layouts into spans
   type Span = {
@@ -130,14 +148,14 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
       condition = containerName
     } else if (isFirst) {
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (max-width: ${nextBp - 1}px)`
+      condition = `${containerName} (max-width: ${spanUpperBound(nextBp)})`
     } else if (isLast) {
       const fromBp = bpEntries[span.fromIdx]!.bp
       condition = `${containerName} (min-width: ${fromBp}px)`
     } else {
       const fromBp = bpEntries[span.fromIdx]!.bp
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (min-width: ${fromBp}px) and (max-width: ${nextBp - 1}px)`
+      condition = `${containerName} (min-width: ${fromBp}px) and (max-width: ${spanUpperBound(nextBp)})`
     }
 
     const itemRules: string[] = []
