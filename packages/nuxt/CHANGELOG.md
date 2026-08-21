@@ -1,5 +1,30 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-rc.1
+
+### Patch Changes
+
+- Use the resolved localization source for both visible counters and screen-reader announcements, and align the carousel playground and browser acceptance coverage with the default lightbox and flat carousel API.
+- Updated dependencies
+  - @lupinum/vue-photo@1.0.0-rc.1
+
+## 1.0.0-rc.0
+
+### Major Changes
+
+- 397cfee: Prepare the 1.0 release candidate around five complete recipe components, optional headless primitives, and one shared reactive lightbox contract.
+
+  Make lightboxes default across recipes; expose consistent recipe controllers; rename `useLightboxProvider()` to `provideLightbox()`; flatten carousel behavior props; add reactive Vue and serializable Nuxt localization; support reactive validation, transitions, adapters, and placeholders; and publish only explicit component, primitive, type, composable, provide, and stylesheet subpaths.
+
+  Make layout calculation deterministic with exact row optimization and shared JavaScript/CSS geometry, move the carousel to stable Embla 8.6.0, and split transition orchestration by responsibility.
+
+  Simplify the Nuxt module to four build-time option roots, load the complete theme by default, keep UI defaults in typed AppConfig, and keep image adapter configuration in `nuxt.config.ts` with quiet native fallback when Nuxt Image is absent.
+
+### Patch Changes
+
+- Updated dependencies [397cfee]
+  - @lupinum/vue-photo@1.0.0-rc.0
+
 ## 0.2.1
 
 ### Patch Changes

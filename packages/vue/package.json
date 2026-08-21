@@ -1,6 +1,6 @@
 {
   "name": "@lupinum/vue-photo",
-  "version": "0.2.1",
+  "version": "1.0.0-rc.1",
   "description": "Vue components, composables, and photo utilities for Nuxt Photo.",
   "keywords": [
     "gallery",

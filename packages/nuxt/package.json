@@ -1,6 +1,6 @@
 {
   "name": "@lupinum/nuxt-photo",
-  "version": "0.2.1",
+  "version": "1.0.0-rc.1",
   "description": "Photo galleries, lightboxes, and provider-aware image rendering for Nuxt.",
   "keywords": [
     "gallery",
