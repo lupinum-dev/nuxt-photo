@@ -270,6 +270,7 @@ const {
   containerStyle,
   containerQueryCSS,
   containerQueriesRender,
+  containerQueriesActive,
   groups,
   rowItems,
   ssrWrapperStyle,
@@ -299,7 +300,7 @@ const renderBranch = computed(() => {
       containerQueryCss: containerQueryCSS.value,
       wrapperStyle: ssrWrapperStyle.value,
       items: rowItems.value,
-      containerQueriesActive: containerQueriesRender.value,
+      containerQueriesActive: containerQueriesActive.value,
     }
   }
 

@@ -290,10 +290,25 @@ describe('layout algorithms', () => {
       containerName: 'fractional-test',
     })
 
-    expect(css).toContain('width < 800.25px')
+    expect(css).toContain('width >= 400.5px) and (width < 800.25px')
     expect(css).toContain('width >= 800.25px')
     expect(css).not.toContain('max-width')
     expect(css).not.toContain('min-width')
+  })
+
+  it('does not apply a sampled breakpoint layout below the smallest breakpoint', () => {
+    const css = computeBreakpointStyles({
+      photos: [
+        { id: 'a', src: '/a.jpg', width: 20, height: 1 },
+        { id: 'b', src: '/b.jpg', width: 1, height: 10 },
+      ],
+      breakpoints: [400, 800],
+      containerName: 'below-minimum',
+    })
+
+    expect(css).toContain('@container below-minimum (width >= 400px)')
+    expect(css).not.toContain('@container below-minimum{')
+    expect(css).not.toContain('@container below-minimum (width <')
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {

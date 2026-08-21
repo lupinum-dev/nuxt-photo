@@ -333,8 +333,8 @@ describe('SSR', () => {
 
     expect(html).toContain('@container')
     expect(html).toContain('np-item-0')
-    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
-    expect(html).not.toContain('style="flex-grow:1.777')
+    expect(html).not.toContain('class="np-album__item np-item-0"')
+    expect(html).toContain('style="flex-grow:1.777')
   })
 })
 

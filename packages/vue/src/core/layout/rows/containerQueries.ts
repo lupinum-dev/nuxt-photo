@@ -1,5 +1,11 @@
 import { computeRowsLayout } from './index'
-import { computeGaps, computeWidthDivisor } from '../constants'
+import {
+  computeGaps,
+  computeWidthDivisor,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+} from '../constants'
 import { resolveResponsiveParameter } from '../../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
@@ -58,9 +64,13 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
   const bpEntries: BpEntry[] = []
   for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
+    const spacing = resolveResponsiveParameter(opts.spacing, bp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, bp, DEFAULT_PADDING)
+    const targetRowHeight = resolveResponsiveParameter(
+      opts.targetRowHeight,
+      bp,
+      DEFAULT_TARGET_ROW_HEIGHT,
+    )
     const groups = computeRowsLayout({
       photos,
       containerWidth: bp,
@@ -110,17 +120,17 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     const isLast = s === spans.length - 1
     const sampleBp = span.sampleBp
 
-    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, sampleBp, 0)
+    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, sampleBp, DEFAULT_PADDING)
 
     // Build the @container condition
     let condition: string
     if (spans.length === 1) {
-      // Single span: bare @container — always applies within this container
-      condition = containerName
+      condition = `${containerName} (width >= ${bpEntries[0]!.bp}px)`
     } else if (isFirst) {
+      const fromBp = bpEntries[span.fromIdx]!.bp
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (width < ${nextBp}px)`
+      condition = `${containerName} (width >= ${fromBp}px) and (width < ${nextBp}px)`
     } else if (isLast) {
       const fromBp = bpEntries[span.fromIdx]!.bp
       condition = `${containerName} (width >= ${fromBp}px)`

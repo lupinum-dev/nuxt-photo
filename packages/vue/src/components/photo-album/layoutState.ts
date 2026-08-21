@@ -75,6 +75,16 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const containerQueriesRender = computed(
     () => !!breakpoints.value?.length && !defaultContainerWidth,
   )
+  const minimumBreakpoint = computed(() => {
+    const positive = breakpoints.value?.filter((breakpoint) => breakpoint > 0)
+    return positive?.length ? Math.min(...positive) : undefined
+  })
+  const containerQueriesActive = computed(
+    () =>
+      containerQueriesRender.value &&
+      minimumBreakpoint.value !== undefined &&
+      containerWidth.value >= minimumBreakpoint.value,
+  )
 
   const containerQueryCSS = computed(() => {
     if (!containerQueriesRender.value || layout.value !== 'rows') return ''
@@ -136,7 +146,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
     const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
 
-    if (containerQueriesRender.value) {
+    if (containerQueriesActive.value) {
       return photos.value.map((photo, index) => ({
         photo,
         index,
@@ -262,6 +272,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     containerStyle,
     containerQueryCSS,
     containerQueriesRender,
+    containerQueriesActive,
     groups,
     rowItems,
     ssrWrapperStyle,
