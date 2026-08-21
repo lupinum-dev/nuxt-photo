@@ -1,5 +1,5 @@
 import type { PhotoItem } from '../../types'
-import { cost, findIdealNodeSearch } from './helpers'
+import { cost } from './helpers'
 
 /**
  * Find row breaks using a bounded dynamic-programming search.
@@ -12,17 +12,22 @@ import { cost, findIdealNodeSearch } from './helpers'
  *
  * Recurrence:
  *   minCost[0] = 0
- *   minCost[i] = min over j in [i − limitNodeSearch, i) of
+ *   minCost[i] = min over j in [start_i, i) of
  *                  minCost[j] + cost(photos[j..i), container, targetHeight, …)
  *
  * `cost()` returns the squared deviation of the row's scaled height from the
- * target height (see {@link ./helpers}) — rows that are too short or too tall
- * are penalised quadratically, so a mediocre row is preferred to one bad row.
+ * target height — rows that are too short or too tall are penalised
+ * quadratically, so a mediocre row is preferred to one bad row.
  *
- * `limitNodeSearch` is a dynamic upper bound on how far back `j` ranges for
- * each `i`. A naive search would be O(N²); in practice the optimal break for
- * position i sits a bounded number of photos behind it (no row contains 100
- * photos), so we cap the window and get O(N·K).
+ * Per-position window bound: a row of photos with total aspect ratio S renders
+ * at height rowWidth/S, so rows shorter than roughly targetRowHeight / 4 would
+ * need S > 4·containerWidth/targetRowHeight. Such rows are dominated by any
+ * split into smaller rows under quadratic badness, so the search never looks
+ * past them: for each end i the window starts at the smallest j whose ratio
+ * sum prefix[i] − prefix[j] stays under that bound. The bound is local — one
+ * extreme panorama or tall-skinnie elsewhere in the album cannot inflate the
+ * window for every position (a global minimum-ratio bound would degrade the
+ * whole solve toward O(N²)). A single-photo row is always admissible.
  *
  * Path reconstruction: `pointers[i]` stores the `j` that produced `minCost[i]`.
  * We walk pointers from N back to 0 to recover the ordered break indices, then
@@ -41,14 +46,27 @@ export function findRowBreaks(
   const N = photos.length
   if (N === 0) return undefined
 
-  const limitNodeSearch = findIdealNodeSearch(photos, targetRowHeight, containerWidth)
+  // Prefix sums of aspect ratios: prefix[k] = Σ ratio(photos[t]) for t < k.
+  const prefix = new Float64Array(N + 1)
+  for (let k = 0; k < N; k++) {
+    prefix[k + 1] = prefix[k]! + photos[k]!.width / photos[k]!.height
+  }
+
+  const maxRowRatioSum = (4 * containerWidth) / targetRowHeight
 
   const minCost = new Float64Array(N + 1).fill(Infinity)
   const pointers = new Int32Array(N + 1).fill(0)
   minCost[0] = 0
 
+  let start = 0
   for (let i = 1; i <= N; i++) {
-    const start = Math.max(0, i - limitNodeSearch)
+    // Advance the window start while the ratio sum of photos[start..i) still
+    // exceeds the short-row bound; such rows are never worth considering.
+    // The loop guard keeps at least the single-photo row admissible.
+    while (start < i - 1 && prefix[i]! - prefix[start]! > maxRowRatioSum) {
+      start++
+    }
+
     for (let j = i - 1; j >= start; j--) {
       const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
       if (currentCost === undefined) continue

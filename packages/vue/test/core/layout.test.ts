@@ -193,6 +193,93 @@ describe('layout algorithms', () => {
     expect(css).toContain('padding:8px')
   })
 
+  it('keeps generated container-query widths equal to solver math across randomized sets', () => {
+    // Deterministic LCG so failures reproduce.
+    let seed = 0x2f6e2b1
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296
+      return seed / 4294967296
+    }
+
+    for (let setIndex = 0; setIndex < 12; setIndex++) {
+      const count = 3 + Math.floor(random() * 10)
+      const photos: PhotoItem[] = Array.from({ length: count }, (_, index) => ({
+        id: `rand-${setIndex}-${index}`,
+        src: `/r${index}.jpg`,
+        width: Math.round(300 + random() * 2400),
+        height: Math.round(200 + random() * 2000),
+      }))
+      const spacing = Math.floor(random() * 16)
+      const padding = Math.floor(random() * 8)
+      const targetRowHeight = 180 + Math.floor(random() * 220)
+      const containerWidth = 320 + Math.floor(random() * 1200)
+
+      // One breakpoint samples the CSS exactly at containerWidth, so every
+      // emitted rule must reproduce the solver's geometry at that width.
+      const css = computeBreakpointStyles({
+        photos,
+        breakpoints: [containerWidth],
+        spacing,
+        padding,
+        targetRowHeight,
+        containerName: 'parity-test',
+      })
+      const widths = parseItemWidths(css)
+      expect(widths.size).toBe(count)
+
+      const layout = computeRowsLayout({
+        photos,
+        containerWidth,
+        spacing,
+        padding,
+        targetRowHeight,
+      })
+      for (const group of layout) {
+        for (const entry of group.entries) {
+          const rule = widths.get(entry.index)!
+          const cssWidth = (containerWidth - rule.gaps) / rule.divisor
+          // The emitted divisor is rounded to 5 decimals, so parity is
+          // asserted relatively rather than absolutely.
+          expect(Math.abs(cssWidth - entry.width) / entry.width).toBeLessThan(1e-4)
+        }
+      }
+    }
+  })
+
+  it('lays out pathological aspect ratios without degenerate rows', () => {
+    // One extreme tall-skinnie plus one extreme panorama in a normal mix —
+    // the historical O(N²) window-bound trigger.
+    const photos: PhotoItem[] = [
+      ...createPhotoSet(),
+      { id: 'skinnie', src: '/s.jpg', width: 60, height: 2000 },
+      { id: 'pano', src: '/p.jpg', width: 4000, height: 500 },
+    ]
+    const rows = computeRowsLayout({
+      photos,
+      containerWidth: 1000,
+      spacing: 8,
+      targetRowHeight: 260,
+    })
+
+    expect(rows.length).toBeGreaterThan(1)
+    for (const row of rows) {
+      for (const entry of row.entries) {
+        expect(entry.width).toBeGreaterThan(0)
+        expect(entry.height).toBeGreaterThan(0)
+        // No row may be stretched past a sane multiple of the target height.
+        expect(entry.height).toBeLessThan(260 * 12)
+      }
+    }
+    const totalWidth = rows.reduce(
+      (sum, row) =>
+        sum +
+        row.entries.reduce((acc, entry) => acc + entry.width, 0) +
+        8 * (row.entries.length - 1),
+      0,
+    )
+    expect(totalWidth).toBeCloseTo(1000 * rows.length, 0)
+  })
+
   it('covers fractional breakpoints without leaving uncovered windows', () => {
     const photos = createPhotoSet().slice(0, 4)
     const css = computeBreakpointStyles({
