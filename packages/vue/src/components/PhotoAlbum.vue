@@ -8,10 +8,7 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <!-- Internal layout output only; raw text keeps CSS range operators SSR-stable. -->
-        <!-- eslint-disable vue/no-v-html, vue/no-v-text-v-html-on-component -->
-        <component :is="'style'" v-html="renderBranch.containerQueryCss" />
-        <!-- eslint-enable vue/no-v-html, vue/no-v-text-v-html-on-component -->
+        <ContainerQueryStyle :css="renderBranch.containerQueryCss" />
       </template>
 
       <div :style="renderBranch.wrapperStyle">
@@ -119,7 +116,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, onMounted, ref, watch, type Component } from 'vue'
+import { computed, defineComponent, h, onMounted, ref, watch, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
   DEFAULT_COLUMNS,
@@ -135,11 +132,19 @@ import {
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
 } from '../core/index'
+
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { resolveRecipePhotos } from '../core/photo/resolve'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+
+// Generated layout CSS is trusted internal output. innerHTML preserves `<` and
+// `>` range operators identically in SSR output and during client hydration.
+const ContainerQueryStyle = defineComponent({
+  props: { css: { type: String, required: true } },
+  setup: (props) => () => h('style', { innerHTML: props.css }),
+})
 
 defineOptions({ inheritAttrs: false })
 
