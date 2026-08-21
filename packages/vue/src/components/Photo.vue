@@ -181,8 +181,7 @@ function registerWithGroup() {
       id: props.photo.id,
       getThumbnailElement: () => thumbRef.value,
       renderSlide: slots.slide
-        ? (slotProps) =>
-            slots.slide?.({ ...slotProps, photo: slotProps.photo as PhotoItem<TMeta> }) ?? null
+        ? (slotProps) => slots.slide?.({ ...slotProps, photo: props.photo }) ?? null
         : null,
     },
   ])
@@ -227,7 +226,11 @@ async function openById(id: string) {
     if (id !== props.photo.id) throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
     return soloOpen()
   }
-  if (isGrouped.value) return group!.activateById(id, thumbRef.value)
+  if (isGrouped.value) {
+    return id === props.photo.id
+      ? group!.activateById(id, thumbRef.value)
+      : group!.openById(id)
+  }
   devWarn('Photo.openById() was ignored because no lightbox is available.')
 }
 

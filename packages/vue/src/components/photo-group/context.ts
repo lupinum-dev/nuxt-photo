@@ -7,7 +7,8 @@ export interface PhotoGroupContext {
   replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]): void
   removeCapabilities(owner: symbol): void
   open(index?: number): Promise<void>
-  activateById(id: string, source?: HTMLElement | null): Promise<void>
+  openById(id: string): Promise<void>
+  activateById(id: string, source: HTMLElement | null): Promise<void>
   close(): Promise<void>
   readonly isOpen: ComputedRef<boolean>
   hasPhoto(id: string): boolean

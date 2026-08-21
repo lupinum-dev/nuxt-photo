@@ -108,7 +108,7 @@ export function useAlbumLightbox<TMeta extends object>(
   }
 
   async function openById(id: string) {
-    if (parentGroup) return parentGroup.activateById(id)
+    if (parentGroup) return parentGroup.openById(id)
     if (!ownCtx || !hasOwnLightbox.value) return
     syncOwnThumbRefs()
     await ownCtx.openById(id)

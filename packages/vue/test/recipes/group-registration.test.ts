@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { computed, defineComponent, h, inject, reactive } from 'vue'
+import { computed, defineComponent, h, inject, reactive, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import type { PhotoItem } from '../../src/core/index'
@@ -155,6 +155,64 @@ describe('PhotoGroup registration', () => {
     mounted.unmount()
   })
 
+  it('keeps cross-id controller opens separate from trigger activation', async () => {
+    const first = makePhoto({ id: 'first' })
+    const second = makePhoto({ id: 'second' })
+    const activateById = vi.fn(async () => {})
+    const openById = vi.fn(async () => {})
+    const context: PhotoGroupContext = {
+      enabled: computed(() => true),
+      hasPhoto: () => true,
+      photos: computed(() => [first, second]),
+      hiddenPhoto: computed(() => null),
+      replaceCapabilities() {},
+      removeCapabilities() {},
+      async open() {},
+      openById,
+      activateById,
+      async close() {},
+      isOpen: computed(() => false),
+    }
+    const controller = ref<{ openById(id: string): Promise<void> }>()
+    const mounted = await mountComponent(Photo, {
+      props: { ref: controller, photo: first },
+      provideValues: [[PhotoGroupContextKey, context]],
+    })
+
+    await controller.value!.openById('second')
+    expect(openById).toHaveBeenCalledWith('second')
+    expect(activateById).not.toHaveBeenCalled()
+
+    mounted.unmount()
+  })
+
+  it('keeps a descendant custom slide bound to its own reactive photo type', async () => {
+    const canonical = makePhoto({ id: 'typed', meta: { canonical: true } })
+    const descendant = makePhoto({ id: 'typed', meta: { childLabel: 'Child metadata' } })
+    const mounted = await mountComponent(PhotoGroup, {
+      props: { photos: [canonical], transition: 'none' },
+      slots: {
+        default: () =>
+          h(
+            Photo,
+            { photo: descendant },
+            {
+              slide: ({ photo }: { photo: typeof descendant }) =>
+                h('output', { 'data-testid': 'child-meta' }, photo.meta?.childLabel),
+            },
+          ),
+      },
+    })
+
+    ;(mounted.container.querySelector('.np-photo') as HTMLButtonElement).click()
+    await flushUi()
+
+    expect(document.body.querySelector('[data-testid="child-meta"]')?.textContent).toBe(
+      'Child metadata',
+    )
+    mounted.unmount()
+  })
+
   it('hides an equivalent same-id trigger during grouped transitions', async () => {
     const canonical = makePhoto({ id: 'same-id' })
     const descendant = { ...canonical }
@@ -166,6 +224,7 @@ describe('PhotoGroup registration', () => {
       replaceCapabilities() {},
       removeCapabilities() {},
       async open() {},
+      async openById() {},
       async activateById() {},
       async close() {},
       isOpen: computed(() => false),

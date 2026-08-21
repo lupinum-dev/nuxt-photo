@@ -162,7 +162,7 @@ async function open(index = 0) {
   await provider.open(index)
 }
 
-async function activateById(id: string, source?: HTMLElement | null) {
+async function activateById(id: string, source: HTMLElement | null) {
   if (!enabled.value) {
     warnDisabledInteraction('openById')
     return
@@ -172,12 +172,17 @@ async function activateById(id: string, source?: HTMLElement | null) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
   syncThumbnailRefs()
-  if (source) provider.setThumbnailRef(index)(source)
+  provider.setThumbnailRef(index)(source)
   await provider.openById(id)
 }
 
 async function openById(id: string) {
-  await activateById(id)
+  if (!enabled.value) {
+    warnDisabledInteraction('openById')
+    return
+  }
+  syncThumbnailRefs()
+  await provider.openById(id)
 }
 
 async function close() {
@@ -205,6 +210,7 @@ const groupContext: PhotoGroupContext = {
   replaceCapabilities,
   removeCapabilities,
   open,
+  openById,
   activateById,
   close,
   isOpen,
