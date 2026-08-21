@@ -114,7 +114,9 @@ describe('@lupinum/nuxt-photo app exports', () => {
 
   it('provides reactive labels through the Nuxt app instead of component setup', () => {
     const locale = computed(() => 'de')
-    const labels = providePhotoLabels(() => ({ close: locale.value === 'de' ? 'Schließen' : 'Close' }))
+    const labels = providePhotoLabels(() => ({
+      close: locale.value === 'de' ? 'Schließen' : 'Close',
+    }))
 
     expect(provided.get(PhotoLabelsKey)).toBe(labels)
     expect(labels.value.close).toBe('Schließen')

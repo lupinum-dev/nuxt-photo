@@ -92,11 +92,7 @@ export function useLightboxMotion(
       dragFrame = 0
       const height = areaMetrics.value?.height || 1
       const progress = Math.min(1, Math.abs(closeDragY.value) / height)
-      visual.applyCloseDrag(
-        closeDragY.value,
-        progress,
-        uiVisible.value ? 1 - progress : 0,
-      )
+      visual.applyCloseDrag(closeDragY.value, progress, uiVisible.value ? 1 - progress : 0)
     })
   }
 

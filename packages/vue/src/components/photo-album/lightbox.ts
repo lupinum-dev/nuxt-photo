@@ -30,9 +30,7 @@ export function useAlbumLightbox<TMeta extends object>(
   const injectedLightbox = inject(LightboxComponentKey, null)
 
   const LightboxComponent = computed<Component | null>(() =>
-    !parentGroup
-      ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox)
-      : null,
+    !parentGroup ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox) : null,
   )
   const hasOwnLightbox = computed(() => LightboxComponent.value !== null)
   const hasLightbox = computed(() => parentGroup?.enabled.value ?? hasOwnLightbox.value)

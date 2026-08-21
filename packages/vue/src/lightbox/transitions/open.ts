@@ -1,9 +1,5 @@
 import { nextTick, toValue } from 'vue'
-import {
-  isUsableRect,
-  shouldUseFlip,
-  type RectLike,
-} from '../../core/index'
+import { isUsableRect, shouldUseFlip, type RectLike } from '../../core/index'
 import { flipTransform } from '../../core/geometry/rect'
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
 import { nextFrame, throwIfAborted, wait } from './animation'
@@ -137,11 +133,7 @@ async function runFadeOpen(
   await Promise.all([shell, media])
 }
 
-function resolveOpenRects(
-  context: OpenTransitionContext,
-  index: number,
-  toRect: RectLike | null,
-) {
+function resolveOpenRects(context: OpenTransitionContext, index: number, toRect: RectLike | null) {
   const { visual } = context
   const captured = context.getCapturedOpen()?.index === index ? context.getCapturedOpen() : null
   const interruptedRect = visible(visual.transitionFrameRef.value)
@@ -303,9 +295,9 @@ export async function runOpenTransition(
       ])
       const handoffWindow =
         typeof current.transitionFrame?.animate === 'function'
-          ? wait(OPEN_DURATION_MS - HANDOFF_DURATION_MS, signal).then(
-              () => ({ kind: 'window' as const }),
-            )
+          ? wait(OPEN_DURATION_MS - HANDOFF_DURATION_MS, signal).then(() => ({
+              kind: 'window' as const,
+            }))
           : null
 
       await nextFrame(signal)

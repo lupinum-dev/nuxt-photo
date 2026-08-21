@@ -86,11 +86,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
 
     if (nuxt.options.appConfig.nuxtPhoto) {
-      addPlugin(
-        {
-          src: resolver.resolve('./runtime/defaults-plugin'),
-        },
-      )
+      addPlugin({
+        src: resolver.resolve('./runtime/defaults-plugin'),
+      })
     }
 
     if (options.image !== false) {

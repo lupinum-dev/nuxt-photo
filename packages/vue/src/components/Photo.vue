@@ -225,9 +225,7 @@ async function openById(id: string) {
     return soloOpen()
   }
   if (isGrouped.value) {
-    return id === props.photo.id
-      ? group!.activateById(id, thumbRef.value)
-      : group!.openById(id)
+    return id === props.photo.id ? group!.activateById(id, thumbRef.value) : group!.openById(id)
   }
 }
 
