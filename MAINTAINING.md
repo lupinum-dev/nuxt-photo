@@ -71,6 +71,18 @@ An emergency security update may use the documented pnpm security exception.
 Record the package, reason, and removal date. Remove the exception after the
 fixed release passes the normal age gate.
 
+### Embla version pin
+
+`packages/vue` pins the exact Embla version (`9.0.0-rc02`, currently a release
+candidate). The lightbox reads Embla's internal slide-to-snap registry through
+one deliberate canary file, `src/integrations/embla/snapModel.ts`; that file
+documents the coupling and throws when Embla's internals drift. Treat any
+Embla bump as an exact-version integration upgrade: bump all four `embla-*`
+packages together, run the carousel and lightbox browser tests, and confirm
+`snapModel` still matches. Do not widen the range to `^` while the integration
+reads internal APIs. Revisit once Embla 9 ships stable or exposes the snap
+registry publicly.
+
 ## Verification commands
 
 - `pnpm verify` is the normal handoff gate.

@@ -46,9 +46,12 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"
     },
+    "./components/*": "./dist/components/*",
+    "./primitives/*": "./dist/primitives/*",
     "./styles.css": {
       "default": "./dist/styles.css"
-    }
+    },
+    "./styles/*": "./dist/styles/*"
   },
   "publishConfig": {
     "access": "public"

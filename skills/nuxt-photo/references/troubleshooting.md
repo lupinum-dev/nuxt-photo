@@ -4,16 +4,19 @@
 
 ## Troubleshooting
 
-| Symptom                                      | Likely cause                                            | Fix                                                                         |
-| -------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Gallery collapses or moves after load        | Missing dimensions or missing structure CSS             | Use real intrinsic dimensions and keep `css: 'structure'` or `css: 'all'`.  |
-| Lightbox opens from the wrong frame          | Thumbnail identity or dimensions do not match           | Use stable IDs, correct dimensions, and `PhotoTrigger` for custom layouts.  |
-| Nuxt Image mode throws during setup          | `@nuxt/image` is missing or not registered              | Install it in any module order, or use `auto` or `native`.                  |
-| Direct Vue package import fails under pnpm   | The app does not declare the package it imports         | Import from `@lupinum/nuxt-photo/app` or add `@lupinum/vue-photo` directly. |
-| Custom lightbox has empty or duplicate state | It creates a second provider inside a recipe override   | Remove `useLightboxProvider()` from the override.                           |
-| Custom thumbnail ignores image configuration | It renders a raw `<img>`                                | Render `<PhotoImage>` or accept that the adapter is bypassed.               |
-| Signed URLs cause hydration mismatch         | URLs are signed with time or random state during render | Pre-sign before render and store deterministic URLs on `PhotoItem`.         |
-| Carousel autoplay feels unpredictable        | Interaction settings do not match the intended behavior | Set `delayMs`, `stopOnInteraction`, and `stopOnMouseEnter` explicitly.      |
+| Symptom                                                | Likely cause                                             | Fix                                                                                                                                   |
+| ------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Gallery collapses or moves after load                  | Missing dimensions or missing structure CSS              | Use real intrinsic dimensions and keep `css: 'structure'` or `css: 'all'`.                                                            |
+| Lightbox opens from the wrong frame                    | Thumbnail identity or dimensions do not match            | Use stable IDs, correct dimensions, and `PhotoTrigger` for custom layouts.                                                            |
+| Nuxt Image mode throws during setup                    | `@nuxt/image` is missing or not registered               | Install it in any module order, or use `auto` or `native`.                                                                            |
+| Direct Vue package import fails under pnpm             | The app does not declare the package it imports          | Import from `@lupinum/nuxt-photo/app` or add `@lupinum/vue-photo` directly.                                                           |
+| Custom lightbox has empty or duplicate state           | It creates a second provider inside a recipe override    | Remove `useLightboxProvider()` from the override.                                                                                     |
+| Custom thumbnail ignores image configuration           | It renders a raw `<img>`                                 | Render `<PhotoImage>` or accept that the adapter is bypassed.                                                                         |
+| Signed URLs cause hydration mismatch                   | URLs are signed with time or random state during render  | Pre-sign before render and store deterministic URLs on `PhotoItem`.                                                                   |
+| Carousel autoplay feels unpredictable                  | Interaction settings do not match the intended behavior  | Set `delayMs`, `stopOnInteraction`, and `stopOnMouseEnter` explicitly.                                                                |
+| Very large albums (thousands of photos) feel heavy     | Every photo stays in the DOM; there is no virtualization | Split into albums per section, paginate at the data layer, or lazy-mount sections. `loading="lazy"` bounds network use, not DOM cost. |
+| A build warning says photos render with native sources | `provider: 'auto'` found no `@nuxt/image` module         | Install `@nuxt/image`, or set `nuxtPhoto.image.provider = 'native'` to silence.                                                       |
+| A build warning says image config has no effect        | `image.thumb`/`image.slide` set without `@nuxt/image`    | Install `@nuxt/image`, remove the config, or switch to `'native'`.                                                                    |
 
 ## Inspect the application
 

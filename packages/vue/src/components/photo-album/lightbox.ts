@@ -15,6 +15,7 @@ import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 type AlbumLightboxProps<TMeta extends object> = {
   lightbox?: boolean | Component
@@ -29,7 +30,6 @@ export function useAlbumLightbox<TMeta extends object>(
   const parentGroup = inject(PhotoGroupContextKey, null)
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
-    transition: () => props.transition,
   })
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
@@ -43,7 +43,7 @@ export function useAlbumLightbox<TMeta extends object>(
 
   const ownCtx = hasOwnLightbox
     ? useLightboxProvider(photos, {
-        transition: props.transition,
+        transition: () => props.transition,
         imageAdapter: computed(() => props.imageAdapter),
       })
     : null
@@ -73,13 +73,20 @@ export function useAlbumLightbox<TMeta extends object>(
     return ownCtx.open(index)
   }
 
+  const labels = usePhotoLabels()
+
   function itemBindings(photo: PhotoItem<TMeta>, index: number) {
     const base = { ref: setItemRef(index) }
     if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
 
     return {
       ...base,
-      ...createPhotoTriggerBindings(photo, index, () => activatePhoto(photo, index)),
+      ...createPhotoTriggerBindings(
+        photo,
+        index,
+        () => activatePhoto(photo, index),
+        photo.alt || labels.viewPhoto(index + 1),
+      ),
     }
   }
 
@@ -94,6 +101,33 @@ export function useAlbumLightbox<TMeta extends object>(
     }
     return false
   }
+
+  // Programmatic control surface, exposed by PhotoAlbum. Delegates to a parent
+  // PhotoGroup when present; otherwise drives the album's own lightbox.
+  async function open(index = 0) {
+    if (delegatedGroup) return delegatedGroup.open(index)
+    if (!ownCtx) return
+    syncOwnThumbRefs()
+    await ownCtx.open(index)
+  }
+
+  async function openById(id: string) {
+    if (delegatedGroup) return delegatedGroup.activateById(id)
+    if (!ownCtx) return
+    const index = photos.value.findIndex((photo) => photo.id === id)
+    if (index < 0) {
+      throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+    }
+    syncOwnThumbRefs()
+    await ownCtx.open(index)
+  }
+
+  async function close() {
+    if (delegatedGroup) return delegatedGroup.close()
+    await ownCtx?.close()
+  }
+
+  const isOpen = computed(() => delegatedGroup?.isOpen.value ?? ownCtx?.isOpen.value ?? false)
 
   const capabilityOwner = Symbol('PhotoAlbum')
 
@@ -136,5 +170,9 @@ export function useAlbumLightbox<TMeta extends object>(
     LightboxComponent,
     itemBindings,
     isHidden,
+    open,
+    openById,
+    close,
+    isOpen,
   }
 }

@@ -18,10 +18,18 @@ import {
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
 } from '../../core/index'
+import {
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+  computeGaps,
+  computeWidthDivisor,
+} from '../../core/layout/constants'
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
-import { round } from '../../core/utils/math'
 
 const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
@@ -43,9 +51,7 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes: ComputedRef<
-    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
-  >
+  sizes: ComputedRef<string | ResponsivePhotoSizes | undefined>
   interactive: Ref<boolean>
 }
 
@@ -95,10 +101,10 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     if (containerWidth.value <= 0) return []
 
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
-    const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
     const input = {
       photos: photos.value,
       containerWidth: w,
@@ -126,9 +132,9 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const rowItems = computed<RowItem[]>(() => {
     const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
 
     if (containerQueriesActive.value && !defaultContainerWidth) {
       return photos.value.map((photo, index) => ({
@@ -160,20 +166,25 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
 
     return groups.value.flatMap((row) =>
       row.entries.map((entry) => {
-        const gaps = sp * (entry.itemsCount - 1) + 2 * pd * entry.itemsCount
+        const gaps = computeGaps(sp, pd, entry.itemsCount)
         return {
           photo: entry.photo,
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes.value),
+          // A plain string passes through verbatim; the structured form
+          // derives a layout-exact calc() per photo.
+          computedSizes:
+            typeof sizes.value === 'string'
+              ? sizes.value
+              : computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes.value),
           style: {
             ...cursor,
             flex: '0 0 auto',
             boxSizing: 'content-box' as const,
             padding: `${pd}px`,
             overflow: 'hidden',
-            width: `calc((100% - ${gaps}px) / ${round((w - gaps) / entry.width, 5)})`,
+            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(w, gaps, entry.width)})`,
           } as CSSProperties,
         }
       }),
@@ -182,8 +193,8 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
 
   const ssrWrapperStyle = computed<CSSProperties>(() => {
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
     if (layout.value === 'rows') {
       return {
         display: 'flex',
@@ -204,7 +215,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const cursor = interactive.value ? { cursor: 'pointer' } : {}
     if (layout.value === 'rows') {
       const w = containerWidth.value
-      const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+      const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
       const ar = photo.width / photo.height
       return {
         ...cursor,
@@ -241,9 +252,9 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const w = containerWidth.value
     return {
       containerWidth: w,
-      spacing: resolveResponsiveParameter(spacing.value, w, 8),
-      padding: resolveResponsiveParameter(padding.value, w, 0),
-      columnsCount: groups.value.length || 1,
+      spacing: resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING),
+      padding: resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING),
+      groupCount: groups.value.length || 1,
       layoutType: layout.value,
     }
   }

@@ -1,6 +1,7 @@
 // @lupinum/vue-photo — Vue components, composables, and photo utilities
 export { Lightbox, Photo, PhotoAlbum, PhotoCarousel, PhotoGroup } from './components'
-export { useLightbox, useLightboxProvider, useContainerWidth } from './composables'
+export { useLightbox, useLightboxProvider, useContainerWidth, usePhotoLabels } from './composables'
+export { DEFAULT_PHOTO_LABELS, resolvePhotoLabels, type PhotoLabels } from './provide'
 export {
   LightboxProvider,
   LightboxRoot,
@@ -48,6 +49,7 @@ export type {
   TransitionMode,
   ResponsiveParameter,
   ResponsiveResolver,
+  ResponsivePhotoSizes,
 } from './core/types'
 export type {
   InvalidPhotoPolicy,

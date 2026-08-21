@@ -1,19 +1,21 @@
 import type { CSSProperties, Ref } from 'vue'
 import type { LayoutEntry, LayoutGroup } from '../../core/index'
+import { computeGaps, computeWidthDivisor } from '../../core/layout/constants'
 import { round } from '../../core/utils/math'
 
 export type AlbumStyleContext = {
   containerWidth: number
   spacing: number
   padding: number
-  columnsCount: number
+  /** Number of top-level groups: rows for rows layout, columns otherwise. */
+  groupCount: number
   layoutType: 'rows' | 'columns' | 'masonry'
 }
 
 export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSSProperties {
   if (group.type === 'row') {
     return {
-      marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
+      marginBottom: group.index < ctx.groupCount - 1 ? `${ctx.spacing}px` : undefined,
     }
   }
 
@@ -24,7 +26,7 @@ export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSS
   ) {
     return {
       marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
-      width: `calc((100% - ${ctx.spacing * (ctx.columnsCount - 1)}px) / ${ctx.columnsCount})`,
+      width: `calc((100% - ${ctx.spacing * (ctx.groupCount - 1)}px) / ${ctx.groupCount})`,
     }
   }
 
@@ -38,7 +40,7 @@ export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSS
   return {
     marginLeft: group.index > 0 ? `${ctx.spacing}px` : undefined,
     width: `calc((100% - ${round(
-      (ctx.columnsCount - 1) * ctx.spacing + 2 * ctx.columnsCount * ctx.padding + totalAdjustedGaps,
+      computeGaps(ctx.spacing, ctx.padding, ctx.groupCount) + totalAdjustedGaps,
       3,
     )}px) * ${round((group.columnsRatios[group.index] ?? 0) / totalRatio, 5)} + ${
       2 * ctx.padding
@@ -55,14 +57,14 @@ export function albumItemStyle(
   const cursor = interactive.value ? { cursor: 'pointer' } : {}
 
   if (group.type === 'row') {
-    const gaps = ctx.spacing * (entry.itemsCount - 1) + 2 * ctx.padding * entry.itemsCount
+    const gaps = computeGaps(ctx.spacing, ctx.padding, entry.itemsCount)
     return {
       ...cursor,
       boxSizing: 'content-box',
       display: 'block',
       height: 'auto',
       padding: `${ctx.padding}px`,
-      width: `calc((100% - ${gaps}px) / ${round((ctx.containerWidth - gaps) / entry.width, 5)})`,
+      width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(ctx.containerWidth, gaps, entry.width)})`,
     }
   }
 

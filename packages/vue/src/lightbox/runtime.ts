@@ -18,6 +18,7 @@ import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
+  type TransitionMode,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
@@ -52,7 +53,7 @@ export function getMountedSlideIndices(active: number, count: number) {
  */
 export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
-  transitionOption?: LightboxTransitionOption,
+  transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
   imageAdapter?: MaybeRef<ImageAdapter | undefined>,
 ) {
@@ -75,26 +76,19 @@ export function useLightboxRuntimeState(
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
   const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
+  // The mode the user asked for, before reduced-motion downgrades. Re-derived
+  // whenever the transition option changes.
+  let userTransitionMode: TransitionMode = transitionConfig.mode
 
-  // Apply user-provided transition option
-  if (transitionOption) {
-    if (typeof transitionOption === 'string') {
-      transitionConfig.mode = transitionOption
-    } else {
-      transitionConfig.mode = transitionOption.mode
-      transitionConfig.autoThreshold =
-        transitionOption.autoThreshold ?? transitionConfig.autoThreshold
+  function applyTransitionOption(option: LightboxTransitionOption | undefined) {
+    if (!option) return
+    userTransitionMode = typeof option === 'string' ? option : option.mode
+    if (typeof option !== 'string' && option.autoThreshold !== undefined) {
+      transitionConfig.autoThreshold = option.autoThreshold
     }
   }
 
-  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (prefersReducedMotion && transitionConfig.mode !== 'none') {
-    transitionConfig.mode = 'fade'
-  }
+  applyTransitionOption(toValue(transitionOption))
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
@@ -102,6 +96,37 @@ export function useLightboxRuntimeState(
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
+
+  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but never an
+  // explicit 'none'). Mode changes take effect at the next transition start,
+  // so no mid-animation guard is required.
+  const reduceMotionQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null
+
+  function applyMotionPreference() {
+    if (!reduceMotionQuery) return
+    if (reduceMotionQuery.matches && userTransitionMode !== 'none') {
+      transitionConfig.mode = 'fade'
+    } else {
+      transitionConfig.mode = userTransitionMode
+    }
+  }
+
+  function refreshTransitionConfig() {
+    applyTransitionOption(toValue(transitionOption))
+    applyMotionPreference()
+  }
+
+  applyMotionPreference()
+  watch(() => toValue(transitionOption), refreshTransitionConfig)
+  reduceMotionQuery?.addEventListener('change', applyMotionPreference)
+  onBeforeUnmount(() => {
+    reduceMotionQuery?.removeEventListener('change', applyMotionPreference)
+  })
+
+  const prefersReducedMotion = !!reduceMotionQuery?.matches
 
   const carousel = useCarousel(
     photos,

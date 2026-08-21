@@ -1,5 +1,6 @@
 <template>
   <img
+    ref="imgRef"
     :src="resolved.src"
     :srcset="resolved.srcset"
     :sizes="props.sizes ?? resolved.sizes"
@@ -7,13 +8,15 @@
     :height="resolved.height"
     :alt="photo.alt || ''"
     :loading="loading"
+    :style="placeholderStyle"
     draggable="false"
     v-bind="$attrs"
+    @load="loaded = true"
   />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject } from 'vue'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import {
   createNativeImageAdapter,
   type PhotoItem,
@@ -47,4 +50,33 @@ const resolveImage = computed(
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))
+
+// Placeholder is painted behind the image content until the source decodes.
+const imgRef = ref<HTMLImageElement | null>(null)
+const loaded = ref(false)
+
+onMounted(() => {
+  if (imgRef.value?.complete) loaded.value = true
+})
+
+// Reset on source changes using raw photo fields so the adapter is never
+// evaluated outside render; a cached source reports complete immediately.
+watch(
+  () => [props.photo.src, props.photo.thumbSrc] as const,
+  () => {
+    loaded.value = false
+    if (imgRef.value?.complete) loaded.value = true
+  },
+)
+
+const placeholderStyle = computed(() => {
+  const placeholder = resolved.value.placeholder
+  if (!placeholder || loaded.value) return undefined
+  return {
+    backgroundImage: `url("${placeholder}")`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }
+})
 </script>

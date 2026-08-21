@@ -1,5 +1,11 @@
 import { computeRowsLayout } from './index'
-import { round } from '../../utils/math'
+import {
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+  computeGaps,
+  computeWidthDivisor,
+} from '../constants'
 import { resolveResponsiveParameter } from '../../types'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
@@ -58,9 +64,13 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
   const bpEntries: BpEntry[] = []
   for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
+    const spacing = resolveResponsiveParameter(opts.spacing, bp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, bp, DEFAULT_PADDING)
+    const targetRowHeight = resolveResponsiveParameter(
+      opts.targetRowHeight,
+      bp,
+      DEFAULT_TARGET_ROW_HEIGHT,
+    )
     const groups = computeRowsLayout({
       photos,
       containerWidth: bp,
@@ -110,8 +120,8 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     const isLast = s === spans.length - 1
     const sampleBp = span.sampleBp
 
-    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, sampleBp, 0)
+    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, sampleBp, DEFAULT_PADDING)
 
     // Build the @container condition
     let condition: string
@@ -133,8 +143,8 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     const itemRules: string[] = []
     for (const group of span.groups) {
       for (const entry of group.entries) {
-        const gaps = spacing * (entry.itemsCount - 1) + 2 * padding * entry.itemsCount
-        const divisor = round((sampleBp - gaps) / entry.width, 5)
+        const gaps = computeGaps(spacing, padding, entry.itemsCount)
+        const divisor = computeWidthDivisor(sampleBp, gaps, entry.width)
         const paddingPart = padding > 0 ? `padding:${padding}px;` : ''
         itemRules.push(
           `.np-item-${entry.index}{flex:0 0 auto;box-sizing:content-box;${paddingPart}overflow:hidden;width:calc((100% - ${gaps}px) / ${divisor})}`,

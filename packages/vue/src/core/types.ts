@@ -4,6 +4,12 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly id: string
   readonly src: string
   readonly thumbSrc?: string
+  /**
+   * Tiny preview shown behind the image until it decodes — a blurred LQIP
+   * data URI or dominant-color data URI. Painted by the browser while the
+   * full source loads; never affects layout.
+   */
+  readonly placeholder?: string
   readonly width: number
   readonly height: number
   readonly alt?: string
@@ -153,6 +159,19 @@ export type ImageSource = {
   sizes?: string
   width?: number
   height?: number
+  /** Tiny preview painted behind the image until it decodes. */
+  placeholder?: string
+}
+
+/**
+ * Structured `<img sizes>` configuration for photos rendered inside a
+ * justified-rows layout. The library derives a layout-exact `calc()` per photo.
+ */
+export type ResponsivePhotoSizes = {
+  /** CSS size of the album container, e.g. `'100vw'` or `'calc(100vw - 240px)'`. */
+  size: string
+  /** Optional viewport-specific overrides, listed from smallest to largest breakpoint. */
+  sizes?: Array<{ viewport: string; size: string }>
 }
 
 /**

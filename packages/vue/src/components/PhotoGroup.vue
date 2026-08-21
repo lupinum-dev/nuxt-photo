@@ -13,6 +13,7 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
+import { devWarn } from '../core/env'
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
@@ -38,7 +39,7 @@ const props = withDefaults(
     imageAdapter?: ImageAdapter<TMeta>
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
-    /** Setup-time transition configuration. Remount to change it. */
+    /** Transition configuration. Reactive. */
     transition?: LightboxTransitionOption
   }>(),
   { lightbox: true },
@@ -63,11 +64,10 @@ const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLight
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 const provider = enabled
   ? useLightboxProvider(canonicalPhotos, {
-      transition: props.transition,
+      transition: () => props.transition,
       imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => {
         for (const entry of capabilities.value) {
@@ -139,21 +139,38 @@ function syncThumbnailRefs() {
   })
 }
 
+let warnedDisabled = false
+
+/** Disabled lightboxes no-op consistently instead of mixing throws and silence. */
+function warnDisabledInteraction(method: string) {
+  if (warnedDisabled || !import.meta.env.DEV) return
+  warnedDisabled = true
+  devWarn(
+    `[nuxt-photo] PhotoGroup.${method}() was ignored because the lightbox is disabled. Enable it via the \`lightbox\` prop to control it programmatically.`,
+  )
+}
+
 async function open(index = 0) {
+  if (!provider) {
+    warnDisabledInteraction('open')
+    return
+  }
   if (index < 0 || index >= canonicalPhotos.value.length) {
     throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
-  if (!provider) return
   syncThumbnailRefs()
   await provider.open(index)
 }
 
 async function activateById(id: string, source?: HTMLElement | null) {
+  if (!provider) {
+    warnDisabledInteraction('openById')
+    return
+  }
   const index = canonicalPhotos.value.findIndex((photo) => photo.id === id)
   if (index < 0) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
-  if (!provider) return
   syncThumbnailRefs()
   if (source) provider.setThumbnailRef(index)(source)
   await provider.openById(id)
@@ -200,6 +217,8 @@ const groupContext: PhotoGroupContext = {
   removeCapabilities,
   open,
   activateById,
+  close,
+  isOpen: computed(() => provider?.isOpen.value ?? false),
   photos: canonicalPhotos,
   hiddenPhoto,
 }

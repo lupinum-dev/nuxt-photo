@@ -1,5 +1,6 @@
 <template>
   <figure
+    v-if="!dropped"
     ref="thumbRef"
     class="np-photo"
     v-bind="mergeProps(interactiveAttrs, $attrs)"
@@ -17,7 +18,7 @@
       {{ photo.caption }}
     </figcaption>
   </figure>
-  <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
+  <component :is="soloLightboxComponent" v-if="!dropped && isSolo && soloCtx" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
@@ -36,40 +37,70 @@ import {
 import { useLightboxProvider } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
-import type { PhotoItem, ImageAdapter } from '../core/index'
-import type { LightboxTransitionOption } from '../core/index'
+import type {
+  PhotoItem,
+  ImageAdapter,
+  InvalidPhotoPolicy,
+  LightboxTransitionOption,
+} from '../core/index'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
-import { normalizePhotos } from '../core/photo/normalize'
+import { normalizePhotos, PhotoValidationError } from '../core/photo/normalize'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
+import { devWarn } from '../core/env'
 
 defineOptions({ inheritAttrs: false })
 
-const props = defineProps<{
-  photo: PhotoItem<TMeta>
-  /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
-  lightbox?: boolean | Component
-  /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
-  lightboxIgnore?: boolean
-  imageAdapter?: ImageAdapter<TMeta>
-  /** Setup-time transition configuration for a standalone lightbox. */
-  transition?: LightboxTransitionOption
-  loading?: 'lazy' | 'eager'
-  /** Extra classes for the inner img element */
-  imgClass?: string
-  /** Extra classes for the caption element */
-  captionClass?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    photo: PhotoItem<TMeta>
+    /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
+    lightbox?: boolean | Component
+    /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
+    lightboxIgnore?: boolean
+    imageAdapter?: ImageAdapter<TMeta>
+    /** Transition configuration for a standalone lightbox. Reactive. */
+    transition?: LightboxTransitionOption
+    loading?: 'lazy' | 'eager'
+    /** Extra classes for the inner img element */
+    imgClass?: string
+    /** Extra classes for the caption element */
+    captionClass?: string
+    /**
+     * What to do with an invalid photo. `'throw'` (default) fails loudly;
+     * `'drop'` renders nothing, matching the `PhotoAlbum` policy surface.
+     */
+    validation?: InvalidPhotoPolicy
+  }>(),
+  { validation: 'throw' },
+)
 const slots = defineSlots<{
   slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
 
-function validatePhoto() {
-  normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
+// Validates on access and re-validates when the photo prop changes.
+// With `validation="drop"` an invalid photo renders nothing; otherwise it
+// fails fast with a structured error, matching the historical contract.
+const resolution = computed(() =>
+  normalizePhotos<TMeta>([props.photo], {
+    owner: 'Photo',
+    onInvalid: 'return',
+  }),
+)
+const dropped = computed(() => props.validation === 'drop' && resolution.value.issues.length > 0)
+
+function assertValidPhoto() {
+  if (resolution.value.issues.length > 0) {
+    throw new PhotoValidationError('Photo', resolution.value.issues)
+  }
 }
-validatePhoto()
+
+if (props.validation !== 'drop') {
+  assertValidPhoto()
+}
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
@@ -85,27 +116,29 @@ const hasSoloProvider = soloLightboxComponent !== null
 const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 
-// Solo lightbox context — only created when solo (outside group)
-const soloCtx = isSolo.value
-  ? useLightboxProvider(
-      computed(() => props.photo),
-      {
-        transition: props.transition,
-        imageAdapter: computed(() => props.imageAdapter),
-        resolveSlide: (photo) => {
-          if (
-            (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
-            !slots.slide
-          )
-            return null
-          return (slotProps) => slots.slide?.(slotProps) ?? null
+// Solo lightbox context — only created when solo (outside group) and valid.
+// Created once at setup; a photo that becomes valid later requires a remount,
+// matching the setup-time semantics of the `lightbox` prop.
+const soloCtx =
+  isSolo.value && !dropped.value
+    ? useLightboxProvider(
+        computed(() => props.photo),
+        {
+          transition: () => props.transition,
+          imageAdapter: computed(() => props.imageAdapter),
+          resolveSlide: (photo) => {
+            if (
+              (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
+              !slots.slide
+            )
+              return null
+            return (slotProps) => slots.slide?.(slotProps) ?? null
+          },
         },
-      },
-    )
-  : null
+      )
+    : null
 
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
@@ -138,9 +171,16 @@ function handleClick() {
   else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
 }
 
+const labels = usePhotoLabels()
+
 const interactiveAttrs = computed(() => {
-  if (!isInteractive.value) return {}
-  return createPhotoTriggerBindings(props.photo, 0, handleClick)
+  if (!isInteractive.value || dropped.value) return {}
+  return createPhotoTriggerBindings(
+    props.photo,
+    0,
+    handleClick,
+    props.photo.alt || labels.viewPhoto(1),
+  )
 })
 
 // Capability registration with the parent group.
@@ -148,7 +188,7 @@ const id = Symbol()
 const registered = ref(false)
 
 function shouldRegisterWithGroup() {
-  return group && group.enabled && !props.lightboxIgnore && !isSolo.value
+  return group && group.enabled && !props.lightboxIgnore && !isSolo.value && !dropped.value
 }
 
 function unregisterFromGroup() {
@@ -183,7 +223,7 @@ registerWithGroup()
 watch(
   () => [props.photo, props.lightboxIgnore],
   () => {
-    validatePhoto()
+    if (props.validation !== 'drop') assertValidPhoto()
     unregisterFromGroup()
     registerWithGroup()
   },
@@ -196,4 +236,49 @@ async function soloOpen() {
   soloCtx.setThumbnailRef(0)(thumbRef.value)
   await soloCtx.open(0)
 }
+
+// Programmatic control surface: drives the solo lightbox directly, or
+// delegates to the parent PhotoGroup when grouped.
+async function open(index = 0) {
+  if (isSolo.value) {
+    if (index !== 0) {
+      throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
+    }
+    await soloOpen()
+    return
+  }
+  if (isGrouped.value) {
+    await group!.open(index)
+    return
+  }
+  devWarn('[nuxt-photo] Photo.open() was ignored because no lightbox is available.')
+}
+
+async function openById(id: string) {
+  if (isSolo.value) {
+    if (id !== props.photo.id) {
+      throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+    }
+    await soloOpen()
+    return
+  }
+  if (isGrouped.value) {
+    await group!.activateById(id, thumbRef.value)
+    return
+  }
+  devWarn('[nuxt-photo] Photo.openById() was ignored because no lightbox is available.')
+}
+
+async function close() {
+  if (isSolo.value) return soloCtx?.close()
+  if (isGrouped.value) return group!.close()
+}
+
+const isOpen = computed(() => {
+  if (isSolo.value) return soloCtx?.isOpen.value ?? false
+  if (isGrouped.value) return group!.isOpen.value
+  return false
+})
+
+defineExpose({ open, openById, close, isOpen })
 </script>

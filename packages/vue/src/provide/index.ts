@@ -7,3 +7,4 @@ export {
   type LightboxProviderController,
   type LightboxSlideRenderer,
 } from './keys'
+export { DEFAULT_PHOTO_LABELS, resolvePhotoLabels, type PhotoLabels } from './labels'

@@ -29,7 +29,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
 export function useLightboxProvider<TMeta extends object = Readonly<Record<string, unknown>>>(
   photosInput: MaybeRefOrGetter<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
   options?: {
-    transition?: LightboxTransitionOption
+    transition?: MaybeRefOrGetter<LightboxTransitionOption | undefined>
     resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
     minZoom?: number
     imageAdapter?: MaybeRef<ImageAdapter<TMeta> | undefined>

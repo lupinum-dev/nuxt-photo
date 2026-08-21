@@ -38,7 +38,7 @@ The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, `<PhotoCarou
 
 ## Use it
 
-The smallest working example:
+The smallest working example. The module default injects structure CSS (exact geometry, no theme), so this gallery is laid out correctly but visually bare; set `css: 'all'` in your config if you want the finished look immediately.
 
 ```vue [app.vue]
 <script setup lang="ts">
@@ -312,6 +312,23 @@ A smaller pre-rendered URL for the grid. If set, the native image adapter uses `
 ```
 
 If you use `@nuxt/image`, you usually do not need `thumbSrc`. The provider generates responsive sizes automatically.
+
+### `placeholder`
+
+A tiny preview painted behind the image until the full source decodes - a blurred LQIP data URI or a dominant-color data URI. It never affects layout; it only removes the "pop-in" flash while large sources stream in.
+
+```ts
+{
+  id: 'desert',
+  src: '/photos/desert-2000.jpg',
+  // 16px-wide blurred variant, encoded as a data URI by your build pipeline
+  placeholder: 'data:image/jpeg;base64,/9j/4AAQ...',
+  width: 2000,
+  height: 1333,
+}
+```
+
+Generate placeholders at upload time or build time. Keep them under a few hundred bytes.
 
 ### `srcset`
 

@@ -71,6 +71,16 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
+    /** Whether the carousel wraps around at the ends. */
+    loop?: boolean
+    /** Enable free dragging without snap points. */
+    dragFree?: boolean
+    /** How many slides to advance per navigation. */
+    slidesToScroll?: number
+    /**
+     * @deprecated Use the flat `loop`, `dragFree`, and `slidesToScroll` props.
+     * Flat props take precedence when both are provided.
+     */
     options?: PhotoCarouselOptions
     showArrows?: boolean
     showThumbnails?: boolean
@@ -83,7 +93,7 @@ const props = withDefaults(
     thumbSize?: string
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
-    /** Setup-time transition configuration. Remount to change it. */
+    /** Transition configuration. Reactive. */
     transition?: LightboxTransitionOption
     slideClass?: string
     imgClass?: string
@@ -92,14 +102,27 @@ const props = withDefaults(
     controlsClass?: string
   }>(),
   {
+    loop: undefined,
+    dragFree: undefined,
+    slidesToScroll: undefined,
     showArrows: true,
     showThumbnails: true,
     showCounter: true,
     showDots: false,
     autoplay: false,
-    lightbox: false,
+    lightbox: true,
   },
 )
+
+/**
+ * Reconcile the deprecated options bag with the flat props. Flat props win
+ * when explicitly set; otherwise fall back to the bag, then library defaults.
+ */
+const effectiveOptions = computed<PhotoCarouselOptions>(() => ({
+  loop: props.loop ?? props.options?.loop,
+  dragFree: props.dragFree ?? props.options?.dragFree,
+  slidesToScroll: props.slidesToScroll ?? props.options?.slidesToScroll,
+}))
 
 const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
@@ -135,11 +158,10 @@ const lightboxComponent = resolveLightboxComponent(
 const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 const provider = hasLightbox
   ? useLightboxProvider(resolvedPhotos, {
-      transition: props.transition,
+      transition: () => props.transition,
       imageAdapter: computed(() => props.imageAdapter),
     })
   : null
@@ -151,7 +173,7 @@ async function openSlide(index: number) {
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   imageAdapter: props.imageAdapter,
-  options: props.options ?? {},
+  options: effectiveOptions.value,
   autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,

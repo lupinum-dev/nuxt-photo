@@ -31,6 +31,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
   it('exposes the documented app runtime API exactly', () => {
     expect(Object.keys(app).sort()).toEqual(
       [
+        'DEFAULT_PHOTO_LABELS',
         'ImageAdapterKey',
         'Lightbox',
         'LightboxCaption',
@@ -49,11 +50,13 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'resolvePhotoLabels',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
         'useLightbox',
         'useLightboxProvider',
+        'usePhotoLabels',
       ].sort(),
     )
   })

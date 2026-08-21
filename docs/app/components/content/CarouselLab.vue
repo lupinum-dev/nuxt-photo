@@ -12,7 +12,9 @@ const lightbox = ref(true)
 const code = computed(
   () => `<PhotoCarousel
   :photos="photos"
-  :options="{ loop: ${loop.value}, dragFree: ${dragFree.value}, slidesToScroll: ${slidesToScroll.value} }"
+  :loop="${loop.value}"
+  :drag-free="${dragFree.value}"
+  :slides-to-scroll="${slidesToScroll.value}"
   :autoplay="${autoplay.value}"
   :show-thumbnails="${thumbnails.value}"
   :show-dots="${dots.value}"
@@ -40,7 +42,9 @@ function reset() {
     <PhotoCarousel
       :key="`${loop}-${dragFree}-${slidesToScroll}`"
       :photos="demoPhotos.slice(0, 8)"
-      :options="{ loop, dragFree, slidesToScroll }"
+      :loop="loop"
+      :drag-free="dragFree"
+      :slides-to-scroll="slidesToScroll"
       :autoplay="autoplay"
       :show-thumbnails="thumbnails"
       :show-dots="dots"

@@ -1,5 +1,6 @@
 import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
 import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } from './types'
+import { devWarn } from '../env'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
@@ -60,7 +61,14 @@ function findColumnBreaks(
   let end = count
   for (let column = columns; column > 0; column--) {
     const start = previous[column]![end]!
-    if (start < 0) return [0, count]
+    if (start < 0) {
+      // Invariant failure: the DP could not reconstruct a partition. Degrade
+      // to a single column rather than emit broken geometry, but say so.
+      devWarn(
+        'columns layout reconstruction failed; falling back to a single column. Please report this with the photo set that triggered it.',
+      )
+      return [0, count]
+    }
     path.push(start)
     end = start
   }

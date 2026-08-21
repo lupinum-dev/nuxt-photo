@@ -334,7 +334,7 @@ This is the shallowest customization path for:
 - a custom counter
 - slide markup that still lives inside the built-in lightbox
 
-If you need a different primitive tree or your own lightbox state wiring, skip to [Build a custom lightbox](/docs/guides/customize-the-lightbox).
+If you need a different primitive tree or your own lightbox state wiring, skip to [Global lightbox override](/docs/concepts/customization-layers).
 
 ## 1. Wrap the recipe lightbox
 
@@ -433,7 +433,9 @@ import MyLightbox from '~/components/MyLightbox.vue'
 
 ## 3. Customize slides only when you need to
 
-The recipe `<Lightbox>` also supports a `slide` slot:
+The recipe `<Lightbox>` also supports a `slide` slot.
+
+Nuxt Photo does not ship built-in video support. The slide slot is the supported escape hatch: render any media player you own, and keep the lightbox's navigation, gestures, and accessibility for the surrounding photos. You own the video's keyboard focus, autoplay policy, and gesture conflicts (pinch-zoom and drag-to-close stay enabled around your player).
 
 ```vue
 <Lightbox>
@@ -460,13 +462,13 @@ Stay on this path when:
 - you only want different UI chrome
 - you want the shallowest path that still keeps the recipe runtime
 
-Move to [Build a custom lightbox](/docs/guides/customize-the-lightbox) when you need a different primitive structure or want to compose the overlay, viewport, controls, and caption yourself.
+Move to [the primitives](/docs/api/primitives) when you need a different primitive structure or want to compose the overlay, viewport, controls, and caption yourself.
 
 ## Apply the lightbox globally
 
 If most galleries in the app should use the same custom lightbox, set it once globally.
 
-Follow [the global custom-lightbox guide](/docs/guides/customize-the-lightbox) to apply the component to each gallery.
+Follow [the global lightbox override](/docs/concepts/customization-layers) to apply the component to each gallery.
 
 _Source: `docs/content/docs/4.guides/6.customize-the-lightbox.md`_
 

@@ -3,9 +3,11 @@ import {
   addComponent,
   addImports,
   addPlugin,
+  addTypeTemplate,
   createResolver,
   defineNuxtModule,
   hasNuxtModule,
+  useLogger,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 import {
@@ -76,9 +78,31 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
+    const logger = useLogger('nuxt-photo')
     const resolver = createResolver(import.meta.url)
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
     const minZoom = options.lightbox?.minZoom
+
+    // Type the application-owned `nuxtPhoto` app config surface so
+    // `useAppConfig().nuxtPhoto` is checked against the declared shape.
+    addTypeTemplate({
+      filename: 'types/nuxt-photo-app-config.d.ts',
+      getContents: () => `import type { NuxtPhotoAppConfig } from '@lupinum/nuxt-photo'
+
+declare module '@nuxt/schema' {
+  interface AppConfig {
+    nuxtPhoto?: NuxtPhotoAppConfig
+  }
+}
+
+declare module 'nuxt/schema' {
+  interface AppConfig {
+    nuxtPhoto?: NuxtPhotoAppConfig
+  }
+}
+
+export {}`,
+    })
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
@@ -91,7 +115,20 @@ export default defineNuxtModule<NuxtPhotoOptions>({
             )
           }
 
-          if (!hasImageModule) return
+          if (!hasImageModule) {
+            const hasAdapterConfig =
+              typeof options.image === 'object' && !!(options.image.thumb || options.image.slide)
+            if (hasAdapterConfig) {
+              logger.warn(
+                '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect because `@nuxt/image` is not installed. Install `@nuxt/image`, or remove the config, or set `nuxtPhoto.image.provider = "native"`.',
+              )
+            } else {
+              logger.warn(
+                '`@nuxt/image` was not found; photos render with their native sources. Install `@nuxt/image` for responsive srcsets, or set `nuxtPhoto.image.provider = "native"` to silence this warning.',
+              )
+            }
+            return
+          }
 
           addPlugin(
             {
@@ -107,23 +144,22 @@ export default defineNuxtModule<NuxtPhotoOptions>({
             ...appConfig.nuxtPhoto,
             image: {
               ...appConfig.nuxtPhoto?.image,
-              thumb: options.image.thumb,
-              slide: options.image.slide,
+              // Only forward explicitly-set values so app.config.ts entries survive.
+              ...(options.image.thumb ? { thumb: options.image.thumb } : {}),
+              ...(options.image.slide ? { slide: options.image.slide } : {}),
             },
           }
         })
       }
     }
 
-    if (minZoom != null) {
+    if (minZoom != null || options.labels != null) {
       const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
 
       appConfig.nuxtPhoto = {
         ...appConfig.nuxtPhoto,
-        lightbox: {
-          ...appConfig.nuxtPhoto?.lightbox,
-          minZoom,
-        },
+        ...(minZoom != null ? { lightbox: { ...appConfig.nuxtPhoto?.lightbox, minZoom } } : {}),
+        ...(options.labels ? { labels: options.labels } : {}),
       }
 
       addPlugin(

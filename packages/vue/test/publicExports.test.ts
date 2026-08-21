@@ -5,6 +5,7 @@ describe('@lupinum/vue-photo public exports', () => {
   it('exposes the documented root runtime API exactly', () => {
     expect(Object.keys(vue).sort()).toEqual(
       [
+        'DEFAULT_PHOTO_LABELS',
         'ImageAdapterKey',
         'Lightbox',
         'LightboxCaption',
@@ -23,11 +24,13 @@ describe('@lupinum/vue-photo public exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'resolvePhotoLabels',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
         'useLightbox',
         'useLightboxProvider',
+        'usePhotoLabels',
       ].sort(),
     )
   })

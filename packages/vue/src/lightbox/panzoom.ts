@@ -18,6 +18,7 @@ import {
   type PhotoItem,
   type ZoomState,
 } from '../core/index'
+import { domElement } from '../internal/elementRefs'
 
 /**
  * Manage zoom state, pan bounds, and spring-driven transform updates for the
@@ -303,14 +304,9 @@ export function usePanzoom(
 
   function setSlideZoomRef(slideIndex: number) {
     return (value: Element | ComponentPublicInstance | null) => {
-      const element =
-        value instanceof HTMLElement
-          ? value
-          : value && '$el' in value && value.$el instanceof HTMLElement
-            ? value.$el
-            : null
+      const element = domElement(value)
 
-      if (element instanceof HTMLElement) {
+      if (element) {
         slideZoomRefs.set(slideIndex, element)
         if (slideIndex === activeSlideIndex) {
           applyActivePanzoomTransform()

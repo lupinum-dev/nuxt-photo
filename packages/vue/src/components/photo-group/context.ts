@@ -8,6 +8,8 @@ export interface PhotoGroupContext {
   removeCapabilities(owner: symbol): void
   open(index?: number): Promise<void>
   activateById(id: string, source?: HTMLElement | null): Promise<void>
+  close(): Promise<void>
+  readonly isOpen: ComputedRef<boolean>
   hasPhoto(id: string): boolean
   readonly photos: ComputedRef<readonly PhotoItem[]>
   readonly hiddenPhoto: ComputedRef<PhotoItem | null>

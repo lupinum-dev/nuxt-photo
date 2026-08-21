@@ -13,6 +13,11 @@ function snapToBreakpoint(width: number, breakpoints: readonly number[]): number
  * Tracks an element's width via ResizeObserver with optional breakpoint snapping and
  * scrollbar-oscillation detection. SSR-safe: initialises from `defaultContainerWidth`
  * and only starts the observer after mount.
+ *
+ * All measurements come from `contentRect` (content-box), matching how item
+ * widths are computed against the layout container. ResizeObserver always
+ * delivers one callback when observation starts, so this is also the initial
+ * measurement path — there is no separate border-box read.
  */
 export function useContainerWidth(
   containerRef: Ref<HTMLElement | null>,
@@ -41,13 +46,6 @@ export function useContainerWidth(
   onMounted(() => {
     if (!containerRef.value) return
 
-    rawWidth = containerRef.value.getBoundingClientRect().width
-    const initial = resolveWidth(rawWidth)
-    if (initial > 0) {
-      prevWidth = containerWidth.value
-      containerWidth.value = initial
-    }
-
     resizeObserver = new ResizeObserver((entries) => {
       const raw = entries[0]?.contentRect.width
       if (!raw || raw <= 0) return
@@ -55,7 +53,10 @@ export function useContainerWidth(
       rawWidth = raw
       const newW = resolveWidth(raw)
 
-      // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
+      // Scrollbar oscillation invariant: when the observed width returns to
+      // the previous stable width within MAX_SCROLLBAR_WIDTH px of the last
+      // applied width, a scrollbar appeared and vanished mid-layout. Hold the
+      // smaller width instead of flapping between two layouts.
       if (newW === prevWidth && Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH) {
         containerWidth.value = Math.min(containerWidth.value, newW)
         return

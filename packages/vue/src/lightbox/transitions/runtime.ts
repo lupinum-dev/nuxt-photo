@@ -1,12 +1,4 @@
-import {
-  computed,
-  nextTick,
-  ref,
-  watch,
-  type ComponentPublicInstance,
-  type ComputedRef,
-  type Ref,
-} from 'vue'
+import { computed, nextTick, ref, watch, type ComputedRef, type Ref } from 'vue'
 import {
   chooseCloseTransition,
   DEFAULT_TRANSITION_CONFIG,
@@ -20,6 +12,7 @@ import {
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
 import { flipTransform } from '../../core/geometry/rect'
 import { nextFrame, throwIfAborted, wait } from './animation'
+import { registerSetRef, setMapRef, setRef } from '../../internal/elementRefs'
 
 const OPEN_DURATION_MS = 420
 const CLOSE_DURATION_MS = 360
@@ -62,29 +55,6 @@ type RunningAnimation = {
   animation: Animation
   element: HTMLElement
   properties: readonly ('opacity' | 'transform')[]
-}
-
-function domElement(value: Element | ComponentPublicInstance | null) {
-  if (value instanceof HTMLElement) return value
-  const root = value ? (value as ComponentPublicInstance).$el : null
-  if (root instanceof HTMLElement) {
-    return root
-  }
-  return null
-}
-
-function setRef(target: Ref<HTMLElement | null>) {
-  return (value: Element | ComponentPublicInstance | null) => {
-    target.value = domElement(value)
-  }
-}
-
-function setMapRef(map: Map<number, HTMLElement>, index: number) {
-  return (value: Element | ComponentPublicInstance | null) => {
-    const element = domElement(value)
-    if (element) map.set(index, element)
-    else map.delete(index)
-  }
 }
 
 function persistAnimation(running: RunningAnimation) {
@@ -201,16 +171,6 @@ export function useLightboxMotion(
       transitionImageRef.value instanceof HTMLImageElement ? transitionImageRef.value : null,
     transitionShadow: transitionShadowRef.value,
   })
-
-  function registerSet(set: Set<HTMLElement>) {
-    let current: HTMLElement | null = null
-    return (value: Element | ComponentPublicInstance | null) => {
-      if (current) set.delete(current)
-      const element = domElement(value)
-      current = element
-      if (current) set.add(current)
-    }
-  }
 
   function animate(
     element: HTMLElement | null,
@@ -900,8 +860,8 @@ export function useLightboxMotion(
     setSlideImageRef: (index: number) => setMapRef(slideImageRefs, index),
     setOverlayRef: setRef(overlayRef),
     setViewportRef: setRef(viewportRef),
-    setControlsRef: registerSet(controls),
-    setCaptionRef: registerSet(captions),
+    setControlsRef: registerSetRef(controls),
+    setCaptionRef: registerSetRef(captions),
     setTransitionFrameRef: setRef(transitionFrameRef),
     setTransitionImageRef: setRef(transitionImageRef),
     setTransitionShadowRef: setRef(transitionShadowRef),

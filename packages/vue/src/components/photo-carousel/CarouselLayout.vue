@@ -55,7 +55,7 @@
               type="button"
               class="np-carousel__arrow np-carousel__arrow--prev"
               :disabled="!canPrev"
-              aria-label="Previous slide"
+              :aria-label="labels.previousSlide"
               @click="goToPrev()"
             >
               <slot name="prev">‹</slot>
@@ -64,7 +64,7 @@
               type="button"
               class="np-carousel__arrow np-carousel__arrow--next"
               :disabled="!canNext"
-              aria-label="Next slide"
+              :aria-label="labels.nextSlide"
               @click="goToNext()"
             >
               <slot name="next">›</slot>
@@ -101,7 +101,7 @@
           type="button"
           class="np-carousel__dot"
           :class="{ 'np-carousel__dot--selected': i === selectedSnapIndex }"
-          :aria-label="`Go to slide ${slideIndex + 1}`"
+          :aria-label="labels.goToSlide(slideIndex + 1)"
           :aria-current="i === selectedSnapIndex ? 'true' : undefined"
           @click="goTo(slideIndex)"
         />
@@ -117,7 +117,7 @@
             type="button"
             class="np-carousel__thumb"
             :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
-            :aria-label="`Go to slide ${index + 1}`"
+            :aria-label="photo.alt || labels.goToSlide(index + 1)"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
           >
@@ -161,8 +161,11 @@ import type {
 } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
+import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
+
+const labels = usePhotoLabels()
 
 defineSlots<{
   slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
@@ -255,7 +258,7 @@ function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
       photo,
       index,
       async () => props.onSlideActivate?.(index),
-      `Open slide ${index + 1}`,
+      photo.alt || labels.viewPhoto(index + 1),
     ),
     style: { cursor: 'pointer' },
     'data-index': index,
