@@ -10,7 +10,7 @@
 | Lightbox opens from the wrong frame          | Thumbnail identity or dimensions do not match           | Use stable IDs, correct dimensions, and `PhotoTrigger` for custom layouts.  |
 | Nuxt Image mode throws during setup          | `@nuxt/image` is missing or not registered              | Install it in any module order, or use `auto` or `native`.                  |
 | Direct Vue package import fails under pnpm   | The app does not declare the package it imports         | Import from `@lupinum/nuxt-photo/app` or add `@lupinum/vue-photo` directly. |
-| Custom lightbox has empty or duplicate state | It creates a second provider inside a recipe override   | Remove `useLightboxProvider()` from the override.                           |
+| Custom lightbox has empty or duplicate state | It creates a second provider inside a recipe override   | Remove `provideLightbox()` from the override.                               |
 | Custom thumbnail ignores image configuration | It renders a raw `<img>`                                | Render `<PhotoImage>` or accept that the adapter is bypassed.               |
 | Signed URLs cause hydration mismatch         | URLs are signed with time or random state during render | Pre-sign before render and store deterministic URLs on `PhotoItem`.         |
 | Carousel autoplay feels unpredictable        | Interaction settings do not match the intended behavior | Set `delayMs`, `stopOnInteraction`, and `stopOnMouseEnter` explicitly.      |
@@ -18,7 +18,7 @@
 ## Inspect the application
 
 ```bash
-rg "nuxtPhoto|@lupinum/(nuxt|vue)-photo|@nuxt/image|PhotoAlbum|PhotoGroup|PhotoCarousel|useLightboxProvider" .
+rg "nuxtPhoto|@lupinum/(nuxt|vue)-photo|@nuxt/image|PhotoAlbum|PhotoGroup|PhotoCarousel|provideLightbox" .
 ```
 
 Check the package manager, Nuxt configuration, image pipeline, CSS mode, and whether imports are automatic or explicit.

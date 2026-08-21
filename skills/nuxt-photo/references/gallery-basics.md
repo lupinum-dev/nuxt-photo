@@ -34,7 +34,9 @@ export default defineNuxtConfig({
 })
 ```
 
-The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, `<PhotoCarousel>`, and helpers such as `useLightbox`. Composables still need the provider context that their reference pages describe.
+The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`,
+`<PhotoCarousel>`, and `<Lightbox>`. It also loads the complete default theme and
+auto-imports helpers such as `useLightbox` and `responsive`.
 
 ## Use it
 
@@ -119,22 +121,18 @@ then replace them with your own data once the component is working.
 
 - The module installed. If not, see [Installation](/docs/getting-started/installation).
 
-## 1. Load the default theme
+## 1. Confirm the module
 
-For the first pass, load the theme CSS so the result looks complete
-immediately:
+The default module setup includes the structure and theme CSS:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
   modules: ['@lupinum/nuxt-photo'],
-  nuxtPhoto: {
-    css: 'all',
-  },
 })
 ```
 
-Switch back to the default `css: 'structure'` later when you want Nuxt Photo to
-provide layout geometry only and you plan to theme the components yourself.
+Use `css: 'structure'` later only when you plan to replace the complete visual
+theme yourself.
 
 ## 2. Render the demo gallery
 
@@ -243,6 +241,7 @@ interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly description?: string // long-form text; shown below caption
   readonly thumbSrc?: string // smaller URL; falls back to `src`
   readonly srcset?: string // explicit responsive source candidates
+  readonly placeholder?: string // URL or data URI shown while the source loads
   readonly meta?: Readonly<TMeta> // free-form app-specific data
 }
 ```
@@ -275,7 +274,10 @@ The image's intrinsic pixel dimensions, not its display size. Nuxt Photo uses th
 - Pick the right aspect ratio for `object-fit` and lightbox sizing.
 
 ::warning
-Every rendered photo needs accurate dimensions. Do not use placeholder values. If your CMS does not return dimensions, generate them at upload time with [`probe-image-size`](https://www.npmjs.com/package/probe-image-size) or an equivalent tool. Approximate values cause incorrect layouts.
+Every rendered photo needs accurate dimensions. Do not use placeholder values.
+Store dimensions in upload metadata or use the width and height returned by
+your CMS or asset pipeline. Nuxt Photo does not inspect remote assets at
+runtime; approximate values cause incorrect layouts.
 ::
 
 Recipe components validate photo data before layout code sees it. Invalid photos
@@ -316,6 +318,14 @@ If you use `@nuxt/image`, you usually do not need `thumbSrc`. The provider gener
 ### `srcset`
 
 Escape hatch for when you want to control the browser's image selection yourself. Passed through to the `<img srcset>` attribute verbatim. Most users should rely on the image adapter instead.
+
+### `placeholder`
+
+A preview URL or data URI shown until the resolved image source loads. The
+placeholder resets when an image adapter resolves a different source. It is
+removed after a successful load and retained as a fallback when the full image
+fails. Nuxt Photo does not decode blurhash values; convert those to an image
+URL or data URI in your asset pipeline.
 
 ### `meta`
 
