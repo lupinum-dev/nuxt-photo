@@ -31,6 +31,7 @@ export {
   type LightboxProviderController,
   type LightboxDefaults,
   type LightboxSlideRenderer,
+  type PhotoLabels,
 } from './provide'
 export { responsive, resolveResponsiveParameter } from './core/types'
 export type {

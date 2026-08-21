@@ -42,6 +42,8 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     toggleZoom: panzoom.toggleZoom,
     goToNext: navigation.goToNext,
     goToPrev: navigation.goToPrev,
+    goToFirst: navigation.goToFirst,
+    goToLast: navigation.goToLast,
     close: lifecycle.close,
     reportAsyncError: lifecycle.reportAsyncError,
   })

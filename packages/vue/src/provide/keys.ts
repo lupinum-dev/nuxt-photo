@@ -8,6 +8,7 @@ import type {
   VNodeChild,
 } from 'vue'
 import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '../core/index'
+import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
@@ -107,6 +108,7 @@ export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:
 /** Global defaults for lightbox behaviour, typically provided once at app level. */
 export interface LightboxDefaults {
   minZoom?: number
+  labels?: Partial<PhotoLabels>
 }
 export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol(
   'nuxt-photo:lightbox-defaults',

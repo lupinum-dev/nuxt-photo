@@ -15,6 +15,7 @@ import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 type AlbumLightboxProps<TMeta extends object> = {
   lightbox?: boolean | Component
@@ -73,13 +74,20 @@ export function useAlbumLightbox<TMeta extends object>(
     return ownCtx.open(index)
   }
 
+  const labels = usePhotoLabels()
+
   function itemBindings(photo: PhotoItem<TMeta>, index: number) {
     const base = { ref: setItemRef(index) }
     if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
 
     return {
       ...base,
-      ...createPhotoTriggerBindings(photo, index, () => activatePhoto(photo, index)),
+      ...createPhotoTriggerBindings(
+        photo,
+        index,
+        () => activatePhoto(photo, index),
+        photo.alt || labels.viewPhoto(index + 1),
+      ),
     }
   }
 

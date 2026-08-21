@@ -44,6 +44,7 @@ import { normalizePhotos } from '../core/photo/normalize'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
 
@@ -138,9 +139,11 @@ function handleClick() {
   else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
 }
 
+const labels = usePhotoLabels()
+
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return createPhotoTriggerBindings(props.photo, 0, handleClick)
+  return createPhotoTriggerBindings(props.photo, 0, handleClick, props.photo.alt || labels.viewPhoto(1))
 })
 
 // Capability registration with the parent group.

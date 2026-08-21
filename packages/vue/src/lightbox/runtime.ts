@@ -298,6 +298,8 @@ export function useLightboxRuntimeState(
       goToPrev: carousel.goToPrev,
       goTo: carousel.goTo,
       selectedSnap: carousel.selectedSnap,
+      goToFirst: () => carousel.goTo(0),
+      goToLast: () => carousel.goTo(photos.value.length - 1),
     },
     lifecycle: {
       setCloseDragY: motion.setCloseDragY,
