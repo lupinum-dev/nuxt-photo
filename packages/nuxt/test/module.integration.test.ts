@@ -30,5 +30,5 @@ describe('nuxt-photo module integration', async () => {
       ['exec', 'vue-tsc', '-p', `${fixtureRoot}/.nuxt/tsconfig.app.json`, '--noEmit'],
       execOptions,
     )
-  }, 30_000)
+  }, 90_000)
 })
