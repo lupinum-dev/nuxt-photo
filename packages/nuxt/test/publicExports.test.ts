@@ -1,4 +1,17 @@
 import { describe, expect, it } from 'vite-plus/test'
+import { vi } from 'vite-plus/test'
+import { computed, type InjectionKey } from 'vue'
+
+const provided = new Map<InjectionKey<unknown>, unknown>()
+
+vi.mock('#app', () => ({
+  useNuxtApp: () => ({
+    vueApp: {
+      provide: (key: InjectionKey<unknown>, value: unknown) => provided.set(key, value),
+    },
+  }),
+}))
+
 import * as app from '../src/runtime/app'
 import {
   ImageAdapterKey,
@@ -97,6 +110,14 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(LightboxComponentKey).toBeTypeOf('symbol')
     expect(LightboxDefaultsKey).toBeTypeOf('symbol')
     expect(PhotoLabelsKey).toBeTypeOf('symbol')
+  })
+
+  it('provides reactive labels through the Nuxt app instead of component setup', () => {
+    const locale = computed(() => 'de')
+    const labels = providePhotoLabels(() => ({ close: locale.value === 'de' ? 'Schließen' : 'Close' }))
+
+    expect(provided.get(PhotoLabelsKey)).toBe(labels)
+    expect(labels.value.close).toBe('Schließen')
   })
 
   it('keeps consumer-proven Nuxt app types available', () => {

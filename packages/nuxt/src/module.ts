@@ -90,7 +90,6 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         {
           src: resolver.resolve('./runtime/defaults-plugin'),
         },
-        { append: true },
       )
     }
 
