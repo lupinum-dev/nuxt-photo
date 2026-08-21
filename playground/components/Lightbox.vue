@@ -18,7 +18,9 @@
         }"
       >
         <div class="np-lightbox__topbar">
-          <div class="np-lightbox__counter">{{ activeIndex + 1 }} / {{ count }}</div>
+          <div class="np-lightbox__counter" aria-live="polite" aria-atomic="true">
+            {{ activeIndex + 1 }} / {{ count }}
+          </div>
 
           <div class="np-lightbox__actions">
             <button

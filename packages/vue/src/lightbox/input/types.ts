@@ -37,6 +37,8 @@ export type GestureInputConfig = {
     goToPrev: () => void
     goTo: (index: number, instant?: boolean) => void
     selectedSnap: () => number
+    goToFirst: () => void
+    goToLast: () => void
   }
   lifecycle: {
     setCloseDragY: (value: number) => void
