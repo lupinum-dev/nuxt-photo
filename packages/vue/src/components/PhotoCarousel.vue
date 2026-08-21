@@ -31,7 +31,6 @@ import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
 import type {
   ImageAdapter,
   PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
   PhotoItem,
 } from '../core/index'
 import type {
@@ -71,7 +70,9 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
-    options?: PhotoCarouselOptions
+    loop?: boolean
+    dragFree?: boolean
+    direction?: 'ltr' | 'rtl'
     showArrows?: boolean
     showThumbnails?: boolean
     showCounter?: boolean
@@ -151,7 +152,9 @@ async function openSlide(index: number) {
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   imageAdapter: props.imageAdapter,
-  options: props.options ?? {},
+  loop: props.loop,
+  dragFree: props.dragFree,
+  direction: props.direction,
   autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,

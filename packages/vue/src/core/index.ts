@@ -17,7 +17,6 @@ export type {
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
-  PhotoCarouselOptions,
   PhotoCarouselAutoplayOptions,
   ImageAdapter,
   ImageContext,

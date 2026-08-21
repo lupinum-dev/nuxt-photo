@@ -51,7 +51,7 @@
         :show-dots="showDots"
         :autoplay="autoplay ? { delayMs: 3500 } : false"
         :lightbox="lightbox"
-        :options="{ loop }"
+        :loop="loop"
       />
     </section>
 
@@ -111,7 +111,7 @@ const templateCode = computed(
   :show-arrows="${showArrows.value}"
   :show-thumbnails="${showThumbnails.value}"
   :show-counter="${showCounter.value}"
-  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  :options="{ loop: true }"' : ''}
+  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  loop' : ''}
 />`,
 )
 </script>

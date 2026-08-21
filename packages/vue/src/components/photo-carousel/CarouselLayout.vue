@@ -156,7 +156,6 @@ import type {
 import type {
   ImageAdapter,
   PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
   PhotoItem,
 } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
@@ -177,7 +176,9 @@ defineSlots<{
 const props = defineProps<{
   photos: PhotoItem<TMeta>[]
   imageAdapter?: ImageAdapter<TMeta>
-  options: PhotoCarouselOptions
+  loop?: boolean
+  dragFree?: boolean
+  direction?: 'ltr' | 'rtl'
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
   showArrows: boolean
@@ -221,7 +222,9 @@ const {
   reInit,
 } = usePhotoCarouselRuntime({
   photos: toRef(props, 'photos'),
-  options: toRef(props, 'options'),
+  loop: toRef(props, 'loop'),
+  dragFree: toRef(props, 'dragFree'),
+  direction: toRef(props, 'direction'),
   autoplay: toRef(props, 'autoplay'),
   showThumbnails: toRef(props, 'showThumbnails'),
 })

@@ -133,12 +133,6 @@ export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLay
 
 // ─── Carousel ───
 
-export interface PhotoCarouselOptions {
-  readonly loop?: boolean
-  readonly dragFree?: boolean
-  readonly slidesToScroll?: number
-}
-
 export interface PhotoCarouselAutoplayOptions {
   readonly delayMs?: number
   readonly stopOnInteraction?: boolean

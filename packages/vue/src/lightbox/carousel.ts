@@ -39,11 +39,11 @@ export function useCarousel(
       if (!api) return
 
       api.on('select', (_api: EmblaCarouselType) => {
-        const newIndex = _api.selectedSnap()
+        const newIndex = _api.selectedScrollSnap()
         activeIndex.value = newIndex
       })
 
-      api.on('pointerdown', () => {
+      api.on('pointerDown', () => {
         if (isZoomedIn() || isInteractionLocked()) return false
       })
     },
@@ -75,21 +75,21 @@ export function useCarousel(
   }
 
   function goToNext() {
-    emblaApi.value?.goToNext()
+    emblaApi.value?.scrollNext()
   }
 
   function goToPrev() {
-    emblaApi.value?.goToPrev()
+    emblaApi.value?.scrollPrev()
   }
 
   function goTo(index: number, instant = false) {
     emblaOptions.value = { ...emblaOptions.value, startSnap: index }
     activeIndex.value = index
-    emblaApi.value?.goTo(index, instant)
+    emblaApi.value?.scrollTo(index, instant)
   }
 
   function selectedSnap(): number {
-    return emblaApi.value?.selectedSnap() ?? activeIndex.value
+    return emblaApi.value?.selectedScrollSnap() ?? activeIndex.value
   }
 
   onBeforeUnmount(() => {

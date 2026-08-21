@@ -184,14 +184,14 @@ importers:
   packages/vue:
     dependencies:
       embla-carousel:
-        specifier: 9.0.0-rc02
-        version: 9.0.0-rc02
+        specifier: 8.6.0
+        version: 8.6.0
       embla-carousel-autoplay:
-        specifier: 9.0.0-rc02
-        version: 9.0.0-rc02(embla-carousel@9.0.0-rc02)
+        specifier: 8.6.0
+        version: 8.6.0(embla-carousel@8.6.0)
       embla-carousel-vue:
-        specifier: 9.0.0-rc02
-        version: 9.0.0-rc02(vue@3.5.40(typescript@5.9.3))
+        specifier: 8.6.0
+        version: 8.6.0(vue@3.5.40(typescript@5.9.3))
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -4265,23 +4265,23 @@ packages:
   electron-to-chromium@1.5.392:
     resolution: {integrity: sha512-1yQq3VQCZRwsnYc67Oc+1fge6Lwtn0hzi6zmEVkB61Zx21kTbwJAW4dFLadl5Rc1tKhG/kSpYXnfiAhu0f0a1g==}
 
-  embla-carousel-autoplay@9.0.0-rc02:
-    resolution: {integrity: sha512-xmHUL/dVL0EN9Tf6EeWirc1eEYEr8uxEG4l4QxzRPrUbHhshTzPcKfB0DatAmOI6rcTldqQsslbffNqQmg9E3Q==}
+  embla-carousel-autoplay@8.6.0:
+    resolution: {integrity: sha512-OBu5G3nwaSXkZCo1A6LTaFMZ8EpkYbwIaH+bPqdBnDGQ2fh4+NbzjXjs2SktoPNKCtflfVMc75njaDHOYXcrsA==}
     peerDependencies:
-      embla-carousel: 9.0.0-rc02
+      embla-carousel: 8.6.0
 
-  embla-carousel-reactive-utils@9.0.0-rc02:
-    resolution: {integrity: sha512-H1c+yUbcVST9eJoGU+05L1vSDyBs0hf/Gf1OadHYIJ3asBfyvn6oaGCs2wXq1D8/f09y0wwCxeRxT9UZU/TxJA==}
+  embla-carousel-reactive-utils@8.6.0:
+    resolution: {integrity: sha512-fMVUDUEx0/uIEDM0Mz3dHznDhfX+znCCDCeIophYb1QGVM7YThSWX+wz11zlYwWFOr74b4QLGg0hrGPJeG2s4A==}
     peerDependencies:
-      embla-carousel: 9.0.0-rc02
+      embla-carousel: 8.6.0
 
-  embla-carousel-vue@9.0.0-rc02:
-    resolution: {integrity: sha512-QokXgQhl6/iTO89mojCSGyZMaZpgy9nnDrHAITMmdtGKLESPaPRR62Z7+h2tMiqt8h9csj+IPk/fh5pR/8b2cA==}
+  embla-carousel-vue@8.6.0:
+    resolution: {integrity: sha512-v8UO5UsyLocZnu/LbfQA7Dn2QHuZKurJY93VUmZYP//QRWoCWOsionmvLLAlibkET3pGPs7++03VhJKbWD7vhQ==}
     peerDependencies:
       vue: ^3.2.37
 
-  embla-carousel@9.0.0-rc02:
-    resolution: {integrity: sha512-GOQBX6v5cNk/ptfuHUoHhW9rvl5KeSGsBoppaUqtihu2kDmQAyzvnH/95r3TaSScFSJTj68V9AM6E5nq3jUVcQ==}
+  embla-carousel@8.6.0:
+    resolution: {integrity: sha512-SjWyZBHJPbqxHOzckOfo8lHisEaJWmwd23XppYFYVh10bU66/Pn5tkVkbkCMZVdbUE5eTCI2nD8OyIP4Z+uwkA==}
 
   emoji-regex-xs@2.0.1:
     resolution: {integrity: sha512-1QFuh8l7LqUcKe24LsPUNzjrzJQ7pgRwp1QMcZ5MX6mFplk2zQ08NVCM84++1cveaUUYtcCYHmeFEuNg16sU4g==}
@@ -11899,21 +11899,21 @@ snapshots:
 
   electron-to-chromium@1.5.392: {}
 
-  embla-carousel-autoplay@9.0.0-rc02(embla-carousel@9.0.0-rc02):
+  embla-carousel-autoplay@8.6.0(embla-carousel@8.6.0):
     dependencies:
-      embla-carousel: 9.0.0-rc02
+      embla-carousel: 8.6.0
 
-  embla-carousel-reactive-utils@9.0.0-rc02(embla-carousel@9.0.0-rc02):
+  embla-carousel-reactive-utils@8.6.0(embla-carousel@8.6.0):
     dependencies:
-      embla-carousel: 9.0.0-rc02
+      embla-carousel: 8.6.0
 
-  embla-carousel-vue@9.0.0-rc02(vue@3.5.40(typescript@5.9.3)):
+  embla-carousel-vue@8.6.0(vue@3.5.40(typescript@5.9.3)):
     dependencies:
-      embla-carousel: 9.0.0-rc02
-      embla-carousel-reactive-utils: 9.0.0-rc02(embla-carousel@9.0.0-rc02)
+      embla-carousel: 8.6.0
+      embla-carousel-reactive-utils: 8.6.0(embla-carousel@8.6.0)
       vue: 3.5.40(typescript@5.9.3)
 
-  embla-carousel@9.0.0-rc02: {}
+  embla-carousel@8.6.0: {}
 
   emoji-regex-xs@2.0.1: {}
 

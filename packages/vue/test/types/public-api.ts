@@ -86,7 +86,9 @@ void albumProps
 type CarouselProps = GenericComponentProps<typeof PhotoCarousel>
 const carouselProps: CarouselProps = {
   photos: readonlyPhotos,
-  options: { loop: true, slidesToScroll: 2 },
+  loop: true,
+  dragFree: true,
+  direction: 'rtl',
   autoplay: { delayMs: 4000, stopOnMouseEnter: true },
 }
 void carouselProps
