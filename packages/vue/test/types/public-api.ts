@@ -1,4 +1,5 @@
 import {
+  Photo,
   PhotoAlbum,
   PhotoCarousel,
   PhotoGroup,
@@ -101,6 +102,14 @@ declare const groupInstance: GenericComponentExposed<typeof PhotoGroup>
 void groupInstance.openById('one')
 // @ts-expect-error Thumbnail-source plumbing is internal to grouped recipes.
 void groupInstance.openById('one', document.body)
+
+declare const photoInstance: GenericComponentExposed<typeof Photo>
+// @ts-expect-error Single photos do not expose collection controls.
+void photoInstance.open(0)
+
+declare const carouselInstance: GenericComponentExposed<typeof PhotoCarousel>
+// @ts-expect-error Carousels do not expose collection lightbox controls.
+void carouselInstance.open(0)
 
 type GroupDefaultSlot = NonNullable<GenericComponentSlots<typeof PhotoGroup>['default']>
 declare const groupSlot: Parameters<GroupDefaultSlot>[0]
