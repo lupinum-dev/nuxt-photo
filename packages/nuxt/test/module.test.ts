@@ -71,12 +71,17 @@ describe('nuxt-photo module', () => {
     expect(nuxtPhotoModule.defaults.css).toBe('all')
   })
 
-  it('always registers the AppConfig defaults plugin without mutating AppConfig', async () => {
+  it('registers the defaults plugin only when AppConfig has photo defaults', async () => {
     const nuxt = createNuxt()
     await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
-    expect(pluginSources()).toContain('/resolved/./runtime/defaults-plugin')
+    expect(pluginSources()).not.toContain('/resolved/./runtime/defaults-plugin')
     expect(nuxt.options.appConfig).toEqual({})
+
+    nuxt.options.appConfig.nuxtPhoto = { labels: { close: 'Schliessen' } }
+    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+
+    expect(pluginSources()).toContain('/resolved/./runtime/defaults-plugin')
   })
 
   it('silently falls back to native images in auto mode', async () => {
