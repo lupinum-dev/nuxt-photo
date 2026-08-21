@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, nextTick, ref, watch } from 'vue'
+import { computed, inject, onMounted, onUpdated, ref } from 'vue'
 import {
   createNativeImageAdapter,
   type PhotoItem,
@@ -78,15 +78,20 @@ function handleError() {
   failed.value = true
 }
 
-watch(
-  () => resolved.value.src,
-  async () => {
-    loaded.value = false
-    failed.value = false
-    await nextTick()
-    const image = imageRef.value
-    if (image?.complete && image.naturalWidth > 0) handleLoad()
-  },
-  { immediate: true, flush: 'post' },
-)
+let renderedSrc: string | null = null
+
+function syncRenderedSource() {
+  const image = imageRef.value
+  if (!image) return
+  const src = image.getAttribute('src') ?? ''
+  if (src === renderedSrc) return
+
+  renderedSrc = src
+  loaded.value = false
+  failed.value = false
+  if (image.complete && image.naturalWidth > 0) handleLoad()
+}
+
+onMounted(syncRenderedSource)
+onUpdated(syncRenderedSource)
 </script>
