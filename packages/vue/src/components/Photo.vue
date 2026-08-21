@@ -50,7 +50,6 @@ import { normalizePhotos, PhotoValidationError } from '../core/photo/normalize'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 import { usePhotoLabels } from '../provide/labels'
-import { devWarn } from '../core/env'
 
 defineOptions({ inheritAttrs: false })
 
@@ -94,7 +93,7 @@ const group = inject(PhotoGroupContextKey, null)
 const injectedLightbox = inject(LightboxComponentKey, null)
 
 const soloLightboxComponent = computed(() =>
-  !group ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true) : null,
+  !group ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox) : null,
 )
 const isSolo = computed(() => soloLightboxComponent.value !== null)
 
@@ -218,7 +217,6 @@ async function open(index = 0) {
     return soloOpen()
   }
   if (isGrouped.value) return group!.open(index)
-  devWarn('Photo.open() was ignored because no lightbox is available.')
 }
 
 async function openById(id: string) {
@@ -231,7 +229,6 @@ async function openById(id: string) {
       ? group!.activateById(id, thumbRef.value)
       : group!.openById(id)
   }
-  devWarn('Photo.openById() was ignored because no lightbox is available.')
 }
 
 async function close() {

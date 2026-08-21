@@ -20,7 +20,6 @@ import {
   type PhotoGroupContext,
 } from './photo-group/context'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
-import { devWarn } from '../core/env'
 
 defineOptions({ inheritAttrs: false })
 
@@ -60,7 +59,7 @@ function hasPhoto(id: string) {
 
 const injectedLightbox = inject(LightboxComponentKey, null)
 const lightboxComponent = computed(() =>
-  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true),
+  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox),
 )
 const enabled = computed(() => lightboxComponent.value !== null)
 const provider = provideLightbox(canonicalPhotos, {
@@ -140,21 +139,8 @@ function syncThumbnailRefs() {
   })
 }
 
-let warnedDisabled = false
-
-function warnDisabledInteraction(method: string) {
-  if (warnedDisabled || !import.meta.env.DEV) return
-  warnedDisabled = true
-  devWarn(
-    `PhotoGroup.${method}() was ignored because its lightbox is disabled. Enable the \`lightbox\` prop to control it.`,
-  )
-}
-
 async function open(index = 0) {
-  if (!enabled.value) {
-    warnDisabledInteraction('open')
-    return
-  }
+  if (!enabled.value) return
   if (index < 0 || index >= canonicalPhotos.value.length) {
     throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
@@ -163,10 +149,7 @@ async function open(index = 0) {
 }
 
 async function activateById(id: string, source: HTMLElement | null) {
-  if (!enabled.value) {
-    warnDisabledInteraction('openById')
-    return
-  }
+  if (!enabled.value) return
   const index = canonicalPhotos.value.findIndex((photo) => photo.id === id)
   if (index < 0) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
@@ -177,10 +160,7 @@ async function activateById(id: string, source: HTMLElement | null) {
 }
 
 async function openById(id: string) {
-  if (!enabled.value) {
-    warnDisabledInteraction('openById')
-    return
-  }
+  if (!enabled.value) return
   syncThumbnailRefs()
   await provider.openById(id)
 }

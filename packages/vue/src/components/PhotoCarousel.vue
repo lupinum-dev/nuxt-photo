@@ -125,7 +125,7 @@ watch(
 
 const injectedLightbox = inject(LightboxComponentKey, null)
 const lightboxComponent = computed(() =>
-  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true),
+  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox),
 )
 const lightboxEnabled = computed(() => lightboxComponent.value !== null)
 const provider = provideLightbox(resolvedPhotos, {

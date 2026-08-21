@@ -40,6 +40,7 @@ describe('Vue 1.0 recipe contract', () => {
     ['PhotoCarousel', PhotoCarousel, { photos: [makePhoto({ id: 'carousel' })] }],
     ['PhotoGroup', PhotoGroup, { photos: [makePhoto({ id: 'group' })] }],
   ])('exposes the common lightbox controller from %s', async (_, component, props) => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const mounted = mountWithRef(component, { ...props, lightbox: false })
     await nextTick()
 
@@ -47,6 +48,10 @@ describe('Vue 1.0 recipe contract', () => {
     expect(mounted.handle.value?.openById).toBeTypeOf('function')
     expect(mounted.handle.value?.close).toBeTypeOf('function')
     expect(mounted.handle.value?.isOpen).toBe(false)
+    await expect(mounted.handle.value?.open(99)).resolves.toBeUndefined()
+    await expect(mounted.handle.value?.openById('missing')).resolves.toBeUndefined()
+    await expect(mounted.handle.value?.close()).resolves.toBeUndefined()
+    expect(warn).not.toHaveBeenCalled()
 
     mounted.app.unmount()
     mounted.host.remove()

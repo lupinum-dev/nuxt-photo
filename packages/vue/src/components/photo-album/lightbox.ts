@@ -31,7 +31,7 @@ export function useAlbumLightbox<TMeta extends object>(
 
   const LightboxComponent = computed<Component | null>(() =>
     !parentGroup
-      ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
+      ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox)
       : null,
   )
   const hasOwnLightbox = computed(() => LightboxComponent.value !== null)
