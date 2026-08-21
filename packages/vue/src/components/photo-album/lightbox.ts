@@ -76,8 +76,6 @@ export function useAlbumLightbox<TMeta extends object>(
     return {
       ...base,
       ...createPhotoTriggerBindings(
-        photo,
-        index,
         () => activatePhoto(photo, index),
         photo.alt || labels.value.viewPhoto(index + 1),
       ),

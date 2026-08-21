@@ -251,8 +251,6 @@ function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
   if (!props.onSlideActivate || slots.slide) return {}
   return {
     ...createPhotoTriggerBindings(
-      photo,
-      index,
       async () => props.onSlideActivate?.(index),
       photo.alt || labels.value.viewPhoto(index + 1),
     ),

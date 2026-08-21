@@ -160,6 +160,38 @@ describe('reactive labels and placeholders', () => {
     mounted.unmount()
   })
 
+  it('uses the resolved counter label for visible and announced text', async () => {
+    const locale = ref<'en' | 'de'>('en')
+    const mounted = await mountComponent(
+      defineComponent({
+        setup() {
+          providePhotoLabels(() => ({
+            counter: (index, count) =>
+              locale.value === 'de' ? `Bild ${index} von ${count}` : `${index} of ${count}`,
+          }))
+          return () =>
+            h(PhotoAlbum, {
+              photos: [makePhoto({ id: 'one' }), makePhoto({ id: 'two' })],
+              transition: 'none',
+            })
+        },
+      }),
+    )
+
+    ;(mounted.container.querySelector('button.np-album__item') as HTMLElement).click()
+    await flushUi()
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain('1 of 2')
+    expect(document.body.querySelector('[data-np-sr-only]')?.textContent).toContain('1 of 2')
+
+    locale.value = 'de'
+    await flushUi()
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain(
+      'Bild 1 von 2',
+    )
+    expect(document.body.querySelector('[data-np-sr-only]')?.textContent).toContain('Bild 1 von 2')
+    mounted.unmount()
+  })
+
   it('resets the placeholder when a custom adapter source changes and retains it on failure', async () => {
     const source = ref('/full-a.jpg')
     const mounted = await mountComponent(
