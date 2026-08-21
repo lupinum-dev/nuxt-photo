@@ -34,6 +34,7 @@ export {
   type LightboxSlideRenderer,
 } from './provide'
 export { responsive, resolveResponsiveParameter } from './core/types'
+export { measureImage } from './core/image/measure'
 export type {
   PhotoItem,
   AlbumLayout,

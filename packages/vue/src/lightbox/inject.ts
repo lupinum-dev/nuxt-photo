@@ -6,5 +6,9 @@ import { requireInjection } from '../internal/requireInjection'
  * ancestor or `useLightboxProvider()` call.
  */
 export function useLightboxInject(componentName: string): InternalLightboxContext {
-  return requireInjection(LightboxContextKey, componentName, 'an active lightbox context')
+  return requireInjection(
+    LightboxContextKey,
+    componentName,
+    'an active lightbox context. Wrap the component in `<LightboxProvider>` (or call `useLightboxProvider()` in an ancestor), or open photos through `<PhotoGroup>` / a recipe component instead.',
+  )
 }

@@ -24,6 +24,7 @@ describe('@lupinum/vue-photo public exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'measureImage',
         'resolvePhotoLabels',
         'resolveResponsiveParameter',
         'responsive',

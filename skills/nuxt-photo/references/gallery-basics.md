@@ -208,17 +208,7 @@ Wrong dimensions can still render an image, but the layout and FLIP frame will
 be wrong.
 ::
 
-## Continue your setup
-
-You now have the smallest useful Nuxt Photo page. From here:
-
-- [Share one lightbox across multiple albums](/docs/api/photo-group) - use `<PhotoGroup>`.
-- [Use a carousel instead of a grid](/docs/api/photo-carousel) - use `<PhotoCarousel>`.
-- [Customize the built-in lightbox](/docs/guides/customize-the-lightbox) - change captions, actions, or slides without rebuilding everything.
-- [Use `@nuxt/image`](/docs/concepts/image-pipeline) - responsive images with real optimization.
-- [Tune responsive layouts](/docs/guides/tune-a-responsive-album) - column counts, spacing, breakpoints.
-- [Build a custom lightbox](/docs/guides/customize-the-lightbox) - keep the runtime, replace the UI.
-- [Configure the module](/docs/api/configuration) - CSS strategy, image provider, lightbox defaults.
+This page renders the module default structure CSS. When you are ready for responsive provider images, configure [`@nuxt/image`](/docs/concepts/image-pipeline); when the demo data becomes real data, [tune the layout](/docs/guides/tune-a-responsive-album) against your actual container widths.
 
 _Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
 
@@ -329,6 +319,17 @@ A tiny preview painted behind the image until the full source decodes - a blurre
 ```
 
 Generate placeholders at upload time or build time. Keep them under a few hundred bytes.
+
+### No dimensions yet?
+
+CMS payloads often lack intrinsic dimensions. Resolve them once on the client with the exported `measureImage()` helper (auto-imported in Nuxt), then build `PhotoItem`s from the result:
+
+```ts
+const { width, height } = await measureImage(photo.url)
+const item: PhotoItem = { id: photo.id, src: photo.url, width, height }
+```
+
+Results are cached by URL. Prefer real upload metadata when your pipeline can provide it - `measureImage` costs one image load per unique source.
 
 ### `srcset`
 

@@ -50,6 +50,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'measureImage',
         'resolvePhotoLabels',
         'resolveResponsiveParameter',
         'responsive',

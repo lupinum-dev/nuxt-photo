@@ -641,6 +641,11 @@ describe('nuxt-photo module', () => {
         as: 'responsive',
         from: '@lupinum/nuxt-photo/app',
       },
+      {
+        name: 'measureImage',
+        as: 'measureImage',
+        from: '@lupinum/nuxt-photo/app',
+      },
     ])
   })
 
@@ -669,6 +674,11 @@ describe('nuxt-photo module', () => {
       {
         name: 'responsive',
         as: 'npResponsive',
+        from: '@lupinum/nuxt-photo/app',
+      },
+      {
+        name: 'measureImage',
+        as: 'npMeasureImage',
         from: '@lupinum/nuxt-photo/app',
       },
     ])

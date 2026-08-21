@@ -58,6 +58,7 @@ export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
 export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
+export { measureImage } from './image/measure'
 export { isUsableRect, getLoopedIndex, fitRect, flipTransform, rubberband } from './geometry/rect'
 
 export {
