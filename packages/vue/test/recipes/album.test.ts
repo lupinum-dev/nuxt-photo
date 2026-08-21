@@ -36,4 +36,40 @@ describe('PhotoAlbum', () => {
     expect(onClick).toHaveBeenCalledOnce()
     mounted.unmount()
   })
+
+  it('skips container-query CSS when defaultContainerWidth owns rendering', async () => {
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [makePhoto({ id: 'dcw-1' }), makePhoto({ id: 'dcw-2' })],
+        lightbox: false,
+        breakpoints: [400, 800],
+        defaultContainerWidth: 800,
+      },
+    })
+
+    // Inline widths are authoritative with dcw; emitting @container rules
+    // alongside them would ship a stylesheet that can never apply.
+    expect(mounted.container.querySelector('style')).toBeNull()
+
+    const item = mounted.container.querySelector('.np-album__item') as HTMLElement
+    expect(item.getAttribute('style')).toContain('calc(')
+    expect(item.className).not.toContain('np-item-')
+
+    mounted.unmount()
+  })
+
+  it('emits container-query CSS and item classes when breakpoints drive rendering', async () => {
+    const mounted = await mountComponent(PhotoAlbum, {
+      props: {
+        photos: [makePhoto({ id: 'cq-1' }), makePhoto({ id: 'cq-2' })],
+        lightbox: false,
+        breakpoints: [400, 800],
+      },
+    })
+
+    const style = mounted.container.querySelector('style')
+    expect(style?.textContent).toContain('@container')
+
+    mounted.unmount()
+  })
 })
