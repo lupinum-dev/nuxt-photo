@@ -8,7 +8,10 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <component :is="'style'">{{ renderBranch.containerQueryCss }}</component>
+        <!-- Internal layout output only; raw text keeps CSS range operators SSR-stable. -->
+        <!-- eslint-disable vue/no-v-html, vue/no-v-text-v-html-on-component -->
+        <component :is="'style'" v-html="renderBranch.containerQueryCss" />
+        <!-- eslint-enable vue/no-v-html, vue/no-v-text-v-html-on-component -->
       </template>
 
       <div :style="renderBranch.wrapperStyle">
