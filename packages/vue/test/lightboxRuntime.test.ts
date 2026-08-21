@@ -144,12 +144,10 @@ describe('lightbox lifecycle invariants', () => {
       removeEventListener: vi.fn(),
     }
     vi.stubGlobal('matchMedia', () => media)
-    const transition = ref<
-      | { mode: 'auto'; autoThreshold?: number }
-      | 'flip'
-      | 'none'
-      | undefined
-    >({ mode: 'auto', autoThreshold: 0.9 })
+    const transition = ref<{ mode: 'auto'; autoThreshold?: number } | 'flip' | 'none' | undefined>({
+      mode: 'auto',
+      autoThreshold: 0.9,
+    })
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
 
     const App = defineComponent({

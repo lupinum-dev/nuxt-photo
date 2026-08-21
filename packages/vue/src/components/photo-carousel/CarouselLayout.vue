@@ -161,11 +161,7 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import type {
-  ImageAdapter,
-  PhotoCarouselAutoplayOptions,
-  PhotoItem,
-} from '../../core/index'
+import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'

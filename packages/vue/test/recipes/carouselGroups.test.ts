@@ -67,22 +67,25 @@ describe('stable Embla carousel contract', () => {
     [5, 300, 5],
     [5, 200, 5],
     [4, 150, 1],
-  ])('uses stable public snaps for %i variable-width slides', (slideCount, slideWidth, snapCount) => {
-    const { api, root } = createCarousel(slideCount, slideWidth)
+  ])(
+    'uses stable public snaps for %i variable-width slides',
+    (slideCount, slideWidth, snapCount) => {
+      const { api, root } = createCarousel(slideCount, slideWidth)
 
-    expect(api.scrollSnapList()).toHaveLength(snapCount)
-    api.scrollTo(snapCount - 1, true)
-    expect(api.selectedScrollSnap()).toBe(snapCount - 1)
+      expect(api.scrollSnapList()).toHaveLength(snapCount)
+      api.scrollTo(snapCount - 1, true)
+      expect(api.selectedScrollSnap()).toBe(snapCount - 1)
 
-    api.destroy()
-    root.remove()
-  })
+      api.destroy()
+      root.remove()
+    },
+  )
 
   it('accepts only the direct public behavior props', () => {
     expect(() => validatePhotoCarouselBehavior({ loop: true, dragFree: true })).not.toThrow()
-    expect(() =>
-      validatePhotoCarouselBehavior({ direction: 'sideways' as 'ltr' }),
-    ).toThrow(/direction/)
+    expect(() => validatePhotoCarouselBehavior({ direction: 'sideways' as 'ltr' })).toThrow(
+      /direction/,
+    )
   })
 
   it('uses Embla RTL navigation semantics', () => {

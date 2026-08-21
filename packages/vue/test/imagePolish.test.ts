@@ -66,21 +66,23 @@ describe('image previews and sizes', () => {
     host.remove()
   })
 
-  it.each(['rows', 'columns'] as const)('passes native sizes strings through %s layouts', async (layout) => {
-    const mounted = await mountComponent(PhotoAlbum, {
-      props: {
-        photos: [makePhoto({ id: `${layout}-one` }), makePhoto({ id: `${layout}-two` })],
-        layout,
-        lightbox: false,
-        defaultContainerWidth: 800,
-        sizes: '(max-width: 600px) 100vw, 50vw',
-      },
-    })
+  it.each(['rows', 'columns'] as const)(
+    'passes native sizes strings through %s layouts',
+    async (layout) => {
+      const mounted = await mountComponent(PhotoAlbum, {
+        props: {
+          photos: [makePhoto({ id: `${layout}-one` }), makePhoto({ id: `${layout}-two` })],
+          layout,
+          lightbox: false,
+          defaultContainerWidth: 800,
+          sizes: '(max-width: 600px) 100vw, 50vw',
+        },
+      })
 
-    expect(Array.from(mounted.container.querySelectorAll('img'), (image) => image.sizes)).toEqual([
-      '(max-width: 600px) 100vw, 50vw',
-      '(max-width: 600px) 100vw, 50vw',
-    ])
-    mounted.unmount()
-  })
+      expect(Array.from(mounted.container.querySelectorAll('img'), (image) => image.sizes)).toEqual(
+        ['(max-width: 600px) 100vw, 50vw', '(max-width: 600px) 100vw, 50vw'],
+      )
+      mounted.unmount()
+    },
+  )
 })

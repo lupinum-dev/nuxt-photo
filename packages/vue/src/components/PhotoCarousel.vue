@@ -28,11 +28,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
-import type {
-  ImageAdapter,
-  PhotoCarouselAutoplayOptions,
-  PhotoItem,
-} from '../core/index'
+import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,

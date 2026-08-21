@@ -142,7 +142,12 @@ const labels = usePhotoLabels()
 
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return createPhotoTriggerBindings(props.photo, 0, handleClick, props.photo.alt || labels.viewPhoto(1))
+  return createPhotoTriggerBindings(
+    props.photo,
+    0,
+    handleClick,
+    props.photo.alt || labels.viewPhoto(1),
+  )
 })
 
 // Capability registration with the parent group.

@@ -118,6 +118,4 @@ export interface PhotoDefaults {
   minZoom?: number
   labels?: Partial<PhotoLabels>
 }
-export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol(
-  'nuxt-photo:photo-defaults',
-)
+export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol('nuxt-photo:photo-defaults')
