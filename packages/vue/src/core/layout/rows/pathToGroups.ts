@@ -18,18 +18,18 @@ export function pathToGroups(
     const count = to - from
     const height = commonHeight(ratioSum(ratios, from, to), count, containerWidth, spacing, padding)
 
-    const entries = new Array(count)
+    const entries: LayoutGroup['entries'] = []
     for (let positionIndex = 0; positionIndex < count; positionIndex++) {
       const index = from + positionIndex
       const photo = photos[index]!
-      entries[positionIndex] = {
+      entries.push({
         index,
         photo,
         width: height * ratio(photo),
         height,
         positionIndex,
         itemsCount: count,
-      }
+      })
     }
 
     groups.push({
