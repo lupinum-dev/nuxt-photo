@@ -3,6 +3,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 const addComponent = vi.fn()
 const addImports = vi.fn()
 const addPlugin = vi.fn()
+const addTypeTemplate = vi.fn()
+const loggerWarn = vi.fn()
 const resolvePath = vi.fn(async (path: string) => `/resolved/${path}/dist/index.mjs`)
 const createResolver = vi.fn(() => ({
   resolve: (path: string) => `/resolved/${path}`,
@@ -14,9 +16,11 @@ vi.mock('@nuxt/kit', () => ({
   addComponent,
   addImports,
   addPlugin,
+  addTypeTemplate,
   createResolver,
   defineNuxtModule: (definition: unknown) => definition,
   hasNuxtModule,
+  useLogger: () => ({ warn: loggerWarn }),
 }))
 
 function createNuxt() {
@@ -60,6 +64,8 @@ describe('nuxt-photo module', () => {
     addComponent.mockReset()
     addImports.mockReset()
     addPlugin.mockReset()
+    addTypeTemplate.mockReset()
+    loggerWarn.mockReset()
     createResolver.mockClear()
     resolvePath.mockClear()
     hasNuxtModule.mockReset()
@@ -69,6 +75,18 @@ describe('nuxt-photo module', () => {
     expect(nuxtPhotoModule.meta.compatibility).toEqual({
       nuxt: '^4.4.8',
     })
+  })
+
+  it('registers typed Nuxt app config', async () => {
+    const nuxt = createNuxt()
+
+    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+
+    expect(addTypeTemplate).toHaveBeenCalledOnce()
+    const template = addTypeTemplate.mock.calls[0]?.[0]
+    expect(template.filename).toBe('types/nuxt-photo-app-config.d.ts')
+    expect(template.getContents()).toContain('interface AppConfig')
+    expect(template.getContents()).toContain('NuxtPhotoAppConfig')
   })
 
   it('does not register the image plugin in native mode', async () => {
@@ -149,6 +167,31 @@ describe('nuxt-photo module', () => {
     })
   })
 
+  it('preserves app-owned image config that module options do not replace', async () => {
+    const nuxt = createNuxt()
+    nuxt.options.appConfig.nuxtPhoto = {
+      image: {
+        thumb: { quality: 61 },
+        slide: { quality: 62 },
+      },
+    }
+    hasNuxtModule.mockReturnValue(true)
+
+    await nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        image: { provider: 'nuxt-image', thumb: { quality: 70 } },
+      },
+      nuxt,
+    )
+    nuxt.callHook('modules:done')
+
+    expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
+      thumb: { quality: 70 },
+      slide: { quality: 62 },
+    })
+  })
+
   it('registers the defaults plugin when lightbox defaults are configured', async () => {
     const nuxt = createNuxt()
 
@@ -175,6 +218,65 @@ describe('nuxt-photo module', () => {
         },
       },
     })
+  })
+
+  it('merges labels into app config and preserves app-owned labels', async () => {
+    const nuxt = createNuxt()
+    nuxt.options.appConfig.nuxtPhoto = {
+      labels: { close: 'Already closed', previous: 'Previous from app config' },
+    }
+
+    await nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        labels: { close: 'Close from module' },
+      },
+      nuxt,
+    )
+
+    expect(nuxt.options.appConfig.nuxtPhoto.labels).toEqual({
+      close: 'Close from module',
+      previous: 'Previous from app config',
+    })
+    expect(addPlugin).toHaveBeenCalledWith(
+      { src: '/resolved/./runtime/defaults-plugin' },
+      { append: true },
+    )
+  })
+
+  it('keeps automatic native fallback quiet without unusable image config', async () => {
+    const nuxt = createNuxt()
+    hasNuxtModule.mockReturnValue(false)
+
+    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+    nuxt.callHook('modules:done')
+
+    expect(loggerWarn).not.toHaveBeenCalled()
+  })
+
+  it('warns when image adapter config cannot be used', async () => {
+    const autoNuxt = createNuxt()
+    hasNuxtModule.mockReturnValue(false)
+
+    await nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        image: { provider: 'auto', thumb: { quality: 70 } },
+      },
+      autoNuxt,
+    )
+    autoNuxt.callHook('modules:done')
+    expect(loggerWarn).toHaveBeenCalledWith(expect.stringContaining('@nuxt/image'))
+
+    loggerWarn.mockReset()
+    await nuxtPhotoModule.setup(
+      {
+        ...nuxtPhotoModule.defaults,
+        image: { provider: 'native', slide: { quality: 80 } },
+      },
+      createNuxt(),
+    )
+    expect(loggerWarn).toHaveBeenCalledWith(expect.stringContaining('native image provider'))
   })
 
   it('throws after module installation when explicit nuxt image mode is unavailable', async () => {
@@ -263,6 +365,9 @@ describe('nuxt-photo module', () => {
       /`nuxtPhoto\.image\.slide` must be an object/,
     ],
     ['array lightbox', { lightbox: [] }, /`nuxtPhoto\.lightbox` must be an object/],
+    ['array labels', { labels: [] }, /`nuxtPhoto\.labels` must be an object/],
+    ['invalid label', { labels: { close: 1 } }, /`nuxtPhoto\.labels\.close` must be a string/],
+    ['unknown label', { labels: { dismiss: 'Close' } }, /Unknown `nuxtPhoto\.labels\.dismiss`/],
     ['unknown root option', { csss: 'all' }, /Unknown `nuxtPhoto\.csss`/],
     [
       'unknown component option',

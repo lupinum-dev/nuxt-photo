@@ -62,6 +62,8 @@ const photos: PhotoItem[] = [
 
 Install `@nuxt/image` separately when you need provider-backed image rendering. Nuxt Photo also works with native images.
 
+App-wide lightbox labels can be localized through the typed `nuxtPhoto.labels` module option or the `nuxtPhoto.labels` key in `app.config.ts`. Indexed labels support `{index}` and slide announcements also support `{count}`.
+
 ## Documentation
 
 Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com) and the [root README](https://github.com/lupinum-dev/nuxt-photo#readme).
