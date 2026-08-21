@@ -33,8 +33,8 @@ function rowSignature(
  *   2. **Collapse**: merge adjacent breakpoints whose row signatures match
  *      into a single span. This is what keeps the CSS size O(distinct layouts)
  *      instead of O(breakpoints).
- *   3. **Emit**: for each span, emit one `@container` rule bounded by
- *      `min-width` / `max-width` of its first and last breakpoint.
+ *   3. **Emit**: for each span, emit one `@container` rule using exact
+ *      inclusive lower and exclusive upper range boundaries.
  *
  * Why collapse is safe:
  *   Each item's width is `calc((100% − gaps) / divisor)`, where
