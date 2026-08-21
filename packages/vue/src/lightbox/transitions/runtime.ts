@@ -41,18 +41,7 @@ export function useLightboxMotion(
 
   function resetClosedVisualState() {
     cancel()
-    const current = visual.elements()
-    if (current.overlay) current.overlay.style.opacity = '0'
-    if (current.viewport) {
-      current.viewport.style.opacity = '0'
-      current.viewport.style.transform = 'none'
-    }
-    if (current.transitionFrame) {
-      current.transitionFrame.style.display = 'none'
-      current.transitionFrame.style.opacity = '0'
-      current.transitionFrame.style.transform = 'none'
-    }
-    visual.setChromeOpacity(0)
+    visual.resetClosedVisual()
     hiddenThumbIndex.value = null
     closeDragY.value = 0
     stageMounted.value = false
@@ -103,13 +92,11 @@ export function useLightboxMotion(
       dragFrame = 0
       const height = areaMetrics.value?.height || 1
       const progress = Math.min(1, Math.abs(closeDragY.value) / height)
-      const scale = 1 - progress * 0.05
-      const current = visual.elements()
-      if (current.viewport) {
-        current.viewport.style.transform = `translate3d(0, ${closeDragY.value}px, 0) scale(${scale})`
-      }
-      if (current.overlay) current.overlay.style.opacity = String(1 - progress)
-      visual.setChromeOpacity(uiVisible.value ? 1 - progress : 0)
+      visual.applyCloseDrag(
+        closeDragY.value,
+        progress,
+        uiVisible.value ? 1 - progress : 0,
+      )
     })
   }
 
