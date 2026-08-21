@@ -27,6 +27,7 @@ describe('@lupinum/vue-photo public exports', () => {
         'responsive',
         'useContainerWidth',
         'useLightbox',
+        'usePhotoLabels',
         'provideLightbox',
       ].sort(),
     )

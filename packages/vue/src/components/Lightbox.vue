@@ -26,9 +26,6 @@
           <slot name="counter" :active-index="activeIndex" :count="count">
             <div class="np-lightbox__counter">
               <span aria-hidden="true">{{ activeIndex + 1 }} / {{ count }}</span>
-              <span data-np-sr-only aria-live="polite" aria-atomic="true">
-                {{ labels.slideStatus(activeIndex + 1, count) }}
-              </span>
             </div>
           </slot>
 

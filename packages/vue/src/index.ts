@@ -1,6 +1,6 @@
 // @lupinum/vue-photo — Vue components, composables, and photo utilities
 export { Lightbox, Photo, PhotoAlbum, PhotoCarousel, PhotoGroup } from './components'
-export { useLightbox, provideLightbox, useContainerWidth } from './composables'
+export { useLightbox, provideLightbox, useContainerWidth, usePhotoLabels } from './composables'
 export {
   LightboxProvider,
   LightboxRoot,

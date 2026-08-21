@@ -4,7 +4,7 @@
 
 Accessibility and direction: localized controls, native trigger buttons, RTL support, complete keyboard map
 
-**Every built-in label is centralized and localizable.** Missing values fall back to a frozen English label set, including polite slide announcements.
+**Every built-in label is centralized and localizable.** Missing values fall back to a frozen English label set, including polite slide announcements. Custom primitive compositions can read the complete active set with `usePhotoLabels()`.
 
 **PhotoTrigger renders a native `<button>`** instead of a `div` with `role="button"`. Focus, activation, and screen-reader semantics are now native. The element carries an `np-trigger` class with UA chrome reset, so slotted thumbnails style as before. Consumer CSS that styled the trigger via element selectors (`div`) must switch to class selectors.
 

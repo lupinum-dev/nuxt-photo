@@ -619,6 +619,11 @@ describe('nuxt-photo module', () => {
         from: '@lupinum/nuxt-photo/app',
       },
       {
+        name: 'usePhotoLabels',
+        as: 'usePhotoLabels',
+        from: '@lupinum/nuxt-photo/app',
+      },
+      {
         name: 'responsive',
         as: 'responsive',
         from: '@lupinum/nuxt-photo/app',
@@ -646,6 +651,11 @@ describe('nuxt-photo module', () => {
       {
         name: 'provideLightbox',
         as: 'npProvideLightbox',
+        from: '@lupinum/nuxt-photo/app',
+      },
+      {
+        name: 'usePhotoLabels',
+        as: 'useNpPhotoLabels',
         from: '@lupinum/nuxt-photo/app',
       },
       {

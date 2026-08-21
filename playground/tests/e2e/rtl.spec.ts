@@ -38,9 +38,9 @@ test('lightbox chrome mirrors under direction: rtl', async ({ page }) => {
   expect(rtl.next.end).toBeLessThanOrEqual(rtl.prev.start)
 
   // Counter announces slide changes without stealing focus.
-  await expect(page.locator('.np-lightbox__counter [aria-live="polite"]')).toContainText(
-    'Slide 1 of',
-  )
+  await expect(
+    page.locator('[data-np-motion="controls"] [data-np-sr-only][aria-live="polite"]'),
+  ).toContainText('Slide 1 of')
 
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)

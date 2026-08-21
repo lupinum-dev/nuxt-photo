@@ -40,7 +40,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = ['useLightbox', 'provideLightbox', 'responsive'] as const
+const AUTO_IMPORTS = ['useLightbox', 'provideLightbox', 'usePhotoLabels', 'responsive'] as const
 
 function resolveRecipeComponent(vueDistDir: string, name: string) {
   return resolve(vueDistDir, 'components', `${name}.vue`)

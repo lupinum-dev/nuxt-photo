@@ -49,7 +49,7 @@ The provider creates the shared state that the Vue lightbox primitives consume.
 
 ## Exports
 
-- Composables include `useLightbox`, `provideLightbox`, `useContainerWidth`, and `responsive`.
+- Composables include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `useContainerWidth`, and `responsive`.
 - Components include `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`.
 - The package also exports public photo types, injection keys, and CSS.
 

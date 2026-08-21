@@ -23,6 +23,7 @@ import {
   resolveResponsiveParameter,
   useContainerWidth,
   useLightbox,
+  usePhotoLabels,
   provideLightbox,
 } from '../src/runtime/app'
 import type { LightboxCaptionSlotProps, PhotoItem } from '../src/runtime/app'
@@ -53,6 +54,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'responsive',
         'useContainerWidth',
         'useLightbox',
+        'usePhotoLabels',
         'provideLightbox',
       ].sort(),
     )
@@ -77,6 +79,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(PhotoTrigger).toBeTypeOf('object')
     expect(PhotoValidationError).toBeTypeOf('function')
     expect(useLightbox).toBeTypeOf('function')
+    expect(usePhotoLabels).toBeTypeOf('function')
     expect(provideLightbox).toBeTypeOf('function')
     expect(useContainerWidth).toBeTypeOf('function')
     expect(ImageAdapterKey).toBeTypeOf('symbol')
