@@ -7,7 +7,7 @@ import {
   type ComponentPublicInstance,
   type ComputedRef,
 } from 'vue'
-import { useLightboxProvider } from '../../composables/index'
+import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
 import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
@@ -30,7 +30,6 @@ export function useAlbumLightbox<TMeta extends object>(
   const parentGroup = inject(PhotoGroupContextKey, null)
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
-    transition: () => props.transition,
   })
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
@@ -43,8 +42,8 @@ export function useAlbumLightbox<TMeta extends object>(
   const LightboxComponent: Component | null = resolvedLightboxComponent
 
   const ownCtx = hasOwnLightbox
-    ? useLightboxProvider(photos, {
-        transition: props.transition,
+    ? provideLightbox(photos, {
+        transition: () => props.transition,
         imageAdapter: computed(() => props.imageAdapter),
       })
     : null
@@ -103,6 +102,39 @@ export function useAlbumLightbox<TMeta extends object>(
     return false
   }
 
+  async function open(index = 0) {
+    const photo = photos.value[index]
+    if (!photo) {
+      throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
+    }
+    if (delegatedGroup) {
+      return delegatedGroup.activateById(photo.id, thumbElsMap[index])
+    }
+    if (!ownCtx) return
+    syncOwnThumbRefs()
+    await ownCtx.open(index)
+  }
+
+  async function openById(id: string) {
+    const index = photos.value.findIndex((photo) => photo.id === id)
+    if (index < 0) {
+      throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+    }
+    if (delegatedGroup) {
+      return delegatedGroup.activateById(id, thumbElsMap[index])
+    }
+    if (!ownCtx) return
+    syncOwnThumbRefs()
+    await ownCtx.open(index)
+  }
+
+  async function close() {
+    if (delegatedGroup) return delegatedGroup.close()
+    await ownCtx?.close()
+  }
+
+  const isOpen = computed(() => delegatedGroup?.isOpen.value ?? ownCtx?.isOpen.value ?? false)
+
   const capabilityOwner = Symbol('PhotoAlbum')
 
   function removeCapabilities() {
@@ -144,5 +176,9 @@ export function useAlbumLightbox<TMeta extends object>(
     LightboxComponent,
     itemBindings,
     isHidden,
+    open,
+    openById,
+    close,
+    isOpen,
   }
 }

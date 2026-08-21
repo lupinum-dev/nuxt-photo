@@ -45,7 +45,7 @@ import type {
   InvalidPhotosEvent,
   LightboxTransitionOption,
 } from '../core/index'
-import { useLightboxProvider } from '../composables/index'
+import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey } from '../provide/keys'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
@@ -136,11 +136,10 @@ const lightboxComponent = resolveLightboxComponent(
 const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 const provider = hasLightbox
-  ? useLightboxProvider(resolvedPhotos, {
-      transition: props.transition,
+  ? provideLightbox(resolvedPhotos, {
+      transition: () => props.transition,
       imageAdapter: computed(() => props.imageAdapter),
     })
   : null

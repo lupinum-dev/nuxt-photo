@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
-import { LightboxDefaultsKey } from '../src/provide/keys'
+import { PhotoDefaultsKey } from '../src/provide/keys'
 import { DEFAULT_PHOTO_LABELS, resolvePhotoLabels } from '../src/provide/labels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
@@ -30,7 +30,7 @@ describe('photo labels', () => {
       },
       provideValues: [
         [
-          LightboxDefaultsKey,
+          PhotoDefaultsKey,
           {
             labels: {
               photoViewer: 'Bildbetrachter',
@@ -60,7 +60,7 @@ describe('photo labels', () => {
   it('localizes the trigger fallback when alt text is absent', async () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: { photos: [makePhoto({ id: 'l-alt', alt: undefined })], lightbox: true },
-      provideValues: [[LightboxDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
+      provideValues: [[PhotoDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
     })
 
     expect(mounted.container.querySelector('[role="button"]')?.getAttribute('aria-label')).toBe(

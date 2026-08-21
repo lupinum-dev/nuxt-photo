@@ -10,7 +10,7 @@ describe('@lupinum/vue-photo public exports', () => {
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',
-        'LightboxDefaultsKey',
+        'PhotoDefaultsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -27,7 +27,7 @@ describe('@lupinum/vue-photo public exports', () => {
         'responsive',
         'useContainerWidth',
         'useLightbox',
-        'useLightboxProvider',
+        'provideLightbox',
       ].sort(),
     )
   })
@@ -35,7 +35,7 @@ describe('@lupinum/vue-photo public exports', () => {
   it('keeps app-level extension keys public', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')
-    expect(vue.LightboxDefaultsKey).toBeTypeOf('symbol')
+    expect(vue.PhotoDefaultsKey).toBeTypeOf('symbol')
     expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(vue.PhotoValidationError)
   })
 })

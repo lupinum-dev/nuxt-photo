@@ -6,7 +6,7 @@ import {
   LightboxCaption,
   LightboxComponentKey,
   LightboxControls,
-  LightboxDefaultsKey,
+  PhotoDefaultsKey,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -23,7 +23,7 @@ import {
   resolveResponsiveParameter,
   useContainerWidth,
   useLightbox,
-  useLightboxProvider,
+  provideLightbox,
 } from '../src/runtime/app'
 import type { LightboxCaptionSlotProps, PhotoItem } from '../src/runtime/app'
 
@@ -36,7 +36,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',
-        'LightboxDefaultsKey',
+        'PhotoDefaultsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -53,7 +53,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'responsive',
         'useContainerWidth',
         'useLightbox',
-        'useLightboxProvider',
+        'provideLightbox',
       ].sort(),
     )
   })
@@ -77,11 +77,11 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(PhotoTrigger).toBeTypeOf('object')
     expect(PhotoValidationError).toBeTypeOf('function')
     expect(useLightbox).toBeTypeOf('function')
-    expect(useLightboxProvider).toBeTypeOf('function')
+    expect(provideLightbox).toBeTypeOf('function')
     expect(useContainerWidth).toBeTypeOf('function')
     expect(ImageAdapterKey).toBeTypeOf('symbol')
     expect(LightboxComponentKey).toBeTypeOf('symbol')
-    expect(LightboxDefaultsKey).toBeTypeOf('symbol')
+    expect(PhotoDefaultsKey).toBeTypeOf('symbol')
   })
 
   it('keeps consumer-proven Nuxt app types available', () => {

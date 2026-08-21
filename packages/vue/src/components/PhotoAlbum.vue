@@ -223,10 +223,19 @@ watch(
   { flush: 'post' },
 )
 
-const { hasLightbox, hasOwnLightbox, LightboxComponent, itemBindings, isHidden } = useAlbumLightbox(
-  normalizedPhotos,
-  props,
-)
+const {
+  hasLightbox,
+  hasOwnLightbox,
+  LightboxComponent,
+  itemBindings,
+  isHidden,
+  open,
+  openById,
+  close,
+  isOpen,
+} = useAlbumLightbox(normalizedPhotos, props)
+
+defineExpose({ open, openById, close, isOpen })
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {

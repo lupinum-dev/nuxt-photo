@@ -166,8 +166,8 @@ export function useLightboxMotion(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
-  transitionConfig?: TransitionModeConfig,
-  reducedMotion = false,
+  getTransitionConfig: () => TransitionModeConfig = () => DEFAULT_TRANSITION_CONFIG,
+  isReducedMotion: () => boolean = () => false,
 ) {
   const animating = ref(false)
   const hiddenThumbIndex = ref<number | null>(null)
@@ -477,11 +477,11 @@ export function useLightboxMotion(
       return false
     }
 
-    const config = transitionConfig ?? DEFAULT_TRANSITION_CONFIG
+    const config = getTransitionConfig()
     const duration =
       config.mode === 'none'
         ? 0
-        : reducedMotion
+        : isReducedMotion()
           ? REDUCED_MOTION_DURATION_MS
           : config.mode === 'fade'
             ? FADE_DURATION_MS
@@ -694,7 +694,7 @@ export function useLightboxMotion(
       return
     }
 
-    const config = transitionConfig ?? DEFAULT_TRANSITION_CONFIG
+    const config = getTransitionConfig()
     const thumb = thumbRefs.get(activeIndex.value) ?? null
     const toRect = thumb?.getBoundingClientRect() ?? null
     const activeFrame = slideFrameRefs.get(activeIndex.value)
@@ -716,7 +716,7 @@ export function useLightboxMotion(
         const duration =
           plan.mode === 'instant'
             ? 0
-            : reducedMotion
+            : isReducedMotion()
               ? REDUCED_MOTION_DURATION_MS
               : FADE_DURATION_MS
         await runFadeClose(duration, signal)
@@ -735,7 +735,10 @@ export function useLightboxMotion(
         }
         if (!(await prepareTransitionImage(signal))) {
           if (e.transitionFrame) e.transitionFrame.style.display = 'none'
-          await runFadeClose(reducedMotion ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS, signal)
+          await runFadeClose(
+            isReducedMotion() ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
+            signal,
+          )
           resetClosedVisualState()
           return
         }

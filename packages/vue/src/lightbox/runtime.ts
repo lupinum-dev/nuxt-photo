@@ -29,7 +29,7 @@ import {
   useLightboxWindowLifecycle,
   watchPhotoCollection,
 } from './watchers'
-import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
+import { ImageAdapterKey, PhotoDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
@@ -41,10 +41,25 @@ export function getMountedSlideIndices(active: number, count: number) {
   return new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
 }
 
+export function resolveTransitionConfig(
+  option: LightboxTransitionOption | undefined,
+  reducedMotion: boolean,
+) {
+  const config = { ...DEFAULT_TRANSITION_CONFIG }
+  if (typeof option === 'string') {
+    config.mode = option
+  } else if (option) {
+    config.mode = option.mode
+    config.autoThreshold = option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold
+  }
+  if (reducedMotion && config.mode !== 'none') config.mode = 'fade'
+  return config
+}
+
 /**
  * Internal Vue lightbox state.
  *
- * Public customisation should go through `useLightboxProvider`; this function
+ * Public customisation should go through `provideLightbox`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
  * Lifecycle intent is reconciled by one abortable runner. Status is the sole
@@ -52,7 +67,7 @@ export function getMountedSlideIndices(active: number, count: number) {
  */
 export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
-  transitionOption?: LightboxTransitionOption,
+  transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
   imageAdapter?: MaybeRef<ImageAdapter | undefined>,
 ) {
@@ -65,7 +80,7 @@ export function useLightboxRuntimeState(
     return Array.isArray(value) ? value : [value]
   })
 
-  const globalDefaults = inject(LightboxDefaultsKey, undefined)
+  const globalDefaults = inject(PhotoDefaultsKey, undefined)
   const injectedImageAdapter = inject(ImageAdapterKey, null)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
   const resolvedImageAdapter = computed(
@@ -74,27 +89,20 @@ export function useLightboxRuntimeState(
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
-  const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
-
-  // Apply user-provided transition option
-  if (transitionOption) {
-    if (typeof transitionOption === 'string') {
-      transitionConfig.mode = transitionOption
-    } else {
-      transitionConfig.mode = transitionOption.mode
-      transitionConfig.autoThreshold =
-        transitionOption.autoThreshold ?? transitionConfig.autoThreshold
-    }
+  const reducedMotion = ref(false)
+  const motionQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null
+  const syncReducedMotion = () => {
+    reducedMotion.value = motionQuery?.matches ?? false
   }
+  syncReducedMotion()
+  motionQuery?.addEventListener('change', syncReducedMotion)
 
-  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (prefersReducedMotion && transitionConfig.mode !== 'none') {
-    transitionConfig.mode = 'fade'
-  }
+  const transitionConfig = computed(() => {
+    return resolveTransitionConfig(toValue(transitionOption), reducedMotion.value)
+  })
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
@@ -117,8 +125,8 @@ export function useLightboxRuntimeState(
     carousel.currentPhoto,
     areaMetrics,
     carousel.getAbsoluteFrameRect,
-    transitionConfig,
-    prefersReducedMotion,
+    () => transitionConfig.value,
+    () => reducedMotion.value,
   )
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
@@ -346,6 +354,7 @@ export function useLightboxRuntimeState(
   })
 
   onBeforeUnmount(() => {
+    motionQuery?.removeEventListener('change', syncReducedMotion)
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
     gestures.disposeGestureState()
@@ -359,6 +368,8 @@ export function useLightboxRuntimeState(
     photos,
     count: computed(() => photos.value.length),
     lifecycleStatus,
+    transitionConfig,
+    reducedMotion,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,

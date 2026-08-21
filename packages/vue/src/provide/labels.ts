@@ -24,9 +24,9 @@ export const DEFAULT_PHOTO_LABELS: Readonly<PhotoLabels> = Object.freeze({
   loadFailed: 'Image could not be loaded.',
   previousSlide: 'Previous slide',
   nextSlide: 'Next slide',
-  goToSlide: (index) => `Go to slide ${index}`,
-  viewPhoto: (index) => `View photo ${index}`,
-  slideStatus: (index, count) => `Slide ${index} of ${count}`,
+  goToSlide: (index: number) => `Go to slide ${index}`,
+  viewPhoto: (index: number) => `View photo ${index}`,
+  slideStatus: (index: number, count: number) => `Slide ${index} of ${count}`,
 })
 
 export function resolvePhotoLabels(partial?: Partial<PhotoLabels>): PhotoLabels {

@@ -33,7 +33,7 @@ import {
   type VNodeChild,
 } from 'vue'
 
-import { useLightboxProvider } from '../composables/index'
+import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
@@ -86,15 +86,14 @@ const hasSoloProvider = soloLightboxComponent !== null
 const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
-  ? useLightboxProvider(
+  ? provideLightbox(
       computed(() => props.photo),
       {
-        transition: props.transition,
+        transition: () => props.transition,
         imageAdapter: computed(() => props.imageAdapter),
         resolveSlide: (photo) => {
           if (

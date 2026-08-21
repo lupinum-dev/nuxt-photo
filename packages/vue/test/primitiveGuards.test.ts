@@ -11,7 +11,7 @@ import {
   LightboxSlide,
   LightboxViewport,
   PhotoTrigger,
-  useLightboxProvider,
+  provideLightbox,
 } from '@lupinum/vue-photo'
 import { makePhoto } from '@test-fixtures/photos'
 
@@ -112,7 +112,7 @@ describe('primitive injection guards', () => {
 
     const App = defineComponent({
       setup() {
-        useLightboxProvider(photos, { transition: 'none' })
+        provideLightbox(photos, { transition: 'none' })
         return () =>
           h('div', [
             h(LightboxRoot),
