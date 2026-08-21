@@ -13,14 +13,19 @@ export interface EmblaSnapModel {
  * file so an Embla upgrade has one explicit canary boundary.
  */
 export function readEmblaSnapModel(api: EmblaCarouselType): EmblaSnapModel {
-  const { slidesBySnap, snapBySlide } = api.internalEngine().scrollSnapList
+  const slidesBySnap = api.internalEngine().slideRegistry
+  const snapBySlide: Record<number, number> = {}
 
-  if (slidesBySnap.length !== api.snapList().length) {
+  if (slidesBySnap.length !== api.scrollSnapList().length) {
     throw new Error('[nuxt-photo] Embla snap registry does not match its public snap list')
   }
 
+  slidesBySnap.forEach((slides, snapIndex) => {
+    for (const slideIndex of slides) snapBySlide[slideIndex] = snapIndex
+  })
+
   return {
     slidesBySnap: slidesBySnap.map((slides) => [...slides]),
-    snapBySlide: { ...snapBySlide },
+    snapBySlide,
   }
 }

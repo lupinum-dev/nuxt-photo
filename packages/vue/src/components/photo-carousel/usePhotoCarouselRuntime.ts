@@ -74,7 +74,8 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     return [
       Autoplay({
         delay: options.delayMs,
-        defaultInteraction: options.stopOnInteraction ?? true,
+        stopOnInteraction: options.stopOnInteraction ?? true,
+        stopOnMouseEnter: options.stopOnMouseEnter ?? false,
       }),
     ]
   })
@@ -100,13 +101,13 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
   function syncThumbs() {
     if (!config.showThumbnails.value) return
-    thumbsApi.value?.goTo(selectedIndex.value)
+    thumbsApi.value?.scrollTo(selectedIndex.value)
   }
 
   function syncState(api: EmblaCarouselType, forcedSnap?: number) {
     const model = readEmblaSnapModel(api)
     const maxSnapIndex = Math.max(0, model.slidesBySnap.length - 1)
-    const selectedSnap = Math.min(Math.max(forcedSnap ?? api.selectedSnap(), 0), maxSnapIndex)
+    const selectedSnap = Math.min(Math.max(forcedSnap ?? api.selectedScrollSnap(), 0), maxSnapIndex)
     const activeSlides = model.slidesBySnap[selectedSnap] ?? []
 
     selectedSnapIndex.value = selectedSnap
@@ -114,8 +115,8 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     selectedIndex.value = activeSlides[0] ?? 0
     snapTargets.value = model.slidesBySnap.map((slides) => slides[0] ?? 0)
     snapBySlide.value = model.snapBySlide
-    canPrev.value = api.canGoToPrev()
-    canNext.value = api.canGoToNext()
+    canPrev.value = api.canScrollPrev()
+    canNext.value = api.canScrollNext()
   }
 
   function handleSelect(api: EmblaCarouselType) {
@@ -137,27 +138,11 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
       onReinit(api)
       api.on('select', onSelect)
-      api.on('reinit', onReinit)
-
-      const autoplay = typeof config.autoplay.value === 'object' ? config.autoplay.value : null
-      const root = api.rootNode()
-      const stopOnMouseEnter = autoplay?.stopOnMouseEnter === true
-      const stopAutoplay = () => api.plugins().autoplay?.stop()
-      const resumeAutoplay = () => {
-        if (autoplay?.stopOnInteraction === false) {
-          api.plugins().autoplay?.play()
-        }
-      }
-      if (stopOnMouseEnter) {
-        root.addEventListener('mouseenter', stopAutoplay)
-        root.addEventListener('mouseleave', resumeAutoplay)
-      }
+      api.on('reInit', onReinit)
 
       return () => {
         api.off('select', onSelect)
-        api.off('reinit', onReinit)
-        root.removeEventListener('mouseenter', stopAutoplay)
-        root.removeEventListener('mouseleave', resumeAutoplay)
+        api.off('reInit', onReinit)
       }
     },
     { immediate: true },
@@ -180,7 +165,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
     const targetSnap = snapBySlide.value[target]
     if (targetSnap === undefined) return
-    api.goTo(targetSnap, instant)
+    api.scrollTo(targetSnap, instant)
     if (instant) {
       syncState(api, targetSnap)
       syncThumbs()
@@ -190,9 +175,9 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   function goToNext(instant = false) {
     const api = emblaApi.value
     if (!api) return goTo(selectedIndex.value + 1, instant)
-    api.goToNext(instant)
+    api.scrollNext(instant)
     if (instant) {
-      const target = api.selectedSnap()
+      const target = api.selectedScrollSnap()
       syncState(api, target)
       syncThumbs()
     }
@@ -201,16 +186,16 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   function goToPrev(instant = false) {
     const api = emblaApi.value
     if (!api) return goTo(selectedIndex.value - 1, instant)
-    api.goToPrev(instant)
+    api.scrollPrev(instant)
     if (instant) {
-      const target = api.selectedSnap()
+      const target = api.selectedScrollSnap()
       syncState(api, target)
       syncThumbs()
     }
   }
 
   function selectedSnap() {
-    return emblaApi.value?.selectedSnap() ?? selectedSnapIndex.value
+    return emblaApi.value?.selectedScrollSnap() ?? selectedSnapIndex.value
   }
 
   function reInit() {

@@ -25,6 +25,7 @@ function createCarousel(slideCount: number, slideWidth: number, groupSize: numbe
     disconnect() {}
     unobserve() {}
   }
+  window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
   window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
   window.matchMedia = ((query: string) => ({
     matches: false,
@@ -54,8 +55,8 @@ function createCarousel(slideCount: number, slideWidth: number, groupSize: numbe
     align: 'start',
     containScroll: 'trimSnaps',
     slidesToScroll: groupSize,
-    resize: false,
-    slideChanges: false,
+    watchResize: false,
+    watchSlides: false,
   })
   return { api, root }
 }

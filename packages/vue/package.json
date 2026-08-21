@@ -139,9 +139,9 @@
     "typecheck": "vue-tsc -p tsconfig.json --noEmit && vue-tsc -p tsconfig.public-api.json"
   },
   "dependencies": {
-    "embla-carousel": "9.0.0-rc02",
-    "embla-carousel-autoplay": "9.0.0-rc02",
-    "embla-carousel-vue": "9.0.0-rc02"
+    "embla-carousel": "8.6.0",
+    "embla-carousel-autoplay": "8.6.0",
+    "embla-carousel-vue": "8.6.0"
   },
   "devDependencies": {
     "typescript": "catalog:",
