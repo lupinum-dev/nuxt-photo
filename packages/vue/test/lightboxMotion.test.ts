@@ -39,7 +39,7 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
     computed(() => photo),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     () => rect(200, 100, 800, 500),
-    { mode, autoThreshold: 0.55 },
+    () => ({ mode, autoThreshold: 0.55 }),
   )
 
   const overlay = document.createElement('div')
