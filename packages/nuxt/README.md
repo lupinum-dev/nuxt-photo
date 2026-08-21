@@ -34,7 +34,6 @@ pnpm add @lupinum/nuxt-photo
 ```ts
 export default defineNuxtConfig({
   modules: ['@lupinum/nuxt-photo'],
-  nuxtPhoto: { css: 'all' },
 })
 ```
 
@@ -58,7 +57,9 @@ const photos: PhotoItem[] = [
 
 - `@lupinum/nuxt-photo` exports the Nuxt module.
 - `@lupinum/nuxt-photo/app` exports runtime types and helpers.
-- Auto-imports include `useLightbox`, `useLightboxProvider`, and `responsive`.
+- Auto-imports include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `providePhotoLabels`, and `responsive`.
+
+Keep image adapter settings in `nuxt.config.ts`. Set labels and lightbox UI defaults in `app.config.ts`.
 
 Install `@nuxt/image` separately when you need provider-backed image rendering. Nuxt Photo also works with native images.
 
