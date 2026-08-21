@@ -69,6 +69,7 @@ export function createNuxtImageAdapter(
           quality,
         }),
         srcset,
+        placeholderSrc: photo.placeholderSrc,
         sizes: resolvedConfig.slide.sizes,
         width: photo.width,
         height: photo.height,
@@ -82,6 +83,7 @@ export function createNuxtImageAdapter(
 
     return {
       src: result.src,
+      placeholderSrc: photo.placeholderSrc,
       srcset: result.srcset,
       sizes: result.sizes,
       width: photo.width,

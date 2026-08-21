@@ -165,7 +165,14 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
       invalidIndexes.add(index)
     }
 
-    for (const field of ['thumbSrc', 'alt', 'caption', 'description', 'srcset'] as const) {
+    for (const field of [
+      'thumbSrc',
+      'placeholderSrc',
+      'alt',
+      'caption',
+      'description',
+      'srcset',
+    ] as const) {
       const value = rawPhoto[field]
       if (value !== undefined && typeof value !== 'string') {
         issues.push(

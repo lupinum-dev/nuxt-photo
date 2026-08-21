@@ -21,6 +21,7 @@ export type {
   ImageAdapter,
   ImageContext,
   ImageSource,
+  ResponsivePhotoSizes,
   LightboxTransitionOption,
   TransitionMode,
   ResponsiveParameter,

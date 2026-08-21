@@ -74,6 +74,7 @@
               :hidden="isHidden(metadataPhoto(entry.photo))"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
+              :sizes="nativeSizes"
             >
               <template v-if="$slots.thumbnail" #thumbnail="slotProps">
                 <slot name="thumbnail" v-bind="slotProps" />
@@ -101,6 +102,7 @@
           :hidden="false"
           :image-adapter="imageAdapter"
           :img-class="imgClass"
+          :sizes="nativeSizes"
         >
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
@@ -126,6 +128,7 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
 } from '../core/index'
@@ -156,10 +159,7 @@ const props = withDefaults(
     padding?: ResponsiveParameter<number>
     defaultContainerWidth?: number
     breakpoints?: readonly number[]
-    sizes?: {
-      size: string
-      sizes?: Array<{ viewport: string; size: string }>
-    }
+    sizes?: string | ResponsivePhotoSizes
     imageAdapter?: ImageAdapter<TMeta>
     lightbox?: boolean | Component
     transition?: LightboxTransitionOption
@@ -262,6 +262,7 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
     layoutTargetRowHeight.value,
   ])
 })
+const nativeSizes = computed(() => (typeof props.sizes === 'string' ? props.sizes : undefined))
 
 const {
   containerRef,

@@ -24,6 +24,7 @@ import {
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
 } from '../../core/index'
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
@@ -46,9 +47,7 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes: ComputedRef<
-    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
-  >
+  sizes: ComputedRef<string | ResponsivePhotoSizes | undefined>
   interactive: Ref<boolean>
 }
 
@@ -146,6 +145,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
         index,
         width: photo.width,
         height: photo.height,
+        computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
         style: { ...cursor, overflow: 'hidden' } as CSSProperties,
       }))
     }
@@ -158,6 +158,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
           index,
           width: photo.width,
           height: photo.height,
+          computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
           style: {
             ...cursor,
             flexGrow: ar,
