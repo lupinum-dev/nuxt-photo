@@ -33,7 +33,7 @@ import {
   type VNodeChild,
 } from 'vue'
 
-import { useLightboxProvider } from '../composables/index'
+import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
@@ -44,6 +44,7 @@ import { normalizePhotos } from '../core/photo/normalize'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
 
@@ -85,15 +86,14 @@ const hasSoloProvider = soloLightboxComponent !== null
 const isSolo = computed(() => hasSoloProvider)
 warnOnSetupOptionChanges('Photo', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
-  ? useLightboxProvider(
+  ? provideLightbox(
       computed(() => props.photo),
       {
-        transition: props.transition,
+        transition: () => props.transition,
         imageAdapter: computed(() => props.imageAdapter),
         resolveSlide: (photo) => {
           if (
@@ -138,9 +138,16 @@ function handleClick() {
   else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
 }
 
+const labels = usePhotoLabels()
+
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
-  return createPhotoTriggerBindings(props.photo, 0, handleClick)
+  return createPhotoTriggerBindings(
+    props.photo,
+    0,
+    handleClick,
+    props.photo.alt || labels.viewPhoto(1),
+  )
 })
 
 // Capability registration with the parent group.

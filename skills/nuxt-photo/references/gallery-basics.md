@@ -242,6 +242,7 @@ interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly caption?: string // shown by <Photo> and the default lightbox
   readonly description?: string // long-form text; shown below caption
   readonly thumbSrc?: string // smaller URL; falls back to `src`
+  readonly placeholderSrc?: string // low-quality preview shown while loading
   readonly srcset?: string // explicit responsive source candidates
   readonly meta?: Readonly<TMeta> // free-form app-specific data
 }
@@ -316,6 +317,12 @@ If you use `@nuxt/image`, you usually do not need `thumbSrc`. The provider gener
 ### `srcset`
 
 Escape hatch for when you want to control the browser's image selection yourself. Passed through to the `<img srcset>` attribute verbatim. Most users should rely on the image adapter instead.
+
+### `placeholderSrc`
+
+An optional low-quality URL or data URI shown behind an image until its
+adapter-resolved source loads. It resets when the adapter or image context
+selects a different URL and remains visible if that source fails.
 
 ### `meta`
 

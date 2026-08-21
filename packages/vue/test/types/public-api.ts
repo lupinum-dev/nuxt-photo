@@ -1,8 +1,9 @@
 import {
+  Photo,
   PhotoAlbum,
   PhotoCarousel,
   PhotoGroup,
-  useLightboxProvider,
+  provideLightbox,
   type CarouselSlideSlotProps,
   type ImageAdapter,
   type PhotoItem,
@@ -33,9 +34,9 @@ const readonlyPhotos = [
   { id: 'one', src: '/one.jpg', width: 1200, height: 800 },
 ] as const satisfies readonly PhotoItem[]
 
-const controller = useLightboxProvider(readonlyPhotos)
+const controller = provideLightbox(readonlyPhotos)
 void controller.openById('one')
-const getterController = useLightboxProvider(() => readonlyPhotos)
+const getterController = provideLightbox(() => readonlyPhotos)
 void getterController.openById('one')
 
 // @ts-expect-error Controller read models are readonly.
@@ -61,7 +62,7 @@ const metadataAdapter: ImageAdapter<ConsumerMeta> = (photo) => ({
 })
 void metadataAdapter
 
-const metadataController = useLightboxProvider([photoWithInterfaceMeta])
+const metadataController = provideLightbox([photoWithInterfaceMeta])
 const activePhotographer: string | undefined =
   metadataController.activePhoto.value?.meta?.photographer
 void activePhotographer
@@ -86,7 +87,9 @@ void albumProps
 type CarouselProps = GenericComponentProps<typeof PhotoCarousel>
 const carouselProps: CarouselProps = {
   photos: readonlyPhotos,
-  options: { loop: true, slidesToScroll: 2 },
+  loop: true,
+  dragFree: true,
+  direction: 'rtl',
   autoplay: { delayMs: 4000, stopOnMouseEnter: true },
 }
 void carouselProps
@@ -99,6 +102,14 @@ declare const groupInstance: GenericComponentExposed<typeof PhotoGroup>
 void groupInstance.openById('one')
 // @ts-expect-error Thumbnail-source plumbing is internal to grouped recipes.
 void groupInstance.openById('one', document.body)
+
+declare const photoInstance: GenericComponentExposed<typeof Photo>
+// @ts-expect-error Single photos do not expose collection controls.
+void photoInstance.open(0)
+
+declare const carouselInstance: GenericComponentExposed<typeof PhotoCarousel>
+// @ts-expect-error Carousels do not expose collection lightbox controls.
+void carouselInstance.open(0)
 
 type GroupDefaultSlot = NonNullable<GenericComponentSlots<typeof PhotoGroup>['default']>
 declare const groupSlot: Parameters<GroupDefaultSlot>[0]

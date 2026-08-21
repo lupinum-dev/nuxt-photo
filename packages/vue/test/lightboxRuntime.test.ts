@@ -4,7 +4,7 @@ import { computed, createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
-import { useLightbox, useLightboxProvider } from '../src/composables'
+import { useLightbox, provideLightbox } from '../src/composables'
 import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
@@ -43,7 +43,7 @@ describe('lightbox controller surface', () => {
 
   it('returns the same controller behavior from provider and injected consumer', async () => {
     const photos = [makePhoto({ id: 'controller-a' })]
-    let providerApi: ReturnType<typeof useLightboxProvider> | null = null
+    let providerApi: ReturnType<typeof provideLightbox> | null = null
     let consumerApi: ReturnType<typeof useLightbox> | null = null
 
     const Consumer = defineComponent({
@@ -55,7 +55,7 @@ describe('lightbox controller surface', () => {
 
     const App = defineComponent({
       setup() {
-        providerApi = useLightboxProvider(photos, { transition: 'none' })
+        providerApi = provideLightbox(photos, { transition: 'none' })
         return () => h(Consumer)
       },
     })
@@ -91,11 +91,11 @@ describe('lightbox controller surface', () => {
 
   it('rejects invalid controller targets without opening', async () => {
     const photos = [makePhoto({ id: 'controller-a' })]
-    let providerApi: ReturnType<typeof useLightboxProvider> | null = null
+    let providerApi: ReturnType<typeof provideLightbox> | null = null
 
     const App = defineComponent({
       setup() {
-        providerApi = useLightboxProvider(photos, { transition: 'none' })
+        providerApi = provideLightbox(photos, { transition: 'none' })
         return () => null
       },
     })
@@ -132,6 +132,56 @@ describe('lightbox lifecycle invariants', () => {
     document.body.innerHTML = ''
     document.body.style.overflow = ''
     document.body.style.paddingRight = ''
+  })
+
+  it('rebuilds transition defaults and reacts to reduced-motion changes', async () => {
+    let onChange: (() => void) | undefined
+    const media = {
+      matches: false,
+      addEventListener: (_event: string, listener: () => void) => {
+        onChange = listener
+      },
+      removeEventListener: vi.fn(),
+    }
+    vi.stubGlobal('matchMedia', () => media)
+    const transition = ref<{ mode: 'auto'; autoThreshold?: number } | 'flip' | 'none' | undefined>({
+      mode: 'auto',
+      autoThreshold: 0.9,
+    })
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState([makePhoto()], transition)
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    expect(api!.transitionConfig.value.autoThreshold).toBe(0.9)
+    transition.value = { mode: 'auto' }
+    await nextTick()
+    expect(api!.transitionConfig.value.autoThreshold).toBe(0.55)
+    transition.value = undefined
+    await nextTick()
+    expect(api!.transitionConfig.value).toEqual({ mode: 'auto', autoThreshold: 0.55 })
+
+    media.matches = true
+    onChange?.()
+    await nextTick()
+    expect(api!.reducedMotion.value).toBe(true)
+    expect(api!.transitionConfig.value.mode).toBe('fade')
+
+    transition.value = 'none'
+    await nextTick()
+    expect(api!.transitionConfig.value.mode).toBe('none')
+
+    app.unmount()
+    host.remove()
+    expect(media.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function))
   })
 
   it('honors a close intent issued while open is still reconciling', async () => {
@@ -396,11 +446,11 @@ describe('lightbox lifecycle invariants', () => {
     const removeKeydown = vi.spyOn(window, 'removeEventListener')
 
     const photos = [makePhoto({ id: 'unmount-open', src: '/unmount-open.jpg' })]
-    let api: ReturnType<typeof useLightboxProvider> | null = null
+    let api: ReturnType<typeof provideLightbox> | null = null
 
     const App = defineComponent({
       setup() {
-        api = useLightboxProvider(photos, { transition: 'none' })
+        api = provideLightbox(photos, { transition: 'none' })
         return () => null
       },
     })

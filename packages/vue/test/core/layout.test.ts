@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import {
   computeBreakpointStyles,
   computeColumnsLayout,
@@ -187,10 +187,46 @@ describe('layout algorithms', () => {
       containerName: 'responsive-test',
     })
 
-    expect(css).toContain('max-width: 799px')
-    expect(css).toContain('min-width: 800px')
+    expect(css).toContain('width < 800px')
+    expect(css).toContain('width >= 800px')
     expect(css).toContain('52px')
     expect(css).toContain('padding:8px')
+  })
+
+  it('uses exact range boundaries for fractional breakpoints', () => {
+    const photos = createPhotoSet().slice(0, 4)
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [400.5, 800.25],
+      spacing: 10,
+      padding: 2,
+      targetRowHeight: 220,
+      containerName: 'fractional-test',
+    })
+
+    expect(css).toContain('width < 800.25px')
+    expect(css).toContain('width >= 800.25px')
+    expect(css).not.toContain('max-width')
+    expect(css).not.toContain('min-width')
+  })
+
+  it('warns when every breakpoint produces an empty layout', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const photos = createPhotoSet().slice(0, 3)
+    const css = computeBreakpointStyles({
+      photos,
+      breakpoints: [320],
+      spacing: 8,
+      padding: 500,
+      targetRowHeight: 220,
+      containerName: 'empty-test',
+    })
+
+    expect(css).toBe('')
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('every breakpoint produced an empty rows layout'),
+    )
+    warn.mockRestore()
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {

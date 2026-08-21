@@ -1,14 +1,17 @@
 import { defineNuxtPlugin, type Plugin, useAppConfig } from '#app'
-import { LightboxDefaultsKey } from '@lupinum/vue-photo/provide'
+import { PhotoDefaultsKey } from '@lupinum/vue-photo/provide'
+import { resolveNuxtPhotoLabels } from './labels'
 
 const nuxtPhotoDefaultsPlugin: Plugin = (nuxtApp): void => {
-  const lightbox = useAppConfig().nuxtPhoto?.lightbox
+  const config = useAppConfig().nuxtPhoto
+  const minZoom = config?.lightbox?.minZoom
+  const labels = resolveNuxtPhotoLabels(config?.labels)
 
-  if (lightbox?.minZoom != null) {
-    nuxtApp.vueApp.provide(LightboxDefaultsKey, {
-      minZoom: lightbox.minZoom,
-    })
-  }
+  if (minZoom == null && Object.keys(labels).length === 0) return
+  nuxtApp.vueApp.provide(PhotoDefaultsKey, {
+    ...(minZoom != null ? { minZoom } : {}),
+    ...(Object.keys(labels).length > 0 ? { labels } : {}),
+  })
 }
 
 export default defineNuxtPlugin(nuxtPhotoDefaultsPlugin)

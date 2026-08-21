@@ -4,14 +4,15 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, provide, shallowRef, type Component } from 'vue'
-import { useLightboxProvider } from '../composables/index'
+import { computed, inject, onMounted, provide, ref, shallowRef, watch, type Component } from 'vue'
+import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey, type LightboxProviderController } from '../provide/keys'
-import {
-  normalizePhotos,
-  type ImageAdapter,
-  type LightboxTransitionOption,
-  type PhotoItem,
+import type {
+  ImageAdapter,
+  InvalidPhotoPolicy,
+  InvalidPhotosEvent,
+  LightboxTransitionOption,
+  PhotoItem,
 } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import {
@@ -21,6 +22,7 @@ import {
 } from './photo-group/context'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { resolveRecipePhotos } from '../core/photo/resolve'
 
 defineOptions({ inheritAttrs: false })
 
@@ -35,6 +37,7 @@ const props = withDefaults(
   defineProps<{
     /** Canonical photo collection and navigation order. */
     photos: readonly PhotoItem<TMeta>[]
+    validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
@@ -44,12 +47,24 @@ const props = withDefaults(
   { lightbox: true },
 )
 
-const canonicalPhotos = computed<readonly PhotoItem<TMeta>[]>(
-  () =>
-    normalizePhotos<TMeta>(props.photos, {
-      owner: 'PhotoGroup',
-      onInvalid: 'throw',
-    }).photos,
+const emit = defineEmits<{
+  invalidPhotos: [event: InvalidPhotosEvent]
+}>()
+
+const resolution = computed(() =>
+  resolveRecipePhotos<TMeta>(props.photos, 'PhotoGroup', { validation: props.validation }),
+)
+const canonicalPhotos = computed<readonly PhotoItem<TMeta>[]>(() => resolution.value.photos)
+const reportingReady = ref(false)
+onMounted(() => {
+  reportingReady.value = true
+})
+watch(
+  [() => resolution.value.invalidPhotos, reportingReady],
+  ([event, ready]) => {
+    if (ready && event) emit('invalidPhotos', event)
+  },
+  { flush: 'post' },
 )
 const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
 const capabilities = computed(() => [...capabilityBatches.value.values()].flat())
@@ -63,11 +78,10 @@ const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLight
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 const provider = enabled
-  ? useLightboxProvider(canonicalPhotos, {
-      transition: props.transition,
+  ? provideLightbox(canonicalPhotos, {
+      transition: () => props.transition,
       imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => {
         for (const entry of capabilities.value) {
@@ -192,6 +206,7 @@ const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
   const index = provider.hiddenThumbnailIndex.value
   return index === null ? null : (canonicalPhotos.value[index] ?? null)
 })
+const isOpen = computed(() => provider?.isOpen.value ?? false)
 
 const groupContext: PhotoGroupContext = {
   enabled,
@@ -199,11 +214,13 @@ const groupContext: PhotoGroupContext = {
   replaceCapabilities,
   removeCapabilities,
   open,
+  close,
   activateById,
   photos: canonicalPhotos,
   hiddenPhoto,
+  isOpen,
 }
 provide(PhotoGroupContextKey, groupContext)
 
-defineExpose({ open, openById, close })
+defineExpose({ open, openById, close, isOpen })
 </script>

@@ -14,7 +14,7 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * @example
  * ```vue
  * <script setup>
- * const { open, close, isOpen, activePhoto } = useLightboxProvider(photos)
+ * const { open, close, isOpen, activePhoto } = provideLightbox(photos)
  * </script>
  * <template>
  *   <LightboxRoot>
@@ -26,10 +26,10 @@ import { provideLightboxContexts } from '../provide/lightbox'
  * </template>
  * ```
  */
-export function useLightboxProvider<TMeta extends object = Readonly<Record<string, unknown>>>(
+export function provideLightbox<TMeta extends object = Readonly<Record<string, unknown>>>(
   photosInput: MaybeRefOrGetter<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
   options?: {
-    transition?: LightboxTransitionOption
+    transition?: MaybeRefOrGetter<LightboxTransitionOption | undefined>
     resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
     minZoom?: number
     imageAdapter?: MaybeRef<ImageAdapter<TMeta> | undefined>
@@ -38,7 +38,7 @@ export function useLightboxProvider<TMeta extends object = Readonly<Record<strin
   const photos = computed(() => {
     const value = toValue(photosInput)
     return normalizePhotos<TMeta>(Array.isArray(value) ? value : [value], {
-      owner: 'useLightboxProvider',
+      owner: 'provideLightbox',
       onInvalid: 'throw',
     }).photos
   })

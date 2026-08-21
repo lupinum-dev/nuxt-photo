@@ -3,7 +3,7 @@
 import { createApp, defineComponent, h } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
-import { useLightboxProvider } from '../src/composables/useLightboxProvider'
+import { provideLightbox } from '../src/composables/provideLightbox'
 import LightboxRoot from '../src/primitives/LightboxRoot.vue'
 import { flushUi, installBrowserStubs } from './support/runtime'
 
@@ -18,12 +18,12 @@ describe('LightboxRoot modal ownership', () => {
 
   it('isolates late page siblings and restores focus and page state', async () => {
     const photo = makePhoto({ id: 'focus-photo' })
-    let controller: ReturnType<typeof useLightboxProvider> | null = null
+    let controller: ReturnType<typeof provideLightbox> | null = null
     const host = document.createElement('main')
     document.body.appendChild(host)
     const App = defineComponent({
       setup() {
-        controller = useLightboxProvider([photo], { transition: 'none' })
+        controller = provideLightbox([photo], { transition: 'none' })
         return () =>
           h('div', [
             h('button', { id: 'trigger' }, 'Open'),

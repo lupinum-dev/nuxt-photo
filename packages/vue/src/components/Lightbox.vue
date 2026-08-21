@@ -1,5 +1,10 @@
 <template>
-  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <LightboxRoot
+    class="np-lightbox"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="labels.photoViewer"
+  >
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">
@@ -19,7 +24,9 @@
       >
         <div class="np-lightbox__topbar">
           <slot name="counter" :active-index="activeIndex" :count="count">
-            <div class="np-lightbox__counter">{{ activeIndex + 1 }} / {{ count }}</div>
+            <div class="np-lightbox__counter">
+              <span aria-hidden="true">{{ activeIndex + 1 }} / {{ count }}</span>
+            </div>
           </slot>
 
           <div class="np-lightbox__actions">
@@ -37,7 +44,7 @@
             >
               <button
                 class="np-lightbox__btn np-lightbox__btn--prev"
-                aria-label="Previous"
+                :aria-label="labels.previous"
                 :disabled="controlsDisabled"
                 @click="prev"
               >
@@ -45,7 +52,7 @@
               </button>
               <button
                 class="np-lightbox__btn np-lightbox__btn--next"
-                aria-label="Next"
+                :aria-label="labels.next"
                 :disabled="controlsDisabled"
                 @click="next"
               >
@@ -53,15 +60,15 @@
               </button>
               <button
                 class="np-lightbox__btn np-lightbox__btn--zoom"
-                :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
+                :aria-label="isZoomedIn ? labels.fit : labels.zoom"
                 :disabled="controlsDisabled || !zoomAllowed"
                 @click="toggleZoom()"
               >
-                {{ isZoomedIn ? 'Fit' : 'Zoom' }}
+                {{ isZoomedIn ? labels.fit : labels.zoom }}
               </button>
               <button
                 class="np-lightbox__btn np-lightbox__btn--close"
-                aria-label="Close"
+                :aria-label="labels.close"
                 @click="close"
               >
                 &#10005;
@@ -92,7 +99,7 @@
             </div>
           </div>
           <div v-if="imageLoadFailed" class="np-lightbox__fallback" role="status">
-            Image could not be loaded.
+            {{ labels.loadFailed }}
           </div>
         </LightboxViewport>
 
@@ -116,11 +123,14 @@ import {
   LightboxSlide,
   LightboxViewport,
 } from '../primitives/index'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
 import type {
   LightboxCaptionSlotProps,
   LightboxControlsSlotProps,
   LightboxSlideSlotProps,
 } from '../types/index'
+
+const labels = usePhotoLabels()
 
 interface LightboxCounterSlotProps {
   activeIndex: number

@@ -17,11 +17,11 @@ export type {
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
-  PhotoCarouselOptions,
   PhotoCarouselAutoplayOptions,
   ImageAdapter,
   ImageContext,
   ImageSource,
+  ResponsivePhotoSizes,
   LightboxTransitionOption,
   TransitionMode,
   ResponsiveParameter,
@@ -41,6 +41,14 @@ export type {
 } from './types'
 
 export { computeRowsLayout } from './layout/rows/index'
+export {
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+  computeGaps,
+  computeWidthDivisor,
+} from './layout/constants'
 export {
   computeBreakpointStyles,
   type BreakpointStylesOptions,

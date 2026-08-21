@@ -291,18 +291,18 @@ Use this page to look up the supported customization surfaces.
 
 | Surface                | Import from          | Use it for                                                           | Notes                                            |
 | ---------------------- | -------------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
-| `useLightboxProvider`  | `@lupinum/vue-photo` | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
+| `provideLightbox`      | `@lupinum/vue-photo` | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
 | `resolveSlide` option  | `@lupinum/vue-photo` | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
 | Lightbox primitives    | `@lupinum/vue-photo` | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
 | `LightboxComponentKey` | `@lupinum/vue-photo` | Replacing the default recipe lightbox globally                       | Provided through Vue injection                   |
 | `ImageAdapterKey`      | `@lupinum/vue-photo` | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
-| `LightboxDefaultsKey`  | `@lupinum/vue-photo` | Setting shared default lightbox options                              | Vue-only customization hook                      |
+| `PhotoDefaultsKey`     | `@lupinum/vue-photo` | Setting shared default lightbox options                              | Vue-only customization hook                      |
 | `PhotoTrigger`         | `@lupinum/vue-photo` | Custom thumbnail layouts that keep the recipe lightbox               | Compose under `LightboxProvider`                 |
 | Recipe slots           | `@lupinum/vue-photo` | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
 
 ## When to use which
 
-- Build a custom lightbox UI with `useLightboxProvider` plus Vue primitives.
+- Build a custom lightbox UI with `provideLightbox` plus Vue primitives.
 - Compose `LightboxProvider`, `PhotoTrigger`, and `Lightbox` when only the thumbnail layout is custom.
 - Use recipe slots when the default component is right but one rendered region needs custom markup.
 - Override the default recipe lightbox globally with `LightboxComponentKey`.
@@ -573,7 +573,7 @@ import { stockAdapter } from '~/utils/stockAdapter'
 
 Prop wins over the provided adapter, which wins over the module default.
 
-Primitive lightbox compositions can also pass the adapter to `useLightboxProvider()` or `<LightboxProvider>`.
+Primitive lightbox compositions can also pass the adapter to `provideLightbox()` or `<LightboxProvider>`.
 
 ## Common adapter recipes
 

@@ -58,9 +58,11 @@ const photos: PhotoItem[] = [
 
 - `@lupinum/nuxt-photo` exports the Nuxt module.
 - `@lupinum/nuxt-photo/app` exports runtime types and helpers.
-- Auto-imports include `useLightbox`, `useLightboxProvider`, and `responsive`.
+- Auto-imports include `useLightbox`, `provideLightbox`, `usePhotoLabels`, and `responsive`.
 
 Install `@nuxt/image` separately when you need provider-backed image rendering. Nuxt Photo also works with native images.
+
+App-wide lightbox labels can be localized through the typed `nuxtPhoto.labels` module option or the `nuxtPhoto.labels` key in `app.config.ts`. Indexed labels support `{index}` and slide announcements also support `{count}`.
 
 ## Documentation
 

@@ -34,13 +34,13 @@ pnpm add @lupinum/vue-photo
 ## Quick start
 
 ```ts
-import { useLightboxProvider, type PhotoItem } from '@lupinum/vue-photo'
+import { provideLightbox, type PhotoItem } from '@lupinum/vue-photo'
 
 const photos: PhotoItem[] = [
   { id: 'one', src: '/one.jpg', width: 1200, height: 800, alt: 'First photo' },
 ]
 
-const lightbox = useLightboxProvider(photos, {
+const lightbox = provideLightbox(photos, {
   transition: 'auto',
 })
 ```
@@ -49,7 +49,7 @@ The provider creates the shared state that the Vue lightbox primitives consume.
 
 ## Exports
 
-- Composables include `useLightbox`, `useLightboxProvider`, `useContainerWidth`, and `responsive`.
+- Composables include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `useContainerWidth`, and `responsive`.
 - Components include `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`.
 - The package also exports public photo types, injection keys, and CSS.
 

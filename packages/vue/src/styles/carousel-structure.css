@@ -21,13 +21,13 @@
 .np-carousel__container {
   display: flex;
   touch-action: pan-y pinch-zoom;
-  margin-left: calc(var(--np-carousel-gap) * -1);
+  margin-inline-start: calc(var(--np-carousel-gap) * -1);
 }
 
 .np-carousel__slide {
   flex: 0 0 var(--np-carousel-slide-size);
   min-width: 0;
-  padding-left: var(--np-carousel-gap);
+  padding-inline-start: var(--np-carousel-gap);
   aspect-ratio: var(--np-carousel-slide-aspect);
   position: relative;
 }
@@ -55,7 +55,7 @@
 
 .np-carousel__counter {
   position: absolute;
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   bottom: 0.75rem;
   pointer-events: none;
 }
@@ -88,13 +88,13 @@
 
 .np-carousel__thumbs-container {
   display: flex;
-  margin-left: calc(var(--np-carousel-thumb-gap) * -1);
+  margin-inline-start: calc(var(--np-carousel-thumb-gap) * -1);
 }
 
 .np-carousel__thumb {
   flex: 0 0 auto;
   min-width: 0;
-  padding-left: var(--np-carousel-thumb-gap);
+  padding-inline-start: var(--np-carousel-thumb-gap);
   cursor: pointer;
   background: transparent;
   border: 0;

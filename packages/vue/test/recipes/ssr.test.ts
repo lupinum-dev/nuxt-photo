@@ -109,7 +109,7 @@ describe('SSR', () => {
       expect(html).toContain('ssr-1')
     })
 
-    it('with both breakpoints and defaultContainerWidth renders inline calc() AND container query CSS', async () => {
+    it('with both breakpoints and defaultContainerWidth renders inline calc() without dead container query CSS', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -121,8 +121,10 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
+      // Inline widths are authoritative when dcw is set; @container rules
+      // would never apply underneath them.
       expect(html).toContain('calc(')
-      expect(html).toContain('@container')
+      expect(html).not.toContain('@container')
     })
 
     it('columns breakpoints do not emit hidden SSR variant branches', async () => {

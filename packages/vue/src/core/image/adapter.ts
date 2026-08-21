@@ -1,4 +1,4 @@
-import type { ImageAdapter, ImageSource, PhotoItem } from '../types'
+import type { ImageAdapter, ImageSource, PhotoItem, ResponsivePhotoSizes } from '../types'
 import { round } from '../utils/math'
 
 /**
@@ -9,6 +9,7 @@ const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource =>
   if (context === 'thumb' && photo.thumbSrc) {
     return {
       src: photo.thumbSrc,
+      placeholderSrc: photo.placeholderSrc,
       width: photo.width,
       height: photo.height,
     }
@@ -16,6 +17,7 @@ const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource =>
 
   return {
     src: photo.src,
+    placeholderSrc: photo.placeholderSrc,
     srcset: photo.srcset,
     width: photo.width,
     height: photo.height,
@@ -47,14 +49,10 @@ export function computePhotoSizes(
   itemsInRow: number,
   spacing: number,
   padding: number,
-  responsiveSizes?: {
-    /** CSS size of the album container, e.g. `'100vw'` or `'calc(100vw - 240px)'`. */
-    size: string
-    /** Optional viewport-specific overrides, listed from smallest to largest breakpoint. */
-    sizes?: Array<{ viewport: string; size: string }>
-  },
+  responsiveSizes?: string | ResponsivePhotoSizes,
 ): string | undefined {
   if (!responsiveSizes) return undefined
+  if (typeof responsiveSizes === 'string') return responsiveSizes
 
   const gaps = spacing * (itemsInRow - 1) + 2 * padding * itemsInRow
   const divisor = round((containerWidth - gaps) / photoWidth, 5)

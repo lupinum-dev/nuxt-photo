@@ -8,10 +8,11 @@ import type {
   VNodeChild,
 } from 'vue'
 import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '../core/index'
+import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
-/** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
+/** Small public controller returned by `useLightbox()` and `provideLightbox()`. */
 export interface LightboxController<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly photos: ComputedRef<readonly PhotoItem<TMeta>[]>
   readonly count: ComputedRef<number>
@@ -31,6 +32,14 @@ export interface LightboxProviderController<
 > extends LightboxController<TMeta> {
   readonly hiddenThumbnailIndex: Readonly<Ref<number | null>>
   setThumbnailRef(index: number): (element: Element | ComponentPublicInstance | null) => void
+}
+
+/** Public template-ref contract exposed by collection recipes. */
+export interface LightboxHandle {
+  open(index?: number): Promise<void>
+  openById(id: string): Promise<void>
+  close(): Promise<void>
+  readonly isOpen: boolean
 }
 
 type LightboxRuntimeState = {
@@ -104,10 +113,9 @@ export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:im
  */
 export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
 
-/** Global defaults for lightbox behaviour, typically provided once at app level. */
-export interface LightboxDefaults {
+/** Global defaults for photo recipes and the lightbox, typically provided once per app. */
+export interface PhotoDefaults {
   minZoom?: number
+  labels?: Partial<PhotoLabels>
 }
-export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol(
-  'nuxt-photo:lightbox-defaults',
-)
+export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol('nuxt-photo:photo-defaults')

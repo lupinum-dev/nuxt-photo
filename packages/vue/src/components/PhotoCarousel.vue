@@ -28,12 +28,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
-import type {
-  ImageAdapter,
-  PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
-  PhotoItem,
-} from '../core/index'
+import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -46,7 +41,7 @@ import type {
   InvalidPhotosEvent,
   LightboxTransitionOption,
 } from '../core/index'
-import { useLightboxProvider } from '../composables/index'
+import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey } from '../provide/keys'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
@@ -71,7 +66,9 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
-    options?: PhotoCarouselOptions
+    loop?: boolean
+    dragFree?: boolean
+    direction?: 'ltr' | 'rtl'
     showArrows?: boolean
     showThumbnails?: boolean
     showCounter?: boolean
@@ -135,11 +132,10 @@ const lightboxComponent = resolveLightboxComponent(
 const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
-  transition: () => props.transition,
 })
 const provider = hasLightbox
-  ? useLightboxProvider(resolvedPhotos, {
-      transition: props.transition,
+  ? provideLightbox(resolvedPhotos, {
+      transition: () => props.transition,
       imageAdapter: computed(() => props.imageAdapter),
     })
   : null
@@ -151,7 +147,9 @@ async function openSlide(index: number) {
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   imageAdapter: props.imageAdapter,
-  options: props.options ?? {},
+  loop: props.loop,
+  dragFree: props.dragFree,
+  direction: props.direction,
   autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,

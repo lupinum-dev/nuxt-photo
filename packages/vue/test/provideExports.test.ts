@@ -4,7 +4,7 @@ import * as provide from '../src/provide'
 describe('@lupinum/vue-photo/provide exports', () => {
   it('exposes only the documented extension keys at runtime', () => {
     expect(Object.keys(provide).sort()).toEqual(
-      ['ImageAdapterKey', 'LightboxComponentKey', 'LightboxDefaultsKey'].sort(),
+      ['ImageAdapterKey', 'LightboxComponentKey', 'PhotoDefaultsKey'].sort(),
     )
   })
 })

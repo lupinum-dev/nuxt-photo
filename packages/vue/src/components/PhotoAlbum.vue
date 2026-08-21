@@ -8,7 +8,7 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <component :is="'style'">{{ renderBranch.containerQueryCss }}</component>
+        <ContainerQueryStyle :css="renderBranch.containerQueryCss" />
       </template>
 
       <div :style="renderBranch.wrapperStyle">
@@ -17,7 +17,7 @@
           :key="item.photo.id"
           class="np-album__item"
           :class="[
-            renderBranch.containerQueriesActive ? `np-item-${item.index}` : undefined,
+            renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
             itemClass,
           ]"
           :style="item.style"
@@ -74,6 +74,7 @@
               :hidden="isHidden(metadataPhoto(entry.photo))"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
+              :sizes="nativeSizes"
             >
               <template v-if="$slots.thumbnail" #thumbnail="slotProps">
                 <slot name="thumbnail" v-bind="slotProps" />
@@ -101,6 +102,7 @@
           :hidden="false"
           :image-adapter="imageAdapter"
           :img-class="imgClass"
+          :sizes="nativeSizes"
         >
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
@@ -114,22 +116,35 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, onMounted, ref, watch, type Component } from 'vue'
+import { computed, defineComponent, h, onMounted, ref, watch, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
 } from '../core/index'
+
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { resolveRecipePhotos } from '../core/photo/resolve'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+
+// Generated layout CSS is trusted internal output. innerHTML preserves `<` and
+// `>` range operators identically in SSR output and during client hydration.
+const ContainerQueryStyle = defineComponent({
+  props: { css: { type: String, required: true } },
+  setup: (props) => () => h('style', { innerHTML: props.css }),
+})
 
 defineOptions({ inheritAttrs: false })
 
@@ -152,10 +167,7 @@ const props = withDefaults(
     padding?: ResponsiveParameter<number>
     defaultContainerWidth?: number
     breakpoints?: readonly number[]
-    sizes?: {
-      size: string
-      sizes?: Array<{ viewport: string; size: string }>
-    }
+    sizes?: string | ResponsivePhotoSizes
     imageAdapter?: ImageAdapter<TMeta>
     lightbox?: boolean | Component
     transition?: LightboxTransitionOption
@@ -164,8 +176,8 @@ const props = withDefaults(
   }>(),
   {
     layout: 'rows',
-    spacing: 8,
-    padding: 0,
+    spacing: DEFAULT_SPACING,
+    padding: DEFAULT_PADDING,
     lightbox: true,
   },
 )
@@ -219,22 +231,33 @@ watch(
   { flush: 'post' },
 )
 
-const { hasLightbox, hasOwnLightbox, LightboxComponent, itemBindings, isHidden } = useAlbumLightbox(
-  normalizedPhotos,
-  props,
-)
+const {
+  hasLightbox,
+  hasOwnLightbox,
+  LightboxComponent,
+  itemBindings,
+  isHidden,
+  open,
+  openById,
+  close,
+  isOpen,
+} = useAlbumLightbox(normalizedPhotos, props)
+
+defineExpose({ open, openById, close, isOpen })
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
   const layout = normalizedLayout.value
   if (layout.type === 'columns' || layout.type === 'masonry') {
-    return layout.columns ?? 3
+    return layout.columns ?? DEFAULT_COLUMNS
   }
-  return 3
+  return DEFAULT_COLUMNS
 })
 const layoutTargetRowHeight = computed(() => {
   const layout = normalizedLayout.value
-  return layout.type === 'rows' ? (layout.targetRowHeight ?? 300) : 300
+  return layout.type === 'rows'
+    ? (layout.targetRowHeight ?? DEFAULT_TARGET_ROW_HEIGHT)
+    : DEFAULT_TARGET_ROW_HEIGHT
 })
 
 const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
@@ -247,6 +270,7 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
     layoutTargetRowHeight.value,
   ])
 })
+const nativeSizes = computed(() => (typeof props.sizes === 'string' ? props.sizes : undefined))
 
 const {
   containerRef,
@@ -254,7 +278,7 @@ const {
   scopeClass,
   containerStyle,
   containerQueryCSS,
-  containerQueriesActive,
+  containerQueriesRender,
   groups,
   rowItems,
   ssrWrapperStyle,
@@ -284,7 +308,7 @@ const renderBranch = computed(() => {
       containerQueryCss: containerQueryCSS.value,
       wrapperStyle: ssrWrapperStyle.value,
       items: rowItems.value,
-      containerQueriesActive: containerQueriesActive.value,
+      containerQueriesRender: containerQueriesRender.value,
     }
   }
 

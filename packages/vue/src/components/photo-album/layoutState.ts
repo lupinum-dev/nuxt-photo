@@ -14,16 +14,20 @@ import {
   computeColumnsLayout,
   computeMasonryLayout,
   computePhotoSizes,
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+  computeGaps,
+  computeWidthDivisor,
   resolveResponsiveParameter,
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
 } from '../../core/index'
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
-import { round } from '../../core/utils/math'
-
-const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
 
 export type RowItem = {
   photo: PhotoItem
@@ -43,9 +47,7 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes: ComputedRef<
-    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
-  >
+  sizes: ComputedRef<string | ResponsivePhotoSizes | undefined>
   interactive: Ref<boolean>
 }
 
@@ -70,8 +72,15 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const containerQueriesActive = computed(() => !!breakpoints.value?.length)
 
+  // When defaultContainerWidth is set, items render inline calc widths and the
+  // observed width snaps at breakpoints — inline styles would outrank any
+  // @container rules, so generating both would ship a dead stylesheet.
+  const containerQueriesRender = computed(
+    () => containerQueriesActive.value && !defaultContainerWidth,
+  )
+
   const containerQueryCSS = computed(() => {
-    if (!containerQueriesActive.value || layout.value !== 'rows') return ''
+    if (!containerQueriesRender.value || layout.value !== 'rows') return ''
     return computeBreakpointStyles({
       photos: photos.value,
       breakpoints: breakpoints.value!,
@@ -95,10 +104,10 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     if (containerWidth.value <= 0) return []
 
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
-    const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
     const input = {
       photos: photos.value,
       containerWidth: w,
@@ -126,16 +135,17 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const rowItems = computed<RowItem[]>(() => {
     const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const pd = resolveResponsiveParameter(padding.value, w, 0)
-    const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
 
-    if (containerQueriesActive.value && !defaultContainerWidth) {
+    if (containerQueriesRender.value) {
       return photos.value.map((photo, index) => ({
         photo,
         index,
         width: photo.width,
         height: photo.height,
+        computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
         style: { ...cursor, overflow: 'hidden' } as CSSProperties,
       }))
     }
@@ -148,6 +158,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
           index,
           width: photo.width,
           height: photo.height,
+          computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
           style: {
             ...cursor,
             flexGrow: ar,
@@ -160,7 +171,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
 
     return groups.value.flatMap((row) =>
       row.entries.map((entry) => {
-        const gaps = sp * (entry.itemsCount - 1) + 2 * pd * entry.itemsCount
+        const gaps = computeGaps(sp, pd, entry.itemsCount)
         return {
           photo: entry.photo,
           index: entry.index,
@@ -173,7 +184,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
             boxSizing: 'content-box' as const,
             padding: `${pd}px`,
             overflow: 'hidden',
-            width: `calc((100% - ${gaps}px) / ${round((w - gaps) / entry.width, 5)})`,
+            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(w, gaps, entry.width)})`,
           } as CSSProperties,
         }
       }),
@@ -182,8 +193,8 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
 
   const ssrWrapperStyle = computed<CSSProperties>(() => {
     const w = containerWidth.value
-    const sp = resolveResponsiveParameter(spacing.value, w, 8)
-    const cols = resolveResponsiveParameter(columns.value, w, 3)
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
     if (layout.value === 'rows') {
       return {
         display: 'flex',
@@ -204,7 +215,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const cursor = interactive.value ? { cursor: 'pointer' } : {}
     if (layout.value === 'rows') {
       const w = containerWidth.value
-      const trh = resolveResponsiveParameter(targetRowHeight.value, w, 300)
+      const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
       const ar = photo.width / photo.height
       return {
         ...cursor,
@@ -217,7 +228,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   }
 
   const containerStyle = computed<CSSProperties>(() => {
-    if (layout.value === 'rows' && containerQueriesActive.value) {
+    if (layout.value === 'rows' && containerQueriesRender.value) {
       return {
         width: '100%',
         containerType: 'inline-size',
@@ -227,11 +238,15 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     return { width: '100%' }
   })
 
+  // Warned once per album instance, not once per module: module-level state
+  // survives HMR and silences warnings for albums mounted later.
+  let warnedApproximate = false
+
   function maybeWarnApproximate() {
     if (layout.value === 'rows') return
     if (defaultContainerWidth && defaultContainerWidth > 0) return
-    if (warnedApproximateLayouts.has(layout.value)) return
-    warnedApproximateLayouts.add(layout.value)
+    if (warnedApproximate) return
+    warnedApproximate = true
     devWarn(
       `${layout.value} layout rendered without defaultContainerWidth; SSR uses a simple fallback and recomputes after mount. See https://nuxt-photo.lupinum.com/docs/concepts/ssr-and-layout-stability`,
     )
@@ -241,8 +256,8 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     const w = containerWidth.value
     return {
       containerWidth: w,
-      spacing: resolveResponsiveParameter(spacing.value, w, 8),
-      padding: resolveResponsiveParameter(padding.value, w, 0),
+      spacing: resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING),
+      padding: resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING),
       columnsCount: groups.value.length || 1,
       layoutType: layout.value,
     }
@@ -255,7 +270,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     scopeClass,
     containerStyle,
     containerQueryCSS,
-    containerQueriesActive,
+    containerQueriesRender,
     groups,
     rowItems,
     ssrWrapperStyle,
