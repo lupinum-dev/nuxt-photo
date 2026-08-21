@@ -181,6 +181,7 @@ export function useLightboxMotion(
     stageMounted,
     activeImagePending,
     transitionInProgress,
+    getThumbRef: (index: number) => visual.thumbRefs.get(index) ?? null,
     captureOpen,
     open: (index: number, callbacks: MotionCallbacks, signal: AbortSignal) =>
       runOpenTransition(transitionContext, index, callbacks, signal),

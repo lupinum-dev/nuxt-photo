@@ -106,7 +106,10 @@ watch(
   () => ctx.isOpen.value,
   async (isOpen) => {
     if (isOpen) {
-      restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      restoreFocusEl =
+        ctx.restoreFocusTarget.value ??
+        (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+      ctx.restoreFocusTarget.value = null
       await nextTick()
       if (rootRef.value) {
         isolatePageSiblings(rootRef.value)

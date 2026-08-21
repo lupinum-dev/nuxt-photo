@@ -83,6 +83,7 @@ export function useLightboxRuntimeState(
       ? window.matchMedia('(prefers-reduced-motion: reduce)')
       : null
   const prefersReducedMotion = ref(!!reducedMotionQuery?.matches)
+  const restoreFocusTarget = ref<HTMLElement | null>(null)
 
   function refreshTransitionConfig() {
     const option = toValue(transitionOption)
@@ -244,6 +245,12 @@ export function useLightboxRuntimeState(
     }
 
     const photo = currentPhotos[index]!
+    const activeElement =
+      typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+    restoreFocusTarget.value =
+      activeElement && activeElement !== document.body ? activeElement : motion.getThumbRef(index)
     motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
     const target: LightboxIntent = { kind: 'open', index }
     desired = target
@@ -395,6 +402,7 @@ export function useLightboxRuntimeState(
     stageMounted: motion.stageMounted,
     activeImagePending: motion.activeImagePending,
     transitionInProgress: motion.transitionInProgress,
+    restoreFocusTarget,
 
     gesturePhase: gestures.gesturePhase,
 
