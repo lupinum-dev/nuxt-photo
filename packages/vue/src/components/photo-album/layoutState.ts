@@ -24,6 +24,7 @@ import {
   type PhotoItem,
   type LayoutGroup,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
 } from '../../core/index'
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
@@ -48,9 +49,7 @@ interface AlbumLayoutRenderingOptions {
   targetRowHeight: Ref<ResponsiveParameter<number>>
   defaultContainerWidth?: number
   breakpoints: ComputedRef<readonly number[] | undefined>
-  sizes: ComputedRef<
-    { size: string; sizes?: Array<{ viewport: string; size: string }> } | undefined
-  >
+  sizes: ComputedRef<string | ResponsivePhotoSizes | undefined>
   interactive: Ref<boolean>
 }
 
@@ -73,9 +72,8 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const albumId = useId()
   const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
-  const containerQueriesActive = computed(() => !!breakpoints.value?.length)
   const containerQueriesRender = computed(
-    () => containerQueriesActive.value && !defaultContainerWidth,
+    () => !!breakpoints.value?.length && !defaultContainerWidth,
   )
 
   const containerQueryCSS = computed(() => {
@@ -263,7 +261,7 @@ export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
     scopeClass,
     containerStyle,
     containerQueryCSS,
-    containerQueriesActive: containerQueriesRender,
+    containerQueriesRender,
     groups,
     rowItems,
     ssrWrapperStyle,

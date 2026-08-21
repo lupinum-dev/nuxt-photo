@@ -8,13 +8,14 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <component :is="'style'">{{ renderBranch.containerQueryCss }}</component>
+        <component :is="'style'" v-bind="{ innerHTML: renderBranch.containerQueryCss }" />
       </template>
 
       <div :style="renderBranch.wrapperStyle">
-        <div
+        <component
           v-for="item in renderBranch.items"
           :key="item.photo.id"
+          :is="isPhotoInteractive(metadataPhoto(item.photo)) ? 'button' : 'div'"
           class="np-album__item"
           :class="[
             renderBranch.containerQueriesActive ? `np-item-${item.index}` : undefined,
@@ -37,7 +38,7 @@
               <slot name="thumbnail" v-bind="slotProps" />
             </template>
           </AlbumThumbnail>
-        </div>
+        </component>
 
         <span
           style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0"
@@ -58,9 +59,10 @@
           :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
           :style="groupStyle(group)"
         >
-          <div
+          <component
             v-for="entry in group.entries"
             :key="entry.photo.id"
+            :is="isPhotoInteractive(metadataPhoto(entry.photo)) ? 'button' : 'div'"
             class="np-album__item"
             :class="itemClass"
             :style="itemStyle(entry, group)"
@@ -79,15 +81,16 @@
                 <slot name="thumbnail" v-bind="slotProps" />
               </template>
             </AlbumThumbnail>
-          </div>
+          </component>
         </div>
       </template>
     </template>
 
     <div v-else :style="renderBranch.wrapperStyle">
-      <div
+      <component
         v-for="(photo, index) in renderBranch.photos"
         :key="photo.id"
+        :is="isPhotoInteractive(photo) ? 'button' : 'div'"
         class="np-album__item"
         :class="itemClass"
         :style="ssrItemStyle(photo)"
@@ -106,7 +109,7 @@
             <slot name="thumbnail" v-bind="slotProps" />
           </template>
         </AlbumThumbnail>
-      </div>
+      </component>
     </div>
   </div>
 
@@ -117,6 +120,10 @@
 import { computed, onMounted, ref, watch, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
   type ImageAdapter,
   type LightboxTransitionOption,
@@ -124,6 +131,7 @@ import {
   type ResponsiveParameter,
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
+  type ResponsivePhotoSizes,
 } from '../core/index'
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
@@ -152,10 +160,7 @@ const props = withDefaults(
     padding?: ResponsiveParameter<number>
     defaultContainerWidth?: number
     breakpoints?: readonly number[]
-    sizes?: {
-      size: string
-      sizes?: Array<{ viewport: string; size: string }>
-    }
+    sizes?: string | ResponsivePhotoSizes
     imageAdapter?: ImageAdapter<TMeta>
     lightbox?: boolean | Component
     transition?: LightboxTransitionOption
@@ -164,8 +169,8 @@ const props = withDefaults(
   }>(),
   {
     layout: 'rows',
-    spacing: 8,
-    padding: 0,
+    spacing: DEFAULT_SPACING,
+    padding: DEFAULT_PADDING,
     lightbox: true,
   },
 )
@@ -219,22 +224,32 @@ watch(
   { flush: 'post' },
 )
 
-const { hasLightbox, hasOwnLightbox, LightboxComponent, itemBindings, isHidden } = useAlbumLightbox(
-  normalizedPhotos,
-  props,
-)
+const {
+  hasLightbox,
+  hasOwnLightbox,
+  LightboxComponent,
+  itemBindings,
+  isPhotoInteractive,
+  isHidden,
+  open,
+  openById,
+  close,
+  isOpen,
+} = useAlbumLightbox(normalizedPhotos, props)
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
   const layout = normalizedLayout.value
   if (layout.type === 'columns' || layout.type === 'masonry') {
-    return layout.columns ?? 3
+    return layout.columns ?? DEFAULT_COLUMNS
   }
-  return 3
+  return DEFAULT_COLUMNS
 })
 const layoutTargetRowHeight = computed(() => {
   const layout = normalizedLayout.value
-  return layout.type === 'rows' ? (layout.targetRowHeight ?? 300) : 300
+  return layout.type === 'rows'
+    ? (layout.targetRowHeight ?? DEFAULT_TARGET_ROW_HEIGHT)
+    : DEFAULT_TARGET_ROW_HEIGHT
 })
 
 const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
@@ -254,7 +269,7 @@ const {
   scopeClass,
   containerStyle,
   containerQueryCSS,
-  containerQueriesActive,
+  containerQueriesRender,
   groups,
   rowItems,
   ssrWrapperStyle,
@@ -284,7 +299,7 @@ const renderBranch = computed(() => {
       containerQueryCss: containerQueryCSS.value,
       wrapperStyle: ssrWrapperStyle.value,
       items: rowItems.value,
-      containerQueriesActive: containerQueriesActive.value,
+      containerQueriesActive: containerQueriesRender.value,
     }
   }
 
@@ -301,4 +316,6 @@ const renderBranch = computed(() => {
     photos: normalizedPhotos.value,
   }
 })
+
+defineExpose({ open, openById, close, isOpen })
 </script>

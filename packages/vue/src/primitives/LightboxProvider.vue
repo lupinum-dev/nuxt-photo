@@ -5,7 +5,7 @@
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed } from 'vue'
 import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../core/index'
-import { useLightboxProvider } from '../composables/useLightboxProvider'
+import { provideLightbox } from '../composables/provideLightbox'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 
 defineOptions({ inheritAttrs: false })
@@ -18,14 +18,13 @@ const props = defineProps<{
 }>()
 
 warnOnSetupOptionChanges('LightboxProvider', {
-  transition: () => props.transition,
   minZoom: () => props.minZoom,
 })
 
-useLightboxProvider(
+provideLightbox(
   computed(() => props.photos),
   {
-    transition: props.transition,
+    transition: () => props.transition,
     minZoom: props.minZoom,
     imageAdapter: computed(() => props.imageAdapter),
   },

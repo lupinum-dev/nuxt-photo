@@ -4,6 +4,8 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly id: string
   readonly src: string
   readonly thumbSrc?: string
+  /** Small image URL or data URI shown behind the full source while it loads. */
+  readonly placeholder?: string
   readonly width: number
   readonly height: number
   readonly alt?: string
@@ -133,12 +135,6 @@ export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLay
 
 // ─── Carousel ───
 
-export interface PhotoCarouselOptions {
-  readonly loop?: boolean
-  readonly dragFree?: boolean
-  readonly slidesToScroll?: number
-}
-
 export interface PhotoCarouselAutoplayOptions {
   readonly delayMs?: number
   readonly stopOnInteraction?: boolean
@@ -153,6 +149,16 @@ export type ImageSource = {
   sizes?: string
   width?: number
   height?: number
+  /** Small image URL or data URI shown behind the full source while it loads. */
+  placeholder?: string
+}
+
+/** Structured sizes input for layout-exact thumbnail calculations. */
+export type ResponsivePhotoSizes = {
+  /** CSS size of the album container, such as `100vw`. */
+  size: string
+  /** Optional viewport-specific overrides, from smallest to largest. */
+  sizes?: Array<{ viewport: string; size: string }>
 }
 
 /**

@@ -5,7 +5,9 @@ import {
   watch,
   type ComponentPublicInstance,
   type ComputedRef,
+  type MaybeRefOrGetter,
   type Ref,
+  toValue,
 } from 'vue'
 import {
   chooseCloseTransition,
@@ -167,7 +169,7 @@ export function useLightboxMotion(
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
   transitionConfig?: TransitionModeConfig,
-  reducedMotion = false,
+  reducedMotion: MaybeRefOrGetter<boolean> = false,
 ) {
   const animating = ref(false)
   const hiddenThumbIndex = ref<number | null>(null)
@@ -481,7 +483,7 @@ export function useLightboxMotion(
     const duration =
       config.mode === 'none'
         ? 0
-        : reducedMotion
+        : toValue(reducedMotion)
           ? REDUCED_MOTION_DURATION_MS
           : config.mode === 'fade'
             ? FADE_DURATION_MS
@@ -716,7 +718,7 @@ export function useLightboxMotion(
         const duration =
           plan.mode === 'instant'
             ? 0
-            : reducedMotion
+            : toValue(reducedMotion)
               ? REDUCED_MOTION_DURATION_MS
               : FADE_DURATION_MS
         await runFadeClose(duration, signal)
@@ -735,7 +737,10 @@ export function useLightboxMotion(
         }
         if (!(await prepareTransitionImage(signal))) {
           if (e.transitionFrame) e.transitionFrame.style.display = 'none'
-          await runFadeClose(reducedMotion ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS, signal)
+          await runFadeClose(
+            toValue(reducedMotion) ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
+            signal,
+          )
           resetClosedVisualState()
           return
         }

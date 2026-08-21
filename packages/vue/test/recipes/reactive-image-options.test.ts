@@ -4,7 +4,7 @@ import { createApp, defineComponent, h, reactive, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
-import { useLightboxProvider } from '../../src/composables/useLightboxProvider'
+import { provideLightbox } from '../../src/composables/provideLightbox'
 import type { ImageAdapter } from '../../src/core/index'
 import PhotoImage from '../../src/primitives/PhotoImage.vue'
 import { flushUi, installBrowserStubs } from '../support/runtime'
@@ -24,7 +24,7 @@ describe('reactive image options', () => {
     const imageAdapter = ref<ImageAdapter>(firstAdapter)
     const component = defineComponent({
       setup() {
-        useLightboxProvider([photo], { imageAdapter })
+        provideLightbox([photo], { imageAdapter })
         return () => h(PhotoImage, { photo, context: 'slide' })
       },
     })

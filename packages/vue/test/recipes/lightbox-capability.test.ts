@@ -2,7 +2,7 @@ import { defineComponent } from 'vue'
 import { describe, expect, it } from 'vite-plus/test'
 import { resolveLightboxComponent } from '../../src/components/shared/resolveLightboxComponent'
 
-describe('setup-time lightbox capability', () => {
+describe('lightbox capability resolution', () => {
   const fallback = defineComponent(() => () => null)
   const injected = defineComponent(() => () => null)
   const custom = defineComponent(() => () => null)

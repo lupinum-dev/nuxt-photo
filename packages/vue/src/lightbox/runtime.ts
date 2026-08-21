@@ -18,6 +18,7 @@ import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
+  type TransitionMode,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
@@ -44,7 +45,7 @@ export function getMountedSlideIndices(active: number, count: number) {
 /**
  * Internal Vue lightbox state.
  *
- * Public customisation should go through `useLightboxProvider`; this function
+ * Public customisation should go through `provideLightbox`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
  * Lifecycle intent is reconciled by one abortable runner. Status is the sole
@@ -52,7 +53,7 @@ export function getMountedSlideIndices(active: number, count: number) {
  */
 export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
-  transitionOption?: LightboxTransitionOption,
+  transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
   imageAdapter?: MaybeRef<ImageAdapter | undefined>,
 ) {
@@ -75,26 +76,43 @@ export function useLightboxRuntimeState(
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
   const transitionConfig = { ...DEFAULT_TRANSITION_CONFIG }
+  let requestedTransitionMode: TransitionMode = DEFAULT_TRANSITION_CONFIG.mode
 
-  // Apply user-provided transition option
-  if (transitionOption) {
-    if (typeof transitionOption === 'string') {
-      transitionConfig.mode = transitionOption
-    } else {
-      transitionConfig.mode = transitionOption.mode
-      transitionConfig.autoThreshold =
-        transitionOption.autoThreshold ?? transitionConfig.autoThreshold
-    }
+  const reducedMotionQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null
+  const prefersReducedMotion = ref(!!reducedMotionQuery?.matches)
+
+  function refreshTransitionConfig() {
+    const option = toValue(transitionOption)
+    requestedTransitionMode =
+      typeof option === 'string' ? option : (option?.mode ?? DEFAULT_TRANSITION_CONFIG.mode)
+    transitionConfig.autoThreshold =
+      typeof option === 'object'
+        ? (option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold)
+        : DEFAULT_TRANSITION_CONFIG.autoThreshold
+    transitionConfig.mode =
+      prefersReducedMotion.value && requestedTransitionMode !== 'none'
+        ? 'fade'
+        : requestedTransitionMode
   }
 
-  // Respect prefers-reduced-motion (overrides 'auto' and 'flip', but not explicit 'none')
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (prefersReducedMotion && transitionConfig.mode !== 'none') {
-    transitionConfig.mode = 'fade'
+  watch(
+    () => {
+      const option = toValue(transitionOption)
+      return typeof option === 'object' ? [option.mode, option.autoThreshold] : option
+    },
+    refreshTransitionConfig,
+    { immediate: true },
+  )
+
+  const onReducedMotionChange = (event: MediaQueryListEvent) => {
+    prefersReducedMotion.value = event.matches
+    refreshTransitionConfig()
   }
+  reducedMotionQuery?.addEventListener('change', onReducedMotionChange)
+  onBeforeUnmount(() => reducedMotionQuery?.removeEventListener('change', onReducedMotionChange))
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
@@ -298,6 +316,8 @@ export function useLightboxRuntimeState(
       goToPrev: carousel.goToPrev,
       goTo: carousel.goTo,
       selectedSnap: carousel.selectedSnap,
+      goToFirst: () => carousel.goTo(0),
+      goToLast: () => carousel.goTo(Math.max(0, photos.value.length - 1)),
     },
     lifecycle: {
       setCloseDragY: motion.setCloseDragY,

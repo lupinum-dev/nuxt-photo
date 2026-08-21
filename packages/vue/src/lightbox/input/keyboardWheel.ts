@@ -17,6 +17,8 @@ type KeyboardWheelConfig = {
   toggleZoom: (clientPoint?: { x: number; y: number }) => void
   goToNext: () => void
   goToPrev: () => void
+  goToFirst: () => void
+  goToLast: () => void
   close: () => Promise<void>
   reportAsyncError: (operation: string, task: Promise<unknown>) => void
 }
@@ -62,6 +64,16 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
     if (config.animating.value) return
     if (event.key === 'z' || event.key === 'Z') {
       config.toggleZoom()
+      return
+    }
+    if (event.key === 'Home') {
+      event.preventDefault()
+      config.goToFirst()
+      return
+    }
+    if (event.key === 'End') {
+      event.preventDefault()
+      config.goToLast()
       return
     }
 

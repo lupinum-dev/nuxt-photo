@@ -69,9 +69,9 @@ describe('PhotoGroup registration', () => {
 
     props.photos = [first]
     await flushUi()
-    const figures = mounted.container.querySelectorAll('figure')
-    expect(figures[0]?.getAttribute('role')).toBe('button')
-    expect(figures[1]?.getAttribute('role')).toBeNull()
+    const figures = mounted.container.querySelectorAll('.np-photo')
+    expect(figures[0]?.tagName).toBe('BUTTON')
+    expect(figures[1]?.tagName).toBe('FIGURE')
 
     mounted.unmount()
   })
@@ -159,7 +159,7 @@ describe('PhotoGroup registration', () => {
     const canonical = makePhoto({ id: 'same-id' })
     const descendant = { ...canonical }
     const context: PhotoGroupContext = {
-      enabled: true,
+      enabled: computed(() => true),
       hasPhoto: () => true,
       photos: computed(() => [canonical]),
       hiddenPhoto: computed(() => canonical),
@@ -167,13 +167,15 @@ describe('PhotoGroup registration', () => {
       removeCapabilities() {},
       async open() {},
       async activateById() {},
+      async close() {},
+      isOpen: computed(() => false),
     }
     const mounted = await mountComponent(Photo, {
       props: { photo: descendant },
       provideValues: [[PhotoGroupContextKey, context]],
     })
 
-    expect((mounted.container.querySelector('figure') as HTMLElement).style.opacity).toBe('0')
+    expect((mounted.container.querySelector('.np-photo') as HTMLElement).style.opacity).toBe('0')
     mounted.unmount()
   })
 })

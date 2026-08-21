@@ -109,7 +109,7 @@ describe('SSR', () => {
       expect(html).toContain('ssr-1')
     })
 
-    it('with both breakpoints and defaultContainerWidth renders inline calc() AND container query CSS', async () => {
+    it('with defaultContainerWidth renders inline geometry without dead container-query CSS', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -122,7 +122,7 @@ describe('SSR', () => {
       })
       const html = await renderToString(app)
       expect(html).toContain('calc(')
-      expect(html).toContain('@container')
+      expect(html).not.toContain('@container')
     })
 
     it('columns breakpoints do not emit hidden SSR variant branches', async () => {
@@ -252,8 +252,8 @@ describe('SSR', () => {
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__column')
-      expect(html).toContain('role="button"')
-      expect(html).toContain('tabindex="0"')
+      expect(html).toContain('type="button"')
+      expect(html).not.toContain('tabindex="0"')
     })
 
     it('columns without any SSR signal falls back to the approximate flat grid', async () => {
@@ -279,7 +279,7 @@ describe('SSR', () => {
 
     const html = await renderToString(app)
 
-    expect(html).toContain('role="button"')
+    expect(html).toContain('type="button"')
     expect(html).not.toContain('teleport start')
     expect(html).not.toContain('role="dialog"')
   })

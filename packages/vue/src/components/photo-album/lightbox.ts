@@ -7,14 +7,14 @@ import {
   type ComponentPublicInstance,
   type ComputedRef,
 } from 'vue'
-import { useLightboxProvider } from '../../composables/index'
+import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
 import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
-import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
+import { usePhotoLabels } from '../../provide/labels'
 
 type AlbumLightboxProps<TMeta extends object> = {
   lightbox?: boolean | Component
@@ -27,23 +27,19 @@ export function useAlbumLightbox<TMeta extends object>(
   props: AlbumLightboxProps<TMeta>,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
-  warnOnSetupOptionChanges('PhotoAlbum', {
-    lightbox: () => props.lightbox,
-    transition: () => props.transition,
-  })
-  const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = inject(LightboxComponentKey, null)
 
-  const resolvedLightboxComponent = !parentGroup
-    ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
-    : null
-  const hasOwnLightbox = resolvedLightboxComponent !== null
-  const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)
-  const LightboxComponent: Component | null = resolvedLightboxComponent
+  const LightboxComponent = computed<Component | null>(() =>
+    !parentGroup
+      ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
+      : null,
+  )
+  const hasOwnLightbox = computed(() => LightboxComponent.value !== null)
+  const hasLightbox = computed(() => parentGroup?.enabled.value ?? hasOwnLightbox.value)
 
-  const ownCtx = hasOwnLightbox
-    ? useLightboxProvider(photos, {
-        transition: props.transition,
+  const ownCtx = !parentGroup
+    ? provideLightbox(photos, {
+        transition: () => props.transition,
         imageAdapter: computed(() => props.imageAdapter),
       })
     : null
@@ -64,28 +60,37 @@ export function useAlbumLightbox<TMeta extends object>(
   }
 
   function activatePhoto(photo: PhotoItem<TMeta>, index: number) {
-    if (delegatedGroup) {
-      return delegatedGroup.activateById(photo.id, thumbElsMap[index])
+    if (parentGroup) {
+      return parentGroup.activateById(photo.id, thumbElsMap[index])
     }
 
-    if (!ownCtx) return
+    if (!ownCtx || !hasOwnLightbox.value) return
     syncOwnThumbRefs()
     return ownCtx.open(index)
   }
 
   function itemBindings(photo: PhotoItem<TMeta>, index: number) {
     const base = { ref: setItemRef(index) }
-    if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
+    if (!isPhotoInteractive(photo)) return base
 
     return {
       ...base,
-      ...createPhotoTriggerBindings(photo, index, () => activatePhoto(photo, index)),
+      ...createPhotoTriggerBindings(
+        photo,
+        index,
+        () => activatePhoto(photo, index),
+        photo.alt || labels.value.viewPhoto(index + 1),
+      ),
     }
   }
 
+  function isPhotoInteractive(photo: PhotoItem<TMeta>) {
+    return hasLightbox.value && (!parentGroup || parentGroup.hasPhoto(photo.id))
+  }
+
   function isHidden(photo: PhotoItem<TMeta>): boolean {
-    if (delegatedGroup) {
-      return delegatedGroup.hiddenPhoto.value?.id === photo.id
+    if (parentGroup) {
+      return parentGroup.hiddenPhoto.value?.id === photo.id
     }
     if (ownCtx) {
       const index = ownCtx.hiddenThumbnailIndex.value
@@ -95,6 +100,35 @@ export function useAlbumLightbox<TMeta extends object>(
     return false
   }
 
+  const labels = usePhotoLabels()
+
+  async function open(index = 0) {
+    if (parentGroup) return parentGroup.open(index)
+    if (!ownCtx || !hasOwnLightbox.value) return
+    syncOwnThumbRefs()
+    await ownCtx.open(index)
+  }
+
+  async function openById(id: string) {
+    if (parentGroup) return parentGroup.activateById(id)
+    if (!ownCtx || !hasOwnLightbox.value) return
+    syncOwnThumbRefs()
+    await ownCtx.openById(id)
+  }
+
+  async function close() {
+    if (parentGroup) return parentGroup.close()
+    await ownCtx?.close()
+  }
+
+  const isOpen = computed(
+    () => parentGroup?.isOpen.value ?? (hasOwnLightbox.value && ownCtx?.isOpen.value) ?? false,
+  )
+
+  watch(hasOwnLightbox, (enabled) => {
+    if (!enabled && ownCtx?.isOpen.value) void ownCtx.close()
+  })
+
   const capabilityOwner = Symbol('PhotoAlbum')
 
   function removeCapabilities() {
@@ -102,7 +136,7 @@ export function useAlbumLightbox<TMeta extends object>(
   }
 
   function syncCapabilities(nextPhotos: PhotoItem<TMeta>[]) {
-    const group = delegatedGroup
+    const group = parentGroup?.enabled.value ? parentGroup : null
     if (!group) {
       removeCapabilities()
       return
@@ -119,8 +153,8 @@ export function useAlbumLightbox<TMeta extends object>(
   }
 
   watch(
-    photos,
-    (nextPhotos) => {
+    [photos, () => parentGroup?.enabled.value],
+    ([nextPhotos]) => {
       syncCapabilities(nextPhotos)
     },
     { flush: 'post' },
@@ -135,6 +169,11 @@ export function useAlbumLightbox<TMeta extends object>(
     hasOwnLightbox,
     LightboxComponent,
     itemBindings,
+    isPhotoInteractive,
     isHidden,
+    open,
+    openById,
+    close,
+    isOpen,
   }
 }

@@ -21,8 +21,7 @@
 .np-lightbox__topbar {
   position: absolute;
   top: 18px;
-  left: 20px;
-  right: 20px;
+  inset-inline: 20px;
   z-index: 55;
   display: flex;
   align-items: center;
@@ -71,11 +70,11 @@
 }
 
 .np-lightbox__btn--prev {
-  left: 18px;
+  inset-inline-start: 18px;
 }
 
 .np-lightbox__btn--next {
-  right: 18px;
+  inset-inline-end: 18px;
 }
 
 .np-lightbox__stage {
@@ -165,9 +164,9 @@
   position: absolute;
   z-index: 54;
   bottom: clamp(40px, 7vh, 80px);
-  left: clamp(48px, 6vw, 120px);
+  inset-inline-start: clamp(48px, 6vw, 120px);
   width: min(720px, calc(100vw - 64px));
-  text-align: left;
+  text-align: start;
   opacity: 0;
   pointer-events: none;
 }
@@ -239,8 +238,7 @@
 @media (max-width: 700px) {
   .np-lightbox__topbar {
     top: 12px;
-    left: 12px;
-    right: 12px;
+    inset-inline: 12px;
   }
 
   .np-lightbox__actions {
@@ -254,7 +252,7 @@
 
   .np-lightbox__caption {
     bottom: 16px;
-    left: 16px;
+    inset-inline-start: 16px;
     width: min(620px, calc(100vw - 32px));
   }
 }

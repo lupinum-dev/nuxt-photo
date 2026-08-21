@@ -181,7 +181,7 @@ describe('PhotoCarousel — DOM', () => {
       showDots: true,
       showThumbnails: false,
       slideSize: '33.333%',
-      options: {} as Record<string, unknown>,
+      dragFree: false,
     })
     const m = mount(PhotoCarousel, props)
     await flushUi()
@@ -193,7 +193,7 @@ describe('PhotoCarousel — DOM', () => {
     setCarouselRect(container, 0, 600)
     slides.forEach((slide, index) => setCarouselRect(slide, index * 200, 200))
 
-    props.options = { dragFree: true }
+    props.dragFree = true
     await flushUi(10)
 
     expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(3)

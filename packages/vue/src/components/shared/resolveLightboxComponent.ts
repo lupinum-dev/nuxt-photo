@@ -1,6 +1,6 @@
 import type { Component } from 'vue'
 
-/** Resolve one setup-time lightbox capability into its concrete component. */
+/** Resolve the current lightbox capability into its concrete component. */
 export function resolveLightboxComponent(
   option: boolean | Component | undefined,
   injected: Component | null,

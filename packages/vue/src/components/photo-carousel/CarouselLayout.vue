@@ -4,9 +4,10 @@
   <div v-else class="np-carousel" :style="cssVarStyle" v-bind="$attrs">
     <div ref="emblaRef" class="np-carousel__viewport">
       <div class="np-carousel__container">
-        <div
+        <component
           v-for="(photo, index) in photos"
           :key="photo.id"
+          :is="onSlideActivate && !$slots.slide ? 'button' : 'div'"
           class="np-carousel__slide"
           :class="slideClass"
           v-bind="interactiveAttrs(photo, index)"
@@ -32,7 +33,7 @@
               />
             </slot>
           </div>
-        </div>
+        </component>
       </div>
 
       <div
@@ -55,7 +56,7 @@
               type="button"
               class="np-carousel__arrow np-carousel__arrow--prev"
               :disabled="!canPrev"
-              aria-label="Previous slide"
+              :aria-label="labels.previousSlide"
               @click="goToPrev()"
             >
               <slot name="prev">‹</slot>
@@ -64,7 +65,7 @@
               type="button"
               class="np-carousel__arrow np-carousel__arrow--next"
               :disabled="!canNext"
-              aria-label="Next slide"
+              :aria-label="labels.nextSlide"
               @click="goToNext()"
             >
               <slot name="next">›</slot>
@@ -78,7 +79,7 @@
       </div>
 
       <div v-if="showMultiControls && showCounter" class="np-carousel__counter" aria-live="polite">
-        {{ selectedIndex + 1 }} / {{ photos.length }}
+        {{ labels.counter(selectedIndex + 1, photos.length) }}
       </div>
     </div>
 
@@ -101,7 +102,7 @@
           type="button"
           class="np-carousel__dot"
           :class="{ 'np-carousel__dot--selected': i === selectedSnapIndex }"
-          :aria-label="`Go to slide ${slideIndex + 1}`"
+          :aria-label="labels.goToSlide(slideIndex + 1)"
           :aria-current="i === selectedSnapIndex ? 'true' : undefined"
           @click="goTo(slideIndex)"
         />
@@ -117,7 +118,7 @@
             type="button"
             class="np-carousel__thumb"
             :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
-            :aria-label="`Go to slide ${index + 1}`"
+            :aria-label="photo.alt || labels.goToSlide(index + 1)"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
           >
@@ -153,16 +154,14 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import type {
-  ImageAdapter,
-  PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
-  PhotoItem,
-} from '../../core/index'
+import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
-import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
+import { usePhotoCarouselRuntime, type CarouselBehaviorOptions } from './usePhotoCarouselRuntime'
+import { usePhotoLabels } from '../../provide/labels'
 
 defineOptions({ inheritAttrs: false })
+
+const labels = usePhotoLabels()
 
 defineSlots<{
   slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
@@ -177,7 +176,7 @@ defineSlots<{
 const props = defineProps<{
   photos: PhotoItem<TMeta>[]
   imageAdapter?: ImageAdapter<TMeta>
-  options: PhotoCarouselOptions
+  options: CarouselBehaviorOptions
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
   showArrows: boolean
@@ -249,13 +248,13 @@ function setSlideElRef(index: number) {
 }
 
 function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
-  if (!props.onSlideActivate) return {}
+  if (!props.onSlideActivate || slots.slide) return {}
   return {
     ...createPhotoTriggerBindings(
       photo,
       index,
       async () => props.onSlideActivate?.(index),
-      `Open slide ${index + 1}`,
+      photo.alt || labels.value.viewPhoto(index + 1),
     ),
     style: { cursor: 'pointer' },
     'data-index': index,

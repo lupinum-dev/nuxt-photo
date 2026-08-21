@@ -3,6 +3,12 @@
 .np-photo {
   position: relative;
   display: inline-block;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
 }
 
 .np-photo__img {
@@ -14,7 +20,21 @@
 .np-photo__caption {
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   pointer-events: none;
+}
+
+.np-trigger {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: start;
 }

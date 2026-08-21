@@ -2,14 +2,16 @@ import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType, EmblaOptionsType } from 'embla-carousel'
 import Autoplay from 'embla-carousel-autoplay'
-import type {
-  PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
-  PhotoItem,
-} from '../../core/index'
+import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { readEmblaSnapModel } from '../../integrations/embla/snapModel'
 
-export function validatePhotoCarouselOptions(options: PhotoCarouselOptions) {
+export interface CarouselBehaviorOptions {
+  readonly loop?: boolean
+  readonly dragFree?: boolean
+  readonly slidesToScroll?: number
+}
+
+export function validatePhotoCarouselOptions(options: CarouselBehaviorOptions) {
   if (options.loop !== undefined && typeof options.loop !== 'boolean') {
     throw new TypeError('[nuxt-photo] PhotoCarousel options.loop must be boolean')
   }
@@ -47,7 +49,7 @@ export function validatePhotoCarouselAutoplayOptions(
 
 type CarouselRuntimeConfig = {
   photos: Readonly<Ref<readonly PhotoItem[]>>
-  options: Readonly<Ref<PhotoCarouselOptions>>
+  options: Readonly<Ref<CarouselBehaviorOptions>>
   autoplay: Readonly<Ref<boolean | PhotoCarouselAutoplayOptions>>
   showThumbnails: Readonly<Ref<boolean>>
 }

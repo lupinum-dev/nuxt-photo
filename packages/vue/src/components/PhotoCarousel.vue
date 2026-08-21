@@ -1,8 +1,9 @@
 <template>
   <CarouselLayout
+    ref="carouselRef"
     v-bind="{ ...$attrs, ...layoutProps }"
-    :on-slide-activate="provider ? openSlide : undefined"
-    :set-slide-ref="provider?.setThumbnailRef"
+    :on-slide-activate="lightboxEnabled ? openSlide : undefined"
+    :set-slide-ref="provider.setThumbnailRef"
   >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
@@ -28,12 +29,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
-import type {
-  ImageAdapter,
-  PhotoCarouselAutoplayOptions,
-  PhotoCarouselOptions,
-  PhotoItem,
-} from '../core/index'
+import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -46,13 +42,13 @@ import type {
   InvalidPhotosEvent,
   LightboxTransitionOption,
 } from '../core/index'
-import { useLightboxProvider } from '../composables/index'
+import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey } from '../provide/keys'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
 import { resolveRecipePhotos } from '../core/photo/resolve'
-import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import type { CarouselBehaviorOptions } from './photo-carousel/usePhotoCarouselRuntime'
 
 defineOptions({ inheritAttrs: false })
 
@@ -71,7 +67,9 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
-    options?: PhotoCarouselOptions
+    loop?: boolean
+    dragFree?: boolean
+    slidesToScroll?: number
     showArrows?: boolean
     showThumbnails?: boolean
     showCounter?: boolean
@@ -81,9 +79,9 @@ const props = withDefaults(
     slideAspect?: string
     gap?: string
     thumbSize?: string
-    /** Setup-time lightbox capability. Remount to change it. */
+    /** Reactive lightbox capability. */
     lightbox?: boolean | Component
-    /** Setup-time transition configuration. Remount to change it. */
+    /** Reactive transition configuration. */
     transition?: LightboxTransitionOption
     slideClass?: string
     imgClass?: string
@@ -97,7 +95,7 @@ const props = withDefaults(
     showCounter: true,
     showDots: false,
     autoplay: false,
-    lightbox: false,
+    lightbox: true,
   },
 )
 
@@ -126,32 +124,34 @@ watch(
 )
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(
-  props.lightbox,
-  injectedLightbox,
-  Lightbox,
-  false,
+const lightboxComponent = computed(() =>
+  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true),
 )
-const hasLightbox = lightboxComponent !== null
-warnOnSetupOptionChanges('PhotoCarousel', {
-  lightbox: () => props.lightbox,
+const lightboxEnabled = computed(() => lightboxComponent.value !== null)
+const provider = provideLightbox(resolvedPhotos, {
   transition: () => props.transition,
+  imageAdapter: computed(() => props.imageAdapter),
 })
-const provider = hasLightbox
-  ? useLightboxProvider(resolvedPhotos, {
-      transition: props.transition,
-      imageAdapter: computed(() => props.imageAdapter),
-    })
-  : null
+
+watch(lightboxEnabled, (enabled) => {
+  if (!enabled && provider.isOpen.value) void provider.close()
+})
 
 async function openSlide(index: number) {
-  await provider?.open(index)
+  if (!lightboxEnabled.value) return
+  await provider.open(index)
 }
+
+const carouselOptions = computed<CarouselBehaviorOptions>(() => ({
+  loop: props.loop,
+  dragFree: props.dragFree,
+  slidesToScroll: props.slidesToScroll,
+}))
 
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   imageAdapter: props.imageAdapter,
-  options: props.options ?? {},
+  options: carouselOptions.value,
   autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,
@@ -167,4 +167,53 @@ const layoutProps = computed(() => ({
   captionClass: props.captionClass,
   controlsClass: props.controlsClass,
 }))
+
+type CarouselLayoutController = {
+  selectedIndex: number
+  goTo(index: number, instant?: boolean): void
+  goToNext(instant?: boolean): void
+  goToPrev(instant?: boolean): void
+}
+
+const carouselRef = ref<CarouselLayoutController | null>(null)
+const selectedIndex = computed(() => carouselRef.value?.selectedIndex ?? 0)
+
+function goToSlide(index: number, instant = false) {
+  carouselRef.value?.goTo(index, instant)
+}
+
+function goToNextSlide(instant = false) {
+  carouselRef.value?.goToNext(instant)
+}
+
+function goToPreviousSlide(instant = false) {
+  carouselRef.value?.goToPrev(instant)
+}
+
+async function open(index = 0) {
+  if (!lightboxEnabled.value) return
+  await provider.open(index)
+}
+
+async function openById(id: string) {
+  if (!lightboxEnabled.value) return
+  await provider.openById(id)
+}
+
+async function close() {
+  await provider.close()
+}
+
+const isOpen = computed(() => lightboxEnabled.value && provider.isOpen.value)
+
+defineExpose({
+  open,
+  openById,
+  close,
+  isOpen,
+  goToSlide,
+  goToNextSlide,
+  goToPreviousSlide,
+  selectedIndex,
+})
 </script>

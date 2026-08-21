@@ -8,10 +8,11 @@ import type {
   VNodeChild,
 } from 'vue'
 import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '../core/index'
+import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
-/** Small public controller returned by `useLightbox()` and `useLightboxProvider()`. */
+/** Small public controller returned by `useLightbox()` and `provideLightbox()`. */
 export interface LightboxController<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly photos: ComputedRef<readonly PhotoItem<TMeta>[]>
   readonly count: ComputedRef<number>
@@ -111,3 +112,5 @@ export interface LightboxDefaults {
 export const LightboxDefaultsKey: InjectionKey<LightboxDefaults> = Symbol(
   'nuxt-photo:lightbox-defaults',
 )
+export const PhotoLabelsKey: InjectionKey<ComputedRef<PhotoLabels>> =
+  Symbol('nuxt-photo:photo-labels')
