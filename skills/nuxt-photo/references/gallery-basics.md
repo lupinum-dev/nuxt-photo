@@ -6,35 +6,38 @@
 
 Nuxt Photo is a single Nuxt module. One install and one entry in `modules` auto-registers the recipe components and auto-imports the helpers.
 
+::warning
+These docs describe the Nuxt Photo 1.0 beta. Install the `next` release while
+the stable `latest` tag remains on 0.2. Existing 0.2 applications should follow
+[the 1.0 upgrade guide](/docs/help/upgrade-to-1).
+::
+
 ## Prerequisites
 
 - Nuxt **4.4.8+** within Nuxt 4
 - Node **22.18+** within Node 22, or **24.11+** within Node 24
 
-## Recommended install
+## Install the beta
 
-Use Nuxt's module helper:
-
-```bash
-npx nuxi module add @lupinum/nuxt-photo
-```
-
-It installs the package and adds `@lupinum/nuxt-photo` to `modules` for you. If you use this command, skip the manual install and registration steps below.
-
-## Manual install
-
-::pm-install{name="@lupinum/nuxt-photo"}
+::pm-install{name="@lupinum/nuxt-photo@next"}
 ::
 
-Then add the module to your `nuxt.config`:
+Add the module and the complete visual theme to your `nuxt.config`:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
   modules: ['@lupinum/nuxt-photo'],
+  nuxtPhoto: {
+    css: 'all',
+  },
 })
 ```
 
-The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, `<PhotoCarousel>`, and helpers such as `useLightbox`. Composables still need the provider context that their reference pages describe.
+The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, and
+`<PhotoCarousel>`. It also auto-imports helpers such as `useLightbox`. The
+`css: 'all'` option includes the visual theme for your first gallery. The
+default `css: 'structure'` option is for applications that provide their own
+theme.
 
 ## Use it
 
@@ -217,7 +220,7 @@ You now have the smallest useful Nuxt Photo page. From here:
 - [Customize the built-in lightbox](/docs/guides/customize-the-lightbox) - change captions, actions, or slides without rebuilding everything.
 - [Use `@nuxt/image`](/docs/concepts/image-pipeline) - responsive images with real optimization.
 - [Tune responsive layouts](/docs/guides/tune-a-responsive-album) - column counts, spacing, breakpoints.
-- [Build a custom lightbox](/docs/guides/customize-the-lightbox) - keep the runtime, replace the UI.
+- [Build a lightbox from primitives](/docs/guides/build-a-lightbox-from-primitives) - replace the structure while keeping the runtime.
 - [Configure the module](/docs/api/configuration) - CSS strategy, image provider, lightbox defaults.
 
 _Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
@@ -282,7 +285,7 @@ Every rendered photo needs accurate dimensions. Do not use placeholder values. I
 Recipe components validate photo data before layout code sees it. Invalid photos
 throw in every environment by default. Use `validation="drop"` explicitly on
 collection recipes only when losing invalid entries is acceptable and handle
-`onInvalidPhotos` so upstream regressions remain visible.
+the `invalidPhotos` event so upstream regressions remain visible.
 
 ## Optional fields
 

@@ -25,7 +25,8 @@
 </p>
 
 > [!WARNING]
-> Nuxt Photo is pre-1.0. Review the changelog before each upgrade.
+> Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag and review the
+> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-to-1).
 
 ## Why use Nuxt Photo?
 
@@ -51,7 +52,7 @@ Nuxt Photo is not suitable when you only need a plain image grid. It is also not
 Install the Nuxt package:
 
 ```bash
-pnpm add @lupinum/nuxt-photo
+pnpm add @lupinum/nuxt-photo@next
 ```
 
 Add the module:
