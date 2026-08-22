@@ -8,9 +8,21 @@ export function listPendingChangesets(rootDir) {
   if (!existsSync(changesetDir)) {
     return []
   }
-  return readdirSync(changesetDir)
+  const changesets = readdirSync(changesetDir)
     .filter((entry) => entry.endsWith('.md') && entry !== 'README.md')
     .toSorted()
+  const prereleasePath = join(changesetDir, 'pre.json')
+  if (!existsSync(prereleasePath)) {
+    return changesets
+  }
+
+  const prerelease = JSON.parse(readFileSync(prereleasePath, 'utf8'))
+  if (prerelease.mode !== 'pre') {
+    return changesets
+  }
+
+  const consumed = new Set(prerelease.changesets ?? [])
+  return changesets.filter((entry) => !consumed.has(entry.slice(0, -3)))
 }
 
 export function extractChangelogSection(path, version) {
