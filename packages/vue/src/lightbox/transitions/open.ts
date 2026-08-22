@@ -1,20 +1,19 @@
-import { nextTick } from 'vue'
+import { nextTick, toValue } from 'vue'
 import { isUsableRect, shouldUseFlip, type RectLike } from '../../core/index'
 import { flipTransform } from '../../core/geometry/rect'
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
 import { nextFrame, throwIfAborted, wait } from './animation'
-import type { MotionCallbacks, MotionTransitionContext } from './types'
+import type { MotionCallbacks, OpenTransitionContext } from './types'
 import { opacityOf, rectsMatch, visible } from './visual-state'
+import { REDUCED_MOTION_DURATION_MS, TRANSITION_EASING } from './timing'
 
 const OPEN_DURATION_MS = 420
 const FADE_DURATION_MS = 220
-const REDUCED_MOTION_DURATION_MS = 160
 const HANDOFF_DURATION_MS = 100
 const INTERRUPTED_HANDOFF_MS = 80
-const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 async function decodeActiveImage(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   index: number,
   signal: AbortSignal,
 ) {
@@ -76,7 +75,7 @@ async function decodeActiveImage(
   }
 }
 
-async function handoffToMedia(context: MotionTransitionContext, signal: AbortSignal) {
+async function handoffToMedia(context: OpenTransitionContext, signal: AbortSignal) {
   const current = context.visual.elements()
   if (!current.transitionFrame) return
   if (current.viewport) current.viewport.style.opacity = '1'
@@ -92,7 +91,7 @@ async function handoffToMedia(context: MotionTransitionContext, signal: AbortSig
 }
 
 async function runFadeOpen(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   duration: number,
   callbacks: MotionCallbacks,
   signal: AbortSignal,
@@ -107,7 +106,7 @@ async function runFadeOpen(
     visual.animate(
       current.overlay,
       [{ opacity: 0 }, { opacity: 1 }],
-      { duration, easing: EASING },
+      { duration, easing: TRANSITION_EASING },
       ['opacity'],
       signal,
     ),
@@ -115,7 +114,7 @@ async function runFadeOpen(
       visual.animate(
         element,
         [{ opacity: 0 }, { opacity: 1 }],
-        { duration, easing: EASING },
+        { duration, easing: TRANSITION_EASING },
         ['opacity'],
         signal,
       ),
@@ -126,7 +125,7 @@ async function runFadeOpen(
     return visual.animate(
       current.viewport,
       [{ opacity: 0 }, { opacity: decode.ok ? 1 : 0 }],
-      { duration, easing: EASING },
+      { duration, easing: TRANSITION_EASING },
       ['opacity'],
       signal,
     )
@@ -134,11 +133,7 @@ async function runFadeOpen(
   await Promise.all([shell, media])
 }
 
-function resolveOpenRects(
-  context: MotionTransitionContext,
-  index: number,
-  toRect: RectLike | null,
-) {
+function resolveOpenRects(context: OpenTransitionContext, index: number, toRect: RectLike | null) {
   const { visual } = context
   const captured = context.getCapturedOpen()?.index === index ? context.getCapturedOpen() : null
   const interruptedRect = visible(visual.transitionFrameRef.value)
@@ -154,7 +149,7 @@ function resolveOpenRects(
 
 /** Run the open choreography while the coordinator retains cancellation and ownership. */
 export async function runOpenTransition(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   index: number,
   callbacks: MotionCallbacks,
   signal: AbortSignal,
@@ -178,11 +173,11 @@ export async function runOpenTransition(
     return false
   }
 
-  const config = context.getTransitionConfig()
+  const config = toValue(context.transitionConfig)
   const duration =
     config.mode === 'none'
       ? 0
-      : context.isReducedMotion()
+      : toValue(context.reducedMotion)
         ? REDUCED_MOTION_DURATION_MS
         : config.mode === 'fade'
           ? FADE_DURATION_MS
@@ -246,14 +241,14 @@ export async function runOpenTransition(
             { transform: current.transitionFrame?.style.transform || 'none' },
             { transform: 'none' },
           ],
-          { duration: OPEN_DURATION_MS, easing: EASING },
+          { duration: OPEN_DURATION_MS, easing: TRANSITION_EASING },
           ['transform'],
           signal,
         ),
         visual.animate(
           current.overlay,
           [{ opacity: 0 }, { opacity: 1 }],
-          { duration: OPEN_DURATION_MS * 0.7, easing: EASING },
+          { duration: OPEN_DURATION_MS * 0.7, easing: TRANSITION_EASING },
           ['opacity'],
           signal,
         ),
@@ -263,7 +258,7 @@ export async function runOpenTransition(
           {
             duration: OPEN_DURATION_MS * 0.5,
             delay: OPEN_DURATION_MS * 0.35,
-            easing: EASING,
+            easing: TRANSITION_EASING,
           },
           ['opacity'],
           signal,
@@ -275,7 +270,7 @@ export async function runOpenTransition(
             {
               duration: OPEN_DURATION_MS * 0.35,
               delay: OPEN_DURATION_MS * 0.55,
-              easing: EASING,
+              easing: TRANSITION_EASING,
             },
             ['opacity'],
             signal,
@@ -291,51 +286,45 @@ export async function runOpenTransition(
             {
               duration: OPEN_DURATION_MS * 0.33,
               delay: OPEN_DURATION_MS * 0.62,
-              easing: EASING,
+              easing: TRANSITION_EASING,
             },
             ['opacity', 'transform'],
             signal,
           ),
         ),
       ])
-      void flight.catch(() => {})
-
       const handoffWindow =
         typeof current.transitionFrame?.animate === 'function'
-          ? wait(OPEN_DURATION_MS - HANDOFF_DURATION_MS, signal)
+          ? wait(OPEN_DURATION_MS - HANDOFF_DURATION_MS, signal).then(() => ({
+              kind: 'window' as const,
+            }))
           : null
-      void handoffWindow?.catch(() => {})
 
       await nextFrame(signal)
       context.stageMounted.value = true
-      const decodeState: {
-        result: { ok: true } | { ok: false; error: unknown } | null
-      } = { result: null }
       const decode = callbacks
         .prepareActiveSlide(true)
         .then(() => decodeActiveImage(context, index, signal))
         .then((result) => {
-          decodeState.result = result
           callbacks.setImageLoadFailed(!result.ok, result.ok ? undefined : result.error)
-          return result
+          return { kind: 'decoded' as const, result }
         })
-      void decode.catch(() => {})
+      const handoff = (async () => {
+        const first = handoffWindow ? await Promise.race([decode, handoffWindow]) : await decode
+        if (first.kind === 'decoded' && first.result.ok) {
+          await handoffToMedia(context, signal)
+          return
+        }
 
-      if (handoffWindow) await handoffWindow
-      else await decode
-      const earlyDecode = decodeState.result
-
-      if (earlyDecode?.ok) {
-        await Promise.all([flight, handoffToMedia(context, signal)])
-      } else {
         await flight
-        const result = earlyDecode ?? (await decode)
+        const result = first.kind === 'decoded' ? first.result : (await decode).result
         if (result.ok) await handoffToMedia(context, signal)
         else if (current.transitionFrame) current.transitionFrame.style.display = 'none'
-      }
+      })()
+
+      await Promise.all([flight, handoff])
     }
 
-    visual.setChromeOpacity(1)
     context.activeImagePending.value = false
     context.animating.value = false
     context.clearCapturedOpen()

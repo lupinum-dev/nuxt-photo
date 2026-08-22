@@ -1,7 +1,12 @@
 import { computeRowsLayout } from './index'
-import { computeGaps, computeWidthDivisor } from '../constants'
+import {
+  computeGaps,
+  computeWidthDivisor,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  DEFAULT_TARGET_ROW_HEIGHT,
+} from '../constants'
 import { resolveResponsiveParameter } from '../../types'
-import { devWarn } from '../../env'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
 export interface BreakpointStylesOptions {
@@ -33,8 +38,8 @@ function rowSignature(
  *   2. **Collapse**: merge adjacent breakpoints whose row signatures match
  *      into a single span. This is what keeps the CSS size O(distinct layouts)
  *      instead of O(breakpoints).
- *   3. **Emit**: for each span, emit one `@container` rule using exact
- *      inclusive lower and exclusive upper range boundaries.
+ *   3. **Emit**: for each span, emit one `@container` rule bounded by
+ *      `min-width` / `max-width` of its first and last breakpoint.
  *
  * Why collapse is safe:
  *   Each item's width is `calc((100% − gaps) / divisor)`, where
@@ -59,9 +64,13 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
   const bpEntries: BpEntry[] = []
   for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
+    const spacing = resolveResponsiveParameter(opts.spacing, bp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, bp, DEFAULT_PADDING)
+    const targetRowHeight = resolveResponsiveParameter(
+      opts.targetRowHeight,
+      bp,
+      DEFAULT_TARGET_ROW_HEIGHT,
+    )
     const groups = computeRowsLayout({
       photos,
       containerWidth: bp,
@@ -76,12 +85,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
       groups,
     })
   }
-  if (bpEntries.length === 0) {
-    devWarn(
-      'container-query styles are empty because every breakpoint produced an empty rows layout. Check that spacing and padding leave room for photos at the smallest breakpoint.',
-    )
-    return ''
-  }
+  if (bpEntries.length === 0) return ''
 
   // 2. Collapse adjacent identical layouts into spans
   type Span = {
@@ -116,17 +120,17 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     const isLast = s === spans.length - 1
     const sampleBp = span.sampleBp
 
-    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, sampleBp, 0)
+    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, DEFAULT_SPACING)
+    const padding = resolveResponsiveParameter(opts.padding, sampleBp, DEFAULT_PADDING)
 
     // Build the @container condition
     let condition: string
     if (spans.length === 1) {
-      // Single span: bare @container — always applies within this container
-      condition = containerName
+      condition = `${containerName} (width >= ${bpEntries[0]!.bp}px)`
     } else if (isFirst) {
+      const fromBp = bpEntries[span.fromIdx]!.bp
       const nextBp = bpEntries[span.toIdx + 1]!.bp
-      condition = `${containerName} (width < ${nextBp}px)`
+      condition = `${containerName} (width >= ${fromBp}px) and (width < ${nextBp}px)`
     } else if (isLast) {
       const fromBp = bpEntries[span.fromIdx]!.bp
       condition = `${containerName} (width >= ${fromBp}px)`

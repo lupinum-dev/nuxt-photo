@@ -1,4 +1,4 @@
 export { useLightbox } from './useLightbox'
 export { provideLightbox } from './provideLightbox'
 export { useContainerWidth } from './useContainerWidth'
-export { usePhotoLabels } from './usePhotoLabels'
+export { providePhotoLabels, usePhotoLabels } from '../provide/labels'

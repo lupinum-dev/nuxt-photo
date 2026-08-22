@@ -3,16 +3,17 @@ import type { PhotoItem } from '../../core/index'
 import type { LightboxSlideRenderer } from '../../provide/keys'
 
 export interface PhotoGroupContext {
-  readonly enabled: boolean
+  readonly enabled: ComputedRef<boolean>
   replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]): void
   removeCapabilities(owner: symbol): void
   open(index?: number): Promise<void>
+  openById(id: string): Promise<void>
+  activateById(id: string, source: HTMLElement | null): Promise<void>
   close(): Promise<void>
-  activateById(id: string, source?: HTMLElement | null): Promise<void>
+  readonly isOpen: ComputedRef<boolean>
   hasPhoto(id: string): boolean
   readonly photos: ComputedRef<readonly PhotoItem[]>
   readonly hiddenPhoto: ComputedRef<PhotoItem | null>
-  readonly isOpen: ComputedRef<boolean>
 }
 
 export interface PhotoGroupCapability {

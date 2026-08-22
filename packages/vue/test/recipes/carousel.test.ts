@@ -196,7 +196,7 @@ describe('PhotoCarousel — DOM', () => {
     props.dragFree = true
     await flushUi(10)
 
-    expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(5)
+    expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(3)
     m.unmount()
   })
 

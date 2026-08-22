@@ -18,6 +18,7 @@ import {
   type ImageAdapter,
   type LightboxTransitionOption,
   type PhotoItem,
+  type TransitionModeConfig,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
@@ -29,7 +30,7 @@ import {
   useLightboxWindowLifecycle,
   watchPhotoCollection,
 } from './watchers'
-import { ImageAdapterKey, PhotoDefaultsKey } from '../provide/keys'
+import { ImageAdapterKey, LightboxDefaultsKey } from '../provide/keys'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
@@ -43,17 +44,17 @@ export function getMountedSlideIndices(active: number, count: number) {
 
 export function resolveTransitionConfig(
   option: LightboxTransitionOption | undefined,
-  reducedMotion: boolean,
-) {
-  const config = { ...DEFAULT_TRANSITION_CONFIG }
-  if (typeof option === 'string') {
-    config.mode = option
-  } else if (option) {
-    config.mode = option.mode
-    config.autoThreshold = option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold
+  prefersReducedMotion: boolean,
+): TransitionModeConfig {
+  const requestedMode =
+    typeof option === 'string' ? option : (option?.mode ?? DEFAULT_TRANSITION_CONFIG.mode)
+  return {
+    autoThreshold:
+      typeof option === 'object'
+        ? (option.autoThreshold ?? DEFAULT_TRANSITION_CONFIG.autoThreshold)
+        : DEFAULT_TRANSITION_CONFIG.autoThreshold,
+    mode: prefersReducedMotion && requestedMode !== 'none' ? 'fade' : requestedMode,
   }
-  if (reducedMotion && config.mode !== 'none') config.mode = 'fade'
-  return config
 }
 
 /**
@@ -80,7 +81,7 @@ export function useLightboxRuntimeState(
     return Array.isArray(value) ? value : [value]
   })
 
-  const globalDefaults = inject(PhotoDefaultsKey, undefined)
+  const globalDefaults = inject(LightboxDefaultsKey, undefined)
   const injectedImageAdapter = inject(ImageAdapterKey, null)
   const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
   const resolvedImageAdapter = computed(
@@ -89,20 +90,22 @@ export function useLightboxRuntimeState(
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
-  const reducedMotion = ref(false)
-  const motionQuery =
+  const reducedMotionQuery =
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-reduced-motion: reduce)')
       : null
-  const syncReducedMotion = () => {
-    reducedMotion.value = motionQuery?.matches ?? false
-  }
-  syncReducedMotion()
-  motionQuery?.addEventListener('change', syncReducedMotion)
+  const prefersReducedMotion = ref(!!reducedMotionQuery?.matches)
+  const restoreFocusTarget = ref<HTMLElement | null>(null)
 
   const transitionConfig = computed(() => {
-    return resolveTransitionConfig(toValue(transitionOption), reducedMotion.value)
+    return resolveTransitionConfig(toValue(transitionOption), prefersReducedMotion.value)
   })
+
+  const onReducedMotionChange = (event: MediaQueryListEvent) => {
+    prefersReducedMotion.value = event.matches
+  }
+  reducedMotionQuery?.addEventListener('change', onReducedMotionChange)
+  onBeforeUnmount(() => reducedMotionQuery?.removeEventListener('change', onReducedMotionChange))
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
@@ -125,8 +128,8 @@ export function useLightboxRuntimeState(
     carousel.currentPhoto,
     areaMetrics,
     carousel.getAbsoluteFrameRect,
-    () => transitionConfig.value,
-    () => reducedMotion.value,
+    transitionConfig,
+    prefersReducedMotion,
   )
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
@@ -234,6 +237,12 @@ export function useLightboxRuntimeState(
     }
 
     const photo = currentPhotos[index]!
+    const activeElement =
+      typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+    restoreFocusTarget.value =
+      activeElement && activeElement !== document.body ? activeElement : motion.getThumbRef(index)
     motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
     const target: LightboxIntent = { kind: 'open', index }
     desired = target
@@ -307,7 +316,7 @@ export function useLightboxRuntimeState(
       goTo: carousel.goTo,
       selectedSnap: carousel.selectedSnap,
       goToFirst: () => carousel.goTo(0),
-      goToLast: () => carousel.goTo(photos.value.length - 1),
+      goToLast: () => carousel.goTo(Math.max(0, photos.value.length - 1)),
     },
     lifecycle: {
       setCloseDragY: motion.setCloseDragY,
@@ -354,7 +363,6 @@ export function useLightboxRuntimeState(
   })
 
   onBeforeUnmount(() => {
-    motionQuery?.removeEventListener('change', syncReducedMotion)
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
     gestures.disposeGestureState()
@@ -368,8 +376,6 @@ export function useLightboxRuntimeState(
     photos,
     count: computed(() => photos.value.length),
     lifecycleStatus,
-    transitionConfig,
-    reducedMotion,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,
@@ -388,6 +394,7 @@ export function useLightboxRuntimeState(
     stageMounted: motion.stageMounted,
     activeImagePending: motion.activeImagePending,
     transitionInProgress: motion.transitionInProgress,
+    restoreFocusTarget,
 
     gesturePhase: gestures.gesturePhase,
 

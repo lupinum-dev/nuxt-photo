@@ -1,22 +1,30 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import useEmblaCarousel from 'embla-carousel-vue'
 import type { EmblaCarouselType, EmblaOptionsType } from 'embla-carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
+import { readEmblaSnapModel } from '../../integrations/embla/snapModel'
 
-export function validatePhotoCarouselBehavior(options: {
-  loop?: boolean
-  dragFree?: boolean
-  direction?: 'ltr' | 'rtl'
-}) {
+export interface CarouselBehaviorOptions {
+  readonly loop?: boolean
+  readonly dragFree?: boolean
+  readonly slidesToScroll?: number
+}
+
+export function validatePhotoCarouselOptions(options: CarouselBehaviorOptions) {
   if (options.loop !== undefined && typeof options.loop !== 'boolean') {
-    throw new TypeError('[nuxt-photo] PhotoCarousel loop must be boolean')
+    throw new TypeError('[nuxt-photo] PhotoCarousel options.loop must be boolean')
   }
   if (options.dragFree !== undefined && typeof options.dragFree !== 'boolean') {
-    throw new TypeError('[nuxt-photo] PhotoCarousel dragFree must be boolean')
+    throw new TypeError('[nuxt-photo] PhotoCarousel options.dragFree must be boolean')
   }
-  if (options.direction !== undefined && !['ltr', 'rtl'].includes(options.direction)) {
-    throw new TypeError('[nuxt-photo] PhotoCarousel direction must be "ltr" or "rtl"')
+  if (
+    options.slidesToScroll !== undefined &&
+    (!Number.isInteger(options.slidesToScroll) || options.slidesToScroll < 1)
+  ) {
+    throw new RangeError(
+      '[nuxt-photo] PhotoCarousel options.slidesToScroll must be a positive integer',
+    )
   }
 }
 
@@ -41,30 +49,21 @@ export function validatePhotoCarouselAutoplayOptions(
 
 type CarouselRuntimeConfig = {
   photos: Readonly<Ref<readonly PhotoItem[]>>
-  loop: Readonly<Ref<boolean | undefined>>
-  dragFree: Readonly<Ref<boolean | undefined>>
-  direction: Readonly<Ref<'ltr' | 'rtl' | undefined>>
+  options: Readonly<Ref<CarouselBehaviorOptions>>
   autoplay: Readonly<Ref<boolean | PhotoCarouselAutoplayOptions>>
   showThumbnails: Readonly<Ref<boolean>>
 }
 
-/** Own both stable Embla instances and expose one slide-per-snap state model. */
+/** Own both Embla instances and expose one reconciled carousel state model. */
 export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
-  const inheritedDirection = ref<'ltr' | 'rtl'>('ltr')
-  const effectiveDirection = computed(() => config.direction.value ?? inheritedDirection.value)
   const optionsRef = computed<EmblaOptionsType>(() => {
-    validatePhotoCarouselBehavior({
-      loop: config.loop.value,
-      dragFree: config.dragFree.value,
-      direction: config.direction.value,
-    })
+    validatePhotoCarouselOptions(config.options.value)
     return {
-      loop: config.loop.value ?? false,
-      dragFree: config.dragFree.value ?? false,
-      direction: effectiveDirection.value,
-      slidesToScroll: 1,
+      loop: config.options.value.loop ?? false,
+      dragFree: config.options.value.dragFree ?? false,
+      slidesToScroll: config.options.value.slidesToScroll ?? 1,
       align: 'start',
-      containScroll: 'keepSnaps',
+      containScroll: 'trimSnaps',
     }
   })
   const pluginsRef = computed(() => {
@@ -82,9 +81,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   })
   const thumbsOptionsRef = computed<EmblaOptionsType>(() => ({
     containScroll: 'keepSnaps',
-    direction: effectiveDirection.value,
     dragFree: true,
-    slidesToScroll: 1,
   }))
 
   const [emblaRef, emblaApi] = useEmblaCarousel(optionsRef, pluginsRef)
@@ -92,30 +89,32 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
   const selectedIndex = ref(0)
   const selectedSnapIndex = ref(0)
+  const selectedSlides = ref<readonly number[]>([])
   const snapTargets = ref<readonly number[]>([])
+  const snapBySlide = ref<Readonly<Record<number, number>>>({})
   const canPrev = ref(false)
   const canNext = ref(false)
 
-  const selectedSlideSet = computed(() => new Set([selectedIndex.value]))
+  const selectedSlideSet = computed(() => new Set(selectedSlides.value))
   const snapCount = computed(() => snapTargets.value.length)
   const snaps = computed(() => snapTargets.value)
-
-  onMounted(() => {
-    if (config.direction.value || !emblaRef.value) return
-    inheritedDirection.value = getComputedStyle(emblaRef.value).direction === 'rtl' ? 'rtl' : 'ltr'
-  })
 
   function syncThumbs() {
     if (!config.showThumbnails.value) return
     thumbsApi.value?.scrollTo(selectedIndex.value)
   }
 
-  function syncState(api: EmblaCarouselType, forcedIndex?: number) {
-    const maxIndex = Math.max(0, config.photos.value.length - 1)
-    const selected = Math.min(Math.max(forcedIndex ?? api.selectedScrollSnap(), 0), maxIndex)
-    selectedSnapIndex.value = selected
-    selectedIndex.value = selected
-    snapTargets.value = api.scrollSnapList().map((_, index) => index)
+  function syncState(api: EmblaCarouselType, forcedSnap?: number) {
+    const model = readEmblaSnapModel(api)
+    const maxSnapIndex = Math.max(0, model.slidesBySnap.length - 1)
+    const selectedSnap = Math.min(Math.max(forcedSnap ?? api.selectedScrollSnap(), 0), maxSnapIndex)
+    const activeSlides = model.slidesBySnap[selectedSnap] ?? []
+
+    selectedSnapIndex.value = selectedSnap
+    selectedSlides.value = activeSlides
+    selectedIndex.value = activeSlides[0] ?? 0
+    snapTargets.value = model.slidesBySnap.map((slides) => slides[0] ?? 0)
+    snapBySlide.value = model.snapBySlide
     canPrev.value = api.canScrollPrev()
     canNext.value = api.canScrollNext()
   }
@@ -129,11 +128,18 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     [emblaApi, config.autoplay],
     ([api]) => {
       if (!api) return
-      const onSelect = (currentApi: EmblaCarouselType) => handleSelect(currentApi)
-      const onReinit = (currentApi: EmblaCarouselType) => handleSelect(currentApi)
+
+      const onSelect = (currentApi: EmblaCarouselType) => {
+        handleSelect(currentApi)
+      }
+      const onReinit = (currentApi: EmblaCarouselType) => {
+        handleSelect(currentApi)
+      }
+
       onReinit(api)
       api.on('select', onSelect)
       api.on('reInit', onReinit)
+
       return () => {
         api.off('select', onSelect)
         api.off('reInit', onReinit)
@@ -153,11 +159,15 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     if (!api) {
       selectedIndex.value = target
       selectedSnapIndex.value = target
+      selectedSlides.value = [target]
       return
     }
-    api.scrollTo(target, instant)
+
+    const targetSnap = snapBySlide.value[target]
+    if (targetSnap === undefined) return
+    api.scrollTo(targetSnap, instant)
     if (instant) {
-      syncState(api, target)
+      syncState(api, targetSnap)
       syncThumbs()
     }
   }
@@ -166,14 +176,22 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     const api = emblaApi.value
     if (!api) return goTo(selectedIndex.value + 1, instant)
     api.scrollNext(instant)
-    if (instant) handleSelect(api)
+    if (instant) {
+      const target = api.selectedScrollSnap()
+      syncState(api, target)
+      syncThumbs()
+    }
   }
 
   function goToPrev(instant = false) {
     const api = emblaApi.value
     if (!api) return goTo(selectedIndex.value - 1, instant)
     api.scrollPrev(instant)
-    if (instant) handleSelect(api)
+    if (instant) {
+      const target = api.selectedScrollSnap()
+      syncState(api, target)
+      syncThumbs()
+    }
   }
 
   function selectedSnap() {
@@ -196,6 +214,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     thumbsApi,
     selectedIndex,
     selectedSnapIndex,
+    selectedSlides,
     selectedSlideSet,
     snapCount,
     snaps,

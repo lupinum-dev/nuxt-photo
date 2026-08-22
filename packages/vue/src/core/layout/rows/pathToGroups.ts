@@ -1,5 +1,5 @@
 import type { LayoutGroup, PhotoItem } from '../../types'
-import { getCommonHeight, ratio } from './helpers'
+import { commonHeight, ratio, ratioPrefixSums, ratioSum } from './helpers'
 
 /** Convert row-break indices into concrete layout groups with sized entries. */
 export function pathToGroups(
@@ -10,30 +10,32 @@ export function pathToGroups(
   padding: number,
 ): LayoutGroup[] {
   const groups: LayoutGroup[] = []
+  const ratios = ratioPrefixSums(photos)
 
   for (let rowIndex = 1; rowIndex < path.length; rowIndex += 1) {
-    const rowItems = photos
-      .map((photo, index) => ({ photo, index }))
-      .slice(path[rowIndex - 1], path[rowIndex])
+    const from = path[rowIndex - 1]!
+    const to = path[rowIndex]!
+    const count = to - from
+    const height = commonHeight(ratioSum(ratios, from, to), count, containerWidth, spacing, padding)
 
-    const height = getCommonHeight(
-      rowItems.map(({ photo }) => photo),
-      containerWidth,
-      spacing,
-      padding,
-    )
-
-    groups.push({
-      type: 'row',
-      index: rowIndex - 1,
-      entries: rowItems.map(({ photo, index }, positionIndex) => ({
+    const entries: LayoutGroup['entries'] = []
+    for (let positionIndex = 0; positionIndex < count; positionIndex++) {
+      const index = from + positionIndex
+      const photo = photos[index]!
+      entries.push({
         index,
         photo,
         width: height * ratio(photo),
         height,
         positionIndex,
-        itemsCount: rowItems.length,
-      })),
+        itemsCount: count,
+      })
+    }
+
+    groups.push({
+      type: 'row',
+      index: rowIndex - 1,
+      entries,
     })
   }
 

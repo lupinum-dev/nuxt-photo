@@ -60,13 +60,19 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
   await stubImageRequests(page)
   await gotoPlayground(page)
 
-  await page.locator('.np-album__item').first().click()
+  const trigger = page.locator('.np-album__item').first()
+  await trigger.focus()
+  await trigger.click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(page.locator('[data-np-slide-frame]')).toHaveCount(12)
   await expect(page.locator('[data-np-slide-img]')).toHaveCount(3)
   await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
+  const liveCounter = page.locator('[data-np-sr-only]')
+  await expect(liveCounter).toHaveAttribute('aria-live', 'polite')
+  await expect(liveCounter).toHaveAttribute('aria-atomic', 'true')
+  await expect(liveCounter).toContainText('1 / 12')
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
 
   const nextButton = page.getByRole('button', { name: 'Next' })
@@ -81,9 +87,35 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
 
   await expect(page.getByRole('button', { name: 'Zoom' })).toBeVisible()
 
+  await page.keyboard.press('End')
+  await expect(page.locator('.np-lightbox__counter')).toContainText('12 / 12')
+  await page.keyboard.press('Home')
+  await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
+
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(trigger).toBeFocused()
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('')
+})
+
+test('RTL places previous and next controls on logical sides', async ({ page }) => {
+  await stubImageRequests(page)
+  await gotoPlayground(page)
+  await page.evaluate(() => {
+    document.documentElement.dir = 'rtl'
+  })
+
+  await page.locator('.np-album__item').first().click()
+  const previous = page.getByRole('button', { name: 'Previous' })
+  const next = page.getByRole('button', { name: 'Next' })
+  await expect(previous).toBeVisible()
+  await expect(next).toBeVisible()
+  const previousBox = await previous.boundingBox()
+  const nextBox = await next.boundingBox()
+
+  expect(previousBox).not.toBeNull()
+  expect(nextBox).not.toBeNull()
+  expect(previousBox!.x).toBeGreaterThan(nextBox!.x)
 })
 
 test('lightbox motion exposes one deterministic WAAPI timeline', async ({ page }) => {

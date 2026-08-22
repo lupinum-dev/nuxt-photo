@@ -49,6 +49,12 @@
 .np-album__item {
   position: relative;
   overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
 }
 
 /* Image fills its item */

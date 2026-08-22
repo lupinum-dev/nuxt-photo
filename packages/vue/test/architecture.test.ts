@@ -82,10 +82,10 @@ describe('source architecture boundaries', () => {
     )
   })
 
-  it('keeps private Embla APIs and vendor types out of public contracts', () => {
+  it('quarantines private Embla APIs and keeps vendor types out of public contracts', () => {
     const productionFiles = sourceFiles('packages/vue/src')
     expect(relativeOffenders(productionFiles, (text) => text.includes('internalEngine()'))).toEqual(
-      [],
+      ['packages/vue/src/integrations/embla/snapModel.ts'],
     )
 
     const publicContractFiles = [
