@@ -1,5 +1,14 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-beta.3
+
+### Patch Changes
+
+- [#49](https://github.com/lupinum-dev/nuxt-photo/pull/49) [`ae1b5f3`](https://github.com/lupinum-dev/nuxt-photo/commit/ae1b5f3573b7e4301e97bd5dfc0d0668413d709e) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Keep shared lightbox navigation aligned when a collection opens at a non-zero photo, and allow carousel autoplay to be enabled without specifying a custom delay. Repair the documentation image demos so their rendered output matches the examples.
+
+- Updated dependencies [[`ae1b5f3`](https://github.com/lupinum-dev/nuxt-photo/commit/ae1b5f3573b7e4301e97bd5dfc0d0668413d709e)]:
+  - @lupinum/vue-photo@1.0.0-beta.3
+
 ## 1.0.0-beta.2
 
 ### Patch Changes
