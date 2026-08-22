@@ -7,9 +7,7 @@ import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } 
  * column and item assignment is deterministic.
  * Returns LayoutGroup[] for flexbox rendering.
  */
-export function computeMasonryLayout<TMeta extends object>(
-  options: MasonryLayoutOptions<TMeta>,
-): LayoutGroup<TMeta>[] {
+export function computeMasonryLayout(options: MasonryLayoutOptions): LayoutGroup[] {
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
   const spacing = normalizeLayoutNumber(options.spacing, 8)
   const padding = normalizeLayoutNumber(options.padding, 0)
@@ -44,9 +42,9 @@ export function computeMasonryLayout<TMeta extends object>(
     colHeights[shortest]! += photoHeights[i]! + spacing
   }
 
-  const groups: LayoutGroup<TMeta>[] = []
+  const groups: LayoutGroup[] = []
   for (let c = 0; c < columns; c++) {
-    const entries: LayoutEntry<TMeta>[] = colItems[c]!.map((idx, positionIndex) => ({
+    const entries: LayoutEntry[] = colItems[c]!.map((idx, positionIndex) => ({
       index: idx,
       photo: photos[idx]!,
       width: columnWidth,

@@ -5,12 +5,13 @@ describe('@lupinum/vue-photo public exports', () => {
   it('exposes the documented root runtime API exactly', () => {
     expect(Object.keys(vue).sort()).toEqual(
       [
+        'DEFAULT_PHOTO_LABELS',
         'ImageAdapterKey',
         'Lightbox',
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',
-        'PhotoDefaultsKey',
+        'LightboxDefaultsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -23,6 +24,9 @@ describe('@lupinum/vue-photo public exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'PhotoLabelsKey',
+        'providePhotoLabels',
+        'resolvePhotoLabels',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
@@ -36,7 +40,7 @@ describe('@lupinum/vue-photo public exports', () => {
   it('keeps app-level extension keys public', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')
-    expect(vue.PhotoDefaultsKey).toBeTypeOf('symbol')
+    expect(vue.LightboxDefaultsKey).toBeTypeOf('symbol')
     expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(vue.PhotoValidationError)
   })
 })

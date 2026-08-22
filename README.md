@@ -59,13 +59,12 @@ Add the module:
 ```ts
 export default defineNuxtConfig({
   modules: ['@lupinum/nuxt-photo'],
-  nuxtPhoto: {
-    css: 'all',
-  },
 })
 ```
 
-The default `css: 'structure'` option includes layout CSS only. Use `css: 'all'` for the included visual theme.
+The default installation includes both structure and theme CSS. Set
+`nuxtPhoto.css` to `'structure'` or `'none'` only when you are replacing the
+visual layer yourself.
 
 ## Quick start
 

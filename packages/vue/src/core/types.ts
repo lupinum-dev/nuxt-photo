@@ -4,7 +4,8 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly id: string
   readonly src: string
   readonly thumbSrc?: string
-  readonly placeholderSrc?: string
+  /** Small image URL or data URI shown behind the full source while it loads. */
+  readonly placeholder?: string
   readonly width: number
   readonly height: number
   readonly alt?: string
@@ -70,41 +71,38 @@ export type CloseTransitionPlan = {
 
 // ─── Layout ───
 
-export type LayoutInput<TMeta extends object = Readonly<Record<string, unknown>>> = {
-  photos: readonly PhotoItem<TMeta>[]
+export type LayoutInput = {
+  photos: PhotoItem[]
   containerWidth: number
   spacing?: number
   padding?: number
 }
 
-export type RowsLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
-  LayoutInput<TMeta> & {
-    targetRowHeight?: number
-  }
+export type RowsLayoutOptions = LayoutInput & {
+  targetRowHeight?: number
+}
 
-export type ColumnsLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
-  LayoutInput<TMeta> & {
-    columns?: number
-  }
+export type ColumnsLayoutOptions = LayoutInput & {
+  columns?: number
+}
 
-export type MasonryLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
-  LayoutInput<TMeta> & {
-    columns?: number
-  }
+export type MasonryLayoutOptions = LayoutInput & {
+  columns?: number
+}
 
-export type LayoutEntry<TMeta extends object = Readonly<Record<string, unknown>>> = {
+export type LayoutEntry = {
   index: number
-  photo: PhotoItem<TMeta>
+  photo: PhotoItem
   width: number
   height: number
   positionIndex: number
   itemsCount: number
 }
 
-export type LayoutGroup<TMeta extends object = Readonly<Record<string, unknown>>> = {
+export type LayoutGroup = {
   type: 'row' | 'column'
   index: number
-  entries: LayoutEntry<TMeta>[]
+  entries: LayoutEntry[]
   columnsGaps?: number[]
   columnsRatios?: number[]
 }
@@ -147,15 +145,19 @@ export interface PhotoCarouselAutoplayOptions {
 
 export type ImageSource = {
   src: string
-  placeholderSrc?: string
   srcset?: string
   sizes?: string
   width?: number
   height?: number
+  /** Small image URL or data URI shown behind the full source while it loads. */
+  placeholder?: string
 }
 
+/** Structured sizes input for layout-exact thumbnail calculations. */
 export type ResponsivePhotoSizes = {
+  /** CSS size of the album container, such as `100vw`. */
   size: string
+  /** Optional viewport-specific overrides, from smallest to largest. */
   sizes?: Array<{ viewport: string; size: string }>
 }
 

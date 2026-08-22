@@ -2,9 +2,10 @@
 
 import EmblaCarousel from 'embla-carousel'
 import { describe, expect, it } from 'vite-plus/test'
+import { readEmblaSnapModel } from '../../src/integrations/embla/snapModel'
 import {
   validatePhotoCarouselAutoplayOptions,
-  validatePhotoCarouselBehavior,
+  validatePhotoCarouselOptions,
 } from '../../src/components/photo-carousel/usePhotoCarouselRuntime'
 
 function setRect(element: HTMLElement, rect: { left: number; width: number; height?: number }) {
@@ -18,15 +19,14 @@ function setRect(element: HTMLElement, rect: { left: number; width: number; heig
   }
 }
 
-function createCarousel(slideCount: number, slideWidth: number, direction: 'ltr' | 'rtl' = 'ltr') {
+function createCarousel(slideCount: number, slideWidth: number, groupSize: number) {
   class NoopObserver {
     observe() {}
     disconnect() {}
     unobserve() {}
   }
-  window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
   window.ResizeObserver = NoopObserver as unknown as typeof window.ResizeObserver
-  globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver
+  window.IntersectionObserver = NoopObserver as unknown as typeof window.IntersectionObserver
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
@@ -53,52 +53,51 @@ function createCarousel(slideCount: number, slideWidth: number, direction: 'ltr'
 
   const api = EmblaCarousel(root, {
     align: 'start',
-    containScroll: 'keepSnaps',
-    direction,
-    slidesToScroll: 1,
+    containScroll: 'trimSnaps',
+    slidesToScroll: groupSize,
     watchResize: false,
     watchSlides: false,
   })
   return { api, root }
 }
 
-describe('stable Embla carousel contract', () => {
+describe('Embla snap model', () => {
   it.each([
-    [5, 300, 5],
-    [5, 200, 5],
-    [4, 150, 1],
+    [5, 300, 1, [[0], [1], [2], [3, 4]]],
+    [5, 200, 1, [[0], [1], [2, 3, 4]]],
+    [
+      5,
+      200,
+      2,
+      [
+        [0, 1],
+        [2, 3, 4],
+      ],
+    ],
+    [4, 150, 2, [[0, 1, 2, 3]]],
   ])(
-    'uses stable public snaps for %i variable-width slides',
-    (slideCount, slideWidth, snapCount) => {
-      const { api, root } = createCarousel(slideCount, slideWidth)
+    'uses real trimmed groups for %i slides at %ipx grouped by %i',
+    (slideCount, slideWidth, groupSize, expectedGroups) => {
+      const { api, root } = createCarousel(slideCount, slideWidth, groupSize)
+      const model = readEmblaSnapModel(api)
 
-      expect(api.scrollSnapList()).toHaveLength(snapCount)
-      api.scrollTo(snapCount - 1, true)
-      expect(api.selectedScrollSnap()).toBe(snapCount - 1)
+      expect(model.slidesBySnap).toEqual(expectedGroups)
+      expect(model.snapBySlide).toEqual(
+        Object.fromEntries(
+          expectedGroups.flatMap((slides, snap) => slides.map((slide) => [slide, snap])),
+        ),
+      )
 
       api.destroy()
       root.remove()
     },
   )
 
-  it('accepts only the direct public behavior props', () => {
-    expect(() => validatePhotoCarouselBehavior({ loop: true, dragFree: true })).not.toThrow()
-    expect(() => validatePhotoCarouselBehavior({ direction: 'sideways' as 'ltr' })).toThrow(
-      /direction/,
-    )
-  })
-
-  it('uses Embla RTL navigation semantics', () => {
-    const { api, root } = createCarousel(5, 300, 'rtl')
-
-    expect(api.selectedScrollSnap()).toBe(0)
-    api.scrollNext(true)
-    expect(api.selectedScrollSnap()).toBe(1)
-    api.scrollPrev(true)
-    expect(api.selectedScrollSnap()).toBe(0)
-
-    api.destroy()
-    root.remove()
+  it('rejects invalid public grouping values before Embla sees them', () => {
+    for (const slidesToScroll of [0, -1, 0.5, Number.NaN]) {
+      expect(() => validatePhotoCarouselOptions({ slidesToScroll })).toThrow(/positive integer/)
+    }
+    expect(() => validatePhotoCarouselOptions({ slidesToScroll: 2 })).not.toThrow()
   })
 
   it('rejects unsafe autoplay values before the plugin sees them', () => {

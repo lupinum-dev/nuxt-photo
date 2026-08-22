@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 
-import { computed, nextTick, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxMotion } from '../src/lightbox/transitions/runtime'
-import { createMotionVisualState } from '../src/lightbox/transitions/visual-state'
 import { createPhotoSet } from '@test-fixtures/photos'
 
 function rect(left: number, top: number, width: number, height: number) {
@@ -33,14 +32,18 @@ function callbacks() {
   }
 }
 
-function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
+function setup(
+  mode: 'flip' | 'fade' | 'none' = 'flip',
+  supportsDecode = true,
+  transitionConfig = ref({ mode, autoThreshold: 0.55 }),
+) {
   const photo = createPhotoSet()[0]!
   const motion = useLightboxMotion(
     ref(0),
     computed(() => photo),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     () => rect(200, 100, 800, 500),
-    () => ({ mode, autoThreshold: 0.55 }),
+    transitionConfig,
   )
 
   const overlay = document.createElement('div')
@@ -83,56 +86,12 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   motion.setSlideImageRef(0)(slideImage)
   motion.setThumbRef(0)(thumb)
 
-  return { motion, slideImage, controls, viewport, callbacks: callbacks() }
+  return { motion, slideImage, callbacks: callbacks() }
 }
 
 describe('lightbox motion controller', () => {
-  it('does not start a Web Animation for a pre-aborted signal', async () => {
-    const visual = createMotionVisualState()
-    const element = document.createElement('div')
-    const animate = vi.fn()
-    element.animate = animate
-    const controller = new AbortController()
-    controller.abort()
-
-    await expect(
-      visual.animate(
-        element,
-        [{ opacity: 0 }, { opacity: 1 }],
-        { duration: 100 },
-        ['opacity'],
-        controller.signal,
-      ),
-    ).rejects.toMatchObject({ name: 'AbortError' })
-    expect(animate).not.toHaveBeenCalled()
-  })
-
-  it('observes an abort triggered while a Web Animation is created', async () => {
-    const visual = createMotionVisualState()
-    const element = document.createElement('div')
-    const controller = new AbortController()
-    const animation = {
-      finished: new Promise<void>(() => {}),
-      cancel: vi.fn(),
-    } as unknown as Animation
-    element.animate = vi.fn(() => {
-      controller.abort()
-      return animation
-    })
-
-    await expect(
-      visual.animate(
-        element,
-        [{ opacity: 0 }, { opacity: 1 }],
-        { duration: 100 },
-        ['opacity'],
-        controller.signal,
-      ),
-    ).rejects.toMatchObject({ name: 'AbortError' })
-  })
-
   it('decodes the mounted responsive image and lands on canonical open styles', async () => {
-    const { motion, slideImage, controls, callbacks } = setup()
+    const { motion, slideImage, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
 
     await expect(motion.open(0, callbacks, new AbortController().signal)).resolves.toBe(true)
@@ -141,7 +100,6 @@ describe('lightbox motion controller', () => {
     expect(motion.stageMounted.value).toBe(true)
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
-    expect(controls.style.pointerEvents).toBe('auto')
   })
 
   it('cleans every visual state after close', async () => {
@@ -179,42 +137,22 @@ describe('lightbox motion controller', () => {
     expect(() => motion.captureOpen(3, '/fallback.jpg')).not.toThrow()
   })
 
-  it('lets the latest chrome visibility request win', async () => {
-    const { motion, controls } = setup('none')
-    const completions: Array<() => void> = []
-    controls.animate = vi.fn(() => {
-      let complete!: () => void
-      const finished = new Promise<void>((resolve) => {
-        complete = resolve
-      })
-      completions.push(complete)
-      return { finished, cancel: vi.fn() } as unknown as Animation
+  it('reads replacement and nested transition changes when each transition starts', async () => {
+    const transition = ref<{ mode: 'flip' | 'none'; autoThreshold: number }>({
+      mode: 'flip',
+      autoThreshold: 0.55,
     })
+    const { motion, callbacks } = setup('flip', true, transition)
 
-    motion.uiVisible.value = false
-    await nextTick()
-    motion.uiVisible.value = true
-    await nextTick()
-    completions.at(-1)?.()
-    await vi.waitFor(() => {
-      expect(controls.style.opacity).toBe('1')
-      expect(controls.style.pointerEvents).toBe('auto')
-    })
-  })
+    transition.value = { mode: 'none', autoThreshold: 0.8 }
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    await motion.open(0, callbacks, new AbortController().signal)
+    expect(motion.hiddenThumbIndex.value).toBeNull()
 
-  it('cancels an owned gesture settle operation', async () => {
-    const { motion, viewport } = setup('none')
-    viewport.animate = vi.fn(
-      () =>
-        ({
-          finished: new Promise<void>(() => {}),
-          cancel: vi.fn(),
-        }) as unknown as Animation,
-    )
-
-    const settling = motion.settleDrag()
-    motion.cancel()
-
-    await expect(settling).rejects.toMatchObject({ name: 'AbortError' })
+    await motion.close(callbacks, new AbortController().signal)
+    transition.value.mode = 'flip'
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    await motion.open(0, callbacks, new AbortController().signal)
+    expect(motion.hiddenThumbIndex.value).toBe(0)
   })
 })

@@ -1,12 +1,27 @@
 import { describe, expect, it } from 'vite-plus/test'
+import { vi } from 'vite-plus/test'
+import { computed, type InjectionKey } from 'vue'
+
+const provided = new Map<InjectionKey<unknown>, unknown>()
+
+vi.mock('#app', () => ({
+  useNuxtApp: () => ({
+    vueApp: {
+      provide: (key: InjectionKey<unknown>, value: unknown) => provided.set(key, value),
+    },
+  }),
+}))
+
 import * as app from '../src/runtime/app'
 import {
   ImageAdapterKey,
+  DEFAULT_PHOTO_LABELS,
   Lightbox,
   LightboxCaption,
   LightboxComponentKey,
   LightboxControls,
-  PhotoDefaultsKey,
+  LightboxDefaultsKey,
+  PhotoLabelsKey,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -20,11 +35,13 @@ import {
   PhotoTrigger,
   PhotoValidationError,
   responsive,
+  resolvePhotoLabels,
   resolveResponsiveParameter,
   useContainerWidth,
   useLightbox,
-  usePhotoLabels,
   provideLightbox,
+  providePhotoLabels,
+  usePhotoLabels,
 } from '../src/runtime/app'
 import type { LightboxCaptionSlotProps, PhotoItem } from '../src/runtime/app'
 
@@ -33,11 +50,13 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(Object.keys(app).sort()).toEqual(
       [
         'ImageAdapterKey',
+        'DEFAULT_PHOTO_LABELS',
         'Lightbox',
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',
-        'PhotoDefaultsKey',
+        'LightboxDefaultsKey',
+        'PhotoLabelsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -52,10 +71,12 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'PhotoValidationError',
         'resolveResponsiveParameter',
         'responsive',
+        'resolvePhotoLabels',
         'useContainerWidth',
         'useLightbox',
-        'usePhotoLabels',
         'provideLightbox',
+        'providePhotoLabels',
+        'usePhotoLabels',
       ].sort(),
     )
   })
@@ -79,12 +100,26 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(PhotoTrigger).toBeTypeOf('object')
     expect(PhotoValidationError).toBeTypeOf('function')
     expect(useLightbox).toBeTypeOf('function')
-    expect(usePhotoLabels).toBeTypeOf('function')
     expect(provideLightbox).toBeTypeOf('function')
+    expect(providePhotoLabels).toBeTypeOf('function')
+    expect(usePhotoLabels).toBeTypeOf('function')
+    expect(resolvePhotoLabels).toBeTypeOf('function')
+    expect(DEFAULT_PHOTO_LABELS.close).toBe('Close')
     expect(useContainerWidth).toBeTypeOf('function')
     expect(ImageAdapterKey).toBeTypeOf('symbol')
     expect(LightboxComponentKey).toBeTypeOf('symbol')
-    expect(PhotoDefaultsKey).toBeTypeOf('symbol')
+    expect(LightboxDefaultsKey).toBeTypeOf('symbol')
+    expect(PhotoLabelsKey).toBeTypeOf('symbol')
+  })
+
+  it('provides reactive labels through the Nuxt app instead of component setup', () => {
+    const locale = computed(() => 'de')
+    const labels = providePhotoLabels(() => ({
+      close: locale.value === 'de' ? 'Schließen' : 'Close',
+    }))
+
+    expect(provided.get(PhotoLabelsKey)).toBe(labels)
+    expect(labels.value.close).toBe('Schließen')
   })
 
   it('keeps consumer-proven Nuxt app types available', () => {

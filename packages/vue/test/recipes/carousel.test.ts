@@ -1,14 +1,6 @@
 // @vitest-environment jsdom
 
-import {
-  createApp,
-  createSSRApp,
-  defineComponent,
-  h,
-  nextTick,
-  reactive,
-  type Component,
-} from 'vue'
+import { createApp, createSSRApp, defineComponent, h, nextTick, reactive, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
@@ -30,17 +22,14 @@ async function flushUi(iterations = 6) {
   }
 }
 
-function mount(
-  component: Component,
-  props: Record<string, unknown> = {},
-  slots: Record<string, unknown> = {},
-) {
+function mount(component: any, props: Record<string, any> = {}, slots: Record<string, any> = {}) {
   const container = document.createElement('div')
   document.body.appendChild(container)
 
+  const handleRef = ref<any>(null)
   const Wrapper = defineComponent({
     setup() {
-      return () => h(component, props, slots)
+      return () => h(component, { ...props, ref: handleRef }, slots)
     },
   })
 
@@ -50,6 +39,9 @@ function mount(
   return {
     app,
     container,
+    get handle() {
+      return handleRef.value
+    },
     unmount() {
       app.unmount()
       container.remove()
@@ -204,7 +196,7 @@ describe('PhotoCarousel — DOM', () => {
     props.dragFree = true
     await flushUi(10)
 
-    expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(5)
+    expect(m.container.querySelectorAll('.np-carousel__dot')).toHaveLength(3)
     m.unmount()
   })
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createApp, defineComponent, h, type Component } from 'vue'
+import { createApp, defineComponent, h } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import {
   LightboxCaption,
@@ -15,7 +15,7 @@ import {
 } from '@lupinum/vue-photo'
 import { makePhoto } from '@test-fixtures/photos'
 
-function mountExpectingError(component: Component, props?: Record<string, unknown>) {
+function mountExpectingError(component: any, props?: Record<string, unknown>) {
   const container = document.createElement('div')
   document.body.appendChild(container)
 

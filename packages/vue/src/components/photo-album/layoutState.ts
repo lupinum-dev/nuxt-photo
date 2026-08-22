@@ -22,7 +22,6 @@ import {
   computeWidthDivisor,
   resolveResponsiveParameter,
   type PhotoItem,
-  type LayoutEntry,
   type LayoutGroup,
   type ResponsiveParameter,
   type ResponsivePhotoSizes,
@@ -30,8 +29,10 @@ import {
 import { albumGroupStyle, albumItemStyle, type AlbumStyleContext } from './styles'
 import { devWarn } from '../../core/env'
 
-export type RowItem<TMeta extends object = Readonly<Record<string, unknown>>> = {
-  photo: PhotoItem<TMeta>
+const warnedApproximateLayouts = new Set<'columns' | 'masonry'>()
+
+export type RowItem = {
+  photo: PhotoItem
   index: number
   width: number
   height: number
@@ -39,8 +40,8 @@ export type RowItem<TMeta extends object = Readonly<Record<string, unknown>>> = 
   computedSizes?: string
 }
 
-interface AlbumLayoutRenderingOptions<TMeta extends object> {
-  photos: Ref<readonly PhotoItem<TMeta>[]>
+interface AlbumLayoutRenderingOptions {
+  photos: Ref<PhotoItem[]>
   layout: Ref<'rows' | 'columns' | 'masonry'>
   columns: Ref<ResponsiveParameter<number>>
   spacing: Ref<ResponsiveParameter<number>>
@@ -52,9 +53,7 @@ interface AlbumLayoutRenderingOptions<TMeta extends object> {
   interactive: Ref<boolean>
 }
 
-export function usePhotoAlbumLayoutState<TMeta extends object>(
-  options: AlbumLayoutRenderingOptions<TMeta>,
-) {
+export function usePhotoAlbumLayoutState(options: AlbumLayoutRenderingOptions) {
   const {
     photos,
     layout,
@@ -73,13 +72,18 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   const albumId = useId()
   const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
-  const containerQueriesActive = computed(() => !!breakpoints.value?.length)
-
-  // When defaultContainerWidth is set, items render inline calc widths and the
-  // observed width snaps at breakpoints — inline styles would outrank any
-  // @container rules, so generating both would ship a dead stylesheet.
   const containerQueriesRender = computed(
-    () => containerQueriesActive.value && !defaultContainerWidth,
+    () => !!breakpoints.value?.length && !defaultContainerWidth,
+  )
+  const minimumBreakpoint = computed(() => {
+    const positive = breakpoints.value?.filter((breakpoint) => breakpoint > 0)
+    return positive?.length ? Math.min(...positive) : undefined
+  })
+  const containerQueriesActive = computed(
+    () =>
+      containerQueriesRender.value &&
+      minimumBreakpoint.value !== undefined &&
+      containerWidth.value >= minimumBreakpoint.value,
   )
 
   const containerQueryCSS = computed(() => {
@@ -103,35 +107,24 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     isMounted.value = true
   })
 
-  const resolvedParameters = computed(() => {
+  const groups = computed<LayoutGroup[]>(() => {
+    if (containerWidth.value <= 0) return []
+
     const w = containerWidth.value
-    return {
-      width: w,
-      spacing: resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING),
-      padding: resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING),
-      columns: resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS),
-      targetRowHeight: resolveResponsiveParameter(
-        targetRowHeight.value,
-        w,
-        DEFAULT_TARGET_ROW_HEIGHT,
-      ),
-    }
-  })
-
-  const groups = computed<LayoutGroup<TMeta>[]>(() => {
-    const resolved = resolvedParameters.value
-    if (resolved.width <= 0) return []
-
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
     const input = {
       photos: photos.value,
-      containerWidth: resolved.width,
-      spacing: resolved.spacing,
-      padding: resolved.padding,
+      containerWidth: w,
+      spacing: sp,
+      padding: pd,
     }
 
     switch (layout.value) {
       case 'rows': {
-        const result = computeRowsLayout({ ...input, targetRowHeight: resolved.targetRowHeight })
+        const result = computeRowsLayout({ ...input, targetRowHeight: trh })
         if (result.length === 0 && photos.value.length > 0) {
           devWarn(
             'rows layout produced no groups; containerWidth may be too small for targetRowHeight',
@@ -140,23 +133,25 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
         return result
       }
       case 'columns':
-        return computeColumnsLayout({ ...input, columns: resolved.columns })
+        return computeColumnsLayout({ ...input, columns: cols })
       case 'masonry':
-        return computeMasonryLayout({ ...input, columns: resolved.columns })
+        return computeMasonryLayout({ ...input, columns: cols })
     }
   })
 
-  const rowItems = computed<RowItem<TMeta>[]>(() => {
+  const rowItems = computed<RowItem[]>(() => {
     const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
-    const resolved = resolvedParameters.value
+    const w = containerWidth.value
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const pd = resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING)
+    const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
 
-    if (containerQueriesRender.value) {
+    if (containerQueriesActive.value) {
       return photos.value.map((photo, index) => ({
         photo,
         index,
         width: photo.width,
         height: photo.height,
-        computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
         style: { ...cursor, overflow: 'hidden' } as CSSProperties,
       }))
     }
@@ -169,11 +164,10 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
           index,
           width: photo.width,
           height: photo.height,
-          computedSizes: typeof sizes.value === 'string' ? sizes.value : undefined,
           style: {
             ...cursor,
             flexGrow: ar,
-            flexBasis: `${resolved.targetRowHeight * ar}px`,
+            flexBasis: `${trh * ar}px`,
             overflow: 'hidden',
           } as CSSProperties,
         }
@@ -182,27 +176,20 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
 
     return groups.value.flatMap((row) =>
       row.entries.map((entry) => {
-        const gaps = computeGaps(resolved.spacing, resolved.padding, entry.itemsCount)
+        const gaps = computeGaps(sp, pd, entry.itemsCount)
         return {
           photo: entry.photo,
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(
-            entry.width,
-            resolved.width,
-            entry.itemsCount,
-            resolved.spacing,
-            resolved.padding,
-            sizes.value,
-          ),
+          computedSizes: computePhotoSizes(entry.width, w, entry.itemsCount, sp, pd, sizes.value),
           style: {
             ...cursor,
             flex: '0 0 auto',
             boxSizing: 'content-box' as const,
-            padding: `${resolved.padding}px`,
+            padding: `${pd}px`,
             overflow: 'hidden',
-            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(resolved.width, gaps, entry.width)})`,
+            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(w, gaps, entry.width)})`,
           } as CSSProperties,
         }
       }),
@@ -210,31 +197,35 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   })
 
   const ssrWrapperStyle = computed<CSSProperties>(() => {
-    const resolved = resolvedParameters.value
+    const w = containerWidth.value
+    const sp = resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING)
+    const cols = resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS)
     if (layout.value === 'rows') {
       return {
         display: 'flex',
         flexWrap: 'wrap',
-        gap: `${resolved.spacing}px`,
+        gap: `${sp}px`,
         width: '100%',
       }
     }
     return {
       display: 'grid',
-      gridTemplateColumns: `repeat(${resolved.columns}, 1fr)`,
-      gap: `${resolved.spacing}px`,
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gap: `${sp}px`,
       width: '100%',
     }
   })
 
-  function ssrItemStyle(photo: PhotoItem<TMeta>): CSSProperties {
+  function ssrItemStyle(photo: PhotoItem): CSSProperties {
     const cursor = interactive.value ? { cursor: 'pointer' } : {}
     if (layout.value === 'rows') {
+      const w = containerWidth.value
+      const trh = resolveResponsiveParameter(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT)
       const ar = photo.width / photo.height
       return {
         ...cursor,
         flexGrow: ar,
-        flexBasis: `${resolvedParameters.value.targetRowHeight * ar}px`,
+        flexBasis: `${trh * ar}px`,
         overflow: 'hidden',
       }
     }
@@ -252,26 +243,22 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     return { width: '100%' }
   })
 
-  // Warned once per album instance, not once per module: module-level state
-  // survives HMR and silences warnings for albums mounted later.
-  let warnedApproximate = false
-
   function maybeWarnApproximate() {
     if (layout.value === 'rows') return
     if (defaultContainerWidth && defaultContainerWidth > 0) return
-    if (warnedApproximate) return
-    warnedApproximate = true
+    if (warnedApproximateLayouts.has(layout.value)) return
+    warnedApproximateLayouts.add(layout.value)
     devWarn(
       `${layout.value} layout rendered without defaultContainerWidth; SSR uses a simple fallback and recomputes after mount. See https://nuxt-photo.lupinum.com/docs/concepts/ssr-and-layout-stability`,
     )
   }
 
   function liveCtx(): AlbumStyleContext {
-    const resolved = resolvedParameters.value
+    const w = containerWidth.value
     return {
-      containerWidth: resolved.width,
-      spacing: resolved.spacing,
-      padding: resolved.padding,
+      containerWidth: w,
+      spacing: resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING),
+      padding: resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING),
       columnsCount: groups.value.length || 1,
       layoutType: layout.value,
     }
@@ -285,12 +272,13 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     containerStyle,
     containerQueryCSS,
     containerQueriesRender,
+    containerQueriesActive,
     groups,
     rowItems,
     ssrWrapperStyle,
     ssrItemStyle,
-    groupStyle: (group: LayoutGroup<TMeta>) => albumGroupStyle(group, liveCtx()),
-    itemStyle: (entry: LayoutEntry<TMeta>, group: LayoutGroup<TMeta>) =>
+    groupStyle: (group: LayoutGroup) => albumGroupStyle(group, liveCtx()),
+    itemStyle: (entry: Parameters<typeof albumItemStyle>[0], group: LayoutGroup) =>
       albumItemStyle(entry, group, liveCtx(), interactive),
     maybeWarnApproximate,
   }

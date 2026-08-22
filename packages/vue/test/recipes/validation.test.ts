@@ -6,7 +6,6 @@ import { renderToString } from '@vue/server-renderer'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
-import type { PhotoItem } from '../../src/core/index'
 import { PhotoValidationError } from '../../src/core/photo/normalize'
 import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
@@ -68,7 +67,7 @@ describe('recipe validation', () => {
     const app = createSSRApp({
       render: () =>
         h(component, {
-          photos: [null] as unknown as PhotoItem<object>[],
+          photos: [null],
           validation: 'drop',
           onInvalidPhotos,
           lightbox: false,
@@ -87,7 +86,7 @@ describe('recipe validation', () => {
     const app = createApp({
       render: () =>
         h(PhotoAlbum, {
-          photos: photos.value as unknown as PhotoItem<object>[],
+          photos: photos.value,
           validation: 'drop',
           onInvalidPhotos,
           lightbox: false,

@@ -1,9 +1,7 @@
 import type { PhotoItem } from '../types'
 
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
-export function validatePhotoDimensions<TMeta extends object>(
-  photos: readonly PhotoItem<TMeta>[],
-): readonly PhotoItem<TMeta>[] {
+export function validatePhotoDimensions(photos: PhotoItem[]): PhotoItem[] {
   for (const photo of photos) {
     if (
       Number.isFinite(photo.width) &&

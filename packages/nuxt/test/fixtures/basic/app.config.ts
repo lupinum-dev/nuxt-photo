@@ -4,7 +4,7 @@ export default defineAppConfig({
       minZoom: 1.2,
     },
     labels: {
-      viewPhoto: 'Fixture photo {index}',
+      viewPhoto: 'Open photo {index}',
     },
   },
 })

@@ -12,30 +12,27 @@ export type NuxtPhotoImageAdapterConfig = {
   }
 }
 
-/** String templates use `{index}` and, for `slideStatus`, `{count}`. */
-export type NuxtPhotoLabelsConfig = Partial<Record<keyof PhotoLabels, string>>
-
-export const NUXT_PHOTO_LABEL_KEYS = {
-  photoViewer: true,
-  previous: true,
-  next: true,
-  zoom: true,
-  fit: true,
-  close: true,
-  loadFailed: true,
-  previousSlide: true,
-  nextSlide: true,
-  goToSlide: true,
-  viewPhoto: true,
-  slideStatus: true,
-} as const satisfies Record<keyof PhotoLabels, true>
-
 export type NuxtPhotoAppConfig = {
-  image?: NuxtPhotoImageAdapterConfig
+  labels?: NuxtPhotoLabels
   lightbox?: {
     minZoom?: number
   }
-  labels?: NuxtPhotoLabelsConfig
+}
+
+/** Serializable label overrides for `app.config.ts`. */
+export type NuxtPhotoLabels = {
+  photoViewer?: string
+  previous?: string
+  next?: string
+  zoom?: string
+  fit?: string
+  close?: string
+  loadFailed?: string
+  previousSlide?: string
+  nextSlide?: string
+  counter?: string
+  goToSlide?: string
+  viewPhoto?: string
 }
 
 type NuxtPhotoImageOptions =
@@ -49,14 +46,12 @@ export interface NuxtPhotoOptions {
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?: NuxtPhotoImageOptions
-  lightbox?: NuxtPhotoAppConfig['lightbox']
-  labels?: NuxtPhotoLabelsConfig
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
   autoImports: true,
   components: { prefix: '' },
-  css: 'structure',
+  css: 'all',
   image: { provider: 'auto' },
 } satisfies NuxtPhotoOptions
 
@@ -135,7 +130,7 @@ function validateToggleRecord(value: unknown, path: string) {
 /** Validate all runtime configuration before the module mutates Nuxt state. */
 export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
   assertPlainRecord(options, '')
-  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels'], '')
+  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image'], '')
 
   if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
     throw configError('css', '"none", "structure", or "all"')
@@ -177,19 +172,4 @@ export function validateNuxtPhotoOptions(options: unknown): asserts options is N
       assertQuality(options.image.slide.quality, 'image.slide.quality')
     }
   }
-
-  if (options.lightbox !== undefined) {
-    assertPlainRecord(options.lightbox, 'lightbox')
-    assertKnownKeys(options.lightbox, ['minZoom'], 'lightbox')
-    assertPositiveNumber(options.lightbox.minZoom, 'lightbox.minZoom')
-  }
-
-  if (options.labels !== undefined) {
-    assertPlainRecord(options.labels, 'labels')
-    assertKnownKeys(options.labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
-    for (const key of Object.keys(options.labels)) {
-      assertString(options.labels[key], `labels.${key}`)
-    }
-  }
 }
-import type { PhotoLabels } from '@lupinum/vue-photo/provide'

@@ -30,6 +30,11 @@
   padding-inline-start: var(--np-carousel-gap);
   aspect-ratio: var(--np-carousel-slide-aspect);
   position: relative;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
 }
 
 .np-carousel__media {

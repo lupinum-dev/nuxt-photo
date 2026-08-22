@@ -31,11 +31,9 @@ test('thumbnail click syncs to main carousel', async ({ page }) => {
   await expect(carousel.locator('.np-carousel__counter')).toContainText('4 / 12')
 })
 
-test('toggling lightbox enables slide click to open dialog', async ({ page }) => {
+test('the default lightbox opens from a carousel slide', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page, '/carousel')
-
-  await page.getByLabel('Lightbox').check()
 
   const carousel = page.locator('.np-carousel').first()
   await carousel.locator('.np-carousel__slide').first().click()

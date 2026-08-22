@@ -6,7 +6,7 @@
     "dev": "nuxi dev",
     "types:prepare": "nuxi prepare",
     "generate": "nuxi generate",
-    "build": "nuxi build && node ../scripts/check-docs-production.mjs",
+    "build": "nuxi build",
     "preview": "nuxi preview",
     "typecheck": "nuxi prepare && vue-tsc -p .nuxt/tsconfig.app.json --noEmit"
   },

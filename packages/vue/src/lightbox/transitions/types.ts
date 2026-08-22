@@ -1,4 +1,4 @@
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef, MaybeRefOrGetter, Ref } from 'vue'
 import type { AreaMetrics, PhotoItem, RectLike, TransitionModeConfig } from '../../core/index'
 import type { MotionVisualState } from './visual-state'
 
@@ -8,39 +8,38 @@ export type CapturedOpen = {
   src: string
 }
 
-export type SharedMotionCallbacks = {
+export type MotionCallbacks = {
+  prepareActiveSlide: (reset: boolean) => Promise<void>
   resetGestureState: () => void
   cancelTapTimer: () => void
   getThumbSrc: (photo: PhotoItem) => string
   setImageLoadFailed: (failed: boolean, error?: unknown) => void
   syncGeometry: () => void
-}
-
-export type OpenMotionCallbacks = SharedMotionCallbacks & {
-  prepareActiveSlide: (reset: boolean) => Promise<void>
-}
-
-export type CloseMotionCallbacks = SharedMotionCallbacks & {
   setPanzoomImmediate: (scale: number, pan: { x: number; y: number }) => void
   isZoomedIn: ComputedRef<boolean>
 }
 
-export type SharedTransitionContext = {
+type SharedTransitionContext = {
   activeIndex: Ref<number>
   currentPhoto: ComputedRef<PhotoItem | null>
-  areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
-  getTransitionConfig: () => TransitionModeConfig
-  isReducedMotion: () => boolean
+  transitionConfig: MaybeRefOrGetter<TransitionModeConfig>
+  reducedMotion: MaybeRefOrGetter<boolean>
+  animating: Ref<boolean>
   hiddenThumbIndex: Ref<number | null>
+  activeImagePending: Ref<boolean>
   visual: MotionVisualState
-  getCapturedOpen: () => CapturedOpen | null
+  resetClosedVisualState: () => void
 }
 
 export type OpenTransitionContext = SharedTransitionContext & {
+  uiVisible: Ref<boolean>
   stageMounted: Ref<boolean>
+  getCapturedOpen: () => CapturedOpen | null
+  clearCapturedOpen: () => void
 }
 
 export type CloseTransitionContext = SharedTransitionContext & {
+  areaMetrics: Ref<AreaMetrics | null>
   closeDragY: Ref<number>
 }
