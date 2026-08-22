@@ -2,13 +2,13 @@ import type { PhotoItem } from '../../types'
 import { round } from '../../utils/math'
 
 /** Return the aspect ratio for a photo item. */
-export function ratio(item: PhotoItem) {
+export function ratio<TMeta extends object>(item: PhotoItem<TMeta>) {
   return item.width / item.height
 }
 
 /** Estimate how many next-row candidates the row solver should inspect. */
-export function findIdealNodeSearch(
-  items: PhotoItem[],
+export function findIdealNodeSearch<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   targetRowHeight: number,
   containerWidth: number,
 ) {
@@ -17,8 +17,8 @@ export function findIdealNodeSearch(
 }
 
 /** Compute the shared height that makes a row fill the available width exactly. */
-export function getCommonHeight(
-  row: PhotoItem[],
+export function getCommonHeight<TMeta extends object>(
+  row: readonly PhotoItem<TMeta>[],
   containerWidth: number,
   spacing: number,
   padding: number,
@@ -29,8 +29,8 @@ export function getCommonHeight(
 }
 
 /** Score a candidate row break for the Knuth-Plass row layout solver. */
-export function cost(
-  items: PhotoItem[],
+export function cost<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   start: number,
   end: number,
   width: number,

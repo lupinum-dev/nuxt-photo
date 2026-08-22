@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, onMounted, ref, watch, type Component } from 'vue'
+import { computed, inject, type Component } from 'vue'
 import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
@@ -45,9 +45,9 @@ import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey } from '../provide/keys'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import Lightbox from './Lightbox.vue'
-import { resolveRecipePhotos } from '../core/photo/resolve'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { useRecipePhotos } from './shared/useRecipePhotos'
 
 defineOptions({ inheritAttrs: false })
 
@@ -80,7 +80,7 @@ const props = withDefaults(
     thumbSize?: string
     /** Setup-time lightbox capability. Remount to change it. */
     lightbox?: boolean | Component
-    /** Setup-time transition configuration. Remount to change it. */
+    /** Reactive transition configuration. */
     transition?: LightboxTransitionOption
     slideClass?: string
     imgClass?: string
@@ -102,24 +102,11 @@ const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
-const resolution = computed(() =>
-  resolveRecipePhotos<TMeta>(props.photos, 'PhotoCarousel', {
-    validation: props.validation,
-  }),
-)
-const resolvedPhotos = computed(() => resolution.value.photos)
-const reportingReady = ref(false)
-
-onMounted(() => {
-  reportingReady.value = true
-})
-
-watch(
-  [() => resolution.value.invalidPhotos, reportingReady],
-  ([event, ready]) => {
-    if (ready && event) emit('invalidPhotos', event)
-  },
-  { flush: 'post' },
+const resolvedPhotos = useRecipePhotos<TMeta>(
+  () => props.photos,
+  'PhotoCarousel',
+  () => props.validation,
+  (event) => emit('invalidPhotos', event),
 )
 
 const injectedLightbox = inject(LightboxComponentKey, null)

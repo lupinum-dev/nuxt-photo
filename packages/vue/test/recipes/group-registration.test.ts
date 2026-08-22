@@ -17,11 +17,14 @@ import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime
 const ProbeLightbox = defineComponent(() => {
   const controller = useLightbox()
   return () =>
-    h(
-      'output',
-      { 'data-testid': 'group-photos' },
-      controller.photos.value.map((photo) => photo.id).join(','),
-    )
+    h('div', [
+      h(
+        'output',
+        { 'data-testid': 'group-photos' },
+        controller.photos.value.map((photo) => photo.id).join(','),
+      ),
+      h('output', { 'data-testid': 'active-photo' }, controller.activePhoto.value?.id ?? ''),
+    ])
 })
 
 describe('PhotoGroup registration', () => {
@@ -72,6 +75,16 @@ describe('PhotoGroup registration', () => {
     const figures = mounted.container.querySelectorAll('figure')
     expect(figures[0]?.getAttribute('role')).toBe('button')
     expect(figures[1]?.getAttribute('role')).toBeNull()
+
+    figures[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushUi()
+    expect(mounted.container.querySelector('[data-testid="active-photo"]')?.textContent).toBe(
+      'first',
+    )
+
+    props.photos = [first, second]
+    await flushUi()
+    expect(figures[1]?.getAttribute('role')).toBe('button')
 
     mounted.unmount()
   })
@@ -166,7 +179,9 @@ describe('PhotoGroup registration', () => {
       replaceCapabilities() {},
       removeCapabilities() {},
       async open() {},
+      async close() {},
       async activateById() {},
+      isOpen: computed(() => false),
     }
     const mounted = await mountComponent(Photo, {
       props: { photo: descendant },

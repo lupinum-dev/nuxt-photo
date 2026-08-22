@@ -10,7 +10,10 @@ export type AlbumStyleContext = {
   layoutType: 'rows' | 'columns' | 'masonry'
 }
 
-export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSSProperties {
+export function albumGroupStyle<TMeta extends object>(
+  group: LayoutGroup<TMeta>,
+  ctx: AlbumStyleContext,
+): CSSProperties {
   if (group.type === 'row') {
     return {
       marginBottom: group.index < ctx.columnsCount - 1 ? `${ctx.spacing}px` : undefined,
@@ -46,9 +49,9 @@ export function albumGroupStyle(group: LayoutGroup, ctx: AlbumStyleContext): CSS
   }
 }
 
-export function albumItemStyle(
-  entry: LayoutEntry,
-  group: LayoutGroup,
+export function albumItemStyle<TMeta extends object>(
+  entry: LayoutEntry<TMeta>,
+  group: LayoutGroup<TMeta>,
   ctx: AlbumStyleContext,
   interactive: Ref<boolean>,
 ): CSSProperties {

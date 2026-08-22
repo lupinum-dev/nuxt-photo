@@ -28,6 +28,7 @@ import {
   onMounted,
   onBeforeUnmount,
   watch,
+  watchEffect,
   mergeProps,
   type Component,
   type VNodeChild,
@@ -55,7 +56,7 @@ const props = defineProps<{
   /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
   lightboxIgnore?: boolean
   imageAdapter?: ImageAdapter<TMeta>
-  /** Setup-time transition configuration for a standalone lightbox. */
+  /** Reactive transition configuration for a standalone lightbox. */
   transition?: LightboxTransitionOption
   loading?: 'lazy' | 'eager'
   /** Extra classes for the inner img element */
@@ -70,7 +71,7 @@ const slots = defineSlots<{
 function validatePhoto() {
   normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
 }
-validatePhoto()
+watchEffect(validatePhoto)
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
@@ -188,9 +189,8 @@ onMounted(() => {
 registerWithGroup()
 
 watch(
-  () => [props.photo, props.lightboxIgnore],
+  () => [props.photo.id, props.lightboxIgnore],
   () => {
-    validatePhoto()
     unregisterFromGroup()
     registerWithGroup()
   },

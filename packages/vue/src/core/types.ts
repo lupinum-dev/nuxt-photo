@@ -70,38 +70,41 @@ export type CloseTransitionPlan = {
 
 // ─── Layout ───
 
-export type LayoutInput = {
-  photos: PhotoItem[]
+export type LayoutInput<TMeta extends object = Readonly<Record<string, unknown>>> = {
+  photos: readonly PhotoItem<TMeta>[]
   containerWidth: number
   spacing?: number
   padding?: number
 }
 
-export type RowsLayoutOptions = LayoutInput & {
-  targetRowHeight?: number
-}
+export type RowsLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
+  LayoutInput<TMeta> & {
+    targetRowHeight?: number
+  }
 
-export type ColumnsLayoutOptions = LayoutInput & {
-  columns?: number
-}
+export type ColumnsLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
+  LayoutInput<TMeta> & {
+    columns?: number
+  }
 
-export type MasonryLayoutOptions = LayoutInput & {
-  columns?: number
-}
+export type MasonryLayoutOptions<TMeta extends object = Readonly<Record<string, unknown>>> =
+  LayoutInput<TMeta> & {
+    columns?: number
+  }
 
-export type LayoutEntry = {
+export type LayoutEntry<TMeta extends object = Readonly<Record<string, unknown>>> = {
   index: number
-  photo: PhotoItem
+  photo: PhotoItem<TMeta>
   width: number
   height: number
   positionIndex: number
   itemsCount: number
 }
 
-export type LayoutGroup = {
+export type LayoutGroup<TMeta extends object = Readonly<Record<string, unknown>>> = {
   type: 'row' | 'column'
   index: number
-  entries: LayoutEntry[]
+  entries: LayoutEntry<TMeta>[]
   columnsGaps?: number[]
   columnsRatios?: number[]
 }

@@ -4,8 +4,8 @@ import { resolveResponsiveParameter } from '../../types'
 import { devWarn } from '../../env'
 import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
 
-export interface BreakpointStylesOptions {
-  photos: PhotoItem[]
+export interface BreakpointStylesOptions<TMeta extends object = Readonly<Record<string, unknown>>> {
+  photos: readonly PhotoItem<TMeta>[]
   breakpoints: readonly number[]
   spacing?: ResponsiveParameter<number>
   padding?: ResponsiveParameter<number>
@@ -13,8 +13,8 @@ export interface BreakpointStylesOptions {
   containerName: string
 }
 
-function rowSignature(
-  groups: LayoutGroup[],
+function rowSignature<TMeta extends object>(
+  groups: LayoutGroup<TMeta>[],
   spacing: number,
   padding: number,
   targetRowHeight: number,
@@ -48,7 +48,9 @@ function rowSignature(
  * The output is scoped to `containerName` so multiple albums on the same page
  * never conflict. Items must carry class `np-item-{index}` for the rules to apply.
  */
-export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
+export function computeBreakpointStyles<TMeta extends object>(
+  opts: BreakpointStylesOptions<TMeta>,
+): string {
   const { photos, containerName } = opts
   if (photos.length === 0 || opts.breakpoints.length === 0) return ''
 
@@ -56,7 +58,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
   if (sorted.length === 0) return ''
 
   // 1. Compute layout at each breakpoint
-  type BpEntry = { bp: number; sig: string; groups: LayoutGroup[] }
+  type BpEntry = { bp: number; sig: string; groups: LayoutGroup<TMeta>[] }
   const bpEntries: BpEntry[] = []
   for (const bp of sorted) {
     const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
@@ -88,7 +90,7 @@ export function computeBreakpointStyles(opts: BreakpointStylesOptions): string {
     sig: string
     fromIdx: number
     toIdx: number
-    groups: LayoutGroup[]
+    groups: LayoutGroup<TMeta>[]
     sampleBp: number
   }
   const spans: Span[] = []

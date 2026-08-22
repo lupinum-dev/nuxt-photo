@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vite-plus/test'
+import { describe, expect, expectTypeOf, it, vi } from 'vite-plus/test'
 import {
   computeBreakpointStyles,
   computeColumnsLayout,
@@ -85,6 +85,23 @@ function parseItemWidths(css: string) {
 }
 
 describe('layout algorithms', () => {
+  it('preserves consumer metadata through every layout solver', () => {
+    const photos: PhotoItem<{ credit: string }>[] = [
+      { ...createPhotoSet()[0]!, meta: { credit: 'Lupinum' } },
+    ]
+    const options = { photos, containerWidth: 800 }
+    const layouts = [
+      computeRowsLayout(options),
+      computeColumnsLayout(options),
+      computeMasonryLayout(options),
+    ]
+
+    for (const layout of layouts) {
+      expectTypeOf(layout[0]!.entries[0]!.photo.meta?.credit).toEqualTypeOf<string | undefined>()
+      expect(layout[0]!.entries[0]!.photo.meta?.credit).toBe('Lupinum')
+    }
+  })
+
   it('justifies rows to the container width and returns no invalid entries', () => {
     const containerWidth = 1000
     const spacing = 8

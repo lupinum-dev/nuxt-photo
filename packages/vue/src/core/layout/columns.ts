@@ -5,8 +5,8 @@ function ratio(item: PhotoItem) {
   return item.width / item.height
 }
 
-function columnHeight(
-  items: PhotoItem[],
+function columnHeight<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   start: number,
   end: number,
   targetColumnWidth: number,
@@ -21,8 +21,8 @@ function columnHeight(
   return height
 }
 
-function findColumnBreaks(
-  items: PhotoItem[],
+function findColumnBreaks<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   columns: number,
   targetColumnWidth: number,
   spacing: number,
@@ -67,8 +67,8 @@ function findColumnBreaks(
   return path.reverse()
 }
 
-function partitionColumns(
-  items: PhotoItem[],
+function partitionColumns<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   columns: number,
   spacing: number,
   padding: number,
@@ -76,7 +76,7 @@ function partitionColumns(
 ): {
   columnsGaps: number[]
   columnsRatios: number[]
-  columnGroups: { photo: PhotoItem; index: number }[][]
+  columnGroups: { photo: PhotoItem<TMeta>; index: number }[][]
 } {
   const columnsGaps: number[] = []
   const columnsRatios: number[] = []
@@ -104,8 +104,11 @@ function partitionColumns(
   return { columnsGaps, columnsRatios, columnGroups }
 }
 
-function buildColumnGroups(path: number[], items: PhotoItem[]) {
-  const groups: { photo: PhotoItem; index: number }[][] = []
+function buildColumnGroups<TMeta extends object>(
+  path: number[],
+  items: readonly PhotoItem<TMeta>[],
+) {
+  const groups: { photo: PhotoItem<TMeta>; index: number }[][] = []
   for (let col = 0; col < path.length - 1; col++) {
     groups.push(
       items.slice(path[col], path[col + 1]).map((photo, i) => ({
@@ -122,7 +125,9 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
  * Returns LayoutGroup[]
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
-export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
+export function computeColumnsLayout<TMeta extends object>(
+  options: ColumnsLayoutOptions<TMeta>,
+): LayoutGroup<TMeta>[] {
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
   const spacing = normalizeLayoutNumber(options.spacing, 8)
   const padding = normalizeLayoutNumber(options.padding, 0)
@@ -137,7 +142,7 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
 
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 
-  const groups: LayoutGroup[] = []
+  const groups: LayoutGroup<TMeta>[] = []
   for (let col = 0; col < result.columnGroups.length; col++) {
     const columnItems = result.columnGroups[col]!
     if (columnItems.length === 0) continue
@@ -156,7 +161,7 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
         (result.columnsRatios[col] ?? 0)) /
       totalRatio
 
-    const entries: LayoutEntry[] = columnItems.map(({ photo, index }, positionIndex) => ({
+    const entries: LayoutEntry<TMeta>[] = columnItems.map(({ photo, index }, positionIndex) => ({
       index,
       photo,
       width: columnWidth,

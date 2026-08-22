@@ -31,8 +31,8 @@ import { cost, findIdealNodeSearch } from './helpers'
  * Typed arrays (Float64Array / Int32Array) avoid V8 allocating boxed numbers
  * per cell — meaningful on large galleries (hundreds of photos).
  */
-export function findRowBreaks(
-  photos: PhotoItem[],
+export function findRowBreaks<TMeta extends object>(
+  photos: readonly PhotoItem<TMeta>[],
   containerWidth: number,
   targetRowHeight: number,
   spacing: number,

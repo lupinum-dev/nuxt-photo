@@ -21,14 +21,14 @@
             itemClass,
           ]"
           :style="item.style"
-          v-bind="itemBindings(metadataPhoto(item.photo), item.index)"
+          v-bind="itemBindings(item.photo, item.index)"
         >
           <AlbumThumbnail
-            :photo="metadataPhoto(item.photo)"
+            :photo="item.photo"
             :index="item.index"
             :width="item.width"
             :height="item.height"
-            :hidden="isHidden(metadataPhoto(item.photo))"
+            :hidden="isHidden(item.photo)"
             :image-adapter="imageAdapter"
             :img-class="imgClass"
             :sizes="item.computedSizes"
@@ -64,14 +64,14 @@
             class="np-album__item"
             :class="itemClass"
             :style="itemStyle(entry, group)"
-            v-bind="itemBindings(metadataPhoto(entry.photo), entry.index)"
+            v-bind="itemBindings(entry.photo, entry.index)"
           >
             <AlbumThumbnail
-              :photo="metadataPhoto(entry.photo)"
+              :photo="entry.photo"
               :index="entry.index"
               :width="entry.width"
               :height="entry.height"
-              :hidden="isHidden(metadataPhoto(entry.photo))"
+              :hidden="isHidden(entry.photo)"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
               :sizes="nativeSizes"
@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, defineComponent, h, onMounted, ref, watch, type Component } from 'vue'
+import { computed, defineComponent, h, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
   DEFAULT_COLUMNS,
@@ -135,9 +135,9 @@ import {
 
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
-import { resolveRecipePhotos } from '../core/photo/resolve'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+import { useRecipePhotos } from './shared/useRecipePhotos'
 
 // Generated layout CSS is trusted internal output. innerHTML preserves `<` and
 // `>` range operators identically in SSR output and during client hydration.
@@ -203,32 +203,15 @@ const normalizedLayout = computed<AlbumLayout>(() => {
   }
 })
 
-function metadataPhoto(photo: PhotoItem): PhotoItem<TMeta> {
-  return photo as PhotoItem<TMeta>
-}
-
 if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
-const resolution = computed(() =>
-  resolveRecipePhotos<TMeta>(props.photos, 'PhotoAlbum', {
-    validation: props.validation,
-  }),
-)
-const normalizedPhotos = computed<PhotoItem<TMeta>[]>(() => resolution.value.photos)
-const reportingReady = ref(false)
-
-onMounted(() => {
-  reportingReady.value = true
-})
-
-watch(
-  [() => resolution.value.invalidPhotos, reportingReady],
-  ([event, ready]) => {
-    if (ready && event) emit('invalidPhotos', event)
-  },
-  { flush: 'post' },
+const normalizedPhotos = useRecipePhotos<TMeta>(
+  () => props.photos,
+  'PhotoAlbum',
+  () => props.validation,
+  (event) => emit('invalidPhotos', event),
 )
 
 const {

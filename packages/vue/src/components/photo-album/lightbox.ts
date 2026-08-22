@@ -24,7 +24,7 @@ type AlbumLightboxProps<TMeta extends object> = {
 }
 
 export function useAlbumLightbox<TMeta extends object>(
-  photos: ComputedRef<PhotoItem<TMeta>[]>,
+  photos: ComputedRef<readonly PhotoItem<TMeta>[]>,
   props: AlbumLightboxProps<TMeta>,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
@@ -141,7 +141,7 @@ export function useAlbumLightbox<TMeta extends object>(
     parentGroup?.removeCapabilities(capabilityOwner)
   }
 
-  function syncCapabilities(nextPhotos: PhotoItem<TMeta>[]) {
+  function syncCapabilities(nextPhotos: readonly PhotoItem<TMeta>[]) {
     const group = delegatedGroup
     if (!group) {
       removeCapabilities()

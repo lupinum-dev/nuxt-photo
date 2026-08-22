@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { createApp, defineComponent, h, reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
 import type { ImageContext, PhotoItem } from '../../src/core/types'
@@ -82,6 +83,27 @@ describe('Photo', () => {
     ).rejects.toThrow(/non-empty string id/)
   })
 
+  it('revalidates in-place mutations through the canonical normalizer', async () => {
+    const photo = reactive({ ...makePhoto({ id: 'reactive-photo' }) })
+    const errorHandler = vi.fn()
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(defineComponent(() => () => h(Photo, { photo })))
+    app.config.errorHandler = errorHandler
+    app.mount(host)
+
+    photo.width = 0
+    await flushUi()
+
+    expect(errorHandler).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('width') }),
+      expect.anything(),
+      expect.any(String),
+    )
+    app.unmount()
+    host.remove()
+  })
+
   it('routes built-in activation failures through Vue error handling', async () => {
     const { createApp, defineComponent, h } = await import('vue')
     const errorHandler = vi.fn()
@@ -95,7 +117,7 @@ describe('Photo', () => {
             photo,
             lightbox: true,
             transition: 'none',
-            imageAdapter: (_photo: PhotoItem, context: ImageContext) => {
+            imageAdapter: (_photo: PhotoItem<object>, context: ImageContext) => {
               if (context === 'slide') throw new Error('slide adapter failed')
               return { src: photo.src }
             },
