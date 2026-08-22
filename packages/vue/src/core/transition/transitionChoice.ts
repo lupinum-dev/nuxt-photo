@@ -13,10 +13,10 @@ export type TransitionModeConfig = {
 }
 
 /** Default close/open transition selection policy. */
-export const DEFAULT_TRANSITION_CONFIG: Readonly<TransitionModeConfig> = Object.freeze({
+export const DEFAULT_TRANSITION_CONFIG: TransitionModeConfig = {
   mode: 'auto',
   autoThreshold: 0.55,
-})
+}
 
 type ViewportRect = {
   left: number

@@ -26,7 +26,7 @@ describe('LightboxRoot modal ownership', () => {
         controller = provideLightbox([photo], { transition: 'none' })
         return () =>
           h('div', [
-            h('button', { id: 'trigger' }, 'Open'),
+            h('button', { id: 'trigger', ref: controller!.setThumbnailRef(0) }, 'Open'),
             h(
               LightboxRoot,
               { 'data-testid': 'lightbox-root' },
@@ -39,6 +39,8 @@ describe('LightboxRoot modal ownership', () => {
     app.mount(host)
     const trigger = host.querySelector('#trigger') as HTMLButtonElement
     trigger.focus()
+    trigger.blur()
+    expect(document.activeElement).toBe(document.body)
 
     await controller!.open(0)
     await flushUi()

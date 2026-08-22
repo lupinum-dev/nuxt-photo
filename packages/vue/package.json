@@ -46,8 +46,88 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"
     },
+    "./components/Lightbox": {
+      "types": "./dist/components/Lightbox.vue.d.ts",
+      "import": "./dist/components/Lightbox.vue"
+    },
+    "./components/Photo": {
+      "types": "./dist/components/Photo.vue.d.ts",
+      "import": "./dist/components/Photo.vue"
+    },
+    "./components/PhotoAlbum": {
+      "types": "./dist/components/PhotoAlbum.vue.d.ts",
+      "import": "./dist/components/PhotoAlbum.vue"
+    },
+    "./components/PhotoCarousel": {
+      "types": "./dist/components/PhotoCarousel.vue.d.ts",
+      "import": "./dist/components/PhotoCarousel.vue"
+    },
+    "./components/PhotoGroup": {
+      "types": "./dist/components/PhotoGroup.vue.d.ts",
+      "import": "./dist/components/PhotoGroup.vue"
+    },
+    "./primitives/LightboxProvider": {
+      "types": "./dist/primitives/LightboxProvider.vue.d.ts",
+      "import": "./dist/primitives/LightboxProvider.vue"
+    },
+    "./primitives/LightboxRoot": {
+      "types": "./dist/primitives/LightboxRoot.vue.d.ts",
+      "import": "./dist/primitives/LightboxRoot.vue"
+    },
+    "./primitives/LightboxOverlay": {
+      "types": "./dist/primitives/LightboxOverlay.vue.d.ts",
+      "import": "./dist/primitives/LightboxOverlay.vue"
+    },
+    "./primitives/LightboxViewport": {
+      "types": "./dist/primitives/LightboxViewport.vue.d.ts",
+      "import": "./dist/primitives/LightboxViewport.vue"
+    },
+    "./primitives/LightboxSlide": {
+      "types": "./dist/primitives/LightboxSlide.vue.d.ts",
+      "import": "./dist/primitives/LightboxSlide.vue"
+    },
+    "./primitives/LightboxControls": {
+      "types": "./dist/primitives/LightboxControls.vue.d.ts",
+      "import": "./dist/primitives/LightboxControls.vue"
+    },
+    "./primitives/LightboxCaption": {
+      "types": "./dist/primitives/LightboxCaption.vue.d.ts",
+      "import": "./dist/primitives/LightboxCaption.vue"
+    },
+    "./primitives/PhotoTrigger": {
+      "types": "./dist/primitives/PhotoTrigger.vue.d.ts",
+      "import": "./dist/primitives/PhotoTrigger.vue"
+    },
+    "./primitives/PhotoImage": {
+      "types": "./dist/primitives/PhotoImage.vue.d.ts",
+      "import": "./dist/primitives/PhotoImage.vue"
+    },
     "./styles.css": {
       "default": "./dist/styles.css"
+    },
+    "./styles/album.css": {
+      "default": "./dist/styles/album.css"
+    },
+    "./styles/carousel-structure.css": {
+      "default": "./dist/styles/carousel-structure.css"
+    },
+    "./styles/carousel-theme.css": {
+      "default": "./dist/styles/carousel-theme.css"
+    },
+    "./styles/lightbox.css": {
+      "default": "./dist/styles/lightbox.css"
+    },
+    "./styles/lightbox-structure.css": {
+      "default": "./dist/styles/lightbox-structure.css"
+    },
+    "./styles/lightbox-theme.css": {
+      "default": "./dist/styles/lightbox-theme.css"
+    },
+    "./styles/photo-structure.css": {
+      "default": "./dist/styles/photo-structure.css"
+    },
+    "./styles/photo.css": {
+      "default": "./dist/styles/photo.css"
     }
   },
   "publishConfig": {

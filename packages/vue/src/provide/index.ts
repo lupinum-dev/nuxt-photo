@@ -1,11 +1,18 @@
 export {
   ImageAdapterKey,
   LightboxComponentKey,
-  PhotoDefaultsKey,
+  LightboxDefaultsKey,
+  PhotoLabelsKey,
   type LightboxController,
-  type LightboxHandle,
-  type PhotoDefaults,
+  type LightboxDefaults,
   type LightboxProviderController,
   type LightboxSlideRenderer,
 } from './keys'
-export type { PhotoLabels } from './labels'
+export {
+  DEFAULT_PHOTO_LABELS,
+  providePhotoLabels,
+  resolvePhotoLabels,
+  usePhotoLabels,
+  type PhotoLabels,
+  type PhotoLabelsInput,
+} from './labels'

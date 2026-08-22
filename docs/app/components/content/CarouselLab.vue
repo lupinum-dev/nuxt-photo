@@ -4,6 +4,7 @@ import { demoPhotos } from '~/composables/demoPhotos'
 
 const loop = ref(true)
 const dragFree = ref(false)
+const slidesToScroll = ref(1)
 const autoplay = ref(false)
 const thumbnails = ref(true)
 const dots = ref(false)
@@ -11,8 +12,7 @@ const lightbox = ref(true)
 const code = computed(
   () => `<PhotoCarousel
   :photos="photos"
-  :loop="${loop.value}"
-  :drag-free="${dragFree.value}"
+  :options="{ loop: ${loop.value}, dragFree: ${dragFree.value}, slidesToScroll: ${slidesToScroll.value} }"
   :autoplay="${autoplay.value}"
   :show-thumbnails="${thumbnails.value}"
   :show-dots="${dots.value}"
@@ -23,6 +23,7 @@ const code = computed(
 function reset() {
   loop.value = true
   dragFree.value = false
+  slidesToScroll.value = 1
   autoplay.value = false
   thumbnails.value = true
   dots.value = false
@@ -37,10 +38,9 @@ function reset() {
     @reset="reset"
   >
     <PhotoCarousel
-      :key="`${loop}-${dragFree}`"
+      :key="`${loop}-${dragFree}-${slidesToScroll}`"
       :photos="demoPhotos.slice(0, 8)"
-      :loop="loop"
-      :drag-free="dragFree"
+      :options="{ loop, dragFree, slidesToScroll }"
       :autoplay="autoplay"
       :show-thumbnails="thumbnails"
       :show-dots="dots"
@@ -52,6 +52,11 @@ function reset() {
       <label class="docs-control"
         ><input v-model="dragFree" type="checkbox" /><span>Drag free</span></label
       >
+      <label class="docs-control docs-control--stacked"
+        ><span
+          >Slides to scroll <output>{{ slidesToScroll }}</output></span
+        ><input v-model.number="slidesToScroll" type="range" min="1" max="3"
+      /></label>
       <label class="docs-control"
         ><input v-model="autoplay" type="checkbox" /><span>Autoplay</span></label
       >
@@ -69,6 +74,7 @@ function reset() {
         :value="{
           loop,
           dragFree,
+          slidesToScroll,
           autoplay,
           thumbnails,
           dots,

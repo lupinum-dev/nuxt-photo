@@ -4,15 +4,14 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, onMounted, provide, ref, shallowRef, watch, type Component } from 'vue'
+import { computed, inject, provide, shallowRef, watch, type Component } from 'vue'
 import { provideLightbox } from '../composables/index'
 import { LightboxComponentKey, type LightboxProviderController } from '../provide/keys'
-import type {
-  ImageAdapter,
-  InvalidPhotoPolicy,
-  InvalidPhotosEvent,
-  LightboxTransitionOption,
-  PhotoItem,
+import {
+  normalizePhotos,
+  type ImageAdapter,
+  type LightboxTransitionOption,
+  type PhotoItem,
 } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import {
@@ -20,9 +19,7 @@ import {
   type PhotoGroupCapability,
   type PhotoGroupContext,
 } from './photo-group/context'
-import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
-import { resolveRecipePhotos } from '../core/photo/resolve'
 
 defineOptions({ inheritAttrs: false })
 
@@ -37,34 +34,21 @@ const props = withDefaults(
   defineProps<{
     /** Canonical photo collection and navigation order. */
     photos: readonly PhotoItem<TMeta>[]
-    validation?: InvalidPhotoPolicy
     imageAdapter?: ImageAdapter<TMeta>
-    /** Setup-time lightbox capability. Remount to change it. */
+    /** Reactive lightbox capability. */
     lightbox?: boolean | Component
-    /** Setup-time transition configuration. Remount to change it. */
+    /** Reactive transition configuration. */
     transition?: LightboxTransitionOption
   }>(),
   { lightbox: true },
 )
 
-const emit = defineEmits<{
-  invalidPhotos: [event: InvalidPhotosEvent]
-}>()
-
-const resolution = computed(() =>
-  resolveRecipePhotos<TMeta>(props.photos, 'PhotoGroup', { validation: props.validation }),
-)
-const canonicalPhotos = computed<readonly PhotoItem<TMeta>[]>(() => resolution.value.photos)
-const reportingReady = ref(false)
-onMounted(() => {
-  reportingReady.value = true
-})
-watch(
-  [() => resolution.value.invalidPhotos, reportingReady],
-  ([event, ready]) => {
-    if (ready && event) emit('invalidPhotos', event)
-  },
-  { flush: 'post' },
+const canonicalPhotos = computed<readonly PhotoItem<TMeta>[]>(
+  () =>
+    normalizePhotos<TMeta>(props.photos, {
+      owner: 'PhotoGroup',
+      onInvalid: 'throw',
+    }).photos,
 )
 const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
 const capabilities = computed(() => [...capabilityBatches.value.values()].flat())
@@ -74,25 +58,28 @@ function hasPhoto(id: string) {
 }
 
 const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
-const enabled = lightboxComponent !== null
-warnOnSetupOptionChanges('PhotoGroup', {
-  lightbox: () => props.lightbox,
+const lightboxComponent = computed(() =>
+  resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox),
+)
+const enabled = computed(() => lightboxComponent.value !== null)
+const provider = provideLightbox(canonicalPhotos, {
+  transition: () => props.transition,
+  imageAdapter: computed(() => props.imageAdapter),
+  resolveSlide: (photo) => {
+    for (const entry of capabilities.value) {
+      if (entry.id === photo.id && entry.renderSlide) {
+        return entry.renderSlide
+      }
+    }
+    return null
+  },
 })
-const provider = enabled
-  ? provideLightbox(canonicalPhotos, {
-      transition: () => props.transition,
-      imageAdapter: computed(() => props.imageAdapter),
-      resolveSlide: (photo) => {
-        for (const entry of capabilities.value) {
-          if (entry.id === photo.id && entry.renderSlide) {
-            return entry.renderSlide
-          }
-        }
-        return null
-      },
-    })
-  : null
+
+watch(enabled, (isEnabled) => {
+  if (!isEnabled && provider.isOpen.value) {
+    void provider.close()
+  }
+})
 
 function validateCapabilityIds(batches: ReadonlyMap<symbol, readonly PhotoGroupCapability[]>) {
   const canonicalIds = new Set(canonicalPhotos.value.map((photo) => photo.id))
@@ -139,7 +126,6 @@ function removeCapabilities(owner: symbol) {
 }
 
 function syncThumbnailRefs() {
-  if (!provider) return
   canonicalPhotos.value.forEach((photo, index) => {
     let element: HTMLElement | null = null
     for (const candidate of capabilities.value) {
@@ -154,59 +140,49 @@ function syncThumbnailRefs() {
 }
 
 async function open(index = 0) {
+  if (!enabled.value) return
   if (index < 0 || index >= canonicalPhotos.value.length) {
     throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
-  if (!provider) return
   syncThumbnailRefs()
   await provider.open(index)
 }
 
-async function activateById(id: string, source?: HTMLElement | null) {
+async function activateById(id: string, source: HTMLElement | null) {
+  if (!enabled.value) return
   const index = canonicalPhotos.value.findIndex((photo) => photo.id === id)
   if (index < 0) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
-  if (!provider) return
   syncThumbnailRefs()
-  if (source) provider.setThumbnailRef(index)(source)
+  provider.setThumbnailRef(index)(source)
   await provider.openById(id)
 }
 
 async function openById(id: string) {
-  await activateById(id)
+  if (!enabled.value) return
+  syncThumbnailRefs()
+  await provider.openById(id)
 }
 
 async function close() {
-  await provider?.close()
+  await provider.close()
 }
 
-const disabledController: LightboxProviderController<TMeta> = {
-  photos: computed(() => canonicalPhotos.value),
-  count: computed(() => canonicalPhotos.value.length),
-  activeIndex: computed(() => 0),
-  activePhoto: computed(() => null),
-  isOpen: computed(() => false),
+const isOpen = computed(() => enabled.value && provider.isOpen.value)
+const controller: LightboxProviderController<TMeta> = {
+  ...provider,
   open,
   openById,
   close,
-  next() {},
-  prev() {},
-  toggleZoom() {},
-  hiddenThumbnailIndex: computed(() => null),
-  setThumbnailRef: () => () => {},
+  isOpen,
 }
 
-const controller: LightboxProviderController<TMeta> = provider
-  ? { ...provider, open, openById }
-  : disabledController
-
 const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
-  if (!provider) return null
+  if (!enabled.value) return null
   const index = provider.hiddenThumbnailIndex.value
   return index === null ? null : (canonicalPhotos.value[index] ?? null)
 })
-const isOpen = computed(() => provider?.isOpen.value ?? false)
 
 const groupContext: PhotoGroupContext = {
   enabled,
@@ -214,11 +190,12 @@ const groupContext: PhotoGroupContext = {
   replaceCapabilities,
   removeCapabilities,
   open,
-  close,
+  openById,
   activateById,
+  close,
+  isOpen,
   photos: canonicalPhotos,
   hiddenPhoto,
-  isOpen,
 }
 provide(PhotoGroupContextKey, groupContext)
 

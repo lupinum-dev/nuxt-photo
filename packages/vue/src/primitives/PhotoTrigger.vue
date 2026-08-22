@@ -15,7 +15,7 @@
 import { computed } from 'vue'
 import type { PhotoItem } from '../core/index'
 import { useLightboxInject } from '../lightbox/inject'
-import { usePhotoLabels } from '../composables/usePhotoLabels'
+import { usePhotoLabels } from '../provide/labels'
 
 const props = defineProps<{
   photo: PhotoItem
@@ -25,5 +25,5 @@ const props = defineProps<{
 const ctx = useLightboxInject('PhotoTrigger')
 const labels = usePhotoLabels()
 
-const ariaLabel = computed(() => props.photo.alt || labels.viewPhoto(props.index + 1))
+const ariaLabel = computed(() => props.photo.alt || labels.value.viewPhoto(props.index + 1))
 </script>

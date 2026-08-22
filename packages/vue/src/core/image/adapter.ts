@@ -1,5 +1,5 @@
 import type { ImageAdapter, ImageSource, PhotoItem, ResponsivePhotoSizes } from '../types'
-import { round } from '../utils/math'
+import { computeGaps, computeWidthDivisor } from '../layout/constants'
 
 /**
  * Default native image adapter — uses photo src/thumbSrc directly.
@@ -9,7 +9,7 @@ const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource =>
   if (context === 'thumb' && photo.thumbSrc) {
     return {
       src: photo.thumbSrc,
-      placeholderSrc: photo.placeholderSrc,
+      placeholder: photo.placeholder,
       width: photo.width,
       height: photo.height,
     }
@@ -17,10 +17,16 @@ const _nativeAdapter: ImageAdapter = (photo: PhotoItem, context): ImageSource =>
 
   return {
     src: photo.src,
-    placeholderSrc: photo.placeholderSrc,
     srcset: photo.srcset,
+    placeholder: photo.placeholder,
     width: photo.width,
     height: photo.height,
+  }
+}
+
+function assertSafeSizeToken(token: string, field: string): void {
+  if (token.length === 0 || /["';{}]/.test(token)) {
+    throw new TypeError(`[nuxt-photo] sizes.${field} is not a valid CSS size value: "${token}"`)
   }
 }
 
@@ -54,8 +60,14 @@ export function computePhotoSizes(
   if (!responsiveSizes) return undefined
   if (typeof responsiveSizes === 'string') return responsiveSizes
 
-  const gaps = spacing * (itemsInRow - 1) + 2 * padding * itemsInRow
-  const divisor = round((containerWidth - gaps) / photoWidth, 5)
+  assertSafeSizeToken(responsiveSizes.size, 'size')
+  for (const override of responsiveSizes.sizes ?? []) {
+    assertSafeSizeToken(override.viewport, 'viewport')
+    assertSafeSizeToken(override.size, 'size')
+  }
+
+  const gaps = computeGaps(spacing, padding, itemsInRow)
+  const divisor = computeWidthDivisor(containerWidth, gaps, photoWidth)
   const defaultSize = `calc((${responsiveSizes.size} - ${gaps}px) / ${divisor})`
 
   if (!responsiveSizes.sizes?.length) return defaultSize

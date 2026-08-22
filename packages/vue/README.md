@@ -17,7 +17,9 @@
 
 ## Purpose
 
-Use this package in plain Vue applications or when a Nuxt interface needs lower-level control. It provides the state and primitives behind the Nuxt Photo recipe components.
+Use this package in plain Vue applications. It provides the same five complete
+recipes as the Nuxt package, plus the composables and primitives for custom
+interfaces.
 
 ## Requirements
 
@@ -33,24 +35,29 @@ pnpm add @lupinum/vue-photo
 
 ## Quick start
 
-```ts
-import { provideLightbox, type PhotoItem } from '@lupinum/vue-photo'
+```vue
+<script setup lang="ts">
+import { PhotoAlbum, type PhotoItem } from '@lupinum/vue-photo'
+import '@lupinum/vue-photo/styles.css'
 
 const photos: PhotoItem[] = [
   { id: 'one', src: '/one.jpg', width: 1200, height: 800, alt: 'First photo' },
 ]
+</script>
 
-const lightbox = provideLightbox(photos, {
-  transition: 'auto',
-})
+<template>
+  <PhotoAlbum :photos="photos" layout="rows" />
+</template>
 ```
 
-The provider creates the shared state that the Vue lightbox primitives consume.
+The album includes its lightbox by default. Use `Photo`, `PhotoGroup`,
+`PhotoCarousel`, or `Lightbox` for the other recipe-level experiences.
 
 ## Exports
 
-- Composables include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `useContainerWidth`, and `responsive`.
-- Components include `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`.
+- Recipe components are `Photo`, `PhotoAlbum`, `PhotoGroup`, `PhotoCarousel`, and `Lightbox`.
+- Composables include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `providePhotoLabels`, `useContainerWidth`, and `responsive`.
+- Optional primitives include `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`.
 - The package also exports public photo types, injection keys, and CSS.
 
 Use documented entry points only. Generated files and undocumented deep imports are internal.
