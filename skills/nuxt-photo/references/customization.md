@@ -305,8 +305,8 @@ Use this page to look up the supported customization surfaces.
 
 - Build a custom lightbox UI with `provideLightbox` plus Vue primitives.
 - Compose `LightboxProvider`, `PhotoTrigger`, and `Lightbox` when only the thumbnail layout is custom.
-- Use recipe slots when the default component is right but one rendered region needs custom markup.
-- Override the default recipe lightbox globally with `LightboxComponentKey`.
+- Use component slots when the ready-made component is right but one rendered region needs custom markup.
+- Override the built-in lightbox globally with `LightboxComponentKey`.
 - Provide a default image adapter with `ImageAdapterKey`.
 
 ## Examples
@@ -484,7 +484,10 @@ export default defineNuxtPlugin((nuxtApp) => {
 ```
 
 Recipe components now use `MyLightbox` unless their `lightbox` prop provides a
-different component.
+different component. The global component does not enable a lightbox by itself.
+`Photo` and `PhotoCarousel` still require `lightbox` to be enabled. An explicit
+component passed through the `lightbox` prop takes precedence over the global
+component.
 
 _Source: `docs/content/docs/4.guides/6.customize-the-lightbox.md`_
 

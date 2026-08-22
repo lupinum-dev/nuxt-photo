@@ -83,6 +83,7 @@ const installationSurfaces = [
   ['docs/content/docs/2.getting-started/1.installation.md', '@lupinum/nuxt-photo'],
   ['docs/content/docs/2.getting-started/3.plain-vue.md', '@lupinum/vue-photo'],
   ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
+  ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],
 ]
 
 if (String(nuxtPackage.version) !== String(vuePackage.version)) {
@@ -99,11 +100,16 @@ for (const [path, packageName] of installationSurfaces) {
   }
 }
 
-if (prereleaseDocs && !docsAppConfig.includes("id: 'nuxt-photo-1-beta'")) {
-  failures.push('Prerelease documentation must show the Nuxt Photo 1.0 beta banner.')
+const betaBannerBlock = docsAppConfig.match(/banner:\s*\{([\s\S]*?)\n\s*\},\n\s*social:/)?.[1] ?? ''
+const hasBetaBanner = betaBannerBlock.includes("id: 'nuxt-photo-1-beta'")
+const betaBannerEnabled = betaBannerBlock.includes('enabled: true')
+const betaBannerOnLanding = betaBannerBlock.includes('showOnLanding: true')
+
+if (prereleaseDocs && (!hasBetaBanner || !betaBannerEnabled || !betaBannerOnLanding)) {
+  failures.push('Prerelease documentation must show the Nuxt Photo 1.0 beta banner on landing.')
 }
-if (!prereleaseDocs && docsAppConfig.includes("id: 'nuxt-photo-1-beta'")) {
-  failures.push('Stable documentation must remove the Nuxt Photo 1.0 beta banner.')
+if (!prereleaseDocs && hasBetaBanner && (betaBannerEnabled || betaBannerOnLanding)) {
+  failures.push('Stable documentation must disable the Nuxt Photo 1.0 beta banner.')
 }
 const publicReadmes = [
   resolve(root, 'README.md'),
