@@ -13,20 +13,22 @@ export type NuxtPhotoImageAdapterConfig = {
 }
 
 /** String templates use `{index}` and, for `slideStatus`, `{count}`. */
-export type NuxtPhotoLabelsConfig = {
-  photoViewer?: string
-  previous?: string
-  next?: string
-  zoom?: string
-  fit?: string
-  close?: string
-  loadFailed?: string
-  previousSlide?: string
-  nextSlide?: string
-  goToSlide?: string
-  viewPhoto?: string
-  slideStatus?: string
-}
+export type NuxtPhotoLabelsConfig = Partial<Record<keyof PhotoLabels, string>>
+
+export const NUXT_PHOTO_LABEL_KEYS = {
+  photoViewer: true,
+  previous: true,
+  next: true,
+  zoom: true,
+  fit: true,
+  close: true,
+  loadFailed: true,
+  previousSlide: true,
+  nextSlide: true,
+  goToSlide: true,
+  viewPhoto: true,
+  slideStatus: true,
+} as const satisfies Record<keyof PhotoLabels, true>
 
 export type NuxtPhotoAppConfig = {
   image?: NuxtPhotoImageAdapterConfig
@@ -184,26 +186,10 @@ export function validateNuxtPhotoOptions(options: unknown): asserts options is N
 
   if (options.labels !== undefined) {
     assertPlainRecord(options.labels, 'labels')
-    assertKnownKeys(
-      options.labels,
-      [
-        'photoViewer',
-        'previous',
-        'next',
-        'zoom',
-        'fit',
-        'close',
-        'loadFailed',
-        'previousSlide',
-        'nextSlide',
-        'goToSlide',
-        'viewPhoto',
-        'slideStatus',
-      ],
-      'labels',
-    )
+    assertKnownKeys(options.labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
     for (const key of Object.keys(options.labels)) {
       assertString(options.labels[key], `labels.${key}`)
     }
   }
 }
+import type { PhotoLabels } from '@lupinum/vue-photo/provide'

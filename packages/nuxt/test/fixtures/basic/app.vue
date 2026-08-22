@@ -14,7 +14,6 @@ const photos: PhotoItem[] = [
     src: '/photos/canyon.jpg',
     width: 960,
     height: 1200,
-    alt: 'Fixture canyon',
   },
 ]
 

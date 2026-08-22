@@ -18,6 +18,7 @@ describe('nuxt-photo module integration', async () => {
 
     expect(html).toContain('id="nuxt-photo-min-zoom">1.2<')
     expect(html).toContain('Fixture sunrise')
+    expect(html).toContain('aria-label="Fixture photo 2"')
     expect(html).toContain('np-scope-')
   })
 

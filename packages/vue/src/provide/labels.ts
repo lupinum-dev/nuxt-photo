@@ -30,5 +30,12 @@ export const DEFAULT_PHOTO_LABELS: Readonly<PhotoLabels> = Object.freeze({
 })
 
 export function resolvePhotoLabels(partial?: Partial<PhotoLabels>): PhotoLabels {
-  return { ...DEFAULT_PHOTO_LABELS, ...partial }
+  const labels = { ...DEFAULT_PHOTO_LABELS }
+  if (!partial) return labels
+
+  for (const key of Object.keys(DEFAULT_PHOTO_LABELS) as Array<keyof PhotoLabels>) {
+    const value = partial[key]
+    if (value !== undefined) Object.assign(labels, { [key]: value })
+  }
+  return labels
 }

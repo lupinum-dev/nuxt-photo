@@ -138,8 +138,22 @@ export {}`,
             ...appConfig.nuxtPhoto,
             image: {
               ...appConfig.nuxtPhoto?.image,
-              ...(options.image.thumb ? { thumb: options.image.thumb } : {}),
-              ...(options.image.slide ? { slide: options.image.slide } : {}),
+              ...(options.image.thumb
+                ? {
+                    thumb: {
+                      ...appConfig.nuxtPhoto?.image?.thumb,
+                      ...options.image.thumb,
+                    },
+                  }
+                : {}),
+              ...(options.image.slide
+                ? {
+                    slide: {
+                      ...appConfig.nuxtPhoto?.image?.slide,
+                      ...options.image.slide,
+                    },
+                  }
+                : {}),
             },
           }
         })
@@ -166,13 +180,30 @@ export {}`,
           ? { labels: { ...appConfig.nuxtPhoto?.labels, ...options.labels } }
           : {}),
       }
+    }
 
-      addPlugin(
-        {
-          src: resolver.resolve('./runtime/defaults-plugin'),
-        },
-        { append: true },
-      )
+    const defaultsPlugin = resolver.resolve('./runtime/defaults-plugin')
+    const inlineDefaults = (nuxt.options.appConfig as NuxtPhotoAppConfigState).nuxtPhoto
+    if (
+      minZoom != null ||
+      options.labels != null ||
+      inlineDefaults?.lightbox?.minZoom != null ||
+      inlineDefaults?.labels != null
+    ) {
+      addPlugin({ src: defaultsPlugin }, { append: true })
+    } else {
+      // `app.config.ts` files are discovered after module setup. Register the
+      // defaults bridge only for apps that actually have an app-config source,
+      // keeping the unused-module bundle free of Vue Photo runtime code.
+      nuxt.hook('app:resolve', (app) => {
+        if (
+          app.configs.length === 0 ||
+          app.plugins.some((plugin) => plugin.src === defaultsPlugin)
+        ) {
+          return
+        }
+        app.plugins.push({ src: defaultsPlugin })
+      })
     }
 
     if (options.components !== false) {

@@ -1,4 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import type { NuxtPhotoAppConfig, NuxtPhotoOptions } from '../src/options'
 
 const addComponent = vi.fn()
 const addImports = vi.fn()
@@ -12,6 +13,13 @@ const createResolver = vi.fn(() => ({
 }))
 const hasNuxtModule = vi.fn()
 
+function expectNoImagePlugin() {
+  expect(addPlugin).not.toHaveBeenCalledWith(
+    { src: '/resolved/./runtime/plugin' },
+    { append: true },
+  )
+}
+
 vi.mock('@nuxt/kit', () => ({
   addComponent,
   addImports,
@@ -24,21 +32,22 @@ vi.mock('@nuxt/kit', () => ({
 }))
 
 function createNuxt() {
-  const hooks = new Map<string, Array<(...args: any[]) => void>>()
+  type HookCallback = (...args: unknown[]) => void
+  const hooks = new Map<string, HookCallback[]>()
 
   return {
-    hook(name: string, callback: (...args: any[]) => void) {
+    hook(name: string, callback: HookCallback) {
       const callbacks = hooks.get(name) ?? []
       callbacks.push(callback)
       hooks.set(name, callbacks)
     },
-    callHook(name: string, ...args: any[]) {
+    callHook(name: string, ...args: unknown[]) {
       for (const callback of hooks.get(name) ?? []) {
         callback(...args)
       }
     },
     options: {
-      appConfig: {} as Record<string, any>,
+      appConfig: {} as Record<string, unknown> & { nuxtPhoto: NuxtPhotoAppConfig },
       css: [] as string[],
       vite: {
         optimizeDeps: {
@@ -54,10 +63,16 @@ function createNuxt() {
   }
 }
 
-let nuxtPhotoModule: Awaited<typeof import('../src/module')>['default']
+type TestModuleDefinition = {
+  meta: { compatibility: { nuxt: string } }
+  defaults: NuxtPhotoOptions
+  setup: (options: NuxtPhotoOptions, nuxt: ReturnType<typeof createNuxt>) => Promise<void>
+}
+
+let nuxtPhotoModule: TestModuleDefinition
 describe('nuxt-photo module', () => {
   beforeAll(async () => {
-    nuxtPhotoModule = (await import('../src/module')).default
+    nuxtPhotoModule = (await import('../src/module')).default as unknown as TestModuleDefinition
   })
 
   beforeEach(() => {
@@ -87,6 +102,17 @@ describe('nuxt-photo module', () => {
     expect(template.filename).toBe('types/nuxt-photo-app-config.d.ts')
     expect(template.getContents()).toContain('interface AppConfig')
     expect(template.getContents()).toContain('NuxtPhotoAppConfig')
+    expect(addPlugin).not.toHaveBeenCalled()
+  })
+
+  it('registers the defaults bridge when app.config.ts is discovered', async () => {
+    const nuxt = createNuxt()
+    const app = { configs: ['/fixture/app.config.ts'], plugins: [] as Array<{ src: string }> }
+
+    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
+    nuxt.callHook('app:resolve', app)
+
+    expect(app.plugins).toEqual([{ src: '/resolved/./runtime/defaults-plugin' }])
   })
 
   it('does not register the image plugin in native mode', async () => {
@@ -100,10 +126,10 @@ describe('nuxt-photo module', () => {
       nuxt,
     )
 
-    expect(addPlugin).not.toHaveBeenCalled()
+    expectNoImagePlugin()
     nuxt.callHook('modules:done')
 
-    expect(addPlugin).not.toHaveBeenCalled()
+    expectNoImagePlugin()
   })
 
   it('registers the nuxt image plugin when explicitly enabled', async () => {
@@ -171,8 +197,8 @@ describe('nuxt-photo module', () => {
     const nuxt = createNuxt()
     nuxt.options.appConfig.nuxtPhoto = {
       image: {
-        thumb: { quality: 61 },
-        slide: { quality: 62 },
+        thumb: { sizes: 'app-thumb', quality: 61 },
+        slide: { maxWidth: 1200, quality: 62 },
       },
     }
     hasNuxtModule.mockReturnValue(true)
@@ -187,8 +213,8 @@ describe('nuxt-photo module', () => {
     nuxt.callHook('modules:done')
 
     expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
-      thumb: { quality: 70 },
-      slide: { quality: 62 },
+      thumb: { sizes: 'app-thumb', quality: 70 },
+      slide: { maxWidth: 1200, quality: 62 },
     })
   })
 
@@ -386,7 +412,7 @@ describe('nuxt-photo module', () => {
       nuxtPhotoModule.setup(
         {
           ...nuxtPhotoModule.defaults,
-          ...(config as any),
+          ...(config as unknown as Partial<NuxtPhotoOptions>),
         },
         nuxt,
       ),
@@ -567,11 +593,15 @@ describe('nuxt-photo module', () => {
         nuxt,
       )
 
-      expect(addPlugin).not.toHaveBeenCalled()
+      expectNoImagePlugin()
       hasNuxtModule.mockReturnValue(true)
       nuxt.callHook('modules:done')
 
       expect(addPlugin).toHaveBeenCalledOnce()
+      expect(addPlugin).toHaveBeenCalledWith(
+        { src: '/resolved/./runtime/plugin' },
+        { append: true },
+      )
     },
   )
 
@@ -582,7 +612,7 @@ describe('nuxt-photo module', () => {
     await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
     nuxt.callHook('modules:done')
 
-    expect(addPlugin).not.toHaveBeenCalled()
+    expectNoImagePlugin()
   })
 
   it('skips image provider entirely when image: false', async () => {
@@ -599,7 +629,7 @@ describe('nuxt-photo module', () => {
 
     nuxt.callHook('modules:done')
 
-    expect(addPlugin).not.toHaveBeenCalled()
+    expectNoImagePlugin()
   })
 
   it('only auto-imports vue composables', async () => {

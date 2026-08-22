@@ -181,7 +181,7 @@ defineSlots<{
 }>()
 
 const props = defineProps<{
-  photos: PhotoItem<TMeta>[]
+  photos: readonly PhotoItem<TMeta>[]
   imageAdapter?: ImageAdapter<TMeta>
   loop?: boolean
   dragFree?: boolean
@@ -265,7 +265,7 @@ function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
       photo,
       index,
       async () => props.onSlideActivate?.(index),
-      `Open slide ${index + 1}`,
+      photo.alt || labels.viewPhoto(index + 1),
     ),
     style: { cursor: 'pointer' },
     'data-index': index,
