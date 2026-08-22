@@ -240,8 +240,33 @@ describe('PhotoCarousel — DOM', () => {
     const m = mount(PhotoCarousel, props)
     await flushUi()
 
-    props.autoplay = true
-    await flushUi()
+    const viewport = m.container.querySelector('.np-carousel__viewport')!
+    const container = m.container.querySelector('.np-carousel__container')!
+    const slides = [...m.container.querySelectorAll('.np-carousel__slide')]
+    setCarouselRect(viewport, 0, 600)
+    setCarouselRect(container, 0, 600)
+    slides.forEach((slide, index) => setCarouselRect(slide, index * 600, 600))
+
+    vi.useFakeTimers()
+    try {
+      props.autoplay = true
+      await nextTick()
+      await Promise.resolve()
+
+      const counter = m.container.querySelector('.np-carousel__counter')!
+      const next = m.container.querySelector('.np-carousel__arrow--next') as HTMLButtonElement
+      expect(next.disabled).toBe(false)
+      expect(vi.getTimerCount()).toBeGreaterThan(0)
+      expect(counter.textContent).toContain('1 / 4')
+      await vi.advanceTimersByTimeAsync(3999)
+      expect(counter.textContent).toContain('1 / 4')
+
+      await vi.advanceTimersByTimeAsync(1001)
+      await nextTick()
+      expect(counter.textContent).toContain('2 / 4')
+    } finally {
+      vi.useRealTimers()
+    }
 
     expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
     m.unmount()
