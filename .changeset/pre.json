@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "rc",
+  "tag": "beta",
   "initialVersions": {
     "@lupinum/nuxt-photo": "0.2.1",
     "@lupinum/vue-photo": "0.2.1"

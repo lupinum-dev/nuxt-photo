@@ -1,6 +1,6 @@
 # @lupinum/nuxt-photo
 
-## 1.0.0-rc.0
+## 1.0.0-beta.1
 
 ### Major Changes
 
@@ -17,7 +17,7 @@
 ### Patch Changes
 
 - Updated dependencies [[`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc)]:
-  - @lupinum/vue-photo@1.0.0-rc.0
+  - @lupinum/vue-photo@1.0.0-beta.1
 
 ## 0.2.1
 
