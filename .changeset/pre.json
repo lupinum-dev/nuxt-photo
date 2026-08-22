@@ -1,16 +1,9 @@
 {
   "mode": "pre",
-  "tag": "rc",
+  "tag": "beta",
   "initialVersions": {
     "@lupinum/nuxt-photo": "0.2.1",
     "@lupinum/vue-photo": "0.2.1"
   },
-  "changesets": [
-    "accessibility-and-direction",
-    "carousel-stable-embla",
-    "container-query-rendering-correctness",
-    "finalize-lightbox-api",
-    "image-previews-and-sizes",
-    "nuxt-config-and-labels"
-  ]
+  "changesets": ["brave-photos-arrive", "quiet-controls-speak"]
 }
