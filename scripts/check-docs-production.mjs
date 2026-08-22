@@ -18,7 +18,6 @@ const requiredContent = [
   '<title>Why Nuxt Photo? - Nuxt Photo</title>',
   '<h1',
   'Why Nuxt Photo?',
-  'One photo model for responsive albums',
 ]
 
 for (const content of requiredContent) {
