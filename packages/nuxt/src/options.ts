@@ -12,15 +12,8 @@ export type NuxtPhotoImageAdapterConfig = {
   }
 }
 
-export type NuxtPhotoAppConfig = {
-  labels?: NuxtPhotoLabels
-  lightbox?: {
-    minZoom?: number
-  }
-}
-
-/** Serializable label overrides for `app.config.ts`. */
-export type NuxtPhotoLabels = {
+/** String templates use `{index}` and, for `slideStatus`, `{count}`. */
+export type NuxtPhotoLabelsConfig = {
   photoViewer?: string
   previous?: string
   next?: string
@@ -30,9 +23,17 @@ export type NuxtPhotoLabels = {
   loadFailed?: string
   previousSlide?: string
   nextSlide?: string
-  counter?: string
   goToSlide?: string
   viewPhoto?: string
+  slideStatus?: string
+}
+
+export type NuxtPhotoAppConfig = {
+  image?: NuxtPhotoImageAdapterConfig
+  lightbox?: {
+    minZoom?: number
+  }
+  labels?: NuxtPhotoLabelsConfig
 }
 
 type NuxtPhotoImageOptions =
@@ -46,12 +47,14 @@ export interface NuxtPhotoOptions {
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?: NuxtPhotoImageOptions
+  lightbox?: NuxtPhotoAppConfig['lightbox']
+  labels?: NuxtPhotoLabelsConfig
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
   autoImports: true,
   components: { prefix: '' },
-  css: 'all',
+  css: 'structure',
   image: { provider: 'auto' },
 } satisfies NuxtPhotoOptions
 
@@ -130,7 +133,7 @@ function validateToggleRecord(value: unknown, path: string) {
 /** Validate all runtime configuration before the module mutates Nuxt state. */
 export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
   assertPlainRecord(options, '')
-  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image'], '')
+  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels'], '')
 
   if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
     throw configError('css', '"none", "structure", or "all"')
@@ -170,6 +173,37 @@ export function validateNuxtPhotoOptions(options: unknown): asserts options is N
       assertPositiveNumber(options.image.slide.maxDensity, 'image.slide.maxDensity')
       assertString(options.image.slide.sizes, 'image.slide.sizes')
       assertQuality(options.image.slide.quality, 'image.slide.quality')
+    }
+  }
+
+  if (options.lightbox !== undefined) {
+    assertPlainRecord(options.lightbox, 'lightbox')
+    assertKnownKeys(options.lightbox, ['minZoom'], 'lightbox')
+    assertPositiveNumber(options.lightbox.minZoom, 'lightbox.minZoom')
+  }
+
+  if (options.labels !== undefined) {
+    assertPlainRecord(options.labels, 'labels')
+    assertKnownKeys(
+      options.labels,
+      [
+        'photoViewer',
+        'previous',
+        'next',
+        'zoom',
+        'fit',
+        'close',
+        'loadFailed',
+        'previousSlide',
+        'nextSlide',
+        'goToSlide',
+        'viewPhoto',
+        'slideStatus',
+      ],
+      'labels',
+    )
+    for (const key of Object.keys(options.labels)) {
+      assertString(options.labels[key], `labels.${key}`)
     }
   }
 }

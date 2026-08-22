@@ -5,6 +5,22 @@ function ratio(item: PhotoItem) {
   return item.width / item.height
 }
 
+function columnHeight(
+  items: PhotoItem[],
+  start: number,
+  end: number,
+  targetColumnWidth: number,
+  spacing: number,
+  padding: number,
+) {
+  let height = 0
+  for (let index = start; index < end; index++) {
+    height += targetColumnWidth / ratio(items[index]!) + 2 * padding
+    if (index > start) height += spacing
+  }
+  return height
+}
+
 function findColumnBreaks(
   items: PhotoItem[],
   columns: number,
@@ -19,12 +35,6 @@ function findColumnBreaks(
       2 * padding * count) /
     columns
 
-  const baseHeights = new Float64Array(count + 1)
-  for (let index = 0; index < count; index++) {
-    baseHeights[index + 1] =
-      baseHeights[index]! + targetColumnWidth / ratio(items[index]!) + 2 * padding
-  }
-
   const costs: number[][] = Array.from({ length: columns + 1 }, () =>
     Array.from({ length: count + 1 }, () => Infinity),
   )
@@ -36,8 +46,7 @@ function findColumnBreaks(
   for (let column = 1; column <= columns; column++) {
     for (let end = column; end <= count; end++) {
       for (let start = column - 1; start < end; start++) {
-        const height =
-          baseHeights[end]! - baseHeights[start]! + spacing * Math.max(0, end - start - 1)
+        const height = columnHeight(items, start, end, targetColumnWidth, spacing, padding)
         const nextCost = costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
         if (nextCost < costs[column]![end]!) {
           costs[column]![end] = nextCost

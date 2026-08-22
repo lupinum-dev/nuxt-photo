@@ -6,6 +6,9 @@ test('headless playground wiring works through useLightbox', async ({ request })
   const html = await response.text()
 
   expect(html).toContain('Fully headless layout')
-  expect(html.match(/class="[^"]*\bhex-grid__item\b[^"]*"/g)).toHaveLength(8)
+  // PhotoTrigger renders a native button, so the consumer class is merged
+  // after the trigger's own class.
+  expect(html.match(/class="[^"]*hex-grid__item"/g)).toHaveLength(8)
+  expect(html.match(/<button[^>]*hex-grid__item/g)).toHaveLength(8)
   expect(html).toContain('alt="Desert landscape at golden hour"')
 })

@@ -50,9 +50,9 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
     goToNext: vi.fn(),
     goToPrev: vi.fn(),
     goTo: vi.fn(),
+    selectedSnap: vi.fn(() => 0),
     goToFirst: vi.fn(),
     goToLast: vi.fn(),
-    selectedSnap: vi.fn(() => 0),
 
     handleCloseGesture: vi.fn(() => Promise.resolve()),
     close: vi.fn(() => Promise.resolve()),
@@ -131,15 +131,28 @@ describe('useLightboxInputHandlers', () => {
     expect(config.setPanzoomImmediate).not.toHaveBeenCalled()
   })
 
-  it('navigates to the first and last photo with Home and End', () => {
+  it('mirrors arrow-key navigation in an RTL document', () => {
+    document.documentElement.dir = 'rtl'
+    const { config } = createGestureConfig(false)
+    const gestures = useLightboxInputHandlers(config)
+
+    gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
+    gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
+
+    expect(config.goToPrev).toHaveBeenCalledTimes(1)
+    expect(config.goToNext).toHaveBeenCalledTimes(1)
+    document.documentElement.dir = ''
+  })
+
+  it('jumps to the first and last slide with Home and End', () => {
     const { config } = createGestureConfig(false)
     const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'Home' }))
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'End' }))
 
-    expect(config.goToFirst).toHaveBeenCalledOnce()
-    expect(config.goToLast).toHaveBeenCalledOnce()
+    expect(config.goToFirst).toHaveBeenCalledTimes(1)
+    expect(config.goToLast).toHaveBeenCalledTimes(1)
   })
 
   it('pans with arrow keys instead of navigating when zoomed in', () => {

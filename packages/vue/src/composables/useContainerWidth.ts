@@ -13,9 +13,6 @@ function snapToBreakpoint(width: number, breakpoints: readonly number[]): number
  * Tracks an element's width via ResizeObserver with optional breakpoint snapping and
  * scrollbar-oscillation detection. SSR-safe: initialises from `defaultContainerWidth`
  * and only starts the observer after mount.
- *
- * ResizeObserver's contentRect is the single measurement source. This keeps
- * layout math aligned with the element's content box when borders or padding exist.
  */
 export function useContainerWidth(
   containerRef: Ref<HTMLElement | null>,
@@ -43,6 +40,13 @@ export function useContainerWidth(
 
   onMounted(() => {
     if (!containerRef.value) return
+
+    rawWidth = containerRef.value.getBoundingClientRect().width
+    const initial = resolveWidth(rawWidth)
+    if (initial > 0) {
+      prevWidth = containerWidth.value
+      containerWidth.value = initial
+    }
 
     resizeObserver = new ResizeObserver((entries) => {
       const raw = entries[0]?.contentRect.width

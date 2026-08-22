@@ -6,7 +6,7 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "brotliLimit": 1080
+      "brotliLimit": 1024
     },
     "all": {
       "label": "full package import",
@@ -20,11 +20,11 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 2048
+      "brotliDeltaLimit": 1450
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 2250
+      "brotliDeltaLimit": 1700
     }
   }
 }

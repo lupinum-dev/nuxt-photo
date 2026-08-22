@@ -1,8 +1,21 @@
-/** Build native-button activation bindings shared by photo recipes. */
-export function createPhotoTriggerBindings(activate: () => void | Promise<void>, label: string) {
+import type { PhotoItem } from '../../core/index'
+
+/** Build the keyboard-accessible activation contract shared by photo recipes. */
+export function createPhotoTriggerBindings(
+  photo: PhotoItem,
+  index: number,
+  activate: () => void | Promise<void>,
+  label = photo.alt || `View photo ${index + 1}`,
+) {
   return {
-    type: 'button' as const,
+    role: 'button' as const,
+    tabindex: 0,
     'aria-label': label,
     onClick: activate,
+    onKeydown(event: KeyboardEvent) {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      return activate()
+    },
   }
 }

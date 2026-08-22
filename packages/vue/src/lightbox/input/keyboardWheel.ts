@@ -77,7 +77,9 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
       return
     }
 
-    const direction = event.key === 'ArrowRight' ? -1 : event.key === 'ArrowLeft' ? 1 : 0
+    const baseDirection = event.key === 'ArrowRight' ? -1 : event.key === 'ArrowLeft' ? 1 : 0
+    const rtl = document.documentElement.dir.toLowerCase() === 'rtl'
+    const direction = rtl ? -baseDirection : baseDirection
     if (!direction) return
 
     if (config.isZoomedIn.value) {

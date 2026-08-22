@@ -1,28 +1,25 @@
 import type { PhotoLabels } from '@lupinum/vue-photo/provide'
-import type { NuxtPhotoLabels } from '../options'
+import type { NuxtPhotoLabelsConfig } from '../options'
 
-function interpolate(template: string, index: number, count?: number) {
-  return template
-    .replaceAll('{index}', String(index))
-    .replaceAll('{count}', count === undefined ? '{count}' : String(count))
+function expand(template: string, values: Readonly<Record<string, number>>) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    template,
+  )
 }
 
-/** Convert serializable AppConfig labels into Vue's callable indexed labels. */
-export function resolveNuxtPhotoLabels(labels?: NuxtPhotoLabels): Partial<PhotoLabels> | undefined {
-  if (!labels) return undefined
-
-  const { counter, goToSlide, viewPhoto, ...staticLabels } = labels
-
-  return {
-    ...staticLabels,
-    ...(counter !== undefined && {
-      counter: (index, count) => interpolate(counter, index, count),
-    }),
-    ...(goToSlide !== undefined && {
-      goToSlide: (index) => interpolate(goToSlide, index),
-    }),
-    ...(viewPhoto !== undefined && {
-      viewPhoto: (index) => interpolate(viewPhoto, index),
-    }),
+export function resolveNuxtPhotoLabels(raw?: NuxtPhotoLabelsConfig): Partial<PhotoLabels> {
+  if (!raw) return {}
+  const { goToSlide, viewPhoto, slideStatus, ...staticLabels } = raw
+  const labels: Partial<PhotoLabels> = { ...staticLabels }
+  if (goToSlide !== undefined) {
+    labels.goToSlide = (index) => expand(goToSlide, { index })
   }
+  if (viewPhoto !== undefined) {
+    labels.viewPhoto = (index) => expand(viewPhoto, { index })
+  }
+  if (slideStatus !== undefined) {
+    labels.slideStatus = (index, count) => expand(slideStatus, { index, count })
+  }
+  return labels
 }

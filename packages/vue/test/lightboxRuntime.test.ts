@@ -5,11 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
-import {
-  getMountedSlideIndices,
-  resolveTransitionConfig,
-  useLightboxRuntimeState,
-} from '../src/lightbox/runtime'
+import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
 import {
   createKeydownBinding,
   useLightboxWindowLifecycle,
@@ -37,27 +33,6 @@ describe('lightbox media window', () => {
     { active: 1, count: 2, expected: [0, 1] },
   ])('mounts modular neighbors for $active of $count', ({ active, count, expected }) => {
     expect([...getMountedSlideIndices(active, count)].sort((a, b) => a - b)).toEqual(expected)
-  })
-})
-
-describe('transition option resolution', () => {
-  it('restores defaults when overrides are removed and applies reduced motion live', () => {
-    expect(resolveTransitionConfig({ mode: 'flip', autoThreshold: 0.8 }, false)).toEqual({
-      mode: 'flip',
-      autoThreshold: 0.8,
-    })
-    expect(resolveTransitionConfig(undefined, false)).toEqual({
-      mode: 'auto',
-      autoThreshold: 0.55,
-    })
-    expect(resolveTransitionConfig({ mode: 'flip', autoThreshold: 0.2 }, true)).toEqual({
-      mode: 'fade',
-      autoThreshold: 0.2,
-    })
-    expect(resolveTransitionConfig('none', true)).toEqual({
-      mode: 'none',
-      autoThreshold: 0.55,
-    })
   })
 })
 
@@ -157,6 +132,56 @@ describe('lightbox lifecycle invariants', () => {
     document.body.innerHTML = ''
     document.body.style.overflow = ''
     document.body.style.paddingRight = ''
+  })
+
+  it('rebuilds transition defaults and reacts to reduced-motion changes', async () => {
+    let onChange: (() => void) | undefined
+    const media = {
+      matches: false,
+      addEventListener: (_event: string, listener: () => void) => {
+        onChange = listener
+      },
+      removeEventListener: vi.fn(),
+    }
+    vi.stubGlobal('matchMedia', () => media)
+    const transition = ref<{ mode: 'auto'; autoThreshold?: number } | 'flip' | 'none' | undefined>({
+      mode: 'auto',
+      autoThreshold: 0.9,
+    })
+    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
+
+    const App = defineComponent({
+      setup() {
+        api = useLightboxRuntimeState([makePhoto()], transition)
+        return () => null
+      },
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+
+    expect(api!.transitionConfig.value.autoThreshold).toBe(0.9)
+    transition.value = { mode: 'auto' }
+    await nextTick()
+    expect(api!.transitionConfig.value.autoThreshold).toBe(0.55)
+    transition.value = undefined
+    await nextTick()
+    expect(api!.transitionConfig.value).toEqual({ mode: 'auto', autoThreshold: 0.55 })
+
+    media.matches = true
+    onChange?.()
+    await nextTick()
+    expect(api!.reducedMotion.value).toBe(true)
+    expect(api!.transitionConfig.value.mode).toBe('fade')
+
+    transition.value = 'none'
+    await nextTick()
+    expect(api!.transitionConfig.value.mode).toBe('none')
+
+    app.unmount()
+    host.remove()
+    expect(media.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function))
   })
 
   it('honors a close intent issued while open is still reconciling', async () => {

@@ -1,7 +1,7 @@
 <template>
   <div :ref="ctx.setControlsRef" data-np-motion="controls" v-bind="$attrs">
     <div data-np-sr-only aria-live="polite" aria-atomic="true">
-      {{ labels.counter(ctx.activeIndex.value + 1, ctx.count.value) }}
+      {{ labels.slideStatus(ctx.activeIndex.value + 1, ctx.count.value) }}
     </div>
     <slot
       :active-index="ctx.activeIndex.value"
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { useLightboxInject } from '../lightbox/inject'
-import { usePhotoLabels } from '../provide/labels'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
 import type { LightboxControlsSlotProps } from '../types/slots'
 
 defineSlots<{ default?: (props: LightboxControlsSlotProps) => unknown }>()

@@ -167,7 +167,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
 
     for (const field of [
       'thumbSrc',
-      'placeholder',
+      'placeholderSrc',
       'alt',
       'caption',
       'description',

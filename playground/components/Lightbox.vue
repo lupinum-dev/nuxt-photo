@@ -1,5 +1,10 @@
 <template>
-  <LightboxRoot class="np-lightbox" role="dialog" aria-modal="true">
+  <LightboxRoot
+    class="np-lightbox"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="labels.photoViewer"
+  >
     <LightboxOverlay class="np-lightbox__backdrop" />
 
     <div class="np-lightbox__ui">
@@ -18,12 +23,14 @@
         }"
       >
         <div class="np-lightbox__topbar">
-          <div class="np-lightbox__counter">{{ activeIndex + 1 }} / {{ count }}</div>
+          <div class="np-lightbox__counter">
+            <span aria-hidden="true">{{ activeIndex + 1 }} / {{ count }}</span>
+          </div>
 
           <div class="np-lightbox__actions">
             <button
               class="np-lightbox__btn np-lightbox__btn--prev"
-              aria-label="Previous"
+              :aria-label="labels.previous"
               :disabled="controlsDisabled"
               @click="prev"
             >
@@ -31,7 +38,7 @@
             </button>
             <button
               class="np-lightbox__btn np-lightbox__btn--next"
-              aria-label="Next"
+              :aria-label="labels.next"
               :disabled="controlsDisabled"
               @click="next"
             >
@@ -39,15 +46,15 @@
             </button>
             <button
               class="np-lightbox__btn np-lightbox__btn--zoom"
-              :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
+              :aria-label="isZoomedIn ? labels.fit : labels.zoom"
               :disabled="controlsDisabled || !zoomAllowed"
               @click="toggleZoom()"
             >
-              {{ isZoomedIn ? 'Fit' : 'Zoom' }}
+              {{ isZoomedIn ? labels.fit : labels.zoom }}
             </button>
             <button
               class="np-lightbox__btn np-lightbox__btn--close"
-              aria-label="Close"
+              :aria-label="labels.close"
               @click="close"
             >
               &#10005;
@@ -88,5 +95,8 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
+  usePhotoLabels,
 } from '@lupinum/nuxt-photo/app'
+
+const labels = usePhotoLabels()
 </script>

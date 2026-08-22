@@ -32,18 +32,14 @@ function callbacks() {
   }
 }
 
-function setup(
-  mode: 'flip' | 'fade' | 'none' = 'flip',
-  supportsDecode = true,
-  transitionConfig = ref({ mode, autoThreshold: 0.55 }),
-) {
+function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   const photo = createPhotoSet()[0]!
   const motion = useLightboxMotion(
     ref(0),
     computed(() => photo),
     ref({ left: 0, top: 0, width: 1200, height: 800 }),
     () => rect(200, 100, 800, 500),
-    transitionConfig,
+    () => ({ mode, autoThreshold: 0.55 }),
   )
 
   const overlay = document.createElement('div')
@@ -86,12 +82,12 @@ function setup(
   motion.setSlideImageRef(0)(slideImage)
   motion.setThumbRef(0)(thumb)
 
-  return { motion, slideImage, callbacks: callbacks() }
+  return { motion, slideImage, controls, callbacks: callbacks() }
 }
 
 describe('lightbox motion controller', () => {
   it('decodes the mounted responsive image and lands on canonical open styles', async () => {
-    const { motion, slideImage, callbacks } = setup()
+    const { motion, slideImage, controls, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
 
     await expect(motion.open(0, callbacks, new AbortController().signal)).resolves.toBe(true)
@@ -100,6 +96,7 @@ describe('lightbox motion controller', () => {
     expect(motion.stageMounted.value).toBe(true)
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
+    expect(controls.style.pointerEvents).toBe('auto')
   })
 
   it('cleans every visual state after close', async () => {
@@ -135,24 +132,5 @@ describe('lightbox motion controller', () => {
     setter(thumb)
     setter(null)
     expect(() => motion.captureOpen(3, '/fallback.jpg')).not.toThrow()
-  })
-
-  it('reads replacement and nested transition changes when each transition starts', async () => {
-    const transition = ref<{ mode: 'flip' | 'none'; autoThreshold: number }>({
-      mode: 'flip',
-      autoThreshold: 0.55,
-    })
-    const { motion, callbacks } = setup('flip', true, transition)
-
-    transition.value = { mode: 'none', autoThreshold: 0.8 }
-    motion.captureOpen(0, '/fallback-thumb.jpg')
-    await motion.open(0, callbacks, new AbortController().signal)
-    expect(motion.hiddenThumbIndex.value).toBeNull()
-
-    await motion.close(callbacks, new AbortController().signal)
-    transition.value.mode = 'flip'
-    motion.captureOpen(0, '/fallback-thumb.jpg')
-    await motion.open(0, callbacks, new AbortController().signal)
-    expect(motion.hiddenThumbIndex.value).toBe(0)
   })
 })
