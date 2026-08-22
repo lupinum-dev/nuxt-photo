@@ -1,6 +1,6 @@
 import { chooseCloseTransition } from '../../core/index'
-import { throwIfAborted, wait } from './animation'
-import type { MotionCallbacks, MotionTransitionContext } from './types'
+import { waitForImageReady } from './image-ready'
+import type { CloseMotionCallbacks, CloseTransitionContext } from './types'
 import { imageSource, opacityOf, rectStyle, visible } from './visual-state'
 
 const CLOSE_DURATION_MS = 360
@@ -10,25 +10,18 @@ const INTERRUPTED_HANDOFF_MS = 80
 const TRANSITION_IMAGE_PREPARE_MS = 800
 const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
-async function prepareTransitionImage(context: MotionTransitionContext, signal: AbortSignal) {
+async function prepareTransitionImage(context: CloseTransitionContext, signal: AbortSignal) {
   const image = context.visual.elements().transitionImage
   if (!image) return false
-  if (!image.decode) return true
-  try {
-    await Promise.race([
-      image.decode(),
-      wait(TRANSITION_IMAGE_PREPARE_MS, signal).then(() => {
-        throw new Error('Transition image decode timed out')
-      }),
-    ])
-    return true
-  } catch {
-    throwIfAborted(signal)
-    return false
-  }
+  return (
+    await waitForImageReady(image, signal, {
+      timeoutMs: TRANSITION_IMAGE_PREPARE_MS,
+      waitForLoadWithoutDecode: false,
+    })
+  ).ok
 }
 
-async function normalizeToGhost(context: MotionTransitionContext, signal: AbortSignal) {
+async function normalizeToGhost(context: CloseTransitionContext, signal: AbortSignal) {
   const { visual } = context
   const current = visual.elements()
   if (!current.transitionFrame || !current.transitionImage) return
@@ -58,7 +51,7 @@ async function normalizeToGhost(context: MotionTransitionContext, signal: AbortS
 }
 
 async function runFadeClose(
-  context: MotionTransitionContext,
+  context: CloseTransitionContext,
   duration: number,
   signal: AbortSignal,
 ) {
@@ -93,21 +86,15 @@ async function runFadeClose(
 
 /** Run the close choreography while the coordinator retains cancellation and ownership. */
 export async function runCloseTransition(
-  context: MotionTransitionContext,
-  callbacks: MotionCallbacks,
+  context: CloseTransitionContext,
+  callbacks: CloseMotionCallbacks,
   signal: AbortSignal,
 ) {
   const { visual } = context
-  callbacks.cancelTapTimer()
-  callbacks.resetGestureState()
-  context.animating.value = true
-  context.activeImagePending.value = false
-
   if (callbacks.isZoomedIn.value) callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
   callbacks.syncGeometry()
   const photo = context.currentPhoto.value
   if (!photo) {
-    context.resetClosedVisualState()
     return
   }
 
@@ -155,7 +142,6 @@ export async function runCloseTransition(
           context.isReducedMotion() ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
           signal,
         )
-        context.resetClosedVisualState()
         return
       }
       context.hiddenThumbIndex.value = context.activeIndex.value
@@ -199,10 +185,8 @@ export async function runCloseTransition(
         ),
       ])
     }
-    context.resetClosedVisualState()
   } catch (error) {
     visual.persistRunningAnimations()
-    context.animating.value = false
     throw error
   }
 }

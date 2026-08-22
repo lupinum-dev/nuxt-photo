@@ -8,32 +8,39 @@ export type CapturedOpen = {
   src: string
 }
 
-export type MotionCallbacks = {
-  prepareActiveSlide: (reset: boolean) => Promise<void>
+export type SharedMotionCallbacks = {
   resetGestureState: () => void
   cancelTapTimer: () => void
   getThumbSrc: (photo: PhotoItem) => string
   setImageLoadFailed: (failed: boolean, error?: unknown) => void
   syncGeometry: () => void
+}
+
+export type OpenMotionCallbacks = SharedMotionCallbacks & {
+  prepareActiveSlide: (reset: boolean) => Promise<void>
+}
+
+export type CloseMotionCallbacks = SharedMotionCallbacks & {
   setPanzoomImmediate: (scale: number, pan: { x: number; y: number }) => void
   isZoomedIn: ComputedRef<boolean>
 }
 
-export type MotionTransitionContext = {
+export type SharedTransitionContext = {
   activeIndex: Ref<number>
   currentPhoto: ComputedRef<PhotoItem | null>
   areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null
   getTransitionConfig: () => TransitionModeConfig
   isReducedMotion: () => boolean
-  animating: Ref<boolean>
   hiddenThumbIndex: Ref<number | null>
-  uiVisible: Ref<boolean>
-  closeDragY: Ref<number>
-  stageMounted: Ref<boolean>
-  activeImagePending: Ref<boolean>
   visual: MotionVisualState
   getCapturedOpen: () => CapturedOpen | null
-  clearCapturedOpen: () => void
-  resetClosedVisualState: () => void
+}
+
+export type OpenTransitionContext = SharedTransitionContext & {
+  stageMounted: Ref<boolean>
+}
+
+export type CloseTransitionContext = SharedTransitionContext & {
+  closeDragY: Ref<number>
 }

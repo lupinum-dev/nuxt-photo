@@ -3,7 +3,8 @@ import { isUsableRect, shouldUseFlip, type RectLike } from '../../core/index'
 import { flipTransform } from '../../core/geometry/rect'
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
 import { nextFrame, throwIfAborted, wait } from './animation'
-import type { MotionCallbacks, MotionTransitionContext } from './types'
+import { waitForImageReady } from './image-ready'
+import type { OpenMotionCallbacks, OpenTransitionContext } from './types'
 import { opacityOf, rectsMatch, visible } from './visual-state'
 
 const OPEN_DURATION_MS = 420
@@ -14,7 +15,7 @@ const INTERRUPTED_HANDOFF_MS = 80
 const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 async function decodeActiveImage(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   index: number,
   signal: AbortSignal,
 ) {
@@ -26,57 +27,13 @@ async function decodeActiveImage(
     return { ok: true as const }
   }
 
-  const decode = element.decode?.bind(element)
-  if (!decode) {
-    if (element.complete && element.naturalWidth > 0) return { ok: true as const }
-    return new Promise<{ ok: true } | { ok: false; error: unknown }>((resolve, reject) => {
-      let settled = false
-      const cleanup = () => {
-        clearTimeout(timeout)
-        signal.removeEventListener('abort', abort)
-        element.removeEventListener('load', loaded)
-        element.removeEventListener('error', failed)
-      }
-      const finish = (result: { ok: true } | { ok: false; error: unknown }) => {
-        if (settled) return
-        settled = true
-        cleanup()
-        resolve(result)
-      }
-      const abort = () => {
-        if (settled) return
-        settled = true
-        cleanup()
-        reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
-      }
-      const loaded = () => finish({ ok: true })
-      const failed = () => finish({ ok: false, error: new Error('Image failed to load') })
-      const timeout = setTimeout(
-        () => finish({ ok: false, error: new Error('Image load timed out') }),
-        IMAGE_LOAD_TIMEOUT_MS,
-      )
-      signal.addEventListener('abort', abort, { once: true })
-      element.addEventListener('load', loaded, { once: true })
-      element.addEventListener('error', failed, { once: true })
-      if (signal.aborted) abort()
-    })
-  }
-
-  try {
-    await Promise.race([
-      decode(),
-      wait(IMAGE_LOAD_TIMEOUT_MS, signal).then(() => {
-        throw new Error(`Image decode timed out: ${element.currentSrc || element.src}`)
-      }),
-    ])
-    return { ok: true as const }
-  } catch (error) {
-    throwIfAborted(signal)
-    return { ok: false as const, error }
-  }
+  return waitForImageReady(element, signal, {
+    timeoutMs: IMAGE_LOAD_TIMEOUT_MS,
+    waitForLoadWithoutDecode: true,
+  })
 }
 
-async function handoffToMedia(context: MotionTransitionContext, signal: AbortSignal) {
+async function handoffToMedia(context: OpenTransitionContext, signal: AbortSignal) {
   const current = context.visual.elements()
   if (!current.transitionFrame) return
   if (current.viewport) current.viewport.style.opacity = '1'
@@ -92,9 +49,9 @@ async function handoffToMedia(context: MotionTransitionContext, signal: AbortSig
 }
 
 async function runFadeOpen(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   duration: number,
-  callbacks: MotionCallbacks,
+  callbacks: OpenMotionCallbacks,
   signal: AbortSignal,
 ) {
   const { visual } = context
@@ -134,11 +91,7 @@ async function runFadeOpen(
   await Promise.all([shell, media])
 }
 
-function resolveOpenRects(
-  context: MotionTransitionContext,
-  index: number,
-  toRect: RectLike | null,
-) {
+function resolveOpenRects(context: OpenTransitionContext, index: number, toRect: RectLike | null) {
   const { visual } = context
   const captured = context.getCapturedOpen()?.index === index ? context.getCapturedOpen() : null
   const interruptedRect = visible(visual.transitionFrameRef.value)
@@ -154,27 +107,18 @@ function resolveOpenRects(
 
 /** Run the open choreography while the coordinator retains cancellation and ownership. */
 export async function runOpenTransition(
-  context: MotionTransitionContext,
+  context: OpenTransitionContext,
   index: number,
-  callbacks: MotionCallbacks,
+  callbacks: OpenMotionCallbacks,
   signal: AbortSignal,
 ) {
   const { visual } = context
-  callbacks.resetGestureState()
-  callbacks.cancelTapTimer()
-  context.animating.value = true
-  context.activeImagePending.value = true
-  context.uiVisible.value = true
-  context.activeIndex.value = index
-  callbacks.setImageLoadFailed(false)
-
   await nextTick()
   throwIfAborted(signal)
   callbacks.syncGeometry()
 
   const photo = context.currentPhoto.value
   if (!photo) {
-    context.resetClosedVisualState()
     return false
   }
 
@@ -222,9 +166,6 @@ export async function runOpenTransition(
         }
         if (current.overlay) current.overlay.style.opacity = '1'
         visual.setChromeOpacity(1)
-        context.activeImagePending.value = false
-        context.animating.value = false
-        context.clearCapturedOpen()
         return true
       }
 
@@ -336,14 +277,9 @@ export async function runOpenTransition(
     }
 
     visual.setChromeOpacity(1)
-    context.activeImagePending.value = false
-    context.animating.value = false
-    context.clearCapturedOpen()
     return true
   } catch (error) {
     visual.persistRunningAnimations()
-    context.animating.value = false
-    context.activeImagePending.value = false
     throw error
   }
 }

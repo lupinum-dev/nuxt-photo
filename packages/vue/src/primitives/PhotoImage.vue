@@ -3,7 +3,7 @@
     ref="imageRef"
     :src="resolved.src"
     :srcset="resolved.srcset"
-    :sizes="props.sizes ?? resolved.sizes"
+    :sizes="effectiveSizes"
     :width="resolved.width"
     :height="resolved.height"
     :alt="photo.alt || ''"
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, onMounted, onUpdated, ref } from 'vue'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import {
   createNativeImageAdapter,
   type PhotoItem,
@@ -53,9 +53,13 @@ const resolveImage = computed(
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))
+const effectiveSizes = computed(() => props.sizes ?? resolved.value.sizes)
 const imageRef = ref<HTMLImageElement | null>(null)
 const loaded = ref(false)
 const failed = ref(false)
+const requestKey = computed(() =>
+  JSON.stringify([resolved.value.src, resolved.value.srcset ?? '', effectiveSizes.value ?? '']),
+)
 
 const placeholderStyle = computed(() => {
   const placeholder = resolved.value.placeholderSrc
@@ -78,20 +82,15 @@ function handleError() {
   failed.value = true
 }
 
-let renderedSrc: string | null = null
-
-function syncRenderedSource() {
+function resetRequestState() {
   const image = imageRef.value
   if (!image) return
-  const src = image.getAttribute('src') ?? ''
-  if (src === renderedSrc) return
-
-  renderedSrc = src
   loaded.value = false
   failed.value = false
   if (image.complete && image.naturalWidth > 0) handleLoad()
 }
 
-onMounted(syncRenderedSource)
-onUpdated(syncRenderedSource)
+onMounted(() => {
+  watch(requestKey, resetRequestState, { immediate: true, flush: 'post' })
+})
 </script>

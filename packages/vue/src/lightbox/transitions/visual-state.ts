@@ -59,6 +59,10 @@ function animationPromise(animation: Animation, signal: AbortSignal) {
       reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
     }
     signal.addEventListener('abort', abort, { once: true })
+    if (signal.aborted) {
+      abort()
+      return
+    }
     animation.finished.then(
       () => {
         signal.removeEventListener('abort', abort)
@@ -149,6 +153,9 @@ export function createMotionVisualState() {
     properties: RunningAnimation['properties'],
     signal: AbortSignal,
   ) {
+    if (signal.aborted) {
+      return Promise.reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
+    }
     if (!element) return Promise.resolve()
     const duration = Number(options.duration ?? 0)
     if (typeof element.animate !== 'function' || duration <= 0) {
