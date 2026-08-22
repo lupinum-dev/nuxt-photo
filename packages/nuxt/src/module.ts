@@ -3,19 +3,25 @@ import {
   addComponent,
   addImports,
   addPlugin,
-  addTemplate,
+  addTypeTemplate,
   createResolver,
   defineNuxtModule,
   hasNuxtModule,
-  logger,
+  useLogger,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
-import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
-export type { NuxtPhotoAppConfig, NuxtPhotoLabels, NuxtPhotoOptions } from './options'
+import {
+  NUXT_PHOTO_DEFAULTS,
+  validateNuxtPhotoOptions,
+  type NuxtPhotoAppConfig,
+  type NuxtPhotoOptions,
+} from './options'
+export type { NuxtPhotoAppConfig, NuxtPhotoOptions } from './options'
+
+type NuxtPhotoAppConfigState = { nuxtPhoto?: NuxtPhotoAppConfig }
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
-  { export: 'Lightbox', name: 'Lightbox' },
   { export: 'Photo', name: 'Photo' },
   { export: 'PhotoGroup', name: 'PhotoGroup' },
   { export: 'PhotoAlbum', name: 'PhotoAlbum' },
@@ -34,17 +40,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = [
-  'useLightbox',
-  'provideLightbox',
-  'usePhotoLabels',
-  'providePhotoLabels',
-  'responsive',
-] as const
-
-function hasAdapterConfig(image: NuxtPhotoOptions['image']) {
-  return typeof image === 'object' && (image.thumb !== undefined || image.slide !== undefined)
-}
+const AUTO_IMPORTS = ['useLightbox', 'provideLightbox', 'usePhotoLabels', 'responsive'] as const
 
 function resolveRecipeComponent(vueDistDir: string, name: string) {
   return resolve(vueDistDir, 'components', `${name}.vue`)
@@ -82,29 +78,33 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
+    const logger = useLogger('nuxt-photo')
     const resolver = createResolver(import.meta.url)
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
+    const minZoom = options.lightbox?.minZoom
 
-    if (nuxt.options.appConfig.nuxtPhoto) {
-      addPlugin({
-        src: resolver.resolve('./runtime/defaults-plugin'),
-      })
-    }
+    addTypeTemplate({
+      filename: 'types/nuxt-photo-app-config.d.ts',
+      getContents: () => `import type { NuxtPhotoAppConfig } from '@lupinum/nuxt-photo'
+
+declare module '@nuxt/schema' {
+  interface AppConfig {
+    nuxtPhoto?: NuxtPhotoAppConfig
+  }
+}
+
+declare module 'nuxt/schema' {
+  interface AppConfig {
+    nuxtPhoto?: NuxtPhotoAppConfig
+  }
+}
+
+export {}`,
+    })
 
     if (options.image !== false) {
       const explicit = options.image?.provider ?? 'auto'
-      const adapterConfig =
-        typeof options.image === 'object'
-          ? { thumb: options.image.thumb, slide: options.image.slide }
-          : {}
-
-      if (explicit === 'native') {
-        if (hasAdapterConfig(options.image)) {
-          logger.warn(
-            '[nuxt-photo] `nuxtPhoto.image.thumb` and `slide` require the Nuxt Image adapter and are ignored in native mode.',
-          )
-        }
-      } else {
+      if (explicit !== 'native') {
         nuxt.hook('modules:done', () => {
           const hasImageModule = hasNuxtModule('@nuxt/image')
           if (explicit === 'nuxt-image' && !hasImageModule) {
@@ -114,18 +114,15 @@ export default defineNuxtModule<NuxtPhotoOptions>({
           }
 
           if (!hasImageModule) {
-            if (hasAdapterConfig(options.image)) {
+            const hasAdapterConfig =
+              typeof options.image === 'object' && !!(options.image.thumb || options.image.slide)
+            if (hasAdapterConfig) {
               logger.warn(
-                '[nuxt-photo] Nuxt Image adapter settings cannot take effect because `@nuxt/image` is not installed; using native images.',
+                '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect because `@nuxt/image` is not installed.',
               )
             }
             return
           }
-
-          addTemplate({
-            filename: 'nuxt-photo/image-config.mjs',
-            getContents: () => `export default ${JSON.stringify(adapterConfig)}`,
-          })
 
           addPlugin(
             {
@@ -133,8 +130,80 @@ export default defineNuxtModule<NuxtPhotoOptions>({
             },
             { append: true },
           )
+
+          if (typeof options.image !== 'object') return
+
+          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
+          appConfig.nuxtPhoto = {
+            ...appConfig.nuxtPhoto,
+            image: {
+              ...appConfig.nuxtPhoto?.image,
+              ...(options.image.thumb
+                ? {
+                    thumb: {
+                      ...appConfig.nuxtPhoto?.image?.thumb,
+                      ...options.image.thumb,
+                    },
+                  }
+                : {}),
+              ...(options.image.slide
+                ? {
+                    slide: {
+                      ...appConfig.nuxtPhoto?.image?.slide,
+                      ...options.image.slide,
+                    },
+                  }
+                : {}),
+            },
+          }
         })
       }
+    }
+
+    if (
+      typeof options.image === 'object' &&
+      options.image.provider === 'native' &&
+      (options.image.thumb || options.image.slide)
+    ) {
+      logger.warn(
+        '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect with the native image provider.',
+      )
+    }
+
+    if (minZoom != null || options.labels != null) {
+      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
+
+      appConfig.nuxtPhoto = {
+        ...appConfig.nuxtPhoto,
+        ...(minZoom != null ? { lightbox: { ...appConfig.nuxtPhoto?.lightbox, minZoom } } : {}),
+        ...(options.labels
+          ? { labels: { ...appConfig.nuxtPhoto?.labels, ...options.labels } }
+          : {}),
+      }
+    }
+
+    const defaultsPlugin = resolver.resolve('./runtime/defaults-plugin')
+    const inlineDefaults = (nuxt.options.appConfig as NuxtPhotoAppConfigState).nuxtPhoto
+    if (
+      minZoom != null ||
+      options.labels != null ||
+      inlineDefaults?.lightbox?.minZoom != null ||
+      inlineDefaults?.labels != null
+    ) {
+      addPlugin({ src: defaultsPlugin }, { append: true })
+    } else {
+      // `app.config.ts` files are discovered after module setup. Register the
+      // defaults bridge only for apps that actually have an app-config source,
+      // keeping the unused-module bundle free of Vue Photo runtime code.
+      nuxt.hook('app:resolve', (app) => {
+        if (
+          app.configs.length === 0 ||
+          app.plugins.some((plugin) => plugin.src === defaultsPlugin)
+        ) {
+          return
+        }
+        app.plugins.push({ src: defaultsPlugin })
+      })
     }
 
     if (options.components !== false) {

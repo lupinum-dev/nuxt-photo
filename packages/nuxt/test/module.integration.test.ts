@@ -17,8 +17,8 @@ describe('nuxt-photo module integration', async () => {
     const html = await $fetch('/')
 
     expect(html).toContain('id="nuxt-photo-min-zoom">1.2<')
-    expect(html).toContain('id="nuxt-photo-plugin-label">Close from plugin<')
     expect(html).toContain('Fixture sunrise')
+    expect(html).toContain('aria-label="Fixture photo 2"')
     expect(html).toContain('np-scope-')
   })
 
@@ -31,5 +31,5 @@ describe('nuxt-photo module integration', async () => {
       ['exec', 'vue-tsc', '-p', `${fixtureRoot}/.nuxt/tsconfig.app.json`, '--noEmit'],
       execOptions,
     )
-  }, 90_000)
+  }, 30_000)
 })

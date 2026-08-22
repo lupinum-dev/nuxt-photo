@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../..",
+    "baseUrl": "../..",
+    "paths": {
+      "@lupinum/vue-photo": ["packages/vue/src/index.ts"],
+      "@lupinum/vue-photo/*": ["packages/vue/src/*"],
+      "@lupinum/nuxt-photo": ["packages/nuxt/src/module.ts"],
+      "@lupinum/nuxt-photo/app": ["packages/nuxt/src/runtime/app.ts"]
+    },
+    "types": ["node", "vite/client", "vitest/globals"]
+  },
+  "include": ["src", "test/**/*.test.ts", "test/type-shims.d.ts"]
+}

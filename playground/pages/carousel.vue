@@ -4,7 +4,8 @@
       <h1 class="header__title">PhotoCarousel</h1>
       <p class="header__desc">
         A swipeable inline carousel for blogs and docs. Thumbnails, arrows, counter, caption — all
-        optional. The lightbox is enabled by default.
+        optional. Lightbox opt-in. Powered by
+        <code>embla-carousel-vue</code>.
       </p>
     </header>
 
@@ -42,6 +43,7 @@
     <section class="demo">
       <h2 class="demo__title">Default carousel</h2>
       <PhotoCarousel
+        :key="`default-carousel-lightbox-${lightbox}`"
         :photos="photos"
         :show-arrows="showArrows"
         :show-thumbnails="showThumbnails"
@@ -100,7 +102,7 @@ const showThumbnails = ref(true)
 const showCounter = ref(true)
 const showDots = ref(false)
 const autoplay = ref(false)
-const lightbox = ref(true)
+const lightbox = ref(false)
 const loop = ref(false)
 
 const templateCode = computed(
@@ -109,7 +111,7 @@ const templateCode = computed(
   :show-arrows="${showArrows.value}"
   :show-thumbnails="${showThumbnails.value}"
   :show-counter="${showCounter.value}"
-  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '' : '\n  :lightbox="false"'}${loop.value ? '\n  loop' : ''}
+  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  loop' : ''}
 />`,
 )
 </script>

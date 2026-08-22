@@ -1,31 +1,24 @@
-import { toValue } from 'vue'
 import { chooseCloseTransition } from '../../core/index'
-import { throwIfAborted, wait } from './animation'
-import type { CloseTransitionContext, MotionCallbacks } from './types'
+import { waitForImageReady } from './image-ready'
+import type { CloseMotionCallbacks, CloseTransitionContext } from './types'
 import { imageSource, opacityOf, rectStyle, visible } from './visual-state'
-import { REDUCED_MOTION_DURATION_MS, TRANSITION_EASING } from './timing'
 
 const CLOSE_DURATION_MS = 360
 const FADE_DURATION_MS = 220
+const REDUCED_MOTION_DURATION_MS = 160
 const INTERRUPTED_HANDOFF_MS = 80
 const TRANSITION_IMAGE_PREPARE_MS = 800
+const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 async function prepareTransitionImage(context: CloseTransitionContext, signal: AbortSignal) {
   const image = context.visual.elements().transitionImage
   if (!image) return false
-  if (!image.decode) return true
-  try {
-    await Promise.race([
-      image.decode(),
-      wait(TRANSITION_IMAGE_PREPARE_MS, signal).then(() => {
-        throw new Error('Transition image decode timed out')
-      }),
-    ])
-    return true
-  } catch {
-    throwIfAborted(signal)
-    return false
-  }
+  return (
+    await waitForImageReady(image, signal, {
+      timeoutMs: TRANSITION_IMAGE_PREPARE_MS,
+      waitForLoadWithoutDecode: false,
+    })
+  ).ok
 }
 
 async function normalizeToGhost(context: CloseTransitionContext, signal: AbortSignal) {
@@ -68,14 +61,14 @@ async function runFadeClose(
     visual.animate(
       current.overlay,
       [{ opacity: opacityOf(current.overlay, 1) }, { opacity: 0 }],
-      { duration, easing: TRANSITION_EASING },
+      { duration, easing: EASING },
       ['opacity'],
       signal,
     ),
     visual.animate(
       current.viewport,
       [{ opacity: opacityOf(current.viewport, 1) }, { opacity: 0 }],
-      { duration, easing: TRANSITION_EASING },
+      { duration, easing: EASING },
       ['opacity'],
       signal,
     ),
@@ -83,7 +76,7 @@ async function runFadeClose(
       visual.animate(
         element,
         [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: 0 }],
-        { duration, easing: TRANSITION_EASING },
+        { duration, easing: EASING },
         ['opacity'],
         signal,
       ),
@@ -94,24 +87,18 @@ async function runFadeClose(
 /** Run the close choreography while the coordinator retains cancellation and ownership. */
 export async function runCloseTransition(
   context: CloseTransitionContext,
-  callbacks: MotionCallbacks,
+  callbacks: CloseMotionCallbacks,
   signal: AbortSignal,
 ) {
   const { visual } = context
-  callbacks.cancelTapTimer()
-  callbacks.resetGestureState()
-  context.animating.value = true
-  context.activeImagePending.value = false
-
   if (callbacks.isZoomedIn.value) callbacks.setPanzoomImmediate(1, { x: 0, y: 0 })
   callbacks.syncGeometry()
   const photo = context.currentPhoto.value
   if (!photo) {
-    context.resetClosedVisualState()
     return
   }
 
-  const config = toValue(context.transitionConfig)
+  const config = context.getTransitionConfig()
   const thumb = visual.thumbRefs.get(context.activeIndex.value) ?? null
   const toRect = thumb?.getBoundingClientRect() ?? null
   const activeFrame = visual.slideFrameRefs.get(context.activeIndex.value)
@@ -131,7 +118,7 @@ export async function runCloseTransition(
       const duration =
         plan.mode === 'instant'
           ? 0
-          : toValue(context.reducedMotion)
+          : context.isReducedMotion()
             ? REDUCED_MOTION_DURATION_MS
             : FADE_DURATION_MS
       await runFadeClose(context, duration, signal)
@@ -152,10 +139,9 @@ export async function runCloseTransition(
         if (current.transitionFrame) current.transitionFrame.style.display = 'none'
         await runFadeClose(
           context,
-          toValue(context.reducedMotion) ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
+          context.isReducedMotion() ? REDUCED_MOTION_DURATION_MS : FADE_DURATION_MS,
           signal,
         )
-        context.resetClosedVisualState()
         return
       }
       context.hiddenThumbIndex.value = context.activeIndex.value
@@ -166,18 +152,14 @@ export async function runCloseTransition(
         visual.animate(
           current.transitionFrame,
           [{ transform: 'none' }, { transform: targetTransform }],
-          { duration: closeDuration, easing: TRANSITION_EASING },
+          { duration: closeDuration, easing: EASING },
           ['transform'],
           signal,
         ),
         visual.animate(
           current.overlay,
           [{ opacity: opacityOf(current.overlay, 1) }, { opacity: 0 }],
-          {
-            duration: closeDuration * 0.9,
-            delay: closeDuration * 0.1,
-            easing: TRANSITION_EASING,
-          },
+          { duration: closeDuration * 0.9, delay: closeDuration * 0.1, easing: EASING },
           ['opacity'],
           signal,
         ),
@@ -187,7 +169,7 @@ export async function runCloseTransition(
           {
             duration: closeDuration * 0.55,
             delay: closeDuration * 0.45,
-            easing: TRANSITION_EASING,
+            easing: EASING,
           },
           ['opacity'],
           signal,
@@ -196,17 +178,15 @@ export async function runCloseTransition(
           visual.animate(
             element,
             [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: 0 }],
-            { duration: closeDuration * 0.35, easing: TRANSITION_EASING },
+            { duration: closeDuration * 0.35, easing: EASING },
             ['opacity'],
             signal,
           ),
         ),
       ])
     }
-    context.resetClosedVisualState()
   } catch (error) {
     visual.persistRunningAnimations()
-    context.animating.value = false
     throw error
   }
 }

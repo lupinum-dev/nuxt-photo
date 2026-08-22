@@ -1,17 +1,31 @@
-import { computed, ref, watch, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
-import type { AreaMetrics, PhotoItem, RectLike, TransitionModeConfig } from '../../core/index'
+import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
+import {
+  DEFAULT_TRANSITION_CONFIG,
+  type AreaMetrics,
+  type PhotoItem,
+  type RectLike,
+  type TransitionModeConfig,
+} from '../../core/index'
 import { runCloseTransition } from './close'
 import { runOpenTransition } from './open'
 import type {
   CapturedOpen,
+  CloseMotionCallbacks,
   CloseTransitionContext,
-  MotionCallbacks,
+  OpenMotionCallbacks,
   OpenTransitionContext,
 } from './types'
 import { createMotionVisualState, imageSource, opacityOf, transformOf } from './visual-state'
-import { REDUCED_MOTION_DURATION_MS, TRANSITION_EASING } from './timing'
 
+const REDUCED_MOTION_DURATION_MS = 160
 const DRAG_SETTLE_MS = 180
+const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
+
+function isAbortError(error: unknown) {
+  return (
+    typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError'
+  )
+}
 
 /** Coordinate transition ownership, cancellation, gestures, and the public motion contract. */
 export function useLightboxMotion(
@@ -19,8 +33,8 @@ export function useLightboxMotion(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
-  transitionConfig: MaybeRefOrGetter<TransitionModeConfig>,
-  reducedMotion: MaybeRefOrGetter<boolean> = false,
+  getTransitionConfig: () => TransitionModeConfig = () => DEFAULT_TRANSITION_CONFIG,
+  isReducedMotion: () => boolean = () => false,
 ) {
   const animating = ref(false)
   const hiddenThumbIndex = ref<number | null>(null)
@@ -32,16 +46,33 @@ export function useLightboxMotion(
   const visual = createMotionVisualState()
   let capturedOpen: CapturedOpen | null = null
   let dragFrame = 0
+  let chromeController: AbortController | null = null
+  let dragSettleController: AbortController | null = null
 
   function cancel() {
     if (dragFrame) cancelAnimationFrame(dragFrame)
     dragFrame = 0
+    chromeController?.abort()
+    chromeController = null
+    dragSettleController?.abort()
+    dragSettleController = null
     visual.persistRunningAnimations()
   }
 
   function resetClosedVisualState() {
     cancel()
-    visual.resetClosedVisual()
+    const current = visual.elements()
+    if (current.overlay) current.overlay.style.opacity = '0'
+    if (current.viewport) {
+      current.viewport.style.opacity = '0'
+      current.viewport.style.transform = 'none'
+    }
+    if (current.transitionFrame) {
+      current.transitionFrame.style.display = 'none'
+      current.transitionFrame.style.opacity = '0'
+      current.transitionFrame.style.transform = 'none'
+    }
+    visual.setChromeOpacity(0)
     hiddenThumbIndex.value = null
     closeDragY.value = 0
     stageMounted.value = false
@@ -52,27 +83,20 @@ export function useLightboxMotion(
   const sharedTransitionContext = {
     activeIndex,
     currentPhoto,
+    areaMetrics,
     getAbsoluteFrameRect,
-    transitionConfig,
-    reducedMotion,
-    animating,
+    getTransitionConfig,
+    isReducedMotion,
     hiddenThumbIndex,
-    activeImagePending,
     visual,
-    resetClosedVisualState,
+    getCapturedOpen: () => capturedOpen,
   }
   const openTransitionContext: OpenTransitionContext = {
     ...sharedTransitionContext,
-    uiVisible,
     stageMounted,
-    getCapturedOpen: () => capturedOpen,
-    clearCapturedOpen: () => {
-      capturedOpen = null
-    },
   }
   const closeTransitionContext: CloseTransitionContext = {
     ...sharedTransitionContext,
-    areaMetrics,
     closeDragY,
   }
 
@@ -92,43 +116,55 @@ export function useLightboxMotion(
       dragFrame = 0
       const height = areaMetrics.value?.height || 1
       const progress = Math.min(1, Math.abs(closeDragY.value) / height)
-      visual.applyCloseDrag(closeDragY.value, progress, uiVisible.value ? 1 - progress : 0)
+      const scale = 1 - progress * 0.05
+      const current = visual.elements()
+      if (current.viewport) {
+        current.viewport.style.transform = `translate3d(0, ${closeDragY.value}px, 0) scale(${scale})`
+      }
+      if (current.overlay) current.overlay.style.opacity = String(1 - progress)
+      visual.setChromeOpacity(uiVisible.value ? 1 - progress : 0)
     })
   }
 
   async function settleDrag(signal?: AbortSignal) {
+    dragSettleController?.abort()
     const controller = signal ? null : new AbortController()
+    if (controller) dragSettleController = controller
     const activeSignal = signal ?? controller!.signal
     const current = visual.elements()
-    await Promise.all([
-      visual.animate(
-        current.viewport,
-        [{ transform: transformOf(current.viewport) }, { transform: 'none' }],
-        { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
-        ['transform'],
-        activeSignal,
-      ),
-      visual.animate(
-        current.overlay,
-        [{ opacity: opacityOf(current.overlay, 1) }, { opacity: 1 }],
-        { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
-        ['opacity'],
-        activeSignal,
-      ),
-      ...[...visual.controls, ...visual.captions].map((element) =>
+    try {
+      await Promise.all([
         visual.animate(
-          element,
-          [
-            { opacity: Number(getComputedStyle(element).opacity) },
-            { opacity: uiVisible.value ? 1 : 0 },
-          ],
-          { duration: DRAG_SETTLE_MS, easing: TRANSITION_EASING },
+          current.viewport,
+          [{ transform: transformOf(current.viewport) }, { transform: 'none' }],
+          { duration: DRAG_SETTLE_MS, easing: EASING },
+          ['transform'],
+          activeSignal,
+        ),
+        visual.animate(
+          current.overlay,
+          [{ opacity: opacityOf(current.overlay, 1) }, { opacity: 1 }],
+          { duration: DRAG_SETTLE_MS, easing: EASING },
           ['opacity'],
           activeSignal,
         ),
-      ),
-    ])
-    closeDragY.value = 0
+        ...[...visual.controls, ...visual.captions].map((element) =>
+          visual.animate(
+            element,
+            [
+              { opacity: Number(getComputedStyle(element).opacity) },
+              { opacity: uiVisible.value ? 1 : 0 },
+            ],
+            { duration: DRAG_SETTLE_MS, easing: EASING },
+            ['opacity'],
+            activeSignal,
+          ),
+        ),
+      ])
+      closeDragY.value = 0
+    } finally {
+      if (dragSettleController === controller) dragSettleController = null
+    }
   }
 
   async function handleCloseGesture(
@@ -152,15 +188,65 @@ export function useLightboxMotion(
   function setChromeVisible(show: boolean) {
     if (animating.value) return
     const target = show ? 1 : 0
+    chromeController?.abort()
     const controller = new AbortController()
-    for (const element of [...visual.controls, ...visual.captions]) {
-      void visual.animate(
-        element,
-        [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: target }],
-        { duration: REDUCED_MOTION_DURATION_MS, easing: TRANSITION_EASING },
-        ['opacity'],
-        controller.signal,
-      )
+    chromeController = controller
+    void Promise.all(
+      [...visual.controls, ...visual.captions].map((element) =>
+        visual.animate(
+          element,
+          [{ opacity: Number(getComputedStyle(element).opacity) }, { opacity: target }],
+          { duration: REDUCED_MOTION_DURATION_MS, easing: EASING },
+          ['opacity'],
+          controller.signal,
+        ),
+      ),
+    )
+      .then(() => {
+        if (chromeController === controller) visual.setChromeOpacity(target)
+      })
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) {
+          console.error('[nuxt-photo] chrome visibility animation failed', error)
+        }
+      })
+      .finally(() => {
+        if (chromeController === controller) chromeController = null
+      })
+  }
+
+  async function open(index: number, callbacks: OpenMotionCallbacks, signal: AbortSignal) {
+    callbacks.resetGestureState()
+    callbacks.cancelTapTimer()
+    animating.value = true
+    activeImagePending.value = true
+    uiVisible.value = true
+    activeIndex.value = index
+    callbacks.setImageLoadFailed(false)
+    try {
+      const opened = await runOpenTransition(openTransitionContext, index, callbacks, signal)
+      if (!opened) resetClosedVisualState()
+      else {
+        visual.setChromeOpacity(1)
+        capturedOpen = null
+      }
+      return opened
+    } finally {
+      activeImagePending.value = false
+      animating.value = false
+    }
+  }
+
+  async function close(callbacks: CloseMotionCallbacks, signal: AbortSignal) {
+    callbacks.cancelTapTimer()
+    callbacks.resetGestureState()
+    animating.value = true
+    activeImagePending.value = false
+    try {
+      await runCloseTransition(closeTransitionContext, callbacks, signal)
+      resetClosedVisualState()
+    } finally {
+      animating.value = false
     }
   }
 
@@ -174,12 +260,9 @@ export function useLightboxMotion(
     stageMounted,
     activeImagePending,
     transitionInProgress,
-    getThumbRef: (index: number) => visual.thumbRefs.get(index) ?? null,
     captureOpen,
-    open: (index: number, callbacks: MotionCallbacks, signal: AbortSignal) =>
-      runOpenTransition(openTransitionContext, index, callbacks, signal),
-    close: (callbacks: MotionCallbacks, signal: AbortSignal) =>
-      runCloseTransition(closeTransitionContext, callbacks, signal),
+    open,
+    close,
     cancel,
     resetClosedVisualState,
     setCloseDragY: applyDrag,

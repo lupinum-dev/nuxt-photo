@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "../..",
+    "jsx": "preserve",
+    "baseUrl": "../..",
+    "paths": {
+      "@lupinum/vue-photo": ["packages/vue/src/index.ts"],
+      "@lupinum/vue-photo/composables": ["packages/vue/src/composables/index.ts"],
+      "@lupinum/vue-photo/provide": ["packages/vue/src/provide/index.ts"],
+      "@lupinum/vue-photo/types": ["packages/vue/src/types/index.ts"],
+      "@test-fixtures/*": ["test/fixtures/*"]
+    },
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "test", "../../test/fixtures"]
+}

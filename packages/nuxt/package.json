@@ -40,7 +40,8 @@
   },
   "scripts": {
     "build": "nuxt-module-build build",
-    "dev": "nuxt-module-build build --stub"
+    "dev": "nuxt-module-build build --stub",
+    "typecheck": "vue-tsc -p tsconfig.tests.json"
   },
   "dependencies": {
     "@lupinum/vue-photo": "workspace:*",

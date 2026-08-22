@@ -1,6 +1,4 @@
-import { computed, inject, provide, toValue, type ComputedRef, type MaybeRefOrGetter } from 'vue'
-import { PhotoLabelsKey } from './keys'
-
+/** Complete user-visible and assistive text rendered by Nuxt Photo. */
 export interface PhotoLabels {
   photoViewer: string
   previous: string
@@ -11,12 +9,12 @@ export interface PhotoLabels {
   loadFailed: string
   previousSlide: string
   nextSlide: string
-  counter: (index: number, count: number) => string
   goToSlide: (index: number) => string
   viewPhoto: (index: number) => string
+  slideStatus: (index: number, count: number) => string
 }
 
-export const DEFAULT_PHOTO_LABELS: PhotoLabels = {
+export const DEFAULT_PHOTO_LABELS: Readonly<PhotoLabels> = Object.freeze({
   photoViewer: 'Photo viewer',
   previous: 'Previous',
   next: 'Next',
@@ -26,26 +24,18 @@ export const DEFAULT_PHOTO_LABELS: PhotoLabels = {
   loadFailed: 'Image could not be loaded.',
   previousSlide: 'Previous slide',
   nextSlide: 'Next slide',
-  counter: (index, count) => `${index} / ${count}`,
-  goToSlide: (index) => `Go to slide ${index}`,
-  viewPhoto: (index) => `View photo ${index}`,
-}
-
-export type PhotoLabelsInput = MaybeRefOrGetter<Partial<PhotoLabels> | undefined>
+  goToSlide: (index: number) => `Go to slide ${index}`,
+  viewPhoto: (index: number) => `View photo ${index}`,
+  slideStatus: (index: number, count: number) => `Slide ${index} of ${count}`,
+})
 
 export function resolvePhotoLabels(partial?: Partial<PhotoLabels>): PhotoLabels {
-  return partial ? { ...DEFAULT_PHOTO_LABELS, ...partial } : DEFAULT_PHOTO_LABELS
-}
+  const labels = { ...DEFAULT_PHOTO_LABELS }
+  if (!partial) return labels
 
-export function providePhotoLabels(labels: PhotoLabelsInput): ComputedRef<PhotoLabels> {
-  const resolved = computed(() => resolvePhotoLabels(toValue(labels)))
-  provide(PhotoLabelsKey, resolved)
-  return resolved
-}
-
-export function usePhotoLabels(): ComputedRef<PhotoLabels> {
-  return inject(
-    PhotoLabelsKey,
-    computed(() => DEFAULT_PHOTO_LABELS),
-  )
+  for (const key of Object.keys(DEFAULT_PHOTO_LABELS) as Array<keyof PhotoLabels>) {
+    const value = partial[key]
+    if (value !== undefined) Object.assign(labels, { [key]: value })
+  }
+  return labels
 }

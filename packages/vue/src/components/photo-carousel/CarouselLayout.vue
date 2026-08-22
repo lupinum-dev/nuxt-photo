@@ -1,13 +1,17 @@
 <template>
-  <div v-if="photos.length === 0" class="np-carousel np-carousel--empty" v-bind="$attrs" />
+  <div
+    v-if="photos.length === 0"
+    class="np-carousel np-carousel--empty"
+    :dir="direction"
+    v-bind="$attrs"
+  />
 
-  <div v-else class="np-carousel" :style="cssVarStyle" v-bind="$attrs">
+  <div v-else class="np-carousel" :dir="direction" :style="cssVarStyle" v-bind="$attrs">
     <div ref="emblaRef" class="np-carousel__viewport">
       <div class="np-carousel__container">
-        <component
+        <div
           v-for="(photo, index) in photos"
           :key="photo.id"
-          :is="onSlideActivate && !$slots.slide ? 'button' : 'div'"
           class="np-carousel__slide"
           :class="slideClass"
           v-bind="interactiveAttrs(photo, index)"
@@ -33,7 +37,7 @@
               />
             </slot>
           </div>
-        </component>
+        </div>
       </div>
 
       <div
@@ -78,8 +82,11 @@
         </template>
       </div>
 
-      <div v-if="showMultiControls && showCounter" class="np-carousel__counter" aria-live="polite">
-        {{ labels.counter(selectedIndex + 1, photos.length) }}
+      <div v-if="showMultiControls && showCounter" class="np-carousel__counter">
+        <span aria-hidden="true">{{ selectedIndex + 1 }} / {{ photos.length }}</span>
+        <span data-np-sr-only aria-live="polite" aria-atomic="true">
+          {{ labels.slideStatus(selectedIndex + 1, photos.length) }}
+        </span>
       </div>
     </div>
 
@@ -156,8 +163,8 @@ import type {
 } from '../../types/index'
 import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
-import { usePhotoCarouselRuntime, type CarouselBehaviorOptions } from './usePhotoCarouselRuntime'
-import { usePhotoLabels } from '../../provide/labels'
+import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
+import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
 
@@ -174,9 +181,11 @@ defineSlots<{
 }>()
 
 const props = defineProps<{
-  photos: PhotoItem<TMeta>[]
+  photos: readonly PhotoItem<TMeta>[]
   imageAdapter?: ImageAdapter<TMeta>
-  options: CarouselBehaviorOptions
+  loop?: boolean
+  dragFree?: boolean
+  direction?: 'ltr' | 'rtl'
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
   showArrows: boolean
@@ -220,7 +229,9 @@ const {
   reInit,
 } = usePhotoCarouselRuntime({
   photos: toRef(props, 'photos'),
-  options: toRef(props, 'options'),
+  loop: toRef(props, 'loop'),
+  dragFree: toRef(props, 'dragFree'),
+  direction: toRef(props, 'direction'),
   autoplay: toRef(props, 'autoplay'),
   showThumbnails: toRef(props, 'showThumbnails'),
 })
@@ -248,11 +259,13 @@ function setSlideElRef(index: number) {
 }
 
 function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
-  if (!props.onSlideActivate || slots.slide) return {}
+  if (!props.onSlideActivate) return {}
   return {
     ...createPhotoTriggerBindings(
+      photo,
+      index,
       async () => props.onSlideActivate?.(index),
-      photo.alt || labels.value.viewPhoto(index + 1),
+      photo.alt || labels.viewPhoto(index + 1),
     ),
     style: { cursor: 'pointer' },
     'data-index': index,

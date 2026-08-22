@@ -24,8 +24,8 @@
       >
         <div class="np-lightbox__topbar">
           <slot name="counter" :active-index="activeIndex" :count="count">
-            <div class="np-lightbox__counter" aria-live="polite" aria-atomic="true">
-              {{ labels.counter(activeIndex + 1, count) }}
+            <div class="np-lightbox__counter">
+              <span aria-hidden="true">{{ activeIndex + 1 }} / {{ count }}</span>
             </div>
           </slot>
 
@@ -123,16 +123,14 @@ import {
   LightboxSlide,
   LightboxViewport,
 } from '../primitives/index'
+import { usePhotoLabels } from '../composables/usePhotoLabels'
 import type {
   LightboxCaptionSlotProps,
   LightboxControlsSlotProps,
   LightboxSlideSlotProps,
 } from '../types/index'
-import { usePhotoLabels } from '../provide/labels'
-import { useLightbox } from '../composables/useLightbox'
 
 const labels = usePhotoLabels()
-const controller = useLightbox()
 
 interface LightboxCounterSlotProps {
   activeIndex: number
@@ -155,11 +153,4 @@ defineSlots<{
   slide?: (props: LightboxSlideSlotProps) => unknown
   caption?: (props: LightboxCaptionRecipeSlotProps) => unknown
 }>()
-
-defineExpose({
-  open: controller.open,
-  openById: controller.openById,
-  close: controller.close,
-  isOpen: controller.isOpen,
-})
 </script>

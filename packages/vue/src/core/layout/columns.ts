@@ -5,8 +5,24 @@ function ratio(item: PhotoItem) {
   return item.width / item.height
 }
 
-function findColumnBreaks(
-  items: PhotoItem[],
+function columnHeight<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
+  start: number,
+  end: number,
+  targetColumnWidth: number,
+  spacing: number,
+  padding: number,
+) {
+  let height = 0
+  for (let index = start; index < end; index++) {
+    height += targetColumnWidth / ratio(items[index]!) + 2 * padding
+    if (index > start) height += spacing
+  }
+  return height
+}
+
+function findColumnBreaks<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   columns: number,
   targetColumnWidth: number,
   spacing: number,
@@ -19,12 +35,6 @@ function findColumnBreaks(
       2 * padding * count) /
     columns
 
-  const baseHeights = new Float64Array(count + 1)
-  for (let index = 0; index < count; index++) {
-    baseHeights[index + 1] =
-      baseHeights[index]! + targetColumnWidth / ratio(items[index]!) + 2 * padding
-  }
-
   const costs: number[][] = Array.from({ length: columns + 1 }, () =>
     Array.from({ length: count + 1 }, () => Infinity),
   )
@@ -36,8 +46,7 @@ function findColumnBreaks(
   for (let column = 1; column <= columns; column++) {
     for (let end = column; end <= count; end++) {
       for (let start = column - 1; start < end; start++) {
-        const height =
-          baseHeights[end]! - baseHeights[start]! + spacing * Math.max(0, end - start - 1)
+        const height = columnHeight(items, start, end, targetColumnWidth, spacing, padding)
         const nextCost = costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
         if (nextCost < costs[column]![end]!) {
           costs[column]![end] = nextCost
@@ -58,8 +67,8 @@ function findColumnBreaks(
   return path.reverse()
 }
 
-function partitionColumns(
-  items: PhotoItem[],
+function partitionColumns<TMeta extends object>(
+  items: readonly PhotoItem<TMeta>[],
   columns: number,
   spacing: number,
   padding: number,
@@ -67,7 +76,7 @@ function partitionColumns(
 ): {
   columnsGaps: number[]
   columnsRatios: number[]
-  columnGroups: { photo: PhotoItem; index: number }[][]
+  columnGroups: { photo: PhotoItem<TMeta>; index: number }[][]
 } {
   const columnsGaps: number[] = []
   const columnsRatios: number[] = []
@@ -95,8 +104,11 @@ function partitionColumns(
   return { columnsGaps, columnsRatios, columnGroups }
 }
 
-function buildColumnGroups(path: number[], items: PhotoItem[]) {
-  const groups: { photo: PhotoItem; index: number }[][] = []
+function buildColumnGroups<TMeta extends object>(
+  path: number[],
+  items: readonly PhotoItem<TMeta>[],
+) {
+  const groups: { photo: PhotoItem<TMeta>; index: number }[][] = []
   for (let col = 0; col < path.length - 1; col++) {
     groups.push(
       items.slice(path[col], path[col + 1]).map((photo, i) => ({
@@ -113,7 +125,9 @@ function buildColumnGroups(path: number[], items: PhotoItem[]) {
  * Returns LayoutGroup[]
  * with columnsGaps and columnsRatios metadata for CSS calc() widths.
  */
-export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup[] {
+export function computeColumnsLayout<TMeta extends object>(
+  options: ColumnsLayoutOptions<TMeta>,
+): LayoutGroup<TMeta>[] {
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
   const spacing = normalizeLayoutNumber(options.spacing, 8)
   const padding = normalizeLayoutNumber(options.padding, 0)
@@ -128,7 +142,7 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
 
   const totalRatio = result.columnsRatios.reduce((acc, r) => acc + r, 0)
 
-  const groups: LayoutGroup[] = []
+  const groups: LayoutGroup<TMeta>[] = []
   for (let col = 0; col < result.columnGroups.length; col++) {
     const columnItems = result.columnGroups[col]!
     if (columnItems.length === 0) continue
@@ -147,7 +161,7 @@ export function computeColumnsLayout(options: ColumnsLayoutOptions): LayoutGroup
         (result.columnsRatios[col] ?? 0)) /
       totalRatio
 
-    const entries: LayoutEntry[] = columnItems.map(({ photo, index }, positionIndex) => ({
+    const entries: LayoutEntry<TMeta>[] = columnItems.map(({ photo, index }, positionIndex) => ({
       index,
       photo,
       width: columnWidth,

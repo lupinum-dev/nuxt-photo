@@ -109,7 +109,7 @@ describe('SSR', () => {
       expect(html).toContain('ssr-1')
     })
 
-    it('with defaultContainerWidth renders inline geometry without dead container-query CSS', async () => {
+    it('with both breakpoints and defaultContainerWidth renders inline calc() without dead container query CSS', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -121,6 +121,8 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
+      // Inline widths are authoritative when dcw is set; @container rules
+      // would never apply underneath them.
       expect(html).toContain('calc(')
       expect(html).not.toContain('@container')
     })
@@ -252,8 +254,8 @@ describe('SSR', () => {
       })
       const html = await renderToString(app)
       expect(html).toContain('np-album__column')
-      expect(html).toContain('type="button"')
-      expect(html).not.toContain('tabindex="0"')
+      expect(html).toContain('role="button"')
+      expect(html).toContain('tabindex="0"')
     })
 
     it('columns without any SSR signal falls back to the approximate flat grid', async () => {
@@ -279,7 +281,7 @@ describe('SSR', () => {
 
     const html = await renderToString(app)
 
-    expect(html).toContain('type="button"')
+    expect(html).toContain('role="button"')
     expect(html).not.toContain('teleport start')
     expect(html).not.toContain('role="dialog"')
   })
@@ -333,8 +335,8 @@ describe('SSR', () => {
 
     expect(html).toContain('@container')
     expect(html).toContain('np-item-0')
-    expect(html).not.toContain('class="np-album__item np-item-0"')
-    expect(html).toContain('style="flex-grow:1.777')
+    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
+    expect(html).not.toContain('style="flex-grow:1.777')
   })
 })
 

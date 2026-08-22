@@ -37,5 +37,5 @@ The website Markdown under `docs/content/docs/**` is the canonical usage documen
   - Common app imports can come from `@lupinum/nuxt-photo/app`.
   - Direct imports from `@lupinum/vue-photo` or its public subpaths require that package in the app's own dependencies.
 - Do not set `nuxtPhoto.css: 'none'` unless the app provides a complete replacement for structure CSS.
-- Do not call `useLightboxProvider()` inside a recipe lightbox override passed through `:lightbox` or `LightboxComponentKey`; the recipe already owns that provider.
+- Do not call `provideLightbox()` inside a recipe lightbox override passed through `:lightbox` or `LightboxComponentKey`; the recipe already owns that provider.
 - Do not generate nondeterministic adapter URLs during SSR render. Pre-sign URLs before rendering or store signed URLs on the `PhotoItem`.

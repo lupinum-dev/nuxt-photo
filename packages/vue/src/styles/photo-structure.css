@@ -3,12 +3,6 @@
 .np-photo {
   position: relative;
   display: inline-block;
-  border: 0;
-  padding: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
 }
 
 .np-photo__img {
@@ -24,6 +18,8 @@
   pointer-events: none;
 }
 
+/* PhotoTrigger renders a native button; strip the UA chrome so slotted
+   thumbnails size and style like plain content. */
 .np-trigger {
   appearance: none;
   background: none;

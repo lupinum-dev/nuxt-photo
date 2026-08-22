@@ -2,28 +2,22 @@
 
 ## 1.0.0-beta.1
 
-### Patch Changes
-
-- Use the resolved localization source for both visible counters and screen-reader announcements, and align the carousel playground and browser acceptance coverage with the default lightbox and flat carousel API.
-- Updated dependencies
-  - @lupinum/vue-photo@1.0.0-beta.1
-
-## 1.0.0-beta.0
-
 ### Major Changes
 
-- 397cfee: Prepare the 1.0 release candidate around five complete recipe components, optional headless primitives, and one shared reactive lightbox contract.
+- [#36](https://github.com/lupinum-dev/nuxt-photo/pull/36) [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Replace the prerelease Embla integration with stable Embla 8.6 and its documented public methods. `PhotoCarousel` now accepts direct `loop`, `dragFree`, and `direction` props. Remove the `options` bag, `slidesToScroll`, and the private snap-model integration. Carousel lightboxes remain opt-in.
 
-  Make lightboxes default across recipes; expose consistent recipe controllers; rename `useLightboxProvider()` to `provideLightbox()`; flatten carousel behavior props; add reactive Vue and serializable Nuxt localization; support reactive validation, transitions, adapters, and placeholders; and publish only explicit component, primitive, type, composable, provide, and stylesheet subpaths.
+- [#36](https://github.com/lupinum-dev/nuxt-photo/pull/36) [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Finalize the 1.0 lightbox contract. Rename `useLightboxProvider()` to `provideLightbox()` and `LightboxDefaults` to `PhotoDefaults` without compatibility aliases. Export `LightboxHandle` and expose it only from `PhotoAlbum` and `PhotoGroup`. Transition props now rebuild from immutable defaults when changed or cleared, and live reduced-motion changes flow through animation timing.
 
-  Make layout calculation deterministic with exact row optimization and shared JavaScript/CSS geometry, move the carousel to stable Embla 8.6.0, and split transition orchestration by responsibility.
+### Minor Changes
 
-  Simplify the Nuxt module to four build-time option roots, load the complete theme by default, keep UI defaults in typed AppConfig, and keep image adapter configuration in `nuxt.config.ts` with quiet native fallback when Nuxt Image is absent.
+- [#36](https://github.com/lupinum-dev/nuxt-photo/pull/36) [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add optional `placeholderSrc` previews to `PhotoItem` and `ImageSource`. Placeholders reset whenever the adapter-resolved URL changes and remain visible after load failures. `PhotoAlbum.sizes` now also accepts a native HTML sizes string for every layout.
+
+- [#36](https://github.com/lupinum-dev/nuxt-photo/pull/36) [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add typed Nuxt app configuration and complete module-level localization. Module options now preserve app-owned image, lightbox, and label values that they do not replace. Automatic native-image fallback remains quiet; warnings are limited to explicit adapter settings that cannot work.
 
 ### Patch Changes
 
-- Updated dependencies [397cfee]
-  - @lupinum/vue-photo@1.0.0-beta.0
+- Updated dependencies [[`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc), [`d93238b`](https://github.com/lupinum-dev/nuxt-photo/commit/d93238bec66ed1d33d687d165c9bfa9a0c5f71bc)]:
+  - @lupinum/vue-photo@1.0.0-beta.1
 
 ## 0.2.1
 

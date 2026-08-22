@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { createApp, defineComponent, h, reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
 import type { ImageContext, PhotoItem } from '../../src/core/types'
@@ -13,14 +14,13 @@ describe('Photo', () => {
     document.body.innerHTML = ''
   })
 
-  it('renders native trigger semantics and enables the lightbox by default', async () => {
+  it('renders thumb semantics and is inert by default', async () => {
     const mounted = await mountComponent(Photo, {
       props: { photo: makePhoto({ id: 'plain' }) },
     })
-    const figure = mounted.container.querySelector('.np-photo')
+    const figure = mounted.container.querySelector('figure')
     const image = mounted.container.querySelector('img')
-    expect(figure?.tagName).toBe('BUTTON')
-    expect(figure?.getAttribute('type')).toBe('button')
+    expect(figure?.getAttribute('role')).toBeNull()
     expect(image?.getAttribute('loading')).toBe('lazy')
     mounted.unmount()
   })
@@ -39,7 +39,7 @@ describe('Photo', () => {
         onClick,
       },
     })
-    const figure = mounted.container.querySelector('.np-photo') as HTMLElement
+    const figure = mounted.container.querySelector('figure') as HTMLElement
 
     expect(figure.id).toBe('reviewed-photo')
     expect(figure.classList).toContain('np-photo')
@@ -55,7 +55,8 @@ describe('Photo', () => {
     mounted.unmount()
   })
 
-  it('reactively enables and disables its lightbox capability', async () => {
+  it('keeps setup-time lightbox capability stable and warns on changes', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const photo = makePhoto({ id: 'static-photo' })
     const { createApp, defineComponent, h, ref } = await import('vue')
     const lightbox = ref(false)
@@ -67,10 +68,8 @@ describe('Photo', () => {
     app.mount(host)
     lightbox.value = true
     await flushUi()
-    expect(host.querySelector('.np-photo')?.tagName).toBe('BUTTON')
-    lightbox.value = false
-    await flushUi()
-    expect(host.querySelector('.np-photo')?.tagName).toBe('FIGURE')
+    expect(host.querySelector('figure')?.getAttribute('role')).toBeNull()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('setup-time'))
     app.unmount()
   })
 
@@ -82,6 +81,27 @@ describe('Photo', () => {
         },
       }),
     ).rejects.toThrow(/non-empty string id/)
+  })
+
+  it('revalidates in-place mutations through the canonical normalizer', async () => {
+    const photo = reactive({ ...makePhoto({ id: 'reactive-photo' }) })
+    const errorHandler = vi.fn()
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(defineComponent(() => () => h(Photo, { photo })))
+    app.config.errorHandler = errorHandler
+    app.mount(host)
+
+    photo.width = 0
+    await flushUi()
+
+    expect(errorHandler).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('width') }),
+      expect.anything(),
+      expect.any(String),
+    )
+    app.unmount()
+    host.remove()
   })
 
   it('routes built-in activation failures through Vue error handling', async () => {
@@ -97,7 +117,7 @@ describe('Photo', () => {
             photo,
             lightbox: true,
             transition: 'none',
-            imageAdapter: (_photo: PhotoItem, context: ImageContext) => {
+            imageAdapter: (_photo: PhotoItem<object>, context: ImageContext) => {
               if (context === 'slide') throw new Error('slide adapter failed')
               return { src: photo.src }
             },
@@ -107,13 +127,13 @@ describe('Photo', () => {
     app.config.errorHandler = errorHandler
     app.mount(host)
 
-    host.querySelector('.np-photo')?.dispatchEvent(new MouseEvent('click'))
+    host.querySelector('figure')?.dispatchEvent(new MouseEvent('click'))
     await flushUi()
 
     expect(errorHandler).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'slide adapter failed' }),
       expect.anything(),
-      expect.any(String),
+      expect.stringContaining('render function'),
     )
     app.unmount()
     host.remove()

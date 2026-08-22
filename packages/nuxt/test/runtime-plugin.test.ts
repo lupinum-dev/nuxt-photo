@@ -27,7 +27,6 @@ const photo: PhotoItem = {
   thumbSrc: '/photos/thumb.jpg',
   width: 1600,
   height: 1000,
-  placeholder: 'data:image/jpeg;base64,preview',
 }
 
 describe('nuxt image adapter', () => {
@@ -51,7 +50,6 @@ describe('nuxt image adapter', () => {
       sizes: 'sm:100vw lg:360px',
       width: 1600,
       height: 1000,
-      placeholder: 'data:image/jpeg;base64,preview',
     })
   })
 
@@ -75,7 +73,6 @@ describe('nuxt image adapter', () => {
     expect(slide.srcset).toContain('/_ipx/w_1200,q_77/photos/full.jpg 1200w')
     expect(slide.srcset).not.toContain('1800w')
     expect(slide.sizes).toBe('90vw')
-    expect(slide.placeholder).toBe('data:image/jpeg;base64,preview')
   })
 
   it('keeps the existing default slide cap and fallback width behavior', () => {

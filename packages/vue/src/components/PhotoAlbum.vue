@@ -8,28 +8,27 @@
   >
     <template v-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
-        <component :is="'style'" v-bind="{ innerHTML: renderBranch.containerQueryCss }" />
+        <ContainerQueryStyle :css="renderBranch.containerQueryCss" />
       </template>
 
       <div :style="renderBranch.wrapperStyle">
-        <component
+        <div
           v-for="item in renderBranch.items"
           :key="item.photo.id"
-          :is="isPhotoInteractive(metadataPhoto(item.photo)) ? 'button' : 'div'"
           class="np-album__item"
           :class="[
-            renderBranch.containerQueriesActive ? `np-item-${item.index}` : undefined,
+            renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
             itemClass,
           ]"
           :style="item.style"
-          v-bind="itemBindings(metadataPhoto(item.photo), item.index)"
+          v-bind="itemBindings(item.photo, item.index)"
         >
           <AlbumThumbnail
-            :photo="metadataPhoto(item.photo)"
+            :photo="item.photo"
             :index="item.index"
             :width="item.width"
             :height="item.height"
-            :hidden="isHidden(metadataPhoto(item.photo))"
+            :hidden="isHidden(item.photo)"
             :image-adapter="imageAdapter"
             :img-class="imgClass"
             :sizes="item.computedSizes"
@@ -38,7 +37,7 @@
               <slot name="thumbnail" v-bind="slotProps" />
             </template>
           </AlbumThumbnail>
-        </component>
+        </div>
 
         <span
           style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0"
@@ -59,38 +58,37 @@
           :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
           :style="groupStyle(group)"
         >
-          <component
+          <div
             v-for="entry in group.entries"
             :key="entry.photo.id"
-            :is="isPhotoInteractive(metadataPhoto(entry.photo)) ? 'button' : 'div'"
             class="np-album__item"
             :class="itemClass"
             :style="itemStyle(entry, group)"
-            v-bind="itemBindings(metadataPhoto(entry.photo), entry.index)"
+            v-bind="itemBindings(entry.photo, entry.index)"
           >
             <AlbumThumbnail
-              :photo="metadataPhoto(entry.photo)"
+              :photo="entry.photo"
               :index="entry.index"
               :width="entry.width"
               :height="entry.height"
-              :hidden="isHidden(metadataPhoto(entry.photo))"
+              :hidden="isHidden(entry.photo)"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
+              :sizes="nativeSizes"
             >
               <template v-if="$slots.thumbnail" #thumbnail="slotProps">
                 <slot name="thumbnail" v-bind="slotProps" />
               </template>
             </AlbumThumbnail>
-          </component>
+          </div>
         </div>
       </template>
     </template>
 
     <div v-else :style="renderBranch.wrapperStyle">
-      <component
+      <div
         v-for="(photo, index) in renderBranch.photos"
         :key="photo.id"
-        :is="isPhotoInteractive(photo) ? 'button' : 'div'"
         class="np-album__item"
         :class="itemClass"
         :style="ssrItemStyle(photo)"
@@ -104,12 +102,13 @@
           :hidden="false"
           :image-adapter="imageAdapter"
           :img-class="imgClass"
+          :sizes="nativeSizes"
         >
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
           </template>
         </AlbumThumbnail>
-      </component>
+      </div>
     </div>
   </div>
 
@@ -117,7 +116,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, onMounted, ref, watch, type Component } from 'vue'
+import { computed, defineComponent, h, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
   DEFAULT_COLUMNS,
@@ -129,15 +128,23 @@ import {
   type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
+  type ResponsivePhotoSizes,
   type InvalidPhotoPolicy,
   type InvalidPhotosEvent,
-  type ResponsivePhotoSizes,
 } from '../core/index'
+
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
-import { resolveRecipePhotos } from '../core/photo/resolve'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+import { useRecipePhotos } from './shared/useRecipePhotos'
+
+// Generated layout CSS is trusted internal output. innerHTML preserves `<` and
+// `>` range operators identically in SSR output and during client hydration.
+const ContainerQueryStyle = defineComponent({
+  props: { css: { type: String, required: true } },
+  setup: (props) => () => h('style', { innerHTML: props.css }),
+})
 
 defineOptions({ inheritAttrs: false })
 
@@ -196,32 +203,15 @@ const normalizedLayout = computed<AlbumLayout>(() => {
   }
 })
 
-function metadataPhoto(photo: PhotoItem): PhotoItem<TMeta> {
-  return photo as PhotoItem<TMeta>
-}
-
 if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
-const resolution = computed(() =>
-  resolveRecipePhotos<TMeta>(props.photos, 'PhotoAlbum', {
-    validation: props.validation,
-  }),
-)
-const normalizedPhotos = computed<PhotoItem<TMeta>[]>(() => resolution.value.photos)
-const reportingReady = ref(false)
-
-onMounted(() => {
-  reportingReady.value = true
-})
-
-watch(
-  [() => resolution.value.invalidPhotos, reportingReady],
-  ([event, ready]) => {
-    if (ready && event) emit('invalidPhotos', event)
-  },
-  { flush: 'post' },
+const normalizedPhotos = useRecipePhotos<TMeta>(
+  () => props.photos,
+  'PhotoAlbum',
+  () => props.validation,
+  (event) => emit('invalidPhotos', event),
 )
 
 const {
@@ -229,13 +219,14 @@ const {
   hasOwnLightbox,
   LightboxComponent,
   itemBindings,
-  isPhotoInteractive,
   isHidden,
   open,
   openById,
   close,
   isOpen,
 } = useAlbumLightbox(normalizedPhotos, props)
+
+defineExpose({ open, openById, close, isOpen })
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
@@ -262,6 +253,7 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
     layoutTargetRowHeight.value,
   ])
 })
+const nativeSizes = computed(() => (typeof props.sizes === 'string' ? props.sizes : undefined))
 
 const {
   containerRef,
@@ -270,7 +262,6 @@ const {
   containerStyle,
   containerQueryCSS,
   containerQueriesRender,
-  containerQueriesActive,
   groups,
   rowItems,
   ssrWrapperStyle,
@@ -300,7 +291,7 @@ const renderBranch = computed(() => {
       containerQueryCss: containerQueryCSS.value,
       wrapperStyle: ssrWrapperStyle.value,
       items: rowItems.value,
-      containerQueriesActive: containerQueriesActive.value,
+      containerQueriesRender: containerQueriesRender.value,
     }
   }
 
@@ -317,6 +308,4 @@ const renderBranch = computed(() => {
     photos: normalizedPhotos.value,
   }
 })
-
-defineExpose({ open, openById, close, isOpen })
 </script>

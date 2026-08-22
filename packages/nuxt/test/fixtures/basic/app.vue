@@ -14,19 +14,16 @@ const photos: PhotoItem[] = [
     src: '/photos/canyon.jpg',
     width: 960,
     height: 1200,
-    alt: 'Fixture canyon',
   },
 ]
 
 const spacing = responsive({ 0: 4, 640: 8 })
 const minZoom = useAppConfig().nuxtPhoto?.lightbox?.minZoom
-const labels = usePhotoLabels()
 </script>
 
 <template>
   <main>
     <p id="nuxt-photo-min-zoom">{{ minZoom }}</p>
-    <p id="nuxt-photo-plugin-label">{{ labels.close }}</p>
     <PhotoAlbum
       :photos="photos"
       :layout="{ type: 'rows', targetRowHeight: 220 }"

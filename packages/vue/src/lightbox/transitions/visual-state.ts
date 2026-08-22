@@ -59,6 +59,10 @@ function animationPromise(animation: Animation, signal: AbortSignal) {
       reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
     }
     signal.addEventListener('abort', abort, { once: true })
+    if (signal.aborted) {
+      abort()
+      return
+    }
     animation.finished.then(
       () => {
         signal.removeEventListener('abort', abort)
@@ -149,6 +153,9 @@ export function createMotionVisualState() {
     properties: RunningAnimation['properties'],
     signal: AbortSignal,
   ) {
+    if (signal.aborted) {
+      return Promise.reject(signal.reason ?? new DOMException('Operation aborted', 'AbortError'))
+    }
     if (!element) return Promise.resolve()
     const duration = Number(options.duration ?? 0)
     if (typeof element.animate !== 'function' || duration <= 0) {
@@ -182,31 +189,6 @@ export function createMotionVisualState() {
     }
   }
 
-  function resetClosedVisual() {
-    const current = elements()
-    if (current.overlay) current.overlay.style.opacity = '0'
-    if (current.viewport) {
-      current.viewport.style.opacity = '0'
-      current.viewport.style.transform = 'none'
-    }
-    if (current.transitionFrame) {
-      current.transitionFrame.style.display = 'none'
-      current.transitionFrame.style.opacity = '0'
-      current.transitionFrame.style.transform = 'none'
-    }
-    setChromeOpacity(0)
-  }
-
-  function applyCloseDrag(offsetY: number, progress: number, chromeOpacity: number) {
-    const current = elements()
-    const scale = 1 - progress * 0.05
-    if (current.viewport) {
-      current.viewport.style.transform = `translate3d(0, ${offsetY}px, 0) scale(${scale})`
-    }
-    if (current.overlay) current.overlay.style.opacity = String(1 - progress)
-    setChromeOpacity(chromeOpacity)
-  }
-
   function normalizeTransitionVisual(rect: RectLike, src: string) {
     const current = elements()
     if (!current.transitionFrame || !current.transitionImage) return false
@@ -235,8 +217,6 @@ export function createMotionVisualState() {
     animate,
     persistRunningAnimations,
     setChromeOpacity,
-    resetClosedVisual,
-    applyCloseDrag,
     normalizeTransitionVisual,
     setThumbRef: (index: number) => setMapRef(thumbRefs, index),
     setSlideFrameRef: (index: number) => setMapRef(slideFrameRefs, index),
