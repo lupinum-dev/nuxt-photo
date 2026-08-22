@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PhotoImage } from '@lupinum/nuxt-photo/app'
+import { Lightbox, LightboxProvider, PhotoImage, PhotoTrigger } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 type Layer = 'recipe' | 'slots' | 'provider' | 'primitives'
@@ -8,7 +8,7 @@ const layer = ref<Layer>('recipe')
 const layers = [
   {
     id: 'recipe' as const,
-    label: 'Recipe',
+    label: 'Ready-made',
     owns: 'Layout, triggers, lightbox, gestures',
   },
   {
@@ -70,8 +70,8 @@ function reset() {
       </LightboxProvider>
     </div>
     <p class="ownership-note">
-      <strong>{{ selected.label }}</strong
-      >{{ selected.owns }}
+      <strong>{{ selected.label }}</strong>
+      <span>{{ selected.owns }}</span>
     </p>
     <template #controls>
       <fieldset class="docs-control">

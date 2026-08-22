@@ -6,7 +6,7 @@ type Layout = 'rows' | 'columns' | 'masonry'
 
 const defaults = {
   layout: 'rows' as Layout,
-  width: 860,
+  width: 560,
   spacing: 8,
   rowHeight: 220,
   columns: 3,

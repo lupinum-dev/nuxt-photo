@@ -12,8 +12,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
 
 const presets = [
   { label: 'Phone', width: 375 },
-  { label: 'Tablet', width: 720 },
-  { label: 'Desktop', width: 1040 },
+  { label: 'Content', width: 560 },
+  { label: 'Wide', width: 900 },
 ]
 </script>
 

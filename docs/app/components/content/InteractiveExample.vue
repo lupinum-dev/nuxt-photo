@@ -26,17 +26,13 @@ const panels = computed(() =>
         <h3>{{ title }}</h3>
         <p v-if="description">{{ description }}</p>
       </div>
-      <button
-        type="button"
-        class="inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        @click="emit('reset')"
-      >
+      <button type="button" class="docs-lab__reset" @click="emit('reset')">
         <Icon name="lucide:rotate-ccw" class="size-4" />
         Reset
       </button>
     </header>
 
-    <div class="docs-lab__workspace" :class="{ 'docs-lab__workspace--solo': !slots.controls }">
+    <div class="docs-lab__workspace">
       <div class="docs-lab__preview">
         <slot />
       </div>
