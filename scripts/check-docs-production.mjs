@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 const usesVercelOutput = process.env.VERCEL === '1' || process.env.NITRO_PRESET === 'vercel'
 const outputDirectory = usesVercelOutput ? '.vercel/output/static' : '.output/public'
 const routeOutput = fileURLToPath(
-  new URL(`../docs/${outputDirectory}/docs/overview/why-nuxt-photo/index.html`, import.meta.url),
+  new URL(`../docs/${outputDirectory}/docs/start/why-nuxt-photo/index.html`, import.meta.url),
 )
 
 let html
@@ -26,4 +26,4 @@ if (html.includes('Server Error') || html.includes('data-error="500"')) {
   throw new Error('Docs production route rendered an error page.')
 }
 
-console.log('✓ Docs production route rendered /docs/overview/why-nuxt-photo')
+console.log('✓ Docs production route rendered /docs/start/why-nuxt-photo')

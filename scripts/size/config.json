@@ -25,6 +25,10 @@
     "usage": {
       "label": "module enabled with PhotoImage usage",
       "brotliDeltaLimit": 1700
+    },
+    "album": {
+      "label": "module enabled with PhotoAlbum usage",
+      "brotliDeltaLimit": 30720
     }
   }
 }

@@ -9,15 +9,18 @@ that behavior without exposing repository internals.
 
 ## Organize by reader intent
 
-The sidebar has two primary areas:
+The sidebar has five reader-focused areas:
 
-1. **Documentation** starts with the quickstart, then moves through concepts,
-   task guides, customization, and troubleshooting.
-2. **Reference** contains exact options, symbols, components, exports, and
-   upgrade notes.
+1. **Start** helps a new user evaluate, install, and build a first album.
+2. **Guides** solve one specific implementation task per page.
+3. **Concepts** explain why photo data, layout, delivery, and lightbox behavior
+   work as they do.
+4. **Reference** lists exact public components, options, types, CSS, and exports.
+5. **Help** starts from a visible problem or an upgrade need.
 
-Use `sidebar: section` only for those two area boundaries. Every folder between
-them uses `sidebar: group`. Keep the tree flat enough to scan in one pass.
+Keep contributor architecture and CI procedures outside the consumer sidebar.
+Use one canonical page for each fact. Link to that page instead of maintaining
+another copy.
 
 ## Write like Nuxt
 
@@ -34,6 +37,22 @@ them uses `sidebar: group`. Keep the tree flat enough to scan in one pass.
 - Use American English spelling.
 - Use the public Nuxt import path, `@lupinum/nuxt-photo/app`, in explicit app
   imports. Reserve `@lupinum/vue-photo` for plain Vue documentation.
+
+## Use direct, literal language
+
+- Write like an experienced maintainer helping a capable junior developer.
+- State the result or constraint in the first sentence.
+- Prefer common words that preserve their meaning in translation.
+- Describe observable behavior instead of making broad quality claims.
+- Use "ready-made components" for `Photo`, `PhotoAlbum`, `PhotoGroup`, and
+  `PhotoCarousel`.
+- Use "lower-level components" for primitives.
+- Use "component options" instead of "shallow props".
+- Say "opening animation" until FLIP has been defined.
+- Avoid metaphors, slang, cultural comparisons, hype, and exclamation marks.
+- Avoid "simply", "just", "obviously", and wording that minimizes work.
+- Do not open with meta prose about what the page will explain.
+- Split a sentence when it gives more than one instruction.
 
 Frontmatter supplies the page title. Do not add a body `#` heading.
 
@@ -83,7 +102,7 @@ that might tempt a reader to change it at runtime.
 Use canonical collection references for internal links:
 
 ```md
-[the photo model]($docs/concepts/photo-model)
+[photo data and dimensions](/docs/concepts/photo-data-and-dimensions)
 ```
 
 Place a link in the sentence that creates the need for it. Do not append

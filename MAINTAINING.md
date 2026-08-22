@@ -71,6 +71,23 @@ An emergency security update may use the documented pnpm security exception.
 Record the package, reason, and removal date. Remove the exception after the
 fixed release passes the normal age gate.
 
+## Bundle-size checks
+
+The size harness builds small Vue and Nuxt consumer fixtures and compares their
+compressed client output with committed limits:
+
+```sh
+pnpm size
+pnpm size:vue
+pnpm size:nuxt
+pnpm size:analyze
+```
+
+`pnpm size:analyze` writes local analyzer output under `test-results/`. Update a
+limit only when a reviewed public change explains the increase. Consumer docs
+may report the measured results, but must not describe harness implementation or
+CI commands.
+
 ## Verification commands
 
 - `pnpm verify` is the normal handoff gate.

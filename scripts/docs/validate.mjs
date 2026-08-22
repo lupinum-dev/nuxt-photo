@@ -80,8 +80,8 @@ const installationSurfaces = [
   ['README.md', '@lupinum/nuxt-photo'],
   ['packages/nuxt/README.md', '@lupinum/nuxt-photo'],
   ['packages/vue/README.md', '@lupinum/vue-photo'],
-  ['docs/content/docs/2.getting-started/1.installation.md', '@lupinum/nuxt-photo'],
-  ['docs/content/docs/2.getting-started/3.plain-vue.md', '@lupinum/vue-photo'],
+  ['docs/content/docs/1.start/2.installation.md', '@lupinum/nuxt-photo'],
+  ['docs/content/docs/1.start/5.plain-vue.md', '@lupinum/vue-photo'],
   ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
   ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],
 ]
@@ -237,15 +237,7 @@ for (const file of [...files, ...publicReadmes]) {
   }
 }
 
-const expectedSections = [
-  '1.overview',
-  '2.getting-started',
-  '3.concepts',
-  '4.guides',
-  '5.api',
-  '6.help',
-  '7.project',
-]
+const expectedSections = ['1.start', '2.guides', '3.concepts', '4.reference', '5.help']
 const topLevel = await readdir(contentRoot, { withFileTypes: true })
 const actualSections = topLevel
   .filter((entry) => entry.isDirectory())

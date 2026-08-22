@@ -42,6 +42,7 @@ const nuxtScenarios = [
   { id: 'baseline', name: 'nuxt:baseline' },
   { id: 'module', name: 'nuxt:module' },
   { id: 'usage', name: 'nuxt:usage' },
+  { id: 'album', name: 'nuxt:album' },
 ]
 
 void main()
@@ -78,16 +79,15 @@ async function main() {
       measured.set(scenario.id, runNuxtFixture(scenario.id))
     }
     const baseline = measured.get('baseline')
-    const moduleResult = measured.get('module')
-    const usageResult = measured.get('usage')
-
-    const moduleDelta = diffSizes(moduleResult, baseline)
-    const usageDelta = diffSizes(usageResult, baseline)
-    const modulePassed = moduleDelta.brotli <= limits.nuxt.module.brotliDeltaLimit
-    const usagePassed = usageDelta.brotli <= limits.nuxt.usage.brotliDeltaLimit
-
-    if (!modulePassed) failures.push('nuxt:module')
-    if (!usagePassed) failures.push('nuxt:usage')
+    const measuredScenarios = nuxtScenarios
+      .filter((scenario) => scenario.id !== 'baseline')
+      .map((scenario) => {
+        const result = measured.get(scenario.id)
+        const delta = diffSizes(result, baseline)
+        const passed = delta.brotli <= limits.nuxt[scenario.id].brotliDeltaLimit
+        if (!passed) failures.push(scenario.name)
+        return { ...scenario, result, delta, passed }
+      })
 
     printTable(
       'Nuxt',
@@ -102,24 +102,15 @@ async function main() {
           '-',
           'BASELINE',
         ],
-        [
-          limits.nuxt.module.label,
-          formatBytes(moduleResult.raw),
-          formatBytes(moduleResult.gzip),
-          formatBytes(moduleResult.brotli),
-          formatSignedBytes(moduleDelta.brotli),
-          formatBytes(limits.nuxt.module.brotliDeltaLimit),
-          modulePassed ? 'PASS' : 'FAIL',
-        ],
-        [
-          limits.nuxt.usage.label,
-          formatBytes(usageResult.raw),
-          formatBytes(usageResult.gzip),
-          formatBytes(usageResult.brotli),
-          formatSignedBytes(usageDelta.brotli),
-          formatBytes(limits.nuxt.usage.brotliDeltaLimit),
-          usagePassed ? 'PASS' : 'FAIL',
-        ],
+        ...measuredScenarios.map(({ id, result, delta, passed }) => [
+          limits.nuxt[id].label,
+          formatBytes(result.raw),
+          formatBytes(result.gzip),
+          formatBytes(result.brotli),
+          formatSignedBytes(delta.brotli),
+          formatBytes(limits.nuxt[id].brotliDeltaLimit),
+          passed ? 'PASS' : 'FAIL',
+        ]),
       ],
     )
   }

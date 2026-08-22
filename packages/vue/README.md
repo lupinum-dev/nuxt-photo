@@ -14,7 +14,7 @@
 
 > [!WARNING]
 > Vue Photo 1.0 is in beta. Install it from the `next` npm tag and review the
-> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-to-1).
+> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
 
 ## Purpose
 
@@ -58,7 +58,7 @@ Use documented entry points only. Generated files and undocumented deep imports 
 
 ## Documentation
 
-Read the [Vue API documentation](https://nuxt-photo.lupinum.com/docs/api/composables) and the [root README](https://github.com/lupinum-dev/nuxt-photo#readme).
+Read the [Vue API documentation](https://nuxt-photo.lupinum.com/docs/reference/composables) and the [root README](https://github.com/lupinum-dev/nuxt-photo#readme).
 
 ## Support and security
 

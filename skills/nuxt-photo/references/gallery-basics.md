@@ -10,7 +10,7 @@ photo components and auto-imports its helpers.
 ::warning
 These docs describe the Nuxt Photo 1.0 beta. Install the `next` release while
 the stable `latest` tag remains on 0.2. Existing 0.2 applications should follow
-[the 1.0 upgrade guide](/docs/help/upgrade-to-1).
+[the 1.0 upgrade guide](/docs/help/upgrade-from-0-2-to-1-0).
 ::
 
 ## Prerequisites
@@ -74,12 +74,12 @@ it. Configure remote domains and provider-specific source rules in the Nuxt
 `image` block; use `nuxtPhoto.image` only for Nuxt Photo's thumb and slide
 defaults.
 
-[Image providers](/docs/concepts/image-pipeline)
+[Image providers](/docs/concepts/image-delivery)
 
-Continue with [Build your first album](/docs/getting-started/first-gallery). That
+Continue with [Build your first album](/docs/start/build-your-first-album). That
 page owns the complete copyable example and describes the result you should see.
 
-_Source: `docs/content/docs/2.getting-started/1.installation.md`_
+_Source: `docs/content/docs/1.start/2.installation.md`_
 
 ## Build your first album
 
@@ -88,7 +88,7 @@ replace them with your own data after the example works.
 
 ## Prerequisites
 
-- Complete [Installation](/docs/getting-started/installation), including
+- Complete [Installation](/docs/start/installation), including
   `css: 'all'`.
 
 ## 1. Add the album page
@@ -181,187 +181,79 @@ animation will be wrong.
 
 ## Choose the next task
 
-- [Choose a component](/docs/overview/how-it-works) when you need a single photo,
+- [Choose a component](/docs/start/choose-a-component) when you need a single photo,
   several albums, or a carousel.
-- [Use your CMS photos](/docs/guides/build-a-cms-gallery) when data comes from an
+- [Use your CMS photos](/docs/guides/use-cms-photos) when data comes from an
   API or content system.
-- [Tune responsive layouts](/docs/guides/tune-a-responsive-album) when the rows,
+- [Tune responsive layouts](/docs/guides/tune-responsive-layouts) when the rows,
   spacing, or breakpoints need to change.
 
-_Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
+_Source: `docs/content/docs/1.start/3.build-your-first-album.md`_
 
-## The photo model
+## Photo data and dimensions
 
-Nuxt Photo accepts photos from a CMS, a file system, an Unsplash query, or a static list. Every source maps to one shape: `PhotoItem`.
+Nuxt Photo accepts one public photo shape: `PhotoItem`.
 
 ```ts
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
-```
-
-## The shape
-
-```ts
-interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
-  readonly id: string // required - stable identifier
-  readonly src: string // required - full-size URL
-  readonly width: number // required - intrinsic pixel width
-  readonly height: number // required - intrinsic pixel height
-  readonly alt?: string // accessibility + `<img alt>`
-  readonly caption?: string // shown by <Photo> and the default lightbox
-  readonly description?: string // long-form text; shown below caption
-  readonly thumbSrc?: string // smaller URL; falls back to `src`
-  readonly placeholderSrc?: string // low-quality preview shown while loading
-  readonly srcset?: string // explicit responsive source candidates
-  readonly meta?: Readonly<TMeta> // free-form app-specific data
-}
 ```
 
 ## Required fields
 
-Four fields are required on every item.
-
-### `id`
-
-A non-empty string that is unique within the photo list. Normalize numeric CMS
-or database identifiers to strings at your application boundary.
-
 ```ts
-{ id: 'desert-01', src: '/photos/desert.jpg', width: 1280, height: 800 }
+const photo: PhotoItem = {
+  id: 'alpine-lake',
+  src: '/photos/alpine-lake.jpg',
+  width: 1600,
+  height: 1067,
+}
 ```
 
-Do not use array indices. If the list order changes, the lightbox can lose the active photo during an animation.
+| Field    | Requirement                                                  |
+| -------- | ------------------------------------------------------------ |
+| `id`     | A non-empty string that is unique in the current collection. |
+| `src`    | The full image URL used by the lightbox.                     |
+| `width`  | The intrinsic pixel width. It must be positive and finite.   |
+| `height` | The intrinsic pixel height. It must be positive and finite.  |
 
-### `src`
+Intrinsic dimensions describe the source file, not its displayed CSS size.
+They let Nuxt Photo calculate the layout and reserve space before the image
+loads. Do not use array positions as IDs or approximate dimensions.
 
-The URL to the full-size image. This is what the lightbox loads.
-
-### `width` and `height`
-
-The image's intrinsic pixel dimensions, not its display size. Nuxt Photo uses them to:
-
-- Lay out the grid before images load (no CLS).
-- Compute the FLIP transition target when opening the lightbox.
-- Pick the right aspect ratio for `object-fit` and lightbox sizing.
-
-::warning
-Every rendered photo needs accurate dimensions. Do not use placeholder values. If your CMS does not return dimensions, generate them at upload time with [`probe-image-size`](https://www.npmjs.com/package/probe-image-size) or an equivalent tool. Approximate values cause incorrect layouts.
-::
-
-Recipe components validate photo data before layout code sees it. Invalid photos
-throw in every environment by default. Use `validation="drop"` explicitly on
-collection recipes only when losing invalid entries is acceptable and handle
-the `invalidPhotos` event so upstream regressions remain visible.
+If a CMS omits dimensions, calculate them during upload or server-side
+ingestion. The [CMS guide](/docs/guides/use-cms-photos) shows one approach.
 
 ## Optional fields
 
-### `alt`
+| Field            | Purpose                                                      |
+| ---------------- | ------------------------------------------------------------ |
+| `alt`            | Alternative text for the thumbnail and lightbox image.       |
+| `caption`        | Short visible text for the photo.                            |
+| `description`    | Longer visible text in the included lightbox.                |
+| `thumbSrc`       | A smaller image URL for thumbnails.                          |
+| `placeholderSrc` | A low-quality preview shown until the requested image loads. |
+| `srcset`         | Native responsive image candidates.                          |
+| `meta`           | Typed application data passed through to slots and adapters. |
 
-Accessible alternative text. Rendered on the thumbnail `<img>` and reused in the lightbox. Skip only for decorative images.
+The placeholder resets when the resolved image request changes. It remains
+visible when that image fails to load.
 
-### `caption`
+## Map external data once
 
-Short title-like text. The default `<Photo>` component renders it below the image, and the default lightbox renders it prominently.
-
-### `description`
-
-Longer body text shown below the caption in the default lightbox. Use it for credits, EXIF summaries, or photographer notes.
-
-### `thumbSrc`
-
-A smaller pre-rendered URL for the grid. If set, the native image adapter uses `thumbSrc` in grid thumbnails and `src` in the lightbox - saving bandwidth on the list view.
-
-```ts
-{
-  id: '1',
-  src: '/photos/desert-2400.jpg',       // lightbox
-  thumbSrc: '/photos/desert-400.jpg',   // grid
-  width: 1280,
-  height: 800
-}
-```
-
-If you use `@nuxt/image`, you usually do not need `thumbSrc`. The provider generates responsive sizes automatically.
-
-### `srcset`
-
-Escape hatch for when you want to control the browser's image selection yourself. Passed through to the `<img srcset>` attribute verbatim. Most users should rely on the image adapter instead.
-
-### `placeholderSrc`
-
-An optional low-quality URL or data URI shown behind an image until its
-adapter-resolved source loads. It resets when the adapter or image context
-selects a different URL and remains visible if that source fails.
-
-### `meta`
-
-A typed, non-null object for app-specific data. Nuxt Photo never interprets it,
-but it stays on the `PhotoItem` passed to slots and image adapters, so you can
-use records, class instances, arrays, or other application-owned objects.
+Convert CMS or API records at your application boundary. Rendering components
+should receive `PhotoItem[]` instead of knowing each source format.
 
 ```ts
-type MyMeta = { photographer: string; shotAt: Date; tags: string[] }
-
-const photos: PhotoItem<MyMeta>[] = [
-  {
-    id: '1',
-    src: '/photos/desert.jpg',
-    width: 1280,
-    height: 800,
-    meta: {
-      photographer: 'Jane Doe',
-      shotAt: new Date('2025-03-10'),
-      tags: ['desert', 'golden-hour'],
-    },
-  },
-]
+const photos = records.map((record) => ({
+  id: String(record.id),
+  src: record.image.url,
+  width: record.image.width,
+  height: record.image.height,
+  alt: record.image.alt ?? undefined,
+  meta: { credit: record.image.credit },
+})) satisfies PhotoItem<{ credit: string }>[]
 ```
 
-Then read it in a slot:
+This mapping gives layout, navigation, and image delivery one source of truth.
 
-```vue
-<PhotoAlbum :photos="photos">
-  <template #thumbnail="{ photo, hidden }">
-    <figure :style="{ opacity: hidden ? 0 : 1 }">
-      <img :src="photo.thumbSrc ?? photo.src" :alt="photo.alt" />
-      <figcaption>Shot by {{ photo.meta?.photographer }}</figcaption>
-    </figure>
-  </template>
-</PhotoAlbum>
-```
-
-## Map data from another shape
-
-If your API returns something else-Unsplash, Contentful, or Sanity-map it at
-your application boundary. Rendering components accept only `PhotoItem`.
-
-```ts
-import type { PhotoItem } from '@lupinum/nuxt-photo/app'
-
-type UnsplashPhoto = {
-  id: string
-  urls: { regular: string; thumb: string }
-  width: number
-  height: number
-  alt_description: string | null
-}
-
-const photos = computed<PhotoItem[]>(() =>
-  apiResponse.value.map((item) => ({
-    id: item.id,
-    src: item.urls.regular,
-    thumbSrc: item.urls.thumb,
-    width: item.width,
-    height: item.height,
-    alt: item.alt_description ?? undefined,
-  })),
-)
-```
-
-```vue
-<PhotoAlbum :photos="photos" />
-```
-
-The application owns the source type, refresh policy, and mapping errors. This
-keeps rendering behavior deterministic and fully typed.
-
-_Source: `docs/content/docs/3.concepts/1.photo-model.md`_
+_Source: `docs/content/docs/3.concepts/1.photo-data-and-dimensions.md`_
