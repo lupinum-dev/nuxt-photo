@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
 
+import { listPendingChangesets } from './lib/changelog.mjs'
+
 const workflow = readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8')
 const versionWorkflow = readFileSync(
   new URL('../.github/workflows/version.yml', import.meta.url),
@@ -19,6 +21,34 @@ const securityWorkflow = readFileSync(
 )
 const securityConfig = parse(securityWorkflow)
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+
+const changesetFixture = mkdtempSync(join(tmpdir(), 'nuxt-photo-changesets-'))
+try {
+  const changesetDirectory = join(changesetFixture, '.changeset')
+  mkdirSync(changesetDirectory)
+  writeFileSync(join(changesetDirectory, 'released-change.md'), 'released')
+  writeFileSync(join(changesetDirectory, 'new-change.md'), 'new')
+  writeFileSync(
+    join(changesetDirectory, 'pre.json'),
+    `${JSON.stringify({ mode: 'pre', changesets: ['released-change'] })}\n`,
+  )
+  assert(
+    JSON.stringify(listPendingChangesets(changesetFixture)) === '["new-change.md"]',
+    'Prerelease Changesets must ignore consumed release notes and retain new work.',
+  )
+
+  writeFileSync(
+    join(changesetDirectory, 'pre.json'),
+    `${JSON.stringify({ mode: 'exit', changesets: ['released-change'] })}\n`,
+  )
+  assert(
+    JSON.stringify(listPendingChangesets(changesetFixture)) ===
+      '["new-change.md","released-change.md"]',
+    'Changesets must remain pending outside active prerelease mode.',
+  )
+} finally {
+  rmSync(changesetFixture, { recursive: true, force: true })
+}
 
 const versionAuthorizationJob = ciConfig.jobs['authorize-version-pr']
 assert(versionAuthorizationJob, 'Version CI must authorize the required PR gate directly.')
