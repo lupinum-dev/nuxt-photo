@@ -56,7 +56,7 @@
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub",
-    "typecheck": "vue-tsc -p tsconfig.json --noEmit && vue-tsc -p tsconfig.public-api.json"
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit && vue-tsc -p tsconfig.public-api.json && vue-tsc -p tsconfig.tests.json"
   },
   "dependencies": {
     "embla-carousel": "8.6.0",

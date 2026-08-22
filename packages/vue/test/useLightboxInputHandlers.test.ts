@@ -97,7 +97,7 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
       setCloseDragY: config.setCloseDragY,
       handleCloseGesture: config.handleCloseGesture,
       close: config.close,
-      reportAsyncError: (_operation, task) => void task,
+      reportAsyncError: (_operation: string, task: Promise<unknown>) => void task,
     },
   }
 

@@ -562,7 +562,7 @@ describe('lightbox lifecycle invariants', () => {
     await flushUntil(() => !!resolveDecode)
     app.unmount()
     host.remove()
-    resolveDecode?.()
+    ;(resolveDecode as (() => void) | null)?.()
     await opening
     await flushWatchers()
 

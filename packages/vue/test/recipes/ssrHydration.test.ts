@@ -3,7 +3,7 @@
 import { createSSRApp, h, nextTick } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import { responsive } from '../../src/core/index'
+import { responsive, type PhotoItem } from '../../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
@@ -16,6 +16,7 @@ const photos = [
 
 class ResizeObserverMock {
   observe() {}
+  unobserve() {}
   disconnect() {}
 }
 
@@ -50,8 +51,12 @@ function expectNoHydrationWarnings(
 }
 
 async function hydrateAlbum(props: Record<string, unknown>) {
+  const albumProps = props as unknown as {
+    photos: readonly PhotoItem<object>[]
+    [key: string]: unknown
+  }
   const ssrApp = createSSRApp({
-    render: () => h(PhotoAlbum, props),
+    render: () => h(PhotoAlbum, albumProps),
   })
   const html = await renderToString(ssrApp)
 
@@ -60,7 +65,7 @@ async function hydrateAlbum(props: Record<string, unknown>) {
   document.body.appendChild(host)
 
   const app = createSSRApp({
-    render: () => h(PhotoAlbum, props),
+    render: () => h(PhotoAlbum, albumProps),
   })
   app.mount(host)
   await nextTick()

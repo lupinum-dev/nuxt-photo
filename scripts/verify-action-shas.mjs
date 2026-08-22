@@ -48,7 +48,7 @@ for (const path of await workflowFiles('.github/workflows')) {
 }
 if (references.size === 0) throw new Error('No pinned action references were found.')
 
-for (const reference of [...references].sort()) {
+for (const reference of [...references].sort((a, b) => a.localeCompare(b))) {
   const [repository, sha] = reference.split('@')
   const response = await fetch(`https://github.com/${repository}/commit/${sha}`, {
     method: 'HEAD',
