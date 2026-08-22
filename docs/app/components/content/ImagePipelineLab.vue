@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ImageAdapter } from '@lupinum/nuxt-photo/app'
+import { PhotoImage, type ImageAdapter } from '@lupinum/nuxt-photo/app'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { demoPhotos } from '~/composables/demoPhotos'
 
