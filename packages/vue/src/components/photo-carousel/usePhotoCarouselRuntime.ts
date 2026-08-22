@@ -72,9 +72,10 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     validatePhotoCarouselAutoplayOptions(autoplay)
     if (!autoplay) return []
     const options = typeof autoplay === 'object' ? autoplay : {}
+    const delay = options.delayMs === undefined ? {} : { delay: options.delayMs }
     return [
       Autoplay({
-        delay: options.delayMs,
+        ...delay,
         stopOnInteraction: options.stopOnInteraction ?? true,
         stopOnMouseEnter: options.stopOnMouseEnter ?? false,
       }),

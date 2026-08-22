@@ -235,6 +235,18 @@ describe('PhotoCarousel — DOM', () => {
     m.unmount()
   })
 
+  it('enables autoplay reactively while retaining Embla default delay', async () => {
+    const props = reactive({ photos, autoplay: false as boolean | { delayMs?: number } })
+    const m = mount(PhotoCarousel, props)
+    await flushUi()
+
+    props.autoplay = true
+    await flushUi()
+
+    expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
+    m.unmount()
+  })
+
   it('forwards root attrs to the rendered carousel root', async () => {
     const m = mount(PhotoCarousel, {
       photos,
