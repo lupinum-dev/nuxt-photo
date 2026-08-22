@@ -32,7 +32,7 @@ export function useCarousel(
   isInteractionLocked: () => boolean,
 ) {
   const activeIndex = ref(0)
-  const emblaOptions = ref({ loop: true, duration: 25, startSnap: 0 })
+  const emblaOptions = ref({ loop: true, duration: 25, startIndex: 0 })
 
   const emblaRef = shallowRef<HTMLElement>()
   const emblaApi = shallowRef<EmblaCarouselType>()
@@ -99,7 +99,7 @@ export function useCarousel(
     activeIndex.value = target
     const api = emblaApi.value
     if (api) api.scrollTo(target, instant)
-    else emblaOptions.value = { ...emblaOptions.value, startSnap: target }
+    else emblaOptions.value = { ...emblaOptions.value, startIndex: target }
   }
 
   function selectedSnap(): number {

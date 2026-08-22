@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { PhotoImage } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 type Layer = 'recipe' | 'slots' | 'provider' | 'primitives'

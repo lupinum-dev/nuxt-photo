@@ -103,6 +103,47 @@ describe('collection lightbox handles', () => {
     host.remove()
   })
 
+  it('keeps Embla navigation aligned after opening a nested album photo by id', async () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(600)
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400)
+    vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(
+      function (this: HTMLElement) {
+        return this.classList.contains('np-lightbox__slide')
+          ? Array.from(this.parentElement?.children ?? []).indexOf(this) * 600
+          : 0
+      },
+    )
+    const photos = Array.from({ length: 8 }, (_, index) => makePhoto({ id: `group-${index + 1}` }))
+    const group = ref<LightboxHandle | null>(null)
+    const App = defineComponent({
+      setup: () => () =>
+        h(PhotoGroup, { ref: group, photos, transition: 'none' }, () => [
+          h(PhotoAlbum, { photos: photos.slice(0, 3) }),
+          h(PhotoAlbum, { photos: photos.slice(3) }),
+        ]),
+    })
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp(App)
+    app.mount(host)
+    await flushUi()
+
+    const opening = group.value!.openById('group-4')
+    await flushUi()
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain('4 / 8')
+    document.body
+      .querySelectorAll('.np-lightbox img')
+      .forEach((image) => image.dispatchEvent(new Event('load')))
+    await opening
+
+    ;(document.body.querySelector('.np-lightbox__btn--next') as HTMLButtonElement).click()
+    await flushUi()
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain('5 / 8')
+
+    app.unmount()
+    host.remove()
+  })
+
   it('keeps valid group photos and reports dropped entries', async () => {
     const invalidPhotos = vi.fn()
     const photos = [makePhoto({ id: 'valid' }), { id: 'invalid', src: '', width: 1, height: 1 }]
