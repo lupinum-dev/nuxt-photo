@@ -10,6 +10,7 @@
     "carousel-stable-embla",
     "container-query-rendering-correctness",
     "finalize-lightbox-api",
+    "fix-beta3-browser-findings",
     "image-previews-and-sizes",
     "nuxt-config-and-labels",
     "steady-photo-contracts"
