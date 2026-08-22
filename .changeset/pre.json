@@ -11,6 +11,7 @@
     "container-query-rendering-correctness",
     "finalize-lightbox-api",
     "image-previews-and-sizes",
-    "nuxt-config-and-labels"
+    "nuxt-config-and-labels",
+    "steady-photo-contracts"
   ]
 }

@@ -1,5 +1,14 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-beta.2
+
+### Patch Changes
+
+- [#45](https://github.com/lupinum-dev/nuxt-photo/pull/45) [`62fc815`](https://github.com/lupinum-dev/nuxt-photo/commit/62fc815e353a37893ee575c566eb1f65493af898) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Honor Nuxt app-config-only photo defaults, preserve nested image settings, and localize carousel triggers. Harden collection registration, responsive placeholder resets, strict photo revalidation, metadata-safe layouts, and cancellation of overlapping lightbox animations.
+
+- Updated dependencies [[`62fc815`](https://github.com/lupinum-dev/nuxt-photo/commit/62fc815e353a37893ee575c566eb1f65493af898)]:
+  - @lupinum/vue-photo@1.0.0-beta.2
+
 ## 1.0.0-beta.1
 
 ### Major Changes
