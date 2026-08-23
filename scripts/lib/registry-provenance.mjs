@@ -199,7 +199,7 @@ export function createSigstoreOptions(sourceSha) {
 }
 
 function verifyStatement({ expectedSha512, pkg, sourceSha, statement }) {
-  const expectedSubject = `pkg:npm/${pkg.name.replace('@', '%40')}@${pkg.version}`
+  const expectedSubject = `pkg:npm/${pkg.name.replaceAll('@', '%40')}@${pkg.version}`
   const workflow = statement.predicate?.buildDefinition?.externalParameters?.workflow
   const dependencies = statement.predicate?.buildDefinition?.resolvedDependencies ?? []
   assert(statement._type === STATEMENT_TYPE, 'Provenance statement type differs.')

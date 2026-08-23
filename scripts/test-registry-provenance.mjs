@@ -292,7 +292,7 @@ function provenanceFixture({
     predicateType: PREDICATE_TYPE,
     subject: [
       {
-        name: `pkg:npm/${pkg.name.replace('@', '%40')}@${pkg.version}`,
+        name: `pkg:npm/${pkg.name.replaceAll('@', '%40')}@${pkg.version}`,
         digest: { sha512: wrongSha512 ? '0'.repeat(128) : digest(bytes, 'sha512') },
       },
     ],
