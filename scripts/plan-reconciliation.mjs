@@ -9,7 +9,13 @@ const assert = (condition, message) => {
   if (!condition) throw new Error(message)
 }
 
-export function classifyReconciliation({ modes, tagState, releaseState, assetState }) {
+export function classifyReconciliation({
+  modes,
+  tagState,
+  releaseState,
+  assetState,
+  metadataState,
+}) {
   assert(
     !modes.some((mode) => !['absent', 'oidc', 'bootstrap'].includes(mode)),
     'Unverified npm state.',
@@ -26,9 +32,23 @@ export function classifyReconciliation({ modes, tagState, releaseState, assetSta
     )
     return 'publish'
   }
-  if (tagState === 'absent' || releaseState === 'absent' || assetState !== 'verified')
+  if (
+    tagState === 'absent' ||
+    releaseState === 'absent' ||
+    assetState !== 'verified' ||
+    metadataState !== 'verified'
+  )
     return 'repair'
   return 'complete'
+}
+
+export function releaseMetadataState(release, record, expectedBody) {
+  return release.isPrerelease === (record.channel === 'next') &&
+    release.name === record.tag &&
+    typeof release.body === 'string' &&
+    release.body.replace(/\r\n/gu, '\n').trimEnd() === expectedBody.trimEnd()
+    ? 'verified'
+    : 'conflict'
 }
 
 const run = (args) => {
@@ -62,7 +82,7 @@ function resolveTag(record) {
   return type === 'commit' && sha === record.sourceSha ? 'verified' : 'conflict'
 }
 
-function inspectRelease(record, releaseDir) {
+function inspectRelease(record, releaseDir, expectedBody) {
   const view = spawnSync(
     'gh',
     [
@@ -72,12 +92,12 @@ function inspectRelease(record, releaseDir) {
       '--repo',
       process.env.GITHUB_REPOSITORY,
       '--json',
-      'assets,isPrerelease',
+      'assets,body,isPrerelease,name',
     ],
     { encoding: 'utf8' },
   )
   if (view.status !== 0 && /HTTP 404|release not found/iu.test(view.stderr)) {
-    return { releaseState: 'absent', assetState: 'absent' }
+    return { releaseState: 'absent', assetState: 'absent', metadataState: 'absent' }
   }
   assert(view.status === 0, `Could not read ${record.tag} Release: ${view.stderr.trim()}`)
   const expected = [
@@ -87,12 +107,10 @@ function inspectRelease(record, releaseDir) {
     'registry-verification.json',
   ]
   const release = JSON.parse(view.stdout)
+  const metadataState = releaseMetadataState(release, record, expectedBody)
   const assets = new Set(release.assets.map((asset) => asset.name))
   if (!expected.every((file) => assets.has(basename(file)))) {
-    return { releaseState: 'present', assetState: 'absent' }
-  }
-  if (release.isPrerelease !== (record.channel === 'next')) {
-    return { releaseState: 'present', assetState: 'conflict' }
+    return { releaseState: 'present', assetState: 'absent', metadataState }
   }
   const directory = mkdtempSync(join(tmpdir(), 'nuxt-photo-release-'))
   try {
@@ -124,7 +142,11 @@ function inspectRelease(record, releaseDir) {
         .digest('hex')
       return local === remote
     })
-    return { releaseState: 'present', assetState: matches ? 'verified' : 'conflict' }
+    return {
+      releaseState: 'present',
+      assetState: matches ? 'verified' : 'conflict',
+      metadataState,
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true })
   }
@@ -157,12 +179,27 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     'Registry evidence package coordinates differ from the fixed package set.',
   )
   const tagState = resolveTag(record)
-  const { releaseState, assetState } = inspectRelease(record, releaseDir)
   const modes = verification.packages.map((pkg) => pkg.mode)
-  const action = classifyReconciliation({ modes, tagState, releaseState, assetState })
   const bootstrapPackages = verification.packages
     .filter((pkg) => pkg.mode === 'bootstrap')
     .map((pkg) => pkg.name)
+  const baseNotes = readFileSync(join(releaseDir, 'github-release-notes.md'), 'utf8').trimEnd()
+  const expectedBody =
+    bootstrapPackages.length === 0
+      ? baseNotes
+      : `${baseNotes}\n\n> [!NOTE]\n> This first npm version was created from the exact CI-certified artifact before npm trusted publishing could be configured. npm does not provide GitHub OIDC provenance for this bootstrap publication. The protected workflow verified the registry bytes. Later versions use trusted publishing with provenance.\n> Bootstrap packages: ${bootstrapPackages.join(',')}`
+  const { releaseState, assetState, metadataState } = inspectRelease(
+    record,
+    releaseDir,
+    expectedBody,
+  )
+  const action = classifyReconciliation({
+    modes,
+    tagState,
+    releaseState,
+    assetState,
+    metadataState,
+  })
   if (action !== 'complete' && bootstrapPackages.length > 0) {
     assert(
       process.env.ALLOW_BOOTSTRAP === 'true',
@@ -182,6 +219,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         `- Tag: \`${tagState}\``,
         `- GitHub Release: \`${releaseState}\``,
         `- Release assets: \`${assetState}\``,
+        `- Release metadata: \`${metadataState}\``,
         `- Workflow: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
         `- Approval: ${action === 'publish' ? 'awaiting protected npm approval' : 'not required'}`,
         '',

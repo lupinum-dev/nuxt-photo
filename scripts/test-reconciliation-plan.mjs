@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 
-import { classifyReconciliation } from './plan-reconciliation.mjs'
+import { classifyReconciliation, releaseMetadataState } from './plan-reconciliation.mjs'
 
 const complete = {
   modes: ['oidc', 'oidc'],
   tagState: 'verified',
   releaseState: 'present',
   assetState: 'verified',
+  metadataState: 'verified',
 }
 
 assert.equal(classifyReconciliation(complete), 'complete')
@@ -15,6 +16,18 @@ assert.equal(
   'repair',
 )
 assert.equal(classifyReconciliation({ ...complete, assetState: 'conflict' }), 'repair')
+assert.equal(classifyReconciliation({ ...complete, metadataState: 'conflict' }), 'repair')
+const record = { tag: 'v1.2.3', channel: 'latest' }
+const release = { name: 'v1.2.3', body: 'Certified notes\n', isPrerelease: false }
+assert.equal(releaseMetadataState(release, record, 'Certified notes'), 'verified')
+assert.equal(
+  releaseMetadataState({ ...release, name: 'stale title' }, record, 'Certified notes'),
+  'conflict',
+)
+assert.equal(
+  releaseMetadataState({ ...release, body: 'stale notes' }, record, 'Certified notes'),
+  'conflict',
+)
 assert.equal(
   classifyReconciliation({
     ...complete,
