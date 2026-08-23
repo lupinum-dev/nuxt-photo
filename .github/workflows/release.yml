@@ -3,15 +3,16 @@ name: Publish
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: Exact fixed version from both package manifests
-        required: true
-        type: string
       allow_bootstrap:
         description: Authorize exact first-version recovery without npm provenance
         required: false
         default: false
         type: boolean
+  workflow_run:
+    workflows:
+      - ci
+    types:
+      - completed
 
 permissions: {}
 
@@ -22,37 +23,39 @@ concurrency:
 jobs:
   verify:
     name: Verify certified artifacts
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       actions: read
       contents: read
     outputs:
+      action: ${{ steps.intent.outputs.action || steps.state.outputs.action }}
+      bootstrap: ${{ steps.state.outputs.bootstrap }}
+      bootstrap-packages: ${{ steps.state.outputs.bootstrap-packages }}
       channel: ${{ steps.release.outputs.channel }}
       ci_run_id: ${{ steps.ci.outputs.run-id }}
+      modes: ${{ steps.state.outputs.modes }}
       sha: ${{ steps.ci.outputs.sha }}
       tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - name: Require current main and successful CI
         id: ci
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
           script: |
-            if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(process.env.RELEASE_VERSION)) {
-              core.setFailed('The release version is not valid SemVer.')
-              return
-            }
             const { data: repository } = await github.rest.repos.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
             })
-            if (context.ref !== `refs/heads/${repository.default_branch}`) {
-              core.setFailed(`Dispatch from ${repository.default_branch}.`)
-              return
-            }
             if (repository.visibility !== 'public') {
               core.setFailed('npm provenance requires a public repository.')
               return
@@ -62,8 +65,13 @@ jobs:
               repo: context.repo.repo,
               ref: `heads/${repository.default_branch}`,
             })
-            if (currentMain.object.sha !== context.sha) {
-              core.setFailed('The dispatch SHA is not current main.')
+            const sourceSha = context.eventName === 'workflow_run'
+              ? context.payload.workflow_run.head_sha
+              : currentMain.object.sha
+            const isHistoricalRetry = context.eventName === 'workflow_run' &&
+              Number(process.env.RUN_ATTEMPT) > 1
+            if (sourceSha !== currentMain.object.sha && !isHistoricalRetry) {
+              core.setFailed('The successful CI SHA is no longer current main.')
               return
             }
             const { data: runs } = await github.rest.actions.listWorkflowRuns({
@@ -75,11 +83,29 @@ jobs:
               status: 'completed',
               per_page: 20,
             })
-            const run = runs.workflow_runs.find(candidate =>
-              candidate.conclusion === 'success' && candidate.head_sha === context.sha,
+            const successfulRuns = runs.workflow_runs.filter(candidate =>
+              candidate.conclusion === 'success' && candidate.head_sha === sourceSha,
             )
-            if (!run) {
-              core.setFailed(`Current main ${context.sha} has no successful ci.yml push run.`)
+            const candidates = []
+            for (const run of successfulRuns) {
+              const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+                per_page: 100,
+              })
+              if (artifacts.artifacts.filter(artifact =>
+                artifact.name === 'release-candidate' && !artifact.expired,
+              ).length === 1) candidates.push(run)
+            }
+            const eventRunId = context.payload.workflow_run?.id
+            const selected = context.eventName === 'workflow_run'
+              ? candidates.filter(run => run.id === eventRunId)
+              : candidates
+            if (selected.length !== 1) {
+              core.setFailed(
+                `Expected exactly one successful current-main CI run with a retained release-candidate artifact; found ${selected.length}.`,
+              )
               return
             }
             let environment
@@ -105,33 +131,8 @@ jobs:
               core.setFailed('The npm environment must require a human reviewer.')
               return
             }
-            core.setOutput('sha', context.sha)
-            core.setOutput('run-id', String(run.id))
-
-      - name: Require an absent or matching release tag
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_VERSION: ${{ inputs.version }}
-          SOURCE_SHA: ${{ steps.ci.outputs.sha }}
-        run: |
-          tag="v$RELEASE_VERSION"
-          status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$tag")
-          case "$status" in
-            404) exit 0 ;;
-            200) ;;
-            *) echo "Could not verify tag state (HTTP $status)" >&2; exit 1 ;;
-          esac
-          tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '.object.type')
-          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '.object.sha')
-          while [ "$tag_type" = tag ]; do
-            tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.type')
-            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.sha')
-          done
-          test "$tag_type" = commit
-          test "$tag_sha" = "$SOURCE_SHA"
+            core.setOutput('sha', sourceSha)
+            core.setOutput('run-id', String(selected[0].id))
 
       - name: Checkout certified SHA
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -140,7 +141,26 @@ jobs:
           persist-credentials: false
           ref: ${{ steps.ci.outputs.sha }}
 
+      - name: Check reviewed release intent
+        id: intent
+        run: |
+          pending="$(node --input-type=module -e "import { listPendingChangesets } from './scripts/lib/changelog.mjs'; process.stdout.write(String(listPendingChangesets(process.cwd()).length))")"
+          if test "$pending" = 0; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'action=waiting' >> "$GITHUB_OUTPUT"
+            {
+              echo '# Nuxt Photo release'
+              echo
+              echo 'Release intent is still represented by pending Changesets.'
+              echo
+              echo '**Next action:** Review and merge the generated version pull request after its checks pass.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Set up verification Node
+        if: steps.intent.outputs.ready == 'true'
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .node-version
@@ -148,6 +168,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install locked Sigstore verifier
+        if: steps.intent.outputs.ready == 'true'
         env:
           SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
         run: |
@@ -158,6 +179,7 @@ jobs:
           npm ci --prefix "$SIGSTORE_PREFIX" --ignore-scripts --no-audit --no-fund
 
       - name: Download retained release candidate
+        if: steps.intent.outputs.ready == 'true'
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           github-token: ${{ github.token }}
@@ -166,29 +188,43 @@ jobs:
           run-id: ${{ steps.ci.outputs.run-id }}
 
       - name: Verify publication authorization
+        if: steps.intent.outputs.ready == 'true'
         run: >-
           node scripts/verify-release-artifact.mjs .release
           --expected-sha "${{ steps.ci.outputs.sha }}"
           --publishable
 
       - name: Prepare exact release plan
+        if: steps.intent.outputs.ready == 'true'
         id: release
         run: >-
           node scripts/prepare-release.mjs .release
           --expected-sha "${{ steps.ci.outputs.sha }}"
           --ci-run-id "${{ steps.ci.outputs.run-id }}"
-          --expected-version "${{ inputs.version }}"
           --summary "$GITHUB_STEP_SUMMARY"
           --github-output "$GITHUB_OUTPUT"
 
       - name: Cryptographically verify existing npm packages
+        if: steps.intent.outputs.ready == 'true'
         env:
           SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
         run: >-
           node scripts/verify-registry-provenance.mjs .release
           --summary "$GITHUB_STEP_SUMMARY"
 
+      - name: Derive reconciliation state
+        if: steps.intent.outputs.ready == 'true'
+        id: state
+        env:
+          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap || false }}
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/plan-reconciliation.mjs .release
+          --summary "$GITHUB_STEP_SUMMARY"
+          --github-output "$GITHUB_OUTPUT"
+
       - name: Upload verified release plan
+        if: steps.intent.outputs.ready == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: verified-nuxt-photo-release
@@ -205,6 +241,7 @@ jobs:
   publish:
     name: Publish fixed package set to npm
     needs: verify
+    if: needs.verify.outputs.action == 'publish'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: npm
@@ -212,11 +249,6 @@ jobs:
       actions: read
       contents: read
       id-token: write
-    outputs:
-      bootstrap: ${{ steps.publish.outputs.bootstrap }}
-      bootstrap-packages: ${{ steps.publish.outputs.bootstrap-packages }}
-      modes: ${{ steps.publish.outputs.modes }}
-
     steps:
       - name: Set up trusted publishing Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -235,7 +267,7 @@ jobs:
         id: publish
         env:
           ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap }}
-          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
           node --input-type=module <<'NODE'
@@ -437,6 +469,10 @@ jobs:
     needs:
       - verify
       - publish
+    if: >-
+      always() && needs.verify.result == 'success' &&
+      (needs.verify.outputs.action == 'publish' || needs.verify.outputs.action == 'repair') &&
+      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -456,8 +492,8 @@ jobs:
           RELEASE_CHANNEL: ${{ needs.verify.outputs.channel }}
           RELEASE_TAG: ${{ needs.verify.outputs.tag }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
-          BOOTSTRAP_RELEASE: ${{ needs.publish.outputs.bootstrap }}
-          BOOTSTRAP_PACKAGES: ${{ needs.publish.outputs.bootstrap-packages }}
+          BOOTSTRAP_RELEASE: ${{ needs.verify.outputs.bootstrap }}
+          BOOTSTRAP_PACKAGES: ${{ needs.verify.outputs.bootstrap-packages }}
         run: |
           prerelease=false
           if [ "$RELEASE_CHANNEL" = next ]; then prerelease=true; fi
@@ -488,9 +524,19 @@ jobs:
                 echo "The existing GitHub release has no tag." >&2
                 exit 1
               fi
-              gh api --silent --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              tag_error="$(mktemp)"
+              if ! gh api --silent --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
                 -f ref="refs/tags/$RELEASE_TAG" \
-                -f sha="$SOURCE_SHA"
+                -f sha="$SOURCE_SHA" 2>"$tag_error"; then
+                if grep -Eq 'Resource not accessible by integration|HTTP 403' "$tag_error"; then
+                  echo "HUMAN-ONLY: GitHub could not create historical tag $RELEASE_TAG at certified commit $SOURCE_SHA." >&2
+                  echo "Run: git fetch origin && git tag $RELEASE_TAG $SOURCE_SHA && git push origin refs/tags/$RELEASE_TAG" >&2
+                  echo "Then verify: git ls-remote origin refs/tags/$RELEASE_TAG" >&2
+                  echo "Finally rerun only this failed GitHub release job; do not rebuild or republish." >&2
+                fi
+                cat "$tag_error" >&2
+                exit 1
+              fi
               ;;
             200) ;;
             *) echo "Could not verify tag state (HTTP $tag_status)" >&2; exit 1 ;;

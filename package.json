@@ -23,7 +23,7 @@
     "changelog:preview": "changelogen --no-output --hideAuthorEmail",
     "check": "vp check",
     "check:metadata": "node scripts/check-metadata.mjs",
-    "check:release-workflow": "node scripts/test-release-workflow.mjs && node scripts/test-registry-provenance.mjs",
+    "check:release-workflow": "node scripts/test-release-workflow.mjs && node scripts/test-reconciliation-plan.mjs && node scripts/test-registry-provenance.mjs",
     "check:vercel": "node scripts/check-vercel-config.mjs",
     "dev": "vp run --filter '@lupinum/*photo' --fail-if-no-match --parallel dev",
     "dev:docs": "vp run build && vp run --filter nuxt-photo-docs --fail-if-no-match dev",
