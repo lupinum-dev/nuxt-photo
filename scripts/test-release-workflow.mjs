@@ -8,6 +8,13 @@ import { parse } from 'yaml'
 import { listPendingChangesets } from './lib/changelog.mjs'
 
 const workflow = readFileSync(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8')
+const releaseConfig = parse(workflow)
+const sigstoreManifest = JSON.parse(
+  readFileSync(new URL('./sigstore-verifier/package.json', import.meta.url), 'utf8'),
+)
+const sigstoreLock = JSON.parse(
+  readFileSync(new URL('./sigstore-verifier/package-lock.json', import.meta.url), 'utf8'),
+)
 const versionWorkflow = readFileSync(
   new URL('../.github/workflows/version.yml', import.meta.url),
   'utf8',
@@ -218,6 +225,55 @@ assert(
 
 const publishJob = /^  publish:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
 assert(publishJob, 'release.yml is missing the isolated publish job.')
+const verifyJob = /^  verify:\n([\s\S]*?)(?=^  [a-z][a-z-]*:\n)/m.exec(workflow)?.[1]
+assert(verifyJob, 'release.yml is missing the unprivileged verification job.')
+for (const required of [
+  'cp scripts/sigstore-verifier/package.json',
+  'scripts/sigstore-verifier/package-lock.json',
+  'npm ci --prefix "$SIGSTORE_PREFIX" --ignore-scripts --no-audit --no-fund',
+  'node scripts/verify-registry-provenance.mjs',
+  '.release/registry-verification.json',
+  'while [ "$tag_type" = tag ]',
+  'test "$tag_type" = commit',
+]) {
+  assert(verifyJob.includes(required), `The verification job is missing: ${required}`)
+}
+assert(
+  !verifyJob.includes('npm install') && !verifyJob.includes('npm view sigstore'),
+  'The verification job must install only the committed lock with npm ci.',
+)
+assert(
+  sigstoreManifest.private === true &&
+    sigstoreManifest.engines.node === '^24.15.0' &&
+    sigstoreManifest.dependencies.sigstore === '5.0.0' &&
+    !sigstoreManifest.devDependencies,
+  'The isolated verifier manifest must pin Sigstore without changing the public workspace contract.',
+)
+assert(
+  sigstoreLock.lockfileVersion === 3 &&
+    sigstoreLock.packages[''].dependencies.sigstore === '5.0.0' &&
+    sigstoreLock.packages['node_modules/sigstore'].version === '5.0.0',
+  'The isolated verifier lock must match the exact manifest dependency.',
+)
+const unlockedVerifierPackages = Object.entries(sigstoreLock.packages)
+  .filter(([path]) => path)
+  .filter(
+    ([, pkg]) =>
+      !pkg.version ||
+      !pkg.resolved?.startsWith('https://registry.npmjs.org/') ||
+      !pkg.integrity?.startsWith('sha512-'),
+  )
+assert(
+  Object.keys(sigstoreLock.packages).length > 2 && unlockedVerifierPackages.length === 0,
+  `Every isolated verifier package must have a locked version and integrity: ${unlockedVerifierPackages
+    .map(([path]) => path)
+    .join(', ')}`,
+)
+assert(
+  verifyJob.includes('permissions:\n      actions: read\n      contents: read') &&
+    !verifyJob.includes('id-token: write'),
+  'Registry provenance verification must run without publish credentials.',
+)
 assert(
   publishJob.includes('environment: npm'),
   'The publish job must use the protected npm environment.',
@@ -229,8 +285,13 @@ for (const forbidden of [
   'node scripts/',
   'node-version-file:',
   'npm install',
+  'npm ci',
   'pnpm install',
   'vp install',
+  'fetch(',
+  "from 'sigstore'",
+  "require('sigstore')",
+  'signedAccessSignatureUrl',
 ]) {
   assert(
     !publishJob.includes(forbidden),
@@ -243,9 +304,13 @@ for (const required of [
   "'--ignore-scripts', '--provenance'",
   'record.channel',
   'dist.attestations',
-  'versions.length !== 1 || versions[0] !== pkg.version',
-  "modes.set(name, attestations ? 'oidc' : 'bootstrap')",
-  "mode === 'bootstrap' || (mode === 'oidc' && attestations)",
+  'registry-verification.json',
+  'verification.releaseRecordSha256',
+  "hash(tarball, 'sha512') !== verified.sha512",
+  'was absent during verification but now exists; rerun verification',
+  "verified.mode === 'bootstrap' ? 'bootstrap' : 'oidc'",
+  'versions.length !== 1',
+  "mode === 'oidc' && hasAttestations(attestations)",
   'bootstrap=${String(bootstrap)}',
 ]) {
   assert(publishJob.includes(required), `The publish job is missing: ${required}`)
@@ -257,17 +322,85 @@ assert(
   releaseJob.includes('needs:\n      - verify\n      - publish'),
   'GitHub release creation must wait for npm publication.',
 )
-assert(releaseJob.includes('gh release create'), 'GitHub release creation is not automatic.')
+for (const required of [
+  '/releases/tags/$RELEASE_TAG',
+  'gh release create',
+  'gh release upload',
+  'gh release edit',
+  'release_exists=false',
+  'gh api --silent --method POST',
+  'while [ "$tag_type" = tag ]',
+  'test "$tag_type" = commit',
+  'test "$tag_sha" = "$SOURCE_SHA"',
+  '.release/registry-verification.json',
+  '--clobber',
+]) {
+  assert(releaseJob.includes(required), `GitHub release recovery is missing: ${required}`)
+}
 const releaseCreateCommand =
   releaseJob.match(/gh release create[^\n]*\\\n(?:\s+[^\n]*\\\n)*\s+[^\n]*/u)?.[0] ?? ''
 assert(
-  releaseCreateCommand.includes('--repo "$GITHUB_REPOSITORY"'),
+  releaseCreateCommand.includes('--repo "$GITHUB_REPOSITORY"') &&
+    releaseCreateCommand.includes('--verify-tag'),
   'GitHub release commands must declare the repository when the job has no checkout.',
 )
+assert(
+  releaseJob.indexOf('test "$tag_sha" = "$SOURCE_SHA"') < releaseJob.indexOf('gh release upload'),
+  'The tag must be re-read and source-bound before any GitHub release repair.',
+)
+for (const forbidden of ['--method DELETE', '--method PATCH', 'git update-ref']) {
+  assert(!releaseJob.includes(forbidden), `GitHub release recovery must not contain ${forbidden}.`)
+}
 assert(
   releaseJob.includes('This first npm version was created from the exact CI-certified artifact'),
   'Bootstrap releases must record the missing first-version provenance.',
 )
+assert(
+  workflow.includes('name: verified-nuxt-photo-release') && workflow.includes('retention-days: 14'),
+  'The verified release plan must outlive short workflow-fix cycles.',
+)
+
+const githubReleaseScript = releaseConfig.jobs['github-release'].steps.find(
+  (step) => step.name === 'Create release from the exact certified package set',
+)?.run
+assert(githubReleaseScript, 'The GitHub release policy fixture is missing its shell program.')
+runGitHubReleaseScenario('absent tag is created at the certified source', {
+  expectedActions: ['create-tag', 'create-release'],
+  expectedSuccess: true,
+})
+runGitHubReleaseScenario('existing direct tag permits release repair', {
+  releaseExists: true,
+  tag: { type: 'commit', sha: 'a'.repeat(40) },
+  expectedActions: ['upload-release', 'edit-release'],
+  expectedSuccess: true,
+})
+runGitHubReleaseScenario('nested annotated tags are peeled', {
+  tag: { type: 'tag', sha: '1'.repeat(40) },
+  tagObjects: {
+    ['1'.repeat(40)]: { type: 'tag', sha: '2'.repeat(40) },
+    ['2'.repeat(40)]: { type: 'commit', sha: 'a'.repeat(40) },
+  },
+  expectedActions: ['create-release'],
+  expectedSuccess: true,
+})
+runGitHubReleaseScenario('wrong tag appearance fails closed', {
+  tag: { type: 'commit', sha: 'b'.repeat(40) },
+  expectedActions: [],
+  expectedSuccess: false,
+})
+runGitHubReleaseScenario('wrong annotated tag fails closed', {
+  tag: { type: 'tag', sha: '1'.repeat(40) },
+  tagObjects: {
+    ['1'.repeat(40)]: { type: 'commit', sha: 'b'.repeat(40) },
+  },
+  expectedActions: [],
+  expectedSuccess: false,
+})
+runGitHubReleaseScenario('release without a tag fails closed', {
+  releaseExists: true,
+  expectedActions: [],
+  expectedSuccess: false,
+})
 
 const publishScriptMatch = /node --input-type=module <<'NODE'\n([\s\S]*?)\n\s+NODE/.exec(publishJob)
 assert(publishScriptMatch, 'The publish job must contain one inline Node program.')
@@ -275,7 +408,10 @@ const publishScript = dedent(publishScriptMatch[1])
 
 runScenario('matching bootstrap bytes', {
   allowBootstrap: true,
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'bootstrap',
+  },
   expectedBootstrap: true,
   expectedModes: {
     '@lupinum/vue-photo': 'bootstrap',
@@ -294,7 +430,10 @@ runScenario('missing packages use OIDC', {
 })
 runScenario('mixed package sets recover safely', {
   allowBootstrap: true,
-  existing: ['@lupinum/vue-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'absent',
+  },
   expectedBootstrap: true,
   expectedModes: {
     '@lupinum/vue-photo': 'bootstrap',
@@ -303,31 +442,50 @@ runScenario('mixed package sets recover safely', {
   expectedPublishes: 1,
 })
 runScenario('different bytes fail', {
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'oidc',
+    '@lupinum/nuxt-photo': 'oidc',
+  },
   differentBytes: '@lupinum/vue-photo',
-  expectedError: 'exists with different bytes',
+  expectedError: 'changed after verification',
 })
 runScenario('wrong dist-tags fail', {
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
-  attested: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'oidc',
+    '@lupinum/nuxt-photo': 'oidc',
+  },
   wrongTag: '@lupinum/nuxt-photo',
-  expectedError: 'did not expose the required bytes',
+  expectedError: 'tag changed after verification',
 })
 runScenario('later provenance-free versions fail', {
   allowBootstrap: true,
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'bootstrap',
+  },
   extraVersion: '@lupinum/vue-photo',
-  expectedError: 'is not the first package version and has no provenance',
+  expectedError: 'no longer matches the historical sole-version bootstrap state',
 })
 runScenario('a bootstrap package must remain the sole version', {
   allowBootstrap: true,
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'bootstrap',
+  },
   laterVersionDuringVerification: '@lupinum/vue-photo',
   expectedError: 'did not expose the required bytes',
 })
 runScenario('bootstrap recovery requires explicit authorization', {
-  existing: ['@lupinum/vue-photo', '@lupinum/nuxt-photo'],
+  verificationModes: {
+    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'bootstrap',
+  },
   expectedError: 'requires explicit bootstrap authorization',
+})
+runScenario('absent package appearing after verification fails closed', {
+  appearedAfterVerification: '@lupinum/vue-photo',
+  expectedError: 'was absent during verification but now exists; rerun verification',
+  expectNoPublishes: true,
 })
 runScenario('new provenance-free publications fail', {
   publishProvenance: false,
@@ -405,27 +563,64 @@ function runScenario(name, options) {
         sha256: digest(content, 'sha256'),
       }
     })
-    writeFileSync(
-      join(releaseDir, 'release-record.json'),
-      JSON.stringify({
-        schemaVersion: 2,
-        sourceSha,
-        version,
-        channel,
-        publishOrder: packageNames,
-        packages,
-      }),
-    )
+    const releaseRecordText = JSON.stringify({
+      schemaVersion: 2,
+      sourceSha,
+      version,
+      channel,
+      publishOrder: packageNames,
+      packages,
+    })
+    writeFileSync(join(releaseDir, 'release-record.json'), releaseRecordText)
     writeFileSync(
       join(releaseDir, 'release-artifact.json'),
       JSON.stringify({ sourceSha, packageSetVersion: version }),
     )
 
-    const existing = new Set(options.existing ?? [])
-    const attested = new Set(options.attested ?? [])
+    const verificationModes =
+      options.verificationModes ??
+      Object.fromEntries(packageNames.map((packageName) => [packageName, 'absent']))
+    const verificationPackages = packages.map((pkg) => {
+      const mode = verificationModes[pkg.name]
+      return {
+        ...pkg,
+        sha512: digest(Buffer.from(`${pkg.name}@${pkg.version}`), 'sha512'),
+        mode,
+        channelVersion: mode === 'absent' ? null : pkg.version,
+        provenanceBundleSha256: mode === 'oidc' ? 'c'.repeat(64) : null,
+      }
+    })
+    writeFileSync(
+      join(releaseDir, 'registry-verification.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        releaseRecordSha256: digest(releaseRecordText, 'sha256'),
+        sourceSha,
+        version,
+        channel,
+        sigstoreVersion: '5.0.0',
+        workflow: {
+          repository: 'https://github.com/lupinum-dev/nuxt-photo',
+          path: '.github/workflows/release.yml',
+          ref: 'refs/heads/main',
+          identity:
+            'https://github.com/lupinum-dev/nuxt-photo/.github/workflows/release.yml@refs/heads/main',
+          certificateIssuer: 'https://token.actions.githubusercontent.com',
+          certificateOIDs: {
+            '1.3.6.1.4.1.57264.1.3': sourceSha,
+            '1.3.6.1.4.1.57264.1.5': 'lupinum-dev/nuxt-photo',
+            '1.3.6.1.4.1.57264.1.6': 'refs/heads/main',
+          },
+        },
+        packages: verificationPackages,
+      }),
+    )
+
     const registry = Object.fromEntries(
       packages.map((pkg) => {
-        if (!existing.has(pkg.name)) return [pkg.name, null]
+        const mode = verificationModes[pkg.name]
+        const appeared = options.appearedAfterVerification === pkg.name
+        if (mode === 'absent' && !appeared) return [pkg.name, null]
         const versions = [pkg.version]
         if (options.extraVersion === pkg.name) versions.push('0.2.1')
         return [
@@ -438,9 +633,10 @@ function runScenario(name, options) {
             releases: {
               [pkg.version]: {
                 sha1: options.differentBytes === pkg.name ? '0'.repeat(40) : pkg.sha1,
-                attestations: attested.has(pkg.name)
-                  ? { url: 'https://registry.example/provenance' }
-                  : null,
+                attestations:
+                  mode === 'oidc' || appeared
+                    ? { url: 'https://registry.npmjs.org/-/npm/v1/attestations/fixture' }
+                    : null,
               },
             },
           },
@@ -528,6 +724,142 @@ function runScenario(name, options) {
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
+}
+
+function runGitHubReleaseScenario(name, options) {
+  const root = mkdtempSync(join(tmpdir(), 'nuxt-photo-github-release-policy-'))
+  try {
+    const releaseDir = join(root, '.release')
+    const binDir = join(root, 'bin')
+    mkdirSync(releaseDir)
+    mkdirSync(binDir)
+    writeFileSync(join(releaseDir, 'github-release-notes.md'), 'Release notes.\n')
+    writeFileSync(join(releaseDir, 'package.tgz'), 'package')
+    const statePath = join(root, 'github.json')
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        actions: [],
+        releaseExists: options.releaseExists ?? false,
+        sourceSha: 'a'.repeat(40),
+        tag: options.tag ?? null,
+        tagObjects: options.tagObjects ?? {},
+      }),
+    )
+    for (const [command, program] of [
+      ['curl', fakeCurlProgram()],
+      ['gh', fakeGhProgram()],
+    ]) {
+      const path = join(binDir, command)
+      writeFileSync(path, program)
+      chmodSync(path, 0o755)
+    }
+    const runnerPath = join(root, 'github-release.sh')
+    writeFileSync(runnerPath, githubReleaseScript)
+    const result = spawnSync('/bin/bash', ['-e', '-o', 'pipefail', runnerPath], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        BOOTSTRAP_PACKAGES: '',
+        BOOTSTRAP_RELEASE: 'false',
+        FAKE_GITHUB_STATE: statePath,
+        GH_TOKEN: 'fixture-token',
+        GITHUB_API_URL: 'https://api.github.test',
+        GITHUB_REPOSITORY: 'lupinum-dev/nuxt-photo',
+        PATH: `${binDir}:${process.env.PATH}`,
+        RELEASE_CHANNEL: 'latest',
+        RELEASE_TAG: 'v0.2.0',
+        SOURCE_SHA: 'a'.repeat(40),
+      },
+    })
+    const diagnostic = `${result.stdout}\n${result.stderr}`
+    assert(
+      (result.status === 0) === options.expectedSuccess,
+      `${name} returned the wrong status: ${diagnostic}`,
+    )
+    const state = JSON.parse(readFileSync(statePath, 'utf8'))
+    assert(
+      JSON.stringify(state.actions) === JSON.stringify(options.expectedActions),
+      `${name} performed the wrong GitHub mutations: ${JSON.stringify(state.actions)}`,
+    )
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}
+
+function fakeCurlProgram() {
+  return `#!/usr/bin/env node
+const fs = require('node:fs')
+const state = JSON.parse(fs.readFileSync(process.env.FAKE_GITHUB_STATE, 'utf8'))
+const url = process.argv.at(-1)
+if (url.includes('/releases/tags/')) process.stdout.write(state.releaseExists ? '200' : '404')
+else process.stdout.write(state.tag ? '200' : '404')
+`
+}
+
+function fakeGhProgram() {
+  return `#!/usr/bin/env node
+const fs = require('node:fs')
+const statePath = process.env.FAKE_GITHUB_STATE
+const state = JSON.parse(fs.readFileSync(statePath, 'utf8'))
+const args = process.argv.slice(2)
+const save = () => fs.writeFileSync(statePath, JSON.stringify(state))
+const fail = message => { process.stderr.write(message + '\\n'); process.exit(1) }
+const output = value => process.stdout.write(String(value) + '\\n')
+
+if (args[0] === 'release') {
+  const operation = args[1]
+  if (operation === 'view') process.exit(state.releaseExists ? 0 : 1)
+  if (operation === 'upload') {
+    if (!state.releaseExists) fail('release does not exist')
+    state.actions.push('upload-release')
+    save()
+    process.exit(0)
+  }
+  if (operation === 'edit') {
+    if (!state.releaseExists) fail('release does not exist')
+    state.actions.push('edit-release')
+    save()
+    process.exit(0)
+  }
+  if (operation === 'create') {
+    if (state.releaseExists) fail('release already exists')
+    if (!state.tag || !args.includes('--verify-tag')) fail('verified tag is required')
+    state.releaseExists = true
+    state.actions.push('create-release')
+    save()
+    process.exit(0)
+  }
+}
+
+if (args[0] === 'api') {
+  const endpoint = args.find(value => value.startsWith('repos/'))
+  const methodIndex = args.indexOf('--method')
+  const method = methodIndex === -1 ? 'GET' : args[methodIndex + 1]
+  if (method === 'POST' && endpoint.endsWith('/git/refs')) {
+    if (state.tag) fail('tag already exists')
+    const ref = args.find(value => value.startsWith('ref='))?.slice(4)
+    const sha = args.find(value => value.startsWith('sha='))?.slice(4)
+    if (ref !== 'refs/tags/v0.2.0' || sha !== state.sourceSha) fail('wrong tag creation')
+    state.tag = { type: 'commit', sha }
+    state.actions.push('create-tag')
+    save()
+    process.exit(0)
+  }
+  const jq = args[args.indexOf('--jq') + 1]
+  let object
+  if (endpoint.includes('/git/ref/tags/')) object = state.tag
+  else if (endpoint.includes('/git/tags/')) object = state.tagObjects[endpoint.split('/').at(-1)]
+  if (!object) fail('git object does not exist')
+  if (jq === '.object.type') output(object.type)
+  else if (jq === '.object.sha') output(object.sha)
+  else fail('unsupported jq expression')
+  process.exit(0)
+}
+
+fail('unsupported gh command: ' + args.join(' '))
+`
 }
 
 function fakeNpmProgram() {

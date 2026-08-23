@@ -137,10 +137,13 @@ Publication is intentionally short:
 
 The workflow selects the retained `release-candidate` from the successful
 current-main CI run. It verifies the source SHA, package set, version, changelog,
-and tarball digests. It publishes Vue before Nuxt with npm trusted publishing,
-`--ignore-scripts`, and provenance. It then verifies the registry bytes,
-provenance, and `next` or `latest` tags. Finally, it creates one GitHub release
-from the certified notes and attaches both tarballs and the release evidence.
+and tarball digests. Before approval, it cryptographically verifies any
+existing npm provenance and records the exact recovery mode and tarball
+SHA-512. It publishes missing packages Vue before Nuxt with npm trusted
+publishing, `--ignore-scripts`, and provenance. It then verifies the registry
+bytes, provenance presence, and `next` or `latest` tags. Finally, it creates one
+GitHub release from the certified notes and attaches both tarballs and the
+release evidence.
 
 Never run `npm publish`, `pnpm publish`, `changelogen --release`, or a manual
 Git tag command. Never rebuild a retained artifact during publication.
@@ -148,18 +151,22 @@ Git tag command. Never rebuild a retained artifact during publication.
 ## Partial failure
 
 npm versions are immutable after publication. If the first package succeeds
-and the second package fails, rerun the same workflow for the same version. The
-publish job skips an existing version only when its registry SHA-1 matches the
-certified tarball. It then continues with the missing package.
+and the second package fails, dispatch `release.yml` again from the same source
+SHA for the same version. The fresh unprivileged verification job must
+cryptographically verify the existing package and confirm that the missing
+package is still absent before a new environment approval. Do not rerun only
+the failed protected publish job: its retained record deliberately fails when
+a version that was absent before approval has since appeared.
 
-Stop when an existing version has different bytes, the source SHA changed, or
-registry state is ambiguous. Do not create replacement tarballs or a second
-release workflow.
+Stop when the retained CI artifact expired, an existing version has different
+bytes, the source SHA changed, or registry state is ambiguous. Do not create
+replacement tarballs or a second release workflow.
 
 If npm publication completed but GitHub release creation failed, rerun the
-failed GitHub job or create the release from the retained verified artifact in
-the same workflow run. Do not create a new package version for a GitHub-only
-failure.
+failed GitHub job. The workflow accepts an existing tag only when it targets
+the certified source, replaces retained release assets, and repairs the release
+notes and prerelease state. Do not dispatch from a later commit or create a new
+package version for a GitHub-only failure.
 
 ## Rollback
 
