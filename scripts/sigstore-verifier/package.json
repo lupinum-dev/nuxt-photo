@@ -1,0 +1,13 @@
+{
+  "name": "@lupinum/sigstore-verifier",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Isolated locked dependency tree for release provenance verification.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "sigstore": "5.0.0"
+  },
+  "engines": {
+    "node": "^24.15.0"
+  }
+}

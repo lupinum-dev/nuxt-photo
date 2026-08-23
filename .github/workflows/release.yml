@@ -108,20 +108,30 @@ jobs:
             core.setOutput('sha', context.sha)
             core.setOutput('run-id', String(run.id))
 
-      - name: Require an unused release tag
+      - name: Require an absent or matching release tag
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ steps.ci.outputs.sha }}
         run: |
+          tag="v$RELEASE_VERSION"
           status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/v$RELEASE_VERSION")
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$tag")
           case "$status" in
-            404) ;;
-            200) echo "Tag v$RELEASE_VERSION already exists" >&2; exit 1 ;;
-            *) echo "Could not verify tag availability (HTTP $status)" >&2; exit 1 ;;
+            404) exit 0 ;;
+            200) ;;
+            *) echo "Could not verify tag state (HTTP $status)" >&2; exit 1 ;;
           esac
+          tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '.object.type')
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '.object.sha')
+          while [ "$tag_type" = tag ]; do
+            tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.type')
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.sha')
+          done
+          test "$tag_type" = commit
+          test "$tag_sha" = "$SOURCE_SHA"
 
       - name: Checkout certified SHA
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -136,6 +146,16 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
           registry-url: https://registry.npmjs.org
+
+      - name: Install locked Sigstore verifier
+        env:
+          SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
+        run: |
+          mkdir -p "$SIGSTORE_PREFIX"
+          cp scripts/sigstore-verifier/package.json \
+            scripts/sigstore-verifier/package-lock.json \
+            "$SIGSTORE_PREFIX/"
+          npm ci --prefix "$SIGSTORE_PREFIX" --ignore-scripts --no-audit --no-fund
 
       - name: Download retained release candidate
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
@@ -161,6 +181,13 @@ jobs:
           --summary "$GITHUB_STEP_SUMMARY"
           --github-output "$GITHUB_OUTPUT"
 
+      - name: Cryptographically verify existing npm packages
+        env:
+          SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
+        run: >-
+          node scripts/verify-registry-provenance.mjs .release
+          --summary "$GITHUB_STEP_SUMMARY"
+
       - name: Upload verified release plan
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -169,10 +196,11 @@ jobs:
             .release/*.tgz
             .release/release-artifact.json
             .release/release-record.json
+            .release/registry-verification.json
             .release/github-release-notes.md
           if-no-files-found: error
           include-hidden-files: true
-          retention-days: 2
+          retention-days: 14
 
   publish:
     name: Publish fixed package set to npm
@@ -227,9 +255,17 @@ jobs:
             if (/E404|404 Not Found/.test(result.stderr)) return null
             fail(`npm view failed for ${spec} ${field}: ${result.stderr.trim()}`)
           }
-          const hash = (path, algorithm) => createHash(algorithm).update(readFileSync(path)).digest('hex')
+          const hasAttestations = value => Array.isArray(value)
+            ? value.length > 0
+            : Boolean(value && typeof value === 'object' && Object.keys(value).length)
+          const hashBytes = (bytes, algorithm) => createHash(algorithm).update(bytes).digest('hex')
+          const hash = (path, algorithm) => hashBytes(readFileSync(path), algorithm)
           const artifact = JSON.parse(readFileSync('.release/release-artifact.json', 'utf8'))
-          const record = JSON.parse(readFileSync('.release/release-record.json', 'utf8'))
+          const releaseRecordBytes = readFileSync('.release/release-record.json')
+          const record = JSON.parse(releaseRecordBytes.toString('utf8'))
+          const verification = JSON.parse(
+            readFileSync('.release/registry-verification.json', 'utf8'),
+          )
           const pollAttempts = Number(process.env.REGISTRY_POLL_ATTEMPTS ?? 240)
           const pollDelayMs = Number(process.env.REGISTRY_POLL_DELAY_MS ?? 5000)
           if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1) fail('Invalid registry poll attempt count.')
@@ -240,36 +276,112 @@ jobs:
           if (record.sourceSha !== process.env.SOURCE_SHA || artifact.sourceSha !== record.sourceSha) fail('Source SHA differs.')
           if (record.version !== process.env.RELEASE_VERSION || artifact.packageSetVersion !== record.version) fail('Version differs.')
           const expectedOrder = ['@lupinum/vue-photo', '@lupinum/nuxt-photo']
-          const modes = new Map()
+          const expectedWorkflow = {
+            repository: 'https://github.com/lupinum-dev/nuxt-photo',
+            path: '.github/workflows/release.yml',
+            ref: 'refs/heads/main',
+            identity: 'https://github.com/lupinum-dev/nuxt-photo/.github/workflows/release.yml@refs/heads/main',
+            certificateIssuer: 'https://token.actions.githubusercontent.com',
+            certificateOIDs: {
+              '1.3.6.1.4.1.57264.1.3': record.sourceSha,
+              '1.3.6.1.4.1.57264.1.5': 'lupinum-dev/nuxt-photo',
+              '1.3.6.1.4.1.57264.1.6': 'refs/heads/main',
+            },
+          }
           if (JSON.stringify(record.publishOrder) !== JSON.stringify(expectedOrder)) fail('Publish order differs.')
+          if (
+            verification.schemaVersion !== 1 ||
+            verification.releaseRecordSha256 !== hashBytes(releaseRecordBytes, 'sha256') ||
+            verification.sourceSha !== record.sourceSha ||
+            verification.version !== record.version ||
+            verification.channel !== record.channel ||
+            verification.sigstoreVersion !== '5.0.0' ||
+            JSON.stringify(verification.workflow) !== JSON.stringify(expectedWorkflow)
+          ) fail('Registry verification record differs from the exact release plan.')
+          if (
+            !Array.isArray(record.packages) || record.packages.length !== expectedOrder.length ||
+            !Array.isArray(verification.packages) || verification.packages.length !== expectedOrder.length ||
+            JSON.stringify(verification.packages.map(pkg => pkg.name)) !== JSON.stringify(expectedOrder)
+          ) fail('Registry verification package set differs.')
           const npmVersion = run(['--version']).stdout.trim().split('.').map(Number)
           if (npmVersion[0] < 11 || (npmVersion[0] === 11 && npmVersion[1] < 5)) fail('npm 11.5 or newer is required.')
 
+          const plans = []
           for (const name of expectedOrder) {
-            const pkg = record.packages.find(candidate => candidate.name === name)
-            if (!pkg) fail(`Missing ${name}.`)
+            const releaseMatches = record.packages.filter(candidate => candidate.name === name)
+            const verificationMatches = verification.packages.filter(candidate => candidate.name === name)
+            if (releaseMatches.length !== 1 || verificationMatches.length !== 1) {
+              fail(`Missing or duplicate ${name}.`)
+            }
+            const pkg = releaseMatches[0]
+            const verified = verificationMatches[0]
             const tarball = join('.release', pkg.tarball)
-            if (hash(tarball, 'sha1') !== pkg.sha1 || hash(tarball, 'sha256') !== pkg.sha256) fail(`${name} failed digest verification.`)
-            const existing = view(`${name}@${pkg.version}`, 'dist.shasum')
-            if (existing && existing !== pkg.sha1) fail(`${name}@${pkg.version} exists with different bytes.`)
-            if (existing) {
-              const attestations = view(`${name}@${pkg.version}`, 'dist.attestations')
-              const published = view(name, 'versions')
+            if (
+              !/^[A-Za-z0-9._-]+\.tgz$/.test(pkg.tarball) ||
+              verified.version !== pkg.version || verified.tarball !== pkg.tarball ||
+              verified.sha1 !== pkg.sha1 || verified.sha256 !== pkg.sha256 ||
+              hash(tarball, 'sha1') !== pkg.sha1 ||
+              hash(tarball, 'sha256') !== pkg.sha256 ||
+              hash(tarball, 'sha512') !== verified.sha512
+            ) fail(`${name} failed exact artifact verification.`)
+            if (!['absent', 'oidc', 'bootstrap'].includes(verified.mode)) {
+              fail(`${name} has an invalid registry verification mode.`)
+            }
+            if (
+              (verified.mode === 'oidc' && !/^[0-9a-f]{64}$/.test(verified.provenanceBundleSha256)) ||
+              (verified.mode !== 'oidc' && verified.provenanceBundleSha256 !== null)
+            ) fail(`${name} has an invalid provenance verification record.`)
+            plans.push({ pkg, tarball, verified })
+          }
+
+          for (const { pkg, verified } of plans) {
+            const spec = `${pkg.name}@${pkg.version}`
+            const existing = view(spec, 'dist.shasum')
+            const channel = view(pkg.name, `dist-tags.${record.channel}`)
+            if (verified.mode === 'absent') {
+              if (existing !== null) {
+                fail(`${spec} was absent during verification but now exists; rerun verification.`)
+              }
+              if (channel !== verified.channelVersion) {
+                fail(`${pkg.name} ${record.channel} tag changed after verification.`)
+              }
+              continue
+            }
+            if (existing !== pkg.sha1) fail(`${spec} changed after verification.`)
+            if (channel !== pkg.version || channel !== verified.channelVersion) {
+              fail(`${pkg.name} ${record.channel} tag changed after verification.`)
+            }
+            const attestations = view(spec, 'dist.attestations')
+            if (verified.mode === 'oidc' && !hasAttestations(attestations)) {
+              fail(`${spec} lost its verified npm provenance metadata.`)
+            }
+            if (verified.mode === 'bootstrap') {
+              const published = view(pkg.name, 'versions')
               const versions = Array.isArray(published) ? published : [published]
-              if (!attestations && (versions.length !== 1 || versions[0] !== pkg.version)) {
-                fail(`${name}@${pkg.version} is not the first package version and has no provenance.`)
+              if (
+                hasAttestations(attestations) ||
+                versions.length !== 1 ||
+                versions[0] !== pkg.version
+              ) {
+                fail(`${spec} no longer matches the historical sole-version bootstrap state.`)
               }
-              if (!attestations && process.env.ALLOW_BOOTSTRAP !== 'true') {
-                fail(`${name}@${pkg.version} requires explicit bootstrap authorization.`)
+              if (process.env.ALLOW_BOOTSTRAP !== 'true') {
+                fail(`${spec} requires explicit bootstrap authorization.`)
               }
-              modes.set(name, attestations ? 'oidc' : 'bootstrap')
-            } else {
+            }
+          }
+
+          const modes = new Map(plans.map(({ pkg, verified }) => [
+            pkg.name,
+            verified.mode === 'bootstrap' ? 'bootstrap' : 'oidc',
+          ]))
+          for (const { pkg, tarball, verified } of plans) {
+            if (verified.mode === 'absent') {
               const result = run([
                 'publish', tarball, '--access', 'public', '--tag', record.channel,
                 '--ignore-scripts', '--provenance',
               ], { inherit: true })
-              if (result.status !== 0) fail(`npm publish failed for ${name}.`)
-              modes.set(name, 'oidc')
+              if (result.status !== 0) fail(`npm publish failed for ${pkg.name}.`)
             }
           }
 
@@ -284,13 +396,14 @@ jobs:
               const published = mode === 'bootstrap' ? view(pkg.name, 'versions') : null
               const versions = Array.isArray(published) ? published : [published]
               const remainsFirstVersion = mode !== 'bootstrap' || (
+                !hasAttestations(attestations) &&
                 versions.length === 1 && versions[0] === pkg.version
               )
               if (
                 shasum === pkg.sha1 &&
                 channel === pkg.version &&
                 remainsFirstVersion &&
-                (mode === 'bootstrap' || (mode === 'oidc' && attestations))
+                (mode === 'bootstrap' || (mode === 'oidc' && hasAttestations(attestations)))
               ) {
                 verifiedPackages.add(pkg.name)
               }
@@ -346,8 +459,8 @@ jobs:
           BOOTSTRAP_RELEASE: ${{ needs.publish.outputs.bootstrap }}
           BOOTSTRAP_PACKAGES: ${{ needs.publish.outputs.bootstrap-packages }}
         run: |
-          prerelease=()
-          if [ "$RELEASE_CHANNEL" = next ]; then prerelease=(--prerelease); fi
+          prerelease=false
+          if [ "$RELEASE_CHANNEL" = next ]; then prerelease=true; fi
           if [ "$BOOTSTRAP_RELEASE" = true ]; then
             cat >> .release/github-release-notes.md <<'NOTICE'
 
@@ -356,9 +469,56 @@ jobs:
           NOTICE
             printf '> Bootstrap packages: %s\n' "$BOOTSTRAP_PACKAGES" >> .release/github-release-notes.md
           fi
-          gh release create "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$SOURCE_SHA" \
-            --title "$RELEASE_TAG" \
-            --notes-file .release/github-release-notes.md \
-            "${prerelease[@]}"
+          release_status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG")
+          case "$release_status" in
+            404) release_exists=false ;;
+            200) release_exists=true ;;
+            *) echo "Could not verify GitHub release state (HTTP $release_status)" >&2; exit 1 ;;
+          esac
+          tag_status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG")
+          case "$tag_status" in
+            404)
+              if [ "$release_exists" = true ]; then
+                echo "The existing GitHub release has no tag." >&2
+                exit 1
+              fi
+              gh api --silent --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+                -f ref="refs/tags/$RELEASE_TAG" \
+                -f sha="$SOURCE_SHA"
+              ;;
+            200) ;;
+            *) echo "Could not verify tag state (HTTP $tag_status)" >&2; exit 1 ;;
+          esac
+          tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.type')
+          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')
+          while [ "$tag_type" = tag ]; do
+            tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.type')
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.sha')
+          done
+          test "$tag_type" = commit
+          test "$tag_sha" = "$SOURCE_SHA"
+          if [ "$release_exists" = true ]; then
+            gh release upload "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json .release/registry-verification.json \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+            gh release edit "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$RELEASE_TAG" \
+              --notes-file .release/github-release-notes.md \
+              --prerelease="$prerelease"
+          else
+            create_flags=()
+            if [ "$prerelease" = true ]; then create_flags=(--prerelease); fi
+            gh release create "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json .release/registry-verification.json \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "$RELEASE_TAG" \
+              --notes-file .release/github-release-notes.md \
+              "${create_flags[@]}"
+          fi
