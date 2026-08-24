@@ -125,15 +125,13 @@ Publication is intentionally short:
 
 1. Merge the reviewed version pull request.
 2. Wait for the successful `ci.yml` push run on current `main`.
-3. Dispatch the protected workflow with the exact fixed version:
+3. Review the automatically started `Publish` summary and approve the `npm`
+   environment deployment.
+4. Wait for the workflow to finish.
 
-   ```sh
-   gh workflow run release.yml --repo lupinum-dev/nuxt-photo --ref main \
-     -f version=<version>
-   ```
-
-4. Review the workflow summary and approve the `npm` environment deployment.
-5. Wait for the workflow to finish.
+If the automatic run was missed, dispatch `release.yml` from `main` without a
+version or CI run ID. The workflow fails rather than choosing between multiple
+retained candidates.
 
 The workflow selects the retained `release-candidate` from the successful
 current-main CI run. It verifies the source SHA, package set, version, changelog,
@@ -145,14 +143,18 @@ bytes, provenance presence, and `next` or `latest` tags. Finally, it creates one
 GitHub release from the certified notes and attaches both tarballs and the
 release evidence.
 
-Never run `npm publish`, `pnpm publish`, `changelogen --release`, or a manual
-Git tag command. Never rebuild a retained artifact during publication.
+Never run `npm publish`, `pnpm publish`, or `changelogen --release`. Never
+rebuild a retained artifact during publication. The only manual-tag exception
+is a historical npm publication whose exact source and retained evidence were
+verified first. Use only the workflow's exact `HUMAN-ONLY` lightweight-tag
+command, verify the remote target, and rerun only the failed GitHub Release job.
 
 ## Partial failure
 
 npm versions are immutable after publication. If the first package succeeds
-and the second package fails, dispatch `release.yml` again from the same source
-SHA for the same version. The fresh unprivileged verification job must
+and the second package fails, rerun all jobs in the same `Publish` workflow.
+That retry reuses the exact CI run and certified source even if `main` advanced;
+it does not ask for a version or run ID. The fresh unprivileged verification job must
 cryptographically verify the existing package and confirm that the missing
 package is still absent before a new environment approval. Do not rerun only
 the failed protected publish job: its retained record deliberately fails when

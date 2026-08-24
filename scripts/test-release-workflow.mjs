@@ -232,9 +232,8 @@ for (const required of [
   'scripts/sigstore-verifier/package-lock.json',
   'npm ci --prefix "$SIGSTORE_PREFIX" --ignore-scripts --no-audit --no-fund',
   'node scripts/verify-registry-provenance.mjs',
+  'node scripts/plan-reconciliation.mjs',
   '.release/registry-verification.json',
-  'while [ "$tag_type" = tag ]',
-  'test "$tag_type" = commit',
 ]) {
   assert(verifyJob.includes(required), `The verification job is missing: ${required}`)
 }
@@ -273,6 +272,31 @@ assert(
   verifyJob.includes('permissions:\n      actions: read\n      contents: read') &&
     !verifyJob.includes('id-token: write'),
   'Registry provenance verification must run without publish credentials.',
+)
+assert(
+  releaseConfig.on.workflow_run.workflows.includes('ci') &&
+    releaseConfig.on.workflow_run.types.includes('completed'),
+  'Release reconciliation must follow successful current-main CI.',
+)
+assert(
+  !Object.hasOwn(releaseConfig.on.workflow_dispatch.inputs, 'version'),
+  'Manual reconciliation must derive the reviewed fixed-set version.',
+)
+assert(
+  verifyJob.includes('Expected exactly one successful current-main CI run') &&
+    verifyJob.includes("artifact.name === 'release-candidate' && !artifact.expired") &&
+    verifyJob.includes('Number(process.env.RUN_ATTEMPT) > 1'),
+  'Candidate selection must reject ambiguous or expired retained artifacts.',
+)
+assert(
+  releaseConfig.jobs.publish.if === "needs.verify.outputs.action == 'publish'",
+  'Completed and repair-only releases must not enter the npm environment.',
+)
+assert(
+  verifyJob.includes('action=waiting') &&
+    verifyJob.includes('Review and merge the generated version pull request') &&
+    verifyJob.includes("if: steps.intent.outputs.ready == 'true'"),
+  'Pending Changesets must wait for their reviewed version PR without a failed release run.',
 )
 assert(
   publishJob.includes('environment: npm'),
@@ -332,6 +356,8 @@ for (const required of [
   'while [ "$tag_type" = tag ]',
   'test "$tag_type" = commit',
   'test "$tag_sha" = "$SOURCE_SHA"',
+  'HUMAN-ONLY: GitHub could not create historical tag',
+  'rerun only this failed GitHub release job',
   '.release/registry-verification.json',
   '--clobber',
 ]) {
@@ -367,6 +393,12 @@ assert(githubReleaseScript, 'The GitHub release policy fixture is missing its sh
 runGitHubReleaseScenario('absent tag is created at the certified source', {
   expectedActions: ['create-tag', 'create-release'],
   expectedSuccess: true,
+})
+runGitHubReleaseScenario('historical tag denial gives an exact maintainer gate', {
+  tagCreateFailure: true,
+  expectedActions: [],
+  expectedSuccess: false,
+  expectedDiagnostic: 'HUMAN-ONLY: GitHub could not create historical tag v0.2.0',
 })
 runGitHubReleaseScenario('existing direct tag permits release repair', {
   releaseExists: true,
@@ -742,6 +774,7 @@ function runGitHubReleaseScenario(name, options) {
         actions: [],
         releaseExists: options.releaseExists ?? false,
         sourceSha: 'a'.repeat(40),
+        tagCreateFailure: options.tagCreateFailure ?? false,
         tag: options.tag ?? null,
         tagObjects: options.tagObjects ?? {},
       }),
@@ -778,6 +811,12 @@ function runGitHubReleaseScenario(name, options) {
       (result.status === 0) === options.expectedSuccess,
       `${name} returned the wrong status: ${diagnostic}`,
     )
+    if (options.expectedDiagnostic) {
+      assert(
+        diagnostic.includes(options.expectedDiagnostic),
+        `${name} omitted its HUMAN-ONLY instruction: ${diagnostic}`,
+      )
+    }
     const state = JSON.parse(readFileSync(statePath, 'utf8'))
     assert(
       JSON.stringify(state.actions) === JSON.stringify(options.expectedActions),
@@ -839,6 +878,7 @@ if (args[0] === 'api') {
   const method = methodIndex === -1 ? 'GET' : args[methodIndex + 1]
   if (method === 'POST' && endpoint.endsWith('/git/refs')) {
     if (state.tag) fail('tag already exists')
+    if (state.tagCreateFailure) fail('gh: Resource not accessible by integration (HTTP 403)')
     const ref = args.find(value => value.startsWith('ref='))?.slice(4)
     const sha = args.find(value => value.startsWith('sha='))?.slice(4)
     if (ref !== 'refs/tags/v0.2.0' || sha !== state.sourceSha) fail('wrong tag creation')

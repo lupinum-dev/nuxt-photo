@@ -21,7 +21,6 @@ function readArgument(name, required = false) {
 
 const expectedSha = readArgument('--expected-sha', true)
 const ciRunId = readArgument('--ci-run-id', true)
-const expectedVersion = readArgument('--expected-version', true)
 const summaryPath = readArgument('--summary')
 const outputPath = readArgument('--github-output')
 assert(/^\d+$/.test(ciRunId) && Number(ciRunId) > 0, '--ci-run-id must be a positive integer.')
@@ -35,7 +34,6 @@ const packageSet = discoverPackageSet(rootDir)
 assert(listPendingChangesets(rootDir).length === 0, 'Publication is blocked by pending Changesets.')
 
 const version = artifact.metadata.packageSetVersion
-assert(version === expectedVersion, `Artifact version ${version} differs from ${expectedVersion}.`)
 const channel = releaseChannel(version)
 const packages = artifact.packages.map((pkg) => {
   const registry = readRegistryState(pkg.metadata.name, pkg.metadata.version)
@@ -110,7 +108,10 @@ if (summaryPath) {
   )
 }
 if (outputPath) {
-  appendFileSync(outputPath, `tag=${record.tag}\nchannel=${record.channel}\n`)
+  appendFileSync(
+    outputPath,
+    `tag=${record.tag}\nchannel=${record.channel}\nversion=${record.version}\n`,
+  )
 }
 
 process.stdout.write(
