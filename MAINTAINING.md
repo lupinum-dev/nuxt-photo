@@ -203,8 +203,9 @@ A release is complete only when:
 
 - both npm packages expose the exact intended version;
 - both registry SHA-1 values match the certified tarballs;
-- both packages expose npm provenance, except for the documented first-version
-  bootstrap whose registry bytes match the certified tarballs;
+- both packages expose npm provenance; immutable provenance-free bootstrap
+  versions remain historical `HUMAN-ONLY` exceptions and cannot enter automatic
+  reconciliation;
 - both packages use the correct `next` or `latest` channel;
 - the Git tag targets the certified main SHA;
 - the GitHub release contains the exact notes and retained evidence;

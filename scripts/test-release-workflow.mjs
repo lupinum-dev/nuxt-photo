@@ -279,8 +279,8 @@ assert(
   'Release reconciliation must follow successful current-main CI.',
 )
 assert(
-  !Object.hasOwn(releaseConfig.on.workflow_dispatch.inputs, 'version'),
-  'Manual reconciliation must derive the reviewed fixed-set version.',
+  Object.keys(releaseConfig.on.workflow_dispatch.inputs ?? {}).length === 0,
+  'Manual reconciliation must derive all release coordinates and accept no bypass inputs.',
 )
 assert(
   verifyJob.includes('Expected exactly one successful current-main CI run') &&

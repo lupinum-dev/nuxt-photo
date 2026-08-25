@@ -1,13 +1,7 @@
 name: Publish
 
 on:
-  workflow_dispatch:
-    inputs:
-      allow_bootstrap:
-        description: Authorize exact first-version recovery without npm provenance
-        required: false
-        default: false
-        type: boolean
+  workflow_dispatch: {}
   workflow_run:
     workflows:
       - ci
@@ -216,7 +210,6 @@ jobs:
         if: steps.intent.outputs.ready == 'true'
         id: state
         env:
-          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap || false }}
           GH_TOKEN: ${{ github.token }}
         run: >-
           node scripts/plan-reconciliation.mjs .release
@@ -266,7 +259,6 @@ jobs:
       - name: Publish inert tarballs in dependency order
         id: publish
         env:
-          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap }}
           RELEASE_VERSION: ${{ needs.verify.outputs.version }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
