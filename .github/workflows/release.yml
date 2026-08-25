@@ -1,13 +1,7 @@
 name: Publish
 
 on:
-  workflow_dispatch:
-    inputs:
-      allow_bootstrap:
-        description: Authorize exact first-version recovery without npm provenance
-        required: false
-        default: false
-        type: boolean
+  workflow_dispatch: {}
   workflow_run:
     workflows:
       - ci
@@ -35,11 +29,8 @@ jobs:
       contents: read
     outputs:
       action: ${{ steps.intent.outputs.action || steps.state.outputs.action }}
-      bootstrap: ${{ steps.state.outputs.bootstrap }}
-      bootstrap-packages: ${{ steps.state.outputs.bootstrap-packages }}
       channel: ${{ steps.release.outputs.channel }}
       ci_run_id: ${{ steps.ci.outputs.run-id }}
-      modes: ${{ steps.state.outputs.modes }}
       sha: ${{ steps.ci.outputs.sha }}
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
@@ -216,7 +207,6 @@ jobs:
         if: steps.intent.outputs.ready == 'true'
         id: state
         env:
-          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap || false }}
           GH_TOKEN: ${{ github.token }}
         run: >-
           node scripts/plan-reconciliation.mjs .release
@@ -266,7 +256,6 @@ jobs:
       - name: Publish inert tarballs in dependency order
         id: publish
         env:
-          ALLOW_BOOTSTRAP: ${{ inputs.allow_bootstrap }}
           RELEASE_VERSION: ${{ needs.verify.outputs.version }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
@@ -356,7 +345,7 @@ jobs:
               hash(tarball, 'sha256') !== pkg.sha256 ||
               hash(tarball, 'sha512') !== verified.sha512
             ) fail(`${name} failed exact artifact verification.`)
-            if (!['absent', 'oidc', 'bootstrap'].includes(verified.mode)) {
+            if (!['absent', 'oidc'].includes(verified.mode)) {
               fail(`${name} has an invalid registry verification mode.`)
             }
             if (
@@ -387,26 +376,8 @@ jobs:
             if (verified.mode === 'oidc' && !hasAttestations(attestations)) {
               fail(`${spec} lost its verified npm provenance metadata.`)
             }
-            if (verified.mode === 'bootstrap') {
-              const published = view(pkg.name, 'versions')
-              const versions = Array.isArray(published) ? published : [published]
-              if (
-                hasAttestations(attestations) ||
-                versions.length !== 1 ||
-                versions[0] !== pkg.version
-              ) {
-                fail(`${spec} no longer matches the historical sole-version bootstrap state.`)
-              }
-              if (process.env.ALLOW_BOOTSTRAP !== 'true') {
-                fail(`${spec} requires explicit bootstrap authorization.`)
-              }
-            }
           }
 
-          const modes = new Map(plans.map(({ pkg, verified }) => [
-            pkg.name,
-            verified.mode === 'bootstrap' ? 'bootstrap' : 'oidc',
-          ]))
           for (const { pkg, tarball, verified } of plans) {
             if (verified.mode === 'absent') {
               const result = run([
@@ -424,18 +395,10 @@ jobs:
               const shasum = view(`${pkg.name}@${pkg.version}`, 'dist.shasum')
               const attestations = view(`${pkg.name}@${pkg.version}`, 'dist.attestations')
               const channel = view(pkg.name, `dist-tags.${record.channel}`)
-              const mode = modes.get(pkg.name)
-              const published = mode === 'bootstrap' ? view(pkg.name, 'versions') : null
-              const versions = Array.isArray(published) ? published : [published]
-              const remainsFirstVersion = mode !== 'bootstrap' || (
-                !hasAttestations(attestations) &&
-                versions.length === 1 && versions[0] === pkg.version
-              )
               if (
                 shasum === pkg.sha1 &&
                 channel === pkg.version &&
-                remainsFirstVersion &&
-                (mode === 'bootstrap' || (mode === 'oidc' && hasAttestations(attestations)))
+                hasAttestations(attestations)
               ) {
                 verifiedPackages.add(pkg.name)
               }
@@ -450,17 +413,9 @@ jobs:
               fail(`${pkg.name}@${pkg.version} did not expose the required bytes, provenance mode, and ${record.channel}.`)
             }
           }
-          const publicationModes = Object.fromEntries(modes)
-          const bootstrapPackages = [...modes]
-            .filter(([, mode]) => mode === 'bootstrap')
-            .map(([name]) => name)
-          const bootstrap = bootstrapPackages.length > 0
-          appendFileSync(process.env.GITHUB_OUTPUT, `bootstrap=${String(bootstrap)}\n`)
-          appendFileSync(process.env.GITHUB_OUTPUT, `bootstrap-packages=${bootstrapPackages.join(',')}\n`)
-          appendFileSync(process.env.GITHUB_OUTPUT, `modes=${JSON.stringify(publicationModes)}\n`)
           appendFileSync(
             process.env.GITHUB_STEP_SUMMARY,
-            `\nPublication modes: ${JSON.stringify(publicationModes)}.\n`,
+            '\nBoth packages expose certified bytes and OIDC provenance.\n',
           )
           NODE
 
@@ -492,19 +447,9 @@ jobs:
           RELEASE_CHANNEL: ${{ needs.verify.outputs.channel }}
           RELEASE_TAG: ${{ needs.verify.outputs.tag }}
           SOURCE_SHA: ${{ needs.verify.outputs.sha }}
-          BOOTSTRAP_RELEASE: ${{ needs.verify.outputs.bootstrap }}
-          BOOTSTRAP_PACKAGES: ${{ needs.verify.outputs.bootstrap-packages }}
         run: |
           prerelease=false
           if [ "$RELEASE_CHANNEL" = next ]; then prerelease=true; fi
-          if [ "$BOOTSTRAP_RELEASE" = true ]; then
-            cat >> .release/github-release-notes.md <<'NOTICE'
-
-          > [!NOTE]
-          > This first npm version was created from the exact CI-certified artifact before npm trusted publishing could be configured. npm does not provide GitHub OIDC provenance for this bootstrap publication. The protected workflow verified the registry bytes. Later versions use trusted publishing with provenance.
-          NOTICE
-            printf '> Bootstrap packages: %s\n' "$BOOTSTRAP_PACKAGES" >> .release/github-release-notes.md
-          fi
           release_status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "Accept: application/vnd.github+json" \

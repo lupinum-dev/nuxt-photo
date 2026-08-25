@@ -279,8 +279,8 @@ assert(
   'Release reconciliation must follow successful current-main CI.',
 )
 assert(
-  !Object.hasOwn(releaseConfig.on.workflow_dispatch.inputs, 'version'),
-  'Manual reconciliation must derive the reviewed fixed-set version.',
+  Object.keys(releaseConfig.on.workflow_dispatch.inputs ?? {}).length === 0,
+  'Manual reconciliation must derive all release coordinates and accept no bypass inputs.',
 )
 assert(
   verifyJob.includes('Expected exactly one successful current-main CI run') &&
@@ -332,10 +332,7 @@ for (const required of [
   'verification.releaseRecordSha256',
   "hash(tarball, 'sha512') !== verified.sha512",
   'was absent during verification but now exists; rerun verification',
-  "verified.mode === 'bootstrap' ? 'bootstrap' : 'oidc'",
-  'versions.length !== 1',
-  "mode === 'oidc' && hasAttestations(attestations)",
-  'bootstrap=${String(bootstrap)}',
+  'hasAttestations(attestations)',
 ]) {
   assert(publishJob.includes(required), `The publish job is missing: ${required}`)
 }
@@ -378,8 +375,8 @@ for (const forbidden of ['--method DELETE', '--method PATCH', 'git update-ref'])
   assert(!releaseJob.includes(forbidden), `GitHub release recovery must not contain ${forbidden}.`)
 }
 assert(
-  releaseJob.includes('This first npm version was created from the exact CI-certified artifact'),
-  'Bootstrap releases must record the missing first-version provenance.',
+  !releaseJob.includes('BOOTSTRAP_RELEASE') && !releaseJob.includes('BOOTSTRAP_PACKAGES'),
+  'Automatic GitHub Release repair must not carry provenance-free bypass state.',
 )
 assert(
   workflow.includes('name: verified-nuxt-photo-release') && workflow.includes('retention-days: 14'),
@@ -438,38 +435,14 @@ const publishScriptMatch = /node --input-type=module <<'NODE'\n([\s\S]*?)\n\s+NO
 assert(publishScriptMatch, 'The publish job must contain one inline Node program.')
 const publishScript = dedent(publishScriptMatch[1])
 
-runScenario('matching bootstrap bytes', {
-  allowBootstrap: true,
-  verificationModes: {
-    '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'bootstrap',
-  },
-  expectedBootstrap: true,
-  expectedModes: {
-    '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'bootstrap',
-  },
-  expectedPublishes: 0,
-})
 runScenario('missing packages use OIDC', {
   useProductionPollingDefaults: true,
-  expectedBootstrap: false,
-  expectedModes: {
-    '@lupinum/vue-photo': 'oidc',
-    '@lupinum/nuxt-photo': 'oidc',
-  },
   expectedPublishes: 2,
 })
 runScenario('mixed package sets recover safely', {
-  allowBootstrap: true,
   verificationModes: {
-    '@lupinum/vue-photo': 'bootstrap',
+    '@lupinum/vue-photo': 'oidc',
     '@lupinum/nuxt-photo': 'absent',
-  },
-  expectedBootstrap: true,
-  expectedModes: {
-    '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'oidc',
   },
   expectedPublishes: 1,
 })
@@ -489,30 +462,12 @@ runScenario('wrong dist-tags fail', {
   wrongTag: '@lupinum/nuxt-photo',
   expectedError: 'tag changed after verification',
 })
-runScenario('later provenance-free versions fail', {
-  allowBootstrap: true,
+runScenario('provenance-free registry records fail', {
   verificationModes: {
     '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'bootstrap',
+    '@lupinum/nuxt-photo': 'oidc',
   },
-  extraVersion: '@lupinum/vue-photo',
-  expectedError: 'no longer matches the historical sole-version bootstrap state',
-})
-runScenario('a bootstrap package must remain the sole version', {
-  allowBootstrap: true,
-  verificationModes: {
-    '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'bootstrap',
-  },
-  laterVersionDuringVerification: '@lupinum/vue-photo',
-  expectedError: 'did not expose the required bytes',
-})
-runScenario('bootstrap recovery requires explicit authorization', {
-  verificationModes: {
-    '@lupinum/vue-photo': 'bootstrap',
-    '@lupinum/nuxt-photo': 'bootstrap',
-  },
-  expectedError: 'requires explicit bootstrap authorization',
+  expectedError: 'invalid registry verification mode',
 })
 runScenario('absent package appearing after verification fails closed', {
   appearedAfterVerification: '@lupinum/vue-photo',
@@ -702,7 +657,6 @@ function runScenario(name, options) {
       encoding: 'utf8',
       env: {
         ...process.env,
-        ALLOW_BOOTSTRAP: options.allowBootstrap ? 'true' : 'false',
         PATH: `${binDir}:${process.env.PATH}`,
         FAKE_NPM_STATE: statePath,
         GITHUB_OUTPUT: outputPath,
@@ -731,23 +685,6 @@ function runScenario(name, options) {
       return
     }
     assert(result.status === 0, `${name} failed: ${diagnostic}`)
-    const output = readFileSync(outputPath, 'utf8')
-    assert(
-      output.includes(`bootstrap=${String(options.expectedBootstrap)}`),
-      `${name} reported the wrong publication mode.`,
-    )
-    assert(
-      output.includes(`modes=${JSON.stringify(options.expectedModes)}`),
-      `${name} reported the wrong package modes: ${output}`,
-    )
-    const expectedBootstrapPackages = Object.entries(options.expectedModes)
-      .filter(([, mode]) => mode === 'bootstrap')
-      .map(([packageName]) => packageName)
-      .join(',')
-    assert(
-      output.includes(`bootstrap-packages=${expectedBootstrapPackages}`),
-      `${name} reported the wrong bootstrap packages: ${output}`,
-    )
     const state = JSON.parse(readFileSync(statePath, 'utf8'))
     assert(
       state.publishes.length === options.expectedPublishes,

@@ -202,8 +202,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   })
   if (action !== 'complete' && bootstrapPackages.length > 0) {
     assert(
-      process.env.ALLOW_BOOTSTRAP === 'true',
-      'Historical bootstrap recovery requires explicit authorization.',
+      false,
+      'HUMAN-ONLY: historical provenance-free packages cannot use automatic reconciliation.',
     )
   }
   const modeMap = Object.fromEntries(verification.packages.map((pkg) => [pkg.name, pkg.mode]))
