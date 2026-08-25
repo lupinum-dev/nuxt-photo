@@ -4,7 +4,8 @@
 
 ## Install Nuxt Photo
 
-Nuxt Photo is a single Nuxt module. One install and one entry in `modules` auto-registers the recipe components and auto-imports the helpers.
+Install one Nuxt module and enable its complete theme. The module registers the
+photo components and auto-imports its helpers.
 
 ::warning
 These docs describe the Nuxt Photo 1.0 beta. Install the `next` release while
@@ -38,39 +39,6 @@ The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, and
 `css: 'all'` option includes the visual theme for your first gallery. The
 default `css: 'structure'` option is for applications that provide their own
 theme.
-
-## Use it
-
-The smallest working example:
-
-```vue [app.vue]
-<script setup lang="ts">
-import type { PhotoItem } from '@lupinum/nuxt-photo/app'
-
-const photos: PhotoItem[] = [
-  {
-    id: 'landscape',
-    src: 'https://picsum.photos/id/1018/1280/800',
-    width: 1280,
-    height: 800,
-    alt: 'Sample landscape photo',
-  },
-  {
-    id: 'portrait',
-    src: 'https://picsum.photos/id/1015/960/1200',
-    width: 960,
-    height: 1200,
-    alt: 'Sample vertical photo',
-  },
-]
-</script>
-
-<template>
-  <PhotoAlbum :photos="photos" layout="rows" />
-</template>
-```
-
-Start the dev server and click any photo - the lightbox opens with a FLIP transition.
 
 ## What got installed
 
@@ -108,38 +76,22 @@ defaults.
 
 [Image providers](/docs/concepts/image-pipeline)
 
-Continue with [your first gallery](/docs/getting-started/first-gallery) to render photos with the installed module.
+Continue with [Build your first album](/docs/getting-started/first-gallery). That
+page owns the complete copyable example and describes the result you should see.
 
 _Source: `docs/content/docs/2.getting-started/1.installation.md`_
 
-## Build your first gallery
+## Build your first album
 
-This page gets you to one visible result: a styled gallery page with a
-justified rows layout and a working lightbox. Start with the demo photos below,
-then replace them with your own data once the component is working.
+Build a styled album with a working lightbox. Start with the photos below, then
+replace them with your own data after the example works.
 
 ## Prerequisites
 
-- The module installed. If not, see [Installation](/docs/getting-started/installation).
+- Complete [Installation](/docs/getting-started/installation), including
+  `css: 'all'`.
 
-## 1. Load the default theme
-
-For the first pass, load the theme CSS so the result looks complete
-immediately:
-
-```ts [nuxt.config.ts]
-export default defineNuxtConfig({
-  modules: ['@lupinum/nuxt-photo'],
-  nuxtPhoto: {
-    css: 'all',
-  },
-})
-```
-
-Switch back to the default `css: 'structure'` later when you want Nuxt Photo to
-provide layout geometry only and you plan to theme the components yourself.
-
-## 2. Render the demo gallery
+## 1. Add the album page
 
 Paste this into a page. The image URLs include their dimensions, so the example
 works before you add files to `public/`.
@@ -184,10 +136,26 @@ const photos: PhotoItem[] = [
 Reload the page. You should now see a justified rows gallery. Click any photo to
 open the lightbox; swipe, pinch to zoom, or press `Esc` to close.
 
-## 3. Replace the demo data
+## 2. Check the result
 
-Every photo is a plain object. The required fields are `id`, `src`, `width`,
-and `height`; everything else is optional.
+Start the development server and open the page. You should see three photos in
+rows that fill the available width. Selecting a photo opens the included
+lightbox. Press `ArrowLeft` or `ArrowRight` to navigate, then press `Escape`.
+Focus should return to the selected thumbnail.
+
+## 3. Use your own photos
+
+Every photo is a plain object with four required fields:
+
+| Field    | Purpose                                             |
+| -------- | --------------------------------------------------- |
+| `id`     | Stable, unique identity for navigation and updates. |
+| `src`    | Image URL or public path.                           |
+| `width`  | Intrinsic image width in pixels.                    |
+| `height` | Intrinsic image height in pixels.                   |
+
+`alt`, captions, descriptions, placeholders, and metadata are optional. Add
+meaningful `alt` text unless the image is decorative.
 
 ```ts [app/composables/gallery.ts]
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
@@ -207,21 +175,18 @@ export const gallery: PhotoItem[] = [
 ::warning
 `width` and `height` must match the real image. Nuxt Photo uses them to lay out
 thumbnails before images load and to compute the lightbox transition frame.
-Wrong dimensions can still render an image, but the layout and FLIP frame will
-be wrong.
+Wrong dimensions can still render an image, but the layout and opening
+animation will be wrong.
 ::
 
-## Continue your setup
+## Choose the next task
 
-You now have the smallest useful Nuxt Photo page. From here:
-
-- [Share one lightbox across multiple albums](/docs/api/photo-group) - use `<PhotoGroup>`.
-- [Use a carousel instead of a grid](/docs/api/photo-carousel) - use `<PhotoCarousel>`.
-- [Customize the built-in lightbox](/docs/guides/customize-the-lightbox) - change captions, actions, or slides without rebuilding everything.
-- [Use `@nuxt/image`](/docs/concepts/image-pipeline) - responsive images with real optimization.
-- [Tune responsive layouts](/docs/guides/tune-a-responsive-album) - column counts, spacing, breakpoints.
-- [Build a lightbox from primitives](/docs/guides/build-a-lightbox-from-primitives) - replace the structure while keeping the runtime.
-- [Configure the module](/docs/api/configuration) - CSS strategy, image provider, lightbox defaults.
+- [Choose a component](/docs/overview/how-it-works) when you need a single photo,
+  several albums, or a carousel.
+- [Use your CMS photos](/docs/guides/build-a-cms-gallery) when data comes from an
+  API or content system.
+- [Tune responsive layouts](/docs/guides/tune-a-responsive-album) when the rows,
+  spacing, or breakpoints need to change.
 
 _Source: `docs/content/docs/2.getting-started/2.first-gallery.md`_
 

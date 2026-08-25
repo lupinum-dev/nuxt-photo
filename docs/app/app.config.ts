@@ -40,14 +40,14 @@ export default {
       contentDirectory: 'docs/content',
     },
     landing: {
-      eyebrow: { en: 'Real image data. Predictable layout.' },
-      title: { en: 'Photo experiences that feel native to Nuxt.' },
+      eyebrow: { en: 'Nuxt Photo 1.0 beta' },
+      title: { en: 'Albums and lightboxes for Nuxt.' },
       description: {
-        en: 'Build responsive albums, shared lightboxes, and carousels with stable SSR geometry, accessible interaction, and optional Nuxt Image support.',
+        en: 'Render responsive photo layouts on the server, then open the included accessible lightbox. Add Nuxt Image when you need image optimization.',
       },
       primary: {
-        label: { en: 'Build your first gallery' },
-        to: { en: '/docs/getting-started/first-gallery' },
+        label: { en: 'Install the beta' },
+        to: { en: '/docs/getting-started/installation' },
       },
       secondary: {
         label: { en: 'View on GitHub' },
@@ -56,25 +56,32 @@ export default {
       install: {
         command: 'pnpm add @lupinum/nuxt-photo@next',
       },
+      hero: {
+        media: {
+          type: 'image',
+          src: '/landing-gallery.webp',
+          alt: 'A responsive Nuxt Photo album with two rows of landscape and portrait photos',
+        },
+      },
       features: [
         {
-          title: { en: 'Stable from SSR' },
+          title: { en: 'Useful before hydration' },
           description: {
             en: 'Known dimensions produce useful layout before images finish loading.',
           },
           icon: 'lucide:layout-grid',
         },
         {
-          title: { en: 'One shared lightbox' },
+          title: { en: 'Accessible lightbox included' },
           description: {
             en: 'Albums, groups, carousels, and custom triggers share keyboard, gesture, and focus behavior.',
           },
           icon: 'lucide:scan',
         },
         {
-          title: { en: 'Progressively customizable' },
+          title: { en: 'Customize only what you need' },
           description: {
-            en: 'Start with ready components and move down to primitives only when your design needs it.',
+            en: 'Start with ready-made components. Use slots and lower-level components when the design requires them.',
           },
           icon: 'lucide:layers-3',
         },

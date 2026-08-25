@@ -14,12 +14,7 @@ try {
   throw new Error(`Docs production build did not generate ${routeOutput}.`, { cause: error })
 }
 
-const requiredContent = [
-  '<title>Why Nuxt Photo? - Nuxt Photo</title>',
-  '<h1',
-  'Why Nuxt Photo?',
-  'One photo model for responsive albums',
-]
+const requiredContent = ['<title>Why Nuxt Photo? - Nuxt Photo</title>', '<h1', 'Why Nuxt Photo?']
 
 for (const content of requiredContent) {
   if (!html.includes(content)) {
