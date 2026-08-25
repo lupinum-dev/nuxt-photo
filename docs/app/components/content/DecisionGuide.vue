@@ -7,13 +7,13 @@ const choices = [
     id: 'album' as const,
     label: 'Responsive album',
     component: 'PhotoAlbum',
-    to: '/docs/guides/build-a-cms-gallery',
+    to: '/docs/guides/use-cms-photos',
   },
   {
     id: 'group' as const,
     label: 'Shared lightbox',
     component: 'PhotoGroup',
-    to: '/docs/guides/share-a-lightbox',
+    to: '/docs/guides/share-one-lightbox',
   },
   {
     id: 'carousel' as const,

@@ -24,7 +24,7 @@ export default {
       text: { en: 'These docs describe Nuxt Photo 1.0 beta.' },
       link: {
         label: { en: 'Upgrade from 0.2' },
-        to: { en: '/docs/help/upgrade-to-1' },
+        to: { en: '/docs/help/upgrade-from-0-2-to-1-0' },
       },
       showOnLanding: true,
     },
@@ -47,7 +47,7 @@ export default {
       },
       primary: {
         label: { en: 'Install the beta' },
-        to: { en: '/docs/getting-started/installation' },
+        to: { en: '/docs/start/installation' },
       },
       secondary: {
         label: { en: 'View on GitHub' },

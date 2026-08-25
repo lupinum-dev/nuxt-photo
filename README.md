@@ -26,7 +26,7 @@
 
 > [!WARNING]
 > Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag and review the
-> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-to-1).
+> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
 
 ## Why use Nuxt Photo?
 
@@ -131,7 +131,7 @@ Nuxt applications normally install only `@lupinum/nuxt-photo`.
 
 ## Documentation
 
-Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with the [installation guide](https://nuxt-photo.lupinum.com/docs/getting-started/installation).
+Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with the [installation guide](https://nuxt-photo.lupinum.com/docs/start/installation).
 
 The [changelog](./CHANGELOG.md) records release changes.
 

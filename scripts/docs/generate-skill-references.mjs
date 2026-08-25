@@ -8,20 +8,20 @@ const check = process.argv.includes('--check')
 
 const outputs = {
   'gallery-basics.md': [
-    'docs/content/docs/2.getting-started/1.installation.md',
-    'docs/content/docs/2.getting-started/2.first-gallery.md',
-    'docs/content/docs/3.concepts/1.photo-model.md',
+    'docs/content/docs/1.start/2.installation.md',
+    'docs/content/docs/1.start/3.build-your-first-album.md',
+    'docs/content/docs/3.concepts/1.photo-data-and-dimensions.md',
   ],
   'customization.md': [
-    'docs/content/docs/3.concepts/5.image-pipeline.md',
+    'docs/content/docs/3.concepts/5.image-delivery.md',
     'docs/content/docs/3.concepts/4.ssr-and-layout-stability.md',
-    'docs/content/docs/3.concepts/7.customization-layers.md',
-    'docs/content/docs/4.guides/6.customize-the-lightbox.md',
-    'docs/content/docs/4.guides/8.integrate-a-custom-image-service.md',
+    'docs/content/docs/3.concepts/7.customization-levels.md',
+    'docs/content/docs/2.guides/8.customize-the-built-in-lightbox.md',
+    'docs/content/docs/2.guides/10.integrate-a-custom-image-service.md',
   ],
   'troubleshooting.md': [
-    'docs/content/docs/6.help/1.troubleshooting.md',
-    'docs/content/docs/6.help/2.sharp-edges.md',
+    'docs/content/docs/5.help/1.troubleshooting.md',
+    'docs/content/docs/5.help/2.known-constraints.md',
   ],
 }
 

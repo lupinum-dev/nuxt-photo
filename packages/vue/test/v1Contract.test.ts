@@ -99,13 +99,13 @@ describe('Nuxt Photo 1.0 public contract', () => {
 
   it('keeps one migration guide and no hand-written release history', () => {
     const migrationGuides = allFiles('docs/content').filter((file) =>
-      /(?:upgrade-to-1|migration)/i.test(file),
+      /upgrade-from-0-2/i.test(file),
     )
     const releaseHistories = allFiles('docs/content').filter((file) =>
       /(?:release-history|releases|changelog)/i.test(file),
     )
 
-    expect(migrationGuides).toEqual(['docs/content/docs/6.help/3.upgrade-to-1.md'])
+    expect(migrationGuides).toEqual(['docs/content/docs/5.help/3.upgrade-from-0-2-to-1-0.md'])
     expect(releaseHistories).toEqual([])
   })
 })
