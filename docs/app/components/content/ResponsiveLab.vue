@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { responsive, resolveResponsiveParameter } from '@lupinum/nuxt-photo/app'
 import { demoPhotos } from '~/composables/demoPhotos'
 
-const defaults = { width: 720, snap: true }
+const defaults = { width: 560, snap: true }
 const width = ref(defaults.width)
 const snap = ref(defaults.snap)
 const columnsResolver = responsive({ 0: 2, 560: 3, 900: 4 })

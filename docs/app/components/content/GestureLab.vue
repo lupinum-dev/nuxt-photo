@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { demoPhotos } from '~/composables/demoPhotos'
 
 const events = ref<string[]>([])
+const album = ref<{ open(index?: number): Promise<void> } | null>(null)
 const pointers = new Set<number>()
 const code = '<PhotoAlbum :photos="photos" transition="auto" />'
 
@@ -37,9 +38,13 @@ function reset() {
       @pointerup="pointerUp"
       @pointercancel="pointerUp"
     >
-      <PhotoAlbum :photos="demoPhotos.slice(0, 4)" layout="rows" :spacing="6" />
+      <PhotoAlbum ref="album" :photos="demoPhotos.slice(0, 4)" layout="rows" :spacing="6" />
     </div>
     <template #controls>
+      <button type="button" class="docs-action" @click="album?.open(0)">
+        <Icon name="lucide:expand" class="size-4" />
+        Open the gesture viewer
+      </button>
       <p class="gesture-instructions">
         Open a photo. Drag to navigate, pinch to zoom, pan a zoomed image, or swipe down to close.
       </p>

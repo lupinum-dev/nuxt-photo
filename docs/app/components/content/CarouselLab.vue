@@ -8,6 +8,7 @@ const autoplay = ref(false)
 const thumbnails = ref(true)
 const dots = ref(false)
 const lightbox = ref(true)
+const direction = ref<'ltr' | 'rtl'>('ltr')
 const code = computed(
   () => `<PhotoCarousel
   :photos="photos"
@@ -17,6 +18,7 @@ const code = computed(
   :show-thumbnails="${thumbnails.value}"
   :show-dots="${dots.value}"
   :lightbox="${lightbox.value}"
+  direction="${direction.value}"
 />`,
 )
 
@@ -27,6 +29,7 @@ function reset() {
   thumbnails.value = true
   dots.value = false
   lightbox.value = true
+  direction.value = 'ltr'
 }
 </script>
 
@@ -37,7 +40,7 @@ function reset() {
     @reset="reset"
   >
     <PhotoCarousel
-      :key="`${loop}-${dragFree}`"
+      :key="`${loop}-${dragFree}-${direction}`"
       :photos="demoPhotos.slice(0, 8)"
       :loop="loop"
       :drag-free="dragFree"
@@ -45,9 +48,17 @@ function reset() {
       :show-thumbnails="thumbnails"
       :show-dots="dots"
       :lightbox="lightbox"
+      :direction="direction"
       slide-aspect="16/9"
     />
     <template #controls>
+      <fieldset class="docs-control">
+        <legend>Direction</legend>
+        <label v-for="value in ['ltr', 'rtl'] as const" :key="value">
+          <input v-model="direction" type="radio" :value="value" />
+          <span>{{ value === 'ltr' ? 'Left to right' : 'Right to left' }}</span>
+        </label>
+      </fieldset>
       <label class="docs-control"><input v-model="loop" type="checkbox" /><span>Loop</span></label>
       <label class="docs-control"
         ><input v-model="dragFree" type="checkbox" /><span>Drag free</span></label
@@ -73,6 +84,7 @@ function reset() {
           thumbnails,
           dots,
           lightbox,
+          direction,
         }"
     /></template>
   </InteractiveExample>

@@ -144,6 +144,7 @@ jobs:
 
       - name: Validate and build documentation
         run: >-
+          vp run build &&
           vp run docs:validate &&
           vp run docs:agent:check &&
           vp run build:docs:only
