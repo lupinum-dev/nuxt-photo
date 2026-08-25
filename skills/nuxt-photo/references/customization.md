@@ -290,16 +290,16 @@ Use this page to look up the supported customization surfaces.
 
 ## Surfaces
 
-| Surface                | Import from     | Use it for                                                           | Notes                                            |
-| ---------------------- | --------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
-| `provideLightbox`      | Nuxt app facade | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
-| `resolveSlide` option  | Nuxt app facade | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
-| Lightbox primitives    | Nuxt app facade | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
-| `LightboxComponentKey` | Nuxt app facade | Replacing the default ready-made lightbox globally                   | Provided through Vue injection                   |
-| `ImageAdapterKey`      | Nuxt app facade | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
-| `PhotoDefaultsKey`     | Nuxt app facade | Setting shared default lightbox options                              | Advanced Vue customization hook                  |
-| `PhotoTrigger`         | Nuxt app facade | Custom thumbnail layouts that keep the ready-made lightbox           | Compose under `LightboxProvider`                 |
-| Component slots        | Nuxt app facade | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
+| Surface                               | Import from     | Use it for                                                           | Notes                                            |
+| ------------------------------------- | --------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
+| `provideLightbox`                     | Nuxt app facade | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
+| `provideLightbox.resolveSlide` option | Nuxt app facade | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
+| Lightbox primitives                   | Nuxt app facade | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
+| `LightboxComponentKey`                | Nuxt app facade | Replacing the default ready-made lightbox globally                   | Provided through Vue injection                   |
+| `ImageAdapterKey`                     | Nuxt app facade | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
+| `PhotoDefaultsKey`                    | Nuxt app facade | Setting shared default lightbox options                              | Advanced Vue customization hook                  |
+| `PhotoTrigger`                        | Nuxt app facade | Custom thumbnail layouts that keep the ready-made lightbox           | Compose under `LightboxProvider`                 |
+| Component slots                       | Nuxt app facade | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
 
 ## When to use which
 
