@@ -8,11 +8,15 @@
   "changesets": [
     "accessibility-and-direction",
     "carousel-stable-embla",
+    "clear-beta-guidance",
+    "complete-guides-reference",
     "container-query-rendering-correctness",
     "finalize-lightbox-api",
     "fix-beta3-browser-findings",
     "image-previews-and-sizes",
+    "interactive-doc-showcases",
     "nuxt-config-and-labels",
+    "simplify-newcomer-journey",
     "steady-photo-contracts"
   ]
 }
