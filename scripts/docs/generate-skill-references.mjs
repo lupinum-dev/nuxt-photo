@@ -17,7 +17,7 @@ const outputs = {
     'docs/content/docs/3.concepts/4.ssr-and-layout-stability.md',
     'docs/content/docs/3.concepts/7.customization-layers.md',
     'docs/content/docs/4.guides/6.customize-the-lightbox.md',
-    'docs/content/docs/4.guides/7.integrate-a-custom-image-service.md',
+    'docs/content/docs/4.guides/8.integrate-a-custom-image-service.md',
   ],
   'troubleshooting.md': [
     'docs/content/docs/6.help/1.troubleshooting.md',

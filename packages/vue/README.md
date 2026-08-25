@@ -13,7 +13,8 @@
 </p>
 
 > [!WARNING]
-> This package is pre-1.0. Review the changelog before each upgrade.
+> Vue Photo 1.0 is in beta. Install it from the `next` npm tag and review the
+> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-to-1).
 
 ## Purpose
 
@@ -28,7 +29,7 @@ Use this package in plain Vue applications or when a Nuxt interface needs lower-
 ## Installation
 
 ```bash
-pnpm add @lupinum/vue-photo
+pnpm add @lupinum/vue-photo@next
 ```
 
 ## Quick start

@@ -72,6 +72,45 @@ for (const marker of [
   if (!docsAppConfig.includes(marker))
     failures.push(`Documentation app config is missing: ${marker}`)
 }
+
+const nuxtPackage = JSON.parse(await readFile(resolve(root, 'packages/nuxt/package.json'), 'utf8'))
+const vuePackage = JSON.parse(await readFile(resolve(root, 'packages/vue/package.json'), 'utf8'))
+const prereleaseDocs = String(nuxtPackage.version).includes('-')
+const installationSurfaces = [
+  ['README.md', '@lupinum/nuxt-photo'],
+  ['packages/nuxt/README.md', '@lupinum/nuxt-photo'],
+  ['packages/vue/README.md', '@lupinum/vue-photo'],
+  ['docs/content/docs/2.getting-started/1.installation.md', '@lupinum/nuxt-photo'],
+  ['docs/content/docs/2.getting-started/3.plain-vue.md', '@lupinum/vue-photo'],
+  ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
+  ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],
+]
+
+if (String(nuxtPackage.version) !== String(vuePackage.version)) {
+  failures.push('Nuxt and Vue packages must document one coordinated version.')
+}
+
+for (const [path, packageName] of installationSurfaces) {
+  const source = await readFile(resolve(root, path), 'utf8')
+  if (prereleaseDocs && !source.includes(`${packageName}@next`)) {
+    failures.push(`${path} must install ${packageName} from the next tag during prerelease.`)
+  }
+  if (!prereleaseDocs && source.includes(`${packageName}@next`)) {
+    failures.push(`${path} must stop using the next tag after the stable release.`)
+  }
+}
+
+const betaBannerBlock = docsAppConfig.match(/banner:\s*\{([\s\S]*?)\n\s*\},\n\s*social:/)?.[1] ?? ''
+const hasBetaBanner = betaBannerBlock.includes("id: 'nuxt-photo-1-beta'")
+const betaBannerEnabled = betaBannerBlock.includes('enabled: true')
+const betaBannerOnLanding = betaBannerBlock.includes('showOnLanding: true')
+
+if (prereleaseDocs && (!hasBetaBanner || !betaBannerEnabled || !betaBannerOnLanding)) {
+  failures.push('Prerelease documentation must show the Nuxt Photo 1.0 beta banner on landing.')
+}
+if (!prereleaseDocs && hasBetaBanner && (betaBannerEnabled || betaBannerOnLanding)) {
+  failures.push('Stable documentation must disable the Nuxt Photo 1.0 beta banner.')
+}
 const publicReadmes = [
   resolve(root, 'README.md'),
   resolve(root, 'packages/nuxt/README.md'),

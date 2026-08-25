@@ -85,7 +85,7 @@ nuxtPhoto: {
 ```
 
 ```ts [plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@lupinum/vue-photo'
+import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
 import type { ImageAdapter } from '@lupinum/nuxt-photo/app'
 
 const myAdapter: ImageAdapter = (photo, context) => {
@@ -108,7 +108,8 @@ Every `<PhotoImage>` in the app now routes through `myAdapter`.
 
 `image: false` is a module-level choice. A standalone `<PhotoImage>` without a provided adapter still has its component-level native fallback, so custom pipelines should provide `ImageAdapterKey` at the app root.
 
-Because `ImageAdapterKey` is exported by the Vue layer, add `@lupinum/vue-photo` as a direct dependency when your Nuxt app imports it from app code.
+Nuxt applications import `ImageAdapterKey` from the supported
+`@lupinum/nuxt-photo/app` facade.
 
 ## Per-component override
 
@@ -289,23 +290,23 @@ Use this page to look up the supported customization surfaces.
 
 ## Surfaces
 
-| Surface                | Import from          | Use it for                                                           | Notes                                            |
-| ---------------------- | -------------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
-| `provideLightbox`      | `@lupinum/vue-photo` | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
-| `resolveSlide` option  | `@lupinum/vue-photo` | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
-| Lightbox primitives    | `@lupinum/vue-photo` | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
-| `LightboxComponentKey` | `@lupinum/vue-photo` | Replacing the default recipe lightbox globally                       | Provided through Vue injection                   |
-| `ImageAdapterKey`      | `@lupinum/vue-photo` | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
-| `PhotoDefaultsKey`     | `@lupinum/vue-photo` | Setting shared default lightbox options                              | Vue-only customization hook                      |
-| `PhotoTrigger`         | `@lupinum/vue-photo` | Custom thumbnail layouts that keep the recipe lightbox               | Compose under `LightboxProvider`                 |
-| Recipe slots           | `@lupinum/vue-photo` | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
+| Surface                               | Import from     | Use it for                                                           | Notes                                            |
+| ------------------------------------- | --------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
+| `provideLightbox`                     | Nuxt app facade | Building a custom lightbox UI with Vue primitives                    | Primary advanced Vue entrypoint                  |
+| `provideLightbox.resolveSlide` option | Nuxt app facade | Replacing slide rendering in a custom provider                       | Return `null` to keep the default image slide    |
+| Lightbox primitives                   | Nuxt app facade | Custom overlays, viewports, slides, controls, captions, and triggers | Stay on this layer for custom Vue UI             |
+| `LightboxComponentKey`                | Nuxt app facade | Replacing the default ready-made lightbox globally                   | Provided through Vue injection                   |
+| `ImageAdapterKey`                     | Nuxt app facade | Providing a default image adapter                                    | Use when module-level image wiring is not enough |
+| `PhotoDefaultsKey`                    | Nuxt app facade | Setting shared default lightbox options                              | Advanced Vue customization hook                  |
+| `PhotoTrigger`                        | Nuxt app facade | Custom thumbnail layouts that keep the ready-made lightbox           | Compose under `LightboxProvider`                 |
+| Component slots                       | Nuxt app facade | Thumbnails, built-in lightbox slots, and per-photo slide overrides   | Use before rebuilding the lightbox               |
 
 ## When to use which
 
 - Build a custom lightbox UI with `provideLightbox` plus Vue primitives.
 - Compose `LightboxProvider`, `PhotoTrigger`, and `Lightbox` when only the thumbnail layout is custom.
-- Use recipe slots when the default component is right but one rendered region needs custom markup.
-- Override the default recipe lightbox globally with `LightboxComponentKey`.
+- Use component slots when the ready-made component is right but one rendered region needs custom markup.
+- Override the built-in lightbox globally with `LightboxComponentKey`.
 - Provide a default image adapter with `ImageAdapterKey`.
 
 ## Examples
@@ -313,7 +314,7 @@ Use this page to look up the supported customization surfaces.
 ### Global lightbox override
 
 ```ts
-import { LightboxComponentKey } from '@lupinum/vue-photo'
+import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
 import MyLightbox from '~/components/MyLightbox.vue'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -334,7 +335,8 @@ This is the shallowest customization path for:
 - a custom counter
 - slide markup that still lives inside the built-in lightbox
 
-If you need a different primitive tree or your own lightbox state wiring, skip to [Build a custom lightbox](/docs/guides/customize-the-lightbox).
+If you need a different component structure, use
+[the primitives guide](/docs/guides/build-a-lightbox-from-primitives).
 
 ## 1. Wrap the recipe lightbox
 
@@ -342,7 +344,7 @@ Create a lightbox component that renders the recipe `<Lightbox>` and overrides o
 
 ```vue [components/MyLightbox.vue]
 <script setup lang="ts">
-import { Lightbox } from '@lupinum/vue-photo'
+import { Lightbox } from '@lupinum/nuxt-photo/app'
 </script>
 
 <template>
@@ -436,21 +438,26 @@ import MyLightbox from '~/components/MyLightbox.vue'
 The recipe `<Lightbox>` also supports a `slide` slot:
 
 ```vue
-<Lightbox>
-  <template #slide="{ photo }">
-    <video
-      v-if="photo.meta?.kind === 'video'"
-      :src="photo.src"
-      controls
-      autoplay
-      class="w-full h-full object-contain"
-    />
-    <img v-else :src="photo.src" :alt="photo.alt" class="w-full h-full object-contain" />
-  </template>
-</Lightbox>
+<script setup lang="ts">
+import { Lightbox, PhotoImage } from '@lupinum/nuxt-photo/app'
+</script>
+
+<template>
+  <Lightbox>
+    <template #slide="{ photo }">
+      <figure class="relative h-full w-full">
+        <PhotoImage :photo="photo" context="slide" class="h-full w-full object-contain" />
+        <figcaption class="absolute right-4 bottom-4 rounded bg-black/70 px-3 py-2 text-white">
+          {{ photo.caption }}
+        </figcaption>
+      </figure>
+    </template>
+  </Lightbox>
+</template>
 ```
 
-Use this when the built-in lightbox is still the right shell, but the slide media needs different markup.
+Use this when the built-in lightbox is still the right shell, but a photo needs
+an overlay or different image composition.
 
 ## When this guide is enough
 
@@ -458,15 +465,29 @@ Stay on this path when:
 
 - the built-in lightbox behavior is correct
 - you only want different UI chrome
-- you want the shallowest path that still keeps the recipe runtime
+- you want to keep the existing lightbox behavior
 
-Move to [Build a custom lightbox](/docs/guides/customize-the-lightbox) when you need a different primitive structure or want to compose the overlay, viewport, controls, and caption yourself.
+Move to [Build a lightbox from primitives](/docs/guides/build-a-lightbox-from-primitives)
+when you need to compose the overlay, viewport, controls, and caption yourself.
 
 ## Apply the lightbox globally
 
 If most galleries in the app should use the same custom lightbox, set it once globally.
 
-Follow [the global custom-lightbox guide](/docs/guides/customize-the-lightbox) to apply the component to each gallery.
+```ts [app/plugins/photo-lightbox.ts]
+import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
+import MyLightbox from '~/components/MyLightbox.vue'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.provide(LightboxComponentKey, MyLightbox)
+})
+```
+
+Recipe components now use `MyLightbox` unless their `lightbox` prop provides a
+different component. The global component does not enable a lightbox by itself.
+`Photo` and `PhotoCarousel` still require `lightbox` to be enabled. An explicit
+component passed through the `lightbox` prop takes precedence over the global
+component.
 
 _Source: `docs/content/docs/4.guides/6.customize-the-lightbox.md`_
 
@@ -543,7 +564,7 @@ A few principles:
 Use a Nuxt plugin that runs for the app, not a client-only plugin:
 
 ```ts [plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@lupinum/vue-photo'
+import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
 import { cmsAdapter } from '~/utils/photoAdapter'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -553,7 +574,8 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 Every `<PhotoImage>` in the app now routes through `cmsAdapter` in both SSR and client rendering.
 
-Because `ImageAdapterKey` is exported by the Vue layer, add `@lupinum/vue-photo` as a direct dependency when your Nuxt app imports it from app code.
+Nuxt applications import `ImageAdapterKey` from the supported
+`@lupinum/nuxt-photo/app` facade.
 
 ## 4. Per-instance override
 
@@ -653,4 +675,4 @@ describe('cmsAdapter', () => {
 })
 ```
 
-_Source: `docs/content/docs/4.guides/7.integrate-a-custom-image-service.md`_
+_Source: `docs/content/docs/4.guides/8.integrate-a-custom-image-service.md`_
