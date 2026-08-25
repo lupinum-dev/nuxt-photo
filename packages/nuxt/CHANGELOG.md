@@ -1,5 +1,20 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-beta.4
+
+### Patch Changes
+
+- [#51](https://github.com/lupinum-dev/nuxt-photo/pull/51) [`1c049e8`](https://github.com/lupinum-dev/nuxt-photo/commit/1c049e8d3b611bf255de36c00b0df06586f46e15) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Clarify beta installation, migration, and customization guidance for both published packages.
+
+- [#53](https://github.com/lupinum-dev/nuxt-photo/pull/53) [`3ef5f1a`](https://github.com/lupinum-dev/nuxt-photo/commit/3ef5f1aabc00cc4c5f63cf8c867d44f143a8362c) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Reorganize and complete the public guides, concepts, and API reference for both packages.
+
+- [#57](https://github.com/lupinum-dev/nuxt-photo/pull/57) [`d952f26`](https://github.com/lupinum-dev/nuxt-photo/commit/d952f268bf85a154556d9dd4c3729d7267f77239) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Turn the public examples into interactive showcases that demonstrate both packages in context.
+
+- [#52](https://github.com/lupinum-dev/nuxt-photo/pull/52) [`d537187`](https://github.com/lupinum-dev/nuxt-photo/commit/d5371871d3d1ed545ae4c388af2538ef772cb989) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Simplify the installation, first-gallery, and architecture guidance for new users.
+
+- Updated dependencies [[`1c049e8`](https://github.com/lupinum-dev/nuxt-photo/commit/1c049e8d3b611bf255de36c00b0df06586f46e15), [`3ef5f1a`](https://github.com/lupinum-dev/nuxt-photo/commit/3ef5f1aabc00cc4c5f63cf8c867d44f143a8362c), [`d952f26`](https://github.com/lupinum-dev/nuxt-photo/commit/d952f268bf85a154556d9dd4c3729d7267f77239), [`d537187`](https://github.com/lupinum-dev/nuxt-photo/commit/d5371871d3d1ed545ae4c388af2538ef772cb989)]:
+  - @lupinum/vue-photo@1.0.0-beta.4
+
 ## 1.0.0-beta.3
 
 ### Patch Changes
