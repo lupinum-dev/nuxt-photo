@@ -20,6 +20,7 @@ test-results
 .release
 .package-preview
 .content
+.ginko
 .data
 coverage
 *.log
