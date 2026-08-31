@@ -100,17 +100,6 @@ for (const [path, packageName] of installationSurfaces) {
   }
 }
 
-const betaBannerBlock = docsAppConfig.match(/banner:\s*\{([\s\S]*?)\n\s*\},\n\s*social:/)?.[1] ?? ''
-const hasBetaBanner = betaBannerBlock.includes("id: 'nuxt-photo-1-beta'")
-const betaBannerEnabled = betaBannerBlock.includes('enabled: true')
-const betaBannerOnLanding = betaBannerBlock.includes('showOnLanding: true')
-
-if (prereleaseDocs && (!hasBetaBanner || !betaBannerEnabled || !betaBannerOnLanding)) {
-  failures.push('Prerelease documentation must show the Nuxt Photo 1.0 beta banner on landing.')
-}
-if (!prereleaseDocs && hasBetaBanner && (betaBannerEnabled || betaBannerOnLanding)) {
-  failures.push('Stable documentation must disable the Nuxt Photo 1.0 beta banner.')
-}
 const publicReadmes = [
   resolve(root, 'README.md'),
   resolve(root, 'packages/nuxt/README.md'),

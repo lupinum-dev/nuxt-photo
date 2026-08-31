@@ -17,16 +17,6 @@ export default {
         { label: { en: 'Privacy' }, to: 'https://lupinum.com/datenschutz' },
       ],
     },
-    banner: {
-      enabled: true,
-      id: 'nuxt-photo-1-beta',
-      text: { en: 'These docs describe Nuxt Photo 1.0 beta.' },
-      link: {
-        label: { en: 'Upgrade from 0.2' },
-        to: { en: '/docs/help/upgrade-from-0-2-to-1-0' },
-      },
-      showOnLanding: true,
-    },
     social: {
       github: 'https://github.com/lupinum-dev/nuxt-photo',
       discord: 'https://discord.gg/RPH6SeA36N',
