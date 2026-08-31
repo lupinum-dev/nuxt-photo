@@ -42,7 +42,7 @@ export default defineNuxtConfig({
   },
   site: { url: siteUrl },
   components: [{ path: '~/components/content', pathPrefix: false, global: true }],
-  css: ['~/assets/main.css', '~/assets/css/theme.css'],
+  css: ['~/assets/main.css'],
   ginkoDocs: {
     syntaxHighlighting: {
       themes: {
