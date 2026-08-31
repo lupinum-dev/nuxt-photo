@@ -11,7 +11,7 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@0.2.4
   vite-plus: 0.2.4
   vitest: 4.1.10
-  vue: 3.5.40
+  vue: 3.5.42
   vue-tsc: 3.2.7
 
 overrides:
@@ -48,6 +48,11 @@ peerDependencyRules:
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
+
+# Exact first-party prerelease certified in lupinum-dev/ginko-docs Actions run
+# 33392984677. Remove after 2026-09-01 15:00 Europe/Vienna.
+minimumReleaseAgeExclude:
+  - '@lupinum/ginko-docs@0.4.0-rc.4'
 
 allowBuilds:
   '@parcel/watcher': false
