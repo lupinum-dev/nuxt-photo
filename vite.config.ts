@@ -52,7 +52,12 @@ export default defineConfig({
     ],
   },
   fmt: {
-    ignorePatterns: [...ignoredGeneratedPaths, 'pnpm-lock.yaml'],
+    // Preserve the exact shared Lupinum OSS checker.
+    ignorePatterns: [
+      ...ignoredGeneratedPaths,
+      'pnpm-lock.yaml',
+      'scripts/check-dependency-policy.mjs',
+    ],
     semi: false,
     singleQuote: true,
     trailingComma: 'all',
