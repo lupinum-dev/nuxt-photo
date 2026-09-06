@@ -140,8 +140,7 @@ const readmeContracts = new Map([
 
 const maintaining = await readFile(resolve(root, 'MAINTAINING.md'), 'utf8')
 for (const heading of [
-  'Quick fixes',
-  'Large changes',
+  'Daily work',
   'Documentation changes',
   'Publication',
   'Rollback',

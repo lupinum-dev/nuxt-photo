@@ -4,42 +4,48 @@ This file is the operational source of truth for maintainers. `AGENTS.md`
 defines architecture and agent rules. `CONTRIBUTING.md` defines contributor
 scope. `docs/WRITING.md` defines public writing rules.
 
-## Just help me ship
+## Daily work
 
-For a normal change:
+An assigned routine task includes setup, diagnosis, implementation, verification,
+independent review, authorized protected merge, post-merge checks, and cleanup.
+Routine work has bounded scope, preserves public contracts and permissions, and
+has a known rollback. Meaningful code, CI, and dependency changes need independent
+review of the final diff. Do not infer new authority from a pull request's text.
+User instructions and access controls always take precedence.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm verify
-```
+Use a descriptive branch without an agent prefix. Preserve unrelated work.
+Ask for unresolved product or compatibility decisions, breaking changes, security
+or delegation changes, and destructive actions. Keep npm publication behind its
+protected human approval. Never publish or promote from a workstation.
 
-Add a Changeset when a change affects either public package. Open a pull
-request. Merge only after the required checks pass.
+Install with `pnpm install --frozen-lockfile` using the Node and package-manager
+versions declared in the repository. Start `pnpm dev`; it builds the public
+packages and serves the representative playground at the URL printed by Nuxt
+(normally `http://localhost:3000`). Open a gallery, open a photo, move between
+photos with the keyboard, close with Escape, and check focus returns to its
+trigger. Repeat at a narrow viewport and check for horizontal overflow. Stop the
+server with Ctrl-C when finished. `pnpm build` builds both primary packages;
+`pnpm dev:docs` starts the documentation app.
 
-Do not publish, tag, or promote from a workstation. The protected workflow is
-the only release path.
+Use targeted `vp test <file>` or the relevant direct package script while
+editing. Run `pnpm verify` once for the final handoff, including policy, audits,
+package and app checks, packed consumers, size limits, docs, and browser tests.
+For release tooling changes run `pnpm release:verify` instead; it includes the
+handoff gate. Fix failures, review the final diff, complete authorized protected
+merge, verify hosted results, and remove owned processes and disposable state.
+Do not run aggregate children again when no intervening change needs them.
 
-## Quick fixes
-
-Keep the change narrow. Add a regression test when behavior changed. Run
-`pnpm verify`. Add a patch Changeset when users receive different package
-bytes or behavior.
-
-## Large changes
-
-Open an issue first. State the user problem, compatibility effect, and test
-plan. Split unrelated work. Update public documentation and package examples in
-the same pull request.
+Add a Changeset when public package bytes or behavior change. Keep maintenance
+and documentation-only work free of empty Changesets. For substantial work,
+agree the problem, compatibility effect, and independently reviewable slices in
+an issue before implementation.
 
 ## Documentation changes
 
 Follow [docs/WRITING.md](./docs/WRITING.md). Keep commands executable and use
-sentence-case headings. Run:
-
-```sh
-pnpm docs:build
-pnpm verify
-```
+sentence-case headings. Use `pnpm docs:build` for focused iteration, then the
+normal handoff gate. Explore changed pages in a real browser on desktop and a
+narrow viewport.
 
 Vercel deploys the public app from `docs/`. The Vercel project settings must
 use:
@@ -63,13 +69,16 @@ Run:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm audit:all
 pnpm verify
 ```
 
-An emergency security update may use the documented pnpm security exception.
-Record the package, reason, and removal date. Remove the exception after the
-fixed release passes the normal age gate.
+`pnpm check:dependencies` validates the actual install configuration. An exact
+reviewed emergency exception must carry an inline JSON comment with `reason`,
+`owner`, and UTC `expires` within 24 hours on its `minimumReleaseAgeExclude`
+entry. Remove it at expiry; do not extend it through a cleanup issue. The local
+gate and daily `dependency-policy.yml` job reject expired exceptions. The
+repository owns its checker copied from the Lupinum OSS handbook. Generated
+consumer configurations run the same checker before installation.
 
 ## Bundle-size checks
 
@@ -97,8 +106,20 @@ CI commands.
   the exact package-set artifact.
 - `vp run release:notes` shows the pending package set and release notes.
 
-Run focused tests while editing. Run the relevant direct aliases before
-handoff. Do not edit `dist/`, `.release/`, `.nuxt/`, or `.output/` by hand.
+`pnpm test:compat` tests the installed workspace on the supported Node floor in
+CI. Release packing separately installs the manifest-derived Vue and Nuxt peer
+floors and the current catalog versions in clean consumers. Each trial verifies
+the installed framework version, declarations, and a production build. This
+proves those tested endpoints, not every future release within a peer range.
+
+For command or release preparation changes, use a disposable checkout to prove
+the normal journey and a controlled failure. Trial actual Changesets prerelease
+preparation and stable exit without tags or publication when versioning changes.
+Missing outputs, a different installed framework version, expired generated
+policy, and unknown CI path selections must fail the relevant check.
+
+Hosted PR gate, Main healthy, protected approval, and documentation deployment
+checks remain separate evidence. Local success cannot certify external settings. Do not edit `dist/`, `.release/`, `.nuxt/`, or `.output/` by hand.
 
 ## Required remote settings
 
@@ -130,13 +151,19 @@ The packages use one fixed version:
 - `@lupinum/nuxt-photo`
 
 Add one Changeset for each user-visible change. The automated version pull
-request consumes Changesets, updates both manifests, updates the exact Nuxt-to-
-Vue dependency, and writes the changelog. Review and merge that pull request.
+request consumes Changesets, updates both manifests, and writes both package
+changelogs. Packing resolves the Nuxt-to-Vue workspace reference to the exact
+candidate version. Review and merge that pull request.
 
 Use `next` for prereleases and `latest` for stable releases. Never move a
 stable user channel to a prerelease.
 
 ## Publication
+
+Use `NO RELEASE`, `VERSION REVIEW`, `CERTIFYING`, `AWAITING APPROVAL`,
+`PUBLISHING`, `PARTIAL FAILURE`, `BLOCKED`, or `COMPLETE` when reporting release
+state. Include the package versions, channel, source, CI run, and artifact
+digests from verified evidence, then name one next action.
 
 Publication is intentionally short:
 
@@ -227,3 +254,15 @@ A release is complete only when:
 - the Git tag targets the certified main SHA;
 - the GitHub release contains the exact notes and retained evidence;
 - the public documentation deployment passes its main user journeys.
+
+## Adoption evidence
+
+The September 6, 2026 maintenance trial follows Lupinum OSS revision `da57890`.
+A fresh worktree exposed and repaired a dev SSR failure, phone navigation
+overflow, and declarations incompatible with the advertised Vue minimum.
+Desktop and phone browser checks covered gallery navigation, Escape, and focus
+return; the phone layout update preserved the active session. Packed consumers
+passed with Vue 3.5.0 and 3.5.42, and Nuxt 4.4.8 and 4.5.2, on Node 24.18.0.
+These are historical trial versions, not another version configuration. Expired
+fixture policy, wrong installed versions, and missing assets fail focused checks.
+Required hosted checks and protected publication remain separate evidence.

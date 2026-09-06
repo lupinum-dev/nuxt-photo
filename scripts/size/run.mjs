@@ -1,22 +1,13 @@
 import { build as viteBuild } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { brotliCompressSync, gzipSync } from 'node:zlib'
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs'
-import { dirname, extname, join, relative, resolve } from 'node:path'
+import { cpSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { dirname, relative, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 import limits from './config.json' with { type: 'json' }
+import { collectAssets } from './assets.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..', '..')
@@ -221,62 +212,6 @@ function prepareFixture(surface, fixtureId) {
 function prepareDir(dir) {
   rmSync(dir, { recursive: true, force: true })
   mkdirSync(dir, { recursive: true })
-}
-
-function collectAssets(dir) {
-  const files = []
-  walk(dir, (file) => {
-    const extension = extname(file)
-    if (extension !== '.js' && extension !== '.css') return
-    const relativePath = relative(dir, file)
-    let contents
-    try {
-      contents = readFileSync(file)
-    } catch (error) {
-      // Nuxt occasionally leaves a stale entry in the directory listing while
-      // hashed client chunks are still settling. Treat that as a transient miss,
-      // not a failed size run.
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-        return
-      }
-      throw error
-    }
-    files.push({
-      file: relativePath,
-      ...sizeBuffer(contents),
-    })
-  })
-
-  const totals = files.reduce(
-    (sum, file) => ({
-      raw: sum.raw + file.raw,
-      gzip: sum.gzip + file.gzip,
-      brotli: sum.brotli + file.brotli,
-    }),
-    { raw: 0, gzip: 0, brotli: 0 },
-  )
-
-  return { totals, files }
-}
-
-function walk(dir, onFile) {
-  if (!existsSync(dir)) return
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = join(dir, entry.name)
-    if (entry.isDirectory()) {
-      walk(fullPath, onFile)
-    } else {
-      onFile(fullPath)
-    }
-  }
-}
-
-function sizeBuffer(buffer) {
-  return {
-    raw: buffer.byteLength,
-    gzip: gzipSync(buffer).byteLength,
-    brotli: brotliCompressSync(buffer).byteLength,
-  }
 }
 
 function diffSizes(value, baseline) {

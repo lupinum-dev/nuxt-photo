@@ -1,3 +1,4 @@
+import manifest from '../package.json'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { NuxtPhotoAppConfig, NuxtPhotoOptions } from '../src/options'
 
@@ -88,7 +89,7 @@ describe('nuxt-photo module', () => {
 
   it('declares Nuxt compatibility through module metadata', () => {
     expect(nuxtPhotoModule.meta.compatibility).toEqual({
-      nuxt: '^4.4.8',
+      nuxt: manifest.peerDependencies.nuxt,
     })
   })
 

@@ -195,6 +195,27 @@ for (const scenario of [
     paths: ['.github/workflows/ci.yml'],
     full: 'true',
   },
+  ...[
+    'docs/package.json',
+    'docs/nuxt.config.ts',
+    'docs/server/api/test.ts',
+    'pnpm-lock.yaml',
+    'scripts/test-maintenance.mjs',
+  ].map((path) => ({ name: path, event: 'pull_request', paths: [path], full: 'true' })),
+  {
+    name: 'mixed docs and code',
+    event: 'pull_request',
+    paths: ['README.md', 'packages/vue/src/index.ts'],
+    full: 'true',
+  },
+  { name: 'empty selection', event: 'pull_request', paths: [], full: 'true' },
+  {
+    name: 'code renamed into docs',
+    event: 'pull_request',
+    paths: ['docs/content/example.md'],
+    previous: 'packages/vue/src/example.ts',
+    full: 'true',
+  },
   { name: 'main certification', event: 'push', paths: [], full: 'true' },
 ]) {
   const outputs = new Map()
@@ -205,7 +226,8 @@ for (const scenario of [
       repo: { owner: 'lupinum-dev', repo: 'nuxt-photo' },
     },
     {
-      paginate: async () => scenario.paths.map((filename) => ({ filename })),
+      paginate: async () =>
+        scenario.paths.map((filename) => ({ filename, previous_filename: scenario.previous })),
       rest: { pulls: { listFiles() {} } },
     },
     { setOutput: (name, value) => outputs.set(name, value) },
