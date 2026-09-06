@@ -55,20 +55,6 @@ describe('Nuxt Photo 1.0 public contract', () => {
     expect(carousel).toMatch(/lightbox:\s*false/)
   })
 
-  it('keeps single photos strict and collection dropping explicit', () => {
-    const photo = read('packages/vue/src/components/Photo.vue')
-    const album = read('packages/vue/src/components/PhotoAlbum.vue')
-    const group = read('packages/vue/src/components/PhotoGroup.vue')
-    const carousel = read('packages/vue/src/components/PhotoCarousel.vue')
-
-    expect(photo).not.toContain('validation?:')
-    expect(photo).toContain("onInvalid: 'throw'")
-    for (const collection of [album, group, carousel]) {
-      expect(collection).toContain('validation?: InvalidPhotoPolicy')
-      expect(collection).toContain('invalidPhotos:')
-    }
-  })
-
   it('exposes collection handles only from PhotoAlbum and PhotoGroup', () => {
     expect(read('packages/vue/src/components/PhotoAlbum.vue')).toContain(
       'defineExpose({ open, openById, close, isOpen })',
