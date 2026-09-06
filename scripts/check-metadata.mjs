@@ -25,6 +25,12 @@ assert(
     `npm:@vue/runtime-dom@${vuePeerRange.slice(1)}`,
   'The declaration-only Vue types must match the public Vue peer floor.',
 )
+for (const name of ['@vue/runtime-core', '@vue/server-renderer']) {
+  assert(
+    rootManifest.devDependencies[name] === catalog.vue,
+    `${name} must match the catalog Vue runtime.`,
+  )
+}
 const requiredRootScripts = [
   'build',
   'audit:all',
