@@ -76,6 +76,9 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
   writeFileSync(
     join(consumerDir, 'pnpm-workspace.yaml'),
     [
+      'minimumReleaseAge: 1440',
+      'minimumReleaseAgeStrict: true',
+      'minimumReleaseAgeIgnoreMissingTime: false',
       'autoInstallPeers: false',
       'enableGlobalVirtualStore: false',
       'strictPeerDependencies: true',
@@ -162,6 +165,14 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
   )
 
   try {
+    run(
+      'node',
+      [
+        join(rootDir, 'scripts/check-dependency-policy.mjs'),
+        join(consumerDir, 'pnpm-workspace.yaml'),
+      ],
+      consumerDir,
+    )
     run('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], consumerDir)
     assertInstalledOutsideRepository(
       join(consumerDir, 'node_modules', '@lupinum', 'vue-photo'),
@@ -172,6 +183,7 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
       !existsSync(join(consumerDir, 'node_modules', '@lupinum', 'nuxt-photo')),
       'Vue-only consumer unexpectedly installed @lupinum/nuxt-photo.',
     )
+    assertFrameworkVersion(consumerDir, 'vue', catalog.vue)
     run('pnpm', ['exec', 'vue-tsc', '-p', 'tsconfig.json', '--noEmit'], consumerDir)
     run('node', ['build.mjs'], consumerDir)
     assert(
@@ -268,6 +280,9 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
   writeFileSync(
     join(consumerDir, 'pnpm-workspace.yaml'),
     [
+      'minimumReleaseAge: 1440',
+      'minimumReleaseAgeStrict: true',
+      'minimumReleaseAgeIgnoreMissingTime: false',
       'autoInstallPeers: false',
       'enableGlobalVirtualStore: false',
       'strictPeerDependencies: true',
@@ -316,8 +331,17 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
   )
 
   try {
+    run(
+      'node',
+      [
+        join(rootDir, 'scripts/check-dependency-policy.mjs'),
+        join(consumerDir, 'pnpm-workspace.yaml'),
+      ],
+      consumerDir,
+    )
     run('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], consumerDir)
 
+    assertFrameworkVersion(consumerDir, 'nuxt', catalog.nuxt)
     const consumerManifest = readJson(join(consumerDir, 'package.json'))
     assert(
       consumerManifest.dependencies['@lupinum/vue-photo'] === undefined,
@@ -397,6 +421,35 @@ export function verifyPackedConsumers(rootDir, artifactPackages) {
 
   const rootManifest = readJson(join(rootDir, 'package.json'))
   const catalog = readWorkspaceCatalog(rootDir)
-  runVueConsumer(rootDir, artifactByName, rootManifest, catalog)
-  runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog)
+  const vueRange = artifactByName.get('@lupinum/vue-photo').packageJson.peerDependencies.vue
+  const nuxtRange = artifactByName.get('@lupinum/nuxt-photo').packageJson.peerDependencies.nuxt
+  const failures = []
+  for (const [name, range, verify] of [
+    ['vue', vueRange, runVueConsumer],
+    ['nuxt', nuxtRange, runNuxtConsumer],
+  ]) {
+    for (const version of new Set([peerFloor(range), catalog[name]])) {
+      try {
+        verify(rootDir, artifactByName, rootManifest, { ...catalog, [name]: version })
+      } catch (error) {
+        failures.push(new Error(`${name} ${version} consumer failed`, { cause: error }))
+      }
+    }
+  }
+  if (failures.length) throw new AggregateError(failures, 'Packed framework compatibility failed.')
+}
+
+export function assertFrameworkVersion(consumerDir, name, expected) {
+  const installed = readJson(join(consumerDir, 'node_modules', name, 'package.json')).version
+  assert(installed === expected, `${name} consumer expected ${expected}, installed ${installed}.`)
+  process.stdout.write(`Packed consumer: ${name} ${installed} on Node ${process.versions.node}\n`)
+}
+
+export function peerFloor(range) {
+  const match = /^\^(\d+\.\d+\.\d+)$/.exec(range)
+  assert(
+    match,
+    `Unsupported peer range ${range}; define its compatibility trial before accepting it.`,
+  )
+  return match[1]
 }

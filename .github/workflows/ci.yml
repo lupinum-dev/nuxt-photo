@@ -38,11 +38,11 @@ jobs:
                   pull_number: context.issue.number,
                   per_page: 100,
                 })
-            const paths = files.map((file) => file.filename)
+            const paths = files.flatMap((file) => [file.filename, file.previous_filename].filter(Boolean))
             const publicDocsOnly =
               paths.length > 0 &&
               paths.every((path) =>
-                /^(?:docs\/|README\.md$|CONTRIBUTING\.md$|SECURITY\.md$|MAINTAINING\.md$|AGENTS\.md$|CLAUDE\.md$|LICENSE$)/u.test(path),
+                /^(?:docs\/content\/.*\.md$|docs\/public\/.*\.(?:svg|png|jpe?g|webp|avif|ico)$|README\.md$|CONTRIBUTING\.md$|SECURITY\.md$|MAINTAINING\.md$|AGENTS\.md$|CLAUDE\.md$|LICENSE$)/u.test(path),
               )
             core.setOutput('full', String(runAll || !publicDocsOnly))
 
@@ -144,6 +144,7 @@ jobs:
 
       - name: Validate and build documentation
         run: >-
+          node scripts/check-dependency-policy.mjs &&
           vp run build &&
           vp run docs:validate &&
           vp run docs:agent:check &&

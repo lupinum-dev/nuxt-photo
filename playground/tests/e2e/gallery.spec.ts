@@ -59,6 +59,7 @@ async function waitForSpringFrame() {
 test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
   await page.locator('.np-album__item').first().click()
 

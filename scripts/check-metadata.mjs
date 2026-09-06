@@ -103,7 +103,7 @@ assert(
   'Oxfmt is the only repository formatter; remove Prettier.',
 )
 assert(
-  rootManifest.devDependencies?.['pkg-pr-new'] === '0.0.87',
+  /^\d+\.\d+\.\d+$/.test(rootManifest.devDependencies?.['pkg-pr-new'] ?? ''),
   'pkg-pr-new must remain pinned for reproducible package previews.',
 )
 
@@ -113,6 +113,11 @@ assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency ver
 
 const workspacePolicy = parseYaml(readText('pnpm-workspace.yaml'))
 const ciWorkflow = parseYaml(readText('.github/workflows/ci.yml'))
+assert(
+  ciWorkflow.jobs.compatibility.strategy.matrix['node-version'][0] ===
+    supportedNode.match(/\d+\.\d+\.\d+/)?.[0],
+  'The compatibility lane must test the minimum supported Node release.',
+)
 const actionVerificationSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) =>
   (job.steps ?? [])
     .filter((step) => step.run === 'node scripts/verify-action-shas.mjs')

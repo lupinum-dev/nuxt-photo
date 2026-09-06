@@ -119,11 +119,17 @@ a {
 
 @media (max-width: 700px) {
   .nav {
-    padding: 0 20px;
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 20px;
+  }
+
+  .nav__links {
+    flex-wrap: wrap;
   }
 
   .nav__link {
-    padding: 17px 10px;
+    padding: 12px 10px;
   }
 }
 </style>
