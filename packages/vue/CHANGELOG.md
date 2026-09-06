@@ -1,5 +1,11 @@
 # @lupinum/vue-photo
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- [#72](https://github.com/lupinum-dev/nuxt-photo/pull/72) [`29ede46`](https://github.com/lupinum-dev/nuxt-photo/commit/29ede4619a60090a51c3cf163244eb2a84c1180c) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Generate component declarations against the advertised minimum Vue types. Consumers on older supported Vue releases can type-check slots and components without requiring newer Vue generic parameters.
+
 ## 1.0.0-beta.4
 
 ### Patch Changes

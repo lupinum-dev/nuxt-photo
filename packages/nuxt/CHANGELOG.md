@@ -1,5 +1,12 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-beta.5
+
+### Patch Changes
+
+- Updated dependencies [[`29ede46`](https://github.com/lupinum-dev/nuxt-photo/commit/29ede4619a60090a51c3cf163244eb2a84c1180c)]:
+  - @lupinum/vue-photo@1.0.0-beta.5
+
 ## 1.0.0-beta.4
 
 ### Patch Changes
