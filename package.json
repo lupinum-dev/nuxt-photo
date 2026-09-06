@@ -64,6 +64,7 @@
     "@playwright/test": "1.60.0",
     "@types/node": "22.18.0",
     "@vitejs/plugin-vue": "6.0.7",
+    "@vue/runtime-core": "3.5.42",
     "@vue/server-renderer": "3.5.42",
     "changelogen": "0.6.2",
     "esbuild": "0.28.1",
@@ -82,6 +83,7 @@
     "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
+    "vue-declaration-types": "npm:@vue/runtime-dom@3.5.0",
     "vue-eslint-parser": "^10.4.1",
     "yaml": "2.9.0"
   },
