@@ -80,6 +80,11 @@ gate and daily `dependency-policy.yml` job reject expired exceptions. The
 repository owns its checker copied from the Lupinum OSS handbook. Generated
 consumer configurations run the same checker before installation.
 
+Generated consumers test normal registry resolution under the quarantine. They
+do not inherit root exceptions or security overrides. The Nuxt fixture replaces
+only its Vue sibling with the certified tarball; peer allowances stay explicit
+in each fixture. Review any future consumer exception independently.
+
 ## Bundle-size checks
 
 The size harness builds small Vue and Nuxt consumer fixtures and compares their
