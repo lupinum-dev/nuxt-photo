@@ -14,6 +14,17 @@ const supportedNode = rootManifest.engines?.node
 const packageManager = /^pnpm@(.+)$/.exec(rootManifest.packageManager ?? '')
 const maintainerNode = readText('.node-version').trim()
 const catalog = readWorkspaceCatalog(root)
+// Build declarations against the public peer floor while Nuxt keeps its current runtime.
+const vuePeerRange = packageSet.byName.get('@lupinum/vue-photo').manifest.peerDependencies.vue
+assert(
+  /^\^\d+\.\d+\.\d+$/.test(vuePeerRange),
+  'Review declaration generation for a new Vue peer range.',
+)
+assert(
+  rootManifest.devDependencies['vue-declaration-types'] ===
+    `npm:@vue/runtime-dom@${vuePeerRange.slice(1)}`,
+  'The declaration-only Vue types must match the public Vue peer floor.',
+)
 const requiredRootScripts = [
   'build',
   'audit:all',
