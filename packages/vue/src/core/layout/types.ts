@@ -14,7 +14,10 @@ export function validatePhotoDimensions<TMeta extends object>(
       continue
     }
 
-    throw new Error(`Photo "${photo.id}" has invalid dimensions (${photo.width}x${photo.height})`)
+    throw new Error(
+      `[nuxt-photo] Photo "${photo.id}" has invalid dimensions (${photo.width}x${photo.height}). ` +
+        'Use the real pixel width and height of the image file.',
+    )
   }
 
   return photos

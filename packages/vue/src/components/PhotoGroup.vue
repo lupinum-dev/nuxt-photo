@@ -37,14 +37,37 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
-    /** Canonical photo collection and navigation order. */
+    /**
+     * All photos of the group in navigation order. Every descendant `Photo` or `PhotoAlbum` must
+     * use photos from this list.
+     */
     photos: readonly PhotoItem<TMeta>[]
+    /**
+     * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
+     * `invalidPhotos`.
+     * @default 'throw'
+     */
     validation?: InvalidPhotoPolicy
+    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
-    /** Setup-time lightbox capability. Remount to change it. */
+    /**
+     * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
+     * at mount; change the component `key` to remount.
+     * @default true
+     */
     lightbox?: boolean | Component
-    /** Reactive transition configuration. */
+    /**
+     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
+     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
+     * change while mounted.
+     * @default 'auto'
+     */
     transition?: LightboxTransitionOption
+    /**
+     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
+     * mounted.
+     * @default 'slide'
+     */
     navigation?: LightboxNavigationMode
   }>(),
   { lightbox: true },
@@ -92,7 +115,9 @@ function replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapabili
   for (const entry of entries) {
     if (!canonicalIds.value.has(entry.id)) {
       throw new Error(
-        `[nuxt-photo] PhotoGroup descendant photo "${entry.id}" is missing from the canonical photos collection`,
+        `[nuxt-photo] PhotoGroup descendant photo "${entry.id}" is missing from the canonical photos collection. ` +
+          'Add it to the photos of the surrounding <PhotoGroup>, or render it outside the group. ' +
+          'See https://nuxt-photo.lupinum.com/docs/reference/photo-group',
       )
     }
   }

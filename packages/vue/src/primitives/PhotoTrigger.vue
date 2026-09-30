@@ -18,7 +18,9 @@ import { useLightboxInject } from '../lightbox/inject'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
 
 const props = defineProps<{
+  /** The photo this thumbnail opens. */
   photo: PhotoItem
+  /** Position of `photo` in the provider's collection. */
   index: number
 }>()
 

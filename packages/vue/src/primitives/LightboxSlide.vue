@@ -50,11 +50,17 @@ import PhotoImage from './PhotoImage.vue'
 defineSlots<{ default?: (props: LightboxSlideSlotProps) => unknown }>()
 
 const props = defineProps<{
+  /** The photo of this slide. */
   photo: PhotoItem
+  /** Position of `photo` in the provider's collection. */
   index: number
+  /** Classes for the wrapper that runs the fade and slide effects. */
   effectClass?: string
+  /** Classes for the element sized to the photo frame. */
   frameClass?: string
+  /** Classes for the zoom and pan wrapper. */
   zoomClass?: string
+  /** Classes for the `<img>`. */
   imgClass?: string
 }>()
 

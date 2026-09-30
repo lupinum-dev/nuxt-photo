@@ -36,13 +36,15 @@ export type NormalizePhotosOptions = {
   onInvalid?: InvalidPhotoPolicy | 'return'
 }
 
+const PHOTO_DATA_HELP = 'https://nuxt-photo.lupinum.com/docs/help/troubleshooting'
+
 /** A structured public boundary error for invalid photo collections. */
 export class PhotoValidationError extends Error {
   readonly owner: string
   readonly issues: readonly PhotoValidationIssue[]
 
   constructor(owner: string, issues: readonly PhotoValidationIssue[]) {
-    super(issues.map((issue) => issue.message).join('\n'))
+    super([...issues.map((issue) => issue.message), `See ${PHOTO_DATA_HELP}`].join('\n'))
     this.name = 'PhotoValidationError'
     this.owner = owner
     this.issues = issues
@@ -116,7 +118,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `photo at index ${index} is missing a non-empty string id`,
+          `photo at index ${index} is missing a non-empty string id; use a stable ID from your data, not the array index`,
         ),
       )
       invalidIndexes.add(index)
@@ -146,7 +148,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid width`,
+          `photo "${String(id ?? '')}" has invalid width ${String(rawPhoto.width)}; use the real pixel width of the image file`,
         ),
       )
       invalidIndexes.add(index)
@@ -159,7 +161,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid height`,
+          `photo "${String(id ?? '')}" has invalid height ${String(rawPhoto.height)}; use the real pixel height of the image file`,
         ),
       )
       invalidIndexes.add(index)
@@ -217,7 +219,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `duplicate photo id "${id}" used at indexes ${indexes.join(', ')}`,
+          `duplicate photo id "${id}" used at indexes ${indexes.join(', ')}; IDs must be unique in one collection`,
         ),
       )
       invalidIndexes.add(index)

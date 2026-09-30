@@ -30,9 +30,20 @@ defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
+    /** The photo to render through the image adapter. */
     photo: PhotoItem<TMeta>
+    /**
+     * `'thumb'` for grid images, `'slide'` for lightbox images. The adapter can return different
+     * URLs for each.
+     * @default 'thumb'
+     */
     context?: ImageContext
+    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
+    /**
+     * Native image `loading` hint. Use `'eager'` for images in the first screen.
+     * @default 'lazy'
+     */
     loading?: 'lazy' | 'eager'
     /** Override the adapter-computed sizes attribute with a layout-computed value. */
     sizes?: string
