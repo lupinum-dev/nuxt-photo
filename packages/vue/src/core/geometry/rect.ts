@@ -43,13 +43,32 @@ export function fitRect(container: RectLike, aspect: number): RectLike {
   }
 }
 
-/** Compute the FLIP transform that maps `to` back onto `from`. */
-export function flipTransform(from: RectLike, to: RectLike): string {
-  const dx = from.left - to.left
-  const dy = from.top - to.top
-  const sx = from.width / to.width
-  const sy = from.height / to.height
-  return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`
+/**
+ * Pose a photo-shaped frame so it looks exactly like a cropped thumbnail.
+ *
+ * The frame keeps its aspect ratio (one uniform scale, origin top left) and a
+ * clip in the frame's own coordinates hides what the thumbnail crops away, so
+ * a flight between the two never stretches the photo.
+ */
+export function coverPose(
+  frame: RectLike,
+  thumb: RectLike,
+  thumbRadius = 0,
+): { transform: string; clipPath: string } {
+  const scale = Math.max(thumb.width / frame.width, thumb.height / frame.height)
+  const x = thumb.left + thumb.width / 2 - frame.left - (frame.width * scale) / 2
+  const y = thumb.top + thumb.height / 2 - frame.top - (frame.height * scale) / 2
+  const insetX = Math.max(0, (frame.width - thumb.width / scale) / 2)
+  const insetY = Math.max(0, (frame.height - thumb.height / scale) / 2)
+  return {
+    transform: `translate(${x}px, ${y}px) scale(${scale})`,
+    clipPath: `inset(${insetY}px ${insetX}px round ${thumbRadius / scale}px)`,
+  }
+}
+
+/** The unclipped resting pose that pairs with `coverPose` for clip-path interpolation. */
+export function restingClip(radius = 0) {
+  return `inset(0px 0px round ${radius}px)`
 }
 
 /** Apply a simple rubberband effect when a value moves beyond its allowed range. */

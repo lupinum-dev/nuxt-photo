@@ -14,7 +14,7 @@ type MotionElements = {
 type RunningAnimation = {
   animation: Animation
   element: HTMLElement
-  properties: readonly ('opacity' | 'transform')[]
+  properties: readonly ('opacity' | 'transform' | 'clipPath')[]
 }
 
 function domElement(value: Element | ComponentPublicInstance | null) {
@@ -50,6 +50,7 @@ function finalFrame(keyframes: Keyframe[]) {
 function applyFrame(element: HTMLElement, frame: Keyframe) {
   if (frame.opacity != null) element.style.opacity = String(frame.opacity)
   if (frame.transform != null) element.style.transform = String(frame.transform)
+  if (frame.clipPath != null) element.style.clipPath = String(frame.clipPath)
 }
 
 function animationPromise(animation: Animation, signal: AbortSignal) {
@@ -93,6 +94,17 @@ export function visible(element: HTMLElement | null) {
   return (
     !!element && element.style.display !== 'none' && Number(getComputedStyle(element).opacity) > 0
   )
+}
+
+/** Read an element's rendered corner radius. */
+export function radiusOf(element: Element | null | undefined) {
+  if (!element) return 0
+  return Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) || 0
+}
+
+/** A thumbnail's visible radius may sit on the trigger or on its image. */
+export function thumbRadius(thumb: HTMLElement | null | undefined) {
+  return Math.max(radiusOf(thumb), radiusOf(thumb?.querySelector('img')))
 }
 
 export function opacityOf(element: HTMLElement | null, fallback: number) {
@@ -198,6 +210,7 @@ export function createMotionVisualState() {
     current.transitionFrame.style.transform = 'none'
     current.transitionImage.src = src
     current.transitionImage.style.opacity = '1'
+    current.transitionImage.style.clipPath = ''
     if (current.transitionShadow) current.transitionShadow.style.opacity = '1'
     return true
   }
