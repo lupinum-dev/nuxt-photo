@@ -83,7 +83,7 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   motion.setSlideImageRef(0)(slideImage)
   motion.setThumbRef(0)(thumb)
 
-  return { motion, slideImage, controls, viewport, callbacks: callbacks() }
+  return { motion, slideImage, overlay, controls, viewport, callbacks: callbacks() }
 }
 
 describe('lightbox motion controller', () => {
@@ -131,6 +131,35 @@ describe('lightbox motion controller', () => {
     ).rejects.toMatchObject({ name: 'AbortError' })
   })
 
+  it('keeps the pose an interrupted animation reached instead of snapping back', async () => {
+    const visual = createMotionVisualState()
+    const element = document.createElement('div')
+    element.style.transform = 'scale(0.5)'
+    const controller = new AbortController()
+    const cancel = vi.fn()
+    element.animate = vi.fn(
+      () => ({ finished: new Promise<void>(() => {}), cancel }) as unknown as Animation,
+    )
+    // Mid-flight, the browser renders the animated value, not the inline start value.
+    const computed = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({ transform: 'matrix(0.8, 0, 0, 0.8, 0, 0)' } as CSSStyleDeclaration)
+
+    const flight = visual.animate(
+      element,
+      [{ transform: 'scale(0.5)' }, { transform: 'none' }],
+      { duration: 400 },
+      ['transform'],
+      controller.signal,
+    )
+    controller.abort()
+    await expect(flight).rejects.toMatchObject({ name: 'AbortError' })
+    computed.mockRestore()
+
+    expect(element.style.transform).toBe('matrix(0.8, 0, 0, 0.8, 0, 0)')
+    expect(cancel).toHaveBeenCalled()
+  })
+
   it('decodes the mounted responsive image and lands on canonical open styles', async () => {
     const { motion, slideImage, controls, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
@@ -142,6 +171,22 @@ describe('lightbox motion controller', () => {
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
     expect(controls.style.pointerEvents).toBe('auto')
+  })
+
+  it('keeps the backdrop hidden when a drag reset is still waiting to paint', async () => {
+    const { motion, overlay, callbacks } = setup()
+    // Hold the flight at its first frame so only inline styles decide what is painted.
+    overlay.animate = vi.fn(
+      () => ({ finished: new Promise<void>(() => {}), cancel: vi.fn() }) as unknown as Animation,
+    )
+    const controller = new AbortController()
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    motion.setCloseDragY(0)
+    void motion.open(0, callbacks, controller.signal).catch(() => {})
+
+    await vi.waitFor(() => expect(overlay.animate).toHaveBeenCalled())
+    expect(overlay.style.opacity).toBe('0')
+    controller.abort()
   })
 
   it('cleans every visual state after close', async () => {

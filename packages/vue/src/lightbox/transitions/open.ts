@@ -1,11 +1,16 @@
 import { nextTick } from 'vue'
-import { isUsableRect, shouldUseFlip, type RectLike } from '../../core/index'
-import { flipTransform } from '../../core/geometry/rect'
+import {
+  coverPose,
+  isUsableRect,
+  restingClip,
+  shouldUseFlip,
+  type RectLike,
+} from '../../core/index'
 import { IMAGE_LOAD_TIMEOUT_MS } from '../../core/image/constants'
 import { nextFrame, throwIfAborted, wait } from './animation'
 import { waitForImageReady } from './image-ready'
 import type { OpenMotionCallbacks, OpenTransitionContext } from './types'
-import { opacityOf, rectsMatch, visible } from './visual-state'
+import { opacityOf, radiusOf, rectsMatch, thumbRadius, visible } from './visual-state'
 
 const OPEN_DURATION_MS = 420
 const FADE_DURATION_MS = 220
@@ -170,25 +175,53 @@ export async function runOpenTransition(
       }
 
       visual.normalizeTransitionVisual(toRect, src)
-      if (current.transitionFrame) {
-        current.transitionFrame.style.transform = flipTransform(fromRect, toRect)
-      }
+      const imageRadius = radiusOf(current.transitionImage)
+      const pose = coverPose(
+        toRect,
+        fromRect,
+        interruptedRect ? imageRadius : thumbRadius(visual.thumbRefs.get(index)),
+      )
+      if (current.transitionFrame) current.transitionFrame.style.transform = pose.transform
+      if (current.transitionImage) current.transitionImage.style.clipPath = pose.clipPath
+      if (current.transitionShadow) current.transitionShadow.style.opacity = '0'
       if (current.overlay) current.overlay.style.opacity = '0'
       if (current.viewport) current.viewport.style.opacity = '0'
       visual.setChromeOpacity(0)
 
       await nextFrame(signal)
+      // Hiding the thumbnail re-renders the gallery and mounting the stage builds the
+      // slides. Both happen under the ghost, before the flight's clock starts, so that
+      // work never swallows the first frames of the flight.
       context.hiddenThumbIndex.value = index
+      context.stageMounted.value = true
+      const decodeState: {
+        result: { ok: true } | { ok: false; error: unknown } | null
+      } = { result: null }
+      const decode = callbacks
+        .prepareActiveSlide(true)
+        .then(() => decodeActiveImage(context, index, signal))
+        .then((result) => {
+          decodeState.result = result
+          callbacks.setImageLoadFailed(!result.ok, result.ok ? undefined : result.error)
+          return result
+        })
+      void decode.catch(() => {})
+      await nextFrame(signal)
+      await nextFrame(signal)
 
       const flight = Promise.all([
         visual.animate(
           current.transitionFrame,
-          [
-            { transform: current.transitionFrame?.style.transform || 'none' },
-            { transform: 'none' },
-          ],
+          [{ transform: pose.transform }, { transform: 'none' }],
           { duration: OPEN_DURATION_MS, easing: EASING },
           ['transform'],
+          signal,
+        ),
+        visual.animate(
+          current.transitionImage,
+          [{ clipPath: pose.clipPath }, { clipPath: restingClip(imageRadius) }],
+          { duration: OPEN_DURATION_MS, easing: EASING },
+          ['clipPath'],
           signal,
         ),
         visual.animate(
@@ -246,21 +279,6 @@ export async function runOpenTransition(
           ? wait(OPEN_DURATION_MS - HANDOFF_DURATION_MS, signal)
           : null
       void handoffWindow?.catch(() => {})
-
-      await nextFrame(signal)
-      context.stageMounted.value = true
-      const decodeState: {
-        result: { ok: true } | { ok: false; error: unknown } | null
-      } = { result: null }
-      const decode = callbacks
-        .prepareActiveSlide(true)
-        .then(() => decodeActiveImage(context, index, signal))
-        .then((result) => {
-          decodeState.result = result
-          callbacks.setImageLoadFailed(!result.ok, result.ok ? undefined : result.error)
-          return result
-        })
-      void decode.catch(() => {})
 
       if (handoffWindow) await handoffWindow
       else await decode

@@ -14,7 +14,7 @@ type MotionElements = {
 type RunningAnimation = {
   animation: Animation
   element: HTMLElement
-  properties: readonly ('opacity' | 'transform')[]
+  properties: readonly ('opacity' | 'transform' | 'clipPath')[]
 }
 
 function domElement(value: Element | ComponentPublicInstance | null) {
@@ -50,6 +50,7 @@ function finalFrame(keyframes: Keyframe[]) {
 function applyFrame(element: HTMLElement, frame: Keyframe) {
   if (frame.opacity != null) element.style.opacity = String(frame.opacity)
   if (frame.transform != null) element.style.transform = String(frame.transform)
+  if (frame.clipPath != null) element.style.clipPath = String(frame.clipPath)
 }
 
 function animationPromise(animation: Animation, signal: AbortSignal) {
@@ -82,6 +83,16 @@ export function imageSource(element: HTMLElement | null, fallback: string) {
   return image?.currentSrc || image?.src || fallback
 }
 
+/** Read the layout box that `rectStyle` wrote, ignoring any transform. */
+export function layoutRect(element: HTMLElement): RectLike {
+  return {
+    left: Number.parseFloat(element.style.left) || 0,
+    top: Number.parseFloat(element.style.top) || 0,
+    width: Number.parseFloat(element.style.width) || 0,
+    height: Number.parseFloat(element.style.height) || 0,
+  }
+}
+
 export function rectStyle(element: HTMLElement, rect: RectLike) {
   element.style.left = `${rect.left}px`
   element.style.top = `${rect.top}px`
@@ -93,6 +104,17 @@ export function visible(element: HTMLElement | null) {
   return (
     !!element && element.style.display !== 'none' && Number(getComputedStyle(element).opacity) > 0
   )
+}
+
+/** Read an element's rendered corner radius. */
+export function radiusOf(element: Element | null | undefined) {
+  if (!element) return 0
+  return Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) || 0
+}
+
+/** A thumbnail's visible radius may sit on the trigger or on its image. */
+export function thumbRadius(thumb: HTMLElement | null | undefined) {
+  return Math.max(radiusOf(thumb), radiusOf(thumb?.querySelector('img')))
 }
 
 export function opacityOf(element: HTMLElement | null, fallback: number) {
@@ -169,7 +191,11 @@ export function createMotionVisualState() {
     return animationPromise(animation, signal)
       .then(() => applyFrame(element, finalFrame(keyframes)))
       .finally(() => {
-        if (running.delete(item)) animation.cancel()
+        if (!running.delete(item)) return
+        // An interrupted animation keeps the pose it reached; cancelling alone would
+        // snap the element back to its starting styles before the next motion begins.
+        if (signal.aborted) persistAnimation(item)
+        else animation.cancel()
       })
   }
 
@@ -198,6 +224,7 @@ export function createMotionVisualState() {
     current.transitionFrame.style.transform = 'none'
     current.transitionImage.src = src
     current.transitionImage.style.opacity = '1'
+    current.transitionImage.style.clipPath = ''
     if (current.transitionShadow) current.transitionShadow.style.opacity = '1'
     return true
   }

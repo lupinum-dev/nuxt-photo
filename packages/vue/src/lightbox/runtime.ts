@@ -173,7 +173,7 @@ export function useLightboxRuntimeState(
 
           lifecycleStatus.value = 'closing'
           await startRun((signal) => motion.close(closeCallbacks, signal))
-          motion.setCloseDragY(0)
+          motion.resetCloseDrag()
           keydown.detach()
           lifecycleStatus.value = 'closed'
         } else if (lifecycleStatus.value === 'open') {
@@ -184,7 +184,6 @@ export function useLightboxRuntimeState(
           }
         } else {
           lifecycleStatus.value = 'opening'
-          motion.setCloseDragY(0)
           carousel.goTo(target.index, true)
           keydown.attach()
 

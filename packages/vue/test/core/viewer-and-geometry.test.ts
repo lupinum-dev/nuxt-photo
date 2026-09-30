@@ -6,6 +6,7 @@ import {
   computePanBounds,
   computeTargetPanForZoom,
   computeZoomLevels,
+  coverPose,
   fitRect,
   getLoopedIndex,
   isDoubleTap,
@@ -27,6 +28,18 @@ describe('geometry and viewer utilities', () => {
       width: 366,
       height: 796,
     })
+  })
+
+  it('poses a photo frame over a cropped thumbnail without stretching it', () => {
+    // A portrait photo frame flying from a wide, cropped thumbnail.
+    const frame = { left: 400, top: 100, width: 400, height: 600 }
+    const thumb = { left: 50, top: 300, width: 200, height: 100 }
+    const pose = coverPose(frame, thumb, 4)
+
+    // One scale for both axes: the thumbnail's width decides (cover), so the photo keeps its shape.
+    expect(pose.transform).toBe('translate(-350px, 100px) scale(0.5)')
+    // The visible part after the clip is exactly the thumbnail: 200 × 100 at scale 0.5.
+    expect(pose.clipPath).toBe('inset(200px 0px round 8px)')
   })
 
   it('fits rectangles and loops indexes predictably', () => {

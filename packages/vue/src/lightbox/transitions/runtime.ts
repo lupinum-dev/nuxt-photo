@@ -126,6 +126,13 @@ export function useLightboxMotion(
     })
   }
 
+  /** Forget the drag offset without painting: the open and close motions own the stage. */
+  function resetCloseDrag() {
+    if (dragFrame) cancelAnimationFrame(dragFrame)
+    dragFrame = 0
+    closeDragY.value = 0
+  }
+
   async function settleDrag(signal?: AbortSignal) {
     dragSettleController?.abort()
     const controller = signal ? null : new AbortController()
@@ -218,6 +225,9 @@ export function useLightboxMotion(
   async function open(index: number, callbacks: OpenMotionCallbacks, signal: AbortSignal) {
     callbacks.resetGestureState()
     callbacks.cancelTapTimer()
+    // A drag frame still waiting to paint would reveal the backdrop and controls
+    // at full opacity after the open has hidden them.
+    resetCloseDrag()
     animating.value = true
     activeImagePending.value = true
     uiVisible.value = true
@@ -266,6 +276,7 @@ export function useLightboxMotion(
     cancel,
     resetClosedVisualState,
     setCloseDragY: applyDrag,
+    resetCloseDrag,
     settleDrag,
     handleCloseGesture,
     handleBackdropClick: (closeFn: () => Promise<void>) => closeFn(),

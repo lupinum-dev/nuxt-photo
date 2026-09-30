@@ -1,7 +1,7 @@
-import { chooseCloseTransition } from '../../core/index'
+import { chooseCloseTransition, coverPose, restingClip } from '../../core/index'
 import { waitForImageReady } from './image-ready'
 import type { CloseMotionCallbacks, CloseTransitionContext } from './types'
-import { imageSource, opacityOf, rectStyle, visible } from './visual-state'
+import { imageSource, layoutRect, opacityOf, radiusOf, thumbRadius, visible } from './visual-state'
 
 const CLOSE_DURATION_MS = 360
 const FADE_DURATION_MS = 220
@@ -9,6 +9,8 @@ const REDUCED_MOTION_DURATION_MS = 160
 const INTERRUPTED_HANDOFF_MS = 80
 const TRANSITION_IMAGE_PREPARE_MS = 800
 const EASING = 'cubic-bezier(0.22, 1, 0.36, 1)'
+// A close from a key or button starts from rest; only a drag hands over speed to continue.
+const EASING_FROM_REST = 'cubic-bezier(0.45, 0, 0.2, 1)'
 
 async function prepareTransitionImage(context: CloseTransitionContext, signal: AbortSignal) {
   const image = context.visual.elements().transitionImage
@@ -128,13 +130,15 @@ export async function runCloseTransition(
       const src = imageSource(slideImage, '') || callbacks.getThumbSrc(photo)
       if (!existingVisual) {
         visual.normalizeTransitionVisual(fromRect, src)
+        // Hidden until decoded; once ready the ghost is pixel-identical to the slide and swaps in instantly.
         if (current.transitionImage) current.transitionImage.style.opacity = '0'
         if (current.transitionShadow) current.transitionShadow.style.opacity = '0'
       } else {
-        rectStyle(current.transitionFrame!, fromRect)
-        current.transitionFrame!.style.transform = 'none'
+        // An interrupted open keeps its layout box, transform, and crop; the close
+        // continues from exactly that pose instead of resizing the ghost.
         current.transitionFrame!.style.display = 'block'
       }
+      const frameRect = existingVisual ? layoutRect(current.transitionFrame!) : fromRect
       if (!(await prepareTransitionImage(context, signal))) {
         if (current.transitionFrame) current.transitionFrame.style.display = 'none'
         await runFadeClose(
@@ -145,15 +149,32 @@ export async function runCloseTransition(
         return
       }
       context.hiddenThumbIndex.value = context.activeIndex.value
-      await normalizeToGhost(context, signal)
+      if (existingVisual) await normalizeToGhost(context, signal)
+      else {
+        if (current.transitionImage) current.transitionImage.style.opacity = '1'
+        if (current.transitionShadow) current.transitionShadow.style.opacity = '1'
+        if (current.viewport) current.viewport.style.opacity = '0'
+      }
+      const easing = dragProgress > 0 ? EASING : EASING_FROM_REST
 
-      const targetTransform = `translate3d(${toRect.left - fromRect.left}px, ${toRect.top - fromRect.top}px, 0) scale(${toRect.width / fromRect.width}, ${toRect.height / fromRect.height})`
+      const imageRadius = radiusOf(current.transitionImage)
+      const pose = coverPose(frameRect, toRect, thumbRadius(thumb))
+      const startTransform = (existingVisual && current.transitionFrame!.style.transform) || 'none'
+      const startClip =
+        (existingVisual && current.transitionImage?.style.clipPath) || restingClip(imageRadius)
       await Promise.all([
         visual.animate(
           current.transitionFrame,
-          [{ transform: 'none' }, { transform: targetTransform }],
-          { duration: closeDuration, easing: EASING },
+          [{ transform: startTransform }, { transform: pose.transform }],
+          { duration: closeDuration, easing },
           ['transform'],
+          signal,
+        ),
+        visual.animate(
+          current.transitionImage,
+          [{ clipPath: startClip }, { clipPath: pose.clipPath }],
+          { duration: closeDuration, easing },
+          ['clipPath'],
           signal,
         ),
         visual.animate(
@@ -163,14 +184,11 @@ export async function runCloseTransition(
           ['opacity'],
           signal,
         ),
+        // The shadow belongs to the whole frame; it must be gone before the clip starts cropping.
         visual.animate(
           current.transitionShadow,
           [{ opacity: 1 }, { opacity: 0 }],
-          {
-            duration: closeDuration * 0.55,
-            delay: closeDuration * 0.45,
-            easing: EASING,
-          },
+          { duration: Math.min(120, closeDuration * 0.3), easing: 'linear' },
           ['opacity'],
           signal,
         ),
