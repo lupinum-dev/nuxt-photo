@@ -20,20 +20,6 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: '@lupinum/vue-photo/composables',
-        replacement: fileURLToPath(
-          new URL('./packages/vue/src/composables/index.ts', import.meta.url),
-        ),
-      },
-      {
-        find: '@lupinum/vue-photo/provide',
-        replacement: fileURLToPath(new URL('./packages/vue/src/provide/keys.ts', import.meta.url)),
-      },
-      {
-        find: '@lupinum/vue-photo/types',
-        replacement: fileURLToPath(new URL('./packages/vue/src/types/index.ts', import.meta.url)),
-      },
-      {
         find: '@lupinum/vue-photo',
         replacement: fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
       },

@@ -49,7 +49,10 @@ for (const [file, source] of sources) {
   }
 
   const allowsVueImports =
-    file.endsWith('/1.start/5.plain-vue.md') || file.endsWith('/4.reference/12.package-exports.md')
+    file.endsWith('/1.start/5.plain-vue.md') ||
+    file.endsWith('/4.reference/12.package-exports.md') ||
+    // The migration guide shows the removed Vue subpaths next to their replacement.
+    file.endsWith('/5.help/3.upgrade-from-0-2-to-1-0.md')
   if (
     !allowsVueImports &&
     /(?:from\s+|import\s+)["']@lupinum\/vue-photo(?:\/[^"']*)?["']/.test(source)
