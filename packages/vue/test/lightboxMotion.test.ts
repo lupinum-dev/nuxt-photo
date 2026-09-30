@@ -245,7 +245,7 @@ describe('lightbox motion controller', () => {
     await vi.waitFor(() => {
       expect(controls.style.opacity).toBe('1')
       expect(controls.style.pointerEvents).not.toBe('none')
-    expect(controls.inert).toBe(false)
+      expect(controls.inert).toBe(false)
     })
   })
 

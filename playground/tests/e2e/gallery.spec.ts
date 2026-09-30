@@ -99,11 +99,13 @@ test('lightbox motion exposes one deterministic WAAPI timeline', async ({ page }
       for (let frame = 0; frame < 30; frame += 1) {
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
         // CSS transitions count too; wait for the flight itself.
-        const flying = document.getAnimations().some((animation) =>
-          ((animation.effect as KeyframeEffect).target as HTMLElement)?.hasAttribute(
-            'data-np-transition-frame',
-          ),
-        )
+        const flying = document
+          .getAnimations()
+          .some((animation) =>
+            ((animation.effect as KeyframeEffect).target as HTMLElement)?.hasAttribute(
+              'data-np-transition-frame',
+            ),
+          )
         if (flying) break
       }
 

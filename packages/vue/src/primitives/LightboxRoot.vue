@@ -79,7 +79,9 @@ function getFocusableElements(root: HTMLElement) {
     (el) =>
       !el.hasAttribute('disabled') &&
       el.getAttribute('aria-hidden') !== 'true' &&
-      !el.closest('[inert]'),
+      !el.closest('[inert]') &&
+      // A caption hidden while zoomed cannot take focus; the trap must skip it.
+      getComputedStyle(el).visibility !== 'hidden',
   )
 }
 

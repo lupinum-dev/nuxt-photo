@@ -30,7 +30,13 @@ describe('LightboxRoot modal ownership', () => {
             h(
               LightboxRoot,
               { 'data-testid': 'lightbox-root' },
-              { default: () => h('button', { id: 'inside' }, 'Inside') },
+              {
+                default: () => [
+                  h('button', { id: 'inside' }, 'Inside'),
+                  // Like a caption link hidden while zoomed: present, but unable to take focus.
+                  h('a', { href: '#', id: 'hidden-link', style: 'visibility: hidden' }, 'Hidden'),
+                ],
+              },
             ),
           ])
       },
