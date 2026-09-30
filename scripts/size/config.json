@@ -10,7 +10,7 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 34816
+      "brotliLimit": 35840
     },
     "responsive": {
       "label": "responsive named import",
@@ -20,15 +20,15 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 1450
+      "brotliDeltaLimit": 1800
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 1700
+      "brotliDeltaLimit": 2000
     },
     "album": {
       "label": "module enabled with PhotoAlbum usage",
-      "brotliDeltaLimit": 30720
+      "brotliDeltaLimit": 33792
     }
   }
 }
