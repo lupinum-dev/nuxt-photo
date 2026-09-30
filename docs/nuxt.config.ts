@@ -75,6 +75,7 @@ export default defineNuxtConfig({
             name: { type: 'string', required: true },
             also: { type: 'string', required: false },
             code: { type: 'string', required: false },
+            photos: { type: 'string', required: false },
           },
           slots: [],
           media: null,

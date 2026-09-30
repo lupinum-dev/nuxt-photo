@@ -12,15 +12,14 @@ import {
   type PhotoItem,
 } from '@lupinum/nuxt-photo/app'
 
-const props = defineProps<{ photos: readonly PhotoItem[] }>()
-const shown = props.photos.slice(0, 6)
+defineProps<{ photos: readonly PhotoItem[] }>()
 </script>
 
 <template>
-  <LightboxProvider :photos="shown">
+  <LightboxProvider :photos="photos">
     <div class="photo-viewer__thumbs">
       <PhotoTrigger
-        v-for="(photo, index) in shown"
+        v-for="(photo, index) in photos"
         :key="photo.id"
         v-slot="{ hidden }"
         :photo="photo"

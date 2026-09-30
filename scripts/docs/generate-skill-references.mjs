@@ -8,8 +8,8 @@ const check = process.argv.includes('--check')
 
 const outputs = {
   'gallery-basics.md': [
-    'docs/content/docs/1.start/2.installation.md',
-    'docs/content/docs/1.start/3.build-your-first-album.md',
+    'docs/content/docs/1.start/1.introduction.md',
+    'docs/content/docs/1.start/2.get-started.md',
     'docs/content/docs/3.concepts/1.photo-data-and-dimensions.md',
   ],
   'customization.md': [

@@ -6,7 +6,12 @@ defineProps<{ photos: PhotoItem[] }>()
 
 <template>
   <div class="product">
-    <PhotoCarousel :photos="photos.slice(0, 6)" :show-counter="false" class="product__gallery" />
+    <PhotoCarousel
+      :photos="photos"
+      :show-counter="false"
+      :lightbox="true"
+      class="product__gallery"
+    />
     <div class="product__details">
       <p class="product__eyebrow">Print, 50 × 70 cm</p>
       <h3>Moss Canyon</h3>

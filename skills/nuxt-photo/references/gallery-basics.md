@@ -2,29 +2,137 @@
 
 # gallery basics
 
-## Install Nuxt Photo
+## Introduction
 
-Install one Nuxt module and enable its complete theme. The module registers the
-photo components and auto-imports its helpers.
+Nuxt Photo renders photo albums and a carousel, and opens them in an accessible
+lightbox. It lays out each album on the server from the image sizes you already
+know, so the page does not jump while images load.
+
+Complete example. Use it as `<PortfolioGrid :photos="photos" />` with your own `PhotoItem[]`.
+
+```vue [app/components/PortfolioGrid.vue]
+<script setup lang="ts">
+import { PhotoAlbum, PhotoImage, responsive, type PhotoItem } from '@lupinum/nuxt-photo/app'
+
+defineProps<{ photos: PhotoItem[] }>()
+</script>
+
+<template>
+  <PhotoAlbum
+    :photos="photos"
+    :layout="{ type: 'columns', columns: responsive({ 0: 2, 480: 3 }) }"
+    :spacing="responsive({ 0: 12, 640: 20 })"
+    navigation="crossfade"
+  >
+    <template #thumbnail="{ photo, hidden }">
+      <figure class="work" :class="{ 'work--hidden': hidden }">
+        <PhotoImage :photo="photo" context="thumb" class="work__image" />
+        <figcaption class="work__caption">{{ photo.caption }}</figcaption>
+      </figure>
+    </template>
+  </PhotoAlbum>
+</template>
+
+<style scoped>
+.work {
+  margin: 0;
+}
+
+.work__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  transition: opacity 200ms ease;
+}
+
+.work:hover .work__image {
+  opacity: 0.88;
+}
+
+.work__caption {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* The lightbox animates this photo; hide the caption so it does not sit alone. */
+.work--hidden .work__caption {
+  visibility: hidden;
+}
+</style>
+```
+
+Select a photo. Try the arrow keys, a click to zoom, and `Escape`: focus
+returns to the photo you were viewing.
+
+### Pick a component
+
+All components take the same photo data and are registered for you in Nuxt.
+
+| You need                                 | Use                                 | Lightbox               |
+| ---------------------------------------- | ----------------------------------- | ---------------------- |
+| A gallery in rows, columns, or masonry   | `<PhotoAlbum>`                      | On by default          |
+| One photo, such as a cover               | `<Photo>`                           | Add `lightbox`         |
+| Several sections with one lightbox order | `<PhotoGroup>` around albums/photos | On by default          |
+| Horizontal browsing with thumbnails      | `<PhotoCarousel>`                   | Add `:lightbox="true"` |
+| Your own thumbnail layout or viewer      | `<LightboxProvider>` and primitives | You compose it         |
+
+```vue
+<PhotoAlbum :photos="photos" />
+<Photo :photo="cover" lightbox />
+<PhotoCarousel :photos="photos" :lightbox="true" />
+```
+
+Most apps need only `PhotoAlbum`. Change its look with props, CSS variables,
+and slots before you reach for the lower-level components.
+
+### What you provide
+
+Each photo is a plain object. Four fields are required:
+
+```ts
+const photo: PhotoItem = {
+  id: 'moss-canyon', // stable and unique, not the array index
+  src: '/photos/moss-canyon.jpg',
+  width: 1280, // real pixel size of the image file
+  height: 853,
+}
+```
+
+Nuxt Photo does not measure images in the browser, because that would delay
+the layout until every image has downloaded. Store the sizes when you upload
+or import images; [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) shows how.
+
+### When to use something else
+
+- A plain CSS grid is enough when nobody needs a lightbox, zoom, or rows that
+  fill the width.
+- Use a media viewer such as lightGallery when you need video or plugins.
+  Nuxt Photo 1.0 shows photos only.
+
+[Compare gallery approaches](https://nuxt-photo.lupinum.com/docs/start/compare-approaches) covers PhotoSwipe,
+lightGallery, Nuxt Image, and a custom stack.
+
+_Source: https://nuxt-photo.lupinum.com/docs/start/introduction_
+
+## Get started
+
+In five minutes you have a styled album with a working lightbox.
 
 ::warning
-These docs describe the Nuxt Photo 1.0 beta. Install the `next` release while
-the stable `latest` tag remains on 0.2. Existing 0.2 applications should follow
-[the 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
+These docs describe the Nuxt Photo 1.0 beta. Install the `next` tag; npm
+`latest` still points to 0.2. To upgrade an existing app, follow
+[Upgrade from 0.2 to 1.0](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
 ::
 
-### Prerequisites
+You need Nuxt **4.4.8** or later in Nuxt 4, and Node **22.18+** or **24.11+**.
 
-- Nuxt **4.4.8+** within Nuxt 4
-- Node **22.18+** within Node 22, or **24.11+** within Node 24
-
-### Install the beta
+### 1. Install the module
 
 ```bash [Terminal]
 pnpm add @lupinum/nuxt-photo@next
 ```
-
-Add the module and the complete visual theme to your `nuxt.config`:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -35,162 +143,85 @@ export default defineNuxtConfig({
 })
 ```
 
-The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, and
-`<PhotoCarousel>`. It also auto-imports helpers such as `useLightbox`. The
-`css: 'all'` option includes the visual theme for your first gallery. The
-default `css: 'structure'` option is for applications that provide their own
-theme.
+The module registers `Photo`, `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`,
+and auto-imports helpers such as `responsive` and `useLightbox`. `css: 'all'`
+adds the complete look. Without it you get only the structure CSS, for apps
+that bring their own theme.
 
-### What got installed
+### 2. Add an album page
 
-The `@lupinum/nuxt-photo` package depends on the Vue library internally, so Nuxt
-apps only install the module package.
-
-| Package               | Purpose                                                           |
-| --------------------- | ----------------------------------------------------------------- |
-| `@lupinum/nuxt-photo` | Nuxt module, component registration, auto-imports, image wiring   |
-| `@lupinum/vue-photo`  | Components, composables, primitives, styles, types, photo helpers |
-
-For Nuxt app code, use auto-imports or explicit imports from
-`@lupinum/nuxt-photo/app`. Install `@lupinum/vue-photo` directly only in plain Vue
-apps.
-
-### Add `@nuxt/image` later
-
-Install `@nuxt/image` when you want responsive image generation and provider
-integrations such as Cloudinary, Vercel, or local IPX. It is optional for the
-first gallery.
-
-```bash [Terminal]
-pnpm add @nuxt/image
-```
-
-```ts [nuxt.config.ts]
-export default defineNuxtConfig({
-  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
-})
-```
-
-With `@nuxt/image` present, every thumbnail and lightbox slide is routed through
-it. Configure remote domains and provider-specific source rules in the Nuxt
-`image` block; use `nuxtPhoto.image` only for Nuxt Photo's thumb and slide
-defaults.
-
-[Image providers](https://nuxt-photo.lupinum.com/docs/concepts/image-delivery)
-
-Continue with [Build your first album](https://nuxt-photo.lupinum.com/docs/start/build-your-first-album). That
-page owns the complete copyable example and describes the result you should see.
-
-_Source: https://nuxt-photo.lupinum.com/docs/start/installation_
-
-## Build your first album
-
-Build a styled album with a working lightbox. Start with the photos below, then
-replace them with your own data after the example works.
-
-### Prerequisites
-
-- Complete [Installation](https://nuxt-photo.lupinum.com/docs/start/installation), including
-  `css: 'all'`.
-
-### 1. Add the album page
-
-Paste this into a page. The image URLs include their dimensions, so the example
-works before you add files to `public/`.
-
-```vue [app/pages/index.vue]
+```vue [app/pages/gallery.vue]
 <script setup lang="ts">
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const photos: PhotoItem[] = [
   {
-    id: 'landscape',
+    id: 'lake',
     src: 'https://picsum.photos/id/1018/1280/800',
     width: 1280,
     height: 800,
-    alt: 'Sample landscape photo',
-    caption: 'Landscape',
+    alt: 'Mountain lake under a clear sky',
+    caption: 'Lake',
   },
   {
-    id: 'portrait',
+    id: 'forest',
     src: 'https://picsum.photos/id/1015/960/1200',
     width: 960,
     height: 1200,
-    alt: 'Sample vertical photo',
-    caption: 'Portrait',
+    alt: 'River running through a valley',
+    caption: 'Valley',
   },
   {
-    id: 'wide',
+    id: 'coast',
     src: 'https://picsum.photos/id/1020/1200/800',
     width: 1200,
     height: 800,
-    alt: 'Sample wide photo',
-    caption: 'Wide Frame',
+    alt: 'Bear walking along a stony shore',
+    caption: 'Shore',
   },
 ]
 </script>
 
 <template>
-  <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 240 }" />
+  <PhotoAlbum :photos="photos" />
 </template>
 ```
 
-Reload the page. You should now see a justified rows gallery. Click any photo to
-open the lightbox; swipe, pinch to zoom, or press `Esc` to close.
+The sample URLs contain their sizes, so the page works before you add files.
 
-### 2. Check the result
+### 3. Check the result
 
-Start the development server and open the page. You should see three photos in
-rows that fill the available width. Selecting a photo opens the included
-lightbox. Press `ArrowLeft` or `ArrowRight` to navigate, then press `Escape`.
-Focus should return to the selected thumbnail.
+Start the dev server and open `/gallery`:
 
-### 3. Use your own photos
+- The three photos fill the width in justified rows, with no jump while they load.
+- Selecting a photo opens the lightbox from the thumbnail.
+- `ArrowLeft` and `ArrowRight` change the photo; a click zooms to real pixels.
+- `Escape` closes the lightbox and focus returns to the thumbnail.
 
-Every photo is a plain object with four required fields:
+### 4. Use your own photos
 
-| Field    | Purpose                                             |
-| -------- | --------------------------------------------------- |
-| `id`     | Stable, unique identity for navigation and updates. |
-| `src`    | Image URL or public path.                           |
-| `width`  | Intrinsic image width in pixels.                    |
-| `height` | Intrinsic image height in pixels.                   |
+Replace the array with your data. Each photo needs:
 
-`alt`, captions, descriptions, placeholders, and metadata are optional. Add
-meaningful `alt` text unless the image is decorative.
+| Field    | Rule                                                        |
+| -------- | ----------------------------------------------------------- |
+| `id`     | Stable and unique in the collection. Not the array index.   |
+| `src`    | Image URL or public path.                                   |
+| `width`  | Real pixel width of the image file, not its displayed size. |
+| `height` | Real pixel height of the image file.                        |
 
-```ts [app/composables/gallery.ts]
-import type { PhotoItem } from '@lupinum/nuxt-photo/app'
-
-export const gallery: PhotoItem[] = [
-  {
-    id: 'desert',
-    src: '/photos/desert.jpg',
-    width: 1280,
-    height: 800,
-    alt: 'Desert at golden hour',
-    caption: 'Desert Light',
-  },
-]
-```
+Add `alt` for every image that is not decorative. `caption` and `description`
+appear in the lightbox.
 
 ::warning
-`width` and `height` must match the real image. Nuxt Photo uses them to lay out
-thumbnails before images load and to compute the lightbox transition frame.
-Wrong dimensions can still render an image, but the layout and opening
-animation will be wrong.
+Wrong `width` or `height` values still render, but the layout and the opening
+animation are wrong. Read the sizes from the file, your CMS, or your upload
+pipeline.
 ::
 
-### Choose the next task
+Data from a CMS or an API: [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos).
+Resized and modern image formats: [Deliver images](https://nuxt-photo.lupinum.com/docs/guides/use-nuxt-image).
 
-- [Choose a component](https://nuxt-photo.lupinum.com/docs/start/choose-a-component) when you need a single photo,
-  several albums, or a carousel.
-- [Use your CMS photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) when data comes from an
-  API or content system.
-- [Tune responsive layouts](https://nuxt-photo.lupinum.com/docs/guides/tune-responsive-layouts) when the rows,
-  spacing, or breakpoints need to change.
-
-_Source: https://nuxt-photo.lupinum.com/docs/start/build-your-first-album_
+_Source: https://nuxt-photo.lupinum.com/docs/start/get-started_
 
 ## Photo data and dimensions
 

@@ -11,7 +11,20 @@ const props = defineProps<{
   also?: string
   /** `open` shows the code without a click, for guides where the code is the point. */
   code?: string
+  /**
+   * Which demo photos to pass, as indexes and ranges: `8,9-10,5`. The default is
+   * the first six. Choosing them here keeps demo-only code out of the example.
+   */
+  photos?: string
 }>()
+
+function pickPhotos(selection = '0-5') {
+  return selection.split(',').flatMap((part) => {
+    const [start, end = start] = part.split('-').map((value) => Number(value.trim()))
+    return demoPhotos.slice(start, end! + 1)
+  })
+}
+const examplePhotos = pickPhotos(props.photos)
 
 // The page renders the example and shows its source from the same file.
 const components = import.meta.glob('~/examples/*.vue')
@@ -47,7 +60,7 @@ const codeId = useId()
 <template>
   <figure class="docs-example not-prose">
     <div class="docs-example__stage">
-      <Example :photos="demoPhotos" />
+      <Example :photos="examplePhotos" />
     </div>
     <div class="docs-example__bar">
       <div v-if="showCode && loaded.length > 1" class="docs-example__tabs" role="tablist">
