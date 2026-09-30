@@ -20,7 +20,8 @@ thumbnail or lightbox slide.
 `auto` is the default. Its native fallback is expected and does not warn.
 
 The native adapter uses `thumbSrc` for thumbnails when present and `src` for
-slides. It passes through `srcset` and native `sizes` values. The Nuxt Image
+slides. It passes `srcset` through, except for a thumbnail that uses `thumbSrc`.
+It sets no `sizes`; use the `sizes` prop on `PhotoAlbum` or a custom adapter. The Nuxt Image
 adapter generates responsive URLs from its configured provider.
 
 Use the [Nuxt Image guide](https://nuxt-photo.lupinum.com/docs/guides/use-nuxt-image) or the
@@ -375,7 +376,7 @@ This setting stops Nuxt Photo from registering an adapter at application start. 
 
 ### 2. Write the adapter
 
-```ts [utils/photoAdapter.ts]
+```ts [app/utils/photoAdapter.ts]
 import type { ImageAdapter, PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const BASE = 'https://cdn.example.com/transform'
@@ -415,7 +416,7 @@ A few principles:
 
 Use a Nuxt plugin that runs for the app, not a client-only plugin:
 
-```ts [plugins/photo-adapter.ts]
+```ts [app/plugins/photo-adapter.ts]
 import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
 import { cmsAdapter } from '~/utils/photoAdapter'
 

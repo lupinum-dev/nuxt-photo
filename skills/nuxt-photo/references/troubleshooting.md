@@ -21,9 +21,16 @@ browser reserve space before the image loads.
 
 ### Selecting a photo does not open a lightbox
 
-`PhotoAlbum`, `PhotoCarousel`, and a standalone `Photo` create the required
-lightbox context by default. Lower-level components such as `PhotoTrigger`
-must be inside `LightboxProvider`.
+`PhotoAlbum` and `PhotoGroup` open a lightbox by default. `Photo` and
+`PhotoCarousel` open one only when you set `lightbox`:
+
+```vue
+<Photo :photo="cover" lightbox />
+<PhotoCarousel :photos="photos" :lightbox="true" />
+```
+
+Lower-level components such as `PhotoTrigger` must be inside
+`LightboxProvider`.
 
 If `lightbox` was `false` when a ready-made component mounted, changing it to
 `true` does not create a provider. Remount the component with a new `:key`, or
@@ -42,9 +49,9 @@ option.
 </PhotoGroup>
 ```
 
-Nuxt Photo warns when a descendant registers an ID that is missing from the
-group. It does not add that photo implicitly because DOM mount order is not a
-stable navigation order.
+A descendant ID that is missing from the group throws during registration.
+Nuxt Photo does not add that photo for you, because the order in which
+components mount is not a stable navigation order.
 
 ### Photo data throws an error
 
@@ -198,7 +205,7 @@ options are not extension points.
 
 Nuxt Photo follows `prefers-reduced-motion` and reacts when the media query
 changes. Opening and closing use a short fade instead of moving from the
-thumbnail. With `navigation="slide"` the next photo appears without scrolling,
+thumbnail, unless `transition` is `'none'`. With `navigation="slide"` the next photo appears without scrolling,
 and the fade modes change photos without a fade.
 
 ### The fade modes need the structure CSS
@@ -210,8 +217,8 @@ structure CSS. A custom lightbox that replaces all structural CSS must stack
 ### The backdrop glow needs readable thumbnails
 
 The included theme blurs a small copy of the current thumbnail behind the
-lightbox. A thumbnail from another origin is blurred only when its server sends
-CORS headers; otherwise the glow is only softened. Set `--np-ambient-opacity: 0`
+lightbox. A thumbnail from another
+origin is not blurred; the glow is then only softened. Set `--np-ambient-opacity: 0`
 to turn the glow off.
 
 ### A failed image keeps its placeholder
