@@ -83,7 +83,7 @@ function setup(mode: 'flip' | 'fade' | 'none' = 'flip', supportsDecode = true) {
   motion.setSlideImageRef(0)(slideImage)
   motion.setThumbRef(0)(thumb)
 
-  return { motion, slideImage, controls, viewport, callbacks: callbacks() }
+  return { motion, slideImage, overlay, controls, viewport, callbacks: callbacks() }
 }
 
 describe('lightbox motion controller', () => {
@@ -171,6 +171,22 @@ describe('lightbox motion controller', () => {
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
     expect(controls.style.pointerEvents).toBe('auto')
+  })
+
+  it('keeps the backdrop hidden when a drag reset is still waiting to paint', async () => {
+    const { motion, overlay, callbacks } = setup()
+    // Hold the flight at its first frame so only inline styles decide what is painted.
+    overlay.animate = vi.fn(
+      () => ({ finished: new Promise<void>(() => {}), cancel: vi.fn() }) as unknown as Animation,
+    )
+    const controller = new AbortController()
+    motion.captureOpen(0, '/fallback-thumb.jpg')
+    motion.setCloseDragY(0)
+    void motion.open(0, callbacks, controller.signal).catch(() => {})
+
+    await vi.waitFor(() => expect(overlay.animate).toHaveBeenCalled())
+    expect(overlay.style.opacity).toBe('0')
+    controller.abort()
   })
 
   it('cleans every visual state after close', async () => {
