@@ -9,19 +9,10 @@ const ginkoDocsDir = realpathSync(
 )
 
 const customComponents = [
-  'accessibility-lab',
   'album-layout-lab',
   'carousel-lab',
-  'collection-ownership-lab',
   'customization-lab',
   'decision-guide',
-  'gesture-lab',
-  'image-pipeline-lab',
-  'lightbox-behavior-lab',
-  'photo-model-lab',
-  'responsive-lab',
-  'ssr-layout-lab',
-  'theme-lab',
 ] as const
 
 const components = Object.fromEntries(

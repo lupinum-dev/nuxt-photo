@@ -75,17 +75,5 @@ function reset() {
       >
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state
-      ><DemoState
-        :value="{
-          loop,
-          dragFree,
-          autoplay,
-          thumbnails,
-          dots,
-          lightbox,
-          direction,
-        }"
-    /></template>
   </InteractiveExample>
 </template>

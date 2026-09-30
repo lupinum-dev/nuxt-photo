@@ -157,54 +157,15 @@ If you need a different component structure, use
 
 ## 1. Wrap the included lightbox
 
-Create a component that renders `<Lightbox>` and overrides only the slots you need.
+Create a component that renders `<Lightbox>` and overrides only the slots you
+need. This one replaces the counter and the caption, and widens the mat around
+the photo. Open a photo to see it:
 
-```vue [components/MyLightbox.vue]
-<script setup lang="ts">
-import { Lightbox } from '@lupinum/nuxt-photo/app'
-</script>
+::example{name="caption-gallery" also="caption-lightbox" code="open"}
+::
 
-<template>
-  <Lightbox>
-    <template #counter="{ activeIndex, count }">
-      <div class="text-sm opacity-70">{{ activeIndex + 1 }} of {{ count }}</div>
-    </template>
-
-    <template #caption="{ photo, index }">
-      <div class="space-y-1">
-        <div class="text-xs uppercase tracking-wide opacity-60">Frame {{ index + 1 }}</div>
-        <h2 v-if="photo?.caption" class="text-lg font-medium">
-          {{ photo.caption }}
-        </h2>
-        <p v-if="photo?.description" class="text-sm opacity-80">
-          {{ photo.description }}
-        </p>
-      </div>
-    </template>
-
-    <template
-      #actions="{
-        activeIndex,
-        count,
-        prev,
-        next,
-        close,
-        toggleZoom,
-        isZoomedIn,
-        zoomAllowed,
-        controlsDisabled,
-      }"
-    >
-      <button :disabled="controlsDisabled || activeIndex <= 0" @click="prev">Prev</button>
-      <button :disabled="controlsDisabled || activeIndex >= count - 1" @click="next">Next</button>
-      <button :disabled="controlsDisabled || !zoomAllowed" @click="toggleZoom()">
-        {{ isZoomedIn ? 'Fit' : 'Zoom' }}
-      </button>
-      <button :disabled="controlsDisabled" @click="close">Close</button>
-    </template>
-  </Lightbox>
-</template>
-```
+The `actions` slot replaces the top buttons in the same way; its props are
+listed in [the Lightbox reference](/docs/reference/lightbox#slots).
 
 That keeps the built-in gesture handling, transitions, focus behavior, and slide wiring. You only replace the visible pieces.
 
@@ -216,11 +177,11 @@ Pass the wrapper through the `lightbox` prop on the ready-made component you wan
 
 ```vue
 <script setup lang="ts">
-import MyLightbox from '~/components/MyLightbox.vue'
+import CaptionLightbox from '~/components/CaptionLightbox.vue'
 </script>
 
 <template>
-  <PhotoAlbum :photos="photos" :lightbox="MyLightbox" />
+  <PhotoAlbum :photos="photos" :lightbox="CaptionLightbox" />
 </template>
 ```
 
@@ -228,11 +189,11 @@ import MyLightbox from '~/components/MyLightbox.vue'
 
 ```vue
 <script setup lang="ts">
-import MyLightbox from '~/components/MyLightbox.vue'
+import CaptionLightbox from '~/components/CaptionLightbox.vue'
 </script>
 
 <template>
-  <PhotoGroup :photos="photos" :lightbox="MyLightbox">
+  <PhotoGroup :photos="photos" :lightbox="CaptionLightbox">
     <PhotoAlbum :photos="photos" />
   </PhotoGroup>
 </template>
@@ -242,11 +203,11 @@ import MyLightbox from '~/components/MyLightbox.vue'
 
 ```vue
 <script setup lang="ts">
-import MyLightbox from '~/components/MyLightbox.vue'
+import CaptionLightbox from '~/components/CaptionLightbox.vue'
 </script>
 
 <template>
-  <PhotoCarousel :photos="photos" :lightbox="MyLightbox" />
+  <PhotoCarousel :photos="photos" :lightbox="CaptionLightbox" />
 </template>
 ```
 
@@ -293,14 +254,14 @@ If most galleries in the app should use the same custom lightbox, set it once gl
 
 ```ts [app/plugins/photo-lightbox.ts]
 import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
-import MyLightbox from '~/components/MyLightbox.vue'
+import CaptionLightbox from '~/components/CaptionLightbox.vue'
 
 export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.provide(LightboxComponentKey, MyLightbox)
+  nuxtApp.vueApp.provide(LightboxComponentKey, CaptionLightbox)
 })
 ```
 
-Ready-made components now use `MyLightbox` unless their `lightbox` prop provides a
+Ready-made components now use `CaptionLightbox` unless their `lightbox` prop provides a
 different component. The global component does not enable a lightbox by itself.
 `Photo` and `PhotoCarousel` still require `lightbox` to be enabled. An explicit
 component passed through the `lightbox` prop takes precedence over the global
