@@ -1,11 +1,3 @@
-<script setup lang="ts">
-import { provide } from 'vue'
-import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
-import Lightbox from '~/components/Lightbox.vue'
-
-provide(LightboxComponentKey, Lightbox)
-</script>
-
 <template>
   <div class="app">
     <nav class="nav">

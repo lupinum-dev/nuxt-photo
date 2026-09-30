@@ -45,7 +45,8 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = tru
     clampPanWithResistance: vi.fn((pan: { x: number; y: number }) => pan),
     applyWheelZoom: vi.fn(),
     toggleZoom: vi.fn(),
-    getPanBounds: vi.fn(() => ({ x: 220, y: 120 })),
+    getPanBounds: vi.fn(() => ({ minX: -220, maxX: 220, minY: -120, maxY: 120 })),
+    getFrameOffset: vi.fn(() => ({ x: 0, y: 0 })),
     isPointOnPhoto: vi.fn(() => onPhoto),
 
     goToNext: vi.fn(),
@@ -85,6 +86,7 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = tru
       applyWheelZoom: config.applyWheelZoom,
       toggleZoom: config.toggleZoom,
       getPanBounds: config.getPanBounds,
+      getFrameOffset: config.getFrameOffset,
       isPointOnPhoto: config.isPointOnPhoto,
     },
     navigation: {

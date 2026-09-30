@@ -34,6 +34,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
       [
         'ImageAdapterKey',
         'Lightbox',
+        'LightboxAmbient',
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',

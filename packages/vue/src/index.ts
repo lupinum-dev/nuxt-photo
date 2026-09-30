@@ -5,6 +5,7 @@ export {
   LightboxProvider,
   LightboxRoot,
   LightboxOverlay,
+  LightboxAmbient,
   LightboxViewport,
   LightboxSlide,
   LightboxControls,

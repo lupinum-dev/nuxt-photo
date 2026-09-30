@@ -10,5 +10,5 @@ test('headless playground wiring works through useLightbox', async ({ request })
   // after the trigger's own class.
   expect(html.match(/class="[^"]*hex-grid__item"/g)).toHaveLength(8)
   expect(html.match(/<button[^>]*hex-grid__item/g)).toHaveLength(8)
-  expect(html).toContain('alt="Desert landscape at golden hour"')
+  expect(html).toContain('alt="River canyon with moss-covered walls"')
 })

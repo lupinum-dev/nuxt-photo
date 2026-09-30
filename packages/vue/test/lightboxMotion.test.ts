@@ -170,7 +170,8 @@ describe('lightbox motion controller', () => {
     expect(motion.stageMounted.value).toBe(true)
     expect(motion.transitionInProgress.value).toBe(false)
     expect(motion.hiddenThumbIndex.value).toBe(0)
-    expect(controls.style.pointerEvents).toBe('auto')
+    expect(controls.style.pointerEvents).not.toBe('none')
+    expect(controls.inert).toBe(false)
   })
 
   it('keeps the backdrop hidden when a drag reset is still waiting to paint', async () => {
@@ -243,7 +244,8 @@ describe('lightbox motion controller', () => {
     completions.at(-1)?.()
     await vi.waitFor(() => {
       expect(controls.style.opacity).toBe('1')
-      expect(controls.style.pointerEvents).toBe('auto')
+      expect(controls.style.pointerEvents).not.toBe('none')
+      expect(controls.inert).toBe(false)
     })
   })
 

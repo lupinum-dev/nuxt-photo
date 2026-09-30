@@ -1,6 +1,7 @@
 export { default as LightboxProvider } from './LightboxProvider.vue'
 export { default as LightboxRoot } from './LightboxRoot.vue'
 export { default as LightboxOverlay } from './LightboxOverlay.vue'
+export { default as LightboxAmbient } from './LightboxAmbient.vue'
 export { default as LightboxViewport } from './LightboxViewport.vue'
 export { default as LightboxSlide } from './LightboxSlide.vue'
 export { default as LightboxControls } from './LightboxControls.vue'

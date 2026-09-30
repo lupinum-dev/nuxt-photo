@@ -15,6 +15,7 @@ import {
   computeTargetPanForZoom,
   fitRect,
   type AreaMetrics,
+  type PanBounds,
   type PanState,
   type PhotoItem,
   type RectLike,
@@ -78,11 +79,22 @@ export function usePanzoom(
     )
   }
 
-  function getPanBounds(photo: PhotoItem, zoom: number) {
+  /** Where the fitted frame's center sits relative to the area's center. */
+  function getFrameOffset(photo: PhotoItem): PanState {
     const area = areaMetrics.value
     const frame = getFrameRect(photo)
     if (!area || !frame) return { x: 0, y: 0 }
-    return computePanBounds(frame, area, zoom)
+    return {
+      x: frame.left + frame.width / 2 - area.width / 2,
+      y: frame.top + frame.height / 2 - area.height / 2,
+    }
+  }
+
+  function getPanBounds(photo: PhotoItem, zoom: number): PanBounds {
+    const area = areaMetrics.value
+    const frame = getFrameRect(photo)
+    if (!area || !frame) return { minX: 0, maxX: 0, minY: 0, maxY: 0 }
+    return computePanBounds(frame, area, zoom, getFrameOffset(photo))
   }
 
   function clampPan(
@@ -129,6 +141,7 @@ export function usePanzoom(
       point,
       zoomState.value.fit,
       bounds,
+      getFrameOffset(photo),
     )
   }
 
@@ -355,6 +368,7 @@ export function usePanzoom(
     setSlideZoomRef,
     computeZoomLevels,
     getPanBounds,
+    getFrameOffset,
     clampPan,
     clampPanWithResistance,
     getPointFromClient,

@@ -1,73 +1,133 @@
 /* Theme styles for Lightbox recipe — visual appearance, colors, blur, typography */
 /* Override any --np-* variable on .np-lightbox to customize the theme */
 .np-lightbox {
-  --np-backdrop-bg: rgba(0, 0, 0, 0.85);
+  /* A dark room lit by a soft glow of the photo; set --np-ambient-opacity: 0 for a plain room. */
+  --np-backdrop-bg: #0c0c0e;
   --np-backdrop-filter: none;
+  --np-ambient-opacity: 0.45;
+
+  /* Controls: dark glass that stays readable over bright and zoomed photos. */
   --np-btn-radius: 999px;
-  --np-btn-bg: rgba(255, 255, 255, 0.1);
-  --np-btn-hover-bg: rgba(255, 255, 255, 0.16);
-  --np-btn-color: white;
-  --np-btn-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 16px 40px rgba(0, 0, 0, 0.24);
-  --np-btn-blur: 8px;
-  --np-btn-disabled-opacity: 0.45;
-  --np-counter-color: rgba(255, 255, 255, 0.72);
-  --np-img-radius: 14px;
-  --np-img-shadow: 0 24px 80px rgba(0, 0, 0, 0.34), 0 2px 12px rgba(0, 0, 0, 0.28);
-  --np-caption-color: white;
-  --np-caption-heading-size: 22px;
-  --np-caption-secondary: rgba(255, 255, 255, 0.72);
+  --np-btn-bg: rgba(22, 22, 25, 0.62);
+  --np-btn-hover-bg: rgba(48, 48, 54, 0.78);
+  --np-btn-color: #f4f3f0;
+  --np-btn-border: rgba(255, 255, 255, 0.12);
+  --np-btn-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  --np-btn-blur: 10px;
+  --np-btn-disabled-opacity: 0.35;
+  --np-focus-ring: #f4f3f0;
+
+  --np-counter-color: rgba(244, 243, 240, 0.82);
+
+  /* The photo in its mat. */
+  --np-img-radius: 6px;
+  --np-img-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.35);
+
+  /* The wall label. */
+  --np-caption-color: #f4f3f0;
+  --np-caption-heading-size: 17px;
+  --np-caption-secondary: rgba(244, 243, 240, 0.66);
 }
 
 .np-lightbox__backdrop {
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent 36vh), var(--np-backdrop-bg);
+  background: var(--np-backdrop-bg);
   backdrop-filter: var(--np-backdrop-filter);
 }
 
+.np-lightbox__backdrop::after {
+  /* A scrim keeps the glow quiet so the photo stays the brightest thing in the room. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 8, 10, 0.38);
+}
+
+.np-lightbox__ambient {
+  opacity: var(--np-ambient-opacity);
+}
+
+.np-lightbox__counter,
+.np-lightbox__tools,
+.np-lightbox__btn--prev,
+.np-lightbox__btn--next {
+  border: 1px solid var(--np-btn-border);
+  border-radius: var(--np-btn-radius);
+  background: var(--np-btn-bg);
+  box-shadow: var(--np-btn-shadow);
+  backdrop-filter: blur(var(--np-btn-blur));
+  -webkit-backdrop-filter: blur(var(--np-btn-blur));
+}
+
 .np-lightbox__counter {
+  display: inline-flex;
+  align-items: center;
+  /* Same height as the tools pill beside it. */
+  height: 42px;
+  padding: 0 14px;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--np-counter-color);
 }
 
 .np-lightbox__btn {
   border-radius: var(--np-btn-radius);
   color: var(--np-btn-color);
-  background: var(--np-btn-bg);
-  box-shadow: var(--np-btn-shadow);
-  backdrop-filter: blur(var(--np-btn-blur));
+  background: transparent;
 }
 
 .np-lightbox__btn:hover:not(:disabled) {
   background: var(--np-btn-hover-bg);
 }
 
+.np-lightbox__btn--prev:not(:hover),
+.np-lightbox__btn--next:not(:hover) {
+  background: var(--np-btn-bg);
+}
+
+.np-lightbox__btn:focus-visible {
+  outline: 2px solid var(--np-focus-ring);
+  outline-offset: 2px;
+}
+
 .np-lightbox__btn:disabled {
   opacity: var(--np-btn-disabled-opacity);
+  cursor: default;
 }
 
 [data-np-slide-img] {
   border-radius: var(--np-img-radius);
-  outline: 1px solid rgba(255, 255, 255, 0.1);
+  outline: 1px solid rgba(255, 255, 255, 0.08);
   outline-offset: -1px;
   box-shadow: var(--np-img-shadow);
 }
 
+/* While zoomed, the frame falls away and the photo shows its real pixels edge to edge. */
+.np-lightbox__media[data-zoomed] [data-np-slide-img] {
+  border-radius: 0;
+  outline-color: transparent;
+  box-shadow: none;
+}
+
 .np-lightbox__caption {
   color: var(--np-caption-color);
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.72);
 }
 
 .np-lightbox__fallback {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(244, 243, 240, 0.78);
   font-size: 14px;
 }
 
-.np-lightbox__caption h2 {
+.np-lightbox__label h2 {
   font-size: var(--np-caption-heading-size);
-  letter-spacing: -0.03em;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
-.np-lightbox__caption p {
+.np-lightbox__label p {
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--np-caption-secondary);
 }

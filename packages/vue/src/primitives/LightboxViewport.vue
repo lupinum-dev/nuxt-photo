@@ -18,6 +18,8 @@
     @lostpointercapture.capture="ctx.onMediaPointerCancel"
     @wheel="ctx.onWheel"
   >
+    <!-- Measured, never painted: its box is where a fitted photo may sit. -->
+    <div data-np-frame-area aria-hidden="true" />
     <slot
       v-if="ctx.stageMounted.value"
       :photos="ctx.photos.value"

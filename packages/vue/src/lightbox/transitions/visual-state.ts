@@ -214,8 +214,11 @@ export function createMotionVisualState() {
       element.style.opacity = String(opacity)
       element.inert = hidden
     }
-    for (const element of controls) element.style.pointerEvents = hidden ? 'none' : 'auto'
-    for (const element of captions) element.style.pointerEvents = hidden ? 'none' : ''
+    // Visible chrome returns to its stylesheet value: a full-screen controls layer must
+    // stay click-through so clicks still reach the photo and the backdrop.
+    for (const element of [...controls, ...captions]) {
+      element.style.pointerEvents = hidden ? 'none' : ''
+    }
   }
 
   function normalizeTransitionVisual(rect: RectLike, src: string) {
