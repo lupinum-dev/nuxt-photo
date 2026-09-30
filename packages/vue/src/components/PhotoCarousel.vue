@@ -39,6 +39,7 @@ import type {
 import type {
   InvalidPhotoPolicy,
   InvalidPhotosEvent,
+  LightboxNavigationMode,
   LightboxTransitionOption,
 } from '../core/index'
 import { provideLightbox } from '../composables/index'
@@ -82,6 +83,7 @@ const props = withDefaults(
     lightbox?: boolean | Component
     /** Reactive transition configuration. */
     transition?: LightboxTransitionOption
+    navigation?: LightboxNavigationMode
     slideClass?: string
     imgClass?: string
     thumbClass?: string
@@ -123,6 +125,7 @@ warnOnSetupOptionChanges('PhotoCarousel', {
 const provider = hasLightbox
   ? provideLightbox(resolvedPhotos, {
       transition: () => props.transition,
+      navigation: () => props.navigation,
       imageAdapter: computed(() => props.imageAdapter),
     })
   : null

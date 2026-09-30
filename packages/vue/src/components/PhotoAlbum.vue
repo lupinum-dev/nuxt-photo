@@ -125,6 +125,7 @@ import {
   DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
   type ImageAdapter,
+  type LightboxNavigationMode,
   type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
@@ -171,6 +172,7 @@ const props = withDefaults(
     imageAdapter?: ImageAdapter<TMeta>
     lightbox?: boolean | Component
     transition?: LightboxTransitionOption
+    navigation?: LightboxNavigationMode
     itemClass?: string
     imgClass?: string
   }>(),

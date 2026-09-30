@@ -7,7 +7,14 @@ import type {
   Ref,
   VNodeChild,
 } from 'vue'
-import type { GestureMode, ImageAdapter, PanState, PhotoItem, ZoomState } from '../core/index'
+import type {
+  GestureMode,
+  ImageAdapter,
+  LightboxNavigationMode,
+  PanState,
+  PhotoItem,
+  ZoomState,
+} from '../core/index'
 import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
@@ -57,10 +64,12 @@ type LightboxRuntimeState = {
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
   imageAdapter: ComputedRef<ImageAdapter>
+  navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
   frameVars: ComputedRef<Record<string, string>>
   isSlideMediaMounted: (index: number) => boolean
+  isSlideLeaving: (index: number) => boolean
 }
 
 type LightboxDomBindings = {

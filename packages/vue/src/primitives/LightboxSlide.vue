@@ -1,5 +1,5 @@
 <template>
-  <div v-bind="$attrs">
+  <div data-np-slide :data-np-active="isActive || undefined" v-bind="$attrs">
     <div data-np-slide-effect :class="effectClass">
       <div
         data-np-slide-frame
@@ -9,14 +9,14 @@
       >
         <div data-np-slide-zoom :class="zoomClass" :ref="ctx.setSlideZoomRef(index)">
           <slot
-            v-if="$slots.default && isActive"
+            v-if="$slots.default && showsContent"
             :photo="photo"
             :index="index"
             :width="frameWidth"
             :height="frameHeight"
           />
           <CustomSlideRenderer
-            v-else-if="slideRenderer && isActive"
+            v-else-if="slideRenderer && showsContent"
             :renderer="slideRenderer"
             :photo="photo"
             :index="index"
@@ -63,6 +63,8 @@ const resolveSlide = inject(LightboxSlideRendererKey, () => null)
 
 const slideRenderer = computed(() => resolveSlide(props.photo))
 const isActive = computed(() => ctx.activeIndex.value === props.index)
+// Custom content renders on the active slide, and on a slide still fading out of view.
+const showsContent = computed(() => isActive.value || ctx.isSlideLeaving(props.index))
 const mediaMounted = computed(() => ctx.isSlideMediaMounted(props.index))
 
 const frameStyle = computed(() => ctx.getSlideFrameStyle(props.photo))

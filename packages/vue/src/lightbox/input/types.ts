@@ -39,6 +39,10 @@ export type GestureInputConfig = {
     goToPrev: () => void
     goTo: (index: number, instant?: boolean) => void
     selectedSnap: () => number
+    /** True when a swipe track moves the photos; false in the fade modes. */
+    usesTrack: () => boolean
+    dragSlide: (deltaX: number) => void
+    releaseSlide: (deltaX: number, velocityX: number) => void
     goToFirst: () => void
     goToLast: () => void
   }

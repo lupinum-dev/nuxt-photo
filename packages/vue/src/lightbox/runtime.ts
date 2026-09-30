@@ -16,6 +16,7 @@ import {
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
   type ImageAdapter,
+  type LightboxNavigationMode,
   type LightboxTransitionOption,
   type PhotoItem,
 } from '../core/index'
@@ -36,9 +37,16 @@ import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
 import { acquireLightboxOwnership, releaseLightboxOwnership } from '../internal/lightboxOwnership'
 
-export function getMountedSlideIndices(active: number, count: number) {
+export function getMountedSlideIndices(
+  active: number,
+  count: number,
+  leaving: Iterable<number> = [],
+) {
   if (count <= 0) return new Set<number>()
-  return new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
+  const mounted = new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
+  // A photo that is still fading out keeps its image until the fade ends.
+  for (const index of leaving) if (index < count) mounted.add(index)
+  return mounted
 }
 
 export function resolveTransitionConfig(
@@ -70,6 +78,7 @@ export function useLightboxRuntimeState(
   transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
   imageAdapter?: MaybeRef<ImageAdapter | undefined>,
+  navigationOption?: MaybeRefOrGetter<LightboxNavigationMode | undefined>,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
     console.warn('[nuxt-photo] useLightboxRuntimeState must be called inside a component setup()')
@@ -103,6 +112,9 @@ export function useLightboxRuntimeState(
   const transitionConfig = computed(() => {
     return resolveTransitionConfig(toValue(transitionOption), reducedMotion.value)
   })
+  const navigationMode = computed(
+    (): LightboxNavigationMode => toValue(navigationOption) ?? 'slide',
+  )
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
@@ -112,13 +124,13 @@ export function useLightboxRuntimeState(
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
 
-  const carousel = useCarousel(
-    photos,
-    areaMetrics,
-    frameAreaMetrics,
-    () => isZoomedIn(),
-    () => isInteractionLocked(),
-  )
+  const carousel = useCarousel(photos, areaMetrics, frameAreaMetrics, {
+    isZoomedIn: () => isZoomedIn(),
+    isInteractionLocked: () => isInteractionLocked(),
+    navigationMode: () => navigationMode.value,
+    isReducedMotion: () => reducedMotion.value,
+    onNavigate: (from, to) => motion.playNavigation(from, to),
+  })
 
   const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, resolvedMinZoom, (photo) =>
     carousel.getRelativeFrameRect(photo),
@@ -131,6 +143,7 @@ export function useLightboxRuntimeState(
     carousel.getAbsoluteFrameRect,
     () => transitionConfig.value,
     () => reducedMotion.value,
+    () => navigationMode.value,
   )
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
@@ -327,6 +340,17 @@ export function useLightboxRuntimeState(
       goToPrev: carousel.goToPrev,
       goTo: carousel.goTo,
       selectedSnap: carousel.selectedSnap,
+      usesTrack: () => navigationMode.value === 'slide',
+      dragSlide: motion.dragNavigation,
+      releaseSlide: (deltaX: number, velocityX: number) => {
+        // With one photo there is nowhere to go; the drag settles back.
+        const count = photos.value.length
+        if (!motion.releaseNavigation(count > 1 ? deltaX : 0, count > 1 ? velocityX : 0)) return
+        // Dragging toward the start edge reveals the next photo, mirrored for RTL.
+        const rtl = document.documentElement.dir.toLowerCase() === 'rtl'
+        if (rtl ? deltaX > 0 : deltaX < 0) carousel.goToNext()
+        else carousel.goToPrev()
+      },
       goToFirst: () => carousel.goTo(0),
       goToLast: () => carousel.goTo(photos.value.length - 1),
     },
@@ -390,6 +414,7 @@ export function useLightboxRuntimeState(
     count: computed(() => photos.value.length),
     lifecycleStatus,
     transitionConfig,
+    navigationMode,
     reducedMotion,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
@@ -442,9 +467,14 @@ export function useLightboxRuntimeState(
     handleBackdropClick: () => motion.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
     frameVars,
+    isSlideLeaving: (index: number) => motion.leavingSlides.value.includes(index),
     isSlideMediaMounted: (index: number) => {
       const count = photos.value.length
-      return getMountedSlideIndices(carousel.activeIndex.value, count).has(index)
+      return getMountedSlideIndices(
+        carousel.activeIndex.value,
+        count,
+        motion.leavingSlides.value,
+      ).has(index)
     },
   }
 }

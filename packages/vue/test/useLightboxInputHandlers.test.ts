@@ -5,7 +5,12 @@ import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxInputHandlers } from '../src/lightbox/input/pointer'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = true) {
+function createGestureConfig(
+  zoomedIn = false,
+  zoomAllowed = true,
+  onPhoto = true,
+  usesTrack = true,
+) {
   const isZoomedIn = ref(zoomedIn)
   let currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
@@ -53,6 +58,9 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = tru
     goToPrev: vi.fn(),
     goTo: vi.fn(),
     selectedSnap: vi.fn(() => 0),
+    usesTrack: () => usesTrack,
+    dragSlide: vi.fn(),
+    releaseSlide: vi.fn(),
     goToFirst: vi.fn(),
     goToLast: vi.fn(),
 
@@ -94,6 +102,9 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = tru
       goToPrev: config.goToPrev,
       goTo: config.goTo,
       selectedSnap: config.selectedSnap,
+      usesTrack: config.usesTrack,
+      dragSlide: config.dragSlide,
+      releaseSlide: config.releaseSlide,
       goToFirst: config.goToFirst,
       goToLast: config.goToLast,
     },
@@ -284,6 +295,21 @@ describe('useLightboxInputHandlers', () => {
 
     expect(config.handleCloseGesture).toHaveBeenCalledTimes(1)
     expect(config.goToNext).not.toHaveBeenCalled()
+  })
+
+  it('lets the photo follow a horizontal swipe when there is no swipe track', async () => {
+    const { config } = createGestureConfig(false, true, true, false)
+    const gestures = useLightboxInputHandlers(config)
+    const touch = { pointerId: 3, pointerType: 'touch', clientY: 200 }
+
+    gestures.onMediaPointerDown(new PointerEvent('pointerdown', { ...touch, clientX: 400 }))
+    gestures.onMediaPointerMove(new PointerEvent('pointermove', { ...touch, clientX: 340 }))
+    gestures.onMediaPointerMove(new PointerEvent('pointermove', { ...touch, clientX: 250 }))
+    await gestures.onMediaPointerUp(new PointerEvent('pointerup', { ...touch, clientX: 250 }))
+
+    expect(config.dragSlide).toHaveBeenLastCalledWith(-150)
+    expect(config.releaseSlide).toHaveBeenCalledWith(-150, expect.any(Number))
+    expect(config.close).not.toHaveBeenCalled()
   })
 
   it('pinch-zooms with two active touch pointers', async () => {

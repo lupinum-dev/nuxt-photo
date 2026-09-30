@@ -87,6 +87,41 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('')
 })
 
+for (const navigation of ['fade', 'crossfade']) {
+  test(`${navigation} navigation changes photos by key and by swipe`, async ({ page }) => {
+    await stubImageRequests(page)
+    await gotoPlayground(page, `/?navigation=${navigation}`)
+    await page.locator('.np-album__item').first().click()
+    const counter = page.locator('.np-lightbox__counter')
+    await expect(counter).toContainText('1 / 12')
+    await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled()
+
+    await page.keyboard.press('ArrowRight')
+    await expect(counter).toContainText('2 / 12')
+    // Only the active photo stays visible once the fade settles.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            [...document.querySelectorAll('[data-np-slide-frame]')].filter(
+              (frame) => Number(getComputedStyle(frame).opacity) > 0.01,
+            ).length,
+        ),
+      )
+      .toBe(1)
+
+    const media = await page.locator('.np-lightbox__media').boundingBox()
+    const y = media!.y + media!.height / 2
+    const x = media!.x + media!.width / 2
+    await page.mouse.move(x, y)
+    await page.mouse.down()
+    await page.mouse.move(x - 120, y, { steps: 6 })
+    await page.mouse.move(x - 300, y, { steps: 6 })
+    await page.mouse.up()
+    await expect(counter).toContainText('3 / 12')
+  })
+}
+
 test('lightbox motion exposes one deterministic WAAPI timeline', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page)
