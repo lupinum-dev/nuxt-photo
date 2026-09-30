@@ -54,6 +54,14 @@ export type GestureMode = 'idle' | 'slide' | 'pan' | 'pinch' | 'close'
 
 export type TransitionMode = 'flip' | 'fade' | 'auto' | 'none'
 
+/**
+ * How the lightbox changes from one photo to the next.
+ * - `'slide'` — photos sit on a strip that follows the finger (default)
+ * - `'fade'` — the current photo fades out, then the next fades in
+ * - `'crossfade'` — the next photo fades in over the current one
+ */
+export type LightboxNavigationMode = 'slide' | 'fade' | 'crossfade'
+
 export type LightboxTransitionOption =
   | TransitionMode
   | {

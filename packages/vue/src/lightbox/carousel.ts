@@ -8,20 +8,34 @@ import {
   type Ref,
 } from 'vue'
 import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel'
-import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
+import {
+  fitRect,
+  type AreaMetrics,
+  type LightboxNavigationMode,
+  type PhotoItem,
+} from '../core/index'
+
+type CarouselOptions = {
+  isZoomedIn: () => boolean
+  isInteractionLocked: () => boolean
+  navigationMode: () => LightboxNavigationMode
+  isReducedMotion: () => boolean
+  /** Called when the active photo changes by navigation in a fade mode. */
+  onNavigate: (from: number, to: number) => void
+}
 
 /**
- * Bind Embla-based slide navigation to the active lightbox photo collection.
+ * Bind slide navigation to the active lightbox photo collection.
  *
- * The swipe track stays full-screen while each photo is fitted inside the
- * measured frame area, the mat that themes size through CSS.
+ * In `slide` mode Embla owns a full-screen swipe track. The fade modes keep the
+ * photos stacked and leave the change to the motion controller. Either way each
+ * photo is fitted inside the measured frame area, the mat that themes size through CSS.
  */
 export function useCarousel(
   photos: Readonly<Ref<PhotoItem[]>>,
   areaMetrics: Ref<AreaMetrics | null>,
   frameAreaMetrics: Ref<AreaMetrics | null>,
-  isZoomedIn: () => boolean,
-  isInteractionLocked: () => boolean,
+  options: CarouselOptions,
 ) {
   const activeIndex = ref(0)
   const emblaOptions = ref({ loop: true, duration: 25, startIndex: 0 })
@@ -33,17 +47,17 @@ export function useCarousel(
     () => photos.value[activeIndex.value] ?? photos.value[0] ?? null,
   )
 
-  watch(emblaRef, (node) => {
+  watch([emblaRef, options.navigationMode], ([node, mode]) => {
     emblaApi.value?.destroy()
     emblaApi.value = undefined
-    if (!node) return
+    if (!node || mode !== 'slide') return
 
-    const api = EmblaCarousel(node, emblaOptions.value)
+    const api = EmblaCarousel(node, { ...emblaOptions.value, startIndex: activeIndex.value })
     api.on('select', (_api) => {
       activeIndex.value = _api.selectedScrollSnap()
     })
     api.on('pointerDown', () => {
-      if (isZoomedIn() || isInteractionLocked()) return false
+      if (options.isZoomedIn() || options.isInteractionLocked()) return false
     })
     emblaApi.value = api
   })
@@ -87,24 +101,29 @@ export function useCarousel(
 
   function goToNext() {
     const api = emblaApi.value
-    if (api) api.scrollNext()
+    if (api && !options.isReducedMotion()) api.scrollNext()
     else goTo(activeIndex.value + 1)
   }
 
   function goToPrev() {
     const api = emblaApi.value
-    if (api) api.scrollPrev()
+    if (api && !options.isReducedMotion()) api.scrollPrev()
     else goTo(activeIndex.value - 1)
   }
 
+  /** Show the photo at `index`. `instant` skips motion, for opening and collection changes. */
   function goTo(index: number, instant = false) {
     const count = photos.value.length
     if (count === 0) return
     const target = ((index % count) + count) % count
+    const from = activeIndex.value
     activeIndex.value = target
     const api = emblaApi.value
-    if (api) api.scrollTo(target, instant)
+    if (api) api.scrollTo(target, instant || options.isReducedMotion())
     else emblaOptions.value = { ...emblaOptions.value, startIndex: target }
+    if (options.navigationMode() !== 'slide' && !instant && from !== target) {
+      options.onNavigate(from, target)
+    }
   }
 
   function selectedSnap(): number {

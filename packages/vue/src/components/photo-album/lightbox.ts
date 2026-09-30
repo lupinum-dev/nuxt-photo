@@ -9,7 +9,12 @@ import {
 } from 'vue'
 import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
-import type { ImageAdapter, LightboxTransitionOption, PhotoItem } from '../../core/index'
+import type {
+  ImageAdapter,
+  LightboxNavigationMode,
+  LightboxTransitionOption,
+  PhotoItem,
+} from '../../core/index'
 import { LightboxComponentKey } from '../../provide/keys'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
@@ -20,6 +25,7 @@ import { usePhotoLabels } from '../../composables/usePhotoLabels'
 type AlbumLightboxProps<TMeta extends object> = {
   lightbox?: boolean | Component
   transition?: LightboxTransitionOption
+  navigation?: LightboxNavigationMode
   imageAdapter?: ImageAdapter<TMeta>
 }
 
@@ -44,6 +50,7 @@ export function useAlbumLightbox<TMeta extends object>(
   const ownCtx = hasOwnLightbox
     ? provideLightbox(photos, {
         transition: () => props.transition,
+        navigation: () => props.navigation,
         imageAdapter: computed(() => props.imageAdapter),
       })
     : null

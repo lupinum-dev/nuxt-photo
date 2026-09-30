@@ -11,6 +11,7 @@ import type {
   ImageAdapter,
   InvalidPhotoPolicy,
   InvalidPhotosEvent,
+  LightboxNavigationMode,
   LightboxTransitionOption,
   PhotoItem,
 } from '../core/index'
@@ -44,6 +45,7 @@ const props = withDefaults(
     lightbox?: boolean | Component
     /** Reactive transition configuration. */
     transition?: LightboxTransitionOption
+    navigation?: LightboxNavigationMode
   }>(),
   { lightbox: true },
 )
@@ -80,6 +82,7 @@ warnOnSetupOptionChanges('PhotoGroup', {
 const provider = enabled
   ? provideLightbox(canonicalPhotos, {
       transition: () => props.transition,
+      navigation: () => props.navigation,
       imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => capabilitiesById.value.get(photo.id)?.renderSlide ?? null,
     })

@@ -190,6 +190,28 @@
   place-items: center;
 }
 
+/* The fade modes stack every photo in one place; only the active one is shown at rest. */
+[data-np-navigation='fade'] [data-np-slide],
+[data-np-navigation='crossfade'] [data-np-slide] {
+  position: absolute;
+  inset: 0;
+}
+
+[data-np-navigation='fade'] [data-np-slide]:not([data-np-active]),
+[data-np-navigation='crossfade'] [data-np-slide]:not([data-np-active]) {
+  pointer-events: none;
+}
+
+[data-np-navigation='fade'] [data-np-slide]:not([data-np-active]) [data-np-slide-frame],
+[data-np-navigation='crossfade'] [data-np-slide]:not([data-np-active]) [data-np-slide-frame] {
+  opacity: 0;
+}
+
+[data-np-navigation='fade'] [data-np-slide][data-np-active],
+[data-np-navigation='crossfade'] [data-np-slide][data-np-active] {
+  z-index: 1;
+}
+
 [data-np-slide-effect] {
   width: 100%;
   height: 100%;

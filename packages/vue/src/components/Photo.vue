@@ -38,7 +38,7 @@ import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import { LightboxComponentKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
-import type { LightboxTransitionOption } from '../core/index'
+import type { LightboxNavigationMode, LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
 import { normalizePhotos } from '../core/photo/normalize'
@@ -58,6 +58,7 @@ const props = defineProps<{
   imageAdapter?: ImageAdapter<TMeta>
   /** Reactive transition configuration for a standalone lightbox. */
   transition?: LightboxTransitionOption
+  navigation?: LightboxNavigationMode
   loading?: 'lazy' | 'eager'
   /** Extra classes for the inner img element */
   imgClass?: string
@@ -95,6 +96,7 @@ const soloCtx = isSolo.value
       computed(() => props.photo),
       {
         transition: () => props.transition,
+        navigation: () => props.navigation,
         imageAdapter: computed(() => props.imageAdapter),
         resolveSlide: (photo) => {
           if (

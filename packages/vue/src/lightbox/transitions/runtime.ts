@@ -2,11 +2,13 @@ import { computed, ref, watch, type ComputedRef, type Ref } from 'vue'
 import {
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
+  type LightboxNavigationMode,
   type PhotoItem,
   type RectLike,
   type TransitionModeConfig,
 } from '../../core/index'
 import { runCloseTransition } from './close'
+import { createNavigationMotion } from './navigation'
 import { runOpenTransition } from './open'
 import type {
   CapturedOpen,
@@ -35,6 +37,7 @@ export function useLightboxMotion(
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
   getTransitionConfig: () => TransitionModeConfig = () => DEFAULT_TRANSITION_CONFIG,
   isReducedMotion: () => boolean = () => false,
+  getNavigationMode: () => LightboxNavigationMode = () => 'slide',
 ) {
   const animating = ref(false)
   const hiddenThumbIndex = ref<number | null>(null)
@@ -44,6 +47,7 @@ export function useLightboxMotion(
   const activeImagePending = ref(false)
   const transitionInProgress = computed(() => animating.value || activeImagePending.value)
   const visual = createMotionVisualState()
+  const navigation = createNavigationMotion(visual, activeIndex, getNavigationMode, isReducedMotion)
   let capturedOpen: CapturedOpen | null = null
   let dragFrame = 0
   let chromeController: AbortController | null = null
@@ -61,6 +65,7 @@ export function useLightboxMotion(
 
   function resetClosedVisualState() {
     cancel()
+    navigation.reset()
     const current = visual.elements()
     if (current.overlay) current.overlay.style.opacity = '0'
     if (current.viewport) {
@@ -276,6 +281,10 @@ export function useLightboxMotion(
     cancel,
     resetClosedVisualState,
     setCloseDragY: applyDrag,
+    leavingSlides: navigation.leavingSlides,
+    playNavigation: navigation.play,
+    dragNavigation: navigation.drag,
+    releaseNavigation: navigation.release,
     resetCloseDrag,
     settleDrag,
     handleCloseGesture,

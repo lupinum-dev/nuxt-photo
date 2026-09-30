@@ -23,6 +23,7 @@ export type {
   ImageSource,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
+  LightboxNavigationMode,
   TransitionMode,
   ResponsiveParameter,
   ResponsiveResolver,

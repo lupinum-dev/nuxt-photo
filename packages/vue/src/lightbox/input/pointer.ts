@@ -270,11 +270,22 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
           resetGestureState()
           return
         }
+
+        if (mode === 'slide' && !navigation.usesTrack()) {
+          pointers.capture(event.pointerId)
+        }
       }
     }
 
     if (pointer.kind === 'close' || pointer.kind === 'pan') {
       event.stopPropagation()
+    }
+
+    // Without a swipe track the photo itself follows the finger.
+    if (pointer.kind === 'slide' && !navigation.usesTrack()) {
+      event.stopPropagation()
+      navigation.dragSlide(deltaX)
+      return
     }
 
     if (pointer.kind === 'close') {
@@ -352,10 +363,11 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
       pointers.release(event.pointerId)
     }
 
+    const deltaX = event.clientX - currentSession.startX
     const deltaY = event.clientY - currentSession.startY
     const mode = currentSession.kind === 'tap' ? 'idle' : currentSession.kind
 
-    const { vy: velocityY } = velocityTracker.getVelocity()
+    const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity()
 
     resetGestureState()
 
@@ -370,6 +382,12 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
 
     if (mode === 'close') {
       await lifecycle.handleCloseGesture(deltaY, velocityY, lifecycle.close)
+      return
+    }
+
+    if (mode === 'slide' && !navigation.usesTrack()) {
+      event.stopPropagation()
+      navigation.releaseSlide(deltaX, velocityX)
       return
     }
 
@@ -397,7 +415,9 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     if (event.pointerId !== currentSession.id) return
 
     const hadCapture = capturedPointers.has(event.pointerId)
+    const wasSliding = currentSession.kind === 'slide'
     resetGestureState()
+    if (wasSliding && !navigation.usesTrack()) navigation.releaseSlide(0, 0)
 
     if (state.isZoomedIn.value || hadCapture) {
       panzoom.setCurrentPanImmediate(

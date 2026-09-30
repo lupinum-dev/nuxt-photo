@@ -10,9 +10,18 @@
       </p>
     </header>
 
+    <fieldset class="modes">
+      <legend class="modes__label">Photo change</legend>
+      <label v-for="mode in modes" :key="mode" class="modes__option">
+        <input v-model="navigation" type="radio" name="navigation" :value="mode" />
+        <span>{{ mode }}</span>
+      </label>
+    </fieldset>
+
     <div class="gallery-section">
       <PhotoAlbum
         :photos="photos"
+        :navigation="navigation"
         :layout="{ type: 'rows', targetRowHeight: 280 }"
         :spacing="6"
         :breakpoints="[375, 600, 900, 1200]"
@@ -35,7 +44,14 @@
 </template>
 
 <script setup lang="ts">
+import type { LightboxNavigationMode } from '@lupinum/nuxt-photo/app'
 import { photos } from '~/composables/photos'
+
+const modes: LightboxNavigationMode[] = ['slide', 'fade', 'crossfade']
+const route = useRoute()
+const navigation = ref<LightboxNavigationMode>(
+  modes.find((mode) => mode === route.query.navigation) ?? 'slide',
+)
 
 useHead({ title: 'Gallery — nuxt-photo' })
 
@@ -56,7 +72,56 @@ const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 }
 
 .hero {
-  margin-bottom: 64px;
+  margin-bottom: 48px;
+}
+
+.modes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.modes__label {
+  float: left;
+  margin-right: 12px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(237, 232, 227, 0.5);
+}
+
+.modes__option {
+  position: relative;
+  cursor: pointer;
+}
+
+.modes__option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.modes__option span {
+  display: block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: rgba(237, 232, 227, 0.72);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.modes__option input:checked + span {
+  background: rgba(237, 232, 227, 0.12);
+  color: #ede8e3;
+}
+
+.modes__option input:focus-visible + span {
+  outline: 2px solid #c8956c;
+  outline-offset: 2px;
 }
 
 .hero__eyebrow {

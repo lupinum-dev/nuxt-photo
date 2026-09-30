@@ -1,5 +1,5 @@
 <template>
-  <div v-bind="$attrs">
+  <div data-np-slide :data-np-active="isActive || undefined" v-bind="$attrs">
     <div data-np-slide-effect :class="effectClass">
       <div
         data-np-slide-frame
