@@ -143,9 +143,10 @@ test('responsive-image handoff preserves full luminance', async ({ page }) => {
   const handoff = await page.evaluate(() => {
     const transitionImage = document.querySelector<HTMLElement>('[data-np-transition-image]')!
     const viewport = document.querySelector<HTMLElement>('[data-np-motion="viewport"]')!
+    // The ghost also runs its clip animation; pick the 100 ms opacity handoff.
     const animation = document.getAnimations().find((candidate) => {
       const effect = candidate.effect as KeyframeEffect
-      return effect.target === transitionImage
+      return effect.target === transitionImage && Number(effect.getTiming().duration) === 100
     })!
 
     animation.pause()
