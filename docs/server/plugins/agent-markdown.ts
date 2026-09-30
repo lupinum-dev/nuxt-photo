@@ -48,7 +48,7 @@ const install: AgentMarkdownSerializer = (_node, ctx) => {
 
 // These demos only let a reader try settings that the surrounding prose and
 // tables already state, so the Markdown version leaves them out.
-const interactiveOnly = ['album-layout-lab', 'carousel-lab', 'customization-lab', 'decision-guide']
+const interactiveOnly = ['album-layout-lab']
 const nothing: AgentMarkdownSerializer = () => ''
 
 export default defineNitroPlugin(() => {

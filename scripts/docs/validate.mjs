@@ -225,7 +225,7 @@ for (const file of [...files, ...publicReadmes]) {
   }
 }
 
-const expectedSections = ['1.start', '2.guides', '3.concepts', '4.reference', '5.help']
+const expectedSections = ['1.start', '2.guides', '3.reference', '4.help']
 const topLevel = await readdir(contentRoot, { withFileTypes: true })
 const actualSections = topLevel
   .filter((entry) => entry.isDirectory())

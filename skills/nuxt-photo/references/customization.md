@@ -2,165 +2,771 @@
 
 # customization
 
-## Image delivery
+## Responsive layouts and SSR
 
-Every built-in image passes through an image adapter. The adapter returns the
-final `src`, `srcset`, `sizes`, dimensions, and optional placeholder for a
-thumbnail or lightbox slide.
+`PhotoAlbum` has three layouts. Its numbers, such as the column count, can
+change with the width of the album's container, and the server can render the
+same layout that the browser will show.
 
-### Choose one delivery path
+### Choose a layout
 
-| Path         | Use it when                                                     |
-| ------------ | --------------------------------------------------------------- |
-| `auto`       | You want Nuxt Image when installed and native images otherwise. |
-| `native`     | Your files or CDN URLs are already prepared for the browser.    |
-| `nuxt-image` | You want Nuxt Image transformations and responsive candidates.  |
-| Custom       | Your image service needs application-specific URL generation.   |
+| Layout    | What it does                                                      | Use it when                             |
+| --------- | ----------------------------------------------------------------- | --------------------------------------- |
+| `rows`    | Photos share a row height and each row fills the width. Default.  | Photos have mixed shapes.               |
+| `columns` | Photos go into a fixed number of equal columns, in reading order. | The column count and order matter.      |
+| `masonry` | Each photo goes into the shortest column.                         | Density matters more than strict order. |
 
-`auto` is the default. Its native fallback is expected and does not warn.
+```vue
+<PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 240 }" />
+<PhotoAlbum :photos="photos" :layout="{ type: 'columns', columns: 3 }" />
+<PhotoAlbum :photos="photos" :layout="{ type: 'masonry', columns: 4 }" />
+```
 
-The native adapter uses `thumbSrc` for thumbnails when present and `src` for
-slides. It passes `srcset` through, except for a thumbnail that uses `thumbSrc`.
-It sets no `sizes`; use the `sizes` prop on `PhotoAlbum` or a custom adapter. The Nuxt Image
-adapter generates responsive URLs from its configured provider.
+`targetRowHeight` defaults to `300` pixels: a larger value puts fewer photos in
+a row. `columns` defaults to `3`. `spacing` is the gap between photos (default
+`8`), and `padding` is space inside each photo item (default `0`).
 
-Use the [Nuxt Image guide](https://nuxt-photo.lupinum.com/docs/guides/use-nuxt-image) or the
-[custom image service guide](https://nuxt-photo.lupinum.com/docs/guides/integrate-a-custom-image-service) for
-setup.
+### Change values with the container width
 
-### Loading behavior
+`responsive()` takes a value per minimum container width in pixels. Nuxt
+auto-imports it.
 
-`PhotoImage` uses native lazy loading by default. Ready-made components can use
-eager loading for images that must appear immediately. The browser still owns
-request scheduling and candidate selection.
+```vue [app/pages/gallery.vue]
+<template>
+  <PhotoAlbum
+    :photos="photos"
+    :layout="{
+      type: 'columns',
+      columns: responsive({ 0: 2, 640: 3, 1024: 4 }),
+    }"
+    :spacing="responsive({ 0: 4, 640: 8, 1024: 12 })"
+  />
+</template>
+```
 
-Use a `sizes` value that describes the rendered image width. This helps the
-browser select an appropriate `srcset` candidate instead of downloading a file
-larger than the layout needs.
+The largest matching width wins: a 700-pixel album has three columns. The
+width is the album's container, not the browser window, so the same album works
+in a full page, a card, or a sidebar.
 
-### Placeholders
+`responsive()` works for `spacing`, `padding`, `targetRowHeight`, and
+`columns`. It cannot switch the layout type. For a smooth formula, pass a
+function of the container width instead:
 
-`placeholderSrc` is rendered as a background until the main image loads. It
-resets when the adapter produces a different `src`, `srcset`, or `sizes` request.
-If the main image fails, the placeholder remains visible.
+```vue
+<PhotoAlbum :photos="photos" :spacing="(width) => Math.min(16, Math.max(4, width / 80))" />
+```
 
-This behavior applies to native, Nuxt Image, and custom adapters because the
-adapter returns the same `ImageSource` shape.
+Start with 4 pixels of spacing on narrow containers and 8 to 12 on wide ones.
+Use fewer columns when most photos are portraits or captions need room.
 
-### Server rendering
+### Prevent a layout jump after server rendering
 
-An adapter must return the same result for the same photo and context on the
-server and client. Do not sign URLs from the current time or random state during
-render. Prepare stable URLs before rendering or use a deterministic service URL.
-
-_Source: https://nuxt-photo.lupinum.com/docs/concepts/image-delivery_
-
-## SSR and layout stability
-
-Server-side rendering (SSR) creates HTML before the browser knows the album's
-container width. Nuxt Photo uses photo dimensions and an optional width
-assumption to reduce visible movement during hydration.
-
-### Accurate dimensions come first
-
-Every photo needs intrinsic `width` and `height`. These values reserve the
-correct aspect ratio before the file loads. Missing or approximate dimensions
-cause visible movement and incorrect layout calculations.
-
-### Set a server width for important albums
+The server does not know how wide the album will be. Give it the width the
+album usually has, and the first HTML already has the right rows or columns:
 
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :default-container-width="1280"
-  :spacing="responsive({ 0: 4, 640: 8, 1024: 12 })"
+  :default-container-width="1024"
+  :layout="{ type: 'columns', columns: responsive({ 0: 2, 640: 3, 1024: 4 }) }"
 />
 ```
 
-The server calculates the album as if its container were 1280 pixels wide.
-After mount, the component uses the measured container width.
+After the page loads, the album measures its container and uses the real
+width. Choose a value that is one of your `responsive()` keys and close to the
+common width, such as the width of your content column on desktop. Columns and
+masonry near the top of the page benefit most.
 
-Choose a value close to the album's common rendered width. Above-the-fold
-columns and masonry layouts benefit most because they need a width to form
-their final groups.
-
-### Snap measurements to known breakpoints
-
-The `breakpoints` prop limits layout calculation to a known set of widths:
+When you use a function instead of `responsive()`, also list the widths the
+measurement should snap to:
 
 ```vue
 <PhotoAlbum
   :photos="photos"
-  :default-container-width="1280"
+  :spacing="(width) => (width < 640 ? 4 : 12)"
+  :default-container-width="1024"
   :breakpoints="[375, 640, 1024, 1280]"
 />
 ```
 
-Responsive values contribute their positive breakpoint keys automatically.
-Use `defaultContainerWidth` equal to one of those keys when possible.
+`responsive()` adds its own keys to the breakpoints for you.
 
-No assumption can match every device. The goal is to keep the first render
-stable for common container widths while preserving correct responsive behavior
-after measurement.
+::warning
+The layout needs the real `width` and `height` of every photo. Wrong values
+still render, but photos then change their shape when they load.
+::
 
-_Source: https://nuxt-photo.lupinum.com/docs/concepts/ssr-and-layout-stability_
+### Check the result
 
-## Customization levels
+Open the page at a narrow, a medium, and a wide window, with the album inside
+its real parent. The column count and spacing change at your breakpoints. Reload
+with a slow network: the album keeps its shape while images load, and does not
+jump after hydration at the width you chose for `defaultContainerWidth`.
 
-Start with ready-made components. Move to lower-level components only when a
-specific design cannot be expressed with props, CSS, or slots.
+_Source: https://nuxt-photo.lupinum.com/docs/guides/responsive-layouts_
 
-### Choose a level
+## Deliver images
 
-| Level | Public surface                        | Use it for                                      |
-| ----- | ------------------------------------- | ----------------------------------------------- |
-| 1     | Component options and CSS variables   | Layout, spacing, colors, and common behavior.   |
-| 2     | Slots                                 | Custom thumbnail, caption, action, or slide UI. |
-| 3     | `PhotoTrigger` and `LightboxProvider` | A custom thumbnail layout with the lightbox.    |
-| 4     | `provideLightbox` and primitives      | A fully custom lightbox interface.              |
-| 5     | Image and lightbox injection keys     | Application-wide service or component changes.  |
+Every image Nuxt Photo renders goes through an image adapter: a function that
+turns a photo into the final `src`, `srcset`, and `sizes`, once for the
+thumbnail and once for the lightbox slide. You choose the adapter once in
+`nuxt.config.ts`.
 
-Use only the level that owns the needed behavior. A custom thumbnail does not
-require a custom lightbox. A custom action button does not require a new
-provider.
+| Delivery     | Use it when                                                          |
+| ------------ | -------------------------------------------------------------------- |
+| `auto`       | Default. Uses Nuxt Image when it is installed, native images if not. |
+| `native`     | Your files or CDN URLs are already sized for the browser.            |
+| `nuxt-image` | Nuxt Image should resize and convert every image.                    |
+| Custom       | Your image service needs its own URLs or signing.                    |
 
-### Application-wide overrides
+### Use Nuxt Image
 
-Nuxt applications import these public symbols from
-`@lupinum/nuxt-photo/app`:
+```bash [Terminal]
+pnpm add @nuxt/image
+```
 
-- `PhotoDefaultsKey` sets shared labels and lightbox defaults.
-- `ImageAdapterKey` provides a default image adapter.
-- `LightboxComponentKey` replaces the ready-made lightbox used by components.
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
+  nuxtPhoto: {
+    css: 'all',
+    image: { provider: 'nuxt-image' },
+  },
+})
+```
 
-An override lightbox consumes the existing provider. Do not call
-`provideLightbox()` inside it unless you intend to create a separate state
-owner.
+Thumbnails and lightbox slides now use Nuxt Image's default provider (IPX for
+local files). The module order does not matter. With `provider: 'auto'` the
+same config also works when Nuxt Image is missing; with `'nuxt-image'` a
+missing module is an error.
 
-Use [Customize the built-in lightbox](https://nuxt-photo.lupinum.com/docs/guides/customize-the-built-in-lightbox)
-before [building from primitives](https://nuxt-photo.lupinum.com/docs/guides/build-a-lightbox-from-primitives).
+Remote images need their host in Nuxt Image's `domains`, without `https://`:
 
-_Source: https://nuxt-photo.lupinum.com/docs/concepts/customization-levels_
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  image: { domains: ['images.example.com'] },
+})
+```
 
-## Customize the built-in lightbox
+### Use Cloudinary or another provider
 
-Use this guide when you like Nuxt Photo's built-in lightbox behavior, but want different UI.
+Nuxt Photo calls Nuxt Image with its default provider, so any
+[Nuxt Image provider](https://image.nuxt.com/providers/introduction) works. For
+Cloudinary:
 
-Use this focused customization path for:
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
+  image: {
+    provider: 'cloudinary',
+    cloudinary: {
+      baseURL: 'https://res.cloudinary.com/<your-cloud-name>/image/upload/',
+    },
+  },
+  nuxtPhoto: {
+    css: 'all',
+    image: { provider: 'nuxt-image' },
+  },
+})
+```
 
-- custom captions
-- different top-bar actions
-- a custom counter
-- slide markup that still lives inside the built-in lightbox
+Set each photo's `src` to the asset path after `baseURL`, and keep the
+original size:
 
-If you need a different component structure, use
-[the primitives guide](https://nuxt-photo.lupinum.com/docs/guides/build-a-lightbox-from-primitives).
+```ts
+const photo: PhotoItem = {
+  id: asset.public_id,
+  src: `/${asset.public_id}.${asset.format}`,
+  width: asset.width,
+  height: asset.height,
+  alt: asset.context?.custom?.alt,
+}
+```
 
-### 1. Wrap the included lightbox
+Cloudinary's upload and Admin APIs return `public_id`, `format`, `width`, and
+`height` for every asset.
 
-Create a component that renders `<Lightbox>` and overrides only the slots you
-need. This one replaces the counter and the caption, and widens the mat around
-the photo. Open a photo to see it:
+### Set thumbnail and slide sizes
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  nuxtPhoto: {
+    image: {
+      provider: 'nuxt-image',
+      thumb: {
+        sizes: 'sm:100vw md:50vw lg:400px',
+        quality: 80,
+      },
+      slide: {
+        widths: [640, 960, 1240, 1600, 2000],
+        maxWidth: 1240,
+        sizes: 'min(1240px, calc(100vw - 72px))',
+        quality: 85,
+      },
+    },
+  },
+})
+```
+
+These are the defaults. Thumbnail `sizes` tells the browser how wide a
+thumbnail is on screen, so it downloads a file of that size. Match it to your
+layout: three columns in a 1200-pixel page need about `400px`. Slide `widths`
+are the files generated for the lightbox; widths larger than 1.5 times the
+original are skipped (`maxDensity`).
+
+### Use native images
+
+With `provider: 'native'`, or without Nuxt Image, the browser gets your URLs
+unchanged:
+
+- Thumbnails use `thumbSrc` when you set it, otherwise `src`.
+- Slides use `src`.
+- `srcset` is passed through, except for a thumbnail that uses `thumbSrc`.
+- No `sizes` is set. Pass `sizes` to `PhotoAlbum` when you use `srcset`.
+
+```vue
+<PhotoAlbum :photos="photos" sizes="(min-width: 1024px) 33vw, 50vw" />
+```
+
+### Show a placeholder while an image loads
+
+`placeholderSrc` on a photo is shown until the image loads, for example a tiny
+blurred version or a data URL:
+
+```ts
+const photo: PhotoItem = {
+  id: 'canyon',
+  src: '/photos/canyon.jpg',
+  placeholderSrc: 'data:image/webp;base64,UklGR...',
+  width: 1280,
+  height: 853,
+}
+```
+
+When the image request changes, the placeholder shows again. When the image
+fails, the placeholder stays, so the layout does not show an empty frame.
+
+### Loading
+
+Images are lazy by default. The browser still chooses when to load them and
+which `srcset` candidate fits. Pass `loading="eager"` to a `Photo` in the first
+screen, such as a cover image.
+
+### Check the result
+
+Open the browser's network panel and reload. Thumbnails request files close to
+their displayed width, and the lightbox requests a larger file only when it
+opens. With Nuxt Image, the URLs go through your provider (`/_ipx/...` for
+local files). If local images work and remote ones fail, add the host to
+`image.domains`.
+
+_Source: https://nuxt-photo.lupinum.com/docs/guides/deliver-images_
+
+## Integrate a custom image service
+
+Write an image adapter when Nuxt Image does not fit: your CDN has its own URL
+format, your CMS returns image API URLs, or URLs must be signed. An adapter is
+one function that returns the image attributes for a photo in a context:
+
+```ts
+type ImageAdapter = (photo: PhotoItem, context: 'thumb' | 'slide') => ImageSource
+
+type ImageSource = {
+  src: string
+  srcset?: string
+  sizes?: string
+  placeholderSrc?: string
+  width?: number
+  height?: number
+}
+```
+
+### 1. Write the adapter
+
+```ts [app/utils/photo-adapter.ts]
+import type { ImageAdapter, PhotoItem } from '@lupinum/nuxt-photo/app'
+
+const CDN = 'https://cdn.example.com/transform'
+
+function url(photo: PhotoItem, width: number) {
+  return `${CDN}/${photo.id}?w=${width}&fmt=auto`
+}
+
+function srcset(photo: PhotoItem, widths: number[]) {
+  return widths.map((width) => `${url(photo, width)} ${width}w`).join(', ')
+}
+
+export const cdnAdapter: ImageAdapter = (photo, context) => {
+  if (context === 'thumb') {
+    return {
+      src: url(photo, 480),
+      srcset: srcset(photo, [480, 960]),
+      sizes: '(min-width: 1024px) 400px, 50vw',
+      width: photo.width,
+      height: photo.height,
+    }
+  }
+
+  return {
+    src: url(photo, 1920),
+    srcset: srcset(photo, [960, 1440, 1920, 2560]),
+    sizes: '100vw',
+    width: photo.width,
+    height: photo.height,
+  }
+}
+```
+
+Give thumbnails small files and slides large ones. Always return a `src`. The
+photo's own `width` and `height` still drive the layout; the adapter's values
+are written onto the `<img>`.
+
+### 2. Use it for the whole app
+
+Turn off the built-in adapter and provide yours in a plugin that runs on the
+server and in the browser:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@lupinum/nuxt-photo'],
+  nuxtPhoto: {
+    css: 'all',
+    image: false,
+  },
+})
+```
+
+```ts [app/plugins/photo-adapter.ts]
+import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
+import { cdnAdapter } from '~/utils/photo-adapter'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.provide(ImageAdapterKey, cdnAdapter)
+})
+```
+
+Every thumbnail and slide now goes through `cdnAdapter`.
+
+### Use an adapter for one component
+
+Pass `image-adapter` to a component. It wins over the app adapter, which wins
+over the module default:
+
+```vue
+<PhotoAlbum :photos="cmsPhotos" :image-adapter="cdnAdapter" />
+<PhotoAlbum :photos="stockPhotos" :image-adapter="stockAdapter" />
+```
+
+`Photo`, `PhotoGroup`, `PhotoCarousel`, `PhotoImage`, and `LightboxProvider`
+take the same prop.
+
+### Keep signed URLs stable
+
+The adapter runs on the server and again in the browser. It must return the
+same result both times, or hydration fails. Do not call `Date.now()` or create
+random values inside it. Sign URLs before rendering, in your API or data
+loader, and let the adapter read them from the photo:
+
+```ts
+const signedAdapter: ImageAdapter = (photo, context) => ({
+  src: context === 'thumb' ? (photo.thumbSrc ?? photo.src) : photo.src,
+  width: photo.width,
+  height: photo.height,
+})
+```
+
+### Build Cloudinary URLs without Nuxt Image
+
+```ts
+const CLOUD = '<your-cloud-name>'
+
+const cloudinaryAdapter: ImageAdapter = (photo, context) => {
+  const transform =
+    context === 'thumb' ? 'c_fill,w_480,h_360,q_auto,f_auto' : 'c_limit,w_1920,q_auto,f_auto'
+  return {
+    src: `https://res.cloudinary.com/${CLOUD}/image/upload/${transform}/${photo.src}`,
+    width: photo.width,
+    height: photo.height,
+  }
+}
+```
+
+Here `photo.src` is the Cloudinary public ID. `f_auto` lets Cloudinary choose
+AVIF or WebP. An adapter renders one `<img>`, so it cannot return `<picture>`
+sources; negotiate the format on the server like this instead.
+
+### Test the adapter
+
+An adapter is a plain function. Test it without Vue:
+
+```ts [test/photo-adapter.test.ts]
+import { expect, it } from 'vitest'
+import { cdnAdapter } from '../app/utils/photo-adapter'
+
+const photo = { id: 'canyon', src: 'canyon.jpg', width: 1280, height: 853 }
+
+it('gives thumbnails small files and slides large ones', () => {
+  expect(cdnAdapter(photo, 'thumb').src).toContain('w=480')
+  expect(cdnAdapter(photo, 'slide').src).toContain('w=1920')
+})
+```
+
+_Source: https://nuxt-photo.lupinum.com/docs/guides/integrate-a-custom-image-service_
+
+## Style and theme
+
+Nuxt Photo splits its CSS in two. The **structure CSS** does the layout: row
+and column geometry, the lightbox position, gestures, and transitions. The
+**theme CSS** does the look: colors, buttons, shadows, and the glow. Keep the
+structure CSS and choose who owns the look.
+
+| `nuxtPhoto.css` | Loads                    | Use it when                                      |
+| --------------- | ------------------------ | ------------------------------------------------ |
+| `'all'`         | Structure and theme      | You adjust the included look with CSS variables. |
+| `'structure'`   | Structure only. Default. | Your own CSS or Tailwind owns the look.          |
+| `'none'`        | Nothing                  | You rewrite every structural rule. Rarely right. |
+
+With `'none'`, albums collapse and the lightbox cannot position photos until
+your CSS replaces all structural rules.
+
+### Adjust the included look
+
+With `css: 'all'`, set CSS variables on `.np-lightbox`:
+
+```css [app/assets/css/main.css]
+/* A light room, square photos, and no glow */
+.np-lightbox {
+  --np-backdrop-bg: #f4f2ee;
+  --np-ambient-opacity: 0;
+  --np-img-radius: 0;
+  --np-btn-bg: rgba(255, 255, 255, 0.8);
+  --np-btn-hover-bg: #fff;
+  --np-btn-color: #1c1b19;
+  --np-btn-border: rgba(0, 0, 0, 0.08);
+  --np-focus-ring: #1c1b19;
+  --np-counter-color: #4a4843;
+  --np-caption-color: #1c1b19;
+  --np-caption-secondary: #6b6862;
+}
+```
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@lupinum/nuxt-photo'],
+  css: ['~/assets/css/main.css'],
+  nuxtPhoto: { css: 'all' },
+})
+```
+
+The mat around the photo is structure, so its variables work in both modes:
+
+```css
+.np-lightbox {
+  --np-frame-inset-inline: 72px; /* space left and right of the photo */
+  --np-caption-reserve: 120px; /* room below the photo for the caption */
+}
+```
+
+The [CSS reference](https://nuxt-photo.lupinum.com/docs/reference/css#css-variables) lists every variable and
+class.
+
+### Add classes to albums and carousels
+
+Ready-made components take class props that add to their own classes:
+
+```vue
+<PhotoAlbum :photos="photos" item-class="gallery-item" img-class="gallery-image" />
+```
+
+`PhotoAlbum` has `itemClass` and `imgClass`. `Photo` has `imgClass` and
+`captionClass`. `PhotoCarousel` has `slideClass`, `imgClass`, `thumbClass`,
+`captionClass`, and `controlsClass`.
+
+In a `<style scoped>` block, reach the component's own classes with `:deep()`:
+
+```vue
+<style scoped>
+.portfolio :deep(.np-album__item) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+</style>
+```
+
+### Own the look with Tailwind
+
+Load only the structure CSS, and add Tailwind:
+
+```ts [nuxt.config.ts]
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineNuxtConfig({
+  modules: ['@lupinum/nuxt-photo'],
+  css: ['~/assets/css/main.css'],
+  nuxtPhoto: { css: 'structure' },
+  vite: { plugins: [tailwindcss()] },
+})
+```
+
+```css [app/assets/css/main.css]
+@import 'tailwindcss';
+```
+
+Style albums with the class props:
+
+```vue
+<PhotoAlbum
+  :photos="photos"
+  item-class="group overflow-hidden rounded-xl bg-stone-900"
+  img-class="transition duration-300 group-hover:scale-[1.02]"
+/>
+```
+
+With `'structure'`, the built-in lightbox has no colors: the color variables
+above belong to the theme CSS and do nothing. Give it a look with your own
+rules on its classes:
+
+```css [app/assets/css/main.css]
+@import 'tailwindcss';
+
+.np-lightbox__backdrop {
+  @apply bg-stone-950;
+}
+
+.np-lightbox__btn {
+  @apply grid size-10 place-items-center rounded-full bg-white/10 text-white;
+  @apply hover:bg-white/20 disabled:opacity-35;
+  @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+}
+
+.np-lightbox__counter,
+.np-lightbox__label {
+  @apply text-sm text-white/80;
+}
+```
+
+For full control over the markup, build the lightbox from the lower-level
+components. This one uses only Tailwind utilities. The mat comes from the
+`--np-frame-inset-*` variables, and the caption and arrows follow the photo
+through `--np-frame-*`:
+
+Complete example. Use it as `<TailwindGallery :photos="photos" />` with your own `PhotoItem[]`.
+
+```vue [app/components/TailwindGallery.vue]
+<script setup lang="ts">
+import { PhotoAlbum, type PhotoItem } from '@lupinum/nuxt-photo/app'
+import TailwindLightbox from './TailwindLightbox.vue'
+
+defineProps<{ photos: PhotoItem[] }>()
+</script>
+
+<template>
+  <PhotoAlbum
+    :photos="photos"
+    :lightbox="TailwindLightbox"
+    :layout="{ type: 'rows', targetRowHeight: 180 }"
+    :spacing="6"
+  />
+</template>
+```
+
+```vue [app/components/TailwindLightbox.vue]
+<template>
+  <!--
+    The framed lightbox in Tailwind utilities. The mat comes from the three
+    --np-frame-inset-* variables; the runtime then publishes where the photo is
+    drawn as --np-frame-x/y/width/height, which place the label and arrows.
+  -->
+  <LightboxRoot
+    class="group fixed inset-0 z-50 text-stone-100 [--np-frame-inset-bottom:120px] [--np-frame-inset-inline:clamp(80px,7vw,120px)] [--np-frame-inset-top:72px] max-[699px]:[--np-frame-inset-bottom:108px] max-[699px]:[--np-frame-inset-inline:12px] max-[699px]:[--np-frame-inset-top:64px]"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Photo viewer"
+  >
+    <LightboxOverlay class="absolute inset-0 overflow-hidden bg-stone-950">
+      <LightboxAmbient class="pointer-events-none absolute -inset-[8%] opacity-45" />
+      <div class="absolute inset-0 bg-stone-950/40" />
+    </LightboxOverlay>
+
+    <LightboxControls
+      class="pointer-events-none absolute inset-0 z-20"
+      v-slot="{
+        activeIndex,
+        count,
+        prev,
+        next,
+        close,
+        toggleZoom,
+        isZoomedIn,
+        zoomAllowed,
+        controlsDisabled,
+      }"
+    >
+      <div
+        class="absolute inset-x-4 top-4 flex items-center justify-between max-[699px]:inset-x-3 max-[699px]:top-3"
+      >
+        <span
+          class="pointer-events-auto flex h-[42px] items-center rounded-full border border-white/10 bg-stone-900/60 px-3.5 text-[13px] tabular-nums text-stone-200/80 backdrop-blur-md"
+          aria-hidden="true"
+        >
+          {{ activeIndex + 1 }} / {{ count }}
+        </span>
+
+        <div
+          class="pointer-events-auto flex gap-0.5 rounded-full border border-white/10 bg-stone-900/60 p-[3px] backdrop-blur-md"
+        >
+          <button
+            type="button"
+            :class="toolClass"
+            :aria-label="isZoomedIn ? 'Fit' : 'Zoom'"
+            :title="isZoomedIn ? 'Fit' : 'Zoom'"
+            :disabled="controlsDisabled || !zoomAllowed"
+            @click="toggleZoom()"
+          >
+            <svg viewBox="0 0 24 24" :class="iconClass" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" />
+              <path v-if="isZoomedIn" d="M20 20l-4.2-4.2M8.5 11h5" />
+              <path v-else d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5" />
+            </svg>
+          </button>
+          <button type="button" :class="toolClass" aria-label="Close" title="Close" @click="close">
+            <svg viewBox="0 0 24 24" :class="iconClass" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        :class="[arrowClass, 'start-5']"
+        aria-label="Previous"
+        :disabled="controlsDisabled"
+        @click="prev"
+      >
+        <svg viewBox="0 0 24 24" :class="iconClass" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        :class="[arrowClass, 'end-5']"
+        aria-label="Next"
+        :disabled="controlsDisabled"
+        @click="next"
+      >
+        <svg viewBox="0 0 24 24" :class="iconClass" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+    </LightboxControls>
+
+    <LightboxViewport v-slot="{ photos, viewportRef }" class="absolute inset-0 z-10 touch-none">
+      <div class="absolute inset-0 overflow-hidden" :ref="viewportRef">
+        <div class="flex h-full touch-none">
+          <LightboxSlide
+            v-for="(photo, i) in photos"
+            :key="photo.id"
+            :photo="photo"
+            :index="i"
+            class="grid min-w-0 flex-[0_0_100%] place-items-center"
+            img-class="rounded-md shadow-[0_30px_80px_rgb(0_0_0/0.45),0_2px_10px_rgb(0_0_0/0.35)] in-data-zoomed:rounded-none in-data-zoomed:shadow-none"
+          />
+        </div>
+      </div>
+    </LightboxViewport>
+
+    <LightboxCaption
+      class="absolute z-20 top-[calc(var(--np-frame-y)+var(--np-frame-height)+14px)] left-[clamp(12px,var(--np-frame-x),calc(100vw-12px-var(--np-caption-w)))] w-(--np-caption-w) [--np-caption-w:min(max(var(--np-frame-width),320px),calc(100vw-24px))] transition-[top,left,width] duration-[380ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-has-data-zoomed:invisible"
+      v-slot="{ photo }"
+    >
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="translate-y-1 opacity-0"
+        leave-active-class="transition-opacity duration-75"
+        leave-to-class="opacity-0"
+      >
+        <div :key="photo?.id ?? 'none'">
+          <h2
+            v-if="photo?.caption"
+            class="text-[17px] leading-snug font-medium tracking-tight text-balance"
+          >
+            {{ photo.caption }}
+          </h2>
+          <p
+            v-if="photo?.description"
+            class="mt-1 line-clamp-2 text-sm leading-normal text-stone-300/70"
+          >
+            {{ photo.description }}
+          </p>
+        </div>
+      </Transition>
+    </LightboxCaption>
+  </LightboxRoot>
+</template>
+
+<script setup lang="ts">
+import {
+  LightboxAmbient,
+  LightboxCaption,
+  LightboxControls,
+  LightboxOverlay,
+  LightboxRoot,
+  LightboxSlide,
+  LightboxViewport,
+} from '@lupinum/nuxt-photo/app'
+
+const iconClass =
+  'size-5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]'
+const toolClass =
+  'grid size-9 place-items-center rounded-full text-stone-100 transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35'
+const arrowClass =
+  'pointer-events-auto fixed top-0 grid size-11 translate-y-[calc(var(--np-frame-y)+var(--np-frame-height)/2-22px)] place-items-center rounded-full border border-white/10 bg-stone-900/60 text-stone-100 backdrop-blur-md transition-[translate,background-color,scale] duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-stone-800/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35 max-[699px]:opacity-0 max-[699px]:[clip-path:inset(50%)] max-[699px]:focus-visible:opacity-100 max-[699px]:focus-visible:[clip-path:none]'
+</script>
+```
+
+### Check the result
+
+Open the lightbox in light and dark mode, and at phone width. Every button
+shows a visible focus ring with `Tab`, and disabled buttons look disabled. With
+`'structure'`, check that the backdrop is not transparent.
+
+_Source: https://nuxt-photo.lupinum.com/docs/guides/style-and-theme_
+
+## Customize the lightbox
+
+Keep the built-in lightbox and replace only the parts you want. It still
+handles focus, keyboard, gestures, zoom, and the opening animation.
+
+### Choose how far to go
+
+| You want to change                              | Use                                                                                                      |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Colors, mat, buttons                            | CSS variables: [Style and theme](https://nuxt-photo.lupinum.com/docs/guides/style-and-theme)             |
+| How photos change: slide, fade, crossfade       | The `navigation` prop                                                                                    |
+| Caption, counter, action buttons, slide content | `Lightbox` slots, on this page                                                                           |
+| Your own thumbnail layout                       | [A custom thumbnail layout](https://nuxt-photo.lupinum.com/docs/guides/create-a-custom-thumbnail-layout) |
+| The whole lightbox markup                       | [Lightbox from primitives](https://nuxt-photo.lupinum.com/docs/guides/build-a-lightbox-from-primitives)  |
+
+Stay at the first level that works. A custom caption does not need a custom
+lightbox, and a custom thumbnail layout does not need a custom viewer.
+
+### Fade or crossfade between photos
+
+```vue
+<PhotoAlbum :photos="photos" navigation="crossfade" />
+```
+
+`slide` (default) moves photos on a strip, `fade` fades the current photo out
+and the next in, and `crossfade` fades the next photo in over the current one.
+Swiping works in every mode. The prop is on `Photo`, `PhotoAlbum`,
+`PhotoGroup`, and `PhotoCarousel`, and it can change while mounted.
+
+### Replace the caption and counter
+
+Wrap `Lightbox` in your own component, fill the slots you need, and pass the
+component to the `lightbox` prop:
 
 Complete example. Use it as `<CaptionGallery :photos="photos" />` with your own `PhotoItem[]`.
 
@@ -238,58 +844,58 @@ import { Lightbox } from '@lupinum/nuxt-photo/app'
 </style>
 ```
 
-The `actions` slot replaces the top buttons in the same way; its props are
-listed in [the Lightbox reference](https://nuxt-photo.lupinum.com/docs/reference/lightbox#slots).
+Slot props:
 
-That keeps the built-in gesture handling, transitions, focus behavior, and slide wiring. You only replace the visible pieces.
+| Slot      | Props                                                                                              |
+| --------- | -------------------------------------------------------------------------------------------------- |
+| `counter` | `{ activeIndex, count }`                                                                           |
+| `caption` | `{ photo, index }`                                                                                 |
+| `actions` | `{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }` |
+| `slide`   | `{ photo, index, width, height }`                                                                  |
 
-### 2. Use it on one component
+### Replace the action buttons
 
-Pass the wrapper through the `lightbox` prop on the ready-made component you want to customize.
-
-#### PhotoAlbum
-
-```vue
+```vue [app/components/AppLightbox.vue]
 <script setup lang="ts">
-import CaptionLightbox from '~/components/CaptionLightbox.vue'
+import { Lightbox } from '@lupinum/nuxt-photo/app'
 </script>
 
 <template>
-  <PhotoAlbum :photos="photos" :lightbox="CaptionLightbox" />
+  <Lightbox>
+    <template #actions="{ toggleZoom, isZoomedIn, zoomAllowed, close, controlsDisabled }">
+      <button
+        v-if="zoomAllowed"
+        type="button"
+        class="np-lightbox__btn"
+        :disabled="controlsDisabled"
+        :aria-label="isZoomedIn ? 'Zoom out' : 'Zoom in'"
+        @click="toggleZoom"
+      >
+        {{ isZoomedIn ? '−' : '+' }}
+      </button>
+      <button
+        type="button"
+        class="np-lightbox__btn"
+        :disabled="controlsDisabled"
+        aria-label="Close"
+        @click="close"
+      >
+        ×
+      </button>
+    </template>
+  </Lightbox>
 </template>
 ```
 
-#### PhotoGroup
+Use native buttons with an accessible name, and keep `disabled` and the visible
+focus style.
 
-```vue
-<script setup lang="ts">
-import CaptionLightbox from '~/components/CaptionLightbox.vue'
-</script>
+### Add an overlay to each slide
 
-<template>
-  <PhotoGroup :photos="photos" :lightbox="CaptionLightbox">
-    <PhotoAlbum :photos="photos" />
-  </PhotoGroup>
-</template>
-```
+The `slide` slot replaces the image area of each slide. Render `PhotoImage` to
+keep your image delivery:
 
-#### PhotoCarousel
-
-```vue
-<script setup lang="ts">
-import CaptionLightbox from '~/components/CaptionLightbox.vue'
-</script>
-
-<template>
-  <PhotoCarousel :photos="photos" :lightbox="CaptionLightbox" />
-</template>
-```
-
-### 3. Customize slides only when you need to
-
-The included `<Lightbox>` also supports a `slide` slot:
-
-```vue
+```vue [app/components/CreditLightbox.vue]
 <script setup lang="ts">
 import { Lightbox, PhotoImage } from '@lupinum/nuxt-photo/app'
 </script>
@@ -297,34 +903,54 @@ import { Lightbox, PhotoImage } from '@lupinum/nuxt-photo/app'
 <template>
   <Lightbox>
     <template #slide="{ photo }">
-      <figure class="relative h-full w-full">
-        <PhotoImage :photo="photo" context="slide" class="h-full w-full object-contain" />
-        <figcaption class="absolute right-4 bottom-4 rounded bg-black/70 px-3 py-2 text-white">
-          {{ photo.caption }}
+      <figure class="credit-slide">
+        <PhotoImage :photo="photo" context="slide" class="credit-slide__image" />
+        <figcaption v-if="photo.meta?.photographer" class="credit-slide__credit">
+          Photo: {{ photo.meta.photographer }}
         </figcaption>
       </figure>
     </template>
   </Lightbox>
 </template>
+
+<style scoped>
+.credit-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.credit-slide__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.credit-slide__credit {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: 12px;
+}
+</style>
 ```
 
-Use this when the built-in lightbox is still the right shell, but a photo needs
-an overlay or different image composition.
+### Use one custom lightbox everywhere
 
-### When this guide is enough
+Pass the component per gallery:
 
-Stay on this path when:
+```vue
+<PhotoAlbum :photos="photos" :lightbox="CaptionLightbox" />
+<PhotoGroup :photos="photos" :lightbox="CaptionLightbox">...</PhotoGroup>
+<PhotoCarousel :photos="photos" :lightbox="CaptionLightbox" />
+```
 
-- the built-in lightbox behavior is correct
-- you only want different UI chrome
-- you want to keep the existing lightbox behavior
-
-Move to [Build a lightbox from primitives](https://nuxt-photo.lupinum.com/docs/guides/build-a-lightbox-from-primitives)
-when you need to compose the overlay, viewport, controls, and caption yourself.
-
-### Apply the lightbox globally
-
-If most galleries in the app should use the same custom lightbox, set it once globally.
+Or provide it once for the app:
 
 ```ts [app/plugins/photo-lightbox.ts]
 import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
@@ -335,197 +961,16 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-Ready-made components now use `CaptionLightbox` unless their `lightbox` prop provides a
-different component. The global component does not enable a lightbox by itself.
-`Photo` and `PhotoCarousel` still require `lightbox` to be enabled. An explicit
-component passed through the `lightbox` prop takes precedence over the global
-component.
+A component in the `lightbox` prop still wins. The app-wide component does not
+turn a lightbox on: `Photo` and `PhotoCarousel` still need `lightbox`.
+
+Your component renders inside the provider that the gallery creates. Do not
+call `provideLightbox()` in it, or it gets a second, empty state.
+
+### Check the result
+
+Open a photo and move through several: your caption and counter follow the
+active photo. Press `Tab` through your buttons, then `Escape`: focus returns to
+the thumbnail of the photo you were viewing.
 
 _Source: https://nuxt-photo.lupinum.com/docs/guides/customize-the-built-in-lightbox_
-
-## Integrate a custom image service
-
-The built-in `'native'` and `'nuxt-image'` providers cover most cases. Write a custom **image adapter** when you need signed URLs with short TTLs, a custom image API, or independent WebP and AVIF negotiation.
-
-An adapter is a single function:
-
-```ts
-type ImageAdapter = (photo: PhotoItem, context: 'thumb' | 'slide') => ImageSource
-
-type ImageSource = {
-  src: string
-  placeholderSrc?: string
-  srcset?: string
-  sizes?: string
-  width?: number
-  height?: number
-}
-```
-
-Given a photo and the context it will render in, return what the `<img>` should use.
-
-### 1. Disable the built-in adapter
-
-```ts [nuxt.config.ts]
-nuxtPhoto: {
-  image: false
-}
-```
-
-This setting stops Nuxt Photo from registering an adapter at application start. You must provide the adapter.
-
-### 2. Write the adapter
-
-```ts [app/utils/photoAdapter.ts]
-import type { ImageAdapter, PhotoItem } from '@lupinum/nuxt-photo/app'
-
-const BASE = 'https://cdn.example.com/transform'
-
-function url(photo: PhotoItem, w: number, fmt = 'webp') {
-  return `${BASE}/${photo.id}?w=${w}&fmt=${fmt}`
-}
-
-export const cmsAdapter: ImageAdapter = (photo, context) => {
-  if (context === 'thumb') {
-    return {
-      src: url(photo, 480),
-      srcset: `${url(photo, 480)} 480w, ${url(photo, 960)} 960w`,
-      width: photo.width,
-      height: photo.height,
-    }
-  }
-
-  // slide
-  return {
-    src: url(photo, 1920),
-    srcset: [480, 960, 1440, 1920, 2560].map((w) => `${url(photo, w)} ${w}w`).join(', '),
-    sizes: '100vw',
-    width: photo.width,
-    height: photo.height,
-  }
-}
-```
-
-A few principles:
-
-- **Branch on `context`.** Grid thumbnails do not need full-resolution source sets. Lightbox slides do.
-- **Keep `PhotoItem.width` and `PhotoItem.height` accurate.** Nuxt Photo uses the photo dimensions for layout and lightbox frame sizing. Adapter `width` and `height` are copied onto the rendered `<img>`.
-- **Always return a concrete `src`.** If your upstream asset should render a placeholder, make that an explicit rule in the adapter.
-
-### 3. Provide it globally
-
-Use a Nuxt plugin that runs for the app, not a client-only plugin:
-
-```ts [app/plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
-import { cmsAdapter } from '~/utils/photoAdapter'
-
-export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.provide(ImageAdapterKey, cmsAdapter)
-})
-```
-
-Every `<PhotoImage>` in the app now routes through `cmsAdapter` in both SSR and client rendering.
-
-Nuxt applications import `ImageAdapterKey` from the supported
-`@lupinum/nuxt-photo/app` facade.
-
-### 4. Per-instance override
-
-Pass an `:image-adapter` prop to ready-made components that render images, or to `<PhotoImage>` when you own the lower-level markup:
-
-```vue
-<script setup lang="ts">
-import { cmsAdapter } from '~/utils/photoAdapter'
-import { stockAdapter } from '~/utils/stockAdapter'
-</script>
-
-<template>
-  <PhotoAlbum :photos="cmsPhotos" :image-adapter="cmsAdapter" />
-  <PhotoAlbum :photos="stockPhotos" :image-adapter="stockAdapter" />
-</template>
-```
-
-Prop wins over the provided adapter, which wins over the module default.
-
-Lower-level lightbox compositions can also pass the adapter to `provideLightbox()` or `<LightboxProvider>`.
-
-### Common adapter patterns
-
-#### Signed URLs with expiration
-
-Keep the adapter deterministic during render. Do not call `Date.now()` inside the adapter in an SSR app, because the server render and client hydration can compute different URLs. Sign the final URLs before rendering - in Nitro, your CMS layer, or your data loader - and put them on the photo.
-
-```ts
-const signedAdapter: ImageAdapter = (photo, context) => {
-  return {
-    src: context === 'thumb' ? (photo.thumbSrc ?? photo.src) : photo.src,
-    width: photo.width,
-    height: photo.height,
-  }
-}
-```
-
-#### Format negotiation (AVIF → WebP → JPEG)
-
-The image adapter cannot return a `<picture>`-style source set because it renders an `<img>` element. Instead, let the server negotiate through the `Accept` header and return one URL for each context.
-
-#### Cloudinary via hand-written URL
-
-Use this example when you need Cloudinary without a dependency on `@nuxt/image`:
-
-```ts
-const CLOUD = 'your-cloud'
-
-const cloudinaryAdapter: ImageAdapter = (photo, context) => {
-  const transform =
-    context === 'thumb' ? 'c_fill,w_480,h_360,q_auto,f_auto' : 'c_limit,w_1920,q_auto,f_auto'
-  return {
-    src: `https://res.cloudinary.com/${CLOUD}/image/upload/${transform}/${photo.src}`,
-    width: photo.width,
-    height: photo.height,
-  }
-}
-```
-
-#### Explicit placeholder rule
-
-```ts
-const safeAdapter: ImageAdapter = (photo, context) => {
-  if (photo.meta?.placeholder) {
-    return {
-      src: '/placeholder.svg',
-      width: photo.width,
-      height: photo.height,
-    }
-  }
-  // delegate to another adapter
-  return cmsAdapter(photo, context)
-}
-```
-
-### Testing an adapter
-
-Adapters are pure functions - unit-test them without Vue:
-
-```ts
-import { describe, it, expect } from 'vitest'
-import { cmsAdapter } from '~/utils/photoAdapter'
-
-const photo = { id: '1', src: 'x', width: 1280, height: 800 }
-
-describe('cmsAdapter', () => {
-  it('emits a small srcset for thumbs', () => {
-    const result = cmsAdapter(photo, 'thumb')
-    expect(result.src).toContain('w=480')
-    expect(result.srcset).toMatch(/480w.*960w/)
-  })
-
-  it('emits a full srcset for slides', () => {
-    const result = cmsAdapter(photo, 'slide')
-    expect(result.srcset?.split(', ').length).toBeGreaterThan(3)
-  })
-})
-```
-
-_Source: https://nuxt-photo.lupinum.com/docs/guides/integrate-a-custom-image-service_

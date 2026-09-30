@@ -8,12 +8,7 @@ const ginkoDocsDir = realpathSync(
   fileURLToPath(new URL('./node_modules/@lupinum/ginko-docs', import.meta.url)),
 )
 
-const customComponents = [
-  'album-layout-lab',
-  'carousel-lab',
-  'customization-lab',
-  'decision-guide',
-] as const
+const customComponents = ['album-layout-lab'] as const
 
 const components = Object.fromEntries(
   customComponents.map((name) => [
