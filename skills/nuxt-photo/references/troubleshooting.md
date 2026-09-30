@@ -280,7 +280,8 @@ structure CSS. A custom lightbox that replaces all structural CSS must stack
 
 The included theme blurs a small copy of the current thumbnail behind the
 lightbox. A thumbnail from another
-origin is not blurred; the glow is then only softened. Set `--np-ambient-opacity: 0`
+origin is blurred only when its server sends CORS headers, such as
+`Access-Control-Allow-Origin: *`; otherwise the glow is only softened. Set `--np-ambient-opacity: 0`
 to turn the glow off.
 
 ### A failed image keeps its placeholder
