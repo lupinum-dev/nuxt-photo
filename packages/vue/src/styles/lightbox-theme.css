@@ -5,7 +5,6 @@
   --np-backdrop-bg: #0c0c0e;
   --np-backdrop-filter: none;
   --np-ambient-opacity: 0.45;
-  --np-ambient-filter: blur(16px) saturate(1.35);
 
   /* Controls: dark glass that stays readable over bright and zoomed photos. */
   --np-btn-radius: 999px;
@@ -44,7 +43,6 @@
 }
 
 .np-lightbox__ambient {
-  filter: var(--np-ambient-filter);
   opacity: var(--np-ambient-opacity);
 }
 
@@ -64,8 +62,8 @@
   display: inline-flex;
   align-items: center;
   /* Same height as the tools pill beside it. */
-  height: 46px;
-  padding: 0 16px;
+  height: 42px;
+  padding: 0 14px;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;

@@ -6,19 +6,8 @@
     :aria-label="labels.photoViewer"
   >
     <LightboxOverlay class="np-lightbox__backdrop">
-      <!-- A soft glow of the current photo's colors; the new glow fades in over the old. -->
-      <Transition name="np-ambient">
-        <PhotoImage
-          v-if="lightbox.activePhoto.value"
-          :key="lightbox.activePhoto.value.id"
-          :photo="lightbox.activePhoto.value"
-          context="thumb"
-          loading="eager"
-          alt=""
-          aria-hidden="true"
-          class="np-lightbox__ambient"
-        />
-      </Transition>
+      <!-- A soft glow of the current photo's colors; the new glow crossfades over the old. -->
+      <LightboxAmbient class="np-lightbox__ambient" />
     </LightboxOverlay>
 
     <div class="np-lightbox__ui">
@@ -149,15 +138,14 @@
 
 <script setup lang="ts">
 import {
+  LightboxAmbient,
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-  PhotoImage,
 } from '../primitives/index'
-import { useLightbox } from '../composables/useLightbox'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
 import type {
   LightboxCaptionSlotProps,
@@ -166,7 +154,6 @@ import type {
 } from '../types/index'
 
 const labels = usePhotoLabels()
-const lightbox = useLightbox()
 
 interface LightboxCounterSlotProps {
   activeIndex: number

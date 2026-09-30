@@ -35,31 +35,12 @@
   opacity: 0;
 }
 
-/* Blur a small layer and scale it up: the same soft glow for a fraction of the paint cost. */
+/* The glow arrives pre-blurred; it only needs to cover the room, past its edges. */
 .np-lightbox__ambient {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 30%;
-  height: 30%;
-  object-fit: cover;
-  transform: translate(-50%, -50%) scale(4.2);
+  inset: -8%;
   pointer-events: none;
   user-select: none;
-}
-
-/* The new glow fades in on top; the old one stays opaque underneath until it is covered. */
-.np-ambient-enter-active {
-  transition: opacity 520ms ease-out;
-}
-
-.np-ambient-leave-active {
-  transition: opacity 520ms steps(1, end);
-}
-
-.np-ambient-enter-from,
-.np-ambient-leave-to {
-  opacity: 0;
 }
 
 .np-lightbox__ui {
@@ -103,8 +84,8 @@
 .np-lightbox__btn {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: 0;
   padding: 0;
   cursor: pointer;
@@ -136,9 +117,9 @@
   position: fixed;
   top: 0;
   z-index: 56;
-  width: 48px;
-  height: 48px;
-  translate: 0 calc(var(--np-frame-y, 50vh) + var(--np-frame-height, 0px) / 2 - 24px);
+  width: 44px;
+  height: 44px;
+  translate: 0 calc(var(--np-frame-y, 50vh) + var(--np-frame-height, 0px) / 2 - 22px);
 }
 
 .np-lightbox__btn--prev {
@@ -384,7 +365,6 @@
 @media (prefers-reduced-motion: reduce) {
   .np-lightbox__caption,
   .np-lightbox__btn,
-  .np-ambient-enter-active,
   .np-caption-enter-active {
     transition-duration: 1ms;
   }

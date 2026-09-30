@@ -32,6 +32,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxProvider', name: 'LightboxProvider' },
   { export: 'LightboxRoot', name: 'LightboxRoot' },
   { export: 'LightboxOverlay', name: 'LightboxOverlay' },
+  { export: 'LightboxAmbient', name: 'LightboxAmbient' },
   { export: 'LightboxViewport', name: 'LightboxViewport' },
   { export: 'LightboxSlide', name: 'LightboxSlide' },
   { export: 'LightboxControls', name: 'LightboxControls' },

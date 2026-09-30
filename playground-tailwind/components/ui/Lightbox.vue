@@ -11,23 +11,7 @@
     aria-label="Photo viewer"
   >
     <LightboxOverlay class="absolute inset-0 overflow-hidden bg-stone-950">
-      <Transition
-        enter-active-class="transition-opacity duration-500 ease-out"
-        enter-from-class="opacity-0"
-        leave-active-class="transition-opacity duration-500 ease-[steps(1,end)]"
-        leave-to-class="opacity-0"
-      >
-        <PhotoImage
-          v-if="lightbox.activePhoto.value"
-          :key="lightbox.activePhoto.value.id"
-          :photo="lightbox.activePhoto.value"
-          context="thumb"
-          loading="eager"
-          alt=""
-          aria-hidden="true"
-          class="pointer-events-none absolute top-1/2 left-1/2 h-[30%] w-[30%] -translate-1/2 scale-[4.2] object-cover opacity-45 blur-[16px] saturate-[1.35]"
-        />
-      </Transition>
+      <LightboxAmbient class="pointer-events-none absolute -inset-[8%] opacity-45" />
       <div class="absolute inset-0 bg-stone-950/40" />
     </LightboxOverlay>
 
@@ -49,7 +33,7 @@
         class="absolute inset-x-4 top-4 flex items-center justify-between max-[699px]:inset-x-3 max-[699px]:top-3"
       >
         <span
-          class="pointer-events-auto flex h-[46px] items-center rounded-full border border-white/10 bg-stone-900/60 px-4 text-[13px] tabular-nums text-stone-200/80 backdrop-blur-md"
+          class="pointer-events-auto flex h-[42px] items-center rounded-full border border-white/10 bg-stone-900/60 px-3.5 text-[13px] tabular-nums text-stone-200/80 backdrop-blur-md"
           aria-hidden="true"
         >
           {{ activeIndex + 1 }} / {{ count }}
@@ -151,22 +135,19 @@
 
 <script setup lang="ts">
 import {
+  LightboxAmbient,
   LightboxCaption,
   LightboxControls,
   LightboxOverlay,
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-  PhotoImage,
-  useLightbox,
 } from '@lupinum/nuxt-photo/app'
-
-const lightbox = useLightbox()
 
 const iconClass =
   'size-5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]'
 const toolClass =
-  'grid size-10 place-items-center rounded-full text-stone-100 transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35'
+  'grid size-9 place-items-center rounded-full text-stone-100 transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35'
 const arrowClass =
-  'pointer-events-auto fixed top-0 grid size-12 translate-y-[calc(var(--np-frame-y)+var(--np-frame-height)/2-24px)] place-items-center rounded-full border border-white/10 bg-stone-900/60 text-stone-100 backdrop-blur-md transition-[translate,background-color,scale] duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-stone-800/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35 max-[699px]:opacity-0 max-[699px]:[clip-path:inset(50%)] max-[699px]:focus-visible:opacity-100 max-[699px]:focus-visible:[clip-path:none]'
+  'pointer-events-auto fixed top-0 grid size-11 translate-y-[calc(var(--np-frame-y)+var(--np-frame-height)/2-22px)] place-items-center rounded-full border border-white/10 bg-stone-900/60 text-stone-100 backdrop-blur-md transition-[translate,background-color,scale] duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-stone-800/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-100 active:scale-95 disabled:opacity-35 max-[699px]:opacity-0 max-[699px]:[clip-path:inset(50%)] max-[699px]:focus-visible:opacity-100 max-[699px]:focus-visible:[clip-path:none]'
 </script>

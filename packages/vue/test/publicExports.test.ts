@@ -7,6 +7,7 @@ describe('@lupinum/vue-photo public exports', () => {
       [
         'ImageAdapterKey',
         'Lightbox',
+        'LightboxAmbient',
         'LightboxCaption',
         'LightboxComponentKey',
         'LightboxControls',
