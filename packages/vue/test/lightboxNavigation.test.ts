@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
-import { ref } from 'vue'
-import { describe, expect, it, vi } from 'vite-plus/test'
+import { createApp, defineComponent, h, ref } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { makePhoto } from '@test-fixtures/photos'
+import { provideLightbox } from '../src/composables/provideLightbox'
+import LightboxRoot from '../src/primitives/LightboxRoot.vue'
+import LightboxSlide from '../src/primitives/LightboxSlide.vue'
+import LightboxViewport from '../src/primitives/LightboxViewport.vue'
+import { flushUi, installBrowserStubs } from './support/runtime'
 import { createNavigationMotion } from '../src/lightbox/transitions/navigation'
 import { createMotionVisualState } from '../src/lightbox/transitions/visual-state'
 import type { LightboxNavigationMode } from '../src/core/index'
@@ -47,6 +53,18 @@ describe('lightbox fade navigation', () => {
     await vi.waitFor(() => expect(navigation.leavingSlides.value).toEqual([]))
   })
 
+  it('continues a quick return from the opacity the photo still shows', () => {
+    const { navigation, frames, activeIndex } = setup('crossfade')
+    // Photo 0 was just left and is still fully visible when the reader goes back.
+    frames[0]!.style.opacity = '1'
+
+    activeIndex.value = 0
+    navigation.play(1, 0)
+
+    const [keyframes] = vi.mocked(frames[0]!.animate).mock.calls.at(-1)!
+    expect((keyframes as Keyframe[])[0]!.opacity).toBe(1)
+  })
+
   it.each([
     { deltaX: -40, velocityX: 0, changes: false },
     { deltaX: -200, velocityX: 0, changes: true },
@@ -67,4 +85,56 @@ describe('lightbox fade navigation', () => {
       }
     },
   )
+})
+
+describe('fade navigation with custom slides', () => {
+  beforeEach(installBrowserStubs)
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+    document.body.innerHTML = ''
+  })
+
+  it('keeps custom content on the photo that is fading out', async () => {
+    // Hold every fade open so the outgoing slide is still on screen.
+    Object.defineProperty(HTMLElement.prototype, 'animate', {
+      configurable: true,
+      value: () => ({ finished: new Promise<void>(() => {}), cancel: () => {} }),
+    })
+    const photos = [makePhoto({ id: 'first' }), makePhoto({ id: 'second' })]
+    let controller: ReturnType<typeof provideLightbox> | null = null
+    const host = document.createElement('main')
+    document.body.appendChild(host)
+    const app = createApp(
+      defineComponent({
+        setup() {
+          controller = provideLightbox(photos, { transition: 'none', navigation: 'crossfade' })
+          return () =>
+            h(LightboxRoot, null, {
+              default: () =>
+                h(LightboxViewport, null, {
+                  default: () =>
+                    photos.map((photo, index) =>
+                      h(
+                        LightboxSlide,
+                        { key: photo.id, photo, index },
+                        { default: () => h('p', { class: 'custom' }, photo.id) },
+                      ),
+                    ),
+                }),
+            })
+        },
+      }),
+    )
+    app.mount(host)
+
+    await controller!.open(0)
+    await flushUi()
+    controller!.next()
+    await flushUi()
+
+    const shown = [...document.querySelectorAll('.custom')].map((element) => element.textContent)
+    expect(shown.sort()).toEqual(['first', 'second'])
+    app.unmount()
+  })
 })

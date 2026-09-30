@@ -467,6 +467,7 @@ export function useLightboxRuntimeState(
     handleBackdropClick: () => motion.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
     frameVars,
+    isSlideLeaving: (index: number) => motion.leavingSlides.value.includes(index),
     isSlideMediaMounted: (index: number) => {
       const count = photos.value.length
       return getMountedSlideIndices(

@@ -39,6 +39,7 @@ export function createNavigationMotion(
   /** Slides still fading out; they keep their image mounted until the fade ends. */
   const leavingSlides = ref<number[]>([])
   const running = new Map<HTMLElement, Animation>()
+  let dragBase = 1
 
   const frameOf = (index: number) => visual.slideFrameRefs.get(index) ?? null
 
@@ -111,7 +112,9 @@ export function createNavigationMotion(
     }
 
     if (entering) {
-      const start = enteringPose && enteringPose.opacity < 1 ? enteringPose.opacity : 0
+      // Continue from what the slide shows now: at rest that is 0, but a quick return
+      // to the previous photo finds it still (partly) visible.
+      const start = enteringPose?.opacity ?? 0
       const fadeGap = mode === 'fade' && leavingPose && leavingPose.opacity > 0
       const arrive = drift ? `translateX(${-drift}px)` : 'none'
       void run(
@@ -133,15 +136,12 @@ export function createNavigationMotion(
   function drag(deltaX: number) {
     const element = frameOf(activeIndex.value)
     if (!element) return
-    const current = running.get(element)
-    if (current) {
-      current.cancel()
-      running.delete(element)
-    }
+    // A drag that starts mid-fade continues from the opacity shown, not from full.
+    if (running.has(element)) dragBase = takePose(element).opacity
     const width = visual.viewportRef.value?.clientWidth || window.innerWidth || 1
     const progress = Math.min(1, Math.abs(deltaX) / (width * 0.5))
     element.style.transform = `translateX(${deltaX * DRAG_TRAVEL}px)`
-    element.style.opacity = String(1 - progress * 0.6)
+    element.style.opacity = String(dragBase * (1 - progress * 0.6))
   }
 
   /**
@@ -149,6 +149,7 @@ export function createNavigationMotion(
    * the change then continues from the dragged pose. Otherwise the photo settles back.
    */
   function release(deltaX: number, velocityX: number) {
+    dragBase = 1
     const width = visual.viewportRef.value?.clientWidth || window.innerWidth || 1
     const far = Math.abs(deltaX) > Math.min(120, width * 0.18)
     const flick =
