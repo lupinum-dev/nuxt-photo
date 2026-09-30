@@ -96,6 +96,11 @@
   transform-origin: center 28%;
 }
 
+/* A click on the photo zooms to its real pixels; a click beside it closes. */
+.np-lightbox__media[data-zoomable]:not([data-zoomed]) [data-np-slide-frame] {
+  cursor: zoom-in;
+}
+
 .np-lightbox__media[data-zoomed] {
   cursor: grab;
 }

@@ -53,21 +53,30 @@ describe('geometry and viewer utilities', () => {
     expect(getLoopedIndex(5, 5)).toBe(0)
   })
 
-  it('applies rubberbanding and zoom math correctly', () => {
-    const zoom = computeZoomLevels(2400, 1600, 1200, 800)
-    const bounds = computePanBounds(2400, 1600, 1200, 800, 2)
+  it('bounds panning by the drawn frame, not the whole screen', () => {
+    // A 1000×500 frame in a 1200×800 area: at 2× it overflows by 400 and 100 per axis.
+    const bounds = computePanBounds({ width: 1000, height: 500 }, { width: 1200, height: 800 }, 2)
 
     expect(rubberband(-20, 0, 100)).toBe(-4)
-    expect(zoom).toEqual({ fit: 1, secondary: 2, max: 2, current: 1 })
-    expect(bounds).toEqual({ x: 600, y: 400 })
-    expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({
-      x: 600,
-      y: -400,
-    })
+    expect(bounds).toEqual({ x: 400, y: 100 })
+    expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 400, y: -100 })
   })
 
-  it('applies the default minZoom, supports per-photo and options overrides', () => {
-    // Near-native resolution: the default minZoom raises max above natural ratio
+  it('zooms to real pixels, with the default minZoom as a floor', () => {
+    // A 2400px photo drawn 1200px wide: the click target is its real pixels, 2×.
+    expect(computeZoomLevels(2400, 1600, 1200, 800)).toEqual({
+      fit: 1,
+      secondary: 2,
+      max: 2,
+      current: 1,
+    })
+
+    // Large photo: one click shows real pixels (3.33×), capped at 4×.
+    const large = computeZoomLevels(4000, 2000, 1200, 600)
+    expect(large.secondary).toBeCloseTo(3.33, 2)
+    expect(computeZoomLevels(8000, 4000, 1200, 600).secondary).toBe(4)
+
+    // Near-native resolution: the default minZoom keeps zoom useful.
     const nearNative = computeZoomLevels(1280, 800, 1240, 775)
     expect(nearNative.max).toBe(DEFAULT_MIN_ZOOM)
     expect(nearNative.fit).toBe(1)
@@ -77,11 +86,6 @@ describe('geometry and viewer utilities', () => {
     const small = computeZoomLevels(600, 400, 1200, 800)
     expect(small.max).toBe(DEFAULT_MIN_ZOOM)
     expect(small.secondary).toBe(DEFAULT_MIN_ZOOM)
-
-    // Large photo (>2x) — unchanged, natural resolution dominates
-    const large = computeZoomLevels(4000, 2000, 1200, 800)
-    expect(large.max).toBeCloseTo(3.33, 1)
-    expect(large.secondary).toBe(2)
 
     // Lightbox-level minZoom via options
     const optMin = computeZoomLevels(600, 400, 1200, 800, {

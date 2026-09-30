@@ -75,4 +75,34 @@ describe('LightboxRoot modal ownership', () => {
 
     app.unmount()
   })
+
+  it('returns focus to the thumbnail of the photo being viewed on close', async () => {
+    const photos = [makePhoto({ id: 'first' }), makePhoto({ id: 'second' })]
+    let controller: ReturnType<typeof provideLightbox> | null = null
+    const host = document.createElement('main')
+    document.body.appendChild(host)
+    const App = defineComponent({
+      setup() {
+        controller = provideLightbox(photos, { transition: 'none' })
+        return () =>
+          h('div', [
+            ...photos.map((photo, index) =>
+              h('button', { id: photo.id, ref: controller!.setThumbnailRef(index) }, photo.id),
+            ),
+            h(LightboxRoot, null, { default: () => h('button', 'Inside') }),
+          ])
+      },
+    })
+    const app = createApp(App)
+    app.mount(host)
+    ;(host.querySelector('#first') as HTMLButtonElement).focus()
+
+    await controller!.open(0)
+    await controller!.open(1)
+    await controller!.close()
+    await flushUi()
+
+    expect(document.activeElement?.id).toBe('second')
+    app.unmount()
+  })
 })

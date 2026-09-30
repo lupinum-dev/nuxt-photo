@@ -118,7 +118,9 @@ export function useLightboxRuntimeState(
     () => isInteractionLocked(),
   )
 
-  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, resolvedMinZoom)
+  const panzoom = usePanzoom(carousel.currentPhoto, areaMetrics, resolvedMinZoom, (photo) =>
+    carousel.getRelativeFrameRect(photo),
+  )
 
   const motion = useLightboxMotion(
     carousel.activeIndex,
@@ -297,6 +299,7 @@ export function useLightboxRuntimeState(
       clampPan: panzoom.clampPan,
       clampPanWithResistance: panzoom.clampPanWithResistance,
       applyWheelZoom: panzoom.applyWheelZoom,
+      isPointOnPhoto: panzoom.isPointOnPhoto,
       toggleZoom: panzoom.toggleZoom,
       getPanBounds: panzoom.getPanBounds,
     },
@@ -394,6 +397,7 @@ export function useLightboxRuntimeState(
     emblaRef: carousel.emblaRef,
 
     setThumbRef: motion.setThumbRef,
+    getThumbElement: motion.getThumbElement,
     setSlideZoomRef: panzoom.setSlideZoomRef,
     setSlideFrameRef: motion.setSlideFrameRef,
     setSlideImageRef: motion.setSlideImageRef,

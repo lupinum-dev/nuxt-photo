@@ -281,6 +281,7 @@ export function useLightboxMotion(
     handleCloseGesture,
     handleBackdropClick: (closeFn: () => Promise<void>) => closeFn(),
     setThumbRef: visual.setThumbRef,
+    getThumbElement: (index: number) => visual.thumbRefs.get(index) ?? null,
     setSlideFrameRef: visual.setSlideFrameRef,
     setSlideImageRef: visual.setSlideImageRef,
     setOverlayRef: visual.setOverlayRef,

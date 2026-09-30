@@ -9,6 +9,7 @@
     v-bind="$attrs"
     data-np-motion="viewport"
     :data-zoomed="ctx.isZoomedIn.value || undefined"
+    :data-zoomable="ctx.zoomAllowed.value || undefined"
     :data-gesture="ctx.gesturePhase.value !== 'idle' ? ctx.gesturePhase.value : undefined"
     @pointerdown.capture="ctx.onMediaPointerDown"
     @pointermove.capture="ctx.onMediaPointerMove"

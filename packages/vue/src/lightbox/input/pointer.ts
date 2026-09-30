@@ -211,6 +211,9 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
   }
 
   function onMediaPointerMove(event: PointerEvent) {
+    // Hidden controls return as soon as a mouse moves; only touch hides them for long.
+    if (event.pointerType === 'mouse' && !state.uiVisible.value) state.uiVisible.value = true
+
     const tracked = activePointers.get(event.pointerId)
     if (tracked) {
       tracked.clientX = event.clientX
@@ -291,6 +294,30 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     }
   }
 
+  /**
+   * A click outside the photo closes. A mouse click on the photo zooms to its real
+   * pixels, or back to fit. A touch tap on the photo waits briefly so a double tap
+   * can zoom without the controls blinking first.
+   */
+  function handleTap(event: PointerEvent, pointerType: string) {
+    const onPhoto = panzoom.isPointOnPhoto(event.clientX, event.clientY)
+    if (pointerType === 'mouse') {
+      tap.cancel()
+      if (state.isZoomedIn.value) panzoom.toggleZoom()
+      else if (!onPhoto) lifecycle.reportAsyncError('backdrop-close', lifecycle.close())
+      else if (state.zoomAllowed.value) {
+        panzoom.toggleZoom({ x: event.clientX, y: event.clientY })
+      }
+      return
+    }
+    if (!onPhoto && !state.isZoomedIn.value) {
+      tap.cancel()
+      lifecycle.reportAsyncError('backdrop-close', lifecycle.close())
+      return
+    }
+    tap.handle(event.clientX, event.clientY)
+  }
+
   async function onMediaPointerUp(event: PointerEvent) {
     const currentSession = session.value
     const wasPinching = currentSession.kind === 'pinch'
@@ -336,7 +363,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     }
 
     if (!currentSession.moved || mode === 'idle') {
-      tap.handle(event.clientX, event.clientY)
+      handleTap(event, currentSession.pointerType)
       return
     }
 
