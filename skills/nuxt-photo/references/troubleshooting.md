@@ -118,6 +118,19 @@ mounts. Bind the prop when the direction can change at runtime:
 
 Use either `'ltr'` or `'rtl'`.
 
+## A click closes the lightbox
+
+A click beside the photo closes the lightbox, and a click on the photo zooms to
+its real pixels. In a custom lightbox, a full-screen layer that takes pointer
+events catches those clicks first. Give such layers `pointer-events: none` and
+turn pointer events back on for the buttons inside them.
+
+## The photos do not fade in a custom lightbox
+
+The fade modes stack the slides with rules from the structure CSS. Keep
+`css: 'structure'` or `css: 'all'`, or stack `[data-np-slide]` elements
+yourself.
+
 ## The opening animation jumps
 
 Use the default `transition="auto"`. It fades when the thumbnail is not visible
@@ -183,8 +196,23 @@ options are not extension points.
 
 ## Reduced motion can change animation behavior
 
-Nuxt Photo follows `prefers-reduced-motion`. It replaces movement-heavy
-transitions with a short fade and reacts when the media query changes.
+Nuxt Photo follows `prefers-reduced-motion` and reacts when the media query
+changes. Opening and closing use a short fade instead of moving from the
+thumbnail. With `navigation="slide"` the next photo appears without scrolling,
+and the fade modes change photos without a fade.
+
+## The fade modes need the structure CSS
+
+`navigation="fade"` and `"crossfade"` stack the slides with rules from the
+structure CSS. A custom lightbox that replaces all structural CSS must stack
+`[data-np-slide]` elements itself.
+
+## The backdrop glow needs readable thumbnails
+
+The included theme blurs a small copy of the current thumbnail behind the
+lightbox. A thumbnail from another origin is blurred only when its server sends
+CORS headers; otherwise the glow is only softened. Set `--np-ambient-opacity: 0`
+to turn the glow off.
 
 ## A failed image keeps its placeholder
 
