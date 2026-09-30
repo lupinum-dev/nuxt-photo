@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { PhotoImage } from '@lupinum/nuxt-photo/app'
-import { photos } from '~/composables/photos'
+import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'NuxtImage — nuxt-photo' })
 

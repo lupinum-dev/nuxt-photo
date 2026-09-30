@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PhotoImage, type ImageAdapter } from '@lupinum/nuxt-photo/app'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { demoPhotos } from '~/composables/demoPhotos'
+import { demoPhotos } from 'nuxt-photo-demo'
 
 type Mode = 'native' | 'nuxt-image'
 type Context = 'thumb' | 'slide'

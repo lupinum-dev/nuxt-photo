@@ -1,4 +1,7 @@
-import type { PhotoItem } from '@lupinum/nuxt-photo/app'
+import type { PhotoItem } from '@lupinum/vue-photo'
+
+// One photo set for the docs and the playground. The images live in ./images;
+// each app links that folder into its public directory as /photos.
 
 function localPhoto(
   id: string,
@@ -21,9 +24,9 @@ function localPhoto(
   }
 }
 
-export const photos: PhotoItem[] = [
+export const demoPhotos: PhotoItem[] = [
   localPhoto(
-    'desert-light',
+    'moss-canyon',
     1280,
     800,
     'River canyon with moss-covered walls',
@@ -32,7 +35,7 @@ export const photos: PhotoItem[] = [
     { span: 'wide' },
   ),
   localPhoto(
-    'ocean-glass',
+    'seed-heads',
     960,
     1200,
     'Dandelion seed heads in evening light',
@@ -40,7 +43,7 @@ export const photos: PhotoItem[] = [
     'Dandelion clocks catch the low evening sun in a wide meadow.',
   ),
   localPhoto(
-    'evening-canyon',
+    'paper-wall',
     1280,
     854,
     'Wall covered in open book pages',
@@ -48,7 +51,7 @@ export const photos: PhotoItem[] = [
     'Hundreds of open pages pinned side by side into one wall.',
   ),
   localPhoto(
-    'forest-haze',
+    'forest-tulips',
     1200,
     800,
     'Orange tulips at the edge of a forest',
@@ -56,7 +59,7 @@ export const photos: PhotoItem[] = [
     'Orange tulips glow in the soft light between the trees.',
   ),
   localPhoto(
-    'alpine-frame',
+    'above-the-clouds',
     960,
     1200,
     'Sea of clouds under a blue sky',
@@ -65,7 +68,7 @@ export const photos: PhotoItem[] = [
     { span: 'tall' },
   ),
   localPhoto(
-    'soft-coast',
+    'fog-road',
     1280,
     880,
     'Road through tall trees in fog',
@@ -73,7 +76,7 @@ export const photos: PhotoItem[] = [
     'A quiet road disappears into the fog between tall trees.',
   ),
   localPhoto(
-    'lavender-dreams',
+    'city-at-dusk',
     1200,
     800,
     'City skyline at dusk under a dramatic sky',
@@ -82,7 +85,7 @@ export const photos: PhotoItem[] = [
     { featured: true },
   ),
   localPhoto(
-    'cascade',
+    'yellow-house',
     918,
     1200,
     'Bicycle in front of a yellow shopfront',
@@ -90,7 +93,7 @@ export const photos: PhotoItem[] = [
     'A bicycle rests outside a yellow shopfront under the trees.',
   ),
   localPhoto(
-    'urban-glow',
+    'green-ridge',
     1280,
     720,
     'Green mountain ridge with a footpath',
@@ -98,7 +101,7 @@ export const photos: PhotoItem[] = [
     'A footpath climbs toward a grassy ridge on a clear afternoon.',
   ),
   localPhoto(
-    'amber-detail',
+    'amber-grass',
     1200,
     1200,
     'Tall grass backlit by the setting sun',
@@ -107,7 +110,7 @@ export const photos: PhotoItem[] = [
     { span: '2x2' },
   ),
   localPhoto(
-    'winter-ridge',
+    'stone-field',
     1280,
     828,
     'Large stones in a green meadow',
@@ -115,7 +118,7 @@ export const photos: PhotoItem[] = [
     'Old boulders rest in a meadow under a hazy sky.',
   ),
   localPhoto(
-    'giants',
+    'workshop',
     948,
     1200,
     'Tools and ropes hanging in a workshop',

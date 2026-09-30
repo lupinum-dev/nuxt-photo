@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { photos } from '~/composables/photos'
+import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'Carousel — nuxt-photo' })
 

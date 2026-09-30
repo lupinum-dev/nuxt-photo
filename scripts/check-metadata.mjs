@@ -56,7 +56,7 @@ const forbiddenLifecycleScripts = [
 const workspaceDirectories = [
   'docs',
   'playground',
-  'playground-tailwind',
+  'demo',
   ...packageSet.packages.map((pkg) => pkg.directory),
 ]
 const workspaceManifests = [
@@ -235,6 +235,14 @@ assert(
   '@lupinum/nuxt-photo must directly depend on @lupinum/vue-photo via workspace:*.',
 )
 
+// Private workspace packages (the shared demo photos) may serve other private apps,
+// never a published package.
+const privateWorkspaceNames = new Set(
+  workspaceManifests
+    .filter(({ directory, manifest }) => directory !== '.' && manifest.private === true)
+    .map(({ manifest }) => manifest.name),
+)
+
 for (const { directory, manifest } of workspaceManifests) {
   if (directory !== '.') {
     assert(
@@ -256,8 +264,10 @@ for (const { directory, manifest } of workspaceManifests) {
         `${directory}/package.json uses forbidden non-registry reference ${field}.${name}=${range}.`,
       )
       if (range.startsWith('workspace:')) {
+        const allowed =
+          publicNames.has(name) || (privateWorkspaceNames.has(name) && manifest.private === true)
         assert(
-          publicNames.has(name) && range === 'workspace:*',
+          allowed && range === 'workspace:*',
           `${directory}/package.json has unsupported workspace reference ${name}=${range}.`,
         )
       }

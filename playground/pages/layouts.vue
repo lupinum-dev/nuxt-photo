@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { AlbumLayout } from '@lupinum/nuxt-photo/app'
-import { photos } from '~/composables/photos'
+import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'Layouts — nuxt-photo' })
 

@@ -17,6 +17,7 @@
     "nuxt-shiki": "^0.3.2"
   },
   "devDependencies": {
+    "nuxt-photo-demo": "workspace:*",
     "vite": "catalog:",
     "vue-tsc": "catalog:"
   }

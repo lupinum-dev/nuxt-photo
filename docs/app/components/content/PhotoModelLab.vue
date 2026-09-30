@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 import { computed, ref, watch } from 'vue'
-import { demoPhotos } from '~/composables/demoPhotos'
+import { demoPhotos } from 'nuxt-photo-demo'
 
 const source = demoPhotos[0]!
 const id = ref(source.id)

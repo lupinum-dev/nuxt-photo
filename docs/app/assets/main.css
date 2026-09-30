@@ -1,4 +1,5 @@
 @source "../../content/docs/**/*";
+@source "../examples/**/*";
 
 @theme static {
   --font-sans: 'Public Sans', sans-serif;
@@ -474,35 +475,6 @@ label.docs-control:not(.docs-control--stacked) span {
   font-size: 0.8rem;
 }
 
-.before-after {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  margin: 2rem 0;
-  overflow: hidden;
-  border: 1px solid var(--docs-line);
-  border-radius: 12px;
-  background: var(--docs-line);
-}
-
-.before-after section {
-  min-width: 0;
-  background: var(--docs-surface);
-  padding: 1rem;
-}
-
-.before-after section > p:first-child {
-  margin: 0 0 0.75rem;
-  color: var(--ui-text-muted);
-  font:
-    0.7rem ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .decision-guide {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(15rem, 0.85fr);
@@ -833,7 +805,6 @@ label.docs-control:not(.docs-control--stacked) span {
     min-height: 16rem;
   }
 
-  .before-after,
   .decision-guide__choices {
     grid-template-columns: 1fr;
   }
