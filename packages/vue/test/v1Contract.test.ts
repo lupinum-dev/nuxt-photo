@@ -89,7 +89,7 @@ describe('Nuxt Photo 1.0 public contract', () => {
       /(?:release-history|releases|changelog)/i.test(file),
     )
 
-    expect(migrationGuides).toEqual(['docs/content/docs/5.help/3.upgrade-from-0-2-to-1-0.md'])
+    expect(migrationGuides).toEqual(['docs/content/docs/4.help/3.upgrade-from-0-2-to-1-0.md'])
     expect(releaseHistories).toEqual([])
   })
 })
