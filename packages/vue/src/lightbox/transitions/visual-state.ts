@@ -83,6 +83,16 @@ export function imageSource(element: HTMLElement | null, fallback: string) {
   return image?.currentSrc || image?.src || fallback
 }
 
+/** Read the layout box that `rectStyle` wrote, ignoring any transform. */
+export function layoutRect(element: HTMLElement): RectLike {
+  return {
+    left: Number.parseFloat(element.style.left) || 0,
+    top: Number.parseFloat(element.style.top) || 0,
+    width: Number.parseFloat(element.style.width) || 0,
+    height: Number.parseFloat(element.style.height) || 0,
+  }
+}
+
 export function rectStyle(element: HTMLElement, rect: RectLike) {
   element.style.left = `${rect.left}px`
   element.style.top = `${rect.top}px`
@@ -181,7 +191,11 @@ export function createMotionVisualState() {
     return animationPromise(animation, signal)
       .then(() => applyFrame(element, finalFrame(keyframes)))
       .finally(() => {
-        if (running.delete(item)) animation.cancel()
+        if (!running.delete(item)) return
+        // An interrupted animation keeps the pose it reached; cancelling alone would
+        // snap the element back to its starting styles before the next motion begins.
+        if (signal.aborted) persistAnimation(item)
+        else animation.cancel()
       })
   }
 

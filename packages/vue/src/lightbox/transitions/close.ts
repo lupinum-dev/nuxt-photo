@@ -1,7 +1,7 @@
 import { chooseCloseTransition, coverPose, restingClip } from '../../core/index'
 import { waitForImageReady } from './image-ready'
 import type { CloseMotionCallbacks, CloseTransitionContext } from './types'
-import { imageSource, opacityOf, radiusOf, rectStyle, thumbRadius, visible } from './visual-state'
+import { imageSource, layoutRect, opacityOf, radiusOf, thumbRadius, visible } from './visual-state'
 
 const CLOSE_DURATION_MS = 360
 const FADE_DURATION_MS = 220
@@ -134,10 +134,11 @@ export async function runCloseTransition(
         if (current.transitionImage) current.transitionImage.style.opacity = '0'
         if (current.transitionShadow) current.transitionShadow.style.opacity = '0'
       } else {
-        rectStyle(current.transitionFrame!, fromRect)
-        current.transitionFrame!.style.transform = 'none'
+        // An interrupted open keeps its layout box, transform, and crop; the close
+        // continues from exactly that pose instead of resizing the ghost.
         current.transitionFrame!.style.display = 'block'
       }
+      const frameRect = existingVisual ? layoutRect(current.transitionFrame!) : fromRect
       if (!(await prepareTransitionImage(context, signal))) {
         if (current.transitionFrame) current.transitionFrame.style.display = 'none'
         await runFadeClose(
@@ -157,18 +158,21 @@ export async function runCloseTransition(
       const easing = dragProgress > 0 ? EASING : EASING_FROM_REST
 
       const imageRadius = radiusOf(current.transitionImage)
-      const pose = coverPose(fromRect, toRect, thumbRadius(thumb))
+      const pose = coverPose(frameRect, toRect, thumbRadius(thumb))
+      const startTransform = (existingVisual && current.transitionFrame!.style.transform) || 'none'
+      const startClip =
+        (existingVisual && current.transitionImage?.style.clipPath) || restingClip(imageRadius)
       await Promise.all([
         visual.animate(
           current.transitionFrame,
-          [{ transform: 'none' }, { transform: pose.transform }],
+          [{ transform: startTransform }, { transform: pose.transform }],
           { duration: closeDuration, easing },
           ['transform'],
           signal,
         ),
         visual.animate(
           current.transitionImage,
-          [{ clipPath: restingClip(imageRadius) }, { clipPath: pose.clipPath }],
+          [{ clipPath: startClip }, { clipPath: pose.clipPath }],
           { duration: closeDuration, easing },
           ['clipPath'],
           signal,

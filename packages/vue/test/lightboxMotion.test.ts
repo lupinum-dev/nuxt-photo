@@ -131,6 +131,35 @@ describe('lightbox motion controller', () => {
     ).rejects.toMatchObject({ name: 'AbortError' })
   })
 
+  it('keeps the pose an interrupted animation reached instead of snapping back', async () => {
+    const visual = createMotionVisualState()
+    const element = document.createElement('div')
+    element.style.transform = 'scale(0.5)'
+    const controller = new AbortController()
+    const cancel = vi.fn()
+    element.animate = vi.fn(
+      () => ({ finished: new Promise<void>(() => {}), cancel }) as unknown as Animation,
+    )
+    // Mid-flight, the browser renders the animated value, not the inline start value.
+    const computed = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({ transform: 'matrix(0.8, 0, 0, 0.8, 0, 0)' } as CSSStyleDeclaration)
+
+    const flight = visual.animate(
+      element,
+      [{ transform: 'scale(0.5)' }, { transform: 'none' }],
+      { duration: 400 },
+      ['transform'],
+      controller.signal,
+    )
+    controller.abort()
+    await expect(flight).rejects.toMatchObject({ name: 'AbortError' })
+    computed.mockRestore()
+
+    expect(element.style.transform).toBe('matrix(0.8, 0, 0, 0.8, 0, 0)')
+    expect(cancel).toHaveBeenCalled()
+  })
+
   it('decodes the mounted responsive image and lands on canonical open styles', async () => {
     const { motion, slideImage, controls, callbacks } = setup()
     motion.captureOpen(0, '/fallback-thumb.jpg')
