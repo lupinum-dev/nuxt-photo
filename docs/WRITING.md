@@ -110,6 +110,16 @@ generic headings such as "What's next", "Next step", "Related", "See also",
 "Conclusion", or "Summary". End with the instruction, limitation, or check
 that completes the page.
 
+## Show live examples from real files
+
+When a guide produces a visible result, end it with that result. Put the
+complete component in `docs/app/examples` and render it with
+`::example{name="file-name"}`. The block runs the component and shows its exact
+source, so shown code and running code cannot drift. Add `also="other-file"`
+for companion files, and `code="open"` when the code is the point of the page.
+Each example takes a `photos` prop and must read well when copied into an app:
+no docs-only variables or imports.
+
 ## Use interactive examples deliberately
 
 An interactive example belongs on the one learning page where changing the

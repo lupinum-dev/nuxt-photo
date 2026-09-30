@@ -84,6 +84,5 @@ function reset() {
       </fieldset>
     </template>
     <template #code><DemoCode :code="snippets[layer]" /></template>
-    <template #state><DemoState :value="{ layer, libraryOwns: selected.owns }" /></template>
   </InteractiveExample>
 </template>

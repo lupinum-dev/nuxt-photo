@@ -92,16 +92,5 @@ function reset() {
       </label>
     </template>
     <template #code><DemoCode :code="code" /></template>
-    <template #state>
-      <DemoState
-        :value="{
-          layout,
-          containerWidth: width,
-          spacing,
-          rowHeight: layout === 'rows' ? rowHeight : undefined,
-          columns: layout !== 'rows' ? columns : undefined,
-        }"
-      />
-    </template>
   </InteractiveExample>
 </template>
