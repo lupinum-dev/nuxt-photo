@@ -128,6 +128,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
       startPoint,
       state.zoomState.value.fit,
       bounds,
+      panzoom.getFrameOffset(photo),
     )
     const targetPan = {
       x: scalePan.x + (center.x - pinch.startCenter.x),

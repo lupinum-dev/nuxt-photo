@@ -1,4 +1,4 @@
-import type { GestureMode, PanState } from '../types'
+import type { GestureMode, PanBounds, PanState } from '../types'
 
 /**
  * Classify a gesture based on pointer movement delta.
@@ -9,7 +9,7 @@ export function classifyGesture(
   deltaY: number,
   pointerType: string,
   isZoomedIn: boolean,
-  panBounds: { x: number; y: number },
+  panBounds: PanBounds,
   currentPan: PanState,
 ): GestureMode {
   const absX = Math.abs(deltaX)
@@ -25,10 +25,10 @@ export function classifyGesture(
   const verticalIntent = absY > absX * 1.1
 
   if (isZoomedIn) {
-    const canPanX = panBounds.x > 0.5
-    const canPanY = panBounds.y > 0.5
-    const atLeftEdge = currentPan.x >= panBounds.x - 1
-    const atRightEdge = currentPan.x <= -panBounds.x + 1
+    const canPanX = panBounds.maxX - panBounds.minX > 1
+    const canPanY = panBounds.maxY - panBounds.minY > 1
+    const atLeftEdge = currentPan.x >= panBounds.maxX - 1
+    const atRightEdge = currentPan.x <= panBounds.minX + 1
     const wantsOutwardSlide =
       horizontalIntent && (!canPanX || (deltaX > 0 && atLeftEdge) || (deltaX < 0 && atRightEdge))
 

@@ -47,7 +47,7 @@ describe('usePanzoom', () => {
     panzoom.refreshZoomState(false)
 
     const bounds = panzoom.getPanBounds(currentPhoto.value, panzoom.zoomState.value.max)
-    expect(panzoom.panState.value).toEqual({ x: bounds.x, y: -bounds.y })
+    expect(panzoom.panState.value).toEqual({ x: bounds.maxX, y: bounds.minY })
   })
 
   it('applies transforms to the active slide ref only', () => {

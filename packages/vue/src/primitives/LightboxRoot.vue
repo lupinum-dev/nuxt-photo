@@ -4,6 +4,7 @@
       ref="rootRef"
       tabindex="-1"
       data-np-lightbox-root
+      :style="ctx.frameVars.value"
       v-bind="$attrs"
       @keydown.capture="handleKeydownCapture"
     >

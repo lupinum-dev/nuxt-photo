@@ -106,6 +106,7 @@ export function useLightboxRuntimeState(
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
+  const frameAreaMetrics = ref<AreaMetrics | null>(null)
   const lifecycleStatus = ref<LightboxLifecycleStatus>('closed')
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
@@ -114,6 +115,7 @@ export function useLightboxRuntimeState(
   const carousel = useCarousel(
     photos,
     areaMetrics,
+    frameAreaMetrics,
     () => isZoomedIn(),
     () => isInteractionLocked(),
   )
@@ -133,7 +135,7 @@ export function useLightboxRuntimeState(
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
 
-  const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics)
+  const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, frameAreaMetrics)
 
   type LightboxIntent =
     | { readonly kind: 'closed' }
@@ -275,6 +277,22 @@ export function useLightboxRuntimeState(
     carousel.goToPrev()
   }
 
+  /**
+   * Where the active photo is drawn at fit, as CSS custom properties in viewport
+   * pixels. Themes anchor the caption and arrows to the photo with them.
+   */
+  const frameVars = computed((): Record<string, string> => {
+    const photo = carousel.currentPhoto.value
+    const frame = photo ? carousel.getAbsoluteFrameRect(photo) : null
+    if (!frame) return {}
+    return {
+      '--np-frame-x': `${frame.left}px`,
+      '--np-frame-y': `${frame.top}px`,
+      '--np-frame-width': `${frame.width}px`,
+      '--np-frame-height': `${frame.height}px`,
+    }
+  })
+
   const gestures = useLightboxInputHandlers({
     state: {
       isOpen,
@@ -302,6 +320,7 @@ export function useLightboxRuntimeState(
       isPointOnPhoto: panzoom.isPointOnPhoto,
       toggleZoom: panzoom.toggleZoom,
       getPanBounds: panzoom.getPanBounds,
+      getFrameOffset: panzoom.getFrameOffset,
     },
     navigation: {
       goToNext: carousel.goToNext,
@@ -422,6 +441,7 @@ export function useLightboxRuntimeState(
     toggleZoom: panzoom.toggleZoom,
     handleBackdropClick: () => motion.handleBackdropClick(close),
     getSlideFrameStyle: carousel.getSlideFrameStyle,
+    frameVars,
     isSlideMediaMounted: (index: number) => {
       const count = photos.value.length
       return getMountedSlideIndices(carousel.activeIndex.value, count).has(index)

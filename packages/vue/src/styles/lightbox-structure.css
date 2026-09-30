@@ -1,13 +1,64 @@
 /* Structural / layout styles for Lightbox recipe — no colors, no visual theme */
+
+/*
+ * The frame area: where a fitted photo may sit inside the full-screen swipe track.
+ * The runtime measures [data-np-frame-area]. Set the mat with --np-frame-inset-top,
+ * --np-frame-inset-bottom, and --np-frame-inset-inline on any lightbox root. The
+ * defaults live in var() fallbacks, so utility classes in any cascade layer win.
+ * Without this stylesheet a photo uses the whole area.
+ */
+[data-np-frame-area] {
+  position: absolute;
+  inset: var(--np-frame-inset-top, clamp(40px, 7vh, 80px))
+    var(--np-frame-inset-inline, clamp(48px, 6vw, 120px))
+    var(--np-frame-inset-bottom, clamp(40px, 7vh, 80px));
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .np-lightbox {
   position: fixed;
   inset: 0;
   z-index: 50;
+  /* Room for the top bar above and the wall label below the photo. */
+  --np-caption-gap: 14px;
+  --np-caption-reserve: 104px;
+  --np-frame-inset-top: 72px;
+  --np-frame-inset-bottom: calc(var(--np-caption-reserve) + 16px);
+  --np-frame-inset-inline: clamp(80px, 7vw, 120px);
 }
 
 .np-lightbox__backdrop {
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* Blur a small layer and scale it up: the same soft glow for a fraction of the paint cost. */
+.np-lightbox__ambient {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30%;
+  height: 30%;
+  object-fit: cover;
+  transform: translate(-50%, -50%) scale(4.2);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The new glow fades in on top; the old one stays opaque underneath until it is covered. */
+.np-ambient-enter-active {
+  transition: opacity 520ms ease-out;
+}
+
+.np-ambient-leave-active {
+  transition: opacity 520ms steps(1, end);
+}
+
+.np-ambient-enter-from,
+.np-ambient-leave-to {
   opacity: 0;
 }
 
@@ -20,8 +71,8 @@
 
 .np-lightbox__topbar {
   position: absolute;
-  top: 18px;
-  inset-inline: 20px;
+  top: 16px;
+  inset-inline: 16px;
   z-index: 55;
   display: flex;
   align-items: center;
@@ -33,48 +84,69 @@
   opacity: 0;
 }
 
-.np-lightbox__actions {
-  display: flex;
-  gap: 10px;
+.np-lightbox__counter,
+.np-lightbox__tools {
   pointer-events: auto;
 }
 
+.np-lightbox__actions {
+  display: flex;
+  pointer-events: none;
+}
+
+.np-lightbox__tools {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+}
+
 .np-lightbox__btn {
-  height: 42px;
-  min-width: 42px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
   border: 0;
-  padding: 0 14px;
+  padding: 0;
   cursor: pointer;
-  font-size: 16px;
+  pointer-events: auto;
   transition:
+    background-color 150ms ease,
     opacity 160ms ease,
-    scale 160ms cubic-bezier(0.2, 0, 0, 1);
+    scale 120ms ease,
+    translate 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.np-lightbox__btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .np-lightbox__btn:active:not(:disabled) {
-  scale: 0.96;
+  scale: 0.94;
 }
 
-.np-lightbox__btn--close {
-  min-width: 48px;
-}
-
+/* Arrows sit in the mat beside the photo, centered on it, and follow it between photos. */
 .np-lightbox__btn--prev,
 .np-lightbox__btn--next {
   position: fixed;
-  top: 50%;
+  top: 0;
   z-index: 56;
   width: 48px;
-  padding: 0;
-  transform: translateY(-50%);
+  height: 48px;
+  translate: 0 calc(var(--np-frame-y, 50vh) + var(--np-frame-height, 0px) / 2 - 24px);
 }
 
 .np-lightbox__btn--prev {
-  inset-inline-start: 18px;
+  inset-inline-start: 20px;
 }
 
 .np-lightbox__btn--next {
-  inset-inline-end: 18px;
+  inset-inline-end: 20px;
 }
 
 .np-lightbox__stage {
@@ -165,27 +237,64 @@
   object-fit: contain;
 }
 
+/* The wall label: under the photo, aligned to its left edge, at least a readable width. */
 .np-lightbox__caption {
+  --np-caption-width: min(max(var(--np-frame-width, 100vw), 320px), calc(100vw - 24px));
   position: absolute;
   z-index: 54;
-  bottom: clamp(40px, 7vh, 80px);
-  inset-inline-start: clamp(48px, 6vw, 120px);
-  width: min(720px, calc(100vw - 64px));
+  top: calc(var(--np-frame-y, 0px) + var(--np-frame-height, 0px) + var(--np-caption-gap));
+  left: clamp(12px, var(--np-frame-x, 12px), calc(100vw - 12px - var(--np-caption-width)));
+  width: var(--np-caption-width);
+  max-height: var(--np-caption-reserve);
+  overflow: hidden;
   text-align: start;
   opacity: 0;
   pointer-events: none;
+  transition:
+    top 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    left 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 380ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .np-lightbox__caption > * {
   pointer-events: auto;
 }
 
-.np-lightbox__caption h2 {
+.np-lightbox__label h2 {
   margin: 0;
 }
 
-.np-lightbox__caption p {
-  margin: 6px 0 0;
+.np-lightbox__label p {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Caption text swaps quickly out, then eases in with the new photo. */
+.np-caption-leave-active {
+  transition: opacity 90ms linear;
+}
+
+.np-caption-enter-active {
+  transition:
+    opacity 220ms ease-out,
+    translate 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.np-caption-enter-from {
+  opacity: 0;
+  translate: 0 4px;
+}
+
+.np-caption-leave-to {
+  opacity: 0;
+}
+
+/* While zoomed, the frame falls away and the label steps aside; the arrows stay usable. */
+.np-lightbox:has([data-zoomed]) .np-lightbox__caption {
+  visibility: hidden;
 }
 
 [data-np-transition-layer] {
@@ -240,24 +349,43 @@
   border: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 699px) {
+  [data-np-frame-area] {
+    inset: var(--np-frame-inset-top, 24px) var(--np-frame-inset-inline, 12px)
+      var(--np-frame-inset-bottom, 24px);
+  }
+
+  .np-lightbox {
+    --np-caption-reserve: 96px;
+    --np-frame-inset-top: 64px;
+    --np-frame-inset-bottom: calc(var(--np-caption-reserve) + 12px);
+    --np-frame-inset-inline: 12px;
+  }
+
   .np-lightbox__topbar {
     top: 12px;
     inset-inline: 12px;
   }
 
-  .np-lightbox__actions {
-    gap: 8px;
+  /* Swipe navigates on phones; the arrows stay available to assistive technology. */
+  .np-lightbox__btn--prev,
+  .np-lightbox__btn--next {
+    clip-path: inset(50%);
+    opacity: 0;
   }
 
-  .np-lightbox__btn {
-    min-width: 40px;
-    padding-inline: 12px;
+  .np-lightbox__btn--prev:focus-visible,
+  .np-lightbox__btn--next:focus-visible {
+    clip-path: none;
+    opacity: 1;
   }
+}
 
-  .np-lightbox__caption {
-    bottom: 16px;
-    inset-inline-start: 16px;
-    width: min(620px, calc(100vw - 32px));
+@media (prefers-reduced-motion: reduce) {
+  .np-lightbox__caption,
+  .np-lightbox__btn,
+  .np-ambient-enter-active,
+  .np-caption-enter-active {
+    transition-duration: 1ms;
   }
 }

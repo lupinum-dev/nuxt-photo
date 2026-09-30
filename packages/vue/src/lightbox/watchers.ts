@@ -21,10 +21,18 @@ export function createKeydownBinding(onKeydown: (event: KeyboardEvent) => void) 
   return { attach, detach }
 }
 
-/** Measure the media area and cache the usable viewport metrics. */
+/**
+ * Measure the media area and the frame area inside it.
+ *
+ * The frame area is where a fitted photo may sit. Its size comes from CSS
+ * (`--np-frame-inset-*` on the `[data-np-frame-area]` element), so themes set
+ * the mat around the photo without JavaScript. Without that element the photo
+ * may use the whole media area.
+ */
 export function createGeometrySync(
   mediaAreaRef: Ref<HTMLElement | null>,
   areaMetrics: Ref<AreaMetrics | null>,
+  frameAreaMetrics: Ref<AreaMetrics | null>,
 ) {
   return function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
@@ -41,6 +49,12 @@ export function createGeometrySync(
       width: rect.width,
       height: rect.height,
     }
+
+    const frame = mediaAreaEl.querySelector('[data-np-frame-area]')?.getBoundingClientRect()
+    frameAreaMetrics.value =
+      frame && frame.width > 0 && frame.height > 0
+        ? { left: frame.left, top: frame.top, width: frame.width, height: frame.height }
+        : areaMetrics.value
 
     return areaMetrics.value
   }

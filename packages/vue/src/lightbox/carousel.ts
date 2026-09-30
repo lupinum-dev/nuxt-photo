@@ -10,24 +10,16 @@ import {
 import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel'
 import { fitRect, type AreaMetrics, type PhotoItem } from '../core/index'
 
-/** Keep the swipe track full-screen while fitting each photo inside a gallery mat. */
-export function getLightboxFrameArea(area: AreaMetrics): AreaMetrics {
-  const compact = area.width < 700
-  const horizontalInset = compact ? 12 : Math.min(120, Math.max(48, area.width * 0.06))
-  const verticalInset = compact ? 24 : Math.min(80, Math.max(40, area.height * 0.07))
-
-  return {
-    left: area.left + horizontalInset,
-    top: area.top + verticalInset,
-    width: Math.max(0, area.width - horizontalInset * 2),
-    height: Math.max(0, area.height - verticalInset * 2),
-  }
-}
-
-/** Bind Embla-based slide navigation to the active lightbox photo collection. */
+/**
+ * Bind Embla-based slide navigation to the active lightbox photo collection.
+ *
+ * The swipe track stays full-screen while each photo is fitted inside the
+ * measured frame area, the mat that themes size through CSS.
+ */
 export function useCarousel(
   photos: Readonly<Ref<PhotoItem[]>>,
   areaMetrics: Ref<AreaMetrics | null>,
+  frameAreaMetrics: Ref<AreaMetrics | null>,
   isZoomedIn: () => boolean,
   isInteractionLocked: () => boolean,
 ) {
@@ -56,27 +48,40 @@ export function useCarousel(
     emblaApi.value = api
   })
 
-  function getRelativeFrameRect(photo: PhotoItem, area = areaMetrics.value) {
-    if (!area) return null
-    const frameArea = getLightboxFrameArea({
-      left: 0,
-      top: 0,
-      width: area.width,
-      height: area.height,
-    })
+  /** The fitted photo rect relative to the media area's top-left corner. */
+  function getRelativeFrameRect(photo: PhotoItem) {
+    const area = areaMetrics.value
+    const frameArea = frameAreaMetrics.value ?? area
+    if (!area || !frameArea) return null
+    return fitRect(
+      {
+        left: frameArea.left - area.left,
+        top: frameArea.top - area.top,
+        width: frameArea.width,
+        height: frameArea.height,
+      },
+      photo.width / photo.height,
+    )
+  }
+
+  /** The fitted photo rect in viewport coordinates. */
+  function getAbsoluteFrameRect(photo: PhotoItem) {
+    const frameArea = frameAreaMetrics.value ?? areaMetrics.value
+    if (!frameArea) return null
     return fitRect(frameArea, photo.width / photo.height)
   }
 
-  function getAbsoluteFrameRect(photo: PhotoItem, area = areaMetrics.value) {
-    if (!area) return null
-    return fitRect(getLightboxFrameArea(area), photo.width / photo.height)
-  }
-
   function getSlideFrameStyle(photo: PhotoItem): CSSProperties {
+    const area = areaMetrics.value
     const frame = getRelativeFrameRect(photo)
+    if (!area || !frame) return { width: '0px', height: '0px' }
+    // Slides center their frame; shift it when the mat leaves more room on one side.
+    const offsetX = frame.left + frame.width / 2 - area.width / 2
+    const offsetY = frame.top + frame.height / 2 - area.height / 2
     return {
-      width: `${frame?.width ?? 0}px`,
-      height: `${frame?.height ?? 0}px`,
+      width: `${frame.width}px`,
+      height: `${frame.height}px`,
+      translate: offsetX || offsetY ? `${offsetX}px ${offsetY}px` : undefined,
     }
   }
 

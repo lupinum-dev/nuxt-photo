@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { AreaMetrics, PanState, PhotoItem, ZoomState } from '../../core/index'
+import type { AreaMetrics, PanBounds, PanState, PhotoItem, ZoomState } from '../../core/index'
 
 export type GestureInputConfig = {
   state: {
@@ -31,7 +31,8 @@ export type GestureInputConfig = {
     applyWheelZoom: (event: WheelEvent) => void
     isPointOnPhoto: (clientX: number, clientY: number) => boolean
     toggleZoom: (clientPoint?: { x: number; y: number }) => void
-    getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }
+    getPanBounds: (photo: PhotoItem, zoom: number) => PanBounds
+    getFrameOffset: (photo: PhotoItem) => PanState
   }
   navigation: {
     goToNext: () => void

@@ -12,24 +12,8 @@ import {
   isDoubleTap,
   rubberband,
 } from '../../src/core/index'
-import { getLightboxFrameArea } from '../../src/lightbox/carousel'
 
 describe('geometry and viewer utilities', () => {
-  it('fits desktop photos inside a responsive mat without shrinking the swipe track', () => {
-    expect(getLightboxFrameArea({ left: 0, top: 0, width: 2000, height: 1000 })).toEqual({
-      left: 120,
-      top: 70,
-      width: 1760,
-      height: 860,
-    })
-    expect(getLightboxFrameArea({ left: 0, top: 0, width: 390, height: 844 })).toEqual({
-      left: 12,
-      top: 24,
-      width: 366,
-      height: 796,
-    })
-  })
-
   it('poses a photo frame over a cropped thumbnail without stretching it', () => {
     // A portrait photo frame flying from a wide, cropped thumbnail.
     const frame = { left: 400, top: 100, width: 400, height: 600 }
@@ -58,8 +42,23 @@ describe('geometry and viewer utilities', () => {
     const bounds = computePanBounds({ width: 1000, height: 500 }, { width: 1200, height: 800 }, 2)
 
     expect(rubberband(-20, 0, 100)).toBe(-4)
-    expect(bounds).toEqual({ x: 400, y: 100 })
+    expect(bounds).toEqual({ minX: -400, maxX: 400, minY: -100, maxY: 100 })
     expect(clampPanToBounds({ x: 700, y: -500 }, bounds)).toEqual({ x: 400, y: -100 })
+  })
+
+  it('keeps an off-center frame covering the screen and never jumps as it grows', () => {
+    // The caption mat below moves the frame 60px up: its center sits at y = -60.
+    const frame = { width: 1000, height: 500 }
+    const area = { width: 1200, height: 800 }
+    const offset = { x: 0, y: -60 }
+
+    // At fit the photo stays where the mat put it.
+    expect(computePanBounds(frame, area, 1, offset)).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 })
+    // Just before it fills the screen height it has glided to the screen center (pan +60).
+    const nearlyFull = computePanBounds(frame, area, 1.599, offset)
+    expect(nearlyFull.minY).toBeCloseTo(60, 0)
+    // At 2× its edges may reach, but never pass, the screen edges: 100px each way around center.
+    expect(computePanBounds(frame, area, 2, offset)).toMatchObject({ minY: -40, maxY: 160 })
   })
 
   it('zooms to real pixels, with the default minZoom as a floor', () => {
@@ -101,25 +100,35 @@ describe('geometry and viewer utilities', () => {
 
   it('keeps zoom-out centered and clamps zoom-in targets to bounds', () => {
     expect(
-      computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, { x: 600, y: 400 }),
+      computeTargetPanForZoom(1, 2, { x: 120, y: -80 }, { x: 240, y: -160 }, 1, {
+        minX: -600,
+        maxX: 600,
+        minY: -400,
+        maxY: 400,
+      }),
     ).toEqual({ x: 0, y: 0 })
 
     expect(
       computeTargetPanForZoom(2, 1, { x: 0, y: 0 }, { x: 500, y: -500 }, 1, {
-        x: 300,
-        y: 200,
+        minX: -300,
+        maxX: 300,
+        minY: -200,
+        maxY: 200,
       }),
     ).toEqual({ x: -300, y: 200 })
   })
 })
 
 describe('gesture helpers', () => {
+  const NONE = { minX: 0, maxX: 0, minY: 0, maxY: 0 }
+  const ROOMY = { minX: -80, maxX: 80, minY: -40, maxY: 40 }
+
   it('classifies idle, slide, close, pan, and edge-slide gestures', () => {
-    expect(classifyGesture(4, 4, 'mouse', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('idle')
-    expect(classifyGesture(40, 5, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('slide')
-    expect(classifyGesture(6, 40, 'touch', false, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe('close')
-    expect(classifyGesture(15, 12, 'touch', true, { x: 80, y: 40 }, { x: 0, y: 0 })).toBe('pan')
-    expect(classifyGesture(24, 2, 'touch', true, { x: 80, y: 40 }, { x: 79, y: 0 })).toBe('slide')
+    expect(classifyGesture(4, 4, 'mouse', false, NONE, { x: 0, y: 0 })).toBe('idle')
+    expect(classifyGesture(40, 5, 'touch', false, NONE, { x: 0, y: 0 })).toBe('slide')
+    expect(classifyGesture(6, 40, 'touch', false, NONE, { x: 0, y: 0 })).toBe('close')
+    expect(classifyGesture(15, 12, 'touch', true, ROOMY, { x: 0, y: 0 })).toBe('pan')
+    expect(classifyGesture(24, 2, 'touch', true, ROOMY, { x: 79, y: 0 })).toBe('slide')
   })
 
   it('detects double taps', () => {

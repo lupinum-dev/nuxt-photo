@@ -5,7 +5,21 @@
     aria-modal="true"
     :aria-label="labels.photoViewer"
   >
-    <LightboxOverlay class="np-lightbox__backdrop" />
+    <LightboxOverlay class="np-lightbox__backdrop">
+      <!-- A soft glow of the current photo's colors; the new glow fades in over the old. -->
+      <Transition name="np-ambient">
+        <PhotoImage
+          v-if="lightbox.activePhoto.value"
+          :key="lightbox.activePhoto.value.id"
+          :photo="lightbox.activePhoto.value"
+          context="thumb"
+          loading="eager"
+          alt=""
+          aria-hidden="true"
+          class="np-lightbox__ambient"
+        />
+      </Transition>
+    </LightboxOverlay>
 
     <div class="np-lightbox__ui">
       <LightboxControls
@@ -44,35 +58,49 @@
             >
               <button
                 class="np-lightbox__btn np-lightbox__btn--prev"
+                type="button"
                 :aria-label="labels.previous"
                 :disabled="controlsDisabled"
                 @click="prev"
               >
-                &#8592;
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
               </button>
               <button
                 class="np-lightbox__btn np-lightbox__btn--next"
+                type="button"
                 :aria-label="labels.next"
                 :disabled="controlsDisabled"
                 @click="next"
               >
-                &#8594;
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
               </button>
-              <button
-                class="np-lightbox__btn np-lightbox__btn--zoom"
-                :aria-label="isZoomedIn ? labels.fit : labels.zoom"
-                :disabled="controlsDisabled || !zoomAllowed"
-                @click="toggleZoom()"
-              >
-                {{ isZoomedIn ? labels.fit : labels.zoom }}
-              </button>
-              <button
-                class="np-lightbox__btn np-lightbox__btn--close"
-                :aria-label="labels.close"
-                @click="close"
-              >
-                &#10005;
-              </button>
+              <div class="np-lightbox__tools">
+                <button
+                  class="np-lightbox__btn np-lightbox__btn--zoom"
+                  type="button"
+                  :aria-label="isZoomedIn ? labels.fit : labels.zoom"
+                  :title="isZoomedIn ? labels.fit : labels.zoom"
+                  :disabled="controlsDisabled || !zoomAllowed"
+                  @click="toggleZoom()"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6.5" />
+                    <path v-if="isZoomedIn" d="M20 20l-4.2-4.2M8.5 11h5" />
+                    <path v-else d="M20 20l-4.2-4.2M11 8.5v5M8.5 11h5" />
+                  </svg>
+                </button>
+                <button
+                  class="np-lightbox__btn np-lightbox__btn--close"
+                  type="button"
+                  :aria-label="labels.close"
+                  :title="labels.close"
+                  @click="close"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </button>
+              </div>
             </slot>
           </div>
         </div>
@@ -103,11 +131,16 @@
           </div>
         </LightboxViewport>
 
+        <!-- The wall label: anchored under the photo through the --np-frame-* variables. -->
         <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <slot name="caption" :photo="photo" :index="activeIndex">
-            <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
-            <p v-if="photo?.description">{{ photo.description }}</p>
-          </slot>
+          <Transition name="np-caption" mode="out-in">
+            <div :key="photo?.id ?? 'none'" class="np-lightbox__label">
+              <slot name="caption" :photo="photo" :index="activeIndex">
+                <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
+                <p v-if="photo?.description">{{ photo.description }}</p>
+              </slot>
+            </div>
+          </Transition>
         </LightboxCaption>
       </div>
     </div>
@@ -122,7 +155,9 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
+  PhotoImage,
 } from '../primitives/index'
+import { useLightbox } from '../composables/useLightbox'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
 import type {
   LightboxCaptionSlotProps,
@@ -131,6 +166,7 @@ import type {
 } from '../types/index'
 
 const labels = usePhotoLabels()
+const lightbox = useLightbox()
 
 interface LightboxCounterSlotProps {
   activeIndex: number

@@ -72,12 +72,12 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
 
   const nextButton = page.getByRole('button', { name: 'Next' })
   await expect(nextButton).toBeEnabled()
-  await nextButton.click({ force: true })
+  await nextButton.dispatchEvent('click')
   await expect(page.locator('.np-lightbox__counter')).toContainText('2 / 12')
 
   const previousButton = page.getByRole('button', { name: 'Previous' })
   await expect(previousButton).toBeEnabled()
-  await previousButton.click({ force: true })
+  await previousButton.dispatchEvent('click')
   await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
 
   await expect(page.getByRole('button', { name: 'Zoom' })).toBeVisible()
@@ -96,9 +96,15 @@ test('lightbox motion exposes one deterministic WAAPI timeline', async ({ page }
     .first()
     .evaluate(async (trigger) => {
       ;(trigger as HTMLElement).click()
-      for (let frame = 0; frame < 10; frame += 1) {
+      for (let frame = 0; frame < 30; frame += 1) {
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-        if (document.getAnimations().length >= 5) break
+        // CSS transitions count too; wait for the flight itself.
+        const flying = document.getAnimations().some((animation) =>
+          ((animation.effect as KeyframeEffect).target as HTMLElement)?.hasAttribute(
+            'data-np-transition-frame',
+          ),
+        )
+        if (flying) break
       }
 
       return document.getAnimations().map((animation) => {
@@ -211,7 +217,7 @@ test.describe('touch gestures', () => {
     await expect(media).toHaveAttribute('data-zoomed', 'true')
     await expect.poll(() => currentSlideScale(page)).toBeGreaterThan(1)
 
-    await dialog.getByRole('button', { name: 'Next' }).click({ force: true })
+    await dialog.getByRole('button', { name: 'Next' }).dispatchEvent('click')
     await expect(page.locator('.np-lightbox__counter')).toContainText('2 / 12')
 
     await page.keyboard.press('Escape')
