@@ -18,6 +18,9 @@ overrides:
   # Security floors for transitive build and documentation dependencies.
   # Remove an override after every parent resolves a patched version. Review after 2026-11-01.
   '@hono/node-server': 1.19.15
+  # Keep vite-plus's bundled Vitest browser packages on the same release as vitest.
+  '@vitest/browser': 4.1.11
+  '@vitest/browser-preview': 4.1.11
   '@vitest/mocker': 4.1.11
   'brace-expansion@>=2.0.0 <3.0.0': 2.1.7
   'brace-expansion@>=4.0.0 <5.0.12': 5.0.12
