@@ -1,4 +1,4 @@
-import type { PhotoLabels } from '@lupinum/vue-photo/provide'
+import type { PhotoLabels } from '@lupinum/vue-photo'
 import type { NuxtPhotoLabelsConfig } from '../options'
 
 function expand(template: string, values: Readonly<Record<string, number>>) {

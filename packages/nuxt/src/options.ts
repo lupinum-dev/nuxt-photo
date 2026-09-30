@@ -192,4 +192,4 @@ export function validateNuxtPhotoOptions(options: unknown): asserts options is N
     }
   }
 }
-import type { PhotoLabels } from '@lupinum/vue-photo/provide'
+import type { PhotoLabels } from '@lupinum/vue-photo'

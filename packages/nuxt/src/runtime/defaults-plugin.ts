@@ -1,5 +1,5 @@
 import { defineNuxtPlugin, type Plugin, useAppConfig } from '#app'
-import { PhotoDefaultsKey } from '@lupinum/vue-photo/provide'
+import { PhotoDefaultsKey } from '@lupinum/vue-photo'
 import { resolveNuxtPhotoLabels } from './labels'
 
 const nuxtPhotoDefaultsPlugin: Plugin = (nuxtApp): void => {

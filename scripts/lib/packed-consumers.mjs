@@ -141,9 +141,7 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(srcDir, 'App.vue'),
     [
       '<script setup lang="ts">',
-      "import { PhotoAlbum, PhotoValidationError, responsive, type PhotoItem } from '@lupinum/vue-photo'",
-      "import { useContainerWidth } from '@lupinum/vue-photo/composables'",
-      "import type { LightboxCaptionSlotProps } from '@lupinum/vue-photo/types'",
+      "import { PhotoAlbum, PhotoValidationError, responsive, useContainerWidth, type LightboxCaptionSlotProps, type PhotoItem } from '@lupinum/vue-photo'",
       "import '@lupinum/vue-photo/styles.css'",
       '',
       'const photos: readonly PhotoItem[] = [',

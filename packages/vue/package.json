@@ -34,18 +34,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./composables": {
-      "types": "./dist/composables/index.d.ts",
-      "import": "./dist/composables/index.mjs"
-    },
-    "./provide": {
-      "types": "./dist/provide/index.d.ts",
-      "import": "./dist/provide/index.mjs"
-    },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.mjs"
-    },
     "./styles.css": {
       "default": "./dist/styles.css"
     }
