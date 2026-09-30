@@ -205,14 +205,17 @@ export function createMotionVisualState() {
   }
 
   function setChromeOpacity(opacity: number) {
-    for (const element of controls) {
+    const hidden = opacity <= 0.05
+    for (const element of [...controls, ...captions]) {
+      // Invisible controls must not keep focus or stay in the Tab order.
+      if (hidden && element.contains(document.activeElement)) {
+        element.closest<HTMLElement>('[data-np-lightbox-root]')?.focus({ preventScroll: true })
+      }
       element.style.opacity = String(opacity)
-      element.style.pointerEvents = opacity > 0.05 ? 'auto' : 'none'
+      element.inert = hidden
     }
-    for (const element of captions) {
-      element.style.opacity = String(opacity)
-      element.style.pointerEvents = opacity > 0.05 ? '' : 'none'
-    }
+    for (const element of controls) element.style.pointerEvents = hidden ? 'none' : 'auto'
+    for (const element of captions) element.style.pointerEvents = hidden ? 'none' : ''
   }
 
   function normalizeTransitionVisual(rect: RectLike, src: string) {

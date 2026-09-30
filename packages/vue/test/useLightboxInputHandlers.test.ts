@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxInputHandlers } from '../src/lightbox/input/pointer'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
+function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = true) {
   const isZoomedIn = ref(zoomedIn)
   let currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
@@ -46,6 +46,7 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
     applyWheelZoom: vi.fn(),
     toggleZoom: vi.fn(),
     getPanBounds: vi.fn(() => ({ x: 220, y: 120 })),
+    isPointOnPhoto: vi.fn(() => onPhoto),
 
     goToNext: vi.fn(),
     goToPrev: vi.fn(),
@@ -84,6 +85,7 @@ function createGestureConfig(zoomedIn = false, zoomAllowed = true) {
       applyWheelZoom: config.applyWheelZoom,
       toggleZoom: config.toggleZoom,
       getPanBounds: config.getPanBounds,
+      isPointOnPhoto: config.isPointOnPhoto,
     },
     navigation: {
       goToNext: config.goToNext,
@@ -194,6 +196,33 @@ describe('useLightboxInputHandlers', () => {
     expect(config.goToNext).not.toHaveBeenCalled()
     expect(config.toggleZoom).not.toHaveBeenCalled()
   })
+
+  it.each([
+    // pointer, on the photo, zoomed in → what a single click or tap does
+    { pointerType: 'mouse', onPhoto: false, zoomed: false, expected: 'close' },
+    { pointerType: 'mouse', onPhoto: true, zoomed: false, expected: 'zoom' },
+    { pointerType: 'mouse', onPhoto: true, zoomed: true, expected: 'zoom' },
+    { pointerType: 'touch', onPhoto: false, zoomed: false, expected: 'close' },
+    { pointerType: 'touch', onPhoto: true, zoomed: false, expected: 'controls' },
+    { pointerType: 'touch', onPhoto: false, zoomed: true, expected: 'controls' },
+  ])(
+    'routes a $pointerType click (on photo: $onPhoto, zoomed: $zoomed) to $expected',
+    async ({ pointerType, onPhoto, zoomed, expected }) => {
+      vi.useFakeTimers()
+      const { config } = createGestureConfig(zoomed, true, onPhoto)
+      const gestures = useLightboxInputHandlers(config)
+      const init = { pointerId: 7, pointerType, button: 0, clientX: 300, clientY: 200 }
+
+      gestures.onMediaPointerDown(new PointerEvent('pointerdown', init))
+      await gestures.onMediaPointerUp(new PointerEvent('pointerup', init))
+      vi.advanceTimersByTime(400)
+      vi.useRealTimers()
+
+      expect(config.close).toHaveBeenCalledTimes(expected === 'close' ? 1 : 0)
+      expect(config.toggleZoom).toHaveBeenCalledTimes(expected === 'zoom' ? 1 : 0)
+      expect(config.uiVisible.value).toBe(expected !== 'controls')
+    },
+  )
 
   it('supports mixed pointer types across consecutive gesture sessions', async () => {
     const { config } = createGestureConfig(false)

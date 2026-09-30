@@ -1,71 +1,51 @@
-import type { PanState, RectLike, ZoomState } from '../types'
-import { fitRect, rubberband } from '../geometry/rect'
+import type { PanState, ZoomState } from '../types'
+import { rubberband } from '../geometry/rect'
 
 export const DEFAULT_MIN_ZOOM = 1.5
 
 /**
- * Compute a frame rect (fitted to aspect ratio) relative to the container origin.
- */
-export function computeFittedFrame(
-  containerWidth: number,
-  containerHeight: number,
-  photoWidth: number,
-  photoHeight: number,
-): RectLike {
-  return fitRect(
-    { left: 0, top: 0, width: containerWidth, height: containerHeight },
-    photoWidth / photoHeight,
-  )
-}
-
-/**
- * Compute zoom levels for a photo within a given area.
- * `minZoom` is an explicit provider option; application-owned photo metadata is
- * never interpreted by the viewer.
+ * Compute zoom levels for a photo drawn at `frameWidth` × `frameHeight` when fitted.
+ *
+ * The click target (`secondary`) is the photo's real pixels, so zooming reveals
+ * detail instead of upscaling. `minZoom` is an explicit provider option that
+ * keeps zoom available when the photo has no more pixels to show;
+ * application-owned photo metadata is never interpreted by the viewer.
  */
 export function computeZoomLevels(
   photoWidth: number,
   photoHeight: number,
-  areaWidth: number,
-  areaHeight: number,
+  frameWidth: number,
+  frameHeight: number,
   options?: { minZoom?: number },
 ): ZoomState {
-  const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
-
   const minZoom =
     typeof options?.minZoom === 'number' && Number.isFinite(options.minZoom) && options.minZoom > 0
       ? options.minZoom
       : DEFAULT_MIN_ZOOM
 
-  const naturalMax = Math.max(
-    minZoom,
-    Math.min(4, photoWidth / frame.width, photoHeight / frame.height),
-  )
-  const secondary = Math.min(2, naturalMax)
+  const realPixels = Math.min(photoWidth / frameWidth, photoHeight / frameHeight)
+  const max = Math.max(minZoom, Math.min(4, realPixels))
 
   return {
     fit: 1,
-    secondary,
-    max: Math.max(secondary, naturalMax),
+    secondary: max,
+    max,
     current: 1,
   }
 }
 
 /**
- * Compute pan bounds for a given zoom level.
+ * Compute pan bounds for a fitted frame zoomed inside the visible area.
  * Returns the maximum absolute pan offset in each axis.
  */
 export function computePanBounds(
-  photoWidth: number,
-  photoHeight: number,
-  areaWidth: number,
-  areaHeight: number,
+  frame: { width: number; height: number },
+  area: { width: number; height: number },
   zoom: number,
 ): { x: number; y: number } {
-  const frame = computeFittedFrame(areaWidth, areaHeight, photoWidth, photoHeight)
   return {
-    x: Math.max(0, (frame.width * zoom - areaWidth) / 2),
-    y: Math.max(0, (frame.height * zoom - areaHeight) / 2),
+    x: Math.max(0, (frame.width * zoom - area.width) / 2),
+    y: Math.max(0, (frame.height * zoom - area.height) / 2),
   }
 }
 

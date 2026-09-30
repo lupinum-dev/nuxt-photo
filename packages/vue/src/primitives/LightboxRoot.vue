@@ -1,6 +1,12 @@
 <template>
   <Teleport v-if="ctx.isOpen.value" to="body">
-    <div ref="rootRef" tabindex="-1" v-bind="$attrs" @keydown.capture="handleKeydownCapture">
+    <div
+      ref="rootRef"
+      tabindex="-1"
+      data-np-lightbox-root
+      v-bind="$attrs"
+      @keydown.capture="handleKeydownCapture"
+    >
       <slot />
       <LightboxTransitionLayer />
     </div>
@@ -68,11 +74,26 @@ function getFocusableElements(root: HTMLElement) {
     root.querySelectorAll<HTMLElement>(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
-  ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true')
+  ).filter(
+    (el) =>
+      !el.hasAttribute('disabled') &&
+      el.getAttribute('aria-hidden') !== 'true' &&
+      !el.closest('[inert]'),
+  )
+}
+
+function focusableTrigger(element: HTMLElement | null) {
+  return element?.closest<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])') ?? null
 }
 
 function handleKeydownCapture(event: KeyboardEvent) {
   if (event.key !== 'Tab') return
+  // Keyboard users bring hidden controls back before moving focus into them.
+  if (!ctx.uiVisible.value) {
+    event.preventDefault()
+    ctx.uiVisible.value = true
+    return
+  }
 
   const root = rootRef.value
   if (!root) return
@@ -119,7 +140,8 @@ watch(
       return
     }
 
-    const target = restoreFocusEl
+    // Return focus to the photo the person was looking at, not the one they opened.
+    const target = focusableTrigger(ctx.getThumbElement(ctx.activeIndex.value)) ?? restoreFocusEl
     restoreFocusEl = null
     restoreSiblings?.()
     if (!target?.isConnected) return

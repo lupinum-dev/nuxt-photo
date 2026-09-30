@@ -13,9 +13,11 @@ import {
   clampPanWithResistance as coreClampPanWithResistance,
   clientToAreaPoint,
   computeTargetPanForZoom,
+  fitRect,
   type AreaMetrics,
   type PanState,
   type PhotoItem,
+  type RectLike,
   type ZoomState,
 } from '../core/index'
 
@@ -27,6 +29,11 @@ export function usePanzoom(
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   minZoom?: number,
+  /** The photo's drawn size at fit; the lightbox mat makes it smaller than the area. */
+  getFrameRect: (photo: PhotoItem) => RectLike | null = (photo) => {
+    const area = areaMetrics.value
+    return area ? fitRect({ ...area, left: 0, top: 0 }, photo.width / photo.height) : null
+  },
 ) {
   const zoomState = ref<ZoomState>({
     fit: 1,
@@ -58,21 +65,24 @@ export function usePanzoom(
   const zoomAllowed = computed(() => zoomState.value.max > zoomState.value.fit + 0.05)
 
   function computeZoomLevels(photo: PhotoItem): ZoomState {
-    const area = areaMetrics.value
-    if (!area) return { fit: 1, secondary: 1, max: 1, current: 1 }
+    const frame = getFrameRect(photo)
+    if (!frame || frame.width <= 0 || frame.height <= 0) {
+      return { fit: 1, secondary: 1, max: 1, current: 1 }
+    }
     return coreComputeZoomLevels(
       photo.width,
       photo.height,
-      area.width,
-      area.height,
+      frame.width,
+      frame.height,
       minZoom != null ? { minZoom } : undefined,
     )
   }
 
   function getPanBounds(photo: PhotoItem, zoom: number) {
     const area = areaMetrics.value
-    if (!area) return { x: 0, y: 0 }
-    return computePanBounds(photo.width, photo.height, area.width, area.height, zoom)
+    const frame = getFrameRect(photo)
+    if (!area || !frame) return { x: 0, y: 0 }
+    return computePanBounds(frame, area, zoom)
   }
 
   function clampPan(
@@ -279,6 +289,16 @@ export function usePanzoom(
     startPanzoomSpring(targetZoom, targetPan, { tension: 170, friction: 17 })
   }
 
+  /** Whether a screen point lands on the active photo as currently drawn, zoom included. */
+  function isPointOnPhoto(clientX: number, clientY: number) {
+    const element = slideZoomRefs.get(activeSlideIndex)
+    if (!element) return false
+    const rect = element.getBoundingClientRect()
+    return (
+      clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+    )
+  }
+
   function setActiveSlideIndex(index: number) {
     activeSlideIndex = index
   }
@@ -346,6 +366,7 @@ export function usePanzoom(
     refreshZoomState,
     toggleZoom,
     applyWheelZoom,
+    isPointOnPhoto,
     getCurrentScale,
     getCurrentPan,
     setCurrentPanImmediate,

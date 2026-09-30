@@ -66,6 +66,7 @@ type LightboxDomBindings = {
   mediaAreaRef: Ref<HTMLElement | null>
   emblaRef: Ref<HTMLElement | null | undefined>
   setThumbRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  getThumbElement: (index: number) => HTMLElement | null
   setSlideZoomRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
   setSlideFrameRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void
   setSlideImageRef: (index: number) => (el: Element | ComponentPublicInstance | null) => void

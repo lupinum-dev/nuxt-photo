@@ -29,6 +29,7 @@ export type GestureInputConfig = {
     clampPan: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
     clampPanWithResistance: (pan: PanState, zoom?: number, photo?: PhotoItem) => PanState
     applyWheelZoom: (event: WheelEvent) => void
+    isPointOnPhoto: (clientX: number, clientY: number) => boolean
     toggleZoom: (clientPoint?: { x: number; y: number }) => void
     getPanBounds: (photo: PhotoItem, zoom: number) => { x: number; y: number }
   }
