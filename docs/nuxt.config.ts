@@ -1,4 +1,4 @@
-import { realpathSync } from 'node:fs'
+import { readdirSync, readFileSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { exampleSources } from './example-sources'
@@ -45,6 +45,20 @@ export default defineNuxtConfig({
   },
   nuxtPhoto: { css: 'all' },
   vite: { plugins: [exampleSources()] },
+  nitro: {
+    // The agent Markdown serializer writes each example's source into the page.
+    virtual: {
+      '#docs/example-sources': () => {
+        const directory = fileURLToPath(new URL('./app/examples', import.meta.url))
+        const sources = Object.fromEntries(
+          readdirSync(directory)
+            .filter((file) => file.endsWith('.vue'))
+            .map((file) => [file, readFileSync(join(directory, file), 'utf8').trimEnd()]),
+        )
+        return `export default ${JSON.stringify(sources)}`
+      },
+    },
+  },
   content: {
     componentPolicy: {
       components: {

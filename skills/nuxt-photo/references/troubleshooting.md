@@ -4,7 +4,7 @@
 
 ## Troubleshooting
 
-## The album is unstyled or moves after loading
+### The album is unstyled or moves after loading
 
 Keep the required structure CSS enabled:
 
@@ -19,7 +19,7 @@ Use `css: 'structure'` when your own CSS supplies the visual theme. Every photo
 must also have accurate `width` and `height` values. These values let the
 browser reserve space before the image loads.
 
-## Selecting a photo does not open a lightbox
+### Selecting a photo does not open a lightbox
 
 `PhotoAlbum`, `PhotoCarousel`, and a standalone `Photo` create the required
 lightbox context by default. Lower-level components such as `PhotoTrigger`
@@ -30,7 +30,7 @@ If `lightbox` was `false` when a ready-made component mounted, changing it to
 mount it only after the option is known. Lightbox capability is a setup-time
 option.
 
-## A grouped photo is missing from navigation
+### A grouped photo is missing from navigation
 
 `PhotoGroup.photos` is the complete, ordered collection. Every descendant
 `Photo` or `PhotoAlbum` item must have an ID in that collection.
@@ -46,7 +46,7 @@ Nuxt Photo warns when a descendant registers an ID that is missing from the
 group. It does not add that photo implicitly because DOM mount order is not a
 stable navigation order.
 
-## Photo data throws an error
+### Photo data throws an error
 
 Check that each item has a non-empty string `id`, a non-empty `src`, and
 positive finite `width` and `height` values. IDs must be unique in a collection.
@@ -60,7 +60,7 @@ acceptable:
 
 `Photo` remains strict and always throws for invalid data.
 
-## Nuxt Image rejects a remote URL
+### Nuxt Image rejects a remote URL
 
 Add every remote image host to the Nuxt Image `domains` list. Use hostnames,
 not complete URLs:
@@ -77,7 +77,7 @@ Also confirm that `@nuxt/image` is installed and registered when you explicitly
 select `provider: 'nuxt-image'`. The default `auto` mode uses the native adapter
 when Nuxt Image is absent.
 
-## A placeholder remains visible
+### A placeholder remains visible
 
 This is expected after the requested image fails. The placeholder stays behind
 the broken request instead of leaving an empty frame. It disappears after a
@@ -87,19 +87,19 @@ changes.
 Check the final image URL in the browser network panel. A successful request is
 required to remove the placeholder.
 
-## A custom thumbnail ignores image configuration
+### A custom thumbnail ignores image configuration
 
 A raw `<img>` bypasses the Nuxt Photo image adapter. Render `PhotoImage` in the
 slot when the custom thumbnail should retain native, Nuxt Image, or custom
 adapter behavior.
 
-## A Nuxt import fails under pnpm
+### A Nuxt import fails under pnpm
 
 Nuxt applications should import public symbols from
 `@lupinum/nuxt-photo/app`. Importing `@lupinum/vue-photo` directly requires that
 package to be installed as a direct dependency.
 
-## Server and client HTML do not match
+### Server and client HTML do not match
 
 Do not create signed URLs from the current time or random state while rendering.
 Create them before render and place the stable result on each `PhotoItem`.
@@ -107,7 +107,7 @@ Create them before render and place the stable result on each `PhotoItem`.
 Also keep the photo collection, dimensions, and `defaultContainerWidth`
 deterministic between server rendering and hydration.
 
-## RTL changes do not update a carousel
+### RTL changes do not update a carousel
 
 Without a `direction` prop, `PhotoCarousel` reads inherited direction when it
 mounts. Bind the prop when the direction can change at runtime:
@@ -118,20 +118,20 @@ mounts. Bind the prop when the direction can change at runtime:
 
 Use either `'ltr'` or `'rtl'`.
 
-## A click closes the lightbox
+### A click closes the lightbox
 
 A click beside the photo closes the lightbox, and a click on the photo zooms to
 its real pixels. In a custom lightbox, a full-screen layer that takes pointer
 events catches those clicks first. Give such layers `pointer-events: none` and
 turn pointer events back on for the buttons inside them.
 
-## The photos do not fade in a custom lightbox
+### The photos do not fade in a custom lightbox
 
 The fade modes stack the slides with rules from the structure CSS. Keep
 `css: 'structure'` or `css: 'all'`, or stack `[data-np-slide]` elements
 yourself.
 
-## The opening animation jumps
+### The opening animation jumps
 
 Use the default `transition="auto"`. It fades when the thumbnail is not visible
 enough for a reliable opening animation. Check that thumbnail IDs and dimensions
@@ -141,87 +141,87 @@ uses a fade.
 After a fix, test selecting a thumbnail, next and previous navigation, Escape,
 focus restoration, mobile width, and your application direction.
 
-_Source: `docs/content/docs/5.help/1.troubleshooting.md`_
+_Source: https://nuxt-photo.lupinum.com/docs/help/troubleshooting_
 
 ## Known constraints
 
-## Known dimensions are required
+### Known dimensions are required
 
 Every photo needs accurate intrinsic `width` and `height` values before it is
 rendered. Nuxt Photo does not measure images in the browser. Calculate missing
 dimensions during upload or server-side ingestion.
 
-## The photo model contains images only
+### The photo model contains images only
 
 Video and mixed-media slides are outside the Nuxt Photo 1.0 model. Build those
 experiences separately instead of representing them as photos.
 
-## A single Photo is strict
+### A single Photo is strict
 
 `Photo` throws when its item is invalid. `validation="drop"` exists only on
 collection components: `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`.
 
-## Lightbox capability is decided at setup
+### Lightbox capability is decided at setup
 
 The `lightbox` option on ready-made components is read when the component is
 created. Remount the component to change that capability. Transition settings
 can change while the component remains mounted.
 
-## PhotoGroup uses one explicit collection
+### PhotoGroup uses one explicit collection
 
 `PhotoGroup.photos` owns identity and navigation order. Descendant components
 register thumbnail and slide behavior, but do not add items to the collection.
 
-## One lightbox owns the modal state
+### One lightbox owns the modal state
 
 Only one provider owns focus and page isolation at a time. Opening another
 lightbox closes the current owner.
 
-## Structure CSS is required
+### Structure CSS is required
 
 Use `css: 'all'` for the included appearance or `css: 'structure'` with your own
 theme. With `css: 'none'`, your application must recreate all structural album,
 carousel, lightbox, focus, and transition CSS.
 
-## Carousel options are intentionally limited
+### Carousel options are intentionally limited
 
 The public behavior options are `loop`, `dragFree`, `direction`, and Nuxt
 Photo's autoplay settings. Embla plugins, private methods, and arbitrary Embla
 options are not extension points.
 
-## Runtime direction changes must be explicit
+### Runtime direction changes must be explicit
 
 `PhotoCarousel` reads inherited text direction when it mounts. Bind its
 `direction` prop when locale direction can change without a remount.
 
-## Reduced motion can change animation behavior
+### Reduced motion can change animation behavior
 
 Nuxt Photo follows `prefers-reduced-motion` and reacts when the media query
 changes. Opening and closing use a short fade instead of moving from the
 thumbnail. With `navigation="slide"` the next photo appears without scrolling,
 and the fade modes change photos without a fade.
 
-## The fade modes need the structure CSS
+### The fade modes need the structure CSS
 
 `navigation="fade"` and `"crossfade"` stack the slides with rules from the
 structure CSS. A custom lightbox that replaces all structural CSS must stack
 `[data-np-slide]` elements itself.
 
-## The backdrop glow needs readable thumbnails
+### The backdrop glow needs readable thumbnails
 
 The included theme blurs a small copy of the current thumbnail behind the
 lightbox. A thumbnail from another origin is blurred only when its server sends
 CORS headers; otherwise the glow is only softened. Set `--np-ambient-opacity: 0`
 to turn the glow off.
 
-## A failed image keeps its placeholder
+### A failed image keeps its placeholder
 
 `placeholderSrc` stays visible after the main image fails. It resets when the
 adapter produces a different image request and disappears after that request
 loads successfully.
 
 These constraints keep server rendering, navigation order, and modal ownership
-predictable. Use [Troubleshooting](/docs/help/troubleshooting) for symptom-based
+predictable. Use [Troubleshooting](https://nuxt-photo.lupinum.com/docs/help/troubleshooting) for symptom-based
 fixes.
 
-_Source: `docs/content/docs/5.help/2.known-constraints.md`_
+_Source: https://nuxt-photo.lupinum.com/docs/help/known-constraints_

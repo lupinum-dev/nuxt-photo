@@ -10,18 +10,19 @@ photo components and auto-imports its helpers.
 ::warning
 These docs describe the Nuxt Photo 1.0 beta. Install the `next` release while
 the stable `latest` tag remains on 0.2. Existing 0.2 applications should follow
-[the 1.0 upgrade guide](/docs/help/upgrade-from-0-2-to-1-0).
+[the 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
 ::
 
-## Prerequisites
+### Prerequisites
 
 - Nuxt **4.4.8+** within Nuxt 4
 - Node **22.18+** within Node 22, or **24.11+** within Node 24
 
-## Install the beta
+### Install the beta
 
-::pm-install{name="@lupinum/nuxt-photo@next"}
-::
+```bash [Terminal]
+pnpm add @lupinum/nuxt-photo@next
+```
 
 Add the module and the complete visual theme to your `nuxt.config`:
 
@@ -40,7 +41,7 @@ The module now registers `<Photo>`, `<PhotoAlbum>`, `<PhotoGroup>`, and
 default `css: 'structure'` option is for applications that provide their own
 theme.
 
-## What got installed
+### What got installed
 
 The `@lupinum/nuxt-photo` package depends on the Vue library internally, so Nuxt
 apps only install the module package.
@@ -54,14 +55,15 @@ For Nuxt app code, use auto-imports or explicit imports from
 `@lupinum/nuxt-photo/app`. Install `@lupinum/vue-photo` directly only in plain Vue
 apps.
 
-## Add `@nuxt/image` later
+### Add `@nuxt/image` later
 
 Install `@nuxt/image` when you want responsive image generation and provider
 integrations such as Cloudinary, Vercel, or local IPX. It is optional for the
 first gallery.
 
-::pm-install{name="@nuxt/image"}
-::
+```bash [Terminal]
+pnpm add @nuxt/image
+```
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -74,24 +76,24 @@ it. Configure remote domains and provider-specific source rules in the Nuxt
 `image` block; use `nuxtPhoto.image` only for Nuxt Photo's thumb and slide
 defaults.
 
-[Image providers](/docs/concepts/image-delivery)
+[Image providers](https://nuxt-photo.lupinum.com/docs/concepts/image-delivery)
 
-Continue with [Build your first album](/docs/start/build-your-first-album). That
+Continue with [Build your first album](https://nuxt-photo.lupinum.com/docs/start/build-your-first-album). That
 page owns the complete copyable example and describes the result you should see.
 
-_Source: `docs/content/docs/1.start/2.installation.md`_
+_Source: https://nuxt-photo.lupinum.com/docs/start/installation_
 
 ## Build your first album
 
 Build a styled album with a working lightbox. Start with the photos below, then
 replace them with your own data after the example works.
 
-## Prerequisites
+### Prerequisites
 
-- Complete [Installation](/docs/start/installation), including
+- Complete [Installation](https://nuxt-photo.lupinum.com/docs/start/installation), including
   `css: 'all'`.
 
-## 1. Add the album page
+### 1. Add the album page
 
 Paste this into a page. The image URLs include their dimensions, so the example
 works before you add files to `public/`.
@@ -136,14 +138,14 @@ const photos: PhotoItem[] = [
 Reload the page. You should now see a justified rows gallery. Click any photo to
 open the lightbox; swipe, pinch to zoom, or press `Esc` to close.
 
-## 2. Check the result
+### 2. Check the result
 
 Start the development server and open the page. You should see three photos in
 rows that fill the available width. Selecting a photo opens the included
 lightbox. Press `ArrowLeft` or `ArrowRight` to navigate, then press `Escape`.
 Focus should return to the selected thumbnail.
 
-## 3. Use your own photos
+### 3. Use your own photos
 
 Every photo is a plain object with four required fields:
 
@@ -179,16 +181,16 @@ Wrong dimensions can still render an image, but the layout and opening
 animation will be wrong.
 ::
 
-## Choose the next task
+### Choose the next task
 
-- [Choose a component](/docs/start/choose-a-component) when you need a single photo,
+- [Choose a component](https://nuxt-photo.lupinum.com/docs/start/choose-a-component) when you need a single photo,
   several albums, or a carousel.
-- [Use your CMS photos](/docs/guides/use-cms-photos) when data comes from an
+- [Use your CMS photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) when data comes from an
   API or content system.
-- [Tune responsive layouts](/docs/guides/tune-responsive-layouts) when the rows,
+- [Tune responsive layouts](https://nuxt-photo.lupinum.com/docs/guides/tune-responsive-layouts) when the rows,
   spacing, or breakpoints need to change.
 
-_Source: `docs/content/docs/1.start/3.build-your-first-album.md`_
+_Source: https://nuxt-photo.lupinum.com/docs/start/build-your-first-album_
 
 ## Photo data and dimensions
 
@@ -198,7 +200,7 @@ Nuxt Photo accepts one public photo shape: `PhotoItem`.
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 ```
 
-## Required fields
+### Required fields
 
 ```ts
 const photo: PhotoItem = {
@@ -221,9 +223,9 @@ They let Nuxt Photo calculate the layout and reserve space before the image
 loads. Do not use array positions as IDs or approximate dimensions.
 
 If a CMS omits dimensions, calculate them during upload or server-side
-ingestion. The [CMS guide](/docs/guides/use-cms-photos) shows one approach.
+ingestion. The [CMS guide](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) shows one approach.
 
-## Optional fields
+### Optional fields
 
 | Field            | Purpose                                                      |
 | ---------------- | ------------------------------------------------------------ |
@@ -238,7 +240,7 @@ ingestion. The [CMS guide](/docs/guides/use-cms-photos) shows one approach.
 The placeholder resets when the resolved image request changes. It remains
 visible when that image fails to load.
 
-## Map external data once
+### Map external data once
 
 Convert CMS or API records at your application boundary. Rendering components
 should receive `PhotoItem[]` instead of knowing each source format.
@@ -256,4 +258,4 @@ const photos = records.map((record) => ({
 
 This mapping gives layout, navigation, and image delivery one source of truth.
 
-_Source: `docs/content/docs/3.concepts/1.photo-data-and-dimensions.md`_
+_Source: https://nuxt-photo.lupinum.com/docs/concepts/photo-data-and-dimensions_

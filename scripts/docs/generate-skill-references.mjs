@@ -25,14 +25,61 @@ const outputs = {
   ],
 }
 
-function plainMarkdown(source, path) {
+const site = 'https://nuxt-photo.lupinum.com'
+
+function componentName(name) {
+  return name
+    .trim()
+    .split('-')
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join('')
+}
+
+// Match the website's agent Markdown: examples become their source files and
+// install blocks become commands, because a skill reader cannot run the page.
+async function exampleMarkdown(attributes) {
+  const name = attributes.match(/name="([^"]+)"/)?.[1]
+  const also = attributes.match(/also="([^"]+)"/)?.[1]
+  const files = [name, ...(also?.split(',') ?? [])].filter(Boolean).map(componentName)
+  const blocks = await Promise.all(
+    files.map(async (file) => {
+      const source = await readFile(resolve(root, 'docs/app/examples', `${file}.vue`), 'utf8')
+      return `\`\`\`vue [app/components/${file}.vue]\n${source.trimEnd()}\n\`\`\``
+    }),
+  )
+  return [
+    `Complete example. Use it as \`<${files[0]} :photos="photos" />\` with your own \`PhotoItem[]\`.`,
+    ...blocks,
+  ].join('\n\n')
+}
+
+async function plainMarkdown(source, path) {
   const title = source.match(/^title:\s*['"]?(.+?)['"]?$/m)?.[1] ?? path
-  const body = source
+  let body = source
     .replace(/^---\n[\s\S]*?\n---\n/, '')
+    .replace(/^::pm-install\{name="([^"]+)"\}\n::$/gm, '```bash [Terminal]\npnpm add $1\n```')
     .replace(/^::[a-z0-9-]+\n::\n?/gim, '')
     .replace(/:::read-more\{to="([^"]+)" title="([^"]+)"\}\n:::/g, '[$2]($1)')
+    .replace(/\]\(\/docs\//g, `](${site}/docs/`)
+    // The page title becomes a level-two heading, so page sections move down one level.
+    .replace(/^(#{2,5}) /gm, '#$1 ')
     .trim()
-  return `## ${title}\n\n${body}\n\n_Source: \`${path}\`_\n`
+  for (const match of body.matchAll(/^::example\{([^}]*)\}\n::$/gm)) {
+    body = body.replace(match[0], await exampleMarkdown(match[1]))
+  }
+  return `## ${title}\n\n${body}\n\n_Source: ${site}${routeFor(path)}_\n`
+}
+
+function routeFor(path) {
+  return (
+    '/docs/' +
+    path
+      .replace('docs/content/docs/', '')
+      .replace(/\.md$/, '')
+      .split('/')
+      .map((segment) => segment.replace(/^\d+\./, ''))
+      .join('/')
+  )
 }
 
 async function formatMarkdown(source, filename) {
@@ -57,7 +104,7 @@ for (const [filename, sources] of Object.entries(outputs)) {
   const sections = []
   for (const sourcePath of sources) {
     const source = await readFile(resolve(root, sourcePath), 'utf8')
-    sections.push(plainMarkdown(source, sourcePath))
+    sections.push(await plainMarkdown(source, sourcePath))
   }
 
   const generated = await formatMarkdown(
