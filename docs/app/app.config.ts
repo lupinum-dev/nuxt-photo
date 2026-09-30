@@ -30,7 +30,6 @@ export default {
       contentDirectory: 'docs/content',
     },
     landing: {
-      eyebrow: { en: 'Nuxt Photo 1.0 beta' },
       title: { en: 'Albums and lightboxes for Nuxt.' },
       description: {
         en: 'Render responsive photo layouts on the server, then open the included accessible lightbox. Add Nuxt Image when you need image optimization.',
@@ -46,36 +45,7 @@ export default {
       install: {
         command: 'pnpm add @lupinum/nuxt-photo@next',
       },
-      hero: {
-        media: {
-          type: 'image',
-          src: '/landing-gallery.webp',
-          alt: 'A responsive Nuxt Photo album with two rows of landscape and portrait photos',
-        },
-      },
-      features: [
-        {
-          title: { en: 'Useful before hydration' },
-          description: {
-            en: 'Known dimensions produce useful layout before images finish loading.',
-          },
-          icon: 'lucide:layout-grid',
-        },
-        {
-          title: { en: 'Accessible lightbox included' },
-          description: {
-            en: 'Albums, groups, carousels, and custom triggers share keyboard, gesture, and focus behavior.',
-          },
-          icon: 'lucide:scan',
-        },
-        {
-          title: { en: 'Customize only what you need' },
-          description: {
-            en: 'Start with ready-made components. Use slots and lower-level components when the design requires them.',
-          },
-          icon: 'lucide:layers-3',
-        },
-      ],
+      features: [],
     },
   },
 }
