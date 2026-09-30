@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Lightbox, LightboxProvider, PhotoImage, PhotoTrigger } from '@lupinum/nuxt-photo/app'
-import { demoPhotos } from '~/composables/demoPhotos'
+import { demoPhotos } from 'nuxt-photo-demo'
 
 type Layer = 'recipe' | 'slots' | 'provider' | 'primitives'
 const layer = ref<Layer>('recipe')

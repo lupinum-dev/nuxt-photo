@@ -19,6 +19,8 @@
     "vue-router": "5.3.0"
   },
   "devDependencies": {
+    "nuxt-photo-demo": "workspace:*",
+    "shiki": "4.4.3",
     "vite": "catalog:",
     "vue-tsc": "catalog:"
   }

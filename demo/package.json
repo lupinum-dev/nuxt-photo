@@ -1,0 +1,12 @@
+{
+  "name": "nuxt-photo-demo",
+  "private": true,
+  "description": "The photo set shared by the docs and the playground.",
+  "type": "module",
+  "exports": {
+    ".": "./photos.ts"
+  },
+  "dependencies": {
+    "@lupinum/vue-photo": "workspace:*"
+  }
+}

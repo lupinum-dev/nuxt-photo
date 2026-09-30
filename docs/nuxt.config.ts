@@ -1,6 +1,7 @@
 import { realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { exampleSources } from './example-sources'
 
 const siteUrl = 'https://nuxt-photo.lupinum.com'
 const ginkoDocsDir = realpathSync(
@@ -52,6 +53,7 @@ export default defineNuxtConfig({
     },
   },
   nuxtPhoto: { css: 'all' },
+  vite: { plugins: [exampleSources()] },
   content: {
     componentPolicy: {
       components: {
@@ -62,18 +64,31 @@ export default defineNuxtConfig({
           slots: ['default'],
           media: null,
         },
+        example: {
+          kind: 'block',
+          props: {
+            name: { type: 'string', required: true },
+            also: { type: 'string', required: false },
+            code: { type: 'string', required: false },
+          },
+          slots: [],
+          media: null,
+        },
       },
     },
     markdown: {
-      tags: Object.fromEntries(
-        [...customComponents, 'pm-install'].map((name) => [
-          name,
-          name
-            .split('-')
-            .map((part) => part[0]!.toUpperCase() + part.slice(1))
-            .join(''),
-        ]),
-      ),
+      tags: {
+        ...Object.fromEntries(
+          [...customComponents, 'pm-install'].map((name) => [
+            name,
+            name
+              .split('-')
+              .map((part) => part[0]!.toUpperCase() + part.slice(1))
+              .join(''),
+          ]),
+        ),
+        example: 'ExampleBlock',
+      },
     },
   },
   app: {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { demoPhotos } from '~/composables/demoPhotos'
+import { demoPhotos } from 'nuxt-photo-demo'
 
 const events = ref<string[]>([])
 const album = ref<{ open(index?: number): Promise<void> } | null>(null)

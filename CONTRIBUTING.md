@@ -36,8 +36,9 @@ imports it instead of restoring hoisting.
 - `packages/nuxt` — Nuxt module, runtime plugins, app exports, and generated
   Nuxt integration.
 - `playground` — main development and browser-test application.
-- `playground-tailwind` — distinct Tailwind integration consumer.
-- `docs` — public Ginko-based documentation application and real consumer.
+- `docs` — public Ginko-based documentation application and real consumer. Its
+  live examples in `docs/app/examples` include the Tailwind lightbox.
+- `demo` — the photo set and images shared by the docs and the playground.
 - `test/fixtures` — shared test data and size fixtures.
 
 ## Daily commands
@@ -76,7 +77,6 @@ vp test packages/nuxt/test/module.test.ts
 vp run typecheck
 vp run lint:vue-template
 vp run test:browser
-vp run build:playground-tailwind
 vp run build:docs
 vp run release:pack
 ```
@@ -104,7 +104,6 @@ Choose the consumer that owns the behavior:
 ```sh
 vp run dev
 vp run dev:playground
-vp run dev:playground-tw
 vp run dev:docs
 ```
 

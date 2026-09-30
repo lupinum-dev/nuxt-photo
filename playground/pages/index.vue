@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import type { LightboxNavigationMode } from '@lupinum/nuxt-photo/app'
-import { photos } from '~/composables/photos'
+import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 const modes: LightboxNavigationMode[] = ['slide', 'fade', 'crossfade']
 const route = useRoute()
