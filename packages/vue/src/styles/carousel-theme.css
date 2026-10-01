@@ -30,6 +30,24 @@
   transition: opacity 0.15s;
 }
 
+.np-carousel__autoplay {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 0;
+  background: var(--np-carousel-surface);
+  color: var(--np-carousel-surface-fg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.np-carousel__autoplay:focus-visible {
+  outline: 2px solid var(--np-carousel-surface-fg);
+  outline-offset: 2px;
+}
+
 .np-carousel__arrow:disabled {
   opacity: 0.35;
   cursor: default;

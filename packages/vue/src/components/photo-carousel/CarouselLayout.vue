@@ -7,6 +7,19 @@
   />
 
   <div v-else class="np-carousel" :dir="direction" :style="cssVarStyle" v-bind="$attrs">
+    <!-- First in the tab order, so keyboard users can stop the motion before anything else. -->
+    <button
+      v-if="autoplayAvailable"
+      type="button"
+      class="np-carousel__autoplay"
+      :aria-label="autoplayPlaying ? labels.pauseAutoplay : labels.playAutoplay"
+      @click="toggleAutoplay"
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path :d="autoplayPlaying ? 'M4 3h3v10H4zm5 0h3v10H9z' : 'M5 3l8 5-8 5z'" />
+      </svg>
+    </button>
+
     <div ref="emblaRef" class="np-carousel__viewport">
       <div class="np-carousel__container">
         <div
@@ -84,7 +97,8 @@
 
       <div v-if="showMultiControls && showCounter" class="np-carousel__counter">
         <span aria-hidden="true">{{ selectedIndex + 1 }} / {{ photos.length }}</span>
-        <span data-np-sr-only aria-live="polite" aria-atomic="true">
+        <!-- Announcing every automatic slide change would interrupt screen reader users. -->
+        <span data-np-sr-only :aria-live="autoplayPlaying ? 'off' : 'polite'" aria-atomic="true">
           {{ labels.slideStatus(selectedIndex + 1, photos.length) }}
         </span>
       </div>
@@ -227,6 +241,9 @@ const {
   goToPrev,
   selectedSnap,
   reInit,
+  autoplayAvailable,
+  autoplayPlaying,
+  toggleAutoplay,
 } = usePhotoCarouselRuntime({
   photos: toRef(props, 'photos'),
   loop: toRef(props, 'loop'),

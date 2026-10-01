@@ -53,6 +53,20 @@
   pointer-events: auto;
 }
 
+.np-carousel__autoplay {
+  position: absolute;
+  z-index: 1;
+  top: 0.75rem;
+  inset-inline-start: 0.75rem;
+}
+
+.np-carousel__autoplay svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
 .np-carousel__counter {
   position: absolute;
   inset-inline-end: 0.75rem;

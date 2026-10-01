@@ -272,6 +272,84 @@ describe('PhotoCarousel — DOM', () => {
     m.unmount()
   })
 
+  // Embla starts autoplay only once the slides have a size, so size them first.
+  async function mountAutoplayCarousel() {
+    const props = reactive({ photos, autoplay: false })
+    const m = mount(PhotoCarousel, props)
+    await flushUi()
+    const viewport = m.container.querySelector('.np-carousel__viewport')!
+    const container = m.container.querySelector('.np-carousel__container')!
+    setCarouselRect(viewport, 0, 600)
+    setCarouselRect(container, 0, 600)
+    m.container
+      .querySelectorAll('.np-carousel__slide')
+      .forEach((slide, index) => setCarouselRect(slide, index * 600, 600))
+    props.autoplay = true
+    await flushUi()
+    return {
+      ...m,
+      counter: () => m.container.querySelector('.np-carousel__counter')!.textContent,
+      pauseButton: () => m.container.querySelector<HTMLButtonElement>('.np-carousel__autoplay'),
+    }
+  }
+
+  it('does not autoplay under reduced motion, and starts when the preference is removed', async () => {
+    let reduce = true
+    const listeners = new Set<() => void>()
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          get matches() {
+            return query.includes('reduce') && reduce
+          },
+          media: query,
+          addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+          removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+        }) as unknown as MediaQueryList,
+    )
+    const m = await mountAutoplayCarousel()
+    vi.useFakeTimers()
+    try {
+      await vi.advanceTimersByTimeAsync(9000)
+      expect(m.counter()).toContain('1 / 4')
+      expect(m.pauseButton()).toBeNull()
+
+      reduce = false
+      for (const listener of listeners) listener()
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(4100)
+      expect(m.pauseButton()?.getAttribute('aria-label')).toBe('Pause slideshow')
+      expect(m.counter()).toContain('2 / 4')
+      m.unmount()
+    } finally {
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    }
+  })
+
+  it('pauses autoplay from its visible button', async () => {
+    const m = await mountAutoplayCarousel()
+    vi.useFakeTimers()
+    try {
+      const button = m.pauseButton()!
+      expect(button.getAttribute('aria-label')).toBe('Pause slideshow')
+
+      button.click()
+      await nextTick()
+      expect(button.getAttribute('aria-label')).toBe('Play slideshow')
+      await vi.advanceTimersByTimeAsync(9000)
+      expect(m.counter()).toContain('1 / 4')
+
+      button.click()
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(4100)
+      expect(m.counter()).toContain('2 / 4')
+      m.unmount()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('forwards root attrs to the rendered carousel root', async () => {
     const m = mount(PhotoCarousel, {
       photos,
