@@ -3,10 +3,14 @@
 '@lupinum/nuxt-photo': minor
 ---
 
-Honor thumbnail quality and cap thumbnail and slide candidates at the source width. Remove repeated URLs from providers that round widths. Decode pre-encoded local paths once before passing them to Nuxt Image.
+Thumbnails and lightbox slides now request leaner, correct files through Nuxt Image:
 
-Breaking changes: `image.thumb.sizes` now uses an HTML sizes string instead of Nuxt Image shorthand. The `image.slide.maxDensity` option is removed.
+- The thumbnail `quality` setting is applied. Before, it was ignored, and Vercel served thumbnails at quality 100.
+- Images are never requested wider than the original photo, and providers that round widths no longer produce duplicate `srcset` entries.
+- IPX serves WebP by default. Set `image.format` to `'avif'`, or to `'auto'` to leave the format to the provider. Providers that choose the format themselves, such as Vercel, are unchanged.
+- IPX shows a tiny blurred preview while each photo loads. Turn it off with `image.placeholder: false`, or on for other providers with `true`. A photo's own `placeholderSrc` always wins.
+- Local paths that are already URL-encoded, such as `/photos/my%20trip.jpg`, no longer return 404.
+- New `image.thumb.widths` sets the thumbnail file widths.
+- Invalid module options, such as arrays where a string is expected, now fail with a clear error.
 
-Add `image.thumb.widths` to configure thumbnail candidates. Add `image.format`, defaulting to WebP for IPX and ipxStatic; AVIF and auto are also supported. Add `image.placeholder` to control tiny generated placeholders, enabled by default for IPX and ipxStatic. Other providers keep their format behavior and default to no generated placeholder. An explicit photo placeholder always wins.
-
-Reject malformed module options, including non-plain objects, sparse width arrays, and non-string enum values.
+**Breaking:** `image.thumb.sizes` is now a standard HTML `sizes` string, for example `'(max-width: 768px) 100vw, 400px'`. The old `'sm:100vw lg:400px'` form fails with a message that shows the new form. `image.slide.maxDensity` is removed, because slides are now always capped at the original photo width.
