@@ -37,7 +37,7 @@ describe('recipe validation', () => {
     try {
       app.mount(container)
       await flushUi()
-      expect(errors.length).toBeGreaterThan(0)
+      expect(errors).toHaveLength(1)
       for (const error of errors) {
         expect(error).toBeInstanceOf(PhotoValidationError)
         expect((error as Error).message).toContain(owner + ': photo "one" has invalid width 0')

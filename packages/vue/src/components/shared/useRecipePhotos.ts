@@ -23,15 +23,22 @@ export function useRecipePhotos<TMeta extends object>(
     reportingReady.value = true
   })
 
+  // Report each validation failure once, independently of mount readiness.
+  watch(
+    resolution,
+    (value) => {
+      if (!value.result) throw value.error
+    },
+    { immediate: true },
+  )
+
   watch(
     [resolution, reportingReady],
     ([value, ready]) => {
-      // Watch callbacks use Vue's error handler. Keep the computed value safe
-      // when an app handles the exception and lets the component keep rendering.
-      if (!value.result) throw value.error
-      if (ready && value.result.invalidPhotos) reportInvalid(value.result.invalidPhotos)
+      const event = value.result?.invalidPhotos
+      if (ready && event) reportInvalid(event)
     },
-    { flush: 'post', immediate: true },
+    { flush: 'post' },
   )
 
   return computed(() => resolution.value.result?.photos ?? [])
