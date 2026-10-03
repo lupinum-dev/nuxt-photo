@@ -95,6 +95,11 @@ describe('nuxt image adapter', () => {
       expect(thumb.placeholderSrc).toBe(placeholderSrc)
       expect(slide.placeholderSrc).toBe(placeholderSrc)
       if (originalSrc === '/vector%20art.SVG?version=1#preview.gif') {
+        for (const context of ['thumb', 'slide'] as const) {
+          expect(
+            adapter({ ...tiny, placeholderSrc: '/explicit.jpg' }, context).placeholderSrc,
+          ).toBe('/explicit.jpg')
+        }
         expect(thumb).toEqual({
           src: '/vector%20art.SVG?version=1#preview.gif',
           sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px',
@@ -107,9 +112,6 @@ describe('nuxt image adapter', () => {
           width: 300,
           height: 600,
         })
-        expect(
-          adapter({ ...tiny, placeholderSrc: '/explicit.jpg' }, 'thumb').placeholderSrc,
-        ).toBeUndefined()
         expect(imageMock).not.toHaveBeenCalled()
       } else {
         expect(thumb.srcset).toBe(`${src} 300w`)

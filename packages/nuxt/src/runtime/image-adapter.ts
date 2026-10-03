@@ -60,6 +60,7 @@ export function createNuxtImageAdapter(
     if (sourcePath.endsWith('.svg')) {
       return {
         src: originalSrc,
+        placeholderSrc: photo.placeholderSrc,
         sizes: options.sizes,
         width: photo.width,
         height: photo.height,
