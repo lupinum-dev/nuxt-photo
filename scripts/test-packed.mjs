@@ -1,14 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs'
-import { basename, dirname, join, resolve, sep } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { dirname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { containsLocalFilesystemPath } from './lib/local-reference.mjs'
@@ -18,20 +10,10 @@ import {
   assertSafeLifecycleScripts,
 } from './lib/package-contract.mjs'
 import { verifyPackedConsumers } from './lib/packed-consumers.mjs'
-import { assert, discoverPackageSet, readJson, readWorkspaceCatalog } from './lib/package-set.mjs'
-import {
-  readDeclaredToolchain,
-  readPackedManifest,
-  sha1File,
-  sha256File,
-  toolchainMatchesDeclared,
-} from './lib/release-artifact.mjs'
-
+import { assert, discoverPackageSet, readWorkspaceCatalog } from './lib/package-set.mjs'
 const startedAt = process.hrtime.bigint()
 const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)))
-const releaseDir = join(rootDir, '.release')
-const firstPassDir = join(releaseDir, 'pass-a')
-const secondPassDir = join(releaseDir, 'pass-b')
+const releaseDir = join(rootDir, 'test-results', 'packed')
 const unpackDir = join(releaseDir, 'unpacked')
 const packageSet = discoverPackageSet(rootDir)
 const catalog = readWorkspaceCatalog(rootDir)
@@ -47,18 +29,6 @@ function run(command, args, options = {}) {
     ...options,
   })
   return typeof output === 'string' ? output.trim() : ''
-}
-
-function tryRun(command, args) {
-  try {
-    return execFileSync(command, args, {
-      cwd: rootDir,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim()
-  } catch {
-    return null
-  }
 }
 
 function assertSourceManifestsUnchanged() {
@@ -167,7 +137,7 @@ function inspectSourceMaps(file, unpackedPackage) {
 }
 
 function inspectPackage(pkg, tarballPath) {
-  const packageJson = readPackedManifest(tarballPath)
+  const packageJson = JSON.parse(run('tar', ['-xOzf', tarballPath, 'package/package.json']))
   const packedFiles = listPackedFiles(tarballPath)
 
   assert(packageJson.name === pkg.name, `Packed ${pkg.name} has the wrong name.`)
@@ -227,82 +197,35 @@ function inspectPackage(pkg, tarballPath) {
   return packageJson
 }
 
+// `--tarballs <dir>` tests tarballs that were already packed, such as the exact files
+// the release workflow publishes, instead of building and packing here.
+function findPackedTarballs(directory) {
+  const files = readdirSync(directory)
+  return new Map(
+    packageSet.packages.map((pkg) => {
+      const file = `${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.tgz`
+      assert(files.includes(file), `Expected ${file} in ${directory}.`)
+      return [pkg.name, join(directory, file)]
+    }),
+  )
+}
+
+const tarballsFlag = process.argv.indexOf('--tarballs')
 rmSync(releaseDir, { force: true, recursive: true })
 mkdirSync(releaseDir, { recursive: true })
 
-const firstPass = buildAndPack(firstPassDir)
-const secondPass = buildAndPack(secondPassDir)
-const retainedPackages = []
-
-for (const pkg of packageSet.packages) {
-  const firstTarball = firstPass.get(pkg.name)
-  const secondTarball = secondPass.get(pkg.name)
-  assert(
-    basename(firstTarball) === basename(secondTarball),
-    `${pkg.name} repeated packs produced different filenames.`,
-  )
-  assert(
-    sha256File(firstTarball) === sha256File(secondTarball),
-    `${pkg.name} repeated clean build-and-pack passes were not byte-identical.`,
-  )
-
-  const retainedTarball = join(releaseDir, basename(firstTarball))
-  copyFileSync(firstTarball, retainedTarball)
-  const packageJson = inspectPackage(pkg, retainedTarball)
-  retainedPackages.push({
-    metadata: {
-      name: pkg.name,
-      version: pkg.version,
-      directory: pkg.directory,
-      tarball: basename(retainedTarball),
-      sha1: sha1File(retainedTarball),
-      sha256: sha256File(retainedTarball),
-    },
-    packageJson,
-    tarballPath: retainedTarball,
-  })
-}
-
-rmSync(firstPassDir, { force: true, recursive: true })
-rmSync(secondPassDir, { force: true, recursive: true })
+const tarballs =
+  tarballsFlag === -1
+    ? buildAndPack(releaseDir)
+    : findPackedTarballs(resolve(rootDir, process.argv[tarballsFlag + 1] ?? ''))
+const packed = packageSet.packages.map((pkg) => {
+  const tarballPath = tarballs.get(pkg.name)
+  return { packageJson: inspectPackage(pkg, tarballPath), tarballPath }
+})
 rmSync(unpackDir, { force: true, recursive: true })
 assertSourceManifestsUnchanged()
-
-verifyPackedConsumers(rootDir, retainedPackages)
-
-const sourceSha = tryRun('git', ['rev-parse', 'HEAD'])
-const worktreeStatus = tryRun('git', ['status', '--porcelain=v1', '--untracked-files=all'])
-const worktreeDirty = worktreeStatus === null ? null : worktreeStatus.length > 0
-if (process.env.CI === 'true') {
-  assert(sourceSha, 'CI release candidates require a Git commit.')
-  assert(worktreeDirty === false, 'CI release candidates require a clean tree.')
-}
-
-const toolchain = {
-  node: process.version,
-  npm: run('npm', ['--version']),
-  pnpm: run('pnpm', ['--version']),
-  vitePlus: readJson(join(rootDir, 'node_modules', 'vite-plus', 'package.json')).version,
-}
-const declaredToolchain = readDeclaredToolchain(rootDir)
-const metadata = {
-  schemaVersion: 1,
-  sourceSha,
-  worktreeDirty,
-  releaseEligible:
-    Boolean(sourceSha) &&
-    worktreeDirty === false &&
-    toolchainMatchesDeclared(toolchain, declaredToolchain),
-  reproduciblePasses: 2,
-  packageSetVersion: packageSet.packageSetVersion,
-  publishOrder: packageSet.publishOrder,
-  toolchain,
-  packages: retainedPackages.map(({ metadata: packageMetadata }) => packageMetadata),
-}
-
-writeFileSync(join(releaseDir, 'release-artifact.json'), `${JSON.stringify(metadata, null, 2)}\n`)
-
+verifyPackedConsumers(rootDir, packed)
 const durationSeconds = Number(process.hrtime.bigint() - startedAt) / 1e9
 process.stdout.write(
-  `release package set verified: ${packageSet.packageSetVersion} (${packageSet.packages.length} packages) in ${durationSeconds.toFixed(2)}s\n`,
+  `Packed consumers passed for ${packageSet.packages.length} packages in ${durationSeconds.toFixed(2)}s\n`,
 )

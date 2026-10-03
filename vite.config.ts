@@ -5,7 +5,9 @@ import { defineConfig } from 'vite-plus'
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 const ignoredGeneratedPaths = [
+  'release/**',
   '.release/**',
+  '.package-preview/**',
   '**/.nuxt/**',
   '**/.output/**',
   '**/dist/**',
@@ -38,11 +40,13 @@ export default defineConfig({
     ],
   },
   fmt: {
-    // Preserve the exact shared Lupinum OSS checker.
+    // Keep the shared OSS release helpers identical to the starter.
     ignorePatterns: [
       ...ignoredGeneratedPaths,
       'pnpm-lock.yaml',
       'scripts/check-dependency-policy.mjs',
+      'scripts/release.mjs',
+      'scripts/lint-changesets.mjs',
     ],
     semi: false,
     singleQuote: true,

@@ -1,515 +1,313 @@
-name: Publish
+name: release
 
+# Merging changesets into main opens or updates the "Version packages" PR.
+# Merging that PR publishes: pack (no credentials) -> publish (protected `npm`
+# environment, maintainer approval, OIDC) -> tag and GitHub release.
+# A manual run follows the same rules: it can re-offer a release that is already
+# versioned on main, never one whose changesets are still pending.
 on:
-  workflow_dispatch: {}
-  workflow_run:
-    workflows:
-      - ci
-    types:
-      - completed
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions: {}
 
-concurrency:
-  group: publish-nuxt-photo
-  cancel-in-progress: false
-
 jobs:
-  verify:
-    name: Verify certified artifacts
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main')
+  # Runs dependency code (the Changesets CLI and its changelog plugin) with a read-only token.
+  # It can only produce a patch; version-pr checks that patch and pushes it.
+  version-prepare:
+    name: Prepare version
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      actions: read
       contents: read
+      pull-requests: read # @changesets/changelog-github reads pull request and author names
     outputs:
-      action: ${{ steps.intent.outputs.action || steps.state.outputs.action }}
-      channel: ${{ steps.release.outputs.channel }}
-      ci_run_id: ${{ steps.ci.outputs.run-id }}
-      sha: ${{ steps.ci.outputs.sha }}
-      tag: ${{ steps.release.outputs.tag }}
-      version: ${{ steps.release.outputs.version }}
-
+      pending: ${{ steps.version.outputs.pending }}
+      publish: ${{ steps.check.outputs.publish }}
     steps:
-      - name: Require current main and successful CI
-        id: ci
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        env:
-          RUN_ATTEMPT: ${{ github.run_attempt }}
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          script: |
-            const { data: repository } = await github.rest.repos.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            })
-            if (repository.visibility !== 'public') {
-              core.setFailed('npm provenance requires a public repository.')
-              return
-            }
-            const { data: currentMain } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `heads/${repository.default_branch}`,
-            })
-            const sourceSha = context.eventName === 'workflow_run'
-              ? context.payload.workflow_run.head_sha
-              : currentMain.object.sha
-            const isHistoricalRetry = context.eventName === 'workflow_run' &&
-              Number(process.env.RUN_ATTEMPT) > 1
-            if (sourceSha !== currentMain.object.sha && !isHistoricalRetry) {
-              core.setFailed('The successful CI SHA is no longer current main.')
-              return
-            }
-            const { data: runs } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'ci.yml',
-              branch: repository.default_branch,
-              event: 'push',
-              status: 'completed',
-              per_page: 20,
-            })
-            const successfulRuns = runs.workflow_runs.filter(candidate =>
-              candidate.conclusion === 'success' && candidate.head_sha === sourceSha,
-            )
-            const candidates = []
-            for (const run of successfulRuns) {
-              const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: run.id,
-                per_page: 100,
-              })
-              if (artifacts.artifacts.filter(artifact =>
-                artifact.name === 'release-candidate' && !artifact.expired,
-              ).length === 1) candidates.push(run)
-            }
-            const eventRunId = context.payload.workflow_run?.id
-            const selected = context.eventName === 'workflow_run'
-              ? candidates.filter(run => run.id === eventRunId)
-              : candidates
-            if (selected.length !== 1) {
-              core.setFailed(
-                `Expected exactly one successful current-main CI run with a retained release-candidate artifact; found ${selected.length}.`,
-              )
-              return
-            }
-            let environment
-            try {
-              environment = (await github.request(
-                'GET /repos/{owner}/{repo}/environments/{environment_name}',
-                {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  environment_name: 'npm',
-                },
-              )).data
-            } catch (error) {
-              if (error.status === 404) {
-                core.setFailed('Create the protected npm environment before publication.')
-                return
-              }
-              throw error
-            }
-            const reviewers = (environment.protection_rules ?? [])
-              .find(rule => rule.type === 'required_reviewers')?.reviewers ?? []
-            if (reviewers.length === 0) {
-              core.setFailed('The npm environment must require a human reviewer.')
-              return
-            }
-            core.setOutput('sha', sourceSha)
-            core.setOutput('run-id', String(selected[0].id))
-
-      - name: Checkout certified SHA
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          fetch-depth: 0
           persist-credentials: false
-          ref: ${{ steps.ci.outputs.sha }}
-
-      - name: Check reviewed release intent
-        id: intent
-        run: |
-          pending="$(node --input-type=module -e "import { listPendingChangesets } from './scripts/lib/changelog.mjs'; process.stdout.write(String(listPendingChangesets(process.cwd()).length))")"
-          if test "$pending" = 0; then
-            echo 'ready=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'action=waiting' >> "$GITHUB_OUTPUT"
-            {
-              echo '# Nuxt Photo release'
-              echo
-              echo 'Release intent is still represented by pending Changesets.'
-              echo
-              echo '**Next action:** Review and merge the generated version pull request after its checks pass.'
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Set up verification Node
-        if: steps.intent.outputs.ready == 'true'
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+          fetch-depth: 0 # release.mjs finds the version commit and the release tags
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .node-version
+          node-version: 24
           package-manager-cache: false
-          registry-url: https://registry.npmjs.org
-
-      - name: Install locked Sigstore verifier
-        if: steps.intent.outputs.ready == 'true'
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # Only a changeset that bumps a public version is pending. Empty ones alone produce no
+      # patch, so they never open a Version packages PR and never block a release.
+      # `changeset version` exits 1 when there is no changeset at all, so it runs only when one exists.
+      - id: version
         env:
-          SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
+          GITHUB_TOKEN: ${{ github.token }}
+          OUT: ${{ runner.temp }}/version
         run: |
-          mkdir -p "$SIGSTORE_PREFIX"
-          cp scripts/sigstore-verifier/package.json \
-            scripts/sigstore-verifier/package-lock.json \
-            "$SIGSTORE_PREFIX/"
-          npm ci --prefix "$SIGSTORE_PREFIX" --ignore-scripts --no-audit --no-fund
-
-      - name: Download retained release candidate
-        if: steps.intent.outputs.ready == 'true'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with:
-          github-token: ${{ github.token }}
-          name: release-candidate
-          path: .release
-          run-id: ${{ steps.ci.outputs.run-id }}
-
-      - name: Verify publication authorization
-        if: steps.intent.outputs.ready == 'true'
-        run: >-
-          node scripts/verify-release-artifact.mjs .release
-          --expected-sha "${{ steps.ci.outputs.sha }}"
-          --publishable
-
-      - name: Prepare exact release plan
-        if: steps.intent.outputs.ready == 'true'
-        id: release
-        run: >-
-          node scripts/prepare-release.mjs .release
-          --expected-sha "${{ steps.ci.outputs.sha }}"
-          --ci-run-id "${{ steps.ci.outputs.run-id }}"
-          --summary "$GITHUB_STEP_SUMMARY"
-          --github-output "$GITHUB_OUTPUT"
-
-      - name: Cryptographically verify existing npm packages
-        if: steps.intent.outputs.ready == 'true'
-        env:
-          SIGSTORE_PREFIX: ${{ runner.temp }}/sigstore
-        run: >-
-          node scripts/verify-registry-provenance.mjs .release
-          --summary "$GITHUB_STEP_SUMMARY"
-
-      - name: Derive reconciliation state
-        if: steps.intent.outputs.ready == 'true'
-        id: state
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: >-
-          node scripts/plan-reconciliation.mjs .release
-          --summary "$GITHUB_STEP_SUMMARY"
-          --github-output "$GITHUB_OUTPUT"
-
-      - name: Upload verified release plan
-        if: steps.intent.outputs.ready == 'true'
+          if [[ -n "$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md)" ]]; then
+            pnpm exec changeset version
+          fi
+          mkdir -p "$OUT"
+          git add --all
+          git diff --cached --name-only -- package.json layer/package.json 'packages/*/package.json' | while read -r file; do
+            jq -c --arg old "$(git show "HEAD:$file" | jq -r .version)" \
+              'select(.private != true and .version != $old) | {name, version}' "$file"
+          done | jq -s . > "$OUT/versions.json"
+          git diff --cached --binary --no-renames > "$OUT/version.patch"
+          echo "pending=$(jq 'length > 0' "$OUT/versions.json")" >> "$GITHUB_OUTPUT"
+      - if: steps.version.outputs.pending == 'true'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: verified-nuxt-photo-release
-          path: |
-            .release/*.tgz
-            .release/release-artifact.json
-            .release/release-record.json
-            .release/registry-verification.json
-            .release/github-release-notes.md
+          name: version
+          path: ${{ runner.temp }}/version
           if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 14
-
-  publish:
-    name: Publish fixed package set to npm
-    needs: verify
-    if: needs.verify.outputs.action == 'publish'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    environment: npm
-    permissions:
-      actions: read
-      contents: read
-      id-token: write
-    steps:
-      - name: Set up trusted publishing Node
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24.18.0
-          package-manager-cache: false
-          registry-url: https://registry.npmjs.org
-
-      - name: Download verified release plan
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with:
-          name: verified-nuxt-photo-release
-          path: .release
-
-      - name: Publish inert tarballs in dependency order
-        id: publish
+          overwrite: true
+          retention-days: 1
+      - id: pr
+        if: steps.version.outputs.pending == 'false'
         env:
-          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
-          SOURCE_SHA: ${{ needs.verify.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          node --input-type=module <<'NODE'
-          import { spawnSync } from 'node:child_process'
-          import { createHash } from 'node:crypto'
-          import { appendFileSync, readFileSync } from 'node:fs'
-          import { join } from 'node:path'
+          open="$(gh api "repos/$GITHUB_REPOSITORY/pulls?base=main&head=$GITHUB_REPOSITORY_OWNER:changeset-release/main&state=open" --jq length)"
+          echo "open=$open" >> "$GITHUB_OUTPUT"
+      # Offers a release only when nothing is pending: no changeset that bumps a version and no
+      # open Version packages PR. A manual run follows the same rule; it can re-offer a rejected
+      # or failed publish of an already-versioned release, but never packs main while changesets
+      # are pending.
+      - id: check
+        if: steps.pr.outputs.open == '0'
+        run: node scripts/release.mjs check
 
-          const fail = message => { throw new Error(message) }
-          const run = (args, options = {}) => spawnSync('npm', args, {
-            encoding: 'utf8',
-            stdio: options.inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'],
-          })
-          const view = (spec, field) => {
-            const result = run(['view', spec, field, '--json'])
-            if (result.status === 0) return JSON.parse(result.stdout.trim() || 'null')
-            if (/E404|404 Not Found/.test(result.stderr)) return null
-            fail(`npm view failed for ${spec} ${field}: ${result.stderr.trim()}`)
-          }
-          const hasAttestations = value => Array.isArray(value)
-            ? value.length > 0
-            : Boolean(value && typeof value === 'object' && Object.keys(value).length)
-          const hashBytes = (bytes, algorithm) => createHash(algorithm).update(bytes).digest('hex')
-          const hash = (path, algorithm) => hashBytes(readFileSync(path), algorithm)
-          const artifact = JSON.parse(readFileSync('.release/release-artifact.json', 'utf8'))
-          const releaseRecordBytes = readFileSync('.release/release-record.json')
-          const record = JSON.parse(releaseRecordBytes.toString('utf8'))
-          const verification = JSON.parse(
-            readFileSync('.release/registry-verification.json', 'utf8'),
-          )
-          const pollAttempts = Number(process.env.REGISTRY_POLL_ATTEMPTS ?? 240)
-          const pollDelayMs = Number(process.env.REGISTRY_POLL_DELAY_MS ?? 5000)
-          if (!Number.isSafeInteger(pollAttempts) || pollAttempts < 1) fail('Invalid registry poll attempt count.')
-          if (pollAttempts > 240) fail('Invalid registry poll attempt limit.')
-          if (!Number.isSafeInteger(pollDelayMs) || pollDelayMs < 0) fail('Invalid registry poll delay.')
-          if (pollAttempts * pollDelayMs > 20 * 60 * 1000) fail('Invalid registry poll budget.')
-          if (record.schemaVersion !== 2) fail('Unsupported release record.')
-          if (record.sourceSha !== process.env.SOURCE_SHA || artifact.sourceSha !== record.sourceSha) fail('Source SHA differs.')
-          if (record.version !== process.env.RELEASE_VERSION || artifact.packageSetVersion !== record.version) fail('Version differs.')
-          const expectedOrder = ['@lupinum/vue-photo', '@lupinum/nuxt-photo']
-          const expectedWorkflow = {
-            repository: 'https://github.com/lupinum-dev/nuxt-photo',
-            path: '.github/workflows/release.yml',
-            ref: 'refs/heads/main',
-            identity: 'https://github.com/lupinum-dev/nuxt-photo/.github/workflows/release.yml@refs/heads/main',
-            certificateIssuer: 'https://token.actions.githubusercontent.com',
-            certificateOIDs: {
-              '1.3.6.1.4.1.57264.1.3': record.sourceSha,
-              '1.3.6.1.4.1.57264.1.5': 'lupinum-dev/nuxt-photo',
-              '1.3.6.1.4.1.57264.1.6': 'refs/heads/main',
-            },
-          }
-          if (JSON.stringify(record.publishOrder) !== JSON.stringify(expectedOrder)) fail('Publish order differs.')
-          if (
-            verification.schemaVersion !== 1 ||
-            verification.releaseRecordSha256 !== hashBytes(releaseRecordBytes, 'sha256') ||
-            verification.sourceSha !== record.sourceSha ||
-            verification.version !== record.version ||
-            verification.channel !== record.channel ||
-            verification.sigstoreVersion !== '5.0.0' ||
-            JSON.stringify(verification.workflow) !== JSON.stringify(expectedWorkflow)
-          ) fail('Registry verification record differs from the exact release plan.')
-          if (
-            !Array.isArray(record.packages) || record.packages.length !== expectedOrder.length ||
-            !Array.isArray(verification.packages) || verification.packages.length !== expectedOrder.length ||
-            JSON.stringify(verification.packages.map(pkg => pkg.name)) !== JSON.stringify(expectedOrder)
-          ) fail('Registry verification package set differs.')
-          const npmVersion = run(['--version']).stdout.trim().split('.').map(Number)
-          if (npmVersion[0] < 11 || (npmVersion[0] === 11 && npmVersion[1] < 5)) fail('npm 11.5 or newer is required.')
+  # Turns version.patch into the Version packages PR. Checks out main but installs and runs
+  # nothing from the repository, so no dependency code holds this write token.
+  version-pr:
+    name: Version packages
+    needs: version-prepare
+    if: needs.version-prepare.outputs.pending == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # Job-level, so a publish waiting for approval never blocks updates of the Version packages PR.
+    concurrency:
+      group: release-version
+      cancel-in-progress: false
+    permissions:
+      contents: write # push the changeset-release/main branch
+      pull-requests: write # open or update the Version packages PR
+    outputs:
+      pushed: ${{ steps.push.outputs.pushed }}
+    steps:
+      # Keeps the checkout credentials to push; nothing from the repository runs in this job.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: version
+          path: ${{ runner.temp }}/version
+      # The patch may change only package.json versions (and the ranges of the repository's own
+      # packages), CHANGELOG.md files, changeset .md files (pre mode moves them to .changeset/pre/)
+      # and .changeset/pre.json, and may not create or delete a package.json. Anything else (a
+      # script, a dependency, `files`, .changeset/config.json, a symlink, an executable) fails.
+      - run: |
+          git apply --index "$RUNNER_TEMP/version/version.patch"
+          manifests='^((packages/[^/]+|layer)/)?package\.json$'
+          paths="$(git diff --cached --name-only --no-renames |
+            grep -Ev '^(((packages/[^/]+|layer)/)?(package\.json|CHANGELOG\.md)|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
+          modes="$(git diff --cached --summary --no-renames |
+            grep -Ev '^ (create|delete) mode 100644 (((packages/[^/]+|layer)/)?CHANGELOG\.md|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
+          own="$(git ls-tree -r --name-only HEAD | grep -E "$manifests" |
+            while read -r file; do git show "HEAD:$file"; done | jq -s '[.[].name | strings]')"
+          # shellcheck disable=SC2016 # a jq program: $own and $name are jq variables
+          # Normalize only numeric versions, retaining protocol and range operator. Wrap both
+          # recognized and unchanged values so an input cannot impersonate a normalization marker.
+          normalize='def own_range:
+            if type == "string" and test("^(?<prefix>(workspace:)?[~^]?)[0-9]+[.][0-9]+[.][0-9]+(-[0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?([+][0-9A-Za-z-]+([.][0-9A-Za-z-]+)*)?$")
+            then {kind: "version-range", prefix: capture("^(?<prefix>(workspace:)?[~^]?)").prefix}
+            else {kind: "unmodified", value: .} end;
+            del(.version) | reduce ($own[]) as $name (.; reduce ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies") as $field (.; if .[$field][$name]? then .[$field][$name] |= own_range else . end))'
+          manifest=""
+          for file in $(git diff --cached --name-only --no-renames | grep -E "$manifests" || true); do
+            diff <(git show "HEAD:$file" | jq -S --argjson own "$own" "$normalize") \
+              <(jq -S --argjson own "$own" "$normalize" "$file") || manifest="$manifest $file"
+          done
+          if [[ -n "$paths$modes$manifest" ]]; then
+            echo "::error::version.patch changes files it must not change:"
+            printf '%s\n' "$paths" "$modes" "$manifest"
+            exit 1
+          fi
+      - id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A newer push to main has its own run; do not overwrite its Version packages PR.
+          if [[ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$GITHUB_SHA" ]]; then
+            echo "main moved past $GITHUB_SHA; the newer run updates the PR."
+            echo pushed=false >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --quiet --no-verify --message 'Version packages'
+          git push --force origin HEAD:refs/heads/changeset-release/main
+          {
+            echo 'Merging this pull request releases:'
+            echo
+            jq -r '.[] | "- `\(.name)@\(.version)`"' "$RUNNER_TEMP/version/versions.json"
+            echo
+            echo "The workflow checked that it changes only \`package.json\` versions, \`CHANGELOG.md\` files and consumed changesets."
+            echo "After the merge, approve the \`npm\` deployment."
+          } > "$RUNNER_TEMP/body.md"
+          pr="$(gh api "repos/$GITHUB_REPOSITORY/pulls?base=main&head=$GITHUB_REPOSITORY_OWNER:changeset-release/main&state=open" --jq '.[0].number // empty')"
+          if [[ -n "$pr" ]]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$pr" \
+              -f title='Version packages' -F "body=@$RUNNER_TEMP/body.md" > /dev/null
+          else
+            gh api "repos/$GITHUB_REPOSITORY/pulls" -f title='Version packages' \
+              -f head=changeset-release/main -f base=main -F "body=@$RUNNER_TEMP/body.md" > /dev/null
+          fi
+          echo pushed=true >> "$GITHUB_OUTPUT"
 
-          const plans = []
-          for (const name of expectedOrder) {
-            const releaseMatches = record.packages.filter(candidate => candidate.name === name)
-            const verificationMatches = verification.packages.filter(candidate => candidate.name === name)
-            if (releaseMatches.length !== 1 || verificationMatches.length !== 1) {
-              fail(`Missing or duplicate ${name}.`)
-            }
-            const pkg = releaseMatches[0]
-            const verified = verificationMatches[0]
-            const tarball = join('.release', pkg.tarball)
-            if (
-              !/^[A-Za-z0-9._-]+\.tgz$/.test(pkg.tarball) ||
-              verified.version !== pkg.version || verified.tarball !== pkg.tarball ||
-              verified.sha1 !== pkg.sha1 || verified.sha256 !== pkg.sha256 ||
-              hash(tarball, 'sha1') !== pkg.sha1 ||
-              hash(tarball, 'sha256') !== pkg.sha256 ||
-              hash(tarball, 'sha512') !== verified.sha512
-            ) fail(`${name} failed exact artifact verification.`)
-            if (!['absent', 'oidc'].includes(verified.mode)) {
-              fail(`${name} has an invalid registry verification mode.`)
-            }
-            if (
-              (verified.mode === 'oidc' && !/^[0-9a-f]{64}$/.test(verified.provenanceBundleSha256)) ||
-              (verified.mode !== 'oidc' && verified.provenanceBundleSha256 !== null)
-            ) fail(`${name} has an invalid provenance verification record.`)
-            plans.push({ pkg, tarball, verified })
-          }
-
-          for (const { pkg, verified } of plans) {
-            const spec = `${pkg.name}@${pkg.version}`
-            const existing = view(spec, 'dist.shasum')
-            const channel = view(pkg.name, `dist-tags.${record.channel}`)
-            if (verified.mode === 'absent') {
-              if (existing !== null) {
-                fail(`${spec} was absent during verification but now exists; rerun verification.`)
-              }
-              if (channel !== verified.channelVersion) {
-                fail(`${pkg.name} ${record.channel} tag changed after verification.`)
-              }
-              continue
-            }
-            if (existing !== pkg.sha1) fail(`${spec} changed after verification.`)
-            if (channel !== pkg.version || channel !== verified.channelVersion) {
-              fail(`${pkg.name} ${record.channel} tag changed after verification.`)
-            }
-            const attestations = view(spec, 'dist.attestations')
-            if (verified.mode === 'oidc' && !hasAttestations(attestations)) {
-              fail(`${spec} lost its verified npm provenance metadata.`)
-            }
-          }
-
-          for (const { pkg, tarball, verified } of plans) {
-            if (verified.mode === 'absent') {
-              const result = run([
-                'publish', tarball, '--access', 'public', '--tag', record.channel,
-                '--ignore-scripts', '--provenance',
-              ], { inherit: true })
-              if (result.status !== 0) fail(`npm publish failed for ${pkg.name}.`)
-            }
-          }
-
-          const verifiedPackages = new Set()
-          for (let attempt = 0; attempt < pollAttempts; attempt += 1) {
-            for (const pkg of record.packages) {
-              if (verifiedPackages.has(pkg.name)) continue
-              const shasum = view(`${pkg.name}@${pkg.version}`, 'dist.shasum')
-              const attestations = view(`${pkg.name}@${pkg.version}`, 'dist.attestations')
-              const channel = view(pkg.name, `dist-tags.${record.channel}`)
-              if (
-                shasum === pkg.sha1 &&
-                channel === pkg.version &&
-                hasAttestations(attestations)
-              ) {
-                verifiedPackages.add(pkg.name)
-              }
-            }
-            if (verifiedPackages.size === record.packages.length) break
-            if (attempt + 1 < pollAttempts) {
-              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pollDelayMs)
-            }
-          }
-          for (const pkg of record.packages) {
-            if (!verifiedPackages.has(pkg.name)) {
-              fail(`${pkg.name}@${pkg.version} did not expose the required bytes, provenance mode, and ${record.channel}.`)
-            }
-          }
-          appendFileSync(
-            process.env.GITHUB_STEP_SUMMARY,
-            '\nBoth packages expose certified bytes and OIDC provenance.\n',
-          )
-          NODE
-
-  github-release:
-    name: Create GitHub release
-    needs:
-      - verify
-      - publish
-    if: >-
-      always() && needs.verify.result == 'success' &&
-      (needs.verify.outputs.action == 'publish' || needs.verify.outputs.action == 'repair') &&
-      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+  # Pull requests opened with GITHUB_TOKEN start no workflows, so start ci here. This job
+  # checks out and installs nothing; its token expires before any other job could use it.
+  version-pr-ci:
+    needs: version-pr
+    if: needs.version-pr.outputs.pushed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
-      actions: read
-      contents: write
-
+      actions: write # start ci.yml on the Version packages PR
     steps:
-      - name: Download verified release plan
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with:
-          name: verified-nuxt-photo-release
-          path: .release
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref changeset-release/main
 
-      - name: Create release from the exact certified package set
+  pack:
+    needs: version-prepare
+    if: needs.version-prepare.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # release.mjs finds the version commit and the release tags
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: node scripts/release.mjs pack
+      # Test the exact tarballs that publish uploads, not a separate build.
+      - run: node scripts/test-packed.mjs --tarballs release
+      # Rehearse the publish command on the exact tarballs, with the dist-tag publish will use,
+      # so a broken publish fails before the maintainer is asked to approve. No credentials.
+      - run: |
+          shopt -s nullglob
+          tarballs=(./release/lupinum-vue-photo-*.tgz ./release/lupinum-nuxt-photo-*.tgz)
+          if (( ${#tarballs[@]} == 0 )); then echo "::error::No package tarballs found"; exit 1; fi
+          for tarball in "${tarballs[@]}"; do
+            version="$(tar -xOzf "$tarball" package/package.json | jq -r .version)"
+            tag=latest; if [[ "$version" == *-* ]]; then tag=next; fi
+            npm publish "$tarball" --dry-run --access public --ignore-scripts --tag "$tag"
+          done
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release
+          path: release
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: pack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: npm
+    # Approval order is not commit order. Serialize publication, then reject stale runs.
+    concurrency:
+      group: release-publish
+      cancel-in-progress: false
+    permissions:
+      contents: read # check main after approval without checking out repository code
+      id-token: write # npm trusted publishing and provenance
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release
+          path: release
+      - name: Reject stale release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_CHANNEL: ${{ needs.verify.outputs.channel }}
-          RELEASE_TAG: ${{ needs.verify.outputs.tag }}
-          SOURCE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
-          prerelease=false
-          if [ "$RELEASE_CHANNEL" = next ]; then prerelease=true; fi
-          release_status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG")
-          case "$release_status" in
-            404) release_exists=false ;;
-            200) release_exists=true ;;
-            *) echo "Could not verify GitHub release state (HTTP $release_status)" >&2; exit 1 ;;
-          esac
-          tag_status=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG")
-          case "$tag_status" in
-            404)
-              if [ "$release_exists" = true ]; then
-                echo "The existing GitHub release has no tag." >&2
-                exit 1
-              fi
-              tag_error="$(mktemp)"
-              if ! gh api --silent --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
-                -f ref="refs/tags/$RELEASE_TAG" \
-                -f sha="$SOURCE_SHA" 2>"$tag_error"; then
-                if grep -Eq 'Resource not accessible by integration|HTTP 403' "$tag_error"; then
-                  echo "HUMAN-ONLY: GitHub could not create historical tag $RELEASE_TAG at certified commit $SOURCE_SHA." >&2
-                  echo "Run: git fetch origin && git tag $RELEASE_TAG $SOURCE_SHA && git push origin refs/tags/$RELEASE_TAG" >&2
-                  echo "Then verify: git ls-remote origin refs/tags/$RELEASE_TAG" >&2
-                  echo "Finally rerun only this failed GitHub release job; do not rebuild or republish." >&2
-                fi
-                cat "$tag_error" >&2
-                exit 1
-              fi
-              ;;
-            200) ;;
-            *) echo "Could not verify tag state (HTTP $tag_status)" >&2; exit 1 ;;
-          esac
-          tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.type')
-          tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')
-          while [ "$tag_type" = tag ]; do
-            tag_type=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.type')
-            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_sha" --jq '.object.sha')
-          done
-          test "$tag_type" = commit
-          test "$tag_sha" = "$SOURCE_SHA"
-          if [ "$release_exists" = true ]; then
-            gh release upload "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json .release/registry-verification.json \
-              --repo "$GITHUB_REPOSITORY" \
-              --clobber
-            gh release edit "$RELEASE_TAG" \
-              --repo "$GITHUB_REPOSITORY" \
-              --title "$RELEASE_TAG" \
-              --notes-file .release/github-release-notes.md \
-              --prerelease="$prerelease"
-          else
-            create_flags=()
-            if [ "$prerelease" = true ]; then create_flags=(--prerelease); fi
-            gh release create "$RELEASE_TAG" .release/*.tgz .release/release-artifact.json .release/release-record.json .release/registry-verification.json \
-              --repo "$GITHUB_REPOSITORY" \
-              --verify-tag \
-              --title "$RELEASE_TAG" \
-              --notes-file .release/github-release-notes.md \
-              "${create_flags[@]}"
+          current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)"
+          if [[ "$current" != "$GITHUB_SHA" ]]; then
+            echo "::error::main moved past $GITHUB_SHA; run release again from current main."
+            exit 1
           fi
+      # Skips versions already on npm, so "Re-run failed jobs" is safe after a partial publish.
+      # Versions with a `-` (prereleases) go to `next`, all others to `latest`.
+      - run: |
+          shopt -s nullglob
+          tarballs=(./release/lupinum-vue-photo-*.tgz ./release/lupinum-nuxt-photo-*.tgz)
+          if (( ${#tarballs[@]} == 0 )); then echo "::error::No package tarballs found"; exit 1; fi
+          for tarball in "${tarballs[@]}"; do
+            version="$(tar -xOzf "$tarball" package/package.json | jq -r .version)"
+            spec="$(tar -xOzf "$tarball" package/package.json | jq -r .name)@$version"
+            if npm view "$spec" version --json > "$RUNNER_TEMP/npm-version.json" 2> "$RUNNER_TEMP/npm-version.err"; then
+              published="$(jq -er 'select(type == "string")' "$RUNNER_TEMP/npm-version.json")"
+              if [[ "$published" != "$version" ]]; then echo "::error::Unexpected npm version for $spec"; exit 1; fi
+              # Only this workflow publishes, always with provenance; anything else is not our release.
+              if ! npm view "$spec" dist.attestations.provenance --json | jq -e 'type == "object"' > /dev/null; then
+                echo "::error::$spec is on npm without provenance; investigate before releasing"; exit 1
+              fi
+              echo "$spec is already on npm"; continue
+            elif ! jq -e '.error.code == "E404"' "$RUNNER_TEMP/npm-version.json" > /dev/null 2>&1; then
+              cat "$RUNNER_TEMP/npm-version.err" >&2
+              echo "::error::Cannot verify whether $spec exists on npm"; exit 1
+            fi
+            tag=latest; if [[ "$version" == *-* ]]; then tag=next; fi
+            npm publish "$tarball" --provenance --access public --ignore-scripts --tag "$tag"
+          done
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write # create the tag and the GitHub release
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release
+          path: release
+      # One release per entry in releases.json; existing releases are skipped, so re-runs are
+      # safe. Tags point only at the released commit: an existing tag that points elsewhere
+      # fails the job.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(jq 'keys[]' release/releases.json); do
+            tag="$(jq -r ".[$i].tag" release/releases.json)"
+            target="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$tag" \
+              --jq ".[] | select(.ref == \"refs/tags/$tag\") | .object | \"\(.type) \(.sha)\"")"
+            if [[ "$target" == tag\ * ]]; then
+              target="commit $(gh api "repos/$GITHUB_REPOSITORY/git/tags/${target#tag }" --jq .object.sha)"
+            fi
+            if [[ -n "$target" && "$target" != "commit $GITHUB_SHA" ]]; then
+              echo "::error::Tag $tag exists but does not point at $GITHUB_SHA."; exit 1
+            fi
+            jq -r ".[$i].notes" release/releases.json > notes.md
+            prerelease=()
+            if [[ "$(jq -r ".[$i].prerelease" release/releases.json)" == true ]]; then prerelease=(--prerelease); fi
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+              gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+                --title "$tag" --notes-file notes.md "${prerelease[@]}"
+          done

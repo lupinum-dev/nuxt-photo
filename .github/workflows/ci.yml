@@ -3,310 +3,52 @@ name: ci
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  classify:
-    name: Classify changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      pull-requests: read
-    outputs:
-      full: ${{ steps.paths.outputs.full }}
+  ci:
+    name: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PLAYWRIGHT_PORT: '47031'
     steps:
-      - name: Select required lanes
-        id: paths
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const runAll = context.eventName !== 'pull_request'
-            const files = runAll
-              ? []
-              : await github.paginate(github.rest.pulls.listFiles, {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: context.issue.number,
-                  per_page: 100,
-                })
-            const paths = files.flatMap((file) => [file.filename, file.previous_filename].filter(Boolean))
-            const publicDocsOnly =
-              paths.length > 0 &&
-              paths.every((path) =>
-                /^(?:docs\/content\/.*\.md$|docs\/public\/.*\.(?:svg|png|jpe?g|webp|avif|ico)$|README\.md$|CONTRIBUTING\.md$|SECURITY\.md$|MAINTAINING\.md$|AGENTS\.md$|CLAUDE\.md$|LICENSE$)/u.test(path),
-              )
-            core.setOutput('full', String(runAll || !publicDocsOnly))
-
-  compatibility:
-    name: Compatibility (Node ${{ matrix.node-version }})
-    needs: classify
-    if: needs.classify.outputs.full == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version:
-          - 22.18.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
-      - name: Set up Vite+
-        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
-        with:
-          node-version: ${{ matrix.node-version }}
-          run-install: false
-          cache: false
-
-      - name: Install dependencies
-        run: vp install --frozen-lockfile
-
-      - name: Verify pinned Action commits
-        run: node scripts/verify-action-shas.mjs
-
-      - name: Verify runtime compatibility
-        run: vp run test:compat
-
-  verify:
-    name: Verify
-    needs: classify
-    if: >-
-      needs.classify.outputs.full == 'true' &&
-      (github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          persist-credentials: false
-
-      - name: Set up Vite+
-        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .node-version
-          run-install: false
-          cache: false
-
-      - name: Install dependencies
-        run: vp install --frozen-lockfile
-
-      - name: Install browser runtimes
-        run: vp exec playwright install --with-deps chromium firefox webkit
-
-      - name: Run the complete pull-request gate
-        run: vp run verify
-
-      - name: Upload browser failure evidence
-        if: failure()
+          package-manager-cache: false
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: node scripts/verify-action-shas.mjs
+      - run: pnpm verify
+      - if: failure()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: playwright-pr-${{ github.run_id }}
+          name: browser-failures
           path: |
             playwright-report/
             test-results/
           if-no-files-found: ignore
           retention-days: 7
 
-  docs:
-    name: Documentation
-    needs: classify
-    if: github.event_name == 'pull_request' && needs.classify.outputs.full == 'false'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Set up minimum supported Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          persist-credentials: false
-
-      - name: Set up Vite+
-        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
-        with:
-          node-version-file: .node-version
-          run-install: false
-          cache: false
-
-      - name: Install dependencies
-        run: vp install --frozen-lockfile
-
-      - name: Validate and build documentation
-        run: >-
-          node scripts/check-dependency-policy.mjs &&
-          vp run build &&
-          vp run docs:validate &&
-          vp run docs:agent:check &&
-          vp run build:docs:only
-
-  release-candidate:
-    name: Release candidate
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-        with:
-          persist-credentials: false
-
-      - name: Set up Vite+
-        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
-        with:
-          node-version-file: .node-version
-          run-install: false
-          cache: false
-
-      - name: Install dependencies
-        run: vp install --frozen-lockfile
-
-      - name: Install browser runtimes
-        run: vp exec playwright install --with-deps chromium firefox webkit
-
-      - name: Build and certify the exact release candidate
-        run: vp run release:verify
-
-      - name: Revalidate retained artifact metadata
-        run: >-
-          node scripts/verify-release-artifact.mjs .release
-          --expected-sha "${{ github.sha }}"
-          --publishable
-
-      - name: Upload browser failure evidence
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: playwright-main-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Upload exact release candidate
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: release-candidate
-          path: |
-            .release/*.tgz
-            .release/release-artifact.json
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 14
-
-  pr-gate:
-    name: PR gate
-    if: >-
-      always() &&
-      (github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/changeset-release/main'))
-    needs:
-      - classify
-      - compatibility
-      - docs
-      - verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Authorize pull request
-        env:
-          CLASSIFY_RESULT: ${{ needs.classify.result }}
-          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
-          DOCS_RESULT: ${{ needs.docs.result }}
-          FULL: ${{ needs.classify.outputs.full }}
-          VERIFY_RESULT: ${{ needs.verify.result }}
-        run: |
-          test "$CLASSIFY_RESULT" = "success"
-          if [ "$FULL" = "true" ]; then
-            test "$COMPATIBILITY_RESULT" = "success"
-            test "$VERIFY_RESULT" = "success"
-            test "$DOCS_RESULT" = "skipped"
-          else
-            test "$COMPATIBILITY_RESULT" = "skipped"
-            test "$VERIFY_RESULT" = "skipped"
-            test "$DOCS_RESULT" = "success"
-          fi
-
-  authorize-version-pr:
-    name: Authorize generated PR
-    if: >-
-      always() &&
-      needs.pr-gate.result == 'success' &&
-      github.event_name == 'workflow_dispatch' &&
-      github.ref == 'refs/heads/changeset-release/main'
-    needs: pr-gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions:
-      checks: write
-      contents: read
-      pull-requests: read
-    steps:
-      - name: Publish the exact verified check
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const verifiedSha = context.sha
-            const branch = 'changeset-release/main'
-            const { data: currentBranch } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `heads/${branch}`,
-            })
-            const { data: pullRequests } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              base: context.payload.repository.default_branch,
-              head: `${context.repo.owner}:${branch}`,
-            })
-            if (
-              currentBranch.object.sha !== verifiedSha ||
-              pullRequests.length !== 1 ||
-              pullRequests[0].head.sha !== verifiedSha
-            ) {
-              core.setFailed('The successful CI run is not for the exact open version PR head.')
-              return
-            }
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'PR gate',
-              head_sha: verifiedSha,
-              status: 'completed',
-              conclusion: 'success',
-              details_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              output: {
-                title: 'Generated version commit verified',
-                summary: 'The exact generated version commit passed CI.',
-              },
-            })
-
-  main-healthy:
-    name: Main healthy
-    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs:
-      - classify
-      - compatibility
-      - release-candidate
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Authorize main
-        env:
-          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
-          RELEASE_CANDIDATE_RESULT: ${{ needs.release-candidate.result }}
-        run: |
-          test "$COMPATIBILITY_RESULT" = "success"
-          test "$RELEASE_CANDIDATE_RESULT" = "success"
+          node-version: 22.18.0
+          package-manager-cache: false
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:compat

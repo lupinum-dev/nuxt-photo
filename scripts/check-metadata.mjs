@@ -33,18 +33,14 @@ for (const name of ['@vue/runtime-core', '@vue/server-renderer']) {
 }
 const requiredRootScripts = [
   'build',
-  'audit:all',
   'changeset',
-  'check',
-  'check:release-workflow',
+  'lint',
+  'check:metadata',
   'check:vercel',
   'docs:build',
-  'release:notes',
-  'release:pack',
-  'release:verify',
   'test',
+  'test:packed',
   'verify',
-  'version',
 ]
 const forbiddenLifecycleScripts = [
   'prepack',
@@ -114,8 +110,9 @@ assert(npmrc.includes('save-exact=true'), '.npmrc must save exact dependency ver
 const workspacePolicy = parseYaml(readText('pnpm-workspace.yaml'))
 const ciWorkflow = parseYaml(readText('.github/workflows/ci.yml'))
 assert(
-  ciWorkflow.jobs.compatibility.strategy.matrix['node-version'][0] ===
-    supportedNode.match(/\d+\.\d+\.\d+/)?.[0],
+  ciWorkflow.jobs.ci.steps.find((step) => step.name === 'Set up minimum supported Node')?.with?.[
+    'node-version'
+  ] === supportedNode.match(/\d+\.\d+\.\d+/)?.[0],
   'The compatibility lane must test the minimum supported Node release.',
 )
 const actionVerificationSteps = Object.values(ciWorkflow.jobs ?? {}).flatMap((job) =>
@@ -202,7 +199,7 @@ for (const pkg of packageSet.packages) {
   for (const script of forbiddenLifecycleScripts) {
     assert(
       !manifest.scripts?.[script],
-      `${pkg.name} must not use lifecycle script ${script}; release:pack owns builds.`,
+      `${pkg.name} must not use lifecycle script ${script}; the release workflow owns builds.`,
     )
   }
 
@@ -280,7 +277,7 @@ for (const path of [
   'CLAUDE.md',
   'CONTRIBUTING.md',
   'LICENSE',
-  'MAINTAINING.md',
+  'DECISIONS.md',
   'README.md',
   'SECURITY.md',
   '.changeset/config.json',
@@ -363,18 +360,6 @@ function verifyWorkflows() {
     workflows.some(({ name }) => name === 'release.yml'),
     'The protected release.yml workflow is missing.',
   )
-  assert(
-    workflows.some(({ name }) => name === 'security.yml'),
-    'The CodeQL security.yml workflow is missing.',
-  )
-  assert(
-    workflows.some(({ name }) => name === 'version.yml'),
-    'The Changesets version.yml workflow is missing.',
-  )
-  assert(
-    workflows.some(({ name }) => name === 'package-preview.yml'),
-    'The non-required package-preview.yml workflow is missing.',
-  )
 
   for (const workflow of workflows) {
     assert(
@@ -427,9 +412,9 @@ function verifyWorkflows() {
     )
   }
   assert(
-    publishJob.includes("'publish', tarball") &&
-      publishJob.includes("'--ignore-scripts', '--provenance'") &&
-      publishJob.includes('record.channel'),
+    publishJob.includes(
+      'npm publish "$tarball" --provenance --access public --ignore-scripts --tag "$tag"',
+    ) && publishJob.includes('tag=latest; if [[ "$version" == *-* ]]; then tag=next; fi'),
     'The publish job must submit only retained tarballs to next or latest with scripts disabled and provenance enabled.',
   )
   const releaseCreateCommand =
