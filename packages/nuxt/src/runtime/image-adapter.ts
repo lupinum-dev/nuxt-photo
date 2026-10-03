@@ -45,12 +45,16 @@ export function createNuxtImageAdapter(
   const thumb = {
     ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb,
     ...config?.thumb,
-    widths: config?.thumb?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb.widths,
+    widths: [
+      ...new Set(config?.thumb?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb.widths),
+    ].sort((a, b) => a - b),
   }
   const slide = {
     ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide,
     ...config?.slide,
-    widths: config?.slide?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide.widths,
+    widths: [
+      ...new Set(config?.slide?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide.widths),
+    ].sort((a, b) => a - b),
   }
 
   return (photo: PhotoItem, context: ImageContext): ImageSource => {
@@ -69,7 +73,7 @@ export function createNuxtImageAdapter(
     const src = decodeLocalPath(originalSrc)
     const formatModifiers =
       ipx && format !== 'auto' && !sourcePath.endsWith('.gif') ? { format } : {}
-    const configuredWidths = [...new Set(options.widths)].sort((a, b) => a - b)
+    const configuredWidths = options.widths
     const widths = configuredWidths.filter((width) => width < photo.width)
     if (configuredWidths.some((width) => width >= photo.width)) widths.push(photo.width)
 

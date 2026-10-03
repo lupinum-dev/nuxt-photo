@@ -25,6 +25,23 @@ describe('Photo', () => {
     mounted.unmount()
   })
 
+  it.each([
+    [true, undefined, 'eager', 'high'],
+    [true, 'lazy', 'lazy', 'high'],
+    [false, undefined, 'lazy', null],
+  ] as const)(
+    'applies priority %s with explicit loading %s',
+    async (priority, loading, expectedLoading, expectedPriority) => {
+      const mounted = await mountComponent(Photo, {
+        props: { photo: makePhoto(), priority, loading },
+      })
+      const image = mounted.container.querySelector('img')!
+      expect(image.getAttribute('loading')).toBe(expectedLoading)
+      expect(image.getAttribute('fetchpriority')).toBe(expectedPriority)
+      mounted.unmount()
+    },
+  )
+
   it('merges consumer attrs and listeners with interactive trigger behavior', async () => {
     const onClick = vi.fn()
     const mounted = await mountComponent(Photo, {

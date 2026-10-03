@@ -16,7 +16,8 @@ export async function stubImageRequests(page: Page) {
 }
 
 export async function gotoPlayground(page: Page, path = '/') {
-  await page.goto(path, { waitUntil: 'domcontentloaded' })
+  // SSR triggers are visible before the deferred client entry attaches their handlers.
+  await page.goto(path, { waitUntil: 'load' })
 }
 
 export { expect, test }

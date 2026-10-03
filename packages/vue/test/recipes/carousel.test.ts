@@ -105,6 +105,19 @@ describe('PhotoCarousel — DOM', () => {
     const m = mount(PhotoCarousel, { photos })
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(photos.length)
+    const images = Array.from(m.container.querySelectorAll('.np-carousel__media'))
+    expect(images.map((image) => image.getAttribute('loading'))).toEqual([
+      'eager',
+      'lazy',
+      'lazy',
+      'lazy',
+    ])
+    expect(images.map((image) => image.getAttribute('fetchpriority'))).toEqual([
+      'high',
+      null,
+      null,
+      null,
+    ])
     m.unmount()
   })
 

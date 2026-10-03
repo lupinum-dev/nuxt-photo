@@ -32,6 +32,7 @@
             :image-adapter="imageAdapter"
             :img-class="imgClass"
             :sizes="item.computedSizes"
+            :priority="item.index < priority"
           >
             <template v-if="$slots.thumbnail" #thumbnail="slotProps">
               <slot name="thumbnail" v-bind="slotProps" />
@@ -74,7 +75,8 @@
               :hidden="isHidden(entry.photo)"
               :image-adapter="imageAdapter"
               :img-class="imgClass"
-              :sizes="nativeSizes"
+              :sizes="thumbnailSizes(entry)"
+              :priority="entry.index < priority"
             >
               <template v-if="$slots.thumbnail" #thumbnail="slotProps">
                 <slot name="thumbnail" v-bind="slotProps" />
@@ -103,6 +105,7 @@
           :image-adapter="imageAdapter"
           :img-class="imgClass"
           :sizes="nativeSizes"
+          :priority="index < priority"
         >
           <template v-if="$slots.thumbnail" #thumbnail="slotProps">
             <slot name="thumbnail" v-bind="slotProps" />
@@ -201,10 +204,12 @@ const props = withDefaults(
      */
     breakpoints?: readonly number[]
     /**
-     * Image `sizes`: an HTML `sizes` string, or a `ResponsivePhotoSizes` object that the rows
+     * Image `sizes`: an HTML `sizes` string, or a `ResponsivePhotoSizes` object that each
      * layout turns into a value per photo.
      */
     sizes?: string | ResponsivePhotoSizes
+    /** Number of leading photos to load eagerly with high fetch priority. @default 0 */
+    priority?: number
     /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
     /**
@@ -233,6 +238,7 @@ const props = withDefaults(
   }>(),
   {
     layout: 'rows',
+    priority: 0,
     spacing: DEFAULT_SPACING,
     padding: DEFAULT_PADDING,
     lightbox: true,
@@ -321,6 +327,7 @@ const {
   containerQueriesRender,
   groups,
   rowItems,
+  thumbnailSizes,
   ssrWrapperStyle,
   ssrItemStyle,
   groupStyle,

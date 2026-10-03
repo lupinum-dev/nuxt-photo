@@ -5,7 +5,7 @@ import { createApp, defineComponent, h, reactive, ref } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoImage from '../src/primitives/PhotoImage.vue'
-import type { ImageAdapter } from '../src/core/types'
+import type { ImageAdapter, PhotoItem } from '../src/core/types'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('image previews and sizes', () => {
@@ -121,7 +121,7 @@ describe('image previews and sizes', () => {
     mounted.unmount()
   })
 
-  it.each(['rows', 'columns'] as const)(
+  it.each(['rows', 'columns', 'masonry'] as const)(
     'passes native sizes strings through %s layouts',
     async (layout) => {
       const mounted = await mountComponent(PhotoAlbum, {
@@ -135,9 +135,75 @@ describe('image previews and sizes', () => {
       })
 
       expect(Array.from(mounted.container.querySelectorAll('img'), (image) => image.sizes)).toEqual(
-        ['(max-width: 600px) 100vw, 50vw', '(max-width: 600px) 100vw, 50vw'],
+        ['auto, (max-width: 600px) 100vw, 50vw', 'auto, (max-width: 600px) 100vw, 50vw'],
       )
       mounted.unmount()
+    },
+  )
+
+  // Catches missing auto fallback, duplicate auto prefixes, and lazy hints on priority images.
+  it.each([
+    {
+      sizes: undefined,
+      loading: undefined,
+      priority: false,
+      expected: 'auto, 100vw',
+      hint: 'lazy',
+    },
+    { sizes: '50vw', loading: 'lazy', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: 'auto, 50vw', loading: 'lazy', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: '50vw', loading: 'eager', priority: false, expected: '50vw', hint: 'eager' },
+    { sizes: '50vw', loading: undefined, priority: true, expected: '50vw', hint: 'eager' },
+    { sizes: '50vw', loading: 'lazy', priority: true, expected: 'auto, 50vw', hint: 'lazy' },
+  ] as const)('renders sizes $expected with loading $hint and priority $priority', async (row) => {
+    const mounted = await mountComponent(PhotoImage, {
+      props: { photo: makePhoto(), sizes: row.sizes, loading: row.loading, priority: row.priority },
+    })
+    const image = mounted.container.querySelector('img')!
+    expect(image.sizes).toBe(row.expected)
+    expect(image.getAttribute('loading')).toBe(row.hint)
+    expect(image.getAttribute('fetchpriority')).toBe(row.priority ? 'high' : null)
+    mounted.unmount()
+  })
+
+  // Catches adapter fallback overriding measured widths or object sizes in non-row layouts.
+  it.each(['rows', 'columns', 'masonry'] as const)(
+    'sizes and prioritizes %s thumbnails by photo index',
+    async (type) => {
+      for (const sizes of [undefined, '70vw', { size: '100vw' }]) {
+        const mounted = await mountComponent(PhotoAlbum, {
+          props: {
+            photos: Array.from({ length: 4 }, (_, index) =>
+              makePhoto({
+                id: `budget-${index}`,
+                src: `/budget-${index}.jpg`,
+                width: 400,
+                height: 400,
+              }),
+            ),
+            layout: type === 'rows' ? { type, targetRowHeight: 400 } : { type, columns: 2 },
+            defaultContainerWidth: 800,
+            spacing: 8,
+            padding: 4,
+            sizes,
+            priority: 2,
+            lightbox: false,
+            imageAdapter: (photo: PhotoItem) => ({ src: photo.src, sizes: '400px' }),
+          },
+        })
+        const images = Array.from(mounted.container.querySelectorAll('img'))
+        expect(images).toHaveLength(4)
+        for (const image of images) {
+          const index = Number(image.src.match(/budget-(\d)/)?.[1])
+          const eager = index < 2
+          expect(image.getAttribute('loading')).toBe(eager ? 'eager' : 'lazy')
+          expect(image.getAttribute('fetchpriority')).toBe(eager ? 'high' : null)
+          const expected =
+            typeof sizes === 'string' ? sizes : sizes ? 'calc((100vw - 24px) / 2)' : '388px'
+          expect(image.sizes).toBe(`${eager ? '' : 'auto, '}${expected}`)
+        }
+        mounted.unmount()
+      }
     },
   )
 })

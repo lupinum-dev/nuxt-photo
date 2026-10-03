@@ -17,7 +17,7 @@
       :photo="photo"
       context="thumb"
       :image-adapter="imageAdapter"
-      loading="lazy"
+      :priority="priority"
       class="np-album__img"
       :class="imgClass"
       :style="{
@@ -44,6 +44,7 @@ defineProps<{
   imageAdapter?: ImageAdapter<TMeta>
   imgClass?: string
   sizes?: string
+  priority?: boolean
 }>()
 
 defineSlots<{

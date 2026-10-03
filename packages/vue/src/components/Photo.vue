@@ -9,7 +9,8 @@
       :photo="photo"
       context="thumb"
       :image-adapter="imageAdapter"
-      :loading="loading ?? 'lazy'"
+      :loading="loading"
+      :priority="priority"
       class="np-photo__img"
       :class="imgClass"
     />
@@ -85,6 +86,8 @@ const props = defineProps<{
    * @default 'lazy'
    */
   loading?: 'lazy' | 'eager'
+  /** Load eagerly with high fetch priority. Explicit `loading` wins. @default false */
+  priority?: boolean
   /** Classes for each `<img>`. */
   imgClass?: string
   /** Classes for the caption. */

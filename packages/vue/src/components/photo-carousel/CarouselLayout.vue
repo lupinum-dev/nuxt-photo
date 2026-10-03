@@ -45,6 +45,7 @@
                 context="slide"
                 :image-adapter="imageAdapter"
                 :loading="index === 0 ? 'eager' : 'lazy'"
+                :priority="index === 0"
                 class="np-carousel__media"
                 :class="imgClass"
               />

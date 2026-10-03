@@ -10,5 +10,5 @@ test('nuxt image demo uses the explicit provider contract with clean local compo
   expect(html).toContain('NuxtImage support')
   expect(html).toContain('nuxtPhoto.image.provider = &#39;nuxt-image&#39;')
   expect(html).toContain('&lt;PhotoAlbum&gt;')
-  expect(html).toContain('src="/_ipx/w_1280/')
+  expect(html).toContain('src="/_ipx/w_1080&amp;q_80&amp;f_webp/photos/moss-canyon.jpg"')
 })

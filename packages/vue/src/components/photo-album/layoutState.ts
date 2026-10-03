@@ -146,6 +146,20 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     }
   })
 
+  function thumbnailSizes(entry: LayoutEntry<TMeta>): string {
+    const resolved = resolvedParameters.value
+    return (
+      computePhotoSizes(
+        entry.width,
+        resolved.width,
+        layout.value === 'rows' ? entry.itemsCount : groups.value.length,
+        resolved.spacing,
+        resolved.padding,
+        sizes.value,
+      ) ?? `${Math.ceil(entry.width)}px`
+    )
+  }
+
   const rowItems = computed<RowItem<TMeta>[]>(() => {
     const cursor = interactive.value ? { cursor: 'pointer' as const } : {}
     const resolved = resolvedParameters.value
@@ -188,14 +202,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
           index: entry.index,
           width: entry.width,
           height: entry.height,
-          computedSizes: computePhotoSizes(
-            entry.width,
-            resolved.width,
-            entry.itemsCount,
-            resolved.spacing,
-            resolved.padding,
-            sizes.value,
-          ),
+          computedSizes: thumbnailSizes(entry),
           style: {
             ...cursor,
             flex: '0 0 auto',
@@ -287,6 +294,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     containerQueriesRender,
     groups,
     rowItems,
+    thumbnailSizes,
     ssrWrapperStyle,
     ssrItemStyle,
     groupStyle: (group: LayoutGroup<TMeta>) => albumGroupStyle(group, liveCtx()),

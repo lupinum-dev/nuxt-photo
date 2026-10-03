@@ -1,13 +1,15 @@
 <template>
+  <!-- Set loading and sizes before srcset so new lazy images defer source selection. -->
   <img
     ref="imageRef"
-    :src="resolved.src"
-    :srcset="resolved.srcset"
+    :loading="effectiveLoading"
+    :fetchpriority="priority ? 'high' : undefined"
     :sizes="effectiveSizes"
+    :srcset="resolved.srcset"
+    :src="resolved.src"
     :width="resolved.width"
     :height="resolved.height"
     :alt="photo.alt || ''"
-    :loading="loading"
     draggable="false"
     v-bind="$attrs"
     :style="[placeholderStyle, $attrs.style]"
@@ -45,12 +47,13 @@ const props = withDefaults(
      * @default 'lazy'
      */
     loading?: 'lazy' | 'eager'
+    /** Load eagerly with high fetch priority. Explicit `loading` wins. @default false */
+    priority?: boolean
     /** Override the adapter-computed sizes attribute with a layout-computed value. */
     sizes?: string
   }>(),
   {
     context: 'thumb',
-    loading: 'lazy',
   },
 )
 
@@ -64,7 +67,13 @@ const resolveImage = computed(
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))
-const effectiveSizes = computed(() => props.sizes ?? resolved.value.sizes)
+const effectiveLoading = computed(() => props.loading ?? (props.priority ? 'eager' : 'lazy'))
+const effectiveSizes = computed(() => {
+  const sizes = props.sizes ?? resolved.value.sizes
+  return effectiveLoading.value === 'lazy' && !sizes?.startsWith('auto')
+    ? `auto, ${sizes ?? '100vw'}`
+    : sizes
+})
 const imageRef = ref<HTMLImageElement | null>(null)
 const loaded = ref(false)
 const failed = ref(false)
