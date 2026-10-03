@@ -6,7 +6,7 @@
     :style="figureStyle"
   >
     <PhotoImage
-      :photo="photo"
+      :photo="resolvedPhoto"
       context="thumb"
       :image-adapter="imageAdapter"
       :loading="loading ?? 'lazy'"
@@ -36,7 +36,7 @@ import {
 
 import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
-import { LightboxComponentKey } from '../provide/keys'
+import { LightboxComponentKey, PhotoDimensionsKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
 import type { LightboxNavigationMode, LightboxTransitionOption } from '../core/index'
 import Lightbox from './Lightbox.vue'
@@ -94,10 +94,15 @@ const slots = defineSlots<{
   slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
 
-function validatePhoto() {
-  normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
-}
-watchEffect(validatePhoto)
+const resolveDimensions = inject(PhotoDimensionsKey, null)
+const resolvedPhoto = computed(
+  () =>
+    normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw', resolveDimensions })
+      .photos[0]!,
+)
+watchEffect(() => {
+  void resolvedPhoto.value
+})
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
@@ -117,22 +122,16 @@ warnOnSetupOptionChanges('Photo', {
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
-  ? provideLightbox(
-      computed(() => props.photo),
-      {
-        transition: () => props.transition,
-        navigation: () => props.navigation,
-        imageAdapter: computed(() => props.imageAdapter),
-        resolveSlide: (photo) => {
-          if (
-            (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
-            !slots.slide
-          )
-            return null
-          return (slotProps) => slots.slide?.(slotProps) ?? null
-        },
+  ? provideLightbox(resolvedPhoto, {
+      transition: () => props.transition,
+      navigation: () => props.navigation,
+      imageAdapter: computed(() => props.imageAdapter),
+      resolveSlide: (photo) => {
+        if ((photo !== props.photo && String(photo.id) !== String(props.photo.id)) || !slots.slide)
+          return null
+        return (slotProps) => slots.slide?.(slotProps) ?? null
       },
-    )
+    })
   : null
 
 // Ref for the thumb element
@@ -171,7 +170,7 @@ const labels = usePhotoLabels()
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value) return {}
   return createPhotoTriggerBindings(
-    props.photo,
+    resolvedPhoto.value,
     0,
     handleClick,
     props.photo.alt || labels.viewPhoto(1),

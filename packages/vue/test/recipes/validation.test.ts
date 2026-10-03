@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createApp, createSSRApp, h, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { makePhoto } from '@test-fixtures/photos'
+import { PhotoDimensionsKey, provideLightbox } from '../../src'
+import Photo from '../../src/components/Photo.vue'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../../src/components/PhotoGroup.vue'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
@@ -12,6 +14,71 @@ import { PhotoValidationError } from '../../src/core/photo/normalize'
 import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 describe('recipe validation', () => {
+  // Catch fills that mask bad data, mutate app data, or happen after validation.
+  it.each([
+    ['missing', {}, true, true],
+    ['null', { width: null, height: null }, true, true],
+    ['mixed missing', { width: null }, true, true],
+    ['width only', { width: 640 }, true, false],
+    ['height only', { height: 480 }, true, false],
+    ['zero', { width: 0, height: 0 }, true, false],
+    ['unknown source', { src: '/unknown.jpg' }, true, false],
+    ['no key', {}, false, false],
+    ['provided dimensions', { width: 20, height: 10 }, true, true],
+  ])('resolves dimensions for %s before validation', async (_name, fields, withKey, valid) => {
+    const raw = Object.freeze({ id: 'local', src: '/known.jpg', ...fields })
+    const app = createSSRApp({
+      render: () => h(PhotoAlbum, { photos: [raw] as unknown as PhotoItem[], lightbox: false }),
+    })
+    if (withKey)
+      app.provide(PhotoDimensionsKey, (src) =>
+        src === '/known.jpg' ? { width: 640, height: 480 } : undefined,
+      )
+    if (valid) {
+      const html = await renderToString(app)
+      expect(html).toContain(`width="${'width' in fields ? (fields.width ?? 640) : 640}"`)
+      expect(html).toContain(`height="${'height' in fields ? (fields.height ?? 480) : 480}"`)
+    } else {
+      await expect(renderToString(app)).rejects.toBeInstanceOf(PhotoValidationError)
+    }
+    expect(raw).toEqual({ id: 'local', src: '/known.jpg', ...fields })
+  })
+
+  it.each([Photo, PhotoCarousel, PhotoGroup])(
+    'uses the injected resolver in every recipe',
+    async (component) => {
+      const photo = { id: 'local', src: '/known.jpg' } as PhotoItem
+      const app = createSSRApp({
+        render: () =>
+          component === Photo
+            ? h(Photo, { photo, lightbox: false })
+            : component === PhotoGroup
+              ? h(
+                  PhotoGroup,
+                  { photos: [photo], lightbox: false },
+                  { default: () => h(Photo, { photo }) },
+                )
+              : h(PhotoCarousel, { photos: [photo], lightbox: false }),
+      })
+      app.provide(PhotoDimensionsKey, () => ({ width: 640, height: 480 }))
+      const html = await renderToString(app)
+      expect(html).toContain('width="640"')
+      expect(html).toContain('height="480"')
+    },
+  )
+
+  it('resolves dimensions for provideLightbox before validation', async () => {
+    const app = createSSRApp({
+      setup() {
+        const controller = provideLightbox([{ id: 'local', src: '/known.jpg' }] as PhotoItem[])
+        return () =>
+          h('p', `${controller.photos.value[0]?.width}x${controller.photos.value[0]?.height}`)
+      },
+    })
+    app.provide(PhotoDimensionsKey, () => ({ width: 640, height: 480 }))
+    expect(await renderToString(app)).toContain('640x480')
+  })
+
   beforeEach(installBrowserStubs)
   afterEach(() => {
     vi.unstubAllGlobals()

@@ -7,6 +7,7 @@ import {
   LightboxComponentKey,
   LightboxControls,
   PhotoDefaultsKey,
+  PhotoDimensionsKey,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -39,6 +40,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'LightboxComponentKey',
         'LightboxControls',
         'PhotoDefaultsKey',
+        'PhotoDimensionsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -85,6 +87,7 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(useContainerWidth).toBeTypeOf('function')
     expect(ImageAdapterKey).toBeTypeOf('symbol')
     expect(LightboxComponentKey).toBeTypeOf('symbol')
+    expect(PhotoDimensionsKey).toBeTypeOf('symbol')
     expect(PhotoDefaultsKey).toBeTypeOf('symbol')
   })
 

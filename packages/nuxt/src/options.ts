@@ -47,6 +47,8 @@ type NuxtPhotoImageOptions =
     } & NuxtPhotoImageAdapterConfig)
 
 export interface NuxtPhotoOptions {
+  /** Read public image dimensions at build time and during dev. Default: false. */
+  localImages?: boolean
   autoImports?: boolean | { prefix?: string }
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
@@ -56,6 +58,7 @@ export interface NuxtPhotoOptions {
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
+  localImages: false,
   autoImports: true,
   components: { prefix: '' },
   css: 'structure',
@@ -137,12 +140,17 @@ function validateToggleRecord(value: unknown, path: string) {
 /** Validate all runtime configuration before the module mutates Nuxt state. */
 export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
   assertPlainRecord(options, '')
-  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels'], '')
+  assertKnownKeys(
+    options,
+    ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels', 'localImages'],
+    '',
+  )
 
   if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
     throw configError('css', '"none", "structure", or "all"')
   }
 
+  assertBoolean(options.localImages, 'localImages')
   validateToggleRecord(options.autoImports, 'autoImports')
   validateToggleRecord(options.components, 'components')
 

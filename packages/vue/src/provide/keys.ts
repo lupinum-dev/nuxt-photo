@@ -130,3 +130,8 @@ export interface PhotoDefaults {
   labels?: Partial<PhotoLabels>
 }
 export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol('nuxt-photo:photo-defaults')
+
+/** Resolve intrinsic dimensions for known image sources before photo validation. */
+export const PhotoDimensionsKey: InjectionKey<
+  (src: string) => { width: number; height: number } | undefined
+> = Symbol('nuxt-photo:photo-dimensions')
