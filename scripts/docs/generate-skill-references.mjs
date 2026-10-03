@@ -65,7 +65,9 @@ async function plainMarkdown(source, path) {
     .replace(/^(#{2,5}) /gm, '#$1 ')
     .trim()
   for (const match of body.matchAll(/^::example\{([^}]*)\}\n::$/gm)) {
-    body = body.replace(match[0], await exampleMarkdown(match[1]))
+    const example = await exampleMarkdown(match[1])
+    // A function keeps `$&` and similar patterns in example code literal.
+    body = body.replace(match[0], () => example)
   }
   return `## ${title}\n\n${body}\n\n_Source: ${site}${routeFor(path)}_\n`
 }
