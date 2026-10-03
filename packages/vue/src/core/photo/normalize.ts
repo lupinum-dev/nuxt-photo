@@ -33,6 +33,7 @@ export type NormalizePhotosResult<TMeta extends object = Readonly<Record<string,
 
 export type NormalizePhotosOptions = {
   owner: string
+  resolveDimensions?: ((src: string) => { width: number; height: number } | undefined) | null
   onInvalid?: InvalidPhotoPolicy | 'return'
 }
 
@@ -110,7 +111,13 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
       return
     }
 
-    const id = rawPhoto.id
+    let photo = rawPhoto
+    if (photo.width == null && photo.height == null && typeof photo.src === 'string') {
+      const dimensions = options.resolveDimensions?.(photo.src)
+      if (dimensions) photo = { ...photo, width: dimensions.width, height: dimensions.height }
+    }
+
+    const id = photo.id
     if (!isNonEmptyString(id)) {
       issues.push(
         createIssue(
@@ -128,7 +135,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
       indexesById.set(id, indexes)
     }
 
-    if (!isNonEmptyString(rawPhoto.src)) {
+    if (!isNonEmptyString(photo.src)) {
       issues.push(
         createIssue(
           'missing-src',
@@ -141,27 +148,27 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
       invalidIndexes.add(index)
     }
 
-    if (!isFinitePositiveNumber(rawPhoto.width)) {
+    if (!isFinitePositiveNumber(photo.width)) {
       issues.push(
         createIssue(
           'invalid-width',
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid width ${String(rawPhoto.width)}; use the real pixel width of the image file`,
+          `photo "${String(id ?? '')}" has invalid width ${String(photo.width)}; use the real pixel width of the image file`,
         ),
       )
       invalidIndexes.add(index)
     }
 
-    if (!isFinitePositiveNumber(rawPhoto.height)) {
+    if (!isFinitePositiveNumber(photo.height)) {
       issues.push(
         createIssue(
           'invalid-height',
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid height ${String(rawPhoto.height)}; use the real pixel height of the image file`,
+          `photo "${String(id ?? '')}" has invalid height ${String(photo.height)}; use the real pixel height of the image file`,
         ),
       )
       invalidIndexes.add(index)
@@ -190,10 +197,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
       }
     }
 
-    if (
-      rawPhoto.meta !== undefined &&
-      (typeof rawPhoto.meta !== 'object' || rawPhoto.meta === null)
-    ) {
+    if (photo.meta !== undefined && (typeof photo.meta !== 'object' || photo.meta === null)) {
       issues.push(
         createIssue(
           'invalid-meta',
@@ -207,7 +211,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
     }
 
     // Every consumed field has been checked above; preserve unknown app fields.
-    candidates.push(rawPhoto as unknown as PhotoItem<TMeta>)
+    candidates.push(photo as unknown as PhotoItem<TMeta>)
   })
 
   for (const [id, indexes] of indexesById) {

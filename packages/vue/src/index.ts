@@ -28,6 +28,7 @@ export {
   ImageAdapterKey,
   LightboxComponentKey,
   PhotoDefaultsKey,
+  PhotoDimensionsKey,
   type LightboxController,
   type LightboxHandle,
   type LightboxProviderController,

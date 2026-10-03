@@ -37,6 +37,7 @@ export function useContainerWidth(
 
   let resizeObserver: ResizeObserver | null = null
   let prevWidth = 0
+  let resizeFrame: number | null = null
 
   onMounted(() => {
     if (!containerRef.value) return
@@ -53,16 +54,22 @@ export function useContainerWidth(
       if (!raw || raw <= 0) return
 
       rawWidth = raw
-      const newW = resolveWidth(raw)
+      if (resizeFrame !== null) return
+      // Defer layout writes out of ResizeObserver delivery and keep only the
+      // latest measurement when several notifications arrive in one frame.
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null
+        const newW = resolveWidth(rawWidth)
 
-      // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
-      if (newW === prevWidth && Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH) {
-        containerWidth.value = Math.min(containerWidth.value, newW)
-        return
-      }
+        // Scrollbar oscillation: width bounces back to prevWidth within MAX_SCROLLBAR_WIDTH
+        if (newW === prevWidth && Math.abs(newW - containerWidth.value) <= MAX_SCROLLBAR_WIDTH) {
+          containerWidth.value = Math.min(containerWidth.value, newW)
+          return
+        }
 
-      prevWidth = containerWidth.value
-      containerWidth.value = newW
+        prevWidth = containerWidth.value
+        containerWidth.value = newW
+      })
     })
 
     resizeObserver.observe(containerRef.value)
@@ -81,6 +88,7 @@ export function useContainerWidth(
 
   onBeforeUnmount(() => {
     resizeObserver?.disconnect()
+    if (resizeFrame !== null) cancelAnimationFrame(resizeFrame)
   })
 
   return { containerWidth }

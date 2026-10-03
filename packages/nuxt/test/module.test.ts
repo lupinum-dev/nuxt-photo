@@ -1,7 +1,12 @@
+import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import manifest from '../package.json'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { NuxtPhotoAppConfig, NuxtPhotoOptions } from '../src/options'
 
+const addTemplate = vi.fn()
+const updateTemplates = vi.fn()
 const addComponent = vi.fn()
 const addImports = vi.fn()
 const addPlugin = vi.fn()
@@ -23,6 +28,8 @@ function expectNoImagePlugin() {
 
 vi.mock('@nuxt/kit', () => ({
   addComponent,
+  addTemplate,
+  updateTemplates,
   addImports,
   addPlugin,
   addTypeTemplate,
@@ -33,7 +40,7 @@ vi.mock('@nuxt/kit', () => ({
 }))
 
 function createNuxt() {
-  type HookCallback = (...args: unknown[]) => void
+  type HookCallback = (...args: unknown[]) => void | Promise<void>
   const hooks = new Map<string, HookCallback[]>()
 
   return {
@@ -44,10 +51,18 @@ function createNuxt() {
     },
     callHook(name: string, ...args: unknown[]) {
       for (const callback of hooks.get(name) ?? []) {
-        callback(...args)
+        void callback(...args)
       }
     },
+    async callHookAsync(name: string, ...args: unknown[]) {
+      for (const callback of hooks.get(name) ?? []) await callback(...args)
+    },
     options: {
+      rootDir: '/fixture',
+      srcDir: '/fixture/app',
+      dir: { public: '/fixture/public' },
+      dev: false,
+      watch: [] as string[],
       appConfig: {} as Record<string, unknown> & { nuxtPhoto: NuxtPhotoAppConfig },
       css: [] as string[],
       vite: {
@@ -77,6 +92,8 @@ describe('nuxt-photo module', () => {
   })
 
   beforeEach(() => {
+    addTemplate.mockReset()
+    updateTemplates.mockReset()
     addComponent.mockReset()
     addImports.mockReset()
     addPlugin.mockReset()
@@ -85,6 +102,47 @@ describe('nuxt-photo module', () => {
     createResolver.mockClear()
     resolvePath.mockClear()
     hasNuxtModule.mockReset()
+  })
+
+  it('generates the local lookup and updates only its template on public asset changes', async () => {
+    const publicDir = await mkdtemp(join(tmpdir(), 'nuxt-photo-watch-'))
+    const nuxt = createNuxt()
+    nuxt.options.dir.public = publicDir
+    nuxt.options.dev = true
+    addTemplate.mockImplementation((template) => template)
+    try {
+      await writeFile(join(publicDir, 'photo.svg'), '<svg width="8" height="4"/>')
+      await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, localImages: true }, nuxt)
+      const template = addTemplate.mock.calls[0]![0]
+      expect(template.getContents()).toBe('export default Object.freeze({"/photo.svg":[8,4]})')
+      expect(nuxt.options.watch).toEqual([publicDir])
+      expect(addPlugin).toHaveBeenCalledWith(
+        { src: '/resolved/./runtime/local-images-plugin' },
+        { append: true },
+      )
+      await nuxt.callHookAsync('builder:watch', 'change', '/fixture/app/page.vue')
+      expect(updateTemplates).not.toHaveBeenCalled()
+      await writeFile(join(publicDir, '..photo.svg'), '<svg width="2" height="1"/>')
+      await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, '..photo.svg'))
+      expect(template.getContents()).toContain('"/..photo.svg":[2,1]')
+      await rm(join(publicDir, '..photo.svg'))
+      await nuxt.callHookAsync('builder:watch', 'unlink', join(publicDir, '..photo.svg'))
+      await writeFile(join(publicDir, 'photo.svg'), '<svg width="12" height="6"/>')
+      await nuxt.callHookAsync('builder:watch', 'change', join(publicDir, 'photo.svg'))
+      expect(template.getContents()).toBe('export default Object.freeze({"/photo.svg":[12,6]})')
+      await writeFile(join(publicDir, 'new.svg'), '<svg width="3" height="2"/>')
+      await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, 'new.svg'))
+      expect(template.getContents()).toContain('"/new.svg":[3,2]')
+      await rm(join(publicDir, 'photo.svg'))
+      await nuxt.callHookAsync('builder:watch', 'unlink', join(publicDir, 'photo.svg'))
+      expect(template.getContents()).toBe('export default Object.freeze({"/new.svg":[3,2]})')
+      expect(updateTemplates).toHaveBeenCalledTimes(5)
+      const { filter } = updateTemplates.mock.calls[0]![0]
+      expect(filter({ filename: template.filename })).toBe(true)
+      expect(filter({ filename: 'unrelated.mjs' })).toBe(false)
+    } finally {
+      await rm(publicDir, { recursive: true, force: true })
+    }
   })
 
   it('declares Nuxt compatibility through module metadata', () => {
@@ -104,6 +162,8 @@ describe('nuxt-photo module', () => {
     expect(template.getContents()).toContain('interface AppConfig')
     expect(template.getContents()).toContain('NuxtPhotoAppConfig')
     expect(addPlugin).not.toHaveBeenCalled()
+    expect(addTemplate).not.toHaveBeenCalled()
+    expect(nuxt.options.watch).toEqual([])
   })
 
   it('registers the defaults bridge when app.config.ts is discovered', async () => {
@@ -324,6 +384,7 @@ describe('nuxt-photo module', () => {
   })
 
   it.each([
+    ['local images', { localImages: 'true' }, /`nuxtPhoto\.localImages` must be a boolean/],
     ['css', { css: 'everything' }, /`nuxtPhoto\.css` must be "none", "structure", or "all"/],
     [
       'image provider',

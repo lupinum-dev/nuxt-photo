@@ -1,6 +1,8 @@
-import { dirname, resolve } from 'node:path'
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import {
   addComponent,
+  addTemplate,
+  updateTemplates,
   addImports,
   addPlugin,
   addTypeTemplate,
@@ -16,6 +18,7 @@ import {
   type NuxtPhotoAppConfig,
   type NuxtPhotoOptions,
 } from './options'
+import { readLocalImageDimensions } from './local-images'
 export type { NuxtPhotoAppConfig, NuxtPhotoOptions } from './options'
 
 type NuxtPhotoAppConfigState = { nuxtPhoto?: NuxtPhotoAppConfig }
@@ -83,6 +86,35 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     const resolver = createResolver(import.meta.url)
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
     const minZoom = options.lightbox?.minZoom
+
+    if (options.localImages) {
+      // Nuxt 4 schema resolves dir.public against rootDir, independently of srcDir.
+      const publicDir = resolve(nuxt.options.rootDir, nuxt.options.dir.public)
+      let dimensions = await readLocalImageDimensions(publicDir, logger)
+      const template = addTemplate({
+        filename: 'nuxt-photo-local-images.mjs',
+        getContents: () => `export default Object.freeze(${JSON.stringify(dimensions)})`,
+      })
+      addPlugin({ src: resolver.resolve('./runtime/local-images-plugin') }, { append: true })
+      if (nuxt.options.dev) {
+        if (!nuxt.options.watch.includes(publicDir)) nuxt.options.watch.push(publicDir)
+        nuxt.hook('builder:watch', async (_event, path) => {
+          const changed = resolve(nuxt.options.srcDir, path)
+          const withinPublic = relative(publicDir, changed)
+          if (
+            withinPublic === '' ||
+            (withinPublic !== '..' &&
+              !withinPublic.startsWith('..' + sep) &&
+              !isAbsolute(withinPublic))
+          ) {
+            dimensions = await readLocalImageDimensions(publicDir, logger)
+            await updateTemplates({
+              filter: (candidate) => candidate.filename === template.filename,
+            })
+          }
+        })
+      }
+    }
 
     addTypeTemplate({
       filename: 'types/nuxt-photo-app-config.d.ts',

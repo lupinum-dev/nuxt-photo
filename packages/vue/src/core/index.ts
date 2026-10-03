@@ -58,14 +58,7 @@ export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
 export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
-export {
-  isUsableRect,
-  getLoopedIndex,
-  fitRect,
-  coverPose,
-  restingClip,
-  rubberband,
-} from './geometry/rect'
+export { isUsableRect, fitRect, coverPose, restingClip, rubberband } from './geometry/rect'
 
 export {
   DEFAULT_MIN_ZOOM,

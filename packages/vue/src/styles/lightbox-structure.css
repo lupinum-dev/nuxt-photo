@@ -107,6 +107,11 @@
   stroke-linejoin: round;
 }
 
+[dir='rtl'] .np-lightbox__btn--prev svg,
+[dir='rtl'] .np-lightbox__btn--next svg {
+  transform: scaleX(-1);
+}
+
 .np-lightbox__btn:active:not(:disabled) {
   scale: 0.94;
 }

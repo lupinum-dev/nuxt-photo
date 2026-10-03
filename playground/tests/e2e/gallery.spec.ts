@@ -261,3 +261,65 @@ test.describe('touch gestures', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 })
+
+for (const candidates of ['default', 'unfocusable candidates']) {
+  test(
+    'lightbox keeps keyboard focus inside the dialog @focus-trap: ' + candidates,
+    async ({ page }) => {
+      await stubImageRequests(page)
+      await gotoPlayground(page)
+      await page.locator('.np-album__item').first().click()
+      const dialog = page.getByRole('dialog')
+      await expect(dialog).toBeVisible()
+      await expect(dialog.locator('.np-lightbox__controls')).not.toHaveAttribute('inert', '')
+      await expect(dialog.locator('.np-lightbox__btn--next')).toBeEnabled()
+      if (candidates === 'unfocusable candidates') {
+        await dialog.evaluate((root) => {
+          const controls = document.createElement('div')
+          controls.innerHTML = `
+        <button data-focus-start>Start</button>
+        <input type="hidden">
+        <button style="display:none">Hidden</button>
+        <button style="visibility:hidden">Invisible</button>
+        <fieldset disabled><button>Disabled by fieldset</button></fieldset>
+        <div inert><button>Inert</button></div>
+        <span href="#">Rendered text that cannot take focus</span>
+        <button data-focus-end>End</button>
+      `
+          root.appendChild(controls)
+          controls.querySelector<HTMLElement>('[data-focus-start]')!.focus()
+        })
+        await page.keyboard.press('Tab')
+        await expect(dialog.locator('[data-focus-end]')).toBeFocused()
+        await page.keyboard.press('Shift+Tab')
+        await expect(dialog.locator('[data-focus-start]')).toBeFocused()
+      }
+      // Safari may omit buttons from native tab order. The trap must handle Tab
+      // itself rather than depend on the browser's keyboard navigation setting.
+      expect(
+        await dialog.evaluate((root) => {
+          const event = new KeyboardEvent('keydown', {
+            key: 'Tab',
+            bubbles: true,
+            cancelable: true,
+          })
+          root.dispatchEvent(event)
+          return (
+            event.defaultPrevented &&
+            root.contains(document.activeElement) &&
+            document.activeElement !== root
+          )
+        }),
+      ).toBe(true)
+      for (const key of ['Tab', 'Shift+Tab']) {
+        for (let index = 0; index < 5; index++) {
+          await page.keyboard.press(key)
+          await expect
+            .poll(() => dialog.evaluate((root) => root.contains(document.activeElement)))
+            .toBe(true)
+        }
+      }
+      await page.keyboard.press('Escape')
+    },
+  )
+}

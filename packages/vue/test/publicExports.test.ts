@@ -12,6 +12,7 @@ describe('@lupinum/vue-photo public exports', () => {
         'LightboxComponentKey',
         'LightboxControls',
         'PhotoDefaultsKey',
+        'PhotoDimensionsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -37,6 +38,7 @@ describe('@lupinum/vue-photo public exports', () => {
   it('keeps app-level extension keys public', () => {
     expect(vue.ImageAdapterKey).toBeTypeOf('symbol')
     expect(vue.LightboxComponentKey).toBeTypeOf('symbol')
+    expect(vue.PhotoDimensionsKey).toBeTypeOf('symbol')
     expect(vue.PhotoDefaultsKey).toBeTypeOf('symbol')
     expect(new vue.PhotoValidationError('test', [])).toBeInstanceOf(vue.PhotoValidationError)
   })
