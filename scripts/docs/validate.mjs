@@ -80,7 +80,7 @@ const installationSurfaces = [
   ['README.md', '@lupinum/nuxt-photo'],
   ['packages/nuxt/README.md', '@lupinum/nuxt-photo'],
   ['packages/vue/README.md', '@lupinum/vue-photo'],
-  ['docs/content/docs/1.start/2.installation.md', '@lupinum/nuxt-photo'],
+  ['docs/content/docs/1.start/2.get-started.md', '@lupinum/nuxt-photo'],
   ['docs/content/docs/1.start/5.plain-vue.md', '@lupinum/vue-photo'],
   ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
   ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],

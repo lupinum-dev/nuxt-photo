@@ -36,7 +36,7 @@ export default {
       },
       primary: {
         label: { en: 'Install the beta' },
-        to: { en: '/docs/start/installation' },
+        to: { en: '/docs/start/get-started' },
       },
       secondary: {
         label: { en: 'View on GitHub' },

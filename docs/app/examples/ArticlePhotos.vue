@@ -1,19 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Photo, PhotoAlbum, PhotoGroup, type PhotoItem } from '@lupinum/nuxt-photo/app'
 
 const props = defineProps<{ photos: PhotoItem[] }>()
 
 // One group owns the order, so the lightbox moves through every photo on the page.
-const lead = props.photos[8]!
-const details = [props.photos[9]!, props.photos[10]!, props.photos[5]!]
-const all = [lead, ...details]
+const lead = computed(() => props.photos[0])
+const details = computed(() => props.photos.slice(1))
 </script>
 
 <template>
-  <PhotoGroup :photos="all" navigation="fade">
+  <PhotoGroup :photos="photos" navigation="fade">
     <article class="article">
       <h3>A slow week in the hills</h3>
-      <Photo :photo="lead" class="article__lead" />
+      <Photo v-if="lead" :photo="lead" class="article__lead" />
       <p>
         We walked the ridge every morning before the heat. The grass turned amber by evening, and
         the old stones in the meadow made a good place to rest.

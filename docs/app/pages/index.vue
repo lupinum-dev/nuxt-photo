@@ -225,7 +225,7 @@ useSeoMeta({
             {
               title: 'Ready-made components',
               text: 'Albums, groups, and carousels with the lightbox built in.',
-              to: '/docs/start/choose-a-component',
+              to: '/docs/start/introduction',
             },
             {
               title: 'Slots and CSS variables',

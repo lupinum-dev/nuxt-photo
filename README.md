@@ -131,7 +131,7 @@ Nuxt applications normally install only `@lupinum/nuxt-photo`.
 
 ## Documentation
 
-Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with the [installation guide](https://nuxt-photo.lupinum.com/docs/start/installation).
+Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with [Get started](https://nuxt-photo.lupinum.com/docs/start/get-started).
 
 The [changelog](./CHANGELOG.md) records release changes.
 

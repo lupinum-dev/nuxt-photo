@@ -6,7 +6,7 @@ defineProps<{ photos: PhotoItem[] }>()
 
 <template>
   <PhotoAlbum
-    :photos="photos.slice(0, 6)"
+    :photos="photos"
     :layout="{ type: 'columns', columns: responsive({ 0: 2, 480: 3 }) }"
     :spacing="responsive({ 0: 12, 640: 20 })"
     navigation="crossfade"
