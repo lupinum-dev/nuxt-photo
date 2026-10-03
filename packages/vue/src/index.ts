@@ -25,14 +25,9 @@ export type {
   CarouselDotsSlotProps,
 } from './types'
 export {
-  ImageAdapterKey,
-  LightboxComponentKey,
-  PhotoDefaultsKey,
-  PhotoDimensionsKey,
   type LightboxController,
   type LightboxHandle,
   type LightboxProviderController,
-  type PhotoDefaults,
   type LightboxSlideRenderer,
   type PhotoLabels,
 } from './provide'
@@ -61,3 +56,8 @@ export type {
   PhotoValidationIssueCode,
 } from './core/photo/normalize'
 export { PhotoValidationError } from './core/photo/normalize'
+
+export { createPhoto } from './config'
+export type { PhotoConfig, PhotoProvider, LightboxOptions, LightboxTool } from './config'
+export type { PhotoLocale } from './provide/labels'
+export { validatePhotos } from './core/photo/normalize'

@@ -1,7 +1,6 @@
 import {
   computed,
   getCurrentInstance,
-  inject,
   nextTick,
   onBeforeUnmount,
   ref,
@@ -12,7 +11,6 @@ import {
   type MaybeRefOrGetter,
 } from 'vue'
 import {
-  createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
   type ImageAdapter,
@@ -30,7 +28,7 @@ import {
   useLightboxWindowLifecycle,
   watchPhotoCollection,
 } from './watchers'
-import { ImageAdapterKey, PhotoDefaultsKey } from '../provide/keys'
+import { usePhotoConfig } from '../config'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
@@ -89,12 +87,9 @@ export function useLightboxRuntimeState(
     return Array.isArray(value) ? value : [value]
   })
 
-  const globalDefaults = inject(PhotoDefaultsKey, undefined)
-  const injectedImageAdapter = inject(ImageAdapterKey, null)
-  const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
-  const resolvedImageAdapter = computed(
-    () => unref(imageAdapter) ?? injectedImageAdapter ?? createNativeImageAdapter(),
-  )
+  const config = usePhotoConfig()
+  const resolvedMinZoom = minZoom ?? config.value.lightbox.minZoom
+  const resolvedImageAdapter = computed(() => unref(imageAdapter) ?? config.value.imageAdapter)
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
@@ -110,10 +105,14 @@ export function useLightboxRuntimeState(
   motionQuery?.addEventListener('change', syncReducedMotion)
 
   const transitionConfig = computed(() => {
-    return resolveTransitionConfig(toValue(transitionOption), reducedMotion.value)
+    return resolveTransitionConfig(
+      toValue(transitionOption) ?? config.value.lightbox.transition,
+      reducedMotion.value,
+    )
   })
   const navigationMode = computed(
-    (): LightboxNavigationMode => toValue(navigationOption) ?? 'slide',
+    (): LightboxNavigationMode =>
+      toValue(navigationOption) ?? config.value.lightbox.navigation ?? 'slide',
   )
 
   const mediaAreaRef = ref<HTMLElement | null>(null)

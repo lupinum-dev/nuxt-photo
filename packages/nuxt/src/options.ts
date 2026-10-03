@@ -1,3 +1,12 @@
+import { validatePhotoConfig } from '../../vue/src/config/validate'
+import type {
+  PhotoLabels,
+  PhotoLocale,
+  LightboxOptions,
+  InvalidPhotoPolicy,
+} from '@lupinum/vue-photo'
+import { resolveNuxtPhotoLabels } from './runtime/labels'
+
 export type NuxtPhotoImageAdapterConfig = {
   format?: 'webp' | 'avif' | 'auto'
   placeholder?: boolean
@@ -34,14 +43,6 @@ export const NUXT_PHOTO_LABEL_KEYS = {
   slideStatus: true,
 } as const satisfies Record<keyof PhotoLabels, true>
 
-export type NuxtPhotoAppConfig = {
-  image?: NuxtPhotoImageAdapterConfig
-  lightbox?: {
-    minZoom?: number
-  }
-  labels?: NuxtPhotoLabelsConfig
-}
-
 type NuxtPhotoImageOptions =
   | false
   | ({
@@ -55,8 +56,10 @@ export interface NuxtPhotoOptions {
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
   image?: NuxtPhotoImageOptions
-  lightbox?: NuxtPhotoAppConfig['lightbox']
-  labels?: NuxtPhotoLabelsConfig
+  lightbox?: LightboxOptions
+  validation?: InvalidPhotoPolicy
+  provider?: string
+  labels?: PhotoLocale | NuxtPhotoLabelsConfig
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
@@ -156,7 +159,17 @@ export function validateNuxtPhotoOptions(value: unknown): asserts value is NuxtP
   const options = { ...value }
   assertKnownKeys(
     options,
-    ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels', 'localImages'],
+    [
+      'autoImports',
+      'components',
+      'css',
+      'image',
+      'lightbox',
+      'labels',
+      'localImages',
+      'validation',
+      'provider',
+    ],
     '',
   )
 
@@ -218,20 +231,23 @@ export function validateNuxtPhotoOptions(value: unknown): asserts value is NuxtP
     }
   }
 
-  if (options.lightbox !== undefined) {
-    assertPlainRecord(options.lightbox, 'lightbox')
-    const lightbox = { ...options.lightbox }
-    assertKnownKeys(lightbox, ['minZoom'], 'lightbox')
-    assertPositiveNumber(lightbox.minZoom, 'lightbox.minZoom')
-  }
-
-  if (options.labels !== undefined) {
+  assertString(options.provider, 'provider')
+  if (options.labels !== undefined && typeof options.labels !== 'string') {
     assertPlainRecord(options.labels, 'labels')
-    const labels = { ...options.labels }
-    assertKnownKeys(labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
-    for (const key of Object.keys(labels)) {
-      assertString(labels[key], `labels.${key}`)
-    }
+    assertKnownKeys(options.labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
+    for (const key of Object.keys(options.labels))
+      assertString(options.labels[key], `labels.${key}`)
   }
+  // Both entry points use the core validator; Nuxt converts string templates first.
+  validatePhotoConfig(
+    {
+      lightbox: options.lightbox,
+      validation: options.validation,
+      labels:
+        typeof options.labels === 'string'
+          ? options.labels
+          : resolveNuxtPhotoLabels(options.labels as NuxtPhotoLabelsConfig | undefined),
+    },
+    'nuxtPhoto',
+  )
 }
-import type { PhotoLabels } from '@lupinum/vue-photo'

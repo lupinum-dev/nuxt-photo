@@ -119,6 +119,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
+import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
 import { computed, defineComponent, h, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
@@ -210,14 +211,14 @@ const props = withDefaults(
     sizes?: string | ResponsivePhotoSizes
     /** Number of leading photos to load eagerly with high fetch priority. @default 0 */
     priority?: number
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+    /** Image adapter for this component. Wins over the inherited config and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
     /**
      * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
      * at mount; change the component `key` to remount.
      * @default true
      */
-    lightbox?: boolean | Component
+    lightbox?: boolean | Component | LightboxOptions
     /**
      * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
      * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
@@ -269,6 +270,11 @@ const normalizedLayout = computed<AlbumLayout>(() => {
 if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
+
+const photoConfig = providePhotoConfig(() => ({
+  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+  validation: props.validation,
+}))
 
 const normalizedPhotos = useRecipePhotos<TMeta>(
   () => props.photos,

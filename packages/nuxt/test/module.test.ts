@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import manifest from '../package.json'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import type { NuxtPhotoAppConfig, NuxtPhotoOptions } from '../src/options'
+import type { NuxtPhotoOptions } from '../src/options'
 
 const addTemplate = vi.fn()
 const updateTemplates = vi.fn()
@@ -58,12 +58,13 @@ function createNuxt() {
       for (const callback of hooks.get(name) ?? []) await callback(...args)
     },
     options: {
+      app: { baseURL: '/' },
       rootDir: '/fixture',
       srcDir: '/fixture/app',
       dir: { public: '/fixture/public' },
       dev: false,
       watch: [] as string[],
-      appConfig: {} as Record<string, unknown> & { nuxtPhoto: NuxtPhotoAppConfig },
+      appConfig: {} as Record<string, unknown> & { nuxtPhoto: Record<string, unknown> },
       css: [] as string[],
       vite: {
         optimizeDeps: {
@@ -113,13 +114,17 @@ describe('nuxt-photo module', () => {
     try {
       await writeFile(join(publicDir, 'photo.svg'), '<svg width="8" height="4"/>')
       await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, localImages: true }, nuxt)
-      const template = addTemplate.mock.calls[0]![0]
+      const template = addTemplate.mock.calls.find(
+        ([t]) => t.filename === 'nuxt-photo-local-images.mjs',
+      )![0]
       expect(template.getContents()).toBe('export default Object.freeze({"/photo.svg":[8,4]})')
       expect(nuxt.options.watch).toEqual([publicDir])
-      expect(addPlugin).toHaveBeenCalledWith(
-        { src: '/resolved/./runtime/local-images-plugin' },
-        { append: true },
-      )
+      nuxt.callHook('modules:done')
+      expect(
+        addTemplate.mock.calls
+          .find(([t]) => t.filename === 'nuxt-photo-config.mjs')![0]
+          .getContents(),
+      ).toContain('createLocalImageDimensionsResolver(manifest')
       await nuxt.callHookAsync('builder:watch', 'change', '/fixture/app/page.vue')
       expect(updateTemplates).not.toHaveBeenCalled()
       await writeFile(join(publicDir, '..photo.svg'), '<svg width="2" height="1"/>')
@@ -151,29 +156,26 @@ describe('nuxt-photo module', () => {
     })
   })
 
-  it('registers typed Nuxt app config', async () => {
+  it('uses generated options and ignores runtime app config', async () => {
     const nuxt = createNuxt()
-
-    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
-
-    expect(addTypeTemplate).toHaveBeenCalledOnce()
-    const template = addTypeTemplate.mock.calls[0]?.[0]
-    expect(template.filename).toBe('types/nuxt-photo-app-config.d.ts')
-    expect(template.getContents()).toContain('interface AppConfig')
-    expect(template.getContents()).toContain('NuxtPhotoAppConfig')
-    expect(addPlugin).not.toHaveBeenCalled()
-    expect(addTemplate).not.toHaveBeenCalled()
-    expect(nuxt.options.watch).toEqual([])
-  })
-
-  it('registers the defaults bridge when app.config.ts is discovered', async () => {
-    const nuxt = createNuxt()
-    const app = { configs: ['/fixture/app.config.ts'], plugins: [] as Array<{ src: string }> }
-
-    await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
-    nuxt.callHook('app:resolve', app)
-
-    expect(app.plugins).toEqual([{ src: '/resolved/./runtime/defaults-plugin' }])
+    const old = { labels: { close: 'Old app config' } }
+    nuxt.options.appConfig.nuxtPhoto = old
+    await nuxtPhotoModule.setup(
+      { ...nuxtPhotoModule.defaults, labels: { close: 'Module label' } },
+      nuxt,
+    )
+    nuxt.callHook('modules:done')
+    expect(addTypeTemplate).not.toHaveBeenCalled()
+    expect(nuxt.options.appConfig.nuxtPhoto).toBe(old)
+    const template = addTemplate.mock.calls.find(
+      ([t]) => t.filename === 'nuxt-photo-options.mjs',
+    )![0]
+    expect(template.getContents()).toContain('"close":"Module label"')
+    expect(template.getContents()).not.toContain('Old app config')
+    expect(addPlugin).toHaveBeenCalledWith(
+      { src: '/resolved/./runtime/defaults-plugin' },
+      { append: true },
+    )
   })
 
   it('does not register the image plugin in native mode', async () => {
@@ -217,120 +219,25 @@ describe('nuxt-photo module', () => {
     )
   })
 
-  it('stores configurable nuxt image adapter defaults in app config', async () => {
+  it('retains legacy image options in the setup template until slice 3', async () => {
     const nuxt = createNuxt()
-    hasNuxtModule.mockReturnValue(true)
-
-    await nuxtPhotoModule.setup(
-      {
-        ...nuxtPhotoModule.defaults,
-        image: {
-          provider: 'nuxt-image',
-          format: 'avif',
-          placeholder: false,
-          thumb: { sizes: '(max-width: 768px) 100vw, 320px', quality: 70 },
-          slide: {
-            widths: [480, 960],
-            maxWidth: 960,
-            sizes: '90vw',
-            quality: 76,
-          },
-        },
-      },
-      nuxt,
-    )
-
-    expect(nuxt.options.appConfig.nuxtPhoto).toBeUndefined()
-    nuxt.callHook('modules:done')
-
-    expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
-      format: 'avif',
-      placeholder: false,
-      thumb: { sizes: '(max-width: 768px) 100vw, 320px', quality: 70 },
-      slide: {
-        widths: [480, 960],
-        maxWidth: 960,
-        sizes: '90vw',
-        quality: 76,
-      },
-    })
-  })
-
-  it('preserves app-owned image config that module options do not replace', async () => {
-    const nuxt = createNuxt()
-    nuxt.options.appConfig.nuxtPhoto = {
-      image: {
-        thumb: { sizes: 'app-thumb', quality: 61 },
-        slide: { maxWidth: 1200, quality: 62 },
-      },
+    const image = {
+      provider: 'nuxt-image' as const,
+      thumb: { quality: 70 },
+      slide: { maxWidth: 960 },
     }
     hasNuxtModule.mockReturnValue(true)
-
     await nuxtPhotoModule.setup(
-      {
-        ...nuxtPhotoModule.defaults,
-        image: { provider: 'nuxt-image', thumb: { quality: 70 } },
-      },
+      { ...nuxtPhotoModule.defaults, image, lightbox: { minZoom: 2 } },
       nuxt,
     )
     nuxt.callHook('modules:done')
-
-    expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
-      thumb: { sizes: 'app-thumb', quality: 70 },
-      slide: { maxWidth: 1200, quality: 62 },
-    })
-  })
-
-  it('registers the defaults plugin when lightbox defaults are configured', async () => {
-    const nuxt = createNuxt()
-
-    await nuxtPhotoModule.setup(
-      {
-        ...nuxtPhotoModule.defaults,
-        lightbox: { minZoom: 2 },
-      },
-      nuxt,
-    )
-
-    expect(addPlugin).toHaveBeenCalledWith(
-      {
-        src: '/resolved/./runtime/defaults-plugin',
-      },
-      {
-        append: true,
-      },
-    )
-    expect(nuxt.options.appConfig).toEqual({
-      nuxtPhoto: {
-        lightbox: {
-          minZoom: 2,
-        },
-      },
-    })
-  })
-
-  it('merges labels into app config and preserves app-owned labels', async () => {
-    const nuxt = createNuxt()
-    nuxt.options.appConfig.nuxtPhoto = {
-      labels: { close: 'Already closed', previous: 'Previous from app config' },
-    }
-
-    await nuxtPhotoModule.setup(
-      {
-        ...nuxtPhotoModule.defaults,
-        labels: { close: 'Close from module' },
-      },
-      nuxt,
-    )
-
-    expect(nuxt.options.appConfig.nuxtPhoto.labels).toEqual({
-      close: 'Close from module',
-      previous: 'Previous from app config',
-    })
-    expect(addPlugin).toHaveBeenCalledWith(
-      { src: '/resolved/./runtime/defaults-plugin' },
-      { append: true },
-    )
+    expect(nuxt.options.appConfig).toEqual({})
+    const template = addTemplate.mock.calls.find(
+      ([t]) => t.filename === 'nuxt-photo-options.mjs',
+    )![0]
+    expect(template.getContents()).toContain('"image":' + JSON.stringify(image))
+    expect(template.getContents()).toContain('"lightbox":{"minZoom":2}')
   })
 
   it('keeps automatic native fallback quiet without unusable image config', async () => {

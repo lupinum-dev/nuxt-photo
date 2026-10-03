@@ -1,4 +1,4 @@
-import { computed, inject, toValue, type MaybeRef, type MaybeRefOrGetter } from 'vue'
+import { computed, toValue, type MaybeRef, type MaybeRefOrGetter } from 'vue'
 import type {
   ImageAdapter,
   LightboxNavigationMode,
@@ -8,7 +8,8 @@ import type {
 import { normalizePhotos } from '../core/photo/normalize'
 import { useLightboxRuntimeState } from '../lightbox/runtime'
 import { createLightboxController } from '../lightbox/controller'
-import { PhotoDimensionsKey } from '../provide/keys'
+import { providePhotoConfig, type LightboxOptions } from '../config'
+import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import type { LightboxProviderController, LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
 
@@ -39,16 +40,32 @@ export function provideLightbox<TMeta extends object = Readonly<Record<string, u
     navigation?: MaybeRefOrGetter<LightboxNavigationMode | undefined>
     resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
     minZoom?: number
+    validation?: InvalidPhotoPolicy
+    component?: LightboxOptions['component']
+    history?: boolean
+    deepLink?: boolean | string
+    tools?: LightboxOptions['tools']
     imageAdapter?: MaybeRef<ImageAdapter<TMeta> | undefined>
   },
 ): LightboxProviderController<TMeta> {
-  const resolveDimensions = inject(PhotoDimensionsKey, null)
+  const config = providePhotoConfig(() => ({
+    lightbox: {
+      component: options?.component,
+      history: options?.history,
+      deepLink: options?.deepLink,
+      tools: options?.tools,
+      transition: toValue(options?.transition),
+      navigation: toValue(options?.navigation),
+      minZoom: options?.minZoom,
+    },
+    validation: options?.validation,
+  }))
   const photos = computed(() => {
     const value = toValue(photosInput)
     return normalizePhotos<TMeta>(Array.isArray(value) ? value : [value], {
       owner: 'provideLightbox',
-      onInvalid: 'throw',
-      resolveDimensions,
+      onInvalid: config.value.validation,
+      resolveDimensions: config.value.dimensions,
     }).photos
   })
   const ctx = useLightboxRuntimeState(

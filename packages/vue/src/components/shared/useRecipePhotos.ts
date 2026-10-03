@@ -1,6 +1,6 @@
-import { computed, inject, onMounted, ref, watch, type ComputedRef } from 'vue'
+import { computed, onMounted, ref, watch, type ComputedRef } from 'vue'
 import type { InvalidPhotoPolicy, InvalidPhotosEvent, PhotoItem } from '../../core/index'
-import { PhotoDimensionsKey } from '../../provide/keys'
+import { usePhotoConfig } from '../../config'
 import { resolveRecipePhotos } from '../../core/photo/resolve'
 
 export function useRecipePhotos<TMeta extends object>(
@@ -9,13 +9,13 @@ export function useRecipePhotos<TMeta extends object>(
   validation: () => InvalidPhotoPolicy | undefined,
   reportInvalid: (event: InvalidPhotosEvent) => void,
 ): ComputedRef<readonly PhotoItem<TMeta>[]> {
-  const resolveDimensions = inject(PhotoDimensionsKey, null)
+  const config = usePhotoConfig()
   const resolution = computed(() => {
     try {
       return {
         result: resolveRecipePhotos<TMeta>(photos(), owner, {
-          validation: validation(),
-          resolveDimensions,
+          validation: validation() ?? config.value.validation,
+          resolveDimensions: config.value.dimensions,
         }),
       }
     } catch (error) {

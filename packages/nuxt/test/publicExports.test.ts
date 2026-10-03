@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vite-plus/test'
 import * as app from '../src/runtime/app'
 import {
-  ImageAdapterKey,
   Lightbox,
   LightboxCaption,
-  LightboxComponentKey,
   LightboxControls,
-  PhotoDefaultsKey,
-  PhotoDimensionsKey,
   LightboxOverlay,
   LightboxProvider,
   LightboxRoot,
@@ -33,14 +29,10 @@ describe('@lupinum/nuxt-photo app exports', () => {
   it('exposes the documented app runtime API exactly', () => {
     expect(Object.keys(app).sort()).toEqual(
       [
-        'ImageAdapterKey',
         'Lightbox',
         'LightboxAmbient',
         'LightboxCaption',
-        'LightboxComponentKey',
         'LightboxControls',
-        'PhotoDefaultsKey',
-        'PhotoDimensionsKey',
         'LightboxOverlay',
         'LightboxProvider',
         'LightboxRoot',
@@ -53,6 +45,8 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'PhotoImage',
         'PhotoTrigger',
         'PhotoValidationError',
+        'createPhoto',
+        'validatePhotos',
         'resolveResponsiveParameter',
         'responsive',
         'useContainerWidth',
@@ -85,10 +79,6 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(usePhotoLabels).toBeTypeOf('function')
     expect(provideLightbox).toBeTypeOf('function')
     expect(useContainerWidth).toBeTypeOf('function')
-    expect(ImageAdapterKey).toBeTypeOf('symbol')
-    expect(LightboxComponentKey).toBeTypeOf('symbol')
-    expect(PhotoDimensionsKey).toBeTypeOf('symbol')
-    expect(PhotoDefaultsKey).toBeTypeOf('symbol')
   })
 
   it('keeps consumer-proven Nuxt app types available', () => {

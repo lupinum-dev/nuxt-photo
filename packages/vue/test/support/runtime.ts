@@ -1,4 +1,12 @@
-import { createApp, h, nextTick, provide, type Component, type InjectionKey } from 'vue'
+import {
+  createApp,
+  h,
+  nextTick,
+  provide,
+  type Component,
+  type Plugin,
+  type InjectionKey,
+} from 'vue'
 import { vi } from 'vite-plus/test'
 
 export function installBrowserStubs() {
@@ -52,6 +60,7 @@ export async function flushUi(iterations = 6) {
 export async function mountComponent(
   component: Component,
   options: {
+    plugins?: Plugin[]
     props?: Record<string, unknown>
     slots?: Record<string, (...args: unknown[]) => unknown>
     provideValues?: Array<[InjectionKey<unknown> | string, unknown]>
@@ -67,6 +76,7 @@ export async function mountComponent(
       return () => h(component, options.props ?? {}, options.slots ?? {})
     },
   })
+  for (const plugin of options.plugins ?? []) app.use(plugin)
   app.mount(container)
   await flushUi(2)
   return {

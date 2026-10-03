@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoCarousel from '../src/components/PhotoCarousel.vue'
-import { PhotoDefaultsKey } from '../src/provide/keys'
+import { createPhoto } from '../src'
 import { DEFAULT_PHOTO_LABELS, resolvePhotoLabels } from '../src/provide/labels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
@@ -32,19 +32,16 @@ describe('photo labels', () => {
         photos: [makePhoto({ id: 'l-1' }), makePhoto({ id: 'l-2' })],
         transition: 'none',
       },
-      provideValues: [
-        [
-          PhotoDefaultsKey,
-          {
-            labels: {
-              photoViewer: 'Bildbetrachter',
-              previous: 'Zurück',
-              next: 'Weiter',
-              close: 'Schließen',
-              slideStatus: (index: number, count: number) => `Bild ${index} von ${count}`,
-            },
+      plugins: [
+        createPhoto({
+          labels: {
+            photoViewer: 'Bildbetrachter',
+            previous: 'Zurück',
+            next: 'Weiter',
+            close: 'Schließen',
+            slideStatus: (index: number, count: number) => `Bild ${index} von ${count}`,
           },
-        ],
+        }),
       ],
     })
 
@@ -64,7 +61,7 @@ describe('photo labels', () => {
   it('localizes the trigger fallback when alt text is absent', async () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: { photos: [makePhoto({ id: 'l-alt', alt: undefined })], lightbox: true },
-      provideValues: [[PhotoDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
+      plugins: [createPhoto({ labels: { viewPhoto: (i: number) => `Foto ${i}` } })],
     })
 
     expect(mounted.container.querySelector('[role="button"]')?.getAttribute('aria-label')).toBe(
@@ -79,7 +76,7 @@ describe('photo labels', () => {
         photos: [makePhoto({ id: 'carousel-label', alt: undefined })],
         lightbox: true,
       },
-      provideValues: [[PhotoDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
+      plugins: [createPhoto({ labels: { viewPhoto: (i: number) => `Foto ${i}` } })],
     })
 
     expect(mounted.container.querySelector('.np-carousel__slide')?.getAttribute('aria-label')).toBe(

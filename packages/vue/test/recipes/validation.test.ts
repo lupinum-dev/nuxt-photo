@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createApp, createSSRApp, h, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { makePhoto } from '@test-fixtures/photos'
-import { PhotoDimensionsKey, provideLightbox } from '../../src'
+import { createPhoto, provideLightbox } from '../../src'
 import Photo from '../../src/components/Photo.vue'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../../src/components/PhotoGroup.vue'
@@ -31,8 +31,10 @@ describe('recipe validation', () => {
       render: () => h(PhotoAlbum, { photos: [raw] as unknown as PhotoItem[], lightbox: false }),
     })
     if (withKey)
-      app.provide(PhotoDimensionsKey, (src) =>
-        src === '/known.jpg' ? { width: 640, height: 480 } : undefined,
+      app.use(
+        createPhoto({
+          dimensions: (src) => (src === '/known.jpg' ? { width: 640, height: 480 } : undefined),
+        }),
       )
     if (valid) {
       const html = await renderToString(app)
@@ -60,7 +62,7 @@ describe('recipe validation', () => {
                 )
               : h(PhotoCarousel, { photos: [photo], lightbox: false }),
       })
-      app.provide(PhotoDimensionsKey, () => ({ width: 640, height: 480 }))
+      app.use(createPhoto({ dimensions: () => ({ width: 640, height: 480 }) }))
       const html = await renderToString(app)
       expect(html).toContain('width="640"')
       expect(html).toContain('height="480"')
@@ -75,7 +77,7 @@ describe('recipe validation', () => {
           h('p', `${controller.photos.value[0]?.width}x${controller.photos.value[0]?.height}`)
       },
     })
-    app.provide(PhotoDimensionsKey, () => ({ width: 640, height: 480 }))
+    app.use(createPhoto({ dimensions: () => ({ width: 640, height: 480 }) }))
     expect(await renderToString(app)).toContain('640x480')
   })
 

@@ -19,14 +19,9 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, onMounted, ref, watch } from 'vue'
-import {
-  createNativeImageAdapter,
-  type PhotoItem,
-  type ImageAdapter,
-  type ImageContext,
-} from '../core/index'
-import { ImageAdapterKey } from '../provide/keys'
+import { computed, onMounted, ref, watch } from 'vue'
+import type { PhotoItem, ImageAdapter, ImageContext } from '../core/index'
+import { usePhotoConfig } from '../config'
 
 defineOptions({ inheritAttrs: false })
 
@@ -40,7 +35,7 @@ const props = withDefaults(
      * @default 'thumb'
      */
     context?: ImageContext
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+    /** Image adapter for this component. Wins over the inherited config and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
     /**
      * Native image `loading` hint. Use `'eager'` for images in the first screen.
@@ -57,13 +52,11 @@ const props = withDefaults(
   },
 )
 
-const injectedAdapter = inject(ImageAdapterKey, null)
+const config = usePhotoConfig()
 
 const resolveImage = computed(
   (): ImageAdapter<TMeta> =>
-    props.imageAdapter ??
-    (injectedAdapter as ImageAdapter<TMeta> | null) ??
-    createNativeImageAdapter<TMeta>(),
+    props.imageAdapter ?? (config.value.imageAdapter as ImageAdapter<TMeta>),
 )
 
 const resolved = computed(() => resolveImage.value(props.photo, props.context))

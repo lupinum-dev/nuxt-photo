@@ -18,12 +18,12 @@ const photos: PhotoItem[] = [
 ]
 
 const spacing = responsive({ 0: 4, 640: 8 })
-const minZoom = useAppConfig().nuxtPhoto?.lightbox?.minZoom
+const labels = usePhotoLabels()
 </script>
 
 <template>
   <main>
-    <p id="nuxt-photo-min-zoom">{{ minZoom }}</p>
+    <p id="nuxt-photo-label">{{ labels.viewPhoto(3) }}</p>
     <PhotoAlbum
       :photos="photos"
       :layout="{ type: 'rows', targetRowHeight: 220 }"

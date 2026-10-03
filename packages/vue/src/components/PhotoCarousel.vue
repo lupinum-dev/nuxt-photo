@@ -43,8 +43,8 @@ import type {
   LightboxTransitionOption,
 } from '../core/index'
 import { provideLightbox } from '../composables/index'
-import { LightboxComponentKey } from '../provide/keys'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
+import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
 import Lightbox from './Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
@@ -74,7 +74,7 @@ const props = withDefaults(
      * @default 'throw'
      */
     validation?: InvalidPhotoPolicy
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+    /** Image adapter for this component. Wins over the inherited config and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
     /**
      * Continue from the last slide to the first.
@@ -134,7 +134,7 @@ const props = withDefaults(
      * default. Read once at mount; change the component `key` to remount.
      * @default false
      */
-    lightbox?: boolean | Component
+    lightbox?: boolean | Component | LightboxOptions
     /**
      * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
      * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
@@ -173,6 +173,11 @@ const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
+const photoConfig = providePhotoConfig(() => ({
+  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+  validation: props.validation,
+}))
+
 const resolvedPhotos = useRecipePhotos<TMeta>(
   () => props.photos,
   'PhotoCarousel',
@@ -180,7 +185,7 @@ const resolvedPhotos = useRecipePhotos<TMeta>(
   (event) => emit('invalidPhotos', event),
 )
 
-const injectedLightbox = inject(LightboxComponentKey, null)
+const injectedLightbox = photoConfig.value.lightbox.component ?? null
 const lightboxComponent = resolveLightboxComponent(
   props.lightbox,
   injectedLightbox,

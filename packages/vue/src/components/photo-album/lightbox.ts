@@ -15,7 +15,7 @@ import type {
   LightboxTransitionOption,
   PhotoItem,
 } from '../../core/index'
-import { LightboxComponentKey } from '../../provide/keys'
+import { usePhotoConfig, isLightboxOptions, type LightboxOptions } from '../../config'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
@@ -23,7 +23,7 @@ import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 type AlbumLightboxProps<TMeta extends object> = {
-  lightbox?: boolean | Component
+  lightbox?: boolean | Component | LightboxOptions
   transition?: LightboxTransitionOption
   navigation?: LightboxNavigationMode
   imageAdapter?: ImageAdapter<TMeta>
@@ -38,10 +38,15 @@ export function useAlbumLightbox<TMeta extends object>(
     lightbox: () => props.lightbox,
   })
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
-  const injectedLightbox = inject(LightboxComponentKey, null)
+  const injectedLightbox = usePhotoConfig().value.lightbox.component ?? null
 
   const resolvedLightboxComponent = !parentGroup
-    ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
+    ? resolveLightboxComponent(
+        isLightboxOptions(props.lightbox) ? true : props.lightbox,
+        injectedLightbox,
+        Lightbox,
+        true,
+      )
     : null
   const hasOwnLightbox = resolvedLightboxComponent !== null
   const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)

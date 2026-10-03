@@ -37,9 +37,9 @@ import {
 
 import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
-import { LightboxComponentKey, PhotoDimensionsKey } from '../provide/keys'
 import type { PhotoItem, ImageAdapter } from '../core/index'
 import type { LightboxNavigationMode, LightboxTransitionOption } from '../core/index'
+import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
 import { normalizePhotos } from '../core/photo/normalize'
@@ -60,13 +60,13 @@ const props = defineProps<{
    * `true` opens a one-photo lightbox, a component replaces it. Ignored inside `PhotoGroup`, which
    * owns the lightbox. Read once at mount; change the component `key` to remount.
    */
-  lightbox?: boolean | Component
+  lightbox?: boolean | Component | LightboxOptions
   /**
    * Inside a `PhotoGroup`, render a plain image that does not open the lightbox. The photo stays in
    * the group's navigation.
    */
   lightboxIgnore?: boolean
-  /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+  /** Image adapter for this component. Wins over the inherited config and the module default. */
   imageAdapter?: ImageAdapter<TMeta>
   /**
    * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
@@ -97,7 +97,11 @@ const slots = defineSlots<{
   slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
 
-const resolveDimensions = inject(PhotoDimensionsKey, null)
+const photoConfig = providePhotoConfig(() => ({
+  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+}))
+
+const resolveDimensions = (src: string) => photoConfig.value.dimensions?.(src)
 const resolvedPhoto = computed(
   () =>
     normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw', resolveDimensions })
@@ -111,10 +115,15 @@ watchEffect(() => {
 const group = inject(PhotoGroupContextKey, null)
 
 // Global lightbox override
-const injectedLightbox = inject(LightboxComponentKey, null)
+const injectedLightbox = photoConfig.value.lightbox.component ?? null
 
 const soloLightboxComponent = !group
-  ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, false)
+  ? resolveLightboxComponent(
+      isLightboxOptions(props.lightbox) ? true : props.lightbox,
+      injectedLightbox,
+      Lightbox,
+      false,
+    )
   : null
 // Standalone mode: lightbox capability set and no parent group.
 const hasSoloProvider = soloLightboxComponent !== null

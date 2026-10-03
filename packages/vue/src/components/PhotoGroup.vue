@@ -6,7 +6,7 @@
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, inject, provide, shallowRef, type Component } from 'vue'
 import { provideLightbox } from '../composables/index'
-import { LightboxComponentKey, type LightboxProviderController } from '../provide/keys'
+import type { LightboxProviderController } from '../provide/keys'
 import type {
   ImageAdapter,
   InvalidPhotoPolicy,
@@ -15,6 +15,7 @@ import type {
   LightboxTransitionOption,
   PhotoItem,
 } from '../core/index'
+import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
@@ -48,14 +49,14 @@ const props = withDefaults(
      * @default 'throw'
      */
     validation?: InvalidPhotoPolicy
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+    /** Image adapter for this component. Wins over the inherited config and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
     /**
      * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
      * at mount; change the component `key` to remount.
      * @default true
      */
-    lightbox?: boolean | Component
+    lightbox?: boolean | Component | LightboxOptions
     /**
      * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
      * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
@@ -77,6 +78,11 @@ const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
+const photoConfig = providePhotoConfig(() => ({
+  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+  validation: props.validation,
+}))
+
 const canonicalPhotos = useRecipePhotos<TMeta>(
   () => props.photos,
   'PhotoGroup',
@@ -96,8 +102,13 @@ function hasPhoto(id: string) {
   return canonicalIds.value.has(id)
 }
 
-const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
+const injectedLightbox = photoConfig.value.lightbox.component ?? null
+const lightboxComponent = resolveLightboxComponent(
+  isLightboxOptions(props.lightbox) ? true : props.lightbox,
+  injectedLightbox,
+  Lightbox,
+  true,
+)
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,

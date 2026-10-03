@@ -1,3 +1,4 @@
+import { unref } from 'vue'
 import type { PhotoLabels } from '@lupinum/vue-photo'
 import type { NuxtPhotoLabelsConfig } from '../options'
 
@@ -22,4 +23,13 @@ export function resolveNuxtPhotoLabels(raw?: NuxtPhotoLabelsConfig): Partial<Pho
     labels.slideStatus = (index, count) => expand(slideStatus, { index, count })
   }
   return labels
+}
+
+/** Read the optional i18n global composer without depending on its package. */
+export function resolveNuxtPhotoLocale(i18n: unknown): string {
+  if (typeof i18n === 'object' && i18n !== null && 'locale' in i18n) {
+    const value: unknown = unref(i18n.locale)
+    if (typeof value === 'string') return value
+  }
+  return 'en'
 }

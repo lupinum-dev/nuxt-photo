@@ -1,9 +1,13 @@
-import { inject } from 'vue'
-import { PhotoDefaultsKey } from '../provide/keys'
-import { resolvePhotoLabels, type PhotoLabels } from '../provide/labels'
+import { usePhotoConfig } from '../config'
+import type { PhotoLabels } from '../provide/labels'
 
-/** Return a complete label set, with English defaults for omitted values. */
+/** Complete labels from the nearest merged config, including reactive Nuxt locale changes. */
 export function usePhotoLabels(): PhotoLabels {
-  const defaults = inject(PhotoDefaultsKey, undefined)
-  return resolvePhotoLabels(defaults?.labels)
+  const config = usePhotoConfig()
+  return new Proxy(
+    { ...config.value.labels },
+    {
+      get: (_target, key: keyof PhotoLabels) => config.value.labels[key],
+    },
+  )
 }

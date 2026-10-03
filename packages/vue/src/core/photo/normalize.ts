@@ -66,6 +66,7 @@ function createIssue(
   index: number,
   id: unknown,
   message: string,
+  includeOwner = true,
 ): PhotoValidationIssue {
   const normalizedId = id === undefined || id === null ? undefined : String(id)
   return {
@@ -73,7 +74,7 @@ function createIssue(
     owner,
     index,
     id: normalizedId,
-    message: `${owner}: ${message}`,
+    message: includeOwner ? `${owner}: ${message}` : message,
   }
 }
 
@@ -155,7 +156,10 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid width ${String(photo.width)}; use the real pixel width of the image file`,
+          photo.width == null
+            ? `photo "${String(id ?? '')}" has no width; pass width and height, or in Nuxt use localImages / usePhotoFolder for files in public/`
+            : `photo "${String(id ?? '')}" has invalid width ${String(photo.width)}; use the real pixel width of the image file`,
+          photo.width != null,
         ),
       )
       invalidIndexes.add(index)
@@ -168,7 +172,10 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `photo "${String(id ?? '')}" has invalid height ${String(photo.height)}; use the real pixel height of the image file`,
+          photo.height == null
+            ? `photo "${String(id ?? '')}" has no height; pass width and height, or in Nuxt use localImages / usePhotoFolder for files in public/`
+            : `photo "${String(id ?? '')}" has invalid height ${String(photo.height)}; use the real pixel height of the image file`,
+          photo.height != null,
         ),
       )
       invalidIndexes.add(index)
@@ -241,4 +248,16 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
     ),
     issues,
   }
+}
+
+/** Validate and return valid photos without throwing or modifying the input. */
+export function validatePhotos(
+  input: unknown[],
+  options?: { owner?: string },
+): { photos: PhotoItem[]; issues: PhotoValidationIssue[] } {
+  const result = normalizePhotos(input, {
+    owner: options?.owner ?? 'validatePhotos',
+    onInvalid: 'drop',
+  })
+  return { photos: result.photos, issues: [...result.issues] }
 }

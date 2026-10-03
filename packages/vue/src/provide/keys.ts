@@ -1,5 +1,4 @@
 import type {
-  Component,
   ComponentPublicInstance,
   ComputedRef,
   CSSProperties,
@@ -15,7 +14,6 @@ import type {
   PhotoItem,
   ZoomState,
 } from '../core/index'
-import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
@@ -112,26 +110,3 @@ export const LightboxContextKey: InjectionKey<InternalLightboxContext> =
 export const LightboxSlideRendererKey: InjectionKey<
   (photo: PhotoItem) => LightboxSlideRenderer | null
 > = Symbol('nuxt-photo:lightbox-slide-renderer')
-export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
-
-/**
- * Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
- * use it by default without requiring per-instance :lightbox props.
- *
- * Usage in app.vue:
- *   import MyLightbox from '~/components/Lightbox.vue'
- *   provide(LightboxComponentKey, MyLightbox)
- */
-export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
-
-/** Global defaults for photo recipes and the lightbox, typically provided once per app. */
-export interface PhotoDefaults {
-  minZoom?: number
-  labels?: Partial<PhotoLabels>
-}
-export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol('nuxt-photo:photo-defaults')
-
-/** Resolve intrinsic dimensions for known image sources before photo validation. */
-export const PhotoDimensionsKey: InjectionKey<
-  (src: string) => { width: number; height: number } | undefined
-> = Symbol('nuxt-photo:photo-dimensions')

@@ -10,6 +10,8 @@ import type {
   LightboxTransitionOption,
   PhotoItem,
 } from '../core/index'
+import type { LightboxOptions } from '../config'
+import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import { provideLightbox } from '../composables/provideLightbox'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 
@@ -37,7 +39,12 @@ const props = defineProps<{
    * @default 1.5
    */
   minZoom?: number
-  /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
+  component?: LightboxOptions['component']
+  validation?: InvalidPhotoPolicy
+  history?: boolean
+  deepLink?: boolean | string
+  tools?: LightboxOptions['tools']
+  /** Image adapter for this component. Wins over the inherited config and the module default. */
   imageAdapter?: ImageAdapter<TMeta>
 }>()
 
@@ -51,6 +58,11 @@ provideLightbox(
     transition: () => props.transition,
     navigation: () => props.navigation,
     minZoom: props.minZoom,
+    component: props.component,
+    validation: props.validation,
+    history: props.history,
+    deepLink: props.deepLink,
+    tools: props.tools,
     imageAdapter: computed(() => props.imageAdapter),
   },
 )

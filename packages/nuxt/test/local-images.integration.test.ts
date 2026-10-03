@@ -1,11 +1,12 @@
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vite-plus/test'
 import { $fetch, setup } from '@nuxt/test-utils/e2e'
+import { findFixturePort } from './fixture-port'
 
 describe('local public image dimensions', async () => {
   await setup({
     rootDir: fileURLToPath(new URL('./fixtures/local-images', import.meta.url)),
-    port: 46281,
+    port: await findFixturePort(47050),
   })
 
   it('SSR renders real dimensions without width or height in app data', async () => {
