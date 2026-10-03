@@ -78,11 +78,12 @@ function getFocusableElements(root: HTMLElement) {
     ),
   ).filter(
     (el) =>
-      !el.hasAttribute('disabled') &&
+      !el.matches('input[type="hidden"], :disabled') &&
       el.getAttribute('aria-hidden') !== 'true' &&
       !el.closest('[inert]') &&
-      // A caption hidden while zoomed cannot take focus; the trap must skip it.
-      getComputedStyle(el).visibility !== 'hidden',
+      getComputedStyle(el).visibility !== 'hidden' &&
+      getComputedStyle(el).visibility !== 'collapse' &&
+      (el.checkVisibility?.() ?? el.getClientRects().length > 0),
   )
 }
 
@@ -111,10 +112,19 @@ function handleKeydownCapture(event: KeyboardEvent) {
 
   event.preventDefault()
   const activeIndex = focusables.findIndex((element) => element === document.activeElement)
-  const nextIndex = event.shiftKey
+  let nextIndex = event.shiftKey
     ? (activeIndex <= 0 ? focusables.length : activeIndex) - 1
     : (activeIndex + 1) % focusables.length
-  focusables[nextIndex]!.focus()
+  const direction = event.shiftKey ? -1 : 1
+  // A rendered candidate may still refuse focus. Try each candidate once
+  // instead of leaving the next Tab aimed at the same unreachable element.
+  for (let attempt = 0; attempt < focusables.length; attempt++) {
+    const target = focusables[nextIndex]!
+    target.focus()
+    if (document.activeElement === target) return
+    nextIndex = (nextIndex + direction + focusables.length) % focusables.length
+  }
+  root.focus()
 }
 
 watch(
