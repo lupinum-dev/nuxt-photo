@@ -113,7 +113,8 @@ describe('LightboxAmbient', () => {
       id: 'cdn-srcset',
       src: '/local.jpg',
       thumbSrc: undefined,
-      srcset: 'https://cdn.example.com/w_300,h_200/a.jpg 300w, https://cdn.example.com/b.jpg 600w',
+      // Candidates may follow a comma without a space.
+      srcset: '/local.jpg 300w,https://cdn.example.com/w_600,h_400/b.jpg 600w',
     })
     let controller: ReturnType<typeof provideLightbox> | null = null
     const host = document.createElement('main')
