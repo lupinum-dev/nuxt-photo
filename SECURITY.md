@@ -50,7 +50,7 @@ available.
 - One protected GitHub deployment approval is required before publication.
 - npm provenance must be visible for every version published by the protected
   workflow. The `0.2.0` bootstrap exception is recorded in its GitHub release.
-- The isolated job publishes the certified Vue tarball before the dependent
+- The isolated job publishes the packed Vue tarball before the dependent
   Nuxt tarball.
 - Prereleases use `next`. Stable releases use `latest`.
 - GitHub release finalization has no npm OIDC authority.
@@ -91,4 +91,4 @@ For a vulnerable release:
 
 If a release exposes a secret, introduces malware, or creates an urgent legal
 risk, contact npm support and follow the exceptional unpublish process described
-in `MAINTAINING.md`.
+in the [OSS handbook](https://oss.lupinum.com/docs/releasing).

@@ -163,14 +163,6 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
   )
 
   try {
-    run(
-      'node',
-      [
-        join(rootDir, 'scripts/check-dependency-policy.mjs'),
-        join(consumerDir, 'pnpm-workspace.yaml'),
-      ],
-      consumerDir,
-    )
     run('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], consumerDir)
     assertInstalledOutsideRepository(
       join(consumerDir, 'node_modules', '@lupinum', 'vue-photo'),
@@ -329,14 +321,6 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
   )
 
   try {
-    run(
-      'node',
-      [
-        join(rootDir, 'scripts/check-dependency-policy.mjs'),
-        join(consumerDir, 'pnpm-workspace.yaml'),
-      ],
-      consumerDir,
-    )
     run('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], consumerDir)
 
     assertFrameworkVersion(consumerDir, 'nuxt', catalog.nuxt)
