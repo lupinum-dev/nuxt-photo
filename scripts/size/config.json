@@ -6,7 +6,8 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "brotliLimit": 1024
+      "_comment": "Includes priority loading and sizes=auto (layout-aware images).",
+      "brotliLimit": 1280
     },
     "all": {
       "label": "full package import",
