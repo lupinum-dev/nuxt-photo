@@ -158,33 +158,3 @@ export function discoverPackageSet(rootDirectory = process.cwd()) {
     version: candidates[0].version,
   }
 }
-
-export function assertPackageSetMatchesArtifact(packageSet, metadata) {
-  assert(
-    metadata.packageSetVersion === packageSet.version,
-    `Artifact version ${metadata.packageSetVersion} does not match source ${packageSet.version}.`,
-  )
-  assert(
-    JSON.stringify(metadata.publishOrder) === JSON.stringify(packageSet.publishOrder),
-    'Artifact publish order does not match the source package graph.',
-  )
-
-  const artifactPackages = new Map(metadata.packages.map((pkg) => [pkg.name, pkg]))
-  assert(
-    artifactPackages.size === packageSet.packages.length,
-    'Artifact package count does not match the source package set.',
-  )
-
-  for (const sourcePackage of packageSet.packages) {
-    const artifactPackage = artifactPackages.get(sourcePackage.name)
-    assert(artifactPackage, `Artifact is missing ${sourcePackage.name}.`)
-    assert(
-      artifactPackage.version === sourcePackage.version,
-      `Artifact ${sourcePackage.name} version differs from source.`,
-    )
-    assert(
-      artifactPackage.directory === sourcePackage.directory,
-      `Artifact ${sourcePackage.name} directory differs from source.`,
-    )
-  }
-}

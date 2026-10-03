@@ -12,7 +12,7 @@ It is not:
 - shipped in either npm package.
 
 Active instructions live in `AGENTS.md`, `CONTRIBUTING.md`, and
-`MAINTAINING.md`. Executable truth lives in manifests, tests, scripts, and
+`DECISIONS.md`. Executable truth lives in manifests, tests, scripts, and
 workflows.
 
 ## Downstream deletion rule
@@ -24,7 +24,7 @@ recording their own migration.
 Delete it atomically:
 
 1. Confirm no active file depends on or links to `internal/`.
-2. Move any unresolved operational decision into `MAINTAINING.md` or an issue.
+2. Move any unresolved operational decision into `DECISIONS.md` or an issue.
 3. Delete the complete directory in one focused pull request.
 4. Run `vp run verify`.
 

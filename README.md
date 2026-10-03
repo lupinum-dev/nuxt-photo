@@ -139,7 +139,7 @@ The [changelog](./CHANGELOG.md) records release changes.
 
 ## Contributing and development
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before you open a pull request. Maintainers use [MAINTAINING.md](./MAINTAINING.md) for dependency updates, releases, rollback, and incident response.
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) before you open a pull request. The [OSS handbook](https://oss.lupinum.com) covers dependency updates, releases, rollback, and incident response.
 
 Run the normal handoff gate before you request review:
 

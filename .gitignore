@@ -17,6 +17,8 @@ dist
 .claude/
 playwright-report
 test-results
+release
+# Retained local output from the retired release tooling.
 .release
 .package-preview
 .content

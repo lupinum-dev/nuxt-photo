@@ -187,7 +187,7 @@ and public export tests. Keep these facts aligned:
 - image adapter and SSR behavior;
 - generated agent references.
 
-Run `pnpm docs:validate`, regenerate references with `pnpm docs:agent`, and
+Run `pnpm docs:check`, regenerate references with `pnpm docs:agent`, and
 run `pnpm docs:build` before handoff. Read at least one changed page as an
 agent sees it, under `/raw/docs/...md`. Use the in-app browser to test every
 live example at desktop and phone widths.
