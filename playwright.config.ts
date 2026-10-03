@@ -39,7 +39,7 @@ export default defineConfig({
     },
     {
       name: 'webkit-smoke',
-      grep: /recipe gallery opens/,
+      grep: /recipe gallery opens|@focus-trap/,
       use: {
         browserName: 'webkit',
       },

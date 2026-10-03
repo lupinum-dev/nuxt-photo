@@ -109,22 +109,12 @@ function handleKeydownCapture(event: KeyboardEvent) {
     return
   }
 
-  const first = focusables[0]!
-  const last = focusables[focusables.length - 1]!
-  const active = document.activeElement as HTMLElement | null
-
-  if (event.shiftKey) {
-    if (!active || active === first || active === root) {
-      event.preventDefault()
-      last.focus()
-    }
-    return
-  }
-
-  if (active === last) {
-    event.preventDefault()
-    first.focus()
-  }
+  event.preventDefault()
+  const activeIndex = focusables.findIndex((element) => element === document.activeElement)
+  const nextIndex = event.shiftKey
+    ? (activeIndex <= 0 ? focusables.length : activeIndex) - 1
+    : (activeIndex + 1) % focusables.length
+  focusables[nextIndex]!.focus()
 }
 
 watch(

@@ -261,3 +261,35 @@ test.describe('touch gestures', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 })
+
+test('lightbox keeps keyboard focus inside the dialog @focus-trap', async ({ page }) => {
+  await stubImageRequests(page)
+  await gotoPlayground(page)
+  await page.locator('.np-album__item').first().click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('.np-lightbox__controls')).not.toHaveAttribute('inert', '')
+  await expect(dialog.locator('.np-lightbox__btn--next')).toBeEnabled()
+  // Safari may omit buttons from native tab order. The trap must handle Tab
+  // itself rather than depend on the browser's keyboard navigation setting.
+  expect(
+    await dialog.evaluate((root) => {
+      const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+      root.dispatchEvent(event)
+      return (
+        event.defaultPrevented &&
+        root.contains(document.activeElement) &&
+        document.activeElement !== root
+      )
+    }),
+  ).toBe(true)
+  for (const key of ['Tab', 'Shift+Tab']) {
+    for (let index = 0; index < 5; index++) {
+      await page.keyboard.press(key)
+      await expect
+        .poll(() => dialog.evaluate((root) => root.contains(document.activeElement)))
+        .toBe(true)
+    }
+  }
+  await page.keyboard.press('Escape')
+})
