@@ -1,5 +1,31 @@
 # @lupinum/vue-photo
 
+## 1.0.0-beta.6
+
+### Major Changes
+
+- [#83](https://github.com/lupinum-dev/nuxt-photo/pull/83) [`9803f68`](https://github.com/lupinum-dev/nuxt-photo/commit/9803f6825f85115ead0246930aaa1c9f50649dca) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Import everything from `@lupinum/vue-photo`. The `@lupinum/vue-photo/composables`, `/provide`, and `/types` subpaths are removed because each repeated part of the root entry. Nuxt apps keep using `@lupinum/nuxt-photo/app`.
+
+### Minor Changes
+
+- [#101](https://github.com/lupinum-dev/nuxt-photo/pull/101) [`019b562`](https://github.com/lupinum-dev/nuxt-photo/commit/019b562dc52d8b5aa7aaa933d5c021fb2685080b) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Make carousel autoplay accessible. While autoplay runs, a pause and play button comes first in the carousel's tab order, and the slide counter stops announcing every automatic change to screen readers. Autoplay no longer runs while the reader prefers reduced motion, and starts when that preference is removed. Two new labels, `pauseAutoplay` and `playAutoplay`, translate the button.
+
+- [#80](https://github.com/lupinum-dev/nuxt-photo/pull/80) [`018b12b`](https://github.com/lupinum-dev/nuxt-photo/commit/018b12bfb863f97a6108581872b7009319db3de5) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Make lightbox clicks do what people expect. A click or tap beside the photo now closes the lightbox. A mouse click on the photo zooms to its real pixels and back, while a touch tap still shows or hides the controls. Zoom and pan now measure the photo as it is drawn inside the lightbox mat, so a zoomed photo stops at its own edge. Hidden controls leave the Tab order and return on mouse movement or Tab. Closing focuses the thumbnail of the photo you were viewing.
+
+- [#81](https://github.com/lupinum-dev/nuxt-photo/pull/81) [`41b2c64`](https://github.com/lupinum-dev/nuxt-photo/commit/41b2c64ae78121a4c2d7dabc99065e45a7b6021b) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Hang each lightbox photo in a mat, like a framed print, with its caption directly underneath instead of over the photo. Set the mat with `--np-frame-inset-top`, `--np-frame-inset-bottom`, and `--np-frame-inset-inline` on any lightbox root. The lightbox then publishes where the photo is drawn as `--np-frame-x`, `--np-frame-y`, `--np-frame-width`, and `--np-frame-height`, so custom and Tailwind lightboxes can anchor captions and arrows to the photo. The included theme adds icon buttons on dark glass that stay readable over any photo, arrows beside the photo, and a soft glow of the photo's colors behind it (`--np-ambient-opacity: 0` turns it off). The new `LightboxAmbient` primitive draws that glow and crossfades to the next photo only after its image has loaded, so custom lightboxes get the same smooth backdrop. Visible lightbox controls no longer force `pointer-events: auto`, so a full-screen controls layer stays click-through.
+
+- [#82](https://github.com/lupinum-dev/nuxt-photo/pull/82) [`6f2d8f3`](https://github.com/lupinum-dev/nuxt-photo/commit/6f2d8f316a9752528f3805f1ee80b74734ec81cc) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Choose how the lightbox changes photos with the new `navigation` option: `slide` (default, the swipe strip), `fade` (the current photo fades out, then the next fades in), or `crossfade` (the next photo fades in over the current one). In the fade modes a swipe still works: the photo follows the finger and fades with distance, then either changes or settles back. Under reduced motion, `slide` now jumps to the next photo instead of scrolling.
+
+### Patch Changes
+
+- [#99](https://github.com/lupinum-dev/nuxt-photo/pull/99) [`e824a6e`](https://github.com/lupinum-dev/nuxt-photo/commit/e824a6e762c15421dd881220d94c47bd7cd1d646) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Blur the lightbox glow for thumbnails from another origin, such as a CDN. The glow now requests those thumbnails with CORS, so the canvas can read and blur them. When the image server sends no CORS headers, it loads the thumbnail again without CORS and shows the softened glow as before.
+
+- [#92](https://github.com/lupinum-dev/nuxt-photo/pull/92) [`bcc2d9f`](https://github.com/lupinum-dev/nuxt-photo/commit/bcc2d9f2172bf22d8bb25ee287538cac422482ff) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Explain every public component prop and `PhotoItem` field in the types, so editor hovers and coding agents see the meaning, the default, and whether a value can change after mount. Error messages for invalid photos, a missing lightbox provider, and a photo missing from its `PhotoGroup` now say how to fix the problem and link to the docs.
+
+- [#87](https://github.com/lupinum-dev/nuxt-photo/pull/87) [`a3b7ee1`](https://github.com/lupinum-dev/nuxt-photo/commit/a3b7ee16fe4bf4e07c87bd0c8220a12f3439de49) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Show the docs as working software. The site opens with a live album and lightbox, a new Examples page offers complete components to copy, and the lightbox guides end with their live result rendered from the same file as the code shown. Decorative playgrounds are removed; the help pages cover click routing, the fade modes, and the backdrop glow.
+
+- [#79](https://github.com/lupinum-dev/nuxt-photo/pull/79) [`dedfdae`](https://github.com/lupinum-dev/nuxt-photo/commit/dedfdae8e5d33976298bddba462d7d193119632b) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Keep photos in shape while the lightbox opens and closes. The flight between a cropped thumbnail and the full photo now uses one uniform scale and a clip, so the photo no longer stretches. The open flight starts only after the gallery and slides have painted, and a close from a key or button starts moving at once and eases from rest. Closing while the lightbox is still opening now reverses from the current pose and crop, instead of snapping back to the thumbnail and flashing the full image. The backdrop and controls no longer show at full strength for a frame before the open animation starts.
+
 ## 1.0.0-beta.5
 
 ### Patch Changes
