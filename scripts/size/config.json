@@ -10,7 +10,7 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 36864
+      "brotliLimit": 37376
     },
     "responsive": {
       "label": "responsive named import",

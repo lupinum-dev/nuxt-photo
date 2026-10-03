@@ -67,10 +67,32 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       containScroll: 'keepSnaps',
     }
   })
+  // Autoplay moves content on its own, so it does not run for readers who ask
+  // for reduced motion. The preference can change while the page is open.
+  const reducedMotion = ref(false)
+  const motionQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)')
+      : null
+  const syncReducedMotion = () => {
+    reducedMotion.value = motionQuery?.matches ?? false
+  }
+  onMounted(() => {
+    syncReducedMotion()
+    motionQuery?.addEventListener('change', syncReducedMotion)
+  })
+  onBeforeUnmount(() => motionQuery?.removeEventListener('change', syncReducedMotion))
+
+  const autoplayAvailable = computed(() => !!config.autoplay.value && !reducedMotion.value)
+  const autoplayPlaying = ref(false)
+  // Embla restarts autoplay whenever it reinitializes (resize, new slides), so a
+  // reader's pause has to be remembered here and applied again.
+  let pausedByReader = false
+
   const pluginsRef = computed(() => {
     const autoplay = config.autoplay.value
     validatePhotoCarouselAutoplayOptions(autoplay)
-    if (!autoplay) return []
+    if (!autoplay || reducedMotion.value) return []
     const options = typeof autoplay === 'object' ? autoplay : {}
     const delay = options.delayMs === undefined ? {} : { delay: options.delayMs }
     return [
@@ -133,11 +155,26 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       const onSelect = (currentApi: EmblaCarouselType) => handleSelect(currentApi)
       const onReinit = (currentApi: EmblaCarouselType) => handleSelect(currentApi)
       onReinit(api)
+      // Embla emits these events before `isPlaying()` changes, so take the state from the event.
+      const readAutoplay = () => {
+        const autoplay = api.plugins().autoplay
+        if (pausedByReader && autoplay?.isPlaying()) autoplay.stop()
+        autoplayPlaying.value = autoplay?.isPlaying() ?? false
+      }
+      const onPlay = () => (autoplayPlaying.value = true)
+      const onStop = () => (autoplayPlaying.value = false)
+      readAutoplay()
       api.on('select', onSelect)
       api.on('reInit', onReinit)
+      api.on('reInit', readAutoplay)
+      api.on('autoplay:play', onPlay)
+      api.on('autoplay:stop', onStop)
       return () => {
         api.off('select', onSelect)
         api.off('reInit', onReinit)
+        api.off('reInit', readAutoplay)
+        api.off('autoplay:play', onPlay)
+        api.off('autoplay:stop', onStop)
       }
     },
     { immediate: true },
@@ -177,6 +214,15 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     if (instant) handleSelect(api)
   }
 
+  /** Pause or resume autoplay from a visible control (WCAG 2.2.2). */
+  function toggleAutoplay() {
+    const autoplay = emblaApi.value?.plugins().autoplay
+    if (!autoplay) return
+    pausedByReader = autoplay.isPlaying()
+    if (pausedByReader) autoplay.stop()
+    else autoplay.play()
+  }
+
   function selectedSnap() {
     return emblaApi.value?.selectedScrollSnap() ?? selectedSnapIndex.value
   }
@@ -207,5 +253,8 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     goToPrev,
     selectedSnap,
     reInit,
+    autoplayAvailable,
+    autoplayPlaying,
+    toggleAutoplay,
   }
 }

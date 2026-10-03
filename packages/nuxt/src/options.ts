@@ -25,6 +25,8 @@ export const NUXT_PHOTO_LABEL_KEYS = {
   loadFailed: true,
   previousSlide: true,
   nextSlide: true,
+  pauseAutoplay: true,
+  playAutoplay: true,
   goToSlide: true,
   viewPhoto: true,
   slideStatus: true,

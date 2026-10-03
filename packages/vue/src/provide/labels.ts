@@ -9,6 +9,8 @@ export interface PhotoLabels {
   loadFailed: string
   previousSlide: string
   nextSlide: string
+  pauseAutoplay: string
+  playAutoplay: string
   goToSlide: (index: number) => string
   viewPhoto: (index: number) => string
   slideStatus: (index: number, count: number) => string
@@ -24,6 +26,8 @@ export const DEFAULT_PHOTO_LABELS: Readonly<PhotoLabels> = Object.freeze({
   loadFailed: 'Image could not be loaded.',
   previousSlide: 'Previous slide',
   nextSlide: 'Next slide',
+  pauseAutoplay: 'Pause slideshow',
+  playAutoplay: 'Play slideshow',
   goToSlide: (index: number) => `Go to slide ${index}`,
   viewPhoto: (index: number) => `View photo ${index}`,
   slideStatus: (index: number, count: number) => `Slide ${index} of ${count}`,

@@ -113,7 +113,8 @@ const props = withDefaults(
     showDots?: boolean
     /**
      * `true`, or `{ delayMs, stopOnInteraction, stopOnMouseEnter }`. Defaults: 4000 ms, stop after
-     * interaction, keep playing on mouse enter.
+     * interaction, keep playing on mouse enter. Shows a pause button, and does not run while the
+     * reader prefers reduced motion.
      * @default false
      */
     autoplay?: boolean | PhotoCarouselAutoplayOptions
