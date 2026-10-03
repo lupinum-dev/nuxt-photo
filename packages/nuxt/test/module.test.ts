@@ -166,11 +166,12 @@ describe('nuxt-photo module', () => {
         ...nuxtPhotoModule.defaults,
         image: {
           provider: 'nuxt-image',
-          thumb: { sizes: 'sm:100vw lg:320px', quality: 70 },
+          format: 'avif',
+          placeholder: false,
+          thumb: { sizes: '(max-width: 768px) 100vw, 320px', quality: 70 },
           slide: {
             widths: [480, 960],
             maxWidth: 960,
-            maxDensity: 1,
             sizes: '90vw',
             quality: 76,
           },
@@ -183,11 +184,12 @@ describe('nuxt-photo module', () => {
     nuxt.callHook('modules:done')
 
     expect(nuxt.options.appConfig.nuxtPhoto.image).toEqual({
-      thumb: { sizes: 'sm:100vw lg:320px', quality: 70 },
+      format: 'avif',
+      placeholder: false,
+      thumb: { sizes: '(max-width: 768px) 100vw, 320px', quality: 70 },
       slide: {
         widths: [480, 960],
         maxWidth: 960,
-        maxDensity: 1,
         sizes: '90vw',
         quality: 76,
       },
@@ -346,7 +348,7 @@ describe('nuxt-photo module', () => {
     [
       'slide maxDensity',
       { image: { provider: 'native', slide: { maxDensity: Number.NaN } } },
-      /`nuxtPhoto\.image\.slide\.maxDensity` must be a finite number/,
+      /Unknown `nuxtPhoto\.image\.slide\.maxDensity`/,
     ],
     [
       'lightbox minZoom',

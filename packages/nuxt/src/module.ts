@@ -139,6 +139,10 @@ export {}`,
             ...appConfig.nuxtPhoto,
             image: {
               ...appConfig.nuxtPhoto?.image,
+              ...(options.image.format !== undefined ? { format: options.image.format } : {}),
+              ...(options.image.placeholder !== undefined
+                ? { placeholder: options.image.placeholder }
+                : {}),
               ...(options.image.thumb
                 ? {
                     thumb: {

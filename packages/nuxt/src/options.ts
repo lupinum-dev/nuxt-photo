@@ -1,12 +1,14 @@
 export type NuxtPhotoImageAdapterConfig = {
+  format?: 'webp' | 'avif' | 'auto'
+  placeholder?: boolean
   thumb?: {
+    widths?: number[]
     sizes?: string
     quality?: number
   }
   slide?: {
     widths?: number[]
     maxWidth?: number
-    maxDensity?: number
     sizes?: string
     quality?: number
   }
@@ -67,7 +69,11 @@ function configError(path: string, expected: string) {
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
+  )
 }
 
 function assertPlainRecord(value: unknown, path: string): asserts value is Record<string, unknown> {
@@ -118,7 +124,13 @@ function assertWidths(value: unknown, path: string) {
   if (
     !Array.isArray(value) ||
     value.length === 0 ||
-    value.some((item) => typeof item !== 'number' || !Number.isInteger(item) || item <= 0)
+    Array.from(value).some(
+      (item, index) =>
+        !Object.hasOwn(value, index) ||
+        typeof item !== 'number' ||
+        !Number.isInteger(item) ||
+        item <= 0,
+    )
   ) {
     throw configError(path, 'a non-empty array of positive integers')
   }
@@ -127,19 +139,24 @@ function assertWidths(value: unknown, path: string) {
 function validateToggleRecord(value: unknown, path: string) {
   if (value === undefined || typeof value === 'boolean') return
   if (!isPlainRecord(value)) throw configError(path, 'a boolean or object')
-  assertKnownKeys(value, path === 'components' ? ['prefix', 'primitives'] : ['prefix'], path)
-  assertString(value.prefix, `${path}.prefix`)
+  const record = { ...value }
+  assertKnownKeys(record, path === 'components' ? ['prefix', 'primitives'] : ['prefix'], path)
+  assertString(record.prefix, `${path}.prefix`)
   if (path === 'components') {
-    assertBoolean(value.primitives, 'components.primitives')
+    assertBoolean(record.primitives, 'components.primitives')
   }
 }
 
 /** Validate all runtime configuration before the module mutates Nuxt state. */
-export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
-  assertPlainRecord(options, '')
+export function validateNuxtPhotoOptions(value: unknown): asserts value is NuxtPhotoOptions {
+  assertPlainRecord(value, '')
+  const options = { ...value }
   assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels'], '')
 
-  if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
+  if (
+    options.css !== undefined &&
+    (typeof options.css !== 'string' || !['none', 'structure', 'all'].includes(options.css))
+  ) {
     throw configError('css', '"none", "structure", or "all"')
   }
 
@@ -150,47 +167,62 @@ export function validateNuxtPhotoOptions(options: unknown): asserts options is N
     if (!isPlainRecord(options.image)) {
       throw configError('image', 'false or an object')
     }
-    assertKnownKeys(options.image, ['provider', 'thumb', 'slide'], 'image')
+    const image = { ...options.image }
+    assertKnownKeys(image, ['provider', 'format', 'placeholder', 'thumb', 'slide'], 'image')
     if (
-      options.image.provider !== undefined &&
-      !['auto', 'nuxt-image', 'native'].includes(String(options.image.provider))
+      image.provider !== undefined &&
+      (typeof image.provider !== 'string' ||
+        !['auto', 'nuxt-image', 'native'].includes(image.provider))
     ) {
       throw configError('image.provider', '"auto", "nuxt-image", or "native"')
     }
 
-    if (options.image.thumb !== undefined) {
-      assertPlainRecord(options.image.thumb, 'image.thumb')
-      assertKnownKeys(options.image.thumb, ['sizes', 'quality'], 'image.thumb')
-      assertString(options.image.thumb.sizes, 'image.thumb.sizes')
-      assertQuality(options.image.thumb.quality, 'image.thumb.quality')
+    if (
+      image.format !== undefined &&
+      (typeof image.format !== 'string' || !['webp', 'avif', 'auto'].includes(image.format))
+    ) {
+      throw configError('image.format', '"webp", "avif", or "auto"')
+    }
+    assertBoolean(image.placeholder, 'image.placeholder')
+
+    if (image.thumb !== undefined) {
+      assertPlainRecord(image.thumb, 'image.thumb')
+      const thumb = { ...image.thumb }
+      assertKnownKeys(thumb, ['widths', 'sizes', 'quality'], 'image.thumb')
+      assertString(thumb.sizes, 'image.thumb.sizes')
+      if (typeof thumb.sizes === 'string' && /(^|\s)[a-z0-9]+:\S/i.test(thumb.sizes)) {
+        throw new TypeError(
+          "[nuxt-photo] `nuxtPhoto.image.thumb.sizes` is now an HTML sizes string, e.g. '(max-width: 768px) 100vw, 400px'.",
+        )
+      }
+      assertWidths(thumb.widths, 'image.thumb.widths')
+      assertQuality(thumb.quality, 'image.thumb.quality')
     }
 
-    if (options.image.slide !== undefined) {
-      assertPlainRecord(options.image.slide, 'image.slide')
-      assertKnownKeys(
-        options.image.slide,
-        ['widths', 'maxWidth', 'maxDensity', 'sizes', 'quality'],
-        'image.slide',
-      )
-      assertWidths(options.image.slide.widths, 'image.slide.widths')
-      assertPositiveNumber(options.image.slide.maxWidth, 'image.slide.maxWidth')
-      assertPositiveNumber(options.image.slide.maxDensity, 'image.slide.maxDensity')
-      assertString(options.image.slide.sizes, 'image.slide.sizes')
-      assertQuality(options.image.slide.quality, 'image.slide.quality')
+    if (image.slide !== undefined) {
+      assertPlainRecord(image.slide, 'image.slide')
+      const slide = { ...image.slide }
+      assertKnownKeys(slide, ['widths', 'maxWidth', 'sizes', 'quality'], 'image.slide')
+      assertWidths(slide.widths, 'image.slide.widths')
+      assertPositiveNumber(slide.maxWidth, 'image.slide.maxWidth')
+      assertString(slide.sizes, 'image.slide.sizes')
+      assertQuality(slide.quality, 'image.slide.quality')
     }
   }
 
   if (options.lightbox !== undefined) {
     assertPlainRecord(options.lightbox, 'lightbox')
-    assertKnownKeys(options.lightbox, ['minZoom'], 'lightbox')
-    assertPositiveNumber(options.lightbox.minZoom, 'lightbox.minZoom')
+    const lightbox = { ...options.lightbox }
+    assertKnownKeys(lightbox, ['minZoom'], 'lightbox')
+    assertPositiveNumber(lightbox.minZoom, 'lightbox.minZoom')
   }
 
   if (options.labels !== undefined) {
     assertPlainRecord(options.labels, 'labels')
-    assertKnownKeys(options.labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
-    for (const key of Object.keys(options.labels)) {
-      assertString(options.labels[key], `labels.${key}`)
+    const labels = { ...options.labels }
+    assertKnownKeys(labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
+    for (const key of Object.keys(labels)) {
+      assertString(labels[key], `labels.${key}`)
     }
   }
 }

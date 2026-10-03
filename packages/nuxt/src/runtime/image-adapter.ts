@@ -3,89 +3,86 @@ import type { NuxtPhotoImageAdapterConfig } from '../options'
 
 export type { NuxtPhotoImageAdapterConfig } from '../options'
 
-export type NuxtImageFunction = {
-  (src: string, options: { width: number; quality: number }): string
-  getSizes: (
-    src: string,
-    options: { sizes: string; quality: number },
-  ) => {
-    src: string
-    srcset?: string
-    sizes?: string
-  }
-}
+export type NuxtImageFunction = (
+  src: string,
+  modifiers: { width: number; quality: number; format?: 'webp' | 'avif' },
+) => string
 
 export const DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG = {
+  format: 'webp',
   thumb: {
-    sizes: 'sm:100vw md:50vw lg:400px',
+    widths: [256, 384, 512, 640, 828, 1080, 1280, 1640, 1920, 2560],
+    sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px',
     quality: 80,
   },
   slide: {
     widths: [640, 960, 1240, 1600, 2000],
     maxWidth: 1240,
-    maxDensity: 1.5,
     sizes: 'min(1240px, calc(100vw - 72px))',
     quality: 85,
   },
-} satisfies Required<NuxtPhotoImageAdapterConfig>
+} satisfies NuxtPhotoImageAdapterConfig
 
-function resolveConfig(config?: NuxtPhotoImageAdapterConfig) {
-  return {
-    thumb: {
-      ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb,
-      ...config?.thumb,
-    },
-    slide: {
-      ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide,
-      ...config?.slide,
-    },
+function decodeLocalPath(src: string) {
+  if (src.startsWith('/') && !src.startsWith('//') && src.includes('%')) {
+    try {
+      return decodeURI(src)
+    } catch {
+      // Malformed escapes must not prevent an otherwise usable source from rendering.
+    }
   }
-}
-
-function slideWidths(photo: PhotoItem, config: ReturnType<typeof resolveConfig>) {
-  const maxSourceWidth = photo.width * config.slide.maxDensity
-  const widths = config.slide.widths.filter((width) => width > 0 && width <= maxSourceWidth)
-
-  return widths.length > 0 ? widths : [Math.min(config.slide.maxWidth, photo.width)]
+  return src
 }
 
 export function createNuxtImageAdapter(
   image: NuxtImageFunction,
   config?: NuxtPhotoImageAdapterConfig,
+  provider?: string,
 ): ImageAdapter {
-  const resolvedConfig = resolveConfig(config)
+  const ipx = provider === 'ipx' || provider === 'ipxStatic'
+  const format = config?.format ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.format
+  const formatModifiers = ipx && format !== 'auto' ? { format } : {}
+  const placeholder = config?.placeholder ?? ipx
+  const thumb = {
+    ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb,
+    ...config?.thumb,
+    widths: config?.thumb?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb.widths,
+  }
+  const slide = {
+    ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide,
+    ...config?.slide,
+    widths: config?.slide?.widths ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide.widths,
+  }
 
   return (photo: PhotoItem, context: ImageContext): ImageSource => {
-    const src = context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
+    const src = decodeLocalPath(context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src)
+    const options = context === 'thumb' ? thumb : slide
+    const widths = options.widths.filter((width) => width < photo.width)
+    if (options.widths.some((width) => width >= photo.width)) widths.push(photo.width)
 
-    if (context === 'slide') {
-      const widths = slideWidths(photo, resolvedConfig)
-      const quality = resolvedConfig.slide.quality
-      const srcset = widths.map((width) => `${image(src, { width, quality })} ${width}w`).join(', ')
-
-      return {
-        src: image(src, {
-          width: Math.min(resolvedConfig.slide.maxWidth, photo.width),
-          quality,
-        }),
-        srcset,
-        placeholderSrc: photo.placeholderSrc,
-        sizes: resolvedConfig.slide.sizes,
-        width: photo.width,
-        height: photo.height,
-      }
+    const candidates: { width: number; url: string }[] = []
+    for (const width of widths) {
+      const url = image(src, { width, quality: options.quality, ...formatModifiers })
+      // Some providers round neighboring widths to the same output URL.
+      if (url !== candidates.at(-1)?.url) candidates.push({ width, url })
     }
 
-    const result = image.getSizes(src, {
-      sizes: resolvedConfig.thumb.sizes,
-      quality: resolvedConfig.thumb.quality,
-    })
-
+    const byWidth = [...candidates].sort((a, b) => a.width - b.width)
+    const thumbSource = byWidth.filter((candidate) => candidate.width <= 1080).at(-1) ?? byWidth[0]!
     return {
-      src: result.src,
-      placeholderSrc: photo.placeholderSrc,
-      srcset: result.srcset,
-      sizes: result.sizes,
+      src:
+        context === 'thumb'
+          ? thumbSource.url
+          : image(src, {
+              width: Math.min(slide.maxWidth, photo.width),
+              quality: slide.quality,
+              ...formatModifiers,
+            }),
+      srcset: candidates.map(({ width, url }) => `${url} ${width}w`).join(', '),
+      sizes: options.sizes,
+      placeholderSrc:
+        photo.placeholderSrc ??
+        (placeholder ? image(src, { width: 24, quality: 30, ...formatModifiers }) : undefined),
       width: photo.width,
       height: photo.height,
     }
