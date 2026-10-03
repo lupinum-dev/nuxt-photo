@@ -36,6 +36,9 @@ test('lightbox chrome mirrors under direction: rtl', async ({ page }) => {
     return { prev: box('.np-lightbox__btn--prev'), next: box('.np-lightbox__btn--next') }
   })
   expect(rtl.next.end).toBeLessThanOrEqual(rtl.prev.start)
+  await expect
+    .poll(() => next.locator('svg').evaluate((icon) => getComputedStyle(icon).transform))
+    .toBe('matrix(-1, 0, 0, 1, 0, 0)')
 
   // Counter announces slide changes without stealing focus.
   await expect(
