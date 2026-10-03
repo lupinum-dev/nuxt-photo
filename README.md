@@ -133,6 +133,8 @@ Nuxt applications normally install only `@lupinum/nuxt-photo`.
 
 Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with [Get started](https://nuxt-photo.lupinum.com/docs/start/get-started).
 
+Working with a coding agent? Install the skill with `npx skills add lupinum-dev/nuxt-photo`, or point the agent to [llms.txt](https://nuxt-photo.lupinum.com/llms.txt). [AI coding agents](https://nuxt-photo.lupinum.com/docs/start/ai-agents) lists every option.
+
 The [changelog](./CHANGELOG.md) records release changes.
 
 ## Contributing and development
