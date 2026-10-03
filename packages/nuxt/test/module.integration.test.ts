@@ -11,7 +11,6 @@ const fixtureRoot = fileURLToPath(new URL('./fixtures/basic', import.meta.url))
 describe('nuxt-photo module integration', async () => {
   await setup({
     rootDir: fixtureRoot,
-    port: 46221,
   })
 
   it('renders the module surface in a real Nuxt app', async () => {
