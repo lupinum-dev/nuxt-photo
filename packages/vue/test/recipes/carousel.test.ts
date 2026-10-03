@@ -274,7 +274,7 @@ describe('PhotoCarousel — DOM', () => {
 
   // Embla starts autoplay only once the slides have a size, so size them first.
   async function mountAutoplayCarousel() {
-    const props = reactive({ photos, autoplay: false })
+    const props = reactive({ photos, autoplay: false, loop: false })
     const m = mount(PhotoCarousel, props)
     await flushUi()
     const viewport = m.container.querySelector('.np-carousel__viewport')!
@@ -288,6 +288,7 @@ describe('PhotoCarousel — DOM', () => {
     await flushUi()
     return {
       ...m,
+      props,
       counter: () => m.container.querySelector('.np-carousel__counter')!.textContent,
       pauseButton: () => m.container.querySelector<HTMLButtonElement>('.np-carousel__autoplay'),
     }
@@ -338,6 +339,13 @@ describe('PhotoCarousel — DOM', () => {
       await nextTick()
       expect(button.getAttribute('aria-label')).toBe('Play slideshow')
       await vi.advanceTimersByTimeAsync(9000)
+      expect(m.counter()).toContain('1 / 4')
+
+      // Embla reinitializes on option, size, and slide changes; the pause must hold.
+      m.props.loop = true
+      await nextTick()
+      await vi.advanceTimersByTimeAsync(9000)
+      expect(button.getAttribute('aria-label')).toBe('Play slideshow')
       expect(m.counter()).toContain('1 / 4')
 
       button.click()

@@ -85,6 +85,9 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
   const autoplayAvailable = computed(() => !!config.autoplay.value && !reducedMotion.value)
   const autoplayPlaying = ref(false)
+  // Embla restarts autoplay whenever it reinitializes (resize, new slides), so a
+  // reader's pause has to be remembered here and applied again.
+  let pausedByReader = false
 
   const pluginsRef = computed(() => {
     const autoplay = config.autoplay.value
@@ -154,7 +157,9 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       onReinit(api)
       // Embla emits these events before `isPlaying()` changes, so take the state from the event.
       const readAutoplay = () => {
-        autoplayPlaying.value = api.plugins().autoplay?.isPlaying() ?? false
+        const autoplay = api.plugins().autoplay
+        if (pausedByReader && autoplay?.isPlaying()) autoplay.stop()
+        autoplayPlaying.value = autoplay?.isPlaying() ?? false
       }
       const onPlay = () => (autoplayPlaying.value = true)
       const onStop = () => (autoplayPlaying.value = false)
@@ -213,7 +218,8 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   function toggleAutoplay() {
     const autoplay = emblaApi.value?.plugins().autoplay
     if (!autoplay) return
-    if (autoplay.isPlaying()) autoplay.stop()
+    pausedByReader = autoplay.isPlaying()
+    if (pausedByReader) autoplay.stop()
     else autoplay.play()
   }
 
