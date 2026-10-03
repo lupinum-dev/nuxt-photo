@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { describe, expect, it, vi } from 'vite-plus/test'
 import type { PhotoItem } from '@lupinum/vue-photo'
 import { createNuxtImageAdapter, type NuxtImageFunction } from '../src/runtime/image-adapter'
 
@@ -57,12 +57,69 @@ describe('nuxt image adapter', () => {
     ['vercel', 'webp', '/full.jpg?w=300&q=80', undefined],
     ['netlify', 'avif', '/full.jpg?w=300&q=80', undefined],
     ['cloudinary', 'webp', '/full.jpg?w=300&q=80', undefined],
-  ] as const)('uses provider defaults for %s / %s', (provider, format, src, placeholderSrc) => {
-    const adapter = createNuxtImageAdapter(image, { format }, provider)
-    const tiny = { ...photo, thumbSrc: undefined, width: 300 }
-    expect(adapter(tiny, 'thumb')).toMatchObject({ src, placeholderSrc })
-    expect(adapter(tiny, 'slide').placeholderSrc).toBe(placeholderSrc)
-  })
+    [
+      'ipx',
+      'webp',
+      '/vector%20art.SVG?version=1#preview.gif',
+      undefined,
+      '/vector%20art.SVG?version=1#preview.gif',
+    ],
+    [
+      'ipx',
+      'avif',
+      '/animated.GIF?version=1#preview.jpg?w=300&q=80',
+      '/animated.GIF?version=1#preview.jpg?w=24&q=30',
+      '/animated.GIF?version=1#preview.jpg',
+    ],
+    [
+      'ipx',
+      'webp',
+      '/still.JPG?version=1#preview.svg?w=300&q=80&f=webp',
+      '/still.JPG?version=1#preview.svg?w=24&q=30&f=webp',
+      '/still.JPG?version=1#preview.svg',
+    ],
+  ] as const)(
+    'uses provider defaults for %s / %s',
+    (provider, format, src, placeholderSrc, source?: string) => {
+      const originalSrc = source ?? '/full.jpg'
+      const imageMock = vi.fn(image)
+      const adapter = createNuxtImageAdapter(
+        imageMock,
+        { format, thumb: { widths: [300] } },
+        provider,
+      )
+      const tiny = { ...photo, src: originalSrc, thumbSrc: undefined, width: 300 }
+      const thumb = adapter(tiny, 'thumb')
+      const slide = adapter(tiny, 'slide')
+      expect(thumb.src).toBe(src)
+      expect(thumb.placeholderSrc).toBe(placeholderSrc)
+      expect(slide.placeholderSrc).toBe(placeholderSrc)
+      if (originalSrc === '/vector%20art.SVG?version=1#preview.gif') {
+        expect(thumb).toEqual({
+          src: '/vector%20art.SVG?version=1#preview.gif',
+          sizes: '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px',
+          width: 300,
+          height: 600,
+        })
+        expect(slide).toEqual({
+          src: '/vector%20art.SVG?version=1#preview.gif',
+          sizes: 'min(1240px, calc(100vw - 72px))',
+          width: 300,
+          height: 600,
+        })
+        expect(
+          adapter({ ...tiny, placeholderSrc: '/explicit.jpg' }, 'thumb').placeholderSrc,
+        ).toBeUndefined()
+        expect(imageMock).not.toHaveBeenCalled()
+      } else {
+        expect(thumb.srcset).toBe(`${src} 300w`)
+        if (originalSrc === '/animated.GIF?version=1#preview.jpg') {
+          expect(slide.src).toBe('/animated.GIF?version=1#preview.jpg?w=300&q=85')
+          expect(slide.srcset).toBe('/animated.GIF?version=1#preview.jpg?w=300&q=85 300w')
+        }
+      }
+    },
+  )
 
   it.each(['thumb', 'slide'] as const)('respects placeholder overrides for %s', (context) => {
     expect(

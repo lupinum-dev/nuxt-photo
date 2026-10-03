@@ -41,7 +41,6 @@ export function createNuxtImageAdapter(
 ): ImageAdapter {
   const ipx = provider === 'ipx' || provider === 'ipxStatic'
   const format = config?.format ?? DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.format
-  const formatModifiers = ipx && format !== 'auto' ? { format } : {}
   const placeholder = config?.placeholder ?? ipx
   const thumb = {
     ...DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.thumb,
@@ -55,8 +54,20 @@ export function createNuxtImageAdapter(
   }
 
   return (photo: PhotoItem, context: ImageContext): ImageSource => {
-    const src = decodeLocalPath(context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src)
+    const originalSrc = context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src
+    const sourcePath = originalSrc.split(/[?#]/, 1)[0]!.toLowerCase()
     const options = context === 'thumb' ? thumb : slide
+    if (sourcePath.endsWith('.svg')) {
+      return {
+        src: originalSrc,
+        sizes: options.sizes,
+        width: photo.width,
+        height: photo.height,
+      }
+    }
+    const src = decodeLocalPath(originalSrc)
+    const formatModifiers =
+      ipx && format !== 'auto' && !sourcePath.endsWith('.gif') ? { format } : {}
     const configuredWidths = [...new Set(options.widths)].sort((a, b) => a - b)
     const widths = configuredWidths.filter((width) => width < photo.width)
     if (configuredWidths.some((width) => width >= photo.width)) widths.push(photo.width)

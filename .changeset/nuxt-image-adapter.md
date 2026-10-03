@@ -8,6 +8,7 @@ Thumbnails and lightbox slides now request leaner, correct files through Nuxt Im
 - The thumbnail `quality` setting is applied. Before, it was ignored, and Vercel served thumbnails at quality 100.
 - Images are never requested wider than the original photo, and providers that round widths no longer produce duplicate `srcset` entries.
 - IPX serves WebP by default. Set `image.format` to `'avif'`, or to `'auto'` to leave the format to the provider. Providers that choose the format themselves, such as Vercel, are unchanged.
+- Animated GIFs keep their animation and SVGs are served unchanged.
 - IPX shows a tiny blurred preview while each photo loads. Turn it off with `image.placeholder: false`, or on for other providers with `true`. A photo's own `placeholderSrc` always wins.
 - Local paths that are already URL-encoded, such as `/photos/my%20trip.jpg`, no longer return 404.
 - New `image.thumb.widths` sets the thumbnail file widths.
