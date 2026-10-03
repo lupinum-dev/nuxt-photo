@@ -8,9 +8,15 @@ export function useRecipePhotos<TMeta extends object>(
   validation: () => InvalidPhotoPolicy | undefined,
   reportInvalid: (event: InvalidPhotosEvent) => void,
 ): ComputedRef<readonly PhotoItem<TMeta>[]> {
-  const resolution = computed(() =>
-    resolveRecipePhotos<TMeta>(photos(), owner, { validation: validation() }),
-  )
+  const resolution = computed(() => {
+    try {
+      return { result: resolveRecipePhotos<TMeta>(photos(), owner, { validation: validation() }) }
+    } catch (error) {
+      // Cache the original error as a value so Vue never leaves this computed
+      // without a result when an app handles the validation exception.
+      return { error }
+    }
+  })
   const reportingReady = ref(false)
 
   onMounted(() => {
@@ -18,12 +24,15 @@ export function useRecipePhotos<TMeta extends object>(
   })
 
   watch(
-    [() => resolution.value.invalidPhotos, reportingReady],
-    ([event, ready]) => {
-      if (ready && event) reportInvalid(event)
+    [resolution, reportingReady],
+    ([value, ready]) => {
+      // Watch callbacks use Vue's error handler. Keep the computed value safe
+      // when an app handles the exception and lets the component keep rendering.
+      if (!value.result) throw value.error
+      if (ready && value.result.invalidPhotos) reportInvalid(value.result.invalidPhotos)
     },
-    { flush: 'post' },
+    { flush: 'post', immediate: true },
   )
 
-  return computed(() => resolution.value.photos)
+  return computed(() => resolution.value.result?.photos ?? [])
 }

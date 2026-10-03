@@ -5,6 +5,7 @@ import { createApp, createSSRApp, h, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
+import PhotoGroup from '../../src/components/PhotoGroup.vue'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
 import type { PhotoItem } from '../../src/core/index'
 import { PhotoValidationError } from '../../src/core/photo/normalize'
@@ -17,15 +18,38 @@ describe('recipe validation', () => {
     document.body.innerHTML = ''
   })
 
-  it('rejects invalid data before layout math', async () => {
-    await expect(
-      mountComponent(PhotoAlbum, {
-        props: {
-          photos: [{ id: 'broken', src: '/x.jpg', width: 0, height: 10 }],
+  it.each([
+    ['PhotoAlbum', PhotoAlbum],
+    ['PhotoGroup', PhotoGroup],
+    ['PhotoCarousel', PhotoCarousel],
+  ])('preserves the original validation error from %s', async (owner, component) => {
+    const errors: unknown[] = []
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const app = createApp({
+      render: () =>
+        h(component, {
+          photos: [{ id: 'one', src: '/x.jpg', width: 0, height: 800 }],
           lightbox: false,
-        },
-      }),
-    ).rejects.toBeInstanceOf(PhotoValidationError)
+        }),
+    })
+    app.config.errorHandler = (error) => errors.push(error)
+    try {
+      app.mount(container)
+      await flushUi()
+      expect(errors.length).toBeGreaterThan(0)
+      for (const error of errors) {
+        expect(error).toBeInstanceOf(PhotoValidationError)
+        expect((error as Error).message).toContain(owner + ': photo "one" has invalid width 0')
+        expect((error as Error).message).toContain(
+          'https://nuxt-photo.lupinum.com/docs/help/troubleshooting',
+        )
+      }
+      expect(errors.some((error) => error instanceof TypeError)).toBe(false)
+    } finally {
+      app.unmount()
+      container.remove()
+    }
   })
 
   it.each([
