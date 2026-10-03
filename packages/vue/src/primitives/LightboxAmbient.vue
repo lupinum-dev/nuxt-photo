@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, shallowRef, watch, type ComponentPublicInstance } from 'vue'
-import type { PhotoItem } from '../core/index'
+import type { ImageSource, PhotoItem } from '../core/index'
 import { useLightboxInject } from '../lightbox/inject'
 
 defineOptions({ inheritAttrs: false })
@@ -58,9 +58,20 @@ function reducedMotion() {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-async function loadThumb(photo: PhotoItem) {
-  const source = ctx.imageAdapter.value(photo, 'thumb')
+function isCrossOrigin(src: string) {
+  if (typeof location === 'undefined') return false
+  try {
+    const url = new URL(src, location.href)
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== location.origin
+  } catch {
+    return false
+  }
+}
+
+async function decodeThumb(source: ImageSource, cors: boolean) {
   const image = new Image()
+  // Must be set before `src`: it decides how the browser requests the image.
+  if (cors) image.crossOrigin = 'anonymous'
   // Let the browser pick the smallest candidate; the glow needs almost no detail.
   if (source.srcset) {
     image.sizes = `${GLOW_WIDTH * 2}px`
@@ -69,6 +80,25 @@ async function loadThumb(photo: PhotoItem) {
   image.src = source.src
   await image.decode()
   return image
+}
+
+async function loadThumb(photo: PhotoItem) {
+  const source = ctx.imageAdapter.value(photo, 'thumb')
+  // The canvas can read, and so blur, a cross-origin image only when it was
+  // requested with CORS. A server without CORS headers fails that request; the
+  // plain request then still gives a glow, softened only by the stretching.
+  // The browser may pick any `srcset` candidate. Splitting on whitespace and
+  // commas finds every origin: descriptors like `800w` and the pieces of a URL
+  // that contains commas resolve as same-origin paths.
+  const urls = [source.src, ...(source.srcset?.split(/[\s,]+/) ?? [])]
+  if (urls.some(isCrossOrigin)) {
+    try {
+      return await decodeThumb(source, true)
+    } catch {
+      // Fall through to the plain request.
+    }
+  }
+  return decodeThumb(source, false)
 }
 
 /** Average neighbours three times (close to a Gaussian blur) and lift the saturation. */
@@ -116,7 +146,7 @@ function paint(canvas: HTMLCanvasElement, image: HTMLImageElement) {
     soften(data)
     context.putImageData(data, 0, 0)
   } catch {
-    // A cross-origin image served without CORS cannot be read back. Stretching the
+    // A cross-origin image loaded without CORS cannot be read back. Stretching the
     // small drawing still softens it, only a little less.
   }
 }

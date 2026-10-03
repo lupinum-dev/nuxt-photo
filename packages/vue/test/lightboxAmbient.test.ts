@@ -10,6 +10,7 @@ import { flushUi, installBrowserStubs } from './support/runtime'
 
 describe('LightboxAmbient', () => {
   const loads = new Map<string, () => void>()
+  const requests: { src: string; crossOrigin: string | null; fail: () => void }[] = []
 
   beforeEach(() => {
     installBrowserStubs()
@@ -18,10 +19,14 @@ describe('LightboxAmbient', () => {
       'Image',
       class {
         src = ''
+        crossOrigin: string | null = null
         naturalWidth = 3
         naturalHeight = 2
         decode() {
-          return new Promise<void>((resolve) => loads.set(this.src, resolve))
+          return new Promise<void>((resolve, reject) => {
+            loads.set(this.src, resolve)
+            requests.push({ src: this.src, crossOrigin: this.crossOrigin, fail: () => reject() })
+          })
         }
       },
     )
@@ -31,6 +36,7 @@ describe('LightboxAmbient', () => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
     loads.clear()
+    requests.length = 0
     document.body.innerHTML = ''
   })
 
@@ -67,6 +73,65 @@ describe('LightboxAmbient', () => {
     loads.get(photos[1]!.src)!()
     await flushUi()
     expect(shown()).toEqual([true])
+    app.unmount()
+  })
+
+  it('requests cross-origin thumbnails with CORS, and still glows when CORS is refused', async () => {
+    const remote = 'https://images.example.com/remote.jpg'
+    const photo = makePhoto({ id: 'remote', src: remote, thumbSrc: remote })
+    let controller: ReturnType<typeof provideLightbox> | null = null
+    const host = document.createElement('main')
+    document.body.appendChild(host)
+    const app = createApp(
+      defineComponent({
+        setup() {
+          controller = provideLightbox([photo], { transition: 'none' })
+          return () => h(LightboxRoot, null, { default: () => h(LightboxAmbient) })
+        },
+      }),
+    )
+    app.mount(host)
+
+    await controller!.open(0)
+    await flushUi()
+    // Only a CORS request lets the canvas read the pixels to blur them.
+    expect(requests.map((request) => request.crossOrigin)).toEqual(['anonymous'])
+
+    // A server without CORS headers fails that request; a plain request follows.
+    requests[0]!.fail()
+    await flushUi()
+    expect(requests.map((request) => request.crossOrigin)).toEqual(['anonymous', null])
+
+    loads.get(remote)!()
+    await flushUi()
+    expect(document.querySelectorAll('[data-np-ambient] canvas')).toHaveLength(1)
+    app.unmount()
+  })
+
+  it('requests with CORS when only a srcset candidate is cross-origin', async () => {
+    const photo = makePhoto({
+      id: 'cdn-srcset',
+      src: '/local.jpg',
+      thumbSrc: undefined,
+      // Candidates may follow a comma without a space.
+      srcset: '/local.jpg 300w,https://cdn.example.com/w_600,h_400/b.jpg 600w',
+    })
+    let controller: ReturnType<typeof provideLightbox> | null = null
+    const host = document.createElement('main')
+    document.body.appendChild(host)
+    const app = createApp(
+      defineComponent({
+        setup() {
+          controller = provideLightbox([photo], { transition: 'none' })
+          return () => h(LightboxRoot, null, { default: () => h(LightboxAmbient) })
+        },
+      }),
+    )
+    app.mount(host)
+
+    await controller!.open(0)
+    await flushUi()
+    expect(requests.map((request) => request.crossOrigin)).toEqual(['anonymous'])
     app.unmount()
   })
 })
