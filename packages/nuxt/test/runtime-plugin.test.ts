@@ -13,27 +13,28 @@ const photo: PhotoItem = {
 }
 
 describe('nuxt image adapter', () => {
-  it.each(['thumb', 'slide'] as const)(
-    'caps %s candidates and honors quality and sizes',
-    (context) => {
-      const adapter = createNuxtImageAdapter(image, {
-        thumb: { widths: [256, 640, 1280], quality: 72, sizes: '400px' },
-        slide: { widths: [256, 640, 1280], maxWidth: 800, quality: 72, sizes: '90vw' },
-      })
-      const result = adapter(photo, context)
-      expect(result).toEqual({
-        src: context === 'thumb' ? '/thumb.jpg?w=960&q=72' : '/full.jpg?w=800&q=72',
-        srcset:
-          context === 'thumb'
-            ? '/thumb.jpg?w=256&q=72 256w, /thumb.jpg?w=640&q=72 640w, /thumb.jpg?w=960&q=72 960w'
-            : '/full.jpg?w=256&q=72 256w, /full.jpg?w=640&q=72 640w, /full.jpg?w=960&q=72 960w',
-        sizes: context === 'thumb' ? '400px' : '90vw',
-        placeholderSrc: undefined,
-        width: 960,
-        height: 600,
-      })
-    },
-  )
+  it.each([
+    ['thumb', [256, 640, 1280]],
+    ['slide', [256, 640, 1280]],
+    ['thumb', [1280, 640, 256, 640, 1280, 256]],
+  ] as const)('caps %s candidates and honors quality and sizes', (context, widths) => {
+    const adapter = createNuxtImageAdapter(image, {
+      thumb: { widths: [...widths], quality: 72, sizes: '400px' },
+      slide: { widths: [...widths], maxWidth: 800, quality: 72, sizes: '90vw' },
+    })
+    const result = adapter(photo, context)
+    expect(result).toEqual({
+      src: context === 'thumb' ? '/thumb.jpg?w=960&q=72' : '/full.jpg?w=800&q=72',
+      srcset:
+        context === 'thumb'
+          ? '/thumb.jpg?w=256&q=72 256w, /thumb.jpg?w=640&q=72 640w, /thumb.jpg?w=960&q=72 960w'
+          : '/full.jpg?w=256&q=72 256w, /full.jpg?w=640&q=72 640w, /full.jpg?w=960&q=72 960w',
+      sizes: context === 'thumb' ? '400px' : '90vw',
+      placeholderSrc: undefined,
+      width: 960,
+      height: 600,
+    })
+  })
 
   it.each(['thumb', 'slide'] as const)('drops repeated provider URLs for %s', (context) => {
     const rounded: NuxtImageFunction = (src, modifiers) =>
@@ -44,8 +45,8 @@ describe('nuxt image adapter', () => {
     })
     expect(adapter({ ...photo, thumbSrc: undefined }, context).srcset).toBe(
       context === 'thumb'
-        ? '/full.jpg?w=640&q=80 256w, /full.jpg?w=960&q=80 828w'
-        : '/full.jpg?w=640&q=85 256w, /full.jpg?w=960&q=85 828w',
+        ? '/full.jpg?w=640&q=80 640w, /full.jpg?w=960&q=80 960w'
+        : '/full.jpg?w=640&q=85 640w, /full.jpg?w=960&q=85 960w',
     )
   })
 

@@ -57,18 +57,21 @@ export function createNuxtImageAdapter(
   return (photo: PhotoItem, context: ImageContext): ImageSource => {
     const src = decodeLocalPath(context === 'thumb' && photo.thumbSrc ? photo.thumbSrc : photo.src)
     const options = context === 'thumb' ? thumb : slide
-    const widths = options.widths.filter((width) => width < photo.width)
-    if (options.widths.some((width) => width >= photo.width)) widths.push(photo.width)
+    const configuredWidths = [...new Set(options.widths)].sort((a, b) => a - b)
+    const widths = configuredWidths.filter((width) => width < photo.width)
+    if (configuredWidths.some((width) => width >= photo.width)) widths.push(photo.width)
 
     const candidates: { width: number; url: string }[] = []
     for (const width of widths) {
       const url = image(src, { width, quality: options.quality, ...formatModifiers })
-      // Some providers round neighboring widths to the same output URL.
-      if (url !== candidates.at(-1)?.url) candidates.push({ width, url })
+      const previous = candidates.at(-1)
+      // Rounded URLs share one entry with the largest requested width.
+      if (previous?.url === url) previous.width = width
+      else candidates.push({ width, url })
     }
 
-    const byWidth = [...candidates].sort((a, b) => a.width - b.width)
-    const thumbSource = byWidth.filter((candidate) => candidate.width <= 1080).at(-1) ?? byWidth[0]!
+    const thumbSource =
+      candidates.filter((candidate) => candidate.width <= 1080).at(-1) ?? candidates[0]!
     return {
       src:
         context === 'thumb'
