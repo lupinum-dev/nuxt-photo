@@ -1,5 +1,5 @@
 import type { PhotoItem } from '../../types'
-import { cost, findIdealNodeSearch } from './helpers'
+import { findIdealNodeSearch, ratio } from './helpers'
 
 /**
  * Find row breaks using a bounded dynamic-programming search.
@@ -15,8 +15,8 @@ import { cost, findIdealNodeSearch } from './helpers'
  *   minCost[i] = min over j in [i − limitNodeSearch, i) of
  *                  minCost[j] + cost(photos[j..i), container, targetHeight, …)
  *
- * `cost()` returns the squared deviation of the row's scaled height from the
- * target height (see {@link ./helpers}) — rows that are too short or too tall
+ * The cost is the squared deviation of the row's scaled height from the
+ * target height — rows that are too short or too tall
  * are penalised quadratically, so a mediocre row is preferred to one bad row.
  *
  * `limitNodeSearch` is a dynamic upper bound on how far back `j` ranges for
@@ -45,13 +45,21 @@ export function findRowBreaks<TMeta extends object>(
 
   const minCost = new Float64Array(N + 1).fill(Infinity)
   const pointers = new Int32Array(N + 1).fill(0)
+  const ratioSums = new Float64Array(N)
   minCost[0] = 0
 
   for (let i = 1; i <= N; i++) {
     const start = Math.max(0, i - limitNodeSearch)
+    const aspectRatio = ratio(photos[i - 1]!)
     for (let j = i - 1; j >= start; j--) {
-      const currentCost = cost(photos, j, i, containerWidth, targetRowHeight, spacing, padding)
-      if (currentCost === undefined) continue
+      // Extend each active candidate in the same forward addition order as
+      // getCommonHeight's reduce, preserving rounding and the solver's ties.
+      ratioSums[j] = ratioSums[j]! + aspectRatio
+      const length = i - j
+      const rowWidth = containerWidth - (length - 1) * spacing - 2 * padding * length
+      const commonHeight = rowWidth / ratioSums[j]!
+      if (commonHeight <= 0) continue
+      const currentCost = (commonHeight - targetRowHeight) ** 2 * length
 
       const totalCost = minCost[j]! + currentCost
       if (totalCost < minCost[i]!) {
