@@ -89,7 +89,6 @@ const carouselProps: CarouselProps = {
   photos: readonlyPhotos,
   loop: true,
   dragFree: true,
-  direction: 'rtl',
   autoplay: { delayMs: 4000, stopOnMouseEnter: true },
 }
 void carouselProps
@@ -104,14 +103,20 @@ void groupInstance.openById('one')
 void groupInstance.openById('one', document.body)
 
 declare const photoInstance: GenericComponentExposed<typeof Photo>
-// @ts-expect-error Single photos do not expose collection controls.
 void photoInstance.open(0)
 
 declare const carouselInstance: GenericComponentExposed<typeof PhotoCarousel>
-// @ts-expect-error Carousels do not expose collection lightbox controls.
 void carouselInstance.open(0)
 
 type GroupDefaultSlot = NonNullable<GenericComponentSlots<typeof PhotoGroup>['default']>
 declare const groupSlot: Parameters<GroupDefaultSlot>[0]
 // @ts-expect-error Group slot collections are readonly.
 groupSlot.photos.push(readonlyPhotos[0])
+
+const albumActive: AlbumProps['active'] = 'one'
+const photoActive: GenericComponentProps<typeof Photo>['active'] = null
+void albumActive
+void photoActive
+void carouselInstance.scrollTo(1)
+void carouselInstance.next()
+void carouselInstance.prev()

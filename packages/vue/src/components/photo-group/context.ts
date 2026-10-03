@@ -13,6 +13,8 @@ export interface PhotoGroupContext {
   readonly photos: ComputedRef<readonly PhotoItem[]>
   readonly hiddenPhoto: ComputedRef<PhotoItem | null>
   readonly isOpen: ComputedRef<boolean>
+  readonly activeId: ComputedRef<string | null>
+  readonly activePhoto: ComputedRef<PhotoItem | null>
 }
 
 export interface PhotoGroupCapability {

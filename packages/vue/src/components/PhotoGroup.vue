@@ -1,10 +1,14 @@
 <template>
-  <slot :photos="canonicalPhotos" :controller="controller" />
+  <div ref="rootRef" style="display: contents" v-bind="$attrs">
+    <slot :photos="canonicalPhotos" :controller="controller" />
+  </div>
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, provide, shallowRef, type Component } from 'vue'
+import { computed, provide, ref, shallowRef, type Component } from 'vue'
+import { useGalleryRuntime } from '../gallery/runtime'
+import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import type { LightboxProviderController } from '../provide/keys'
 import type {
@@ -43,6 +47,8 @@ const props = withDefaults(
      * use photos from this list.
      */
     photos: readonly PhotoItem<TMeta>[]
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -75,6 +81,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
@@ -89,6 +96,9 @@ const canonicalPhotos = useRecipePhotos<TMeta>(
   () => props.validation,
   (event) => emit('invalidPhotos', event),
 )
+const rootRef = ref<HTMLElement | null>(null)
+useGalleryRuntime(canonicalPhotos, () => rootRef.value)
+
 const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
 const canonicalIds = computed(() => new Set(canonicalPhotos.value.map((photo) => photo.id)))
 const canonicalIndexById = computed(
@@ -191,6 +201,7 @@ async function close() {
 const disabledController: LightboxProviderController<TMeta> = {
   photos: computed(() => canonicalPhotos.value),
   count: computed(() => canonicalPhotos.value.length),
+  activeId: computed(() => null),
   activeIndex: computed(() => 0),
   activePhoto: computed(() => null),
   isOpen: computed(() => false),
@@ -207,6 +218,14 @@ const disabledController: LightboxProviderController<TMeta> = {
 const controller: LightboxProviderController<TMeta> = provider
   ? { ...provider, open, openById }
   : disabledController
+
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoGroup',
+  () => props.active,
+  () => canonicalPhotos.value,
+  controller,
+  (id) => emit('update:active', id),
+)
 
 const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
   if (!provider) return null
@@ -226,8 +245,10 @@ const groupContext: PhotoGroupContext = {
   photos: canonicalPhotos,
   hiddenPhoto,
   isOpen,
+  activeId,
+  activePhoto,
 }
 provide(PhotoGroupContextKey, groupContext)
 
-defineExpose({ open, openById, close, isOpen })
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 </script>

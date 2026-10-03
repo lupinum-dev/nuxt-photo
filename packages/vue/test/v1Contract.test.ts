@@ -47,23 +47,12 @@ describe('Nuxt Photo 1.0 public contract', () => {
     const carousel = read('packages/vue/src/components/PhotoCarousel.vue')
     const publicProps = carousel.slice(carousel.indexOf('defineProps<{'), carousel.indexOf('}>(),'))
 
-    expect(publicProps).toContain("direction?: 'ltr' | 'rtl'")
+    expect(publicProps).not.toContain('direction?:')
     expect(publicProps).toContain('loop?: boolean')
     expect(publicProps).toContain('dragFree?: boolean')
     expect(publicProps).not.toContain('options?:')
     expect(publicProps).not.toContain('slidesToScroll')
     expect(carousel).toMatch(/lightbox:\s*false/)
-  })
-
-  it('exposes collection handles only from PhotoAlbum and PhotoGroup', () => {
-    expect(read('packages/vue/src/components/PhotoAlbum.vue')).toContain(
-      'defineExpose({ open, openById, close, isOpen })',
-    )
-    expect(read('packages/vue/src/components/PhotoGroup.vue')).toContain(
-      'defineExpose({ open, openById, close, isOpen })',
-    )
-    expect(read('packages/vue/src/components/Photo.vue')).not.toContain('defineExpose(')
-    expect(read('packages/vue/src/components/PhotoCarousel.vue')).not.toContain('defineExpose(')
   })
 
   it('publishes only the reviewed package entry points', () => {

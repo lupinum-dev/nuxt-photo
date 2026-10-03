@@ -32,7 +32,7 @@ function offsetX(transform: string | undefined) {
  */
 export function createNavigationMotion(
   visual: MotionVisualState,
-  activeIndex: Ref<number>,
+  activeIndex: Readonly<Ref<number>>,
   getMode: () => LightboxNavigationMode,
   isReducedMotion: () => boolean,
 ) {

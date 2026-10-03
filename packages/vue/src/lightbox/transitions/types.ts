@@ -26,7 +26,7 @@ export type CloseMotionCallbacks = SharedMotionCallbacks & {
 }
 
 export type SharedTransitionContext = {
-  activeIndex: Ref<number>
+  activeIndex: Readonly<Ref<number>>
   currentPhoto: ComputedRef<PhotoItem | null>
   areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null

@@ -4,6 +4,7 @@
       ref="rootRef"
       tabindex="-1"
       data-np-lightbox-root
+      :dir="ctx.direction.value"
       :data-np-navigation="ctx.navigationMode.value"
       :style="ctx.frameVars.value"
       v-bind="$attrs"

@@ -21,6 +21,7 @@ export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 export interface LightboxController<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly photos: ComputedRef<readonly PhotoItem<TMeta>[]>
   readonly count: ComputedRef<number>
+  readonly activeId: ComputedRef<string | null>
   readonly activeIndex: ComputedRef<number>
   readonly activePhoto: ComputedRef<PhotoItem<TMeta> | null>
   readonly isOpen: ComputedRef<boolean>
@@ -39,14 +40,6 @@ export interface LightboxProviderController<
   setThumbnailRef(index: number): (element: Element | ComponentPublicInstance | null) => void
 }
 
-/** Public template-ref contract exposed by collection recipes. */
-export interface LightboxHandle {
-  open(index?: number): Promise<void>
-  openById(id: string): Promise<void>
-  close(): Promise<void>
-  readonly isOpen: boolean
-}
-
 type LightboxRuntimeState = {
   lifecycleStatus: Ref<LightboxLifecycleStatus>
   zoomState: Ref<ZoomState>
@@ -62,6 +55,7 @@ type LightboxRuntimeState = {
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
   imageAdapter: ComputedRef<ImageAdapter>
+  direction: ComputedRef<'ltr' | 'rtl'>
   navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>
   getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
@@ -98,7 +92,7 @@ export type InternalLightboxContext = Omit<
   'openById' | 'activeIndex' | 'photos'
 > & {
   photos: ComputedRef<PhotoItem[]>
-  activeIndex: Ref<number>
+  activeIndex: ComputedRef<number>
 } & LightboxRuntimeState &
   LightboxDomBindings
 

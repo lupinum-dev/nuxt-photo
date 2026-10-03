@@ -1,5 +1,6 @@
 <template>
   <CarouselLayout
+    ref="layoutRef"
     v-bind="{ ...$attrs, ...layoutProps }"
     :on-slide-activate="provider ? openSlide : undefined"
     :set-slide-ref="provider?.setThumbnailRef"
@@ -27,7 +28,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, type Component } from 'vue'
+import { computed, ref, type Component } from 'vue'
 import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
@@ -42,6 +43,8 @@ import type {
   LightboxNavigationMode,
   LightboxTransitionOption,
 } from '../core/index'
+import { useGalleryRuntime } from '../gallery/runtime'
+import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
@@ -68,6 +71,8 @@ const props = withDefaults(
      * Slides in order. Each needs a stable `id`, a `src`, and the real pixel `width` and `height`.
      */
     photos: readonly PhotoItem<TMeta>[]
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -86,11 +91,6 @@ const props = withDefaults(
      * @default false
      */
     dragFree?: boolean
-    /**
-     * `'ltr'` or `'rtl'`. When omitted, read from the document once at mount; bind it when the
-     * direction can change.
-     */
-    direction?: 'ltr' | 'rtl'
     /**
      * Show the previous and next buttons.
      * @default true
@@ -170,6 +170,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
@@ -185,9 +186,17 @@ const resolvedPhotos = useRecipePhotos<TMeta>(
   (event) => emit('invalidPhotos', event),
 )
 
+const layoutRef = ref<{
+  root: HTMLElement | null
+  goTo(index: number): void
+  goToNext(): void
+  goToPrev(): void
+} | null>(null)
+const gallery = useGalleryRuntime(resolvedPhotos, () => layoutRef.value?.root ?? null)
+
 const injectedLightbox = photoConfig.value.lightbox.component ?? null
 const lightboxComponent = resolveLightboxComponent(
-  props.lightbox,
+  isLightboxOptions(props.lightbox) ? true : props.lightbox,
   injectedLightbox,
   Lightbox,
   false,
@@ -204,16 +213,45 @@ const provider = hasLightbox
     })
   : null
 
-async function openSlide(index: number) {
+async function open(index = 0) {
+  if (!resolvedPhotos.value[index])
+    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   await provider?.open(index)
 }
+const openSlide = open
+async function openById(id: string) {
+  const index = resolvedPhotos.value.findIndex((photo) => photo.id === id)
+  if (index < 0) throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+  await open(index)
+}
+async function close() {
+  await provider?.close()
+}
+const isOpen = gallery.isOpen
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoCarousel',
+  () => props.active,
+  () => resolvedPhotos.value,
+  { isOpen, activeId: gallery.activeId, activePhoto: gallery.activePhoto, openById, close },
+  (id) => emit('update:active', id),
+)
+function scrollTo(index: number) {
+  layoutRef.value?.goTo(index)
+}
+function next() {
+  layoutRef.value?.goToNext()
+}
+function prev() {
+  layoutRef.value?.goToPrev()
+}
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto, scrollTo, next, prev })
 
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
+  gallery,
   imageAdapter: props.imageAdapter,
   loop: props.loop,
   dragFree: props.dragFree,
-  direction: props.direction,
   autoplay: props.autoplay,
   showArrows: props.showArrows,
   showThumbnails: props.showThumbnails,

@@ -182,6 +182,8 @@ describe('PhotoGroup registration', () => {
       async close() {},
       async activateById() {},
       isOpen: computed(() => false),
+      activeId: computed(() => null),
+      activePhoto: computed(() => null),
     }
     const mounted = await mountComponent(Photo, {
       props: { photo: descendant },

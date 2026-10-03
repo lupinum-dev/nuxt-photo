@@ -35,6 +35,8 @@ import {
   type VNodeChild,
 } from 'vue'
 
+import { useGalleryRuntime } from '../gallery/runtime'
+import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
 import type { PhotoItem, ImageAdapter } from '../core/index'
@@ -56,6 +58,8 @@ const props = defineProps<{
    * Invalid data throws.
    */
   photo: PhotoItem<TMeta>
+  /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+  active?: string | null
   /**
    * `true` opens a one-photo lightbox, a component replaces it. Ignored inside `PhotoGroup`, which
    * owns the lightbox. Read once at mount; change the component `key` to remount.
@@ -93,6 +97,7 @@ const props = defineProps<{
   /** Classes for the caption. */
   captionClass?: string
 }>()
+const emit = defineEmits<{ 'update:active': [id: string | null] }>()
 const slots = defineSlots<{
   slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
@@ -113,6 +118,11 @@ watchEffect(() => {
 
 // Inject parent group context (null if none)
 const group = inject(PhotoGroupContextKey, null)
+if (!group)
+  useGalleryRuntime(
+    computed(() => [resolvedPhoto.value]),
+    () => thumbRef.value,
+  )
 
 // Global lightbox override
 const injectedLightbox = photoConfig.value.lightbox.component ?? null
@@ -173,8 +183,7 @@ const figureStyle = computed(() => {
 })
 
 function handleClick() {
-  if (isSolo.value) return soloOpen()
-  else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
+  return open()
 }
 
 const labels = usePhotoLabels()
@@ -236,9 +245,39 @@ watch(
 
 onBeforeUnmount(unregisterFromGroup)
 
-async function soloOpen() {
+async function open(index = 0) {
+  if (index !== 0) throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
+  if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
   if (!soloCtx) return
   soloCtx.setThumbnailRef(0)(thumbRef.value)
   await soloCtx.open(0)
 }
+async function openById(id: string) {
+  if (id !== resolvedPhoto.value.id)
+    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+  await open()
+}
+async function close() {
+  if (isGrouped.value) await group!.close()
+  else await soloCtx?.close()
+}
+const isOpen = computed(() =>
+  isGrouped.value
+    ? !!group?.isOpen.value && group.activeId.value === props.photo.id
+    : (soloCtx?.isOpen.value ?? false),
+)
+const { activeId, activePhoto } = useGalleryModel(
+  'Photo',
+  () => props.active,
+  () => [resolvedPhoto.value],
+  {
+    isOpen,
+    activeId: computed(() => (isOpen.value ? resolvedPhoto.value.id : null)),
+    activePhoto: computed(() => (isOpen.value ? resolvedPhoto.value : null)),
+    openById,
+    close,
+  },
+  (id) => emit('update:active', id),
+)
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 </script>

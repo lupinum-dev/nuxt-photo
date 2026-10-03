@@ -2,11 +2,11 @@
   <div
     v-if="photos.length === 0"
     class="np-carousel np-carousel--empty"
-    :dir="direction"
+    ref="root"
     v-bind="$attrs"
   />
 
-  <div v-else class="np-carousel" :dir="direction" :style="cssVarStyle" v-bind="$attrs">
+  <div v-else class="np-carousel" ref="root" :style="cssVarStyle" v-bind="$attrs">
     <!-- First in the tab order, so keyboard users can stop the motion before anything else. -->
     <button
       v-if="autoplayAvailable"
@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, toRef, useSlots, type ComponentPublicInstance } from 'vue'
+import { computed, ref, toRef, useSlots, type ComponentPublicInstance } from 'vue'
 import { PhotoImage } from '../../primitives/index'
 import type {
   CarouselCaptionSlotProps,
@@ -179,6 +179,7 @@ import type {
 import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
+import type { GalleryRuntime } from '../../gallery/runtime'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
@@ -200,7 +201,7 @@ const props = defineProps<{
   imageAdapter?: ImageAdapter<TMeta>
   loop?: boolean
   dragFree?: boolean
-  direction?: 'ltr' | 'rtl'
+  gallery: GalleryRuntime
   autoplay: boolean | PhotoCarouselAutoplayOptions
 
   showArrows: boolean
@@ -224,6 +225,7 @@ const props = defineProps<{
   setSlideRef?: (index: number) => (el: Element | ComponentPublicInstance | null) => void
 }>()
 
+const root = ref<HTMLElement | null>(null)
 const slots = useSlots()
 const {
   emblaRef,
@@ -249,7 +251,7 @@ const {
   photos: toRef(props, 'photos'),
   loop: toRef(props, 'loop'),
   dragFree: toRef(props, 'dragFree'),
-  direction: toRef(props, 'direction'),
+  gallery: props.gallery,
   autoplay: toRef(props, 'autoplay'),
   showThumbnails: toRef(props, 'showThumbnails'),
 })
@@ -291,6 +293,7 @@ function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
 }
 
 defineExpose({
+  root,
   emblaApi,
   thumbsApi,
   selectedIndex,

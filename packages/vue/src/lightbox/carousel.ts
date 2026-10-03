@@ -1,12 +1,6 @@
-import {
-  computed,
-  onBeforeUnmount,
-  ref,
-  shallowRef,
-  watch,
-  type CSSProperties,
-  type Ref,
-} from 'vue'
+import { onBeforeUnmount, ref, shallowRef, watch, type CSSProperties, type Ref } from 'vue'
+import type { GalleryRuntime } from '../gallery/runtime'
+import { createGalleryEmblaBridge } from '../gallery/embla'
 import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel'
 import {
   fitRect,
@@ -32,30 +26,36 @@ type CarouselOptions = {
  * photo is fitted inside the measured frame area, the mat that themes size through CSS.
  */
 export function useCarousel(
-  photos: Readonly<Ref<PhotoItem[]>>,
+  gallery: GalleryRuntime,
   areaMetrics: Ref<AreaMetrics | null>,
   frameAreaMetrics: Ref<AreaMetrics | null>,
   options: CarouselOptions,
 ) {
-  const activeIndex = ref(0)
+  const photos = gallery.photos
+  const activeIndex = gallery.activeIndex
+  const bridge = createGalleryEmblaBridge(gallery)
   const emblaOptions = ref({ loop: true, duration: 25, startIndex: 0 })
 
   const emblaRef = shallowRef<HTMLElement>()
   const emblaApi = shallowRef<EmblaCarouselType>()
 
-  const currentPhoto = computed<PhotoItem | null>(
-    () => photos.value[activeIndex.value] ?? photos.value[0] ?? null,
-  )
+  const currentPhoto = gallery.activePhoto
 
-  watch([emblaRef, options.navigationMode], ([node, mode]) => {
+  watch([emblaRef, options.navigationMode, gallery.direction], ([node, mode]) => {
     emblaApi.value?.destroy()
     emblaApi.value = undefined
     if (!node || mode !== 'slide') return
 
-    const api = EmblaCarousel(node, { ...emblaOptions.value, startIndex: activeIndex.value })
-    api.on('select', (_api) => {
-      activeIndex.value = _api.selectedScrollSnap()
+    const api = EmblaCarousel(node, {
+      ...emblaOptions.value,
+      startIndex: activeIndex.value,
+      direction: gallery.direction.value,
+      watchSlides: bridge.beforeReinit,
+      watchResize: bridge.beforeReinit,
     })
+    api.on('select', bridge.select)
+    api.on('reInit', (api) => bridge.sync(api, true, true))
+    bridge.sync(api, true, true)
     api.on('pointerDown', () => {
       if (options.isZoomedIn() || options.isInteractionLocked()) return false
     })
@@ -100,15 +100,10 @@ export function useCarousel(
   }
 
   function goToNext() {
-    const api = emblaApi.value
-    if (api && !options.isReducedMotion()) api.scrollNext()
-    else goTo(activeIndex.value + 1)
+    goTo(activeIndex.value + 1)
   }
-
   function goToPrev() {
-    const api = emblaApi.value
-    if (api && !options.isReducedMotion()) api.scrollPrev()
-    else goTo(activeIndex.value - 1)
+    goTo(activeIndex.value - 1)
   }
 
   /** Show the photo at `index`. `instant` skips motion, for opening and collection changes. */
@@ -117,9 +112,9 @@ export function useCarousel(
     if (count === 0) return
     const target = ((index % count) + count) % count
     const from = activeIndex.value
-    activeIndex.value = target
+    gallery.requestIndex(target)
     const api = emblaApi.value
-    if (api) api.scrollTo(target, instant || options.isReducedMotion())
+    if (api) bridge.sync(api, instant || options.isReducedMotion())
     else emblaOptions.value = { ...emblaOptions.value, startIndex: target }
     if (options.navigationMode() !== 'slide' && !instant && from !== target) {
       options.onNavigate(from, target)
@@ -127,8 +122,11 @@ export function useCarousel(
   }
 
   function selectedSnap(): number {
-    return emblaApi.value?.selectedScrollSnap() ?? activeIndex.value
+    return activeIndex.value
   }
+  watch(activeIndex, () => {
+    if (emblaApi.value) bridge.sync(emblaApi.value, options.isReducedMotion())
+  })
 
   onBeforeUnmount(() => {
     emblaApi.value?.destroy()

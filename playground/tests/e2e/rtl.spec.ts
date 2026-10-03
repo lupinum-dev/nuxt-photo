@@ -1,6 +1,6 @@
 import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
-test('lightbox chrome mirrors under direction: rtl', async ({ page }) => {
+test('lightbox chrome mirrors under direction: rtl', async ({ page }, testInfo) => {
   await stubImageRequests(page)
   await gotoPlayground(page)
 
@@ -23,9 +23,19 @@ test('lightbox chrome mirrors under direction: rtl', async ({ page }) => {
   })
   expect(ltr.prev.end).toBeLessThanOrEqual(ltr.next.start)
 
-  await page.evaluate(() => {
-    document.documentElement.setAttribute('dir', 'rtl')
-  })
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await page
+    .locator('.np-album')
+    .first()
+    .evaluate((root) => {
+      root.style.direction = 'rtl'
+    })
+  await page.locator('.np-album__item').first().click()
+  await expect(dialog).toBeVisible()
+  expect(await page.locator('html').evaluate((root) => getComputedStyle(root).direction)).toBe(
+    'ltr',
+  )
 
   // RTL: the inline-start/end anchors flip, so previous sits to the right.
   const rtl = await page.evaluate(() => {
@@ -45,14 +55,30 @@ test('lightbox chrome mirrors under direction: rtl', async ({ page }) => {
     page.locator('[data-np-motion="controls"] [data-np-sr-only][aria-live="polite"]'),
   ).toContainText('Slide 1 of')
 
+  await expect(next).toBeEnabled()
+  await page.keyboard.press('ArrowLeft')
+  await expect(page.locator('.np-lightbox__counter')).toContainText('2 /')
+  await page.screenshot({ path: testInfo.outputPath('rtl-lightbox.png') })
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
-test('carousel mirrors controls and navigation under direction: rtl', async ({ page }) => {
+test('carousel mirrors controls and navigation under direction: rtl', async ({
+  page,
+}, testInfo) => {
   await stubImageRequests(page)
+  await page.route('**/carousel', async (route) => {
+    const response = await route.fetch()
+    const body = (await response.text()).replace(
+      '</head>',
+      '<style>.np-carousel { direction: rtl }</style></head>',
+    )
+    await route.fulfill({ response, body })
+  })
   await gotoPlayground(page, '/carousel')
-  await page.evaluate(() => document.documentElement.setAttribute('dir', 'rtl'))
+  expect(await page.locator('html').evaluate((root) => getComputedStyle(root).direction)).toBe(
+    'ltr',
+  )
 
   const carousel = page.locator('.np-carousel').first()
   const counter = carousel.locator('.np-carousel__counter')
@@ -69,4 +95,5 @@ test('carousel mirrors controls and navigation under direction: rtl', async ({ p
     return { prevLeft: prev.left, nextLeft: next.left }
   })
   expect(positions.prevLeft).toBeGreaterThan(positions.nextLeft)
+  await page.screenshot({ path: testInfo.outputPath('rtl-carousel.png') })
 })

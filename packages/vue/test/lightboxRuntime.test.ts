@@ -1,16 +1,11 @@
 // @vitest-environment jsdom
 
-import { computed, createApp, defineComponent, h, nextTick, ref } from 'vue'
+import { createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import type { PhotoItem } from '../src/core/index'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
 import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
-import {
-  createKeydownBinding,
-  useLightboxWindowLifecycle,
-  watchPhotoCollection,
-} from '../src/lightbox/watchers'
+import { createKeydownBinding, useLightboxWindowLifecycle } from '../src/lightbox/watchers'
 
 async function flushWatchers() {
   await nextTick()
@@ -68,6 +63,7 @@ describe('lightbox controller surface', () => {
 
     expect(Object.keys(consumerApi!).sort()).toEqual(
       [
+        'activeId',
         'activeIndex',
         'activePhoto',
         'close',
@@ -568,96 +564,6 @@ describe('lightbox lifecycle invariants', () => {
 
     expect(api!.lifecycleStatus.value).toBe('closed')
     expect(document.body.style.overflow).toBe('')
-  })
-})
-
-describe('lightbox state collection handling', () => {
-  it('keeps the same active photo selected across reorder, insert, and remove-before-active changes', async () => {
-    const a = makePhoto({ id: 'a' })
-    const b = makePhoto({ id: 'b' })
-    const c = makePhoto({ id: 'c' })
-    const photos = ref<PhotoItem[]>([a, b, c])
-    const activeIndex = ref(1)
-    const goTo = vi.fn((index: number) => {
-      activeIndex.value = index
-    })
-    const close = vi.fn(async () => {})
-
-    watchPhotoCollection(
-      computed(() => photos.value),
-      {
-        activeIndex,
-        isMounted: ref(true),
-        goTo,
-        close,
-        reportAsyncError: (_operation, task) => void task,
-      },
-    )
-
-    photos.value = [c, a, b]
-    await flushWatchers()
-    expect(goTo).toHaveBeenLastCalledWith(2, true)
-    expect(close).not.toHaveBeenCalled()
-
-    goTo.mockClear()
-    photos.value = [a, b]
-    await flushWatchers()
-    expect(goTo).toHaveBeenLastCalledWith(1, true)
-    expect(close).not.toHaveBeenCalled()
-  })
-
-  it('closes when the active photo disappears from an open lightbox', async () => {
-    const a = makePhoto({ id: 'a' })
-    const b = makePhoto({ id: 'b' })
-    const photos = ref<PhotoItem[]>([a, b])
-    const goTo = vi.fn()
-    const close = vi.fn(async () => {})
-
-    watchPhotoCollection(
-      computed(() => photos.value),
-      {
-        activeIndex: ref(1),
-        isMounted: ref(true),
-        goTo,
-        close,
-        reportAsyncError: (_operation, task) => void task,
-      },
-    )
-
-    photos.value = [a]
-    await flushWatchers()
-
-    expect(close).toHaveBeenCalledTimes(1)
-    expect(goTo).toHaveBeenCalledWith(0, true)
-  })
-
-  it('hands collection-close failures to the autonomous error reporter', async () => {
-    const a = makePhoto({ id: 'a' })
-    const b = makePhoto({ id: 'b' })
-    const photos = ref<PhotoItem[]>([a, b])
-    const failure = new Error('collection close failed')
-    const close = vi.fn(() => Promise.reject(failure))
-    const reported: Array<{ operation: string; task: Promise<unknown> }> = []
-
-    watchPhotoCollection(
-      computed(() => photos.value),
-      {
-        activeIndex: ref(1),
-        isMounted: ref(true),
-        goTo: vi.fn(),
-        close,
-        reportAsyncError(operation, task) {
-          reported.push({ operation, task })
-        },
-      },
-    )
-
-    photos.value = [a]
-    await flushWatchers()
-
-    expect(reported).toHaveLength(1)
-    expect(reported[0]?.operation).toBe('collection-close')
-    await expect(reported[0]!.task).rejects.toBe(failure)
   })
 })
 

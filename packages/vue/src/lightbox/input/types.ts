@@ -3,6 +3,7 @@ import type { AreaMetrics, PanBounds, PanState, PhotoItem, ZoomState } from '../
 
 export type GestureInputConfig = {
   state: {
+    direction?: Readonly<Ref<'ltr' | 'rtl'>>
     isOpen: Readonly<Ref<boolean>>
     animating: Readonly<Ref<boolean>>
     isZoomedIn: ComputedRef<boolean>

@@ -26,7 +26,6 @@ export type {
 } from './types'
 export {
   type LightboxController,
-  type LightboxHandle,
   type LightboxProviderController,
   type LightboxSlideRenderer,
   type PhotoLabels,
@@ -61,3 +60,5 @@ export { createPhoto } from './config'
 export type { PhotoConfig, PhotoProvider, LightboxOptions, LightboxTool } from './config'
 export type { PhotoLocale } from './provide/labels'
 export { validatePhotos } from './core/photo/normalize'
+
+export type { GalleryHandle } from './gallery/runtime'

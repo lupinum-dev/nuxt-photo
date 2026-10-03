@@ -142,6 +142,7 @@ import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { devWarn } from '../core/env'
 import { useAlbumLightbox } from './photo-album/lightbox'
+import { useGalleryModel } from '../gallery/model'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 
 // Generated layout CSS is trusted internal output. innerHTML preserves `<` and
@@ -170,6 +171,8 @@ const props = withDefaults(
      * `width` and `height` of the image file.
      */
     photos: readonly PhotoItem<TMeta>[]
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -247,6 +250,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
@@ -293,9 +297,19 @@ const {
   openById,
   close,
   isOpen,
-} = useAlbumLightbox(normalizedPhotos, props)
+  activeId: ownerActiveId,
+  activePhoto: ownerActivePhoto,
+} = useAlbumLightbox(normalizedPhotos, props, (): HTMLElement | null => containerRef.value)
 
-defineExpose({ open, openById, close, isOpen })
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoAlbum',
+  () => props.active,
+  () => normalizedPhotos.value,
+  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
+  (id) => emit('update:active', id),
+)
+
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {

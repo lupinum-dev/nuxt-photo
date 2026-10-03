@@ -1,5 +1,5 @@
-import { onBeforeUnmount, onMounted, watch, type ComputedRef, type Ref } from 'vue'
-import { isUsableRect, type AreaMetrics, type PhotoItem } from '../core/index'
+import { onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
+import { isUsableRect, type AreaMetrics } from '../core/index'
 import { lockBodyScroll } from '../internal/bodyScroll'
 
 /** Create attach/detach helpers for a lightbox-scoped global keydown handler. */
@@ -58,44 +58,6 @@ export function createGeometrySync(
 
     return areaMetrics.value
   }
-}
-
-/** React to photo-list changes that can invalidate the active slide at runtime. */
-export function watchPhotoCollection(
-  photos: ComputedRef<PhotoItem[]>,
-  config: {
-    activeIndex: Ref<number>
-    isMounted: Readonly<Ref<boolean>>
-    goTo: (index: number, instant?: boolean) => void
-    close: () => Promise<void>
-    reportAsyncError: (operation: string, task: Promise<unknown>) => void
-  },
-) {
-  watch(photos, (newPhotos, oldPhotos) => {
-    if (!newPhotos || !oldPhotos) return
-
-    const newIds = new Set(newPhotos.map((photo) => photo.id))
-    const activePhoto = oldPhotos[config.activeIndex.value] ?? null
-    const activeId = activePhoto?.id ?? null
-
-    if (!activeId) {
-      config.goTo(0, true)
-      return
-    }
-
-    if (!newIds.has(activeId)) {
-      if (config.isMounted.value) {
-        config.reportAsyncError('collection-close', config.close())
-      }
-      config.goTo(0, true)
-      return
-    }
-
-    const newIndex = newPhotos.findIndex((photo) => photo.id === activeId)
-    if (newIndex !== -1 && newIndex !== config.activeIndex.value) {
-      config.goTo(newIndex, true)
-    }
-  })
 }
 
 /** Attach the window-level listeners and cleanup used by lightbox state. */

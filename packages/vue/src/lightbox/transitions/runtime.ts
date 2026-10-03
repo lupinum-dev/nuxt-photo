@@ -31,7 +31,7 @@ function isAbortError(error: unknown) {
 
 /** Coordinate transition ownership, cancellation, gestures, and the public motion contract. */
 export function useLightboxMotion(
-  activeIndex: Ref<number>,
+  activeIndex: Readonly<Ref<number>>,
   currentPhoto: ComputedRef<PhotoItem | null>,
   areaMetrics: Ref<AreaMetrics | null>,
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null,
@@ -236,7 +236,6 @@ export function useLightboxMotion(
     animating.value = true
     activeImagePending.value = true
     uiVisible.value = true
-    activeIndex.value = index
     callbacks.setImageLoadFailed(false)
     try {
       const opened = await runOpenTransition(openTransitionContext, index, callbacks, signal)

@@ -22,12 +22,8 @@ import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
 import { useLightboxMotion } from './transitions/runtime'
 import { useLightboxInputHandlers } from './input/pointer'
-import {
-  createGeometrySync,
-  createKeydownBinding,
-  useLightboxWindowLifecycle,
-  watchPhotoCollection,
-} from './watchers'
+import { createGeometrySync, createKeydownBinding, useLightboxWindowLifecycle } from './watchers'
+import { useGalleryRuntime } from '../gallery/runtime'
 import { usePhotoConfig } from '../config'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
@@ -68,8 +64,8 @@ export function resolveTransitionConfig(
  * Public customisation should go through `provideLightbox`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
- * Lifecycle intent is reconciled by one abortable runner. Status is the sole
- * writable representation of actual lifecycle state; DOM mount is derived.
+ * Lifecycle intent is reconciled by one abortable runner. The gallery owns identity and visibility;
+ * lifecycle status only coordinates animations and DOM mounting.
  */
 export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
@@ -87,6 +83,7 @@ export function useLightboxRuntimeState(
     return Array.isArray(value) ? value : [value]
   })
 
+  const gallery = useGalleryRuntime(photos)
   const config = usePhotoConfig()
   const resolvedMinZoom = minZoom ?? config.value.lightbox.minZoom
   const resolvedImageAdapter = computed(() => unref(imageAdapter) ?? config.value.imageAdapter)
@@ -123,7 +120,7 @@ export function useLightboxRuntimeState(
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
 
-  const carousel = useCarousel(photos, areaMetrics, frameAreaMetrics, {
+  const carousel = useCarousel(gallery, areaMetrics, frameAreaMetrics, {
     isZoomedIn: () => isZoomedIn(),
     isInteractionLocked: () => isInteractionLocked(),
     navigationMode: () => navigationMode.value,
@@ -149,15 +146,16 @@ export function useLightboxRuntimeState(
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, frameAreaMetrics)
 
-  type LightboxIntent =
-    | { readonly kind: 'closed' }
-    | { readonly kind: 'open'; readonly index: number }
+  type LightboxIntent = { readonly kind: 'closed' } | { readonly kind: 'open'; readonly id: string }
   type ActiveRun = {
     readonly controller: AbortController
     readonly done: Promise<unknown>
   }
 
-  const isOpen = computed(() => lifecycleStatus.value !== 'closed')
+  watch(lifecycleStatus, (status) => gallery.requestVisibility(status !== 'closed'), {
+    flush: 'sync',
+  })
+  const isOpen = gallery.isOpen
   let desired: LightboxIntent = { kind: 'closed' }
   let activeRun: ActiveRun | null = null
   let reconcilePromise: Promise<void> | null = null
@@ -182,6 +180,12 @@ export function useLightboxRuntimeState(
   async function reconcile() {
     while (true) {
       const target = desired
+      const targetIndex =
+        target.kind === 'open' ? photos.value.findIndex((photo) => photo.id === target.id) : -1
+      if (target.kind === 'open' && targetIndex < 0) {
+        desired = { kind: 'closed' }
+        continue
+      }
 
       try {
         if (target.kind === 'closed') {
@@ -193,18 +197,18 @@ export function useLightboxRuntimeState(
           keydown.detach()
           lifecycleStatus.value = 'closed'
         } else if (lifecycleStatus.value === 'open') {
-          if (carousel.activeIndex.value !== target.index) {
-            carousel.goTo(target.index, true)
+          if (carousel.activeIndex.value !== targetIndex) {
+            carousel.goTo(targetIndex, true)
             activeImageLoadFailed.value = false
             await prepareActiveSlide(true)
           }
         } else {
+          carousel.goTo(targetIndex, true)
           lifecycleStatus.value = 'opening'
-          carousel.goTo(target.index, true)
           keydown.attach()
 
           const opened = await startRun((signal) =>
-            motion.open(target.index, transitionCallbacks, signal),
+            motion.open(targetIndex, transitionCallbacks, signal),
           )
           if (!opened) {
             motion.resetClosedVisualState()
@@ -228,7 +232,7 @@ export function useLightboxRuntimeState(
         ((target.kind === 'closed' && lifecycleStatus.value === 'closed') ||
           (target.kind === 'open' &&
             lifecycleStatus.value === 'open' &&
-            carousel.activeIndex.value === target.index))
+            carousel.activeIndex.value === targetIndex))
       if (realized) return
     }
   }
@@ -250,7 +254,8 @@ export function useLightboxRuntimeState(
 
     const photo = currentPhotos[index]!
     motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
-    const target: LightboxIntent = { kind: 'open', index }
+    if (!isOpen.value) gallery.resolveDirection(motion.getThumbElement(index))
+    const target: LightboxIntent = { kind: 'open', id: photo.id }
     desired = target
     activeRun?.controller.abort()
     await acquireLightboxOwnership({ id: ownershipId, close })
@@ -308,6 +313,7 @@ export function useLightboxRuntimeState(
   const gestures = useLightboxInputHandlers({
     state: {
       isOpen,
+      direction: gallery.direction,
       animating: motion.animating,
       isZoomedIn: panzoom.isZoomedIn,
       zoomAllowed: panzoom.zoomAllowed,
@@ -346,7 +352,7 @@ export function useLightboxRuntimeState(
         const count = photos.value.length
         if (!motion.releaseNavigation(count > 1 ? deltaX : 0, count > 1 ? velocityX : 0)) return
         // Dragging toward the start edge reveals the next photo, mirrored for RTL.
-        const rtl = document.documentElement.dir.toLowerCase() === 'rtl'
+        const rtl = gallery.direction.value === 'rtl'
         if (rtl ? deltaX > 0 : deltaX < 0) carousel.goToNext()
         else carousel.goToPrev()
       },
@@ -378,12 +384,8 @@ export function useLightboxRuntimeState(
 
   const closeCallbacks = transitionCallbacks
 
-  watchPhotoCollection(photos, {
-    activeIndex: carousel.activeIndex,
-    isMounted: isOpen,
-    goTo: carousel.goTo,
-    close,
-    reportAsyncError,
+  watch(photos, () => {
+    if (isOpen.value && !gallery.activePhoto.value) reportAsyncError('collection-close', close())
   })
   watch(carousel.activeIndex, () => {
     if (lifecycleStatus.value !== 'open') return
@@ -415,6 +417,8 @@ export function useLightboxRuntimeState(
     transitionConfig,
     navigationMode,
     reducedMotion,
+    activeId: gallery.activeId,
+    direction: gallery.direction,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,

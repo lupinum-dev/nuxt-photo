@@ -83,8 +83,8 @@ describe('stable Embla carousel contract', () => {
 
   it('accepts only the direct public behavior props', () => {
     expect(() => validatePhotoCarouselBehavior({ loop: true, dragFree: true })).not.toThrow()
-    expect(() => validatePhotoCarouselBehavior({ direction: 'sideways' as 'ltr' })).toThrow(
-      /direction/,
+    expect(() => validatePhotoCarouselBehavior({ loop: 'true' as unknown as boolean })).toThrow(
+      /loop/,
     )
   })
 

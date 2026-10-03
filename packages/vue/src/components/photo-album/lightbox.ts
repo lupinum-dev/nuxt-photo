@@ -7,6 +7,7 @@ import {
   type ComponentPublicInstance,
   type ComputedRef,
 } from 'vue'
+import { useGalleryRuntime } from '../../gallery/runtime'
 import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
 import type {
@@ -32,8 +33,10 @@ type AlbumLightboxProps<TMeta extends object> = {
 export function useAlbumLightbox<TMeta extends object>(
   photos: ComputedRef<readonly PhotoItem<TMeta>[]>,
   props: AlbumLightboxProps<TMeta>,
+  root: () => HTMLElement | null,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
+  if (!parentGroup) useGalleryRuntime(photos, root)
   warnOnSetupOptionChanges('PhotoAlbum', {
     lightbox: () => props.lightbox,
   })
@@ -147,6 +150,11 @@ export function useAlbumLightbox<TMeta extends object>(
 
   const isOpen = computed(() => delegatedGroup?.isOpen.value ?? ownCtx?.isOpen.value ?? false)
 
+  const activeId = computed(() => delegatedGroup?.activeId.value ?? ownCtx?.activeId.value ?? null)
+  const activePhoto = computed(
+    () => delegatedGroup?.activePhoto.value ?? ownCtx?.activePhoto.value ?? null,
+  )
+
   const capabilityOwner = Symbol('PhotoAlbum')
 
   function removeCapabilities() {
@@ -192,5 +200,7 @@ export function useAlbumLightbox<TMeta extends object>(
     openById,
     close,
     isOpen,
+    activeId,
+    activePhoto,
   }
 }
