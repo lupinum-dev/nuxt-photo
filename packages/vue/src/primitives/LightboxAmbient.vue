@@ -16,7 +16,16 @@ import { useLightboxInject } from '../lightbox/inject'
 
 defineOptions({ inheritAttrs: false })
 
-const props = withDefaults(defineProps<{ duration?: number }>(), { duration: 480 })
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Length of the crossfade between photos in milliseconds.
+     * @default 480
+     */
+    duration?: number
+  }>(),
+  { duration: 480 },
+)
 
 type Layer = {
   key: number

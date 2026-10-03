@@ -161,19 +161,74 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
+    /**
+     * Photos in display and navigation order. Each needs a stable `id`, a `src`, and the real pixel
+     * `width` and `height` of the image file.
+     */
     photos: readonly PhotoItem<TMeta>[]
+    /**
+     * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
+     * `invalidPhotos`.
+     * @default 'throw'
+     */
     validation?: InvalidPhotoPolicy
+    /**
+     * `'rows'`, `'columns'`, `'masonry'`, or an object with options: `{ type: 'rows',
+     * targetRowHeight: 300 }` or `{ type: 'columns', columns: 3 }`. Options accept `responsive()`
+     * values.
+     * @default 'rows'
+     */
     layout?: AlbumLayout | AlbumLayout['type']
+    /**
+     * Gap between photos in pixels. Accepts a number, `responsive({ 0: 4, 768: 8 })`, or a function
+     * of the container width.
+     * @default 8
+     */
     spacing?: ResponsiveParameter<number>
+    /**
+     * Space inside each photo item in pixels. Same forms as `spacing`.
+     * @default 0
+     */
     padding?: ResponsiveParameter<number>
+    /**
+     * Container width in pixels for the server render, before the browser can measure. Set it close
+     * to the usual width to avoid a layout jump after hydration.
+     */
     defaultContainerWidth?: number
+    /**
+     * Container widths in pixels that measurement snaps to. Taken from `responsive()` keys when
+     * omitted.
+     */
     breakpoints?: readonly number[]
+    /**
+     * Image `sizes`: an HTML `sizes` string, or a `ResponsivePhotoSizes` object that the rows
+     * layout turns into a value per photo.
+     */
     sizes?: string | ResponsivePhotoSizes
+    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
+    /**
+     * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
+     * at mount; change the component `key` to remount.
+     * @default true
+     */
     lightbox?: boolean | Component
+    /**
+     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
+     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
+     * change while mounted.
+     * @default 'auto'
+     */
     transition?: LightboxTransitionOption
+    /**
+     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
+     * mounted.
+     * @default 'slide'
+     */
     navigation?: LightboxNavigationMode
+    /** Classes for each photo wrapper. */
     itemClass?: string
+    /** Classes for each `<img>`. */
     imgClass?: string
   }>(),
   {

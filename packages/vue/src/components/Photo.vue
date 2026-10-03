@@ -50,19 +50,44 @@ import { usePhotoLabels } from '../composables/usePhotoLabels'
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps<{
+  /**
+   * The photo to render. Needs a stable `id`, a `src`, and the real pixel `width` and `height`.
+   * Invalid data throws.
+   */
   photo: PhotoItem<TMeta>
-  /** Opens a solo lightbox when this Photo is not inside a PhotoGroup */
+  /**
+   * `true` opens a one-photo lightbox, a component replaces it. Ignored inside `PhotoGroup`, which
+   * owns the lightbox. Read once at mount; change the component `key` to remount.
+   */
   lightbox?: boolean | Component
-  /** Opt this photo out of a parent PhotoGroup (renders as plain image) */
+  /**
+   * Inside a `PhotoGroup`, render a plain image that does not open the lightbox. The photo stays in
+   * the group's navigation.
+   */
   lightboxIgnore?: boolean
+  /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
   imageAdapter?: ImageAdapter<TMeta>
-  /** Reactive transition configuration for a standalone lightbox. */
+  /**
+   * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
+   * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
+   * change while mounted.
+   * @default 'auto'
+   */
   transition?: LightboxTransitionOption
+  /**
+   * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
+   * mounted.
+   * @default 'slide'
+   */
   navigation?: LightboxNavigationMode
+  /**
+   * Native image `loading` hint. Use `'eager'` for images in the first screen.
+   * @default 'lazy'
+   */
   loading?: 'lazy' | 'eager'
-  /** Extra classes for the inner img element */
+  /** Classes for each `<img>`. */
   imgClass?: string
-  /** Extra classes for the caption element */
+  /** Classes for the caption. */
   captionClass?: string
 }>()
 const slots = defineSlots<{

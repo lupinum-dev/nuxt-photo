@@ -1,16 +1,31 @@
 // ─── Item types ───
 
+/**
+ * One photo. Every component accepts this shape.
+ * @see https://nuxt-photo.lupinum.com/docs/reference/types
+ */
 export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
+  /** Stable, unique identity. Use the ID from your CMS or database, not the array index. */
   readonly id: string
+  /** Image URL. The lightbox uses it; thumbnails use it unless `thumbSrc` is set. */
   readonly src: string
+  /** Smaller image URL for thumbnails, used by the native image adapter. */
   readonly thumbSrc?: string
+  /** Low-quality preview shown until the image loads. It stays visible if the image fails. */
   readonly placeholderSrc?: string
+  /** Real pixel width of the image file, not its displayed size. Used for layout before load. */
   readonly width: number
+  /** Real pixel height of the image file, not its displayed size. Used for layout before load. */
   readonly height: number
+  /** Alternative text for the thumbnail and the lightbox image. */
   readonly alt?: string
+  /** Short visible text, shown under the photo in the lightbox. */
   readonly caption?: string
+  /** Longer visible text in the lightbox. */
   readonly description?: string
+  /** Native `srcset` candidates, used by the native image adapter. */
   readonly srcset?: string
+  /** Your own typed data, passed through to slots and image adapters. */
   readonly meta?: Readonly<TMeta>
 }
 

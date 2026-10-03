@@ -64,30 +64,98 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
+    /**
+     * Slides in order. Each needs a stable `id`, a `src`, and the real pixel `width` and `height`.
+     */
     photos: readonly PhotoItem<TMeta>[]
+    /**
+     * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
+     * `invalidPhotos`.
+     * @default 'throw'
+     */
     validation?: InvalidPhotoPolicy
+    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
     imageAdapter?: ImageAdapter<TMeta>
+    /**
+     * Continue from the last slide to the first.
+     * @default false
+     */
     loop?: boolean
+    /**
+     * Let the track stop between slides after a drag.
+     * @default false
+     */
     dragFree?: boolean
+    /**
+     * `'ltr'` or `'rtl'`. When omitted, read from the document once at mount; bind it when the
+     * direction can change.
+     */
     direction?: 'ltr' | 'rtl'
+    /**
+     * Show the previous and next buttons.
+     * @default true
+     */
     showArrows?: boolean
+    /**
+     * Show the thumbnail rail.
+     * @default true
+     */
     showThumbnails?: boolean
+    /**
+     * Show the slide counter.
+     * @default true
+     */
     showCounter?: boolean
+    /**
+     * Show one dot per slide.
+     * @default false
+     */
     showDots?: boolean
+    /**
+     * `true`, or `{ delayMs, stopOnInteraction, stopOnMouseEnter }`. Defaults: 4000 ms, stop after
+     * interaction, keep playing on mouse enter.
+     * @default false
+     */
     autoplay?: boolean | PhotoCarouselAutoplayOptions
+    /**
+     * CSS width of each slide, for example `'70%'` to show part of the next slide. Each slide stays
+     * one snap.
+     */
     slideSize?: string
+    /** CSS `aspect-ratio` of each slide, for example `'16/9'`. */
     slideAspect?: string
+    /** CSS gap between slides, for example `'12px'`. */
     gap?: string
+    /** Thumbnail height as a CSS length. The width follows each photo's aspect ratio. */
     thumbSize?: string
-    /** Setup-time lightbox capability. Remount to change it. */
+    /**
+     * `true` opens the built-in lightbox when a slide is selected, a component replaces it. Off by
+     * default. Read once at mount; change the component `key` to remount.
+     * @default false
+     */
     lightbox?: boolean | Component
-    /** Reactive transition configuration. */
+    /**
+     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
+     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
+     * change while mounted.
+     * @default 'auto'
+     */
     transition?: LightboxTransitionOption
+    /**
+     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
+     * mounted.
+     * @default 'slide'
+     */
     navigation?: LightboxNavigationMode
+    /** Classes for each slide. */
     slideClass?: string
+    /** Classes for each `<img>`. */
     imgClass?: string
+    /** Classes for each thumbnail. */
     thumbClass?: string
+    /** Classes for the caption. */
     captionClass?: string
+    /** Classes for the controls wrapper. */
     controlsClass?: string
   }>(),
   {
