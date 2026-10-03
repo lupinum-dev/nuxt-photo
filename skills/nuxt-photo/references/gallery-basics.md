@@ -102,7 +102,7 @@ const photo: PhotoItem = {
 
 Nuxt Photo does not measure images in the browser, because that would delay
 the layout until every image has downloaded. Store the sizes when you upload
-or import images; [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) shows how.
+or import images; [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-your-photos) shows how.
 
 ### When to use something else
 
@@ -218,75 +218,284 @@ animation are wrong. Read the sizes from the file, your CMS, or your upload
 pipeline.
 ::
 
-Data from a CMS or an API: [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos).
-Resized and modern image formats: [Deliver images](https://nuxt-photo.lupinum.com/docs/guides/use-nuxt-image).
+Data from a CMS or an API: [Use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-your-photos).
+Resized and modern image formats: [Deliver images](https://nuxt-photo.lupinum.com/docs/guides/deliver-images).
 
 _Source: https://nuxt-photo.lupinum.com/docs/start/get-started_
 
-## Photo data and dimensions
+## Use your own photos
 
-Nuxt Photo accepts one public photo shape: `PhotoItem`.
+Every component takes the same photo shape, `PhotoItem`. Convert your CMS or
+API records to it once, where the data enters your app, and pass the result to
+any component.
 
-```ts
+### Map your records
+
+```vue [app/pages/gallery.vue]
+<script setup lang="ts">
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
+
+type Asset = {
+  key: string
+  url: string
+  width: number
+  height: number
+  alternativeText?: string
+  title?: string
+}
+
+const { data: assets } = await useFetch<Asset[]>('/api/photos')
+
+const photos = computed<PhotoItem[]>(() =>
+  (assets.value ?? []).map((asset) => ({
+    id: asset.key,
+    src: asset.url,
+    width: asset.width,
+    height: asset.height,
+    alt: asset.alternativeText,
+    caption: asset.title,
+  })),
+)
+</script>
+
+<template>
+  <PhotoAlbum :photos="photos" />
+</template>
 ```
 
-### Required fields
+`useFetch` loads the data on the server, so the album is laid out in the first
+HTML.
 
-```ts
-const photo: PhotoItem = {
-  id: 'alpine-lake',
-  src: '/photos/alpine-lake.jpg',
-  width: 1600,
-  height: 1067,
+When the records have no ID, use another value that is unique and does not
+change, such as the image URL without its size or quality parameters. Never use
+the array index: the lightbox and the thumbnails would lose their link when the
+order changes.
+
+### Required and optional fields
+
+| Field            | Required | Meaning                                                         |
+| ---------------- | -------- | --------------------------------------------------------------- |
+| `id`             | Yes      | Stable, unique string. Use the asset ID, never the array index. |
+| `src`            | Yes      | Image URL. The lightbox uses it.                                |
+| `width`          | Yes      | Real pixel width of the image file, a positive number.          |
+| `height`         | Yes      | Real pixel height of the image file, a positive number.         |
+| `alt`            | No       | Alternative text. Add it unless the image is decorative.        |
+| `caption`        | No       | Short text under the photo in the lightbox.                     |
+| `description`    | No       | Longer text in the lightbox.                                    |
+| `thumbSrc`       | No       | Smaller file for thumbnails.                                    |
+| `srcset`         | No       | Native responsive candidates.                                   |
+| `placeholderSrc` | No       | Low-quality preview until the image loads.                      |
+| `meta`           | No       | Your own data, passed to slots and image adapters.              |
+
+`width` and `height` describe the original file, even when your image service
+returns a smaller version. Nuxt Photo uses them for the aspect ratio: the
+layout before the image loads and the frame of the lightbox animation.
+
+### Get the image size at upload
+
+Nuxt Photo does not measure images in the browser, because that would delay
+the layout until every image has downloaded. Store the size with the asset.
+Most CMSs and image services already return it; use that value.
+
+When you handle uploads yourself, read the size on the server, for example with
+`sharp`:
+
+```ts [server/utils/read-image-size.ts]
+import sharp from 'sharp'
+
+export async function readImageSize(file: Buffer) {
+  const { width, height } = await sharp(file).metadata()
+  if (!width || !height) throw new Error('The uploaded image has no readable size.')
+  return { width, height }
 }
 ```
 
-| Field    | Requirement                                                  |
-| -------- | ------------------------------------------------------------ |
-| `id`     | A non-empty string that is unique in the current collection. |
-| `src`    | The full image URL used by the lightbox.                     |
-| `width`  | The intrinsic pixel width. It must be positive and finite.   |
-| `height` | The intrinsic pixel height. It must be positive and finite.  |
+Call it before you save the upload, and store both values. For existing
+assets, run a one-time backfill on the server. Do not fetch URLs that users
+control without your normal server-side request protections.
 
-Intrinsic dimensions describe the source file, not its displayed CSS size.
-They let Nuxt Photo calculate the layout and reserve space before the image
-loads. Do not use array positions as IDs or approximate dimensions.
+### Keep your own data on the photo
 
-If a CMS omits dimensions, calculate them during upload or server-side
-ingestion. The [CMS guide](https://nuxt-photo.lupinum.com/docs/guides/use-cms-photos) shows one approach.
-
-### Optional fields
-
-| Field            | Purpose                                                      |
-| ---------------- | ------------------------------------------------------------ |
-| `alt`            | Alternative text for the thumbnail and lightbox image.       |
-| `caption`        | Short visible text for the photo.                            |
-| `description`    | Longer visible text in the included lightbox.                |
-| `thumbSrc`       | A smaller image URL for thumbnails.                          |
-| `placeholderSrc` | A low-quality preview shown until the requested image loads. |
-| `srcset`         | Native responsive image candidates.                          |
-| `meta`           | Typed application data passed through to slots and adapters. |
-
-The placeholder resets when the resolved image request changes. It remains
-visible when that image fails to load.
-
-### Map external data once
-
-Convert CMS or API records at your application boundary. Rendering components
-should receive `PhotoItem[]` instead of knowing each source format.
+`meta` carries typed data to slots and image adapters:
 
 ```ts
+type Credit = { photographer: string }
+
 const photos = records.map((record) => ({
   id: String(record.id),
   src: record.image.url,
   width: record.image.width,
   height: record.image.height,
-  alt: record.image.alt ?? undefined,
-  meta: { credit: record.image.credit },
-})) satisfies PhotoItem<{ credit: string }>[]
+  meta: { photographer: record.image.credit },
+})) satisfies PhotoItem<Credit>[]
 ```
 
-This mapping gives layout, navigation, and image delivery one source of truth.
+### Handle invalid records
 
-_Source: https://nuxt-photo.lupinum.com/docs/concepts/photo-data-and-dimensions_
+By default a component throws when a photo has no `id`, no `src`, a size that
+is not a positive number, or an `id` that is used twice. The error names the
+photo and the problem. Keep this default while you connect a new data source.
+
+When the page must render even with bad records, skip them and report them:
+
+```vue
+<script setup lang="ts">
+import type { InvalidPhotosEvent } from '@lupinum/nuxt-photo/app'
+
+function reportInvalidPhotos(event: InvalidPhotosEvent) {
+  for (const issue of event.issues) console.warn(issue.code, issue.message)
+}
+</script>
+
+<template>
+  <PhotoAlbum :photos="photos" validation="drop" @invalid-photos="reportInvalidPhotos" />
+</template>
+```
+
+`validation="drop"` works on `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`.
+A single `Photo` always throws.
+
+### Keep URLs stable during server rendering
+
+Create signed or expiring URLs before rendering and store the final URL on the
+photo. A URL computed from the current time or a random value differs between
+server and browser and causes a hydration mismatch.
+
+### Check the result
+
+Test one portrait photo, one landscape photo, a record with a duplicate ID, and
+a record without a size. The first two keep their shape in the album; the last
+two stop with a clear error, or are skipped with `validation="drop"`.
+
+_Source: https://nuxt-photo.lupinum.com/docs/guides/use-your-photos_
+
+## Share one lightbox
+
+Wrap the sections of a page in `PhotoGroup` and pass it every photo in the
+order the lightbox should follow. The albums and photos inside keep their own
+layout, and the arrow keys move through all of them.
+
+Complete example. Use it as `<ArticlePhotos :photos="photos" />` with your own `PhotoItem[]`.
+
+```vue [app/components/ArticlePhotos.vue]
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Photo, PhotoAlbum, PhotoGroup, type PhotoItem } from '@lupinum/nuxt-photo/app'
+
+const props = defineProps<{ photos: PhotoItem[] }>()
+
+// One group owns the order, so the lightbox moves through every photo on the page.
+const lead = computed(() => props.photos[0])
+const details = computed(() => props.photos.slice(1))
+</script>
+
+<template>
+  <PhotoGroup :photos="photos" navigation="fade">
+    <article class="article">
+      <h3>A slow week in the hills</h3>
+      <Photo v-if="lead" :photo="lead" class="article__lead" />
+      <p>
+        We walked the ridge every morning before the heat. The grass turned amber by evening, and
+        the old stones in the meadow made a good place to rest.
+      </p>
+      <PhotoAlbum :photos="details" :layout="{ type: 'rows', targetRowHeight: 140 }" :spacing="8" />
+      <p>Open any photo: the arrows move through the whole article, not only one block.</p>
+    </article>
+  </PhotoGroup>
+</template>
+
+<style scoped>
+.article {
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+.article h3 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.article p {
+  margin: 16px 0;
+  opacity: 0.8;
+}
+
+.article__lead :deep(img) {
+  border-radius: 8px;
+}
+</style>
+```
+
+### Group albums and photos
+
+```vue [app/pages/portfolio.vue]
+<script setup lang="ts">
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
+
+const summer: PhotoItem[] = [
+  { id: 'coast', src: '/photos/coast.jpg', width: 1200, height: 800, alt: 'Coast in July' },
+  { id: 'dunes', src: '/photos/dunes.jpg', width: 800, height: 1200, alt: 'Dunes at noon' },
+]
+const winter: PhotoItem[] = [
+  { id: 'ridge', src: '/photos/ridge.jpg', width: 1200, height: 800, alt: 'Snow on the ridge' },
+]
+const allPhotos = [...summer, ...winter]
+</script>
+
+<template>
+  <PhotoGroup :photos="allPhotos">
+    <section>
+      <h2>Summer</h2>
+      <PhotoAlbum :photos="summer" />
+    </section>
+    <section>
+      <h2>Winter</h2>
+      <PhotoAlbum :photos="winter" />
+    </section>
+  </PhotoGroup>
+</template>
+```
+
+Open the last summer photo and press `ArrowRight`: the first winter photo
+appears.
+
+### The group's photos set the order
+
+`PhotoGroup` takes the order from its `photos` prop, not from the page. Moving
+the sections, showing one only on wide screens, or mounting one later does not
+change next and previous. To change the order, change the array.
+
+Each album or `Photo` inside connects its thumbnails to the group by photo `id`.
+So:
+
+- Every photo shown inside the group must also be in the group's `photos`. A
+  missing ID throws an error that names it.
+- An `id` may appear only once in the group's `photos`.
+- A photo can be in the group's order without being shown, for example when a
+  button opens it.
+- `lightbox-ignore` on a `Photo` shows a plain image that does not open the
+  lightbox, while the photo stays in the order.
+
+The group owns the lightbox, so the `lightbox`, `transition`, and `navigation`
+props go on `PhotoGroup`, not on the albums inside it.
+
+### Turn the lightbox off or on
+
+`lightbox` is read when the group mounts. To change it later, change the `key`
+so Vue mounts a new group:
+
+```vue
+<PhotoGroup :key="lightboxEnabled ? 'on' : 'off'" :photos="photos" :lightbox="lightboxEnabled">
+  <PhotoAlbum :photos="photos" />
+</PhotoGroup>
+```
+
+### Only one lightbox is open at a time
+
+Each group, album, or carousel with a lightbox has its own. Opening one closes
+any other, because only one can own focus and keyboard input.
+
+_Source: https://nuxt-photo.lupinum.com/docs/guides/share-one-lightbox_

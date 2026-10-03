@@ -50,9 +50,9 @@ for (const [file, source] of sources) {
 
   const allowsVueImports =
     file.endsWith('/1.start/5.plain-vue.md') ||
-    file.endsWith('/4.reference/12.package-exports.md') ||
+    file.endsWith('/3.reference/12.package-exports.md') ||
     // The migration guide shows the removed Vue subpaths next to their replacement.
-    file.endsWith('/5.help/3.upgrade-from-0-2-to-1-0.md')
+    file.endsWith('/4.help/3.upgrade-from-0-2-to-1-0.md')
   if (
     !allowsVueImports &&
     /(?:from\s+|import\s+)["']@lupinum\/vue-photo(?:\/[^"']*)?["']/.test(source)
@@ -62,11 +62,11 @@ for (const [file, source] of sources) {
 }
 
 const componentContracts = [
-  ['Photo', '4.reference/2.photo.md'],
-  ['PhotoAlbum', '4.reference/3.photo-album.md'],
-  ['PhotoGroup', '4.reference/4.photo-group.md'],
-  ['PhotoCarousel', '4.reference/5.photo-carousel.md'],
-  ['Lightbox', '4.reference/6.lightbox.md'],
+  ['Photo', '3.reference/2.photo.md'],
+  ['PhotoAlbum', '3.reference/3.photo-album.md'],
+  ['PhotoGroup', '3.reference/4.photo-group.md'],
+  ['PhotoCarousel', '3.reference/5.photo-carousel.md'],
+  ['Lightbox', '3.reference/6.lightbox.md'],
 ]
 
 for (const [component, docsPath] of componentContracts) {
@@ -89,7 +89,7 @@ for (const [component, docsPath] of componentContracts) {
   }
 }
 
-const primitivesDocs = await readFile(resolve(contentRoot, '4.reference/7.primitives.md'), 'utf8')
+const primitivesDocs = await readFile(resolve(contentRoot, '3.reference/7.primitives.md'), 'utf8')
 for (const primitive of [
   'LightboxProvider',
   'LightboxRoot',
@@ -111,7 +111,7 @@ for (const primitive of [
 
 const labelsSource = await readFile(resolve(root, 'packages/vue/src/provide/labels.ts'), 'utf8')
 const labelsDocs = await readFile(
-  resolve(contentRoot, '4.reference/9.configuration-and-labels.md'),
+  resolve(contentRoot, '3.reference/9.configuration-and-labels.md'),
   'utf8',
 )
 const labelBlock = labelsSource.match(/interface PhotoLabels \{([\s\S]*?)\n\}/)?.[1] ?? ''
@@ -120,7 +120,7 @@ const labelNames = [...labelBlock.matchAll(/^\s*([A-Za-z][A-Za-z0-9]*):/gm)].map
 )
 requireMarkers('Configuration and labels reference', labelsDocs, labelNames)
 
-const cssDocs = await readFile(resolve(contentRoot, '4.reference/11.css.md'), 'utf8')
+const cssDocs = await readFile(resolve(contentRoot, '3.reference/11.css.md'), 'utf8')
 const publicCssFiles = ['lightbox-theme.css', 'carousel-theme.css', 'carousel-structure.css']
 const cssVariables = new Set()
 for (const filename of publicCssFiles) {
@@ -129,7 +129,7 @@ for (const filename of publicCssFiles) {
 }
 requireMarkers('CSS reference', cssDocs, [...cssVariables])
 
-const typeDocs = await readFile(resolve(contentRoot, '4.reference/10.types.md'), 'utf8')
+const typeDocs = await readFile(resolve(contentRoot, '3.reference/10.types.md'), 'utf8')
 requireMarkers('Types reference', typeDocs, [
   'LightboxHandle',
   'LightboxController',
@@ -150,7 +150,7 @@ requireMarkers('Types reference', typeDocs, [
 ])
 
 const exportsDocs = await readFile(
-  resolve(contentRoot, '4.reference/12.package-exports.md'),
+  resolve(contentRoot, '3.reference/12.package-exports.md'),
   'utf8',
 )
 const supportedEntryPoints = new Set()

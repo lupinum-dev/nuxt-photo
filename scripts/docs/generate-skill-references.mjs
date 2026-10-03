@@ -10,18 +10,19 @@ const outputs = {
   'gallery-basics.md': [
     'docs/content/docs/1.start/1.introduction.md',
     'docs/content/docs/1.start/2.get-started.md',
-    'docs/content/docs/3.concepts/1.photo-data-and-dimensions.md',
+    'docs/content/docs/2.guides/1.use-your-photos.md',
+    'docs/content/docs/2.guides/3.share-one-lightbox.md',
   ],
   'customization.md': [
-    'docs/content/docs/3.concepts/5.image-delivery.md',
-    'docs/content/docs/3.concepts/4.ssr-and-layout-stability.md',
-    'docs/content/docs/3.concepts/7.customization-levels.md',
+    'docs/content/docs/2.guides/2.responsive-layouts.md',
+    'docs/content/docs/2.guides/5.deliver-images.md',
+    'docs/content/docs/2.guides/6.integrate-a-custom-image-service.md',
+    'docs/content/docs/2.guides/7.style-and-theme.md',
     'docs/content/docs/2.guides/8.customize-the-built-in-lightbox.md',
-    'docs/content/docs/2.guides/10.integrate-a-custom-image-service.md',
   ],
   'troubleshooting.md': [
-    'docs/content/docs/5.help/1.troubleshooting.md',
-    'docs/content/docs/5.help/2.known-constraints.md',
+    'docs/content/docs/4.help/1.troubleshooting.md',
+    'docs/content/docs/4.help/2.known-constraints.md',
   ],
 }
 

@@ -166,7 +166,7 @@ useSeoMeta({
             </label>
           </fieldset>
           <NuxtLink
-            to="/docs/concepts/layouts-and-responsive-values"
+            to="/docs/guides/responsive-layouts"
             class="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
           >
             Layouts and responsive values
@@ -205,7 +205,7 @@ useSeoMeta({
             <li>Focus returns to the photo you were looking at.</li>
           </ul>
           <NuxtLink
-            to="/docs/concepts/lightbox-gestures-and-accessibility"
+            to="/docs/reference/lightbox"
             class="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
           >
             Gestures and accessibility
