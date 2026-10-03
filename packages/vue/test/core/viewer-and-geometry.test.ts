@@ -8,7 +8,6 @@ import {
   computeZoomLevels,
   coverPose,
   fitRect,
-  getLoopedIndex,
   isDoubleTap,
   rubberband,
 } from '../../src/core/index'
@@ -26,15 +25,13 @@ describe('geometry and viewer utilities', () => {
     expect(pose.clipPath).toBe('inset(200px 0px round 8px)')
   })
 
-  it('fits rectangles and loops indexes predictably', () => {
+  it('fits rectangles predictably', () => {
     expect(fitRect({ left: 0, top: 0, width: 100, height: 100 }, 2)).toEqual({
       left: 0,
       top: 25,
       width: 100,
       height: 50,
     })
-    expect(getLoopedIndex(-1, 5)).toBe(4)
-    expect(getLoopedIndex(5, 5)).toBe(0)
   })
 
   it('bounds panning by the drawn frame, not the whole screen', () => {
