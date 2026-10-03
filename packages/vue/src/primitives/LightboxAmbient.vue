@@ -87,7 +87,10 @@ async function loadThumb(photo: PhotoItem) {
   // The canvas can read, and so blur, a cross-origin image only when it was
   // requested with CORS. A server without CORS headers fails that request; the
   // plain request then still gives a glow, softened only by the stretching.
-  if (isCrossOrigin(source.src)) {
+  // The browser may pick any `srcset` candidate. Splitting on whitespace is
+  // enough: descriptors like `800w` resolve as same-origin paths.
+  const urls = [source.src, ...(source.srcset?.split(/\s+/) ?? [])]
+  if (urls.some(isCrossOrigin)) {
     try {
       return await decodeThumb(source, true)
     } catch {

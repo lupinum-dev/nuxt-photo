@@ -107,4 +107,30 @@ describe('LightboxAmbient', () => {
     expect(document.querySelectorAll('[data-np-ambient] canvas')).toHaveLength(1)
     app.unmount()
   })
+
+  it('requests with CORS when only a srcset candidate is cross-origin', async () => {
+    const photo = makePhoto({
+      id: 'cdn-srcset',
+      src: '/local.jpg',
+      thumbSrc: undefined,
+      srcset: 'https://cdn.example.com/w_300,h_200/a.jpg 300w, https://cdn.example.com/b.jpg 600w',
+    })
+    let controller: ReturnType<typeof provideLightbox> | null = null
+    const host = document.createElement('main')
+    document.body.appendChild(host)
+    const app = createApp(
+      defineComponent({
+        setup() {
+          controller = provideLightbox([photo], { transition: 'none' })
+          return () => h(LightboxRoot, null, { default: () => h(LightboxAmbient) })
+        },
+      }),
+    )
+    app.mount(host)
+
+    await controller!.open(0)
+    await flushUi()
+    expect(requests.map((request) => request.crossOrigin)).toEqual(['anonymous'])
+    app.unmount()
+  })
 })
