@@ -66,3 +66,12 @@ allowBuilds:
   sharp: true
   unrs-resolver: false
   vue-demi: false
+
+# Advisories without a patched release on npm. Neither package ships in
+# @lupinum/vue-photo or @lupinum/nuxt-photo: braces comes from build tooling
+# (Changesets, fast-glob) and node-forge from the Nuxt CLI dev server. Remove an
+# entry as soon as a patched version exists. Review after 2026-10-17.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm # braces <=3.0.3, no 3.0.4 on npm yet
+    - GHSA-86w9-cpqp-85rv # node-forge <=1.4.0, no 1.4.1 on npm yet
