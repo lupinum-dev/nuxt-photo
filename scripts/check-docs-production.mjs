@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
 const usesVercelOutput = process.env.VERCEL === '1' || process.env.NITRO_PRESET === 'vercel'
@@ -27,3 +27,23 @@ if (html.includes('Server Error') || html.includes('data-error="500"')) {
 }
 
 console.log('✓ Docs production route rendered /docs/start/why-nuxt-photo')
+
+// Agents read the Markdown versions. Every page must reach them as complete
+// text: no component placeholders and no examples without their code.
+const publicOutput = fileURLToPath(new URL(`../docs/${outputDirectory}/`, import.meta.url))
+const agentFiles = [
+  'llms.txt',
+  'llms-full.txt',
+  ...(await readdir(`${publicOutput}raw`, { recursive: true }))
+    .filter((file) => file.endsWith('.md'))
+    .map((file) => `raw/${file}`),
+]
+const placeholders = ['Component omitted', '<example', '<pm-install']
+
+for (const file of agentFiles) {
+  const markdown = await readFile(`${publicOutput}${file}`, 'utf8')
+  const found = placeholders.find((placeholder) => markdown.includes(placeholder))
+  if (found) throw new Error(`Agent Markdown ${file} contains a placeholder: ${found}`)
+}
+
+console.log(`✓ ${agentFiles.length} agent Markdown files contain complete content`)
