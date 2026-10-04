@@ -70,7 +70,7 @@ for (const viewport of viewports) {
         expect(summary.provider).toBe('ipx')
         expect(summary.dpr).toBe(viewport.deviceScaleFactor)
         expect(summary.ladder).toEqual([
-          128, 256, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
+          128, 256, 384, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
         ])
         expect(summary.ladder).toContain(6144)
         const badges = await page.locator('.lab-badge').allTextContents()
@@ -184,4 +184,69 @@ test('image budget lab index and album controls use the specified contract', asy
   await expect(page.locator('.np-album__item')).toHaveCount(20)
   await expect(page).toHaveURL(/layout=columns/)
   await expect(page).toHaveURL(/columns=6/)
+})
+
+test('image budget lab cold sources and visible wait are honest', async ({ page }) => {
+  const imageAccept = 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
+  const heads: string[] = []
+  page.on('request', (request) => {
+    if (request.method() === 'HEAD') heads.push(request.headers()['accept'] ?? '')
+  })
+  await page.route('**/_ipx/**/__lab_cold/**', async (route) => {
+    if (route.request().method() === 'GET') await new Promise((done) => setTimeout(done, 1500))
+    await route.continue()
+  })
+  await page.goto('/lab/photo?cold=1', { waitUntil: 'domcontentloaded' })
+  await page.waitForFunction(() => !!window.__lab)
+  await page.waitForFunction(
+    () => window.__lab!.summary().images === 2 && window.__lab!.summary().pending === 0,
+  )
+  const urls = await page
+    .locator('.lab-content img')
+    .evaluateAll((images) => images.map((image) => (image as HTMLImageElement).currentSrc))
+  expect(new Set(urls).size).toBe(2)
+  for (const url of urls) expect(url).toMatch(/\/_ipx\/[^/]+\/__lab_cold\/[\w-]+\/lab\//)
+  const firstNonce = urls[0]!.match(/__lab_cold\/([^/]+)/)![1]
+  const summary = await page.evaluate(() => window.__lab!.summary())
+  expect(summary.waitMaxMs).toBeGreaterThan(500)
+  expect(summary.imageTimings.some((image) => image.waitMs > 500)).toBe(true)
+  expect(summary.blankTotalMs).toBeGreaterThanOrEqual(0)
+  expect(summary.preloaded).toBe(false) // No preload feature has been added yet.
+  expect(heads.length).toBeGreaterThan(0)
+  expect(heads.every((accept) => accept === imageAccept)).toBe(true)
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.locator('.lab-content img').first()).toHaveAttribute(
+    'src',
+    new RegExp(`__lab_cold/(?!${firstNonce})`),
+  )
+})
+
+test('image budget lab reports blank time without a painted placeholder', async ({ page }) => {
+  await page.goto('/lab/photo')
+  await page.waitForFunction(() => !!window.__lab)
+  await page.route('**/lab/normal-05.jpg?blank-proof', async (route) => {
+    await new Promise((done) => setTimeout(done, 1200))
+    await route.continue()
+  })
+  await page.evaluate(() => {
+    const original = document.querySelector<HTMLImageElement>('.lab-content img')!
+    const image = document.createElement('img')
+    image.alt = original.alt
+    image.width = 200
+    image.height = 200
+    image.style.cssText = 'position:fixed;top:400px;left:100px;width:200px;height:200px;z-index:63'
+    image.src = '/lab/normal-05.jpg?blank-proof'
+    document.querySelector('.lab-content')!.append(image)
+  })
+  await page.waitForFunction(() =>
+    window
+      .__lab!.summary()
+      .imageTimings.some((image) => image.url.includes('blank-proof') && !image.pending),
+  )
+  const reading = await page.evaluate(
+    () => window.__lab!.summary().imageTimings.find((image) => image.url.includes('blank-proof'))!,
+  )
+  expect(reading.waitMs).toBeGreaterThan(800)
+  expect(reading.blankMs).toBeGreaterThan(800)
+  expect(await page.locator('.lab-summary').textContent()).toContain('Blank:')
 })

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { labAlt } from '../../lab/photos'
-const photos = await usePhotoFolder('lab', { alt: labAlt })
+const photos = await useLabPhotos()
 </script>
 <template>
   <LabFrame title="Image Lab" :photos="photos">

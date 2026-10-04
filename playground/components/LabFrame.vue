@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
+import { startLabTiming } from '../lab/timing'
 import { useLabMeasurement } from '../lab/measurement'
 import { DEFAULT_WIDTHS } from '#build/nuxt-photo-internals.mjs'
 
@@ -9,6 +10,11 @@ const props = defineProps<{
   active?: string | null
   requests?: boolean
 }>()
+useHead({
+  script: [
+    { key: 'lab-timing', innerHTML: `(${startLabTiming.toString()})()`, tagPosition: 'head' },
+  ],
+})
 const image = useImage()
 // The generated .mjs bridge does not preserve the source declaration for app TypeScript.
 const defaultWidths: readonly number[] = DEFAULT_WIDTHS

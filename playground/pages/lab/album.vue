@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import type { AlbumLayout } from '@lupinum/nuxt-photo/app'
-import { labAlt } from '../../lab/photos'
 import { labCount, repeatLabPhotos } from '../../lab/collection'
 const route = useRoute()
 const router = useRouter()
-const source = await usePhotoFolder('lab', { alt: labAlt })
+const source = await useLabPhotos()
 const layout = computed(() =>
   route.query.layout === 'columns' || route.query.layout === 'masonry'
     ? route.query.layout

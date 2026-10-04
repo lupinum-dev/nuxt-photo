@@ -1,7 +1,15 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
+import type { ImageTiming, LabTiming } from './timing'
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 
 export interface LabSummary {
+  waitP50Ms: number
+  waitP95Ms: number
+  waitMaxMs: number
+  blankTotalMs: number
+  imageTimings: ImageTiming[]
+  cls: number | null
+  preloaded: boolean
   images: number
   inRangePercent: number
   floor: number
@@ -57,7 +65,10 @@ function fileFormat(url: string) {
   if (!formats.has(url))
     formats.set(
       url,
-      fetch(url, { method: 'HEAD' }).then((response) =>
+      fetch(url, {
+        method: 'HEAD',
+        headers: { Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8' },
+      }).then((response) =>
         (response.headers.get('content-type') ?? '').split(';')[0]!.replace(/^image\//, ''),
       ),
     )
@@ -97,6 +108,19 @@ function visible(image: HTMLImageElement) {
   return right > left && bottom > top
 }
 
+export function timingMetrics(timing: LabTiming) {
+  const waits = timing.images.map((image) => image.waitMs).sort((a, b) => a - b)
+  const percentile = (p: number) => waits[Math.max(0, Math.ceil(waits.length * p) - 1)] ?? 0
+  return {
+    imageTimings: timing.images.map((image) => ({ ...image })),
+    cls: timing.cls,
+    waitP50Ms: percentile(0.5),
+    waitP95Ms: percentile(0.95),
+    waitMaxMs: waits.at(-1) ?? 0,
+    blankTotalMs: timing.images.reduce((sum, image) => sum + image.blankMs, 0),
+  }
+}
+
 export function useLabMeasurement(
   photos: () => readonly PhotoItem[],
   provider: string,
@@ -109,6 +133,8 @@ export function useLabMeasurement(
   const dpr = ref(1)
   const lcpMs = ref(0)
   const lcpLoading = ref('unknown')
+  const preloaded = ref(false)
+  const timing = ref<LabTiming>({ images: [], cls: null })
   const slideRequests = ref<string[]>([])
   let openedAt = Infinity
   watch(active, (id, previous) => {
@@ -119,6 +145,8 @@ export function useLabMeasurement(
     const middle = Math.floor(ratios.length / 2)
     const unique = new Map(readings.value.map((reading) => [reading.url, reading.kb]))
     return {
+      ...timingMetrics(timing.value),
+      preloaded: preloaded.value,
       images: ratios.length,
       inRangePercent: ratios.length
         ? (100 * readings.value.filter((reading) => reading.inRange).length) / ratios.length
@@ -139,6 +167,8 @@ export function useLabMeasurement(
       pending: pending.value,
     }
   })
+  // The visual bar updates during pending loads too; the public API snapshots live clocks.
+  let clock: ReturnType<typeof setInterval> | undefined
   let frame = 0
   let revision = 0
   let later: ReturnType<typeof setTimeout> | undefined
@@ -153,6 +183,7 @@ export function useLabMeasurement(
   }
   async function measure() {
     const version = ++revision
+    timing.value = window.__labTiming?.snapshot() ?? timing.value
     const dialog = document.querySelector('[role="dialog"]')
     const candidates = [
       ...document.querySelectorAll<HTMLImageElement>(
@@ -237,8 +268,17 @@ export function useLabMeasurement(
   }
   let api: Window['__lab']
   onMounted(() => {
-    api = { summary: () => structuredClone(summary.value) }
+    api = {
+      summary: () =>
+        structuredClone({
+          ...summary.value,
+          ...timingMetrics(window.__labTiming?.snapshot() ?? timing.value),
+        }),
+    }
     window.__lab = api
+    clock = setInterval(() => {
+      timing.value = window.__labTiming?.snapshot() ?? timing.value
+    }, 100)
     document.addEventListener('load', schedule, true)
     document.addEventListener('transitionend', schedule, true)
     window.addEventListener('scroll', schedule, true)
@@ -276,6 +316,19 @@ export function useLabMeasurement(
         if (entry) {
           lcpMs.value = entry.startTime
           lcpLoading.value = entry.element?.getAttribute('loading') ?? 'unknown'
+          const url = entry.element instanceof HTMLImageElement ? entry.element.currentSrc : ''
+          preloaded.value =
+            !!url &&
+            [...document.querySelectorAll<HTMLLinkElement>('link[rel=preload][as=image]')].some(
+              (link) =>
+                link.href === url ||
+                link.imageSrcset
+                  .split(',')
+                  .some(
+                    (candidate) =>
+                      new URL(candidate.trim().split(' ')[0]!, location.href).href === url,
+                  ),
+            )
         }
       })
       paint.observe({ type: 'largest-contentful-paint', buffered: true })
@@ -286,6 +339,7 @@ export function useLabMeasurement(
     revision++
     cancelAnimationFrame(frame)
     clearTimeout(later)
+    clearInterval(clock)
     mutation?.disconnect()
     paint?.disconnect()
     document.removeEventListener('load', schedule, true)

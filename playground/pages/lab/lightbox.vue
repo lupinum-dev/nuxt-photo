@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { labAlt } from '../../lab/photos'
-const photos = await usePhotoFolder('lab', { alt: labAlt })
+const photos = await useLabPhotos()
 const active = ref<string | null>(null)
 </script>
 <template>

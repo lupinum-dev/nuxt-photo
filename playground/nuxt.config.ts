@@ -1,4 +1,5 @@
 import { cp } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import NuxtImage from '@nuxt/image'
 import NuxtPhoto from '@lupinum/nuxt-photo'
@@ -19,6 +20,8 @@ export default defineNuxtConfig({
     screens: {
       '2xs': 128,
       xs: 256,
+      sm384: 384,
+      sm512: 512,
       '3xl': 1920,
       '4xl': 2560,
       '5xl': 3072,
@@ -29,21 +32,26 @@ export default defineNuxtConfig({
   },
 
   // Vercel serves static files from its CDN, outside the IPX function filesystem.
-  nitro: ipxOnVercel
-    ? {
-        hooks: {
-          async compiled(nitro) {
-            await cp(
-              new URL('./public', import.meta.url),
-              join(nitro.options.output.serverDir, 'public'),
-              {
-                recursive: true,
-              },
-            )
+  nitro: {
+    serverAssets: [
+      { baseName: 'lab', dir: fileURLToPath(new URL('./public/lab', import.meta.url)) },
+    ],
+    ...(ipxOnVercel
+      ? {
+          hooks: {
+            async compiled(nitro) {
+              await cp(
+                new URL('./public', import.meta.url),
+                join(nitro.options.output.serverDir, 'public'),
+                {
+                  recursive: true,
+                },
+              )
+            },
           },
-        },
-      }
-    : {},
+        }
+      : {}),
+  },
 
   shiki: {
     defaultTheme: 'vitesse-dark',

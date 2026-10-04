@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { labAlt } from '../../lab/photos'
 import { labCount, repeatLabPhotos } from '../../lab/collection'
 const route = useRoute()
-const source = await usePhotoFolder('lab', { alt: labAlt })
+const source = await useLabPhotos()
 const photos = ref(repeatLabPhotos(source.value, labCount(route.query.n, 1000)))
 function append() {
   photos.value.push(
