@@ -68,16 +68,30 @@ for (const viewport of viewports) {
         )
         expect(summary.provider).toBe('ipx')
         expect(summary.dpr).toBe(viewport.deviceScaleFactor)
-        expect(summary.ladder).toContain(16)
+        expect(summary.ladder).toEqual([
+          256, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
+        ])
         expect(summary.ladder).toContain(6144)
-        expect(summary.inRangePercent).toBeGreaterThanOrEqual(90)
         const badges = await page.locator('.lab-badge').allTextContents()
         expect(badges).toHaveLength(summary.images)
         for (const text of badges) expect(text).toMatch(badge)
+        const details = await page.locator('.lab-badge').evaluateAll((elements) =>
+          elements.map((element) => ({
+            title: element.getAttribute('title'),
+            text: element.textContent,
+            url: element.getAttribute('data-url'),
+          })),
+        )
+        await writeFile(testInfo.outputPath('readings.json'), JSON.stringify(details, null, 2))
+        for (const detail of details) expect(detail.title).toBe(detail.text)
         const styles = await page.locator('.lab-badge').evaluateAll((elements) =>
           elements.map((element) => {
             const style = getComputedStyle(element)
             return {
+              whiteSpace: style.whiteSpace,
+              overflow: style.overflow,
+              textOverflow: style.textOverflow,
+              maxWidth: style.maxWidth,
               color: style.color,
               size: style.fontSize,
               padding: style.padding,
@@ -86,6 +100,10 @@ for (const viewport of viewports) {
           }),
         )
         for (const style of styles) {
+          expect(style.whiteSpace).toBe('nowrap')
+          expect(style.overflow).toBe('hidden')
+          expect(style.textOverflow).toBe('ellipsis')
+          expect(style.maxWidth).toBe('calc(100% - 4px)')
           expect(style.color).toBe('rgb(255, 255, 255)')
           expect(style.size).toBe('11px')
           expect(style.padding).toBe('2px 4px')
@@ -100,6 +118,7 @@ for (const viewport of viewports) {
             ),
           })
         expect(errors).toEqual([])
+        expect(summary.inRangePercent).toBeGreaterThanOrEqual(90)
       } finally {
         await context.close()
       }

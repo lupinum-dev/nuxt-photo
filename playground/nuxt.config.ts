@@ -10,14 +10,9 @@ export default defineNuxtConfig({
   },
 
   image: {
-    // Six balanced columns with the tall special need 16–64px renditions; keep them in the canonical ladder.
+    // Retain Tailwind screens; cover small thumbnails and 2× laptops on Vercel too.
     screens: {
-      micro: 16,
-      tiny: 32,
-      thumbnail: 64,
-      xs: 128,
-      small: 256,
-      medium: 384,
+      xs: 256,
       '3xl': 1920,
       '4xl': 2560,
       '5xl': 3072,

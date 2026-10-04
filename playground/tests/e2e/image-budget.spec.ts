@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { demoPhotos } from 'nuxt-photo-demo'
+import { writeFile } from 'node:fs/promises'
 
 const viewports = [
   { width: 375, height: 812, deviceScaleFactor: 3 },
@@ -85,7 +86,7 @@ for (const viewport of viewports) {
               .every((image) => image.complete && image.naturalWidth > 0)
           )
         }, selector)
-        const ratios = await thumbs.evaluateAll(async (elements, photos) => {
+        const readings = await thumbs.evaluateAll(async (elements, photos) => {
           const visible = elements.filter((element) => {
             const rect = element.getBoundingClientRect()
             return (
@@ -107,30 +108,39 @@ for (const viewport of viewports) {
                 image.getBoundingClientRect().width * devicePixelRatio,
                 photo.width,
               )
-              return file.naturalWidth / best
+              return {
+                needed: best,
+                got: file.naturalWidth,
+                ratio: file.naturalWidth / best,
+                url: image.currentSrc,
+              }
             }),
           )
         }, demoPhotos)
+        const ratios = readings.map((reading) => reading.ratio)
         expect(ratios.length).toBeGreaterThan(0)
         const sorted = ratios.toSorted((a, b) => a - b)
         const within = ratios.filter((ratio) => ratio >= 0.9 && ratio <= 2).length / ratios.length
+        const efficiency = {
+          kind,
+          layout,
+          columns,
+          viewport,
+          min: sorted[0],
+          median:
+            (sorted[Math.floor((sorted.length - 1) / 2)]! +
+              sorted[Math.floor(sorted.length / 2)]!) /
+            2,
+          max: sorted.at(-1),
+          within,
+          count: ratios.length,
+          readings,
+        }
         await testInfo.attach('efficiency', {
-          body: JSON.stringify({
-            kind,
-            layout,
-            columns,
-            viewport,
-            min: sorted[0],
-            median:
-              (sorted[Math.floor((sorted.length - 1) / 2)]! +
-                sorted[Math.floor(sorted.length / 2)]!) /
-              2,
-            max: sorted.at(-1),
-            within,
-            count: ratios.length,
-          }),
+          body: JSON.stringify(efficiency),
           contentType: 'application/json',
         })
+        await writeFile(testInfo.outputPath('efficiency.json'), JSON.stringify(efficiency, null, 2))
         expect(within).toBeGreaterThanOrEqual(0.9)
         expect(contentTypes.length).toBeGreaterThan(0)
         expect(contentTypes.every((type) => type.startsWith('image/webp'))).toBe(true)

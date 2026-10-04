@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 import { useLabMeasurement } from '../lab/measurement'
+import { DEFAULT_WIDTHS } from '#build/nuxt-photo-internals.mjs'
 
 const props = defineProps<{
   title: string
@@ -9,16 +10,17 @@ const props = defineProps<{
   requests?: boolean
 }>()
 const image = useImage()
+// The generated .mjs bridge does not preserve the source declaration for app TypeScript.
+const defaultWidths: readonly number[] = DEFAULT_WIDTHS
 const provider = image.options.provider
 const screens = [...new Set(Object.values(image.options.screens))].sort((a, b) => a - b)
+const products = [
+  ...new Set(screens.flatMap((width) => image.options.densities.map((density) => width * density))),
+].sort((a, b) => a - b)
 const ladder =
   provider === 'vercel'
     ? screens
-    : [
-        ...new Set(
-          screens.flatMap((width) => image.options.densities.map((density) => width * density)),
-        ),
-      ].sort((a, b) => a - b)
+    : [...defaultWidths.filter((width) => width < (products[0] ?? Infinity)), ...products]
 const bar = ref<HTMLElement | null>(null)
 const barHeight = ref(0)
 const overlay = ref(false)
@@ -49,6 +51,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', sizeBar)
   document.documentElement.style.removeProperty('--lab-bar-height')
 })
+const badgeText = (reading: (typeof readings.value)[number]) =>
+  `need ${Math.round(reading.needed)}px · got ${reading.got}px · ${reading.ratio.toFixed(2)}× · ${reading.kb.toFixed(1)} KB · ${reading.format} · ${reading.loading}${reading.high ? ', high' : ''}`
 const color = (ratio: number) =>
   ratio >= 0.9 && ratio <= 2 ? '#16a34a' : ratio <= 3 ? '#d97706' : '#dc2626'
 </script>
@@ -81,20 +85,24 @@ const color = (ratio: number) =>
     </ul>
     <Teleport to="body">
       <div v-if="overlay" class="lab-overlays" aria-hidden="true">
-        <span
+        <div
           v-for="(reading, index) in readings"
           :key="index"
-          class="lab-badge"
+          class="lab-badge-frame"
           :style="{
             left: `${Math.max(0, reading.left)}px`,
-            maxWidth: `calc(100vw - ${Math.max(0, reading.left)}px)`,
             top: `${reading.top}px`,
-            background: color(reading.ratio),
+            width: `${reading.width}px`,
           }"
-          >need {{ Math.round(reading.needed) }}px · got {{ reading.got }}px ·
-          {{ reading.ratio.toFixed(2) }}× · {{ reading.kb.toFixed(1) }} KB · {{ reading.format }} ·
-          {{ reading.loading }}{{ reading.high ? ', high' : '' }}</span
         >
+          <span
+            class="lab-badge"
+            :title="badgeText(reading)"
+            :data-url="reading.url"
+            :style="{ background: color(reading.ratio) }"
+            >{{ badgeText(reading) }}</span
+          >
+        </div>
       </div>
     </Teleport>
   </main>
@@ -155,14 +163,22 @@ const color = (ratio: number) =>
 .lab-controls input {
   width: 100px;
 }
-.lab-badge {
+.lab-badge-frame {
   position: fixed;
+  z-index: 62;
+  pointer-events: none;
+}
+.lab-badge {
+  display: inline-block;
   z-index: 62;
   pointer-events: none;
   color: white;
   font: 11px monospace;
   padding: 2px 4px;
-  max-width: 100vw;
+  max-width: calc(100% - 4px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .lab-content .lab-photo {
   display: block;

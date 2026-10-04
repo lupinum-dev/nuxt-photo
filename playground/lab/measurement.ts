@@ -30,6 +30,7 @@ interface Reading {
   format: string
   loading: string
   high: boolean
+  width: number
   left: number
   top: number
 }
@@ -176,6 +177,7 @@ export function useLabMeasurement(
             format,
             loading: image.getAttribute('loading') ?? 'eager',
             high: image.getAttribute('fetchpriority') === 'high',
+            width: rect.width,
             left: rect.left,
             top: Math.max(rect.top, bar.value?.getBoundingClientRect().bottom ?? 0),
           }
