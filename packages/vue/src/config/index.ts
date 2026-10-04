@@ -6,19 +6,12 @@ import {
   type Component,
   type ComputedRef,
   type InjectionKey,
-  type Plugin,
 } from 'vue'
 import { nativeProvider } from '../providers/native'
 import { defaultProviderRuntime, type ProviderRuntime } from '../providers/runtime'
 import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/types'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
-import {
-  detectPhotoLocale,
-  resolvePhotoLabels,
-  type PhotoLabels,
-  type PhotoLocale,
-} from '../provide/labels'
-import { validatePhotoConfig } from './validate'
+import type { PhotoLabels, PhotoLocale } from '../provide/labels'
 
 export interface PhotoProvider {
   url(src: string, options: { width: number; quality?: number; format?: string }): string
@@ -50,7 +43,8 @@ export interface ResolvedPhotoConfig extends Omit<
   PhotoConfig,
   'labels' | 'lightbox' | 'validation'
 > {
-  labels: PhotoLabels
+  labels: Partial<PhotoLabels>
+  labelLocale?: string
   lightbox: LightboxOptions
   validation: InvalidPhotoPolicy
   provider: PhotoProvider
@@ -61,64 +55,38 @@ export const photoConfigKey: InjectionKey<ComputedRef<ResolvedPhotoConfig>> =
 // Vue inject() reads ancestors, so retain the current recipe config for its setup consumers.
 const localConfigs = new WeakMap<object, ComputedRef<ResolvedPhotoConfig>>()
 
+function definedEntries(value: object) {
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined))
+}
+
 export function mergePhotoConfig(
   parent: ResolvedPhotoConfig,
   overrides: PhotoConfig,
 ): ResolvedPhotoConfig {
-  const defined = Object.fromEntries(
-    Object.entries(overrides).filter(([, value]) => value !== undefined),
-  )
+  const defined = definedEntries(overrides)
   return {
     ...parent,
     ...defined,
+    labelLocale: typeof overrides.labels === 'string' ? overrides.labels : parent.labelLocale,
     labels:
       typeof overrides.labels === 'string'
-        ? resolvePhotoLabels(overrides.labels)
-        : {
-            ...parent.labels,
-            ...Object.fromEntries(
-              Object.entries(overrides.labels ?? {}).filter(([, value]) => value !== undefined),
-            ),
-          },
+        ? {}
+        : { ...parent.labels, ...definedEntries(overrides.labels ?? {}) },
     lightbox: {
       ...parent.lightbox,
-      ...Object.fromEntries(
-        Object.entries(overrides.lightbox ?? {}).filter(([, value]) => value !== undefined),
-      ),
+      ...definedEntries(overrides.lightbox ?? {}),
     },
   }
 }
-function defaults(locale?: string): ResolvedPhotoConfig {
+export function defaultPhotoConfig(locale?: string): ResolvedPhotoConfig {
   return {
-    labels: resolvePhotoLabels(undefined, detectPhotoLocale(locale)),
+    labels: {},
+    labelLocale: locale,
     lightbox: { minZoom: 1.5, transition: 'auto', navigation: 'slide' },
     validation: 'throw',
     provider: nativeProvider,
     providers: defaultProviderRuntime,
   }
-}
-/** Install setup-time config. Nuxt supplies its provider environment and reactive locale internally. */
-export function createPhotoPlugin(
-  config: PhotoConfig,
-  providers?: ProviderRuntime,
-  locale?: () => string | undefined,
-): Plugin {
-  validatePhotoConfig(config)
-  return {
-    install(app) {
-      app.provide(
-        photoConfigKey,
-        computed(() => {
-          const base = defaults(locale?.())
-          if (providers) base.providers = providers
-          return mergePhotoConfig(base, config)
-        }),
-      )
-    },
-  }
-}
-export function createPhoto(config: PhotoConfig): Plugin {
-  return createPhotoPlugin(config)
 }
 export function usePhotoConfig(): ComputedRef<ResolvedPhotoConfig> {
   const instance = getCurrentInstance()
@@ -126,7 +94,7 @@ export function usePhotoConfig(): ComputedRef<ResolvedPhotoConfig> {
     (instance && localConfigs.get(instance)) ||
     inject(
       photoConfigKey,
-      computed(() => defaults()),
+      computed(() => defaultPhotoConfig()),
     )
   )
 }

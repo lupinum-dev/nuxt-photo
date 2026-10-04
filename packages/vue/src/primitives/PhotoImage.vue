@@ -21,7 +21,7 @@
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, onMounted, ref, watch } from 'vue'
 import type { PhotoItem } from '../core/index'
-import { normalizePhotos } from '../core/photo/normalize'
+import { normalizePhoto } from '../core/photo/normalize'
 import { usePhotoConfig, type PhotoProvider } from '../config'
 import { resolvePhotoImage, type PhotoRenderContext } from '../providers/resolve'
 
@@ -57,10 +57,10 @@ const config = computed(() => {
   return provider ? { ...parent, provider } : parent
 })
 const resolved = computed(() => {
-  const photo = normalizePhotos<TMeta>([props.photo], {
+  const photo = normalizePhoto<TMeta>(props.photo, {
     owner: 'PhotoImage',
     resolveDimensions: config.value.dimensions,
-  }).photos[0]!
+  })
   return resolvePhotoImage(photo, props.context, config.value)
 })
 const effectiveLoading = computed(() => (props.priority ? 'eager' : 'lazy'))

@@ -1,13 +1,18 @@
+import { computed } from 'vue'
 import { usePhotoConfig } from '../config'
-import type { PhotoLabels } from '../provide/labels'
+import { detectPhotoLocale, PHOTO_LABELS, type PhotoLabels } from '../provide/labels'
 
-/** Complete labels from the nearest merged config, including reactive Nuxt locale changes. */
+/** Read each label lazily, retaining reactive locale and per-key overrides. */
 export function usePhotoLabels(): PhotoLabels {
   const config = usePhotoConfig()
+  const defaults = computed(() => PHOTO_LABELS[detectPhotoLocale(config.value.labelLocale)])
   return new Proxy(
-    { ...config.value.labels },
+    { ...defaults.value, ...config.value.labels },
     {
-      get: (_target, key: keyof PhotoLabels) => config.value.labels[key],
+      get: (_target, key: keyof PhotoLabels) => {
+        const override = config.value.labels[key]
+        return override === undefined ? defaults.value[key] : override
+      },
     },
   )
 }

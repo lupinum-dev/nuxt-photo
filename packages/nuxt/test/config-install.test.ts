@@ -2,7 +2,7 @@
 import { afterEach, expect, it } from 'vite-plus/test'
 import { createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { usePhotoLabels } from '@lupinum/vue-photo'
-import { createPhotoPlugin } from '../../vue/src/config'
+import { createPhotoPlugin } from '../../vue/src/config/plugin'
 import { resolveNuxtPhotoLocale, resolveNuxtPhotoLabels } from '../src/runtime/labels'
 
 afterEach(() => {

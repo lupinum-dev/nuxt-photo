@@ -1,23 +1,11 @@
-/** Complete user-visible and assistive text rendered by Nuxt Photo. */
-export interface PhotoLabels {
-  photoViewer: string
-  previous: string
-  next: string
-  zoom: string
-  fit: string
-  close: string
-  loadFailed: string
-  previousSlide: string
-  nextSlide: string
-  pauseAutoplay: string
-  playAutoplay: string
-  goToSlide: (index: number) => string
-  viewPhoto: (index: number) => string
-  slideStatus: (index: number, count: number) => string
-}
-
-export const PHOTO_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'nl', 'pt', 'ar', 'he'] as const
-export type PhotoLocale = (typeof PHOTO_LOCALES)[number]
+import {
+  PHOTO_LOCALES,
+  PHOTO_LABEL_KEYS,
+  PHOTO_LABEL_FUNCTION_KEYS,
+  type PhotoLabels,
+  type PhotoLocale,
+} from './labelTypes'
+export { PHOTO_LOCALES, type PhotoLabels, type PhotoLocale } from './labelTypes'
 
 function labels(
   values: readonly [
@@ -37,39 +25,22 @@ function labels(
     string,
   ],
 ): Readonly<PhotoLabels> {
-  const [
-    photoViewer,
-    previous,
-    next,
-    zoom,
-    fit,
-    close,
-    loadFailed,
-    previousSlide,
-    nextSlide,
-    pauseAutoplay,
-    playAutoplay,
-    goToSlide,
-    viewPhoto,
-    slideStatus,
-  ] = values
-  return Object.freeze({
-    photoViewer: photoViewer,
-    previous: previous,
-    next: next,
-    zoom: zoom,
-    fit: fit,
-    close: close,
-    loadFailed: loadFailed,
-    previousSlide: previousSlide,
-    nextSlide: nextSlide,
-    pauseAutoplay: pauseAutoplay,
-    playAutoplay: playAutoplay,
-    goToSlide: (index: number) => goToSlide.replaceAll('{index}', String(index)),
-    viewPhoto: (index: number) => viewPhoto.replaceAll('{index}', String(index)),
-    slideStatus: (index: number, count: number) =>
-      slideStatus.replaceAll('{index}', String(index)).replaceAll('{count}', String(count)),
-  })
+  // The exhaustive metadata and the 14-value tuple share the public label order.
+  // Object.fromEntries cannot retain those per-key types.
+  return Object.freeze(
+    Object.fromEntries(
+      PHOTO_LABEL_KEYS.map((key, position) => {
+        const template = values[position]!
+        return [
+          key,
+          !PHOTO_LABEL_FUNCTION_KEYS.includes(key)
+            ? template
+            : (index: number, count?: number) =>
+                template.replaceAll('{index}', String(index)).replaceAll('{count}', String(count)),
+        ]
+      }),
+    ) as unknown as PhotoLabels,
+  )
 }
 
 export const PHOTO_LABELS: Readonly<Record<PhotoLocale, Readonly<PhotoLabels>>> = {
@@ -227,17 +198,4 @@ export function detectPhotoLocale(language?: string): PhotoLocale {
     .toLowerCase()
     .split('-')[0]
   return PHOTO_LOCALES.find((locale) => locale === code) ?? 'en'
-}
-
-export function resolvePhotoLabels(
-  partial?: PhotoLocale | Partial<PhotoLabels>,
-  locale = detectPhotoLocale(),
-): PhotoLabels {
-  const result = { ...PHOTO_LABELS[typeof partial === 'string' ? partial : locale] }
-  if (partial && typeof partial !== 'string') {
-    for (const key of Object.keys(result) as Array<keyof PhotoLabels>) {
-      if (partial[key] !== undefined) Object.assign(result, { [key]: partial[key] })
-    }
-  }
-  return result
 }

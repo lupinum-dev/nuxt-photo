@@ -1,6 +1,6 @@
 import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { createPhotoPlugin } from '../../vue/src/config'
+import { createPhotoPlugin } from '../../vue/src/config/plugin'
 import { PhotoImage } from '../../vue/src'
 import { describe, expect, it, vi } from 'vite-plus/test'
 import { createNuxtPhotoProviders, type NuxtImageFunction } from '../src/runtime/provider'

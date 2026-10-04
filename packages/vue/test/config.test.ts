@@ -5,10 +5,12 @@ import { renderToString } from '@vue/server-renderer'
 import {
   createPhoto,
   PhotoAlbum,
+  PhotoImage,
   PhotoGroup,
   LightboxProvider,
   usePhotoLabels,
   validatePhotos,
+  PhotoValidationError,
 } from '../src'
 import { makePhoto } from '@test-fixtures/photos'
 import { PHOTO_LABELS, PHOTO_LOCALES } from '../src/provide/labels'
@@ -124,6 +126,29 @@ it('component validation overrides inherited drop policy and config dimensions r
   })
   app.use(createPhoto({ dimensions: () => ({ width: 100, height: 50 }) }))
   expect(await renderToString(app)).toContain('width="100" height="50"')
+})
+
+// Catches the primitive losing runtime validation or dimension resolution when its imports shrink.
+it('PhotoImage resolves dimensions and still reports all invalid fields', async () => {
+  const render = (photo: unknown) => {
+    const app = createSSRApp({
+      render: () => h(PhotoImage, { photo: JSON.parse(JSON.stringify(photo)) }),
+    })
+    app.use(createPhoto({ dimensions: () => ({ width: 100, height: 50 }) }))
+    return renderToString(app)
+  }
+  expect(await render({ id: 'image', src: '/image.jpg' })).toContain('width="100" height="50"')
+  await expect(render({ id: 'image', src: '', meta: 'invalid' })).rejects.toMatchObject({
+    name: 'PhotoValidationError',
+    owner: 'PhotoImage',
+    issues: [
+      { code: 'missing-src', index: 0 },
+      { code: 'invalid-meta', index: 0 },
+    ],
+  })
+  await expect(
+    render({ id: 'image', src: '/image.jpg', width: 0, height: 50 }),
+  ).rejects.toBeInstanceOf(PhotoValidationError)
 })
 
 it('validatePhotos is pure, drops invalid photos, and names the missing-dimension fix', () => {

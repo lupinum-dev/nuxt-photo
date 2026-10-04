@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
 import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
-import { createPhoto } from '../src/config'
+import { createPhoto } from '../src/config/plugin'
 import { createKeydownBinding, useLightboxWindowLifecycle } from '../src/lightbox/watchers'
 
 async function flushWatchers() {

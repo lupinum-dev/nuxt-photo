@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoCarousel from '../src/components/PhotoCarousel.vue'
-import { createPhoto } from '../src'
-import { DEFAULT_PHOTO_LABELS, resolvePhotoLabels } from '../src/provide/labels'
+import { createPhoto, usePhotoLabels, type PhotoLabels } from '../src'
+import { createSSRApp } from 'vue'
+import { renderToString } from '@vue/server-renderer'
+import { DEFAULT_PHOTO_LABELS } from '../src/provide/labels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('photo labels', () => {
@@ -15,14 +17,27 @@ describe('photo labels', () => {
     document.body.innerHTML = ''
   })
 
-  it('freezes English defaults and fills partial label sets', () => {
+  it('freezes English defaults and fills partial label sets', async () => {
+    const labelsFor = async (partial: Partial<PhotoLabels>) => {
+      const captured: PhotoLabels[] = []
+      const app = createSSRApp({
+        setup() {
+          captured.push(usePhotoLabels())
+          return () => null
+        },
+      })
+      app.use(createPhoto({ labels: partial }))
+      await renderToString(app)
+      expect(captured).toHaveLength(1)
+      return captured[0]!
+    }
     expect(Object.isFrozen(DEFAULT_PHOTO_LABELS)).toBe(true)
-    const labels = resolvePhotoLabels({ close: 'Schließen', viewPhoto: (i) => `Foto ${i}` })
+    const labels = await labelsFor({ close: 'Schließen', viewPhoto: (i) => `Foto ${i}` })
     expect(labels.close).toBe('Schließen')
     expect(labels.viewPhoto(2)).toBe('Foto 2')
     expect(labels.previous).toBe(DEFAULT_PHOTO_LABELS.previous)
 
-    const fallback = resolvePhotoLabels({ close: undefined })
+    const fallback = await labelsFor({ close: undefined })
     expect(fallback.close).toBe(DEFAULT_PHOTO_LABELS.close)
   })
 

@@ -1,5 +1,10 @@
 import type { PhotoConfig } from './index'
-import { PHOTO_LOCALES, DEFAULT_PHOTO_LABELS } from '../provide/labels'
+import {
+  PHOTO_LOCALES,
+  PHOTO_LABEL_KEYS,
+  PHOTO_LABEL_FUNCTION_KEYS,
+  type PhotoLabels,
+} from '../provide/labelTypes'
 
 function error(path: string, expected: string): never {
   throw new TypeError(`[nuxt-photo] \`${path}\` must be ${expected}.`)
@@ -40,9 +45,11 @@ export function validatePhotoConfig(value: unknown, path = 'photo'): asserts val
     if (typeof value.labels === 'string') enumeration(value.labels, PHOTO_LOCALES, `${path}.labels`)
     else {
       record(value.labels, `${path}.labels`)
-      keys(value.labels, Object.keys(DEFAULT_PHOTO_LABELS), `${path}.labels`)
+      keys(value.labels, [...PHOTO_LABEL_KEYS], `${path}.labels`)
       for (const [key, label] of Object.entries(value.labels)) {
-        const expected = typeof DEFAULT_PHOTO_LABELS[key as keyof typeof DEFAULT_PHOTO_LABELS]
+        const expected = PHOTO_LABEL_FUNCTION_KEYS.includes(key as keyof PhotoLabels)
+          ? 'function'
+          : 'string'
         if (label !== undefined && typeof label !== expected)
           error(`${path}.labels.${key}`, expected === 'function' ? 'a function' : 'a string')
       }

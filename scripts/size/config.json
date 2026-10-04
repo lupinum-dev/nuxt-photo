@@ -6,8 +6,8 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "_comment": "Includes shared config/provider images and runtime validation of optional PhotoItem dimensions.",
-      "brotliLimit": 4100
+      "_comment": "Image rendering, provider resolution, single-photo data validation and config injection.",
+      "brotliLimit": 2730
     },
     "all": {
       "label": "full package import",
