@@ -1,5 +1,10 @@
+import { cp } from 'node:fs/promises'
+import { join } from 'node:path'
 import NuxtImage from '@nuxt/image'
 import NuxtPhoto from '@lupinum/nuxt-photo'
+
+const ipxOnVercel =
+  process.env.NITRO_PRESET === 'vercel' && process.env.NUXT_PHOTO_LAB_PROVIDER !== 'vercel'
 
 export default defineNuxtConfig({
   // Imported modules exercise the order-sensitive case that setup-time detection misses.
@@ -20,7 +25,25 @@ export default defineNuxtConfig({
     },
     quality: 80,
     provider: process.env.NUXT_PHOTO_LAB_PROVIDER === 'vercel' ? 'vercel' : 'ipx',
+    ...(ipxOnVercel && { ipx: { fs: { dir: './public' } } }),
   },
+
+  // Vercel serves static files from its CDN, outside the IPX function filesystem.
+  nitro: ipxOnVercel
+    ? {
+        hooks: {
+          async compiled(nitro) {
+            await cp(
+              new URL('./public', import.meta.url),
+              join(nitro.options.output.serverDir, 'public'),
+              {
+                recursive: true,
+              },
+            )
+          },
+        },
+      }
+    : {},
 
   shiki: {
     defaultTheme: 'vitesse-dark',
