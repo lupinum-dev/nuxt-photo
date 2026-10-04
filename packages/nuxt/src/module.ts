@@ -86,7 +86,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     addTemplate({
       filename: 'nuxt-photo-internals.mjs',
       getContents: () =>
-        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}\nexport { nativeProvider } from ${JSON.stringify(resolve(vueDistDir, 'providers/native.mjs'))}`,
+        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}\nexport { nativeProvider } from ${JSON.stringify(resolve(vueDistDir, 'providers/native.mjs'))}\nexport { DEFAULT_WIDTHS } from ${JSON.stringify(resolve(vueDistDir, 'providers/runtime.mjs'))}`,
     })
     addTemplate({
       filename: 'nuxt-photo-options.mjs',

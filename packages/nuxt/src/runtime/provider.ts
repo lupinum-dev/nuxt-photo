@@ -32,15 +32,24 @@ function isFile(src: string, extension: string) {
 }
 
 /** Nuxt Image owns quality, format and transport. Core owns the candidate set. */
-export function createNuxtPhotoProviders(image: NuxtImageFunction, options: NuxtImageOptions) {
+export function createNuxtPhotoProviders(
+  image: NuxtImageFunction,
+  options: NuxtImageOptions,
+  defaultWidths: readonly number[],
+) {
   const names = new WeakMap<PhotoProvider, string>()
   const cache = new Map<string, PhotoProvider>()
   const screens = [...new Set(Object.values(options.screens))]
     .filter((width) => width > 0)
     .sort((a, b) => a - b)
-  const ladder = [
+  const products = [
     ...new Set(screens.flatMap((width) => options.densities.map((density) => width * density))),
   ].sort((a, b) => a - b)
+  // Unrestricted transports also serve small thumbnails below Nuxt Image's first screen.
+  const ladder = [
+    ...defaultWidths.filter((width) => width < (products[0] ?? Infinity)),
+    ...products,
+  ]
   function resolve(name: string) {
     const existing = cache.get(name)
     if (existing) return existing
