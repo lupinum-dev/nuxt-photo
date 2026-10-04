@@ -10,10 +10,14 @@ import {
   type Component,
 } from 'vue'
 import { renderToString } from '@vue/server-renderer'
+import useEmblaCarousel from 'embla-carousel-vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import type { PhotoItem } from '../../src/core/index'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
+
+// Observe the real composable's results without replacing Embla or autoplay.
+vi.mock('embla-carousel-vue', { spy: true })
 
 const photos = [
   makePhoto({ id: 'c-1' }),
@@ -247,6 +251,57 @@ describe('PhotoCarousel — DOM', () => {
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__slide')).toHaveLength(4)
     m.unmount()
+  })
+
+  it('keeps one autoplay subscription and timer after repeated prop changes', async () => {
+    vi.mocked(useEmblaCarousel).mockClear()
+    const props = reactive({ photos, autoplay: false })
+    const m = mount(PhotoCarousel, props)
+    try {
+      await flushUi()
+      const api = vi.mocked(useEmblaCarousel).mock.results[0]!.value[1].value!
+      const on = vi.spyOn(api, 'on')
+      const off = vi.spyOn(api, 'off')
+      const viewport = m.container.querySelector('.np-carousel__viewport')!
+      const container = m.container.querySelector('.np-carousel__container')!
+      setCarouselRect(viewport, 0, 600)
+      setCarouselRect(container, 0, 600)
+      m.container
+        .querySelectorAll('.np-carousel__slide')
+        .forEach((slide, index) => setCarouselRect(slide, index * 600, 600))
+      vi.useFakeTimers()
+      const timers = vi.spyOn(window, 'setTimeout')
+      const cleared = vi.spyOn(window, 'clearTimeout')
+      for (let change = 0; change < 9; change++) {
+        props.autoplay = !props.autoplay
+        await nextTick()
+        await vi.advanceTimersByTimeAsync(0)
+      }
+      for (const event of ['select', 'autoplay:play', 'autoplay:stop'] as const) {
+        const subscriptions = on.mock.calls.filter(([name]) => name === event)
+        const removals = off.mock.calls.filter(([name]) => name === event)
+        const remaining = subscriptions.filter(
+          ([, listener]) => !removals.some(([, removed]) => removed === listener),
+        )
+        expect(remaining, event).toHaveLength(1)
+        // Includes the one initial subscription registered before these method spies.
+        expect(1 + subscriptions.length - removals.length, event).toBe(1)
+      }
+      // Count autoplay's 4000ms timers, excluding Embla's observer/frame scheduling.
+      const pending = timers.mock.calls.filter(
+        ([, delay], index) =>
+          delay === 4000 &&
+          !cleared.mock.calls.some(([id]) => id === timers.mock.results[index]!.value),
+      )
+      expect(pending).toHaveLength(1)
+      expect(m.container.querySelector('.np-carousel__autoplay')?.getAttribute('aria-label')).toBe(
+        'Pause slideshow',
+      )
+    } finally {
+      m.unmount()
+      vi.restoreAllMocks()
+      vi.useRealTimers()
+    }
   })
 
   it('enables autoplay reactively while retaining Embla default delay', async () => {

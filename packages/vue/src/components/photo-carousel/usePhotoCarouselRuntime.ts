@@ -139,7 +139,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
 
   watch(
     [emblaApi, config.autoplay],
-    ([api]) => {
+    ([api], _previous, onCleanup) => {
       if (!api) return
       const onSelect = (currentApi: EmblaCarouselType) => handleSelect(currentApi)
       const onReinit = (currentApi: EmblaCarouselType) => {
@@ -162,13 +162,13 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       api.on('reInit', readAutoplay)
       api.on('autoplay:play', onPlay)
       api.on('autoplay:stop', onStop)
-      return () => {
+      onCleanup(() => {
         api.off('select', onSelect)
         api.off('reInit', onReinit)
         api.off('reInit', readAutoplay)
         api.off('autoplay:play', onPlay)
         api.off('autoplay:stop', onStop)
-      }
+      })
     },
     { immediate: true },
   )

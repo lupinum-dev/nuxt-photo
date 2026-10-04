@@ -12,6 +12,7 @@ import {
   defineNuxtModule,
   hasNuxtModule,
   useLogger,
+  useNitro,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
@@ -118,6 +119,12 @@ export default defineEventHandler(event => {
         })
       : undefined
     if (nuxt.options.dev) {
+      // Nitro virtual templates are evaluated on rebuild, not by updateTemplates.
+      let reloadFolders: (() => Promise<void>) | undefined
+      nuxt.hook('ready', () => {
+        const nitro = useNitro()
+        reloadFolders = () => nitro.hooks.callHook('rollup:reload')
+      })
       if (!nuxt.options.watch.includes(publicDir)) nuxt.options.watch.push(publicDir)
       nuxt.hook('builder:watch', async (_event, path) => {
         const changed = resolve(nuxt.options.srcDir, path)
@@ -132,6 +139,7 @@ export default defineEventHandler(event => {
             rootDir: nuxt.options.rootDir,
             clientManifest: options.localImages,
           })
+          await reloadFolders?.()
           if (template)
             await updateTemplates({
               filter: (candidate) => candidate.filename === template.filename,

@@ -5,6 +5,7 @@ import manifest from '../package.json'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { NuxtPhotoOptions } from '../src/options'
 
+const useNitro = vi.fn()
 const addServerTemplate = vi.fn()
 const addServerHandler = vi.fn()
 const addTemplate = vi.fn()
@@ -34,6 +35,7 @@ vi.mock('@nuxt/kit', () => ({
   addTemplate,
   addServerTemplate,
   addServerHandler,
+  useNitro,
   updateTemplates,
   addImports,
   addPlugin,
@@ -104,6 +106,7 @@ describe('nuxt-photo module', () => {
       ...template,
       dst: `/fixture/.nuxt/${template.filename}`,
     }))
+    useNitro.mockReset()
     addServerTemplate.mockReset()
     addServerHandler.mockReset()
     updateTemplates.mockReset()
@@ -161,7 +164,7 @@ describe('nuxt-photo module', () => {
     )
   })
 
-  it('generates the local lookup and updates only its template on public asset changes', async () => {
+  it('refreshes the server and client lookups on public asset changes', async () => {
     const publicDir = await mkdtemp(join(tmpdir(), 'nuxt-photo-watch-'))
     const nuxt = createNuxt()
     nuxt.options.dir.public = publicDir
@@ -171,6 +174,10 @@ describe('nuxt-photo module', () => {
     try {
       await writeFile(join(publicDir, 'photo.svg'), '<svg width="8" height="4"/>')
       await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, localImages: true }, nuxt)
+      const reload = vi.fn()
+      useNitro.mockReturnValue({ hooks: { callHook: reload } })
+      nuxt.callHook('ready')
+      const server = addServerTemplate.mock.calls[0]![0]
       const template = addTemplate.mock.calls.find(
         ([t]) => t.filename === 'nuxt-photo-local-images.mjs',
       )![0]
@@ -186,6 +193,7 @@ describe('nuxt-photo module', () => {
       ).toContain('createLocalImageDimensionsResolver(manifest')
       await nuxt.callHookAsync('builder:watch', 'change', '/fixture/app/page.vue')
       expect(updateTemplates).not.toHaveBeenCalled()
+      expect(reload).not.toHaveBeenCalled()
       await writeFile(join(publicDir, '..photo.svg'), '<svg width="2" height="1"/>')
       await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, '..photo.svg'))
       expect(template.getContents()).toContain('"/..photo.svg":{"width":2,"height":1')
@@ -205,9 +213,34 @@ describe('nuxt-photo module', () => {
         '/new.svg': { width: 3, height: 2 },
       })
       expect(updateTemplates).toHaveBeenCalledTimes(5)
+      expect(reload.mock.calls).toEqual(Array.from({ length: 5 }, () => ['rollup:reload']))
+      expect(server.getContents()).toContain('"/new.svg":{"width":3,"height":2')
+      expect(server.getContents()).not.toContain('"/photo.svg"')
       const { filter } = updateTemplates.mock.calls[0]![0]
       expect(filter({ filename: template.filename })).toBe(true)
       expect(filter({ filename: 'unrelated.mjs' })).toBe(false)
+    } finally {
+      await rm(publicDir, { recursive: true, force: true })
+    }
+  })
+
+  it('refreshes folder data in dev even without a client manifest', async () => {
+    const publicDir = await mkdtemp(join(tmpdir(), 'nuxt-photo-folder-watch-'))
+    const nuxt = createNuxt()
+    nuxt.options.dir.public = publicDir
+    nuxt.options.rootDir = publicDir
+    nuxt.options.dev = true
+    try {
+      await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, localImages: false }, nuxt)
+      const reload = vi.fn()
+      useNitro.mockReturnValue({ hooks: { callHook: reload } })
+      nuxt.callHook('ready')
+      const server = addServerTemplate.mock.calls[0]![0]
+      await writeFile(join(publicDir, 'new.svg'), '<svg width="3" height="2"/>')
+      await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, 'new.svg'))
+      expect(reload).toHaveBeenCalledExactlyOnceWith('rollup:reload')
+      expect(server.getContents()).toContain('"/new.svg":{"width":3,"height":2')
+      expect(updateTemplates).not.toHaveBeenCalled()
     } finally {
       await rm(publicDir, { recursive: true, force: true })
     }
