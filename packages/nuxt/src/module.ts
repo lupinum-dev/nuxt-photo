@@ -2,6 +2,8 @@ import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import {
   addComponent,
   addTemplate,
+  addServerTemplate,
+  addServerHandler,
   updateTemplates,
   addImports,
   addPlugin,
@@ -13,7 +15,7 @@ import {
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
 import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
-import { readLocalImageDimensions } from './local-images'
+import { readLocalImages } from './local-images'
 import { generatePhotoLocales } from './locales'
 export type { NuxtPhotoOptions } from './options'
 
@@ -38,7 +40,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = ['useLightbox', 'usePhotoLabels', 'responsive'] as const
+const AUTO_IMPORTS = ['useLightbox', 'usePhotoLabels', 'usePhotoFolder', 'responsive'] as const
 
 function resolveRecipeComponent(vueDistDir: string, name: string) {
   return resolve(vueDistDir, 'components', `${name}.vue`)
@@ -83,7 +85,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     addTemplate({
       filename: 'nuxt-photo-internals.mjs',
       getContents: () =>
-        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}`,
+        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}\nexport { nativeProvider } from ${JSON.stringify(resolve(vueDistDir, 'providers/native.mjs'))}`,
     })
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
@@ -91,33 +93,51 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         `export default ${JSON.stringify({ labels: options.labels, lightbox: options.lightbox, validation: options.validation, provider: options.provider })}`,
     })
 
-    if (options.localImages) {
-      // Nuxt 4 schema resolves dir.public against rootDir, independently of srcDir.
-      const publicDir = resolve(nuxt.options.rootDir, nuxt.options.dir.public)
-      let dimensions = await readLocalImageDimensions(publicDir, logger)
-      const template = addTemplate({
-        filename: 'nuxt-photo-local-images.mjs',
-        getContents: () => `export default Object.freeze(${JSON.stringify(dimensions)})`,
-      })
-      // The config plugin owns dimensions as well as the other defaults.
-      if (nuxt.options.dev) {
-        if (!nuxt.options.watch.includes(publicDir)) nuxt.options.watch.push(publicDir)
-        nuxt.hook('builder:watch', async (_event, path) => {
-          const changed = resolve(nuxt.options.srcDir, path)
-          const withinPublic = relative(publicDir, changed)
-          if (
-            withinPublic === '' ||
-            (withinPublic !== '..' &&
-              !withinPublic.startsWith('..' + sep) &&
-              !isAbsolute(withinPublic))
-          ) {
-            dimensions = await readLocalImageDimensions(publicDir, logger)
+    // Folder data stays in Nitro; only localImages opts into a client-wide lookup.
+    const publicDir = resolve(nuxt.options.rootDir, nuxt.options.dir.public)
+    let manifest = await readLocalImages(publicDir, logger, {
+      rootDir: nuxt.options.rootDir,
+      clientManifest: options.localImages,
+    })
+    addServerTemplate({
+      filename: '#nuxt-photo-folders',
+      getContents: () => `import { defineEventHandler, getQuery } from 'h3'
+const manifest = ${JSON.stringify(manifest)}
+export default defineEventHandler(event => {
+  const folder = getQuery(event).folder
+  if (typeof folder !== 'string') return []
+  const prefix = '/' + folder.replace(/^\\/+|\\/+$/g, '') + '/'
+  return Object.entries(manifest).filter(([src]) => src.startsWith(prefix) && !src.slice(prefix.length).includes('/')).map(([src, image]) => ({ ...image, src: ${JSON.stringify(nuxt.options.app.baseURL.replace(/\/$/, ''))} + src, id: src.slice(1).replace(/\\.[^/.]+$/, '') }))
+})`,
+    })
+    addServerHandler({ route: '/__nuxt_photo/folder', handler: '#nuxt-photo-folders' })
+    const template = options.localImages
+      ? addTemplate({
+          filename: 'nuxt-photo-local-images.mjs',
+          getContents: () => `export default Object.freeze(${JSON.stringify(manifest)})`,
+        })
+      : undefined
+    if (nuxt.options.dev) {
+      if (!nuxt.options.watch.includes(publicDir)) nuxt.options.watch.push(publicDir)
+      nuxt.hook('builder:watch', async (_event, path) => {
+        const changed = resolve(nuxt.options.srcDir, path)
+        const withinPublic = relative(publicDir, changed)
+        if (
+          withinPublic === '' ||
+          (withinPublic !== '..' &&
+            !withinPublic.startsWith('..' + sep) &&
+            !isAbsolute(withinPublic))
+        ) {
+          manifest = await readLocalImages(publicDir, logger, {
+            rootDir: nuxt.options.rootDir,
+            clientManifest: options.localImages,
+          })
+          if (template)
             await updateTemplates({
               filter: (candidate) => candidate.filename === template.filename,
             })
-          }
-        })
-      }
+        }
+      })
     }
 
     nuxt.hook('modules:done', () => {
@@ -147,8 +167,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
         filename: 'nuxt-photo-config.mjs',
         getContents:
           () => `${options.localImages ? "import manifest from '#build/nuxt-photo-local-images.mjs'" : ''}
-import { createLocalImageDimensionsResolver } from ${JSON.stringify(resolver.resolve('./runtime/local-image-dimensions'))}
+import { createLocalImageDimensionsResolver, withLocalPlaceholders } from ${JSON.stringify(resolver.resolve('./runtime/local-image-dimensions'))}
 export const dimensions = ${options.localImages ? 'createLocalImageDimensionsResolver(manifest, ' + JSON.stringify(nuxt.options.app.baseURL) + ')' : 'undefined'}
+export const decorateProvider = ${options.localImages ? 'provider => withLocalPlaceholders(provider, dimensions)' : 'provider => provider'}
 export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
       })
     })

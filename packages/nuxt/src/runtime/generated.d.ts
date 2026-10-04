@@ -1,4 +1,5 @@
 declare module '#build/nuxt-photo-internals.mjs' {
+  export const nativeProvider: import('@lupinum/vue-photo').PhotoProvider
   export interface ProviderRuntime {
     resolve(name: string): import('@lupinum/vue-photo').PhotoProvider
     widths(provider: import('@lupinum/vue-photo').PhotoProvider): readonly number[]
@@ -18,5 +19,8 @@ declare module '#build/nuxt-photo-options.mjs' {
 }
 declare module '#build/nuxt-photo-config.mjs' {
   export const dimensions: import('@lupinum/vue-photo').PhotoConfig['dimensions']
+  export function decorateProvider(
+    provider: import('@lupinum/vue-photo').PhotoProvider,
+  ): import('@lupinum/vue-photo').PhotoProvider
   export const hasI18n: boolean
 }

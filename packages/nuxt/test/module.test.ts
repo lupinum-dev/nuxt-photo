@@ -5,6 +5,8 @@ import manifest from '../package.json'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { NuxtPhotoOptions } from '../src/options'
 
+const addServerTemplate = vi.fn()
+const addServerHandler = vi.fn()
 const addTemplate = vi.fn()
 const updateTemplates = vi.fn()
 const addComponent = vi.fn()
@@ -30,6 +32,8 @@ function expectNoImagePlugin() {
 vi.mock('@nuxt/kit', () => ({
   addComponent,
   addTemplate,
+  addServerTemplate,
+  addServerHandler,
   updateTemplates,
   addImports,
   addPlugin,
@@ -100,6 +104,8 @@ describe('nuxt-photo module', () => {
       ...template,
       dst: `/fixture/.nuxt/${template.filename}`,
     }))
+    addServerTemplate.mockReset()
+    addServerHandler.mockReset()
     updateTemplates.mockReset()
     addComponent.mockReset()
     addImports.mockReset()
@@ -151,7 +157,7 @@ describe('nuxt-photo module', () => {
         .find(([t]) => t.filename === 'nuxt-photo-internals.mjs')![0]
         .getContents(),
     ).toBe(
-      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"',
+      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"\nexport { nativeProvider } from "/resolved/@lupinum/vue-photo/dist/providers/native.mjs"',
     )
   })
 
@@ -159,6 +165,7 @@ describe('nuxt-photo module', () => {
     const publicDir = await mkdtemp(join(tmpdir(), 'nuxt-photo-watch-'))
     const nuxt = createNuxt()
     nuxt.options.dir.public = publicDir
+    nuxt.options.rootDir = publicDir
     nuxt.options.dev = true
     addTemplate.mockImplementation((template) => template)
     try {
@@ -167,7 +174,9 @@ describe('nuxt-photo module', () => {
       const template = addTemplate.mock.calls.find(
         ([t]) => t.filename === 'nuxt-photo-local-images.mjs',
       )![0]
-      expect(template.getContents()).toBe('export default Object.freeze({"/photo.svg":[8,4]})')
+      expect(JSON.parse(template.getContents().slice(29, -1))).toMatchObject({
+        '/photo.svg': { width: 8, height: 4 },
+      })
       expect(nuxt.options.watch).toEqual([publicDir])
       nuxt.callHook('modules:done')
       expect(
@@ -179,18 +188,22 @@ describe('nuxt-photo module', () => {
       expect(updateTemplates).not.toHaveBeenCalled()
       await writeFile(join(publicDir, '..photo.svg'), '<svg width="2" height="1"/>')
       await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, '..photo.svg'))
-      expect(template.getContents()).toContain('"/..photo.svg":[2,1]')
+      expect(template.getContents()).toContain('"/..photo.svg":{"width":2,"height":1')
       await rm(join(publicDir, '..photo.svg'))
       await nuxt.callHookAsync('builder:watch', 'unlink', join(publicDir, '..photo.svg'))
       await writeFile(join(publicDir, 'photo.svg'), '<svg width="12" height="6"/>')
       await nuxt.callHookAsync('builder:watch', 'change', join(publicDir, 'photo.svg'))
-      expect(template.getContents()).toBe('export default Object.freeze({"/photo.svg":[12,6]})')
+      expect(JSON.parse(template.getContents().slice(29, -1))).toMatchObject({
+        '/photo.svg': { width: 12, height: 6 },
+      })
       await writeFile(join(publicDir, 'new.svg'), '<svg width="3" height="2"/>')
       await nuxt.callHookAsync('builder:watch', 'add', join(publicDir, 'new.svg'))
-      expect(template.getContents()).toContain('"/new.svg":[3,2]')
+      expect(template.getContents()).toContain('"/new.svg":{"width":3,"height":2')
       await rm(join(publicDir, 'photo.svg'))
       await nuxt.callHookAsync('builder:watch', 'unlink', join(publicDir, 'photo.svg'))
-      expect(template.getContents()).toBe('export default Object.freeze({"/new.svg":[3,2]})')
+      expect(JSON.parse(template.getContents().slice(29, -1))).toMatchObject({
+        '/new.svg': { width: 3, height: 2 },
+      })
       expect(updateTemplates).toHaveBeenCalledTimes(5)
       const { filter } = updateTemplates.mock.calls[0]![0]
       expect(filter({ filename: template.filename })).toBe(true)
@@ -505,6 +518,11 @@ describe('nuxt-photo module', () => {
         from: '@lupinum/nuxt-photo/app',
       },
       {
+        name: 'usePhotoFolder',
+        as: 'usePhotoFolder',
+        from: '@lupinum/nuxt-photo/app',
+      },
+      {
         name: 'responsive',
         as: 'responsive',
         from: '@lupinum/nuxt-photo/app',
@@ -532,6 +550,11 @@ describe('nuxt-photo module', () => {
       {
         name: 'usePhotoLabels',
         as: 'useNpPhotoLabels',
+        from: '@lupinum/nuxt-photo/app',
+      },
+      {
+        name: 'usePhotoFolder',
+        as: 'useNpPhotoFolder',
         from: '@lupinum/nuxt-photo/app',
       },
       {

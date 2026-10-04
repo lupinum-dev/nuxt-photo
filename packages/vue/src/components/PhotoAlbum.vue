@@ -110,6 +110,7 @@
         </AlbumThumbnail>
       </div>
     </div>
+    <span ref="endRef" class="np-album__end" aria-hidden="true" />
   </div>
 
   <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
@@ -140,6 +141,7 @@ import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { devWarn } from '../core/env'
 import { useCollectionLightbox } from './shared/useCollectionLightbox'
 import { useGalleryModel } from '../gallery/model'
+import { useAlbumEndReached } from './photo-album/endReached'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 
 // Generated layout CSS is trusted internal output. innerHTML preserves `<` and
@@ -233,9 +235,15 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
+  'end-reached': []
   'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
+
+const endRef = useAlbumEndReached(
+  () => props.photos.length,
+  () => emit('end-reached'),
+)
 
 const normalizedLayout = computed<AlbumLayout>(() => {
   const raw = props.layout

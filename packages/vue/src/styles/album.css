@@ -61,3 +61,12 @@
   width: 100%;
   min-height: 200px;
 }
+
+/* Absolute positioning keeps the sentinel out of row and column layout math. */
+.np-album__end {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}

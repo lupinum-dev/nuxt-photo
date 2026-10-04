@@ -1,5 +1,5 @@
 declare module '#app' {
-  export { defineNuxtPlugin, useAppConfig } from 'nuxt/app'
+  export { defineNuxtPlugin, useAppConfig, useAsyncData, useRequestFetch } from 'nuxt/app'
   // Nuxt normally generates the built-in app runtime config fields.
   export function useRuntimeConfig(): import('@nuxt/schema').RuntimeConfig & {
     app: { baseURL: string; buildAssetsDir: string; cdnURL: string }
@@ -15,6 +15,6 @@ declare module '#imports' {
 }
 
 declare module '#build/nuxt-photo-local-images.mjs' {
-  const dimensions: Readonly<Record<string, readonly [number, number]>>
+  const dimensions: Readonly<Record<string, import('../src/local-images').LocalImage>>
   export default dimensions
 }

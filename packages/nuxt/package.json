@@ -52,16 +52,21 @@
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.2",
     "nuxt": "catalog:",
+    "sharp": "^0.35.5",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vue-tsc": "catalog:"
   },
   "peerDependencies": {
     "@nuxt/image": "^2.0.0",
-    "nuxt": "^4.4.8"
+    "nuxt": "^4.4.8",
+    "sharp": "^0.35.5"
   },
   "peerDependenciesMeta": {
     "@nuxt/image": {
+      "optional": true
+    },
+    "sharp": {
       "optional": true
     }
   },

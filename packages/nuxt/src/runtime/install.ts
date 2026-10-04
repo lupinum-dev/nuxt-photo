@@ -1,9 +1,9 @@
 import type { NuxtApp } from '#app'
 import type { PhotoProvider } from '@lupinum/vue-photo'
 import type { ProviderRuntime } from './provider'
-import { installPhotoConfig } from '#build/nuxt-photo-internals.mjs'
+import { installPhotoConfig, nativeProvider } from '#build/nuxt-photo-internals.mjs'
 import options from '#build/nuxt-photo-options.mjs'
-import { dimensions, hasI18n } from '#build/nuxt-photo-config.mjs'
+import { dimensions, hasI18n, decorateProvider } from '#build/nuxt-photo-config.mjs'
 import { resolveNuxtPhotoLabels, resolveNuxtPhotoLocale } from './labels'
 
 export function installNuxtPhoto(
@@ -14,10 +14,27 @@ export function installNuxtPhoto(
   const labels =
     typeof options.labels === 'string' ? options.labels : resolveNuxtPhotoLabels(options.labels)
   const locale = () => resolveNuxtPhotoLocale(hasI18n ? nuxtApp.$i18n : undefined)
+  let runtime = providers
+  if (dimensions) {
+    const originals = new WeakMap<PhotoProvider, PhotoProvider>()
+    const decorate = (value: PhotoProvider) => {
+      const wrapped = decorateProvider(value)
+      originals.set(wrapped, value)
+      return wrapped
+    }
+    provider = decorate(provider ?? nativeProvider)
+    if (providers)
+      runtime = {
+        resolve: (name: string) => decorate(providers.resolve(name)),
+        widths: (value: PhotoProvider) => providers.widths(originals.get(value) ?? value),
+        allowSourceWidth: (value: PhotoProvider) =>
+          providers.allowSourceWidth(originals.get(value) ?? value),
+      }
+  }
   installPhotoConfig(
     nuxtApp.vueApp,
     { provider, labels, lightbox: options.lightbox, validation: options.validation, dimensions },
-    providers,
+    runtime,
     locale,
     { initialUrl: nuxtApp.ssrContext?.url, teleportTarget: '#teleports' },
   )

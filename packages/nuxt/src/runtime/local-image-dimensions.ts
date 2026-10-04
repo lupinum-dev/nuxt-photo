@@ -1,6 +1,9 @@
+import type { PhotoProvider } from '@lupinum/vue-photo'
+import type { LocalImage } from '../local-images'
+
 /** Resolve public URL paths, including encoded filenames and an app base URL. */
 export function createLocalImageDimensionsResolver(
-  dimensions: Readonly<Record<string, readonly [number, number]>>,
+  dimensions: Readonly<Record<string, LocalImage>>,
   baseURL: string,
 ) {
   return (src: string): { width: number; height: number } | undefined => {
@@ -17,6 +20,17 @@ export function createLocalImageDimensionsResolver(
         /* Malformed URI escapes are unknown sources. */
       }
     }
-    return size ? { width: size[0], height: size[1] } : undefined
+    return size
+  }
+}
+
+/** Keep local previews on the provider path, with the provider handling remote sources. */
+export function withLocalPlaceholders(
+  provider: PhotoProvider,
+  lookup: (src: string) => LocalImage | undefined,
+): PhotoProvider {
+  return {
+    ...provider,
+    placeholder: (src) => lookup(src)?.placeholderSrc ?? provider.placeholder?.(src),
   }
 }
