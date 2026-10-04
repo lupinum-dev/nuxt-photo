@@ -4,11 +4,12 @@ declare module '#build/nuxt-photo-internals.mjs' {
     widths(provider: import('@lupinum/vue-photo').PhotoProvider): readonly number[]
     allowSourceWidth(provider: import('@lupinum/vue-photo').PhotoProvider): boolean
   }
-  export function createPhotoPlugin(
+  export function installPhotoConfig(
+    app: import('vue').App,
     config: import('@lupinum/vue-photo').PhotoConfig,
     providers?: ProviderRuntime,
     locale?: () => string | undefined,
-  ): import('vue').Plugin
+  ): void
 }
 declare module '#build/nuxt-photo-options.mjs' {
   const options: import('../options').NuxtPhotoOptions

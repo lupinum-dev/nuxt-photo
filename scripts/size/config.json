@@ -12,7 +12,7 @@
     "all": {
       "label": "full package import",
       "brotliLimit": 42200,
-      "_comment": "Includes the accepted shared config, gallery store and PhotoProvider contract."
+      "_comment": "All Vue components, gallery state, provider images, synchronous locales and Vue config validation; retain the existing stricter cap."
     },
     "responsive": {
       "label": "responsive named import",
@@ -22,18 +22,18 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 7700,
-      "_comment": "Includes the installed shared config, nine locales and runtime validation."
+      "brotliDeltaLimit": 2880,
+      "_comment": "Structure CSS, config injection, native provider defaults and Nuxt label-template helpers."
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 7800,
-      "_comment": "Includes shared config and the PhotoProvider image resolution path."
+      "brotliDeltaLimit": 3050,
+      "_comment": "Structure CSS, shared config, provider-based PhotoImage rendering and photo-data validation."
     },
     "album": {
       "label": "module enabled with PhotoAlbum usage",
-      "brotliDeltaLimit": 42000,
-      "_comment": "Includes shared config, gallery state and layout-owned provider images."
+      "brotliDeltaLimit": 40800,
+      "_comment": "Structure CSS, album layout, gallery/lightbox state, provider images and app-selected labels."
     }
   }
 }

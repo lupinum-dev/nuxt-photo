@@ -8,6 +8,7 @@ declare module '#app' {
 }
 
 declare module '#imports' {
+  export { defineNuxtPlugin } from 'nuxt/app'
   export function useImage(): import('../src/runtime/provider').NuxtImageFunction & {
     options: import('../src/runtime/provider').NuxtImageOptions
   }

@@ -7,7 +7,7 @@ import PhotoCarousel from '../src/components/PhotoCarousel.vue'
 import { createPhoto, usePhotoLabels, type PhotoLabels } from '../src'
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { DEFAULT_PHOTO_LABELS } from '../src/provide/labels'
+import { resolvePhotoLabels } from '../src/provide/labels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('photo labels', () => {
@@ -31,14 +31,14 @@ describe('photo labels', () => {
       expect(captured).toHaveLength(1)
       return captured[0]!
     }
-    expect(Object.isFrozen(DEFAULT_PHOTO_LABELS)).toBe(true)
+    expect(Object.isFrozen(resolvePhotoLabels('en'))).toBe(true)
     const labels = await labelsFor({ close: 'Schließen', viewPhoto: (i) => `Foto ${i}` })
     expect(labels.close).toBe('Schließen')
     expect(labels.viewPhoto(2)).toBe('Foto 2')
-    expect(labels.previous).toBe(DEFAULT_PHOTO_LABELS.previous)
+    expect(labels.previous).toBe(resolvePhotoLabels('en').previous)
 
     const fallback = await labelsFor({ close: undefined })
-    expect(fallback.close).toBe(DEFAULT_PHOTO_LABELS.close)
+    expect(fallback.close).toBe(resolvePhotoLabels('en').close)
   })
 
   it('renders localized lightbox labels and announcements', async () => {

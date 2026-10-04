@@ -44,15 +44,23 @@ describe('source architecture boundaries', () => {
     expect(offenders).toEqual([])
   })
 
-  it('keeps Nuxt source on public entry points except the shared config validator', () => {
+  it('keeps Nuxt source on public entry points except shared build-time config and locale data', () => {
     const allowedVuePackageImports = new Set(['@lupinum/vue-photo'])
 
     const offenders = sourceFiles('packages/nuxt/src').flatMap((file) => {
       const imports = importSpecifiers(read(file)).filter((specifier) => {
-        // Setup must validate without loading the Vue root's SFC exports in Node.
+        // Build-time setup shares validation and locale data without loading Vue SFC exports in Node.
         if (
           file === 'packages/nuxt/src/options.ts' &&
           specifier === '../../vue/src/config/validate'
+        )
+          return false
+        if (
+          file === 'packages/nuxt/src/locales.ts' &&
+          [
+            '../../vue/src/provide/photoLocaleTemplates',
+            '../../vue/src/provide/labelTypes',
+          ].includes(specifier)
         )
           return false
         if (specifier.includes('/vue/src') || specifier.includes('../../vue/src')) {

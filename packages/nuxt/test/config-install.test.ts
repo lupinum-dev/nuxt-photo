@@ -2,7 +2,7 @@
 import { afterEach, expect, it } from 'vite-plus/test'
 import { createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { usePhotoLabels } from '@lupinum/vue-photo'
-import { createPhotoPlugin } from '../../vue/src/config/plugin'
+import { installPhotoConfig } from '../../vue/src/config/install'
 import { resolveNuxtPhotoLocale, resolveNuxtPhotoLabels } from '../src/runtime/labels'
 
 afterEach(() => {
@@ -23,12 +23,11 @@ it('follows the active i18n composer locale and keeps per-key overrides', async 
     },
   })
   const app = createApp(Consumer)
-  app.use(
-    createPhotoPlugin(
-      { labels: resolveNuxtPhotoLabels({ close: 'Custom close' }) },
-      undefined,
-      () => resolveNuxtPhotoLocale({ locale }),
-    ),
+  installPhotoConfig(
+    app,
+    { labels: resolveNuxtPhotoLabels({ close: 'Custom close' }) },
+    undefined,
+    () => resolveNuxtPhotoLocale({ locale }),
   )
   const container = document.createElement('div')
   document.body.append(container)

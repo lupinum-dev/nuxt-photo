@@ -5,6 +5,7 @@ import {
   updateTemplates,
   addImports,
   addPlugin,
+  addVitePlugin,
   createResolver,
   defineNuxtModule,
   hasNuxtModule,
@@ -13,6 +14,7 @@ import {
 import type { NuxtModule } from '@nuxt/schema'
 import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
 import { readLocalImageDimensions } from './local-images'
+import { generatePhotoLocales } from './locales'
 export type { NuxtPhotoOptions } from './options'
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
@@ -81,7 +83,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     addTemplate({
       filename: 'nuxt-photo-internals.mjs',
       getContents: () =>
-        `export { createPhotoPlugin } from ${JSON.stringify(resolve(vueDistDir, 'config/plugin.mjs'))}`,
+        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}`,
     })
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
@@ -119,6 +121,28 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     nuxt.hook('modules:done', () => {
+      const i18n = hasNuxtModule('@nuxtjs/i18n')
+      // @nuxtjs/i18n is optional; keep its config boundary independent of its type augmentation.
+      const i18nConfig = 'i18n' in nuxt.options ? nuxt.options.i18n : undefined
+      const i18nLocales =
+        i18n && i18nConfig && typeof i18nConfig === 'object' && 'locales' in i18nConfig
+          ? i18nConfig.locales
+          : undefined
+      const localeTemplate = addTemplate({
+        filename: 'nuxt-photo-locales.mjs',
+        write: true,
+        getContents: () => generatePhotoLocales(options.labels, i18nLocales),
+      })
+      const catalogPath = resolve(vueDistDir, 'provide/photoLocaleTemplates.mjs')
+      // Apply the same synchronous catalog to client and SSR recipes without changing Vue exports.
+      addVitePlugin({
+        name: 'nuxt-photo-locales',
+        enforce: 'pre',
+        resolveId(source, importer) {
+          if (importer && resolve(dirname(importer.split('?')[0]!), source) === catalogPath)
+            return localeTemplate.dst
+        },
+      })
       addTemplate({
         filename: 'nuxt-photo-config.mjs',
         getContents:

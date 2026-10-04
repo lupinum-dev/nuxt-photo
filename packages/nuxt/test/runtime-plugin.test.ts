@@ -1,6 +1,6 @@
 import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { createPhotoPlugin } from '../../vue/src/config/plugin'
+import { installPhotoConfig } from '../../vue/src/config/install'
 import { PhotoImage } from '../../vue/src'
 import { describe, expect, it, vi } from 'vite-plus/test'
 import { createNuxtPhotoProviders, type NuxtImageFunction } from '../src/runtime/provider'
@@ -51,7 +51,7 @@ describe('Nuxt photo providers', () => {
             photo: { id: 'vercel', src: '/photo.jpg', width, height: 200 },
           }),
       })
-      app.use(createPhotoPlugin({ provider: resolve('vercel') }, runtime))
+      installPhotoConfig(app, { provider: resolve('vercel') }, runtime)
       const html = await renderToString(app)
       expect(mock.mock.calls.map(([, modifiers]) => modifiers.width)).toEqual(requested)
       if (width === 500) expect(html).toContain('srcset="vercel:/photo.jpg?w=320&amp;q=72 320w"')

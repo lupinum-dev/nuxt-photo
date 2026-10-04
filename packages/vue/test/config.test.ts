@@ -13,7 +13,8 @@ import {
   PhotoValidationError,
 } from '../src'
 import { makePhoto } from '@test-fixtures/photos'
-import { PHOTO_LABELS, PHOTO_LOCALES } from '../src/provide/labels'
+import { resolvePhotoLabels, PHOTO_LOCALES } from '../src/provide/labels'
+import templates from '../src/provide/photoLocaleTemplates'
 import { installBrowserStubs, mountComponent } from './support/runtime'
 
 beforeEach(installBrowserStubs)
@@ -59,7 +60,8 @@ it.each([
 
 it('each bundled locale supplies all fourteen labels and indexed text', () => {
   for (const locale of PHOTO_LOCALES) {
-    const labels = PHOTO_LABELS[locale]
+    const labels = resolvePhotoLabels(locale)
+    if (!templates[locale]) throw new Error(`Missing plain Vue locale: ${locale}`)
     expect(Object.keys(labels)).toHaveLength(14)
     for (const value of Object.values(labels))
       expect(typeof value === 'string' ? value.length : value(2, 7).length).toBeGreaterThan(0)

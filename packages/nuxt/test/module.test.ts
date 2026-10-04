@@ -10,6 +10,7 @@ const updateTemplates = vi.fn()
 const addComponent = vi.fn()
 const addImports = vi.fn()
 const addPlugin = vi.fn()
+const addVitePlugin = vi.fn()
 const addTypeTemplate = vi.fn()
 const loggerWarn = vi.fn()
 const resolvePath = vi.fn(async (path: string) => `/resolved/${path}/dist/index.mjs`)
@@ -32,6 +33,7 @@ vi.mock('@nuxt/kit', () => ({
   updateTemplates,
   addImports,
   addPlugin,
+  addVitePlugin,
   addTypeTemplate,
   createResolver,
   defineNuxtModule: (definition: unknown) => definition,
@@ -66,6 +68,7 @@ function createNuxt() {
       watch: [] as string[],
       appConfig: {} as Record<string, unknown> & { nuxtPhoto: Record<string, unknown> },
       css: [] as string[],
+      i18n: { locales: [] as unknown[] },
       vite: {
         optimizeDeps: {
           include: ['existing-dependency'],
@@ -93,16 +96,63 @@ describe('nuxt-photo module', () => {
   })
 
   beforeEach(() => {
-    addTemplate.mockReset()
+    addTemplate.mockReset().mockImplementation((template) => ({
+      ...template,
+      dst: `/fixture/.nuxt/${template.filename}`,
+    }))
     updateTemplates.mockReset()
     addComponent.mockReset()
     addImports.mockReset()
     addPlugin.mockReset()
+    addVitePlugin.mockReset()
     addTypeTemplate.mockReset()
     loggerWarn.mockReset()
     createResolver.mockClear()
     resolvePath.mockClear()
     hasNuxtModule.mockReset()
+  })
+
+  // Catches an English-only i18n catalog or shipping unused translations to every app.
+  it.each([
+    { i18n: false, locales: [], labels: undefined, expected: ['en'] },
+    { i18n: true, locales: ['de', 'fr'], labels: undefined, expected: ['en', 'de', 'fr'] },
+    {
+      i18n: true,
+      locales: [{ code: 'de-AT' }, { code: 'fr' }, 'unknown', 'de'],
+      labels: { close: 'Custom' },
+      expected: ['en', 'de', 'fr'],
+    },
+    { i18n: true, locales: ['de', 'fr'], labels: 'he', expected: ['en', 'he'] },
+  ] as const)('bundles exactly $expected locales', async ({ i18n, locales, labels, expected }) => {
+    const nuxt = createNuxt()
+    nuxt.options.i18n.locales = [...locales]
+    hasNuxtModule.mockImplementation((name) => name === '@nuxtjs/i18n' && i18n)
+    await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, labels }, nuxt)
+    nuxt.callHook('modules:done')
+    const template = addTemplate.mock.calls.find(
+      ([t]) => t.filename === 'nuxt-photo-locales.mjs',
+    )![0]
+    const catalog = JSON.parse(template.getContents().slice('export default '.length))
+    expect(Object.keys(catalog)).toEqual(expected)
+    for (const values of Object.values(catalog)) expect(values).toHaveLength(14)
+    expect(catalog.en[0]).toBe('Photo viewer')
+    const plugin = addVitePlugin.mock.calls[0]![0]
+    expect(
+      plugin.resolveId(
+        './photoLocaleTemplates.mjs',
+        '/resolved/@lupinum/vue-photo/dist/provide/labels.mjs',
+      ),
+    ).toBe('/fixture/.nuxt/nuxt-photo-locales.mjs')
+    expect(
+      plugin.resolveId('./other.mjs', '/resolved/@lupinum/vue-photo/dist/provide/labels.mjs'),
+    ).toBeUndefined()
+    expect(
+      addTemplate.mock.calls
+        .find(([t]) => t.filename === 'nuxt-photo-internals.mjs')![0]
+        .getContents(),
+    ).toBe(
+      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"',
+    )
   })
 
   it('generates the local lookup and updates only its template on public asset changes', async () => {
