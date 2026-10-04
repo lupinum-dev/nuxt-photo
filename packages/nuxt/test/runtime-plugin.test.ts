@@ -22,7 +22,7 @@ describe('Nuxt photo providers', () => {
       'ipx',
       { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 },
       [1, 2],
-      [256, 384, 512, 640, 768, 1024, 1280, 1536, 2048, 2560, 3072],
+      [128, 256, 384, 512, 640, 768, 1024, 1280, 1536, 2048, 2560, 3072],
     ],
     [
       'vercel',
@@ -30,8 +30,8 @@ describe('Nuxt photo providers', () => {
       [1, 2],
       [640, 768, 1024, 1280, 1536],
     ],
-    ['ipx', { sm: 320, md: 640 }, [2, 1, 2], [256, 320, 640, 1280]],
-    ['cloudinary', { sm: 800, md: 1200 }, [0.5, 2], [256, 384, 400, 600, 1600, 2400]],
+    ['ipx', { sm: 320, md: 640 }, [2, 1, 2], [128, 256, 320, 640, 1280]],
+    ['cloudinary', { sm: 800, md: 1200 }, [0.5, 2], [128, 256, 384, 400, 600, 1600, 2400]],
     ['vercel', { sm: 320, md: 640 }, [2, 1, 2], [320, 640]],
   ] as const)(
     'uses the correct %s ladder for screens %j and densities %j',
@@ -47,7 +47,7 @@ describe('Nuxt photo providers', () => {
   it('uses screens × densities, app quality/format, and only IPX placeholders', () => {
     const { resolve, runtime } = createNuxtPhotoProviders(image, options, DEFAULT_WIDTHS)
     const ipx = resolve('ipx')
-    expect(runtime.widths(ipx)).toEqual([256, 320, 640, 1280])
+    expect(runtime.widths(ipx)).toEqual([128, 256, 320, 640, 1280])
     expect(ipx.url('/full.jpg', { width: 640 })).toBe('ipx:/full.jpg?w=640&q=72&f=webp')
     expect(ipx.placeholder!('/full.jpg')).toBe('ipx:/full.jpg?w=24&q=30&f=webp')
     const custom = createNuxtPhotoProviders(

@@ -69,7 +69,7 @@ for (const viewport of viewports) {
         expect(summary.provider).toBe('ipx')
         expect(summary.dpr).toBe(viewport.deviceScaleFactor)
         expect(summary.ladder).toEqual([
-          256, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
+          128, 256, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
         ])
         expect(summary.ladder).toContain(6144)
         const badges = await page.locator('.lab-badge').allTextContents()

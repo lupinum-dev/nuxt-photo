@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   image: {
     // Retain Tailwind screens; cover small thumbnails and 2× laptops on Vercel too.
     screens: {
+      '2xs': 128,
       xs: 256,
       '3xl': 1920,
       '4xl': 2560,

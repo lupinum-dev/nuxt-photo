@@ -28,6 +28,7 @@ it('caps core candidates and adds the intrinsic terminal width without passing s
   expect(definePhotoProvider(provider)).toBe(provider)
   const html = await image(provider)
   expect(url.mock.calls.map(([, opts]) => opts)).toEqual([
+    { width: 128 },
     { width: 256 },
     { width: 384 },
     { width: 512 },

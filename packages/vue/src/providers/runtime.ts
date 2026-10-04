@@ -1,6 +1,6 @@
 import type { PhotoProvider } from '../config'
 
-export const DEFAULT_WIDTHS = [256, 384, 512, 640, 828, 1080, 1280, 1640, 1920, 2560] as const
+export const DEFAULT_WIDTHS = [128, 256, 384, 512, 640, 828, 1080, 1280, 1640, 1920, 2560] as const
 /** Nuxt supplies transport constraints; the core alone builds image candidates. */
 export interface ProviderRuntime {
   resolve(name: string): PhotoProvider
