@@ -13,7 +13,7 @@ import {
   type AreaMetrics,
   type LightboxNavigationMode,
   type LightboxTransitionOption,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'

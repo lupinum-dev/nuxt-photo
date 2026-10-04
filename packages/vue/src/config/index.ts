@@ -149,18 +149,3 @@ export function providePhotoConfig(
   provide(photoConfigKey, config)
   return config
 }
-export function isLightboxOptions(
-  value: boolean | Component | LightboxOptions | undefined,
-): value is LightboxOptions {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !(
-      'setup' in value ||
-      'render' in value ||
-      'template' in value ||
-      '__vccOpts' in value ||
-      'name' in value
-    )
-  )
-}

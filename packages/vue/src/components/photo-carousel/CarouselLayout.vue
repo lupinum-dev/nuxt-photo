@@ -2,11 +2,12 @@
   <div
     v-if="photos.length === 0"
     class="np-carousel np-carousel--empty"
+    :class="ui?.root"
     ref="root"
     v-bind="$attrs"
   />
 
-  <div v-else class="np-carousel" ref="root" :style="cssVarStyle" v-bind="$attrs">
+  <div v-else :class="ui?.root" class="np-carousel" ref="root" :style="cssVarStyle" v-bind="$attrs">
     <!-- First in the tab order, so keyboard users can stop the motion before anything else. -->
     <button
       v-if="autoplayAvailable"
@@ -26,7 +27,7 @@
           v-for="(photo, index) in photos"
           :key="photo.id"
           class="np-carousel__slide"
-          :class="slideClass"
+          :class="ui?.slide"
           v-bind="interactiveAttrs(photo, index)"
         >
           <div
@@ -44,10 +45,9 @@
                 :photo="photo"
                 context="slide"
                 :sizes="slideSizes"
-                :loading="index === 0 ? 'eager' : 'lazy'"
                 :priority="index === 0"
                 class="np-carousel__media"
-                :class="imgClass"
+                :class="ui?.img"
               />
             </slot>
           </div>
@@ -55,11 +55,11 @@
       </div>
 
       <div
-        v-if="showMultiControls && (showArrows || showCounter)"
+        v-if="showMultiControls && (hasControl('arrows') || hasControl('counter'))"
         class="np-carousel__controls"
-        :class="controlsClass"
+        :class="ui?.controls"
       >
-        <template v-if="showArrows">
+        <template v-if="hasControl('arrows')">
           <slot
             name="controls"
             :go-to-prev="goToPrev"
@@ -96,7 +96,7 @@
         </template>
       </div>
 
-      <div v-if="showMultiControls && showCounter" class="np-carousel__counter">
+      <div v-if="showMultiControls && hasControl('counter')" class="np-carousel__counter">
         <span aria-hidden="true">{{ selectedIndex + 1 }} / {{ photos.length }}</span>
         <!-- Announcing every automatic slide change would interrupt screen reader users. -->
         <span data-np-sr-only :aria-live="autoplayPlaying ? 'off' : 'polite'" aria-atomic="true">
@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    <div v-if="hasCaption" class="np-carousel__caption" :class="captionClass">
+    <div v-if="hasCaption" class="np-carousel__caption" :class="ui?.caption">
       <slot
         name="caption"
         :photo="photos[selectedIndex]"
@@ -116,7 +116,7 @@
       </slot>
     </div>
 
-    <div v-if="showMultiControls && showDots" class="np-carousel__dots">
+    <div v-if="showMultiControls && hasControl('dots')" class="np-carousel__dots">
       <slot name="dots" :snaps="snaps" :selected-index="selectedSnapIndex" :go-to="goTo">
         <button
           v-for="(slideIndex, i) in snaps"
@@ -131,7 +131,7 @@
       </slot>
     </div>
 
-    <div v-if="showMultiControls && showThumbnails" class="np-carousel__thumbs">
+    <div v-if="showMultiControls && hasControl('thumbnails')" class="np-carousel__thumbs">
       <div ref="thumbsRef" class="np-carousel__thumbs-viewport">
         <div class="np-carousel__thumbs-container">
           <button
@@ -139,7 +139,7 @@
             :key="photo.id"
             type="button"
             class="np-carousel__thumb"
-            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
+            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, ui?.thumb]"
             :aria-label="photo.alt || labels.goToSlide(index + 1)"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
@@ -155,7 +155,6 @@
                 :photo="photo"
                 context="thumb"
                 :sizes="thumbnailSizes(photo)"
-                loading="lazy"
                 class="np-carousel__thumb-img"
               />
             </slot>
@@ -168,6 +167,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, ref, toRef, useSlots, type ComponentPublicInstance } from 'vue'
+import type { PhotoUi, CarouselControl } from '../../types/ui'
 import { PhotoImage } from '../../primitives/index'
 import type {
   CarouselCaptionSlotProps,
@@ -176,9 +176,9 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
+import type { PhotoCarouselAutoplayOptions, ResolvedPhotoItem as PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
-import { useContainerWidth } from '../../composables/useContainerWidth'
+import { useElementWidth } from '../../composables/useElementWidth'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 import type { GalleryRuntime } from '../../gallery/runtime'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
@@ -204,28 +204,20 @@ const props = defineProps<{
   dragFree?: boolean
   gallery: GalleryRuntime
   autoplay: boolean | PhotoCarouselAutoplayOptions
-
-  showArrows: boolean
-  showThumbnails: boolean
-  showCounter: boolean
-  showDots: boolean
+  controls: CarouselControl[]
+  ui?: PhotoUi<'PhotoCarousel'>
 
   slideSize?: string
   slideAspect?: string
   gap?: string
   thumbSize?: string
 
-  slideClass?: string
-  imgClass?: string
-  thumbClass?: string
-  captionClass?: string
-  controlsClass?: string
-
   // Optional lightbox activation and transition-source integration.
   onSlideActivate?: (index: number) => void | Promise<void>
   setSlideRef?: (index: number) => (el: Element | ComponentPublicInstance | null) => void
 }>()
 
+const hasControl = (control: CarouselControl) => props.controls.includes(control)
 const root = ref<HTMLElement | null>(null)
 const slots = useSlots()
 const {
@@ -254,10 +246,10 @@ const {
   dragFree: toRef(props, 'dragFree'),
   gallery: props.gallery,
   autoplay: toRef(props, 'autoplay'),
-  showThumbnails: toRef(props, 'showThumbnails'),
+  hasThumbnails: computed(() => hasControl('thumbnails')),
 })
 
-const { containerWidth } = useContainerWidth(emblaRef)
+const { containerWidth } = useElementWidth(emblaRef)
 const slideSizes = computed(() => {
   const size = props.slideSize ?? '100%'
   // HTML sizes forbids percentages, including those nested in calc()/clamp().

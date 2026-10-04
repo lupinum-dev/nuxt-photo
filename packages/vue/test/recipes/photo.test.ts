@@ -26,29 +26,24 @@ describe('Photo', () => {
   })
 
   it.each([
-    [true, undefined, 'eager', 'high'],
-    [true, 'lazy', 'lazy', 'high'],
-    [false, undefined, 'lazy', null],
-  ] as const)(
-    'applies priority %s with explicit loading %s',
-    async (priority, loading, expectedLoading, expectedPriority) => {
-      const mounted = await mountComponent(Photo, {
-        props: { photo: makePhoto(), priority, loading },
-      })
-      const image = mounted.container.querySelector('img')!
-      expect(image.getAttribute('loading')).toBe(expectedLoading)
-      expect(image.getAttribute('fetchpriority')).toBe(expectedPriority)
-      mounted.unmount()
-    },
-  )
+    [true, 'eager', 'high'],
+    [false, 'lazy', null],
+  ] as const)('applies priority %s', async (priority, expectedLoading, expectedPriority) => {
+    const mounted = await mountComponent(Photo, {
+      props: { photo: makePhoto(), priority },
+    })
+    const image = mounted.container.querySelector('img')!
+    expect(image.getAttribute('loading')).toBe(expectedLoading)
+    expect(image.getAttribute('fetchpriority')).toBe(expectedPriority)
+    mounted.unmount()
+  })
 
   it('merges consumer attrs and listeners with interactive trigger behavior', async () => {
     const onClick = vi.fn()
     const mounted = await mountComponent(Photo, {
       props: {
         photo: makePhoto({ id: 'interactive' }),
-        lightbox: true,
-        transition: 'none',
+        lightbox: { transition: 'none' as const },
         id: 'reviewed-photo',
         class: 'consumer-photo',
         'data-test-id': 'photo-root',
@@ -132,8 +127,7 @@ describe('Photo', () => {
         () => () =>
           h(Photo, {
             photo,
-            lightbox: true,
-            transition: 'none',
+            lightbox: { transition: 'none' as const },
             provider: {
               url: (src: string) => src,
               srcset: (_photo: PhotoItem, context: 'thumb' | 'slide') => {

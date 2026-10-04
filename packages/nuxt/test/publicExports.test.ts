@@ -17,15 +17,16 @@ import {
   PhotoTrigger,
   PhotoValidationError,
   responsive,
-  resolveResponsiveParameter,
-  useContainerWidth,
   useLightbox,
   usePhotoLabels,
-  provideLightbox,
 } from '../src/runtime/app'
 import type { LightboxCaptionSlotProps, PhotoItem } from '../src/runtime/app'
 
 describe('@lupinum/nuxt-photo app exports', () => {
+  it('exports only the module from the package root', async () => {
+    expect(Object.keys(await import('../src/module')).sort()).toEqual(['default'])
+  })
+
   it('exposes the documented app runtime API exactly', () => {
     expect(Object.keys(app).sort()).toEqual(
       [
@@ -48,19 +49,15 @@ describe('@lupinum/nuxt-photo app exports', () => {
         'createPhoto',
         'definePhotoProvider',
         'validatePhotos',
-        'resolveResponsiveParameter',
         'responsive',
-        'useContainerWidth',
         'useLightbox',
         'usePhotoLabels',
-        'provideLightbox',
       ].sort(),
     )
   })
 
   it('exposes the Nuxt app-facing API from one package', () => {
     expect(responsive({ 0: 1 })(320)).toBe(1)
-    expect(resolveResponsiveParameter(undefined, 320, 2)).toBe(2)
     expect(Photo).toBeTypeOf('object')
     expect(PhotoAlbum).toBeTypeOf('object')
     expect(PhotoCarousel).toBeTypeOf('object')
@@ -78,8 +75,6 @@ describe('@lupinum/nuxt-photo app exports', () => {
     expect(PhotoValidationError).toBeTypeOf('function')
     expect(useLightbox).toBeTypeOf('function')
     expect(usePhotoLabels).toBeTypeOf('function')
-    expect(provideLightbox).toBeTypeOf('function')
-    expect(useContainerWidth).toBeTypeOf('function')
   })
 
   it('keeps consumer-proven Nuxt app types available', () => {

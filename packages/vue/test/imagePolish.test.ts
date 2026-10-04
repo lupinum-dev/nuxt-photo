@@ -147,19 +147,16 @@ describe('image previews and sizes', () => {
   it.each([
     {
       sizes: undefined,
-      loading: undefined,
       priority: false,
       expected: 'auto, 100vw',
       hint: 'lazy',
     },
-    { sizes: '50vw', loading: 'lazy', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
-    { sizes: 'auto, 50vw', loading: 'lazy', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
-    { sizes: '50vw', loading: 'eager', priority: false, expected: '50vw', hint: 'eager' },
-    { sizes: '50vw', loading: undefined, priority: true, expected: '50vw', hint: 'eager' },
-    { sizes: '50vw', loading: 'lazy', priority: true, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: '50vw', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: 'auto, 50vw', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: '50vw', priority: true, expected: '50vw', hint: 'eager' },
   ] as const)('renders sizes $expected with loading $hint and priority $priority', async (row) => {
     const mounted = await mountComponent(PhotoImage, {
-      props: { photo: makePhoto(), sizes: row.sizes, loading: row.loading, priority: row.priority },
+      props: { photo: makePhoto(), sizes: row.sizes, priority: row.priority },
     })
     const image = mounted.container.querySelector('img')!
     expect(image.sizes).toBe(row.expected)

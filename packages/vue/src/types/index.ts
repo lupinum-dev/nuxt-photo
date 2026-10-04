@@ -9,3 +9,5 @@ export type {
   CarouselControlsSlotProps,
   CarouselDotsSlotProps,
 } from './slots'
+
+export type { PhotoUi, CarouselControl } from './ui'

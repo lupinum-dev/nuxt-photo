@@ -5,7 +5,7 @@ import {
   computeMasonryLayout,
   computeRowsLayout,
   responsive,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
 } from '../../src/core/index'
 import { createPhotoSet } from '@test-fixtures/photos'
 

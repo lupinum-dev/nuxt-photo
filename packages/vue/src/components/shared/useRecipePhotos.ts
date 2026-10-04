@@ -1,5 +1,10 @@
 import { computed, onMounted, ref, watch, type ComputedRef } from 'vue'
-import type { InvalidPhotoPolicy, InvalidPhotosEvent, PhotoItem } from '../../core/index'
+import type {
+  InvalidPhotoPolicy,
+  InvalidPhotosEvent,
+  PhotoItem,
+  ResolvedPhotoItem,
+} from '../../core/index'
 import { usePhotoConfig } from '../../config'
 import { resolveRecipePhotos } from '../../core/photo/resolve'
 
@@ -8,7 +13,7 @@ export function useRecipePhotos<TMeta extends object>(
   owner: string,
   validation: () => InvalidPhotoPolicy | undefined,
   reportInvalid: (event: InvalidPhotosEvent) => void,
-): ComputedRef<readonly PhotoItem<TMeta>[]> {
+): ComputedRef<readonly ResolvedPhotoItem<TMeta>[]> {
   const config = usePhotoConfig()
   const resolution = computed(() => {
     try {

@@ -1,3 +1,4 @@
+import { provideLightbox } from '../src/composables/provideLightbox'
 // @vitest-environment jsdom
 
 import { createApp, defineComponent, h, type Component } from 'vue'
@@ -11,7 +12,6 @@ import {
   LightboxSlide,
   LightboxViewport,
   PhotoTrigger,
-  provideLightbox,
 } from '@lupinum/vue-photo'
 import { makePhoto } from '@test-fixtures/photos'
 

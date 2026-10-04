@@ -100,6 +100,9 @@ for (const viewport of viewports) {
               file.src = image.currentSrc
               await file.decode()
               const photo = photos.find((photo) => photo.alt === image.alt)!
+              if (photo.width === undefined) {
+                throw new Error(`Image-budget fixture "${photo.id}" has no source width`)
+              }
               const best = Math.min(
                 image.getBoundingClientRect().width * devicePixelRatio,
                 photo.width,

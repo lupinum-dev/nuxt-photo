@@ -1,6 +1,6 @@
 // Internal framework-free barrel used by the Vue implementation.
 
-export { responsive, resolveResponsiveParameter, mergeResponsiveBreakpoints } from './types'
+export { responsive, resolveResponsiveValue, mergeResponsiveBreakpoints } from './types'
 export {
   normalizePhotos,
   type NormalizePhotosOptions,
@@ -13,6 +13,7 @@ export {
 } from './photo/normalize'
 export type {
   PhotoItem,
+  ResolvedPhotoItem,
   AlbumLayout,
   RowsAlbumLayout,
   ColumnsAlbumLayout,

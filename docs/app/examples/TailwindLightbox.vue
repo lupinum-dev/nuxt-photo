@@ -96,8 +96,7 @@
             :key="photo.id"
             :photo="photo"
             :index="i"
-            class="grid min-w-0 flex-[0_0_100%] place-items-center"
-            img-class="rounded-md shadow-[0_30px_80px_rgb(0_0_0/0.45),0_2px_10px_rgb(0_0_0/0.35)] in-data-zoomed:rounded-none in-data-zoomed:shadow-none"
+            class="grid min-w-0 flex-[0_0_100%] place-items-center [&_img]:rounded-md [&_img]:shadow-[0_30px_80px_rgb(0_0_0/0.45),0_2px_10px_rgb(0_0_0/0.35)] in-data-zoomed:[&_img]:rounded-none in-data-zoomed:[&_img]:shadow-none"
           />
         </div>
       </div>

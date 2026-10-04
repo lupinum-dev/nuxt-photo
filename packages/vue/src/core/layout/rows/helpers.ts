@@ -1,4 +1,4 @@
-import type { PhotoItem } from '../../types'
+import type { ResolvedPhotoItem as PhotoItem } from '../../types'
 import { round } from '../../utils/math'
 
 /** Return the aspect ratio for a photo item. */

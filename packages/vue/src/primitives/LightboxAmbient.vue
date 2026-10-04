@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, shallowRef, watch, type ComponentPublicInstance } from 'vue'
-import type { PhotoItem } from '../core/index'
+import type { ResolvedPhotoItem as PhotoItem } from '../core/index'
 import { resolvePhotoImage, type ResolvedPhotoImage } from '../providers/resolve'
 import { useLightboxInject } from '../lightbox/inject'
 

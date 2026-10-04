@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import type { PhotoItem } from '../../src/core/types'
+import type { ResolvedPhotoItem as PhotoItem } from '../../src/core/types'
 import { computeColumnsLayout } from '../../src/core/layout/columns'
 import { computeRowsLayout } from '../../src/core/layout/rows'
 import { computeMasonryLayout } from '../../src/core/layout/masonry'

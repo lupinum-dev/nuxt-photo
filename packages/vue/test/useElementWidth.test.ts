@@ -2,7 +2,7 @@
 
 import { createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
-import { useContainerWidth } from '../src/composables/useContainerWidth'
+import { useElementWidth } from '../src/composables/useElementWidth'
 
 function mountWidthProbe(width: number) {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
@@ -44,7 +44,7 @@ function mountWidthProbe(width: number) {
     defineComponent({
       setup() {
         const el = ref<HTMLElement | null>(null)
-        const { containerWidth } = useContainerWidth(el, {
+        const { containerWidth } = useElementWidth(el, {
           breakpoints: [600, 900],
         })
 
@@ -68,7 +68,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('useContainerWidth', () => {
+describe('useElementWidth', () => {
   it('keeps real widths below the smallest breakpoint', async () => {
     const { app, container } = mountWidthProbe(500)
     await nextTick()

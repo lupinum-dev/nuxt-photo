@@ -36,7 +36,7 @@ it('keeps photo X in both the open lightbox and inline carousel after removing a
   document.body.append(host)
   const app = createApp(
     defineComponent({
-      render: () => h(PhotoCarousel, { photos: photos.value, lightbox: true, transition: 'none' }),
+      render: () => h(PhotoCarousel, { photos: photos.value, lightbox: { transition: 'none' } }),
     }),
   )
   app.mount(host)

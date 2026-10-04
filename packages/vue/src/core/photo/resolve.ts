@@ -4,7 +4,7 @@ import {
   type NormalizePhotosOptions,
   type InvalidPhotosEvent,
 } from './normalize'
-import type { PhotoItem } from '../types'
+import type { ResolvedPhotoItem as PhotoItem } from '../types'
 
 export type ResolveRecipePhotosOptions = {
   validation?: InvalidPhotoPolicy

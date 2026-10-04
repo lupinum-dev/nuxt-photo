@@ -1,61 +1,23 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue'
-import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/index'
+import type { PhotoItem } from '../core/index'
 import { normalizePhotos } from '../core/photo/normalize'
 import { useLightboxRuntimeState } from '../lightbox/runtime'
 import { createLightboxController } from '../lightbox/controller'
-import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
+import { providePhotoConfig, type LightboxOptions } from '../config'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import type { LightboxProviderController, LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
 
-/**
- * Creates a full lightbox context and provides it to child components.
- * This is the composable for providing context to custom lightbox components.
- * It is the supported advanced entrypoint above the internal lightbox state.
- *
- * @example
- * ```vue
- * <script setup>
- * const { open, close, isOpen, activePhoto } = provideLightbox(photos)
- * </script>
- * <template>
- *   <LightboxRoot>
- *     <LightboxOverlay />
- *     <LightboxViewport v-slot="{ photos, viewportRef }">
- *       <!-- custom slide rendering -->
- *     </LightboxViewport>
- *   </LightboxRoot>
- * </template>
- * ```
- */
+/** Internal provider shared by recipes and LightboxProvider. */
 export function provideLightbox<TMeta extends object = Readonly<Record<string, unknown>>>(
   photosInput: MaybeRefOrGetter<PhotoItem<TMeta> | readonly PhotoItem<TMeta>[]>,
-  options?: {
-    transition?: MaybeRefOrGetter<LightboxTransitionOption | undefined>
-    navigation?: MaybeRefOrGetter<LightboxNavigationMode | undefined>
-    resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null
-    minZoom?: number
-    validation?: InvalidPhotoPolicy
-    component?: LightboxOptions['component']
-    history?: boolean
-    deepLink?: boolean | string
-    tools?: LightboxOptions['tools']
-    provider?: MaybeRefOrGetter<PhotoProvider | string | undefined>
-  },
+  options?: MaybeRefOrGetter<LightboxOptions & { validation?: InvalidPhotoPolicy }>,
+  resolveSlide?: (photo: PhotoItem<TMeta>) => LightboxSlideRenderer<TMeta> | null,
 ): LightboxProviderController<TMeta> {
-  const config = providePhotoConfig(() => ({
-    provider: toValue(options?.provider),
-    lightbox: {
-      component: options?.component,
-      history: options?.history,
-      deepLink: options?.deepLink,
-      tools: options?.tools,
-      transition: toValue(options?.transition),
-      navigation: toValue(options?.navigation),
-      minZoom: options?.minZoom,
-    },
-    validation: options?.validation,
-  }))
+  const config = providePhotoConfig(() => {
+    const { validation, ...lightbox } = toValue(options) ?? {}
+    return { lightbox, validation }
+  })
   const photos = computed(() => {
     const value = toValue(photosInput)
     return normalizePhotos<TMeta>(Array.isArray(value) ? value : [value], {
@@ -64,18 +26,11 @@ export function provideLightbox<TMeta extends object = Readonly<Record<string, u
       resolveDimensions: config.value.dimensions,
     }).photos
   })
-  const ctx = useLightboxRuntimeState(
-    photos,
-    options?.transition,
-    options?.minZoom,
-    options?.navigation,
-  )
+  const ctx = useLightboxRuntimeState(photos)
 
   // Provide the shared lightbox context plus custom slide resolution.
   provideLightboxContexts(ctx, {
-    resolveSlide: options?.resolveSlide as
-      | ((photo: PhotoItem) => LightboxSlideRenderer | null)
-      | undefined,
+    resolveSlide: resolveSlide as ((photo: PhotoItem) => LightboxSlideRenderer | null) | undefined,
   })
 
   return {

@@ -27,11 +27,10 @@
             :photo="photo"
             context="slide"
             :sizes="frameWidth > 0 ? `${frameWidth}px` : '100vw'"
-            loading="eager"
+            priority
             decoding="async"
             :fetchpriority="isActive ? 'high' : 'low'"
             data-np-slide-img
-            :class="imgClass"
           />
         </div>
       </div>
@@ -41,7 +40,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, inject, type PropType, type VNodeChild } from 'vue'
-import type { PhotoItem } from '../core/index'
+import { normalizePhotos, type PhotoItem } from '../core/index'
 import { LightboxSlideRendererKey } from '../provide/keys'
 import type { LightboxSlideRenderer } from '../provide/keys'
 import type { LightboxSlideSlotProps } from '../types/slots'
@@ -61,8 +60,6 @@ const props = defineProps<{
   frameClass?: string
   /** Classes for the zoom and pan wrapper. */
   zoomClass?: string
-  /** Classes for the `<img>`. */
-  imgClass?: string
 }>()
 
 const ctx = useLightboxInject('LightboxSlide')
@@ -74,7 +71,14 @@ const isActive = computed(() => ctx.activeIndex.value === props.index)
 const showsContent = computed(() => isActive.value || ctx.isSlideLeaving(props.index))
 const mediaMounted = computed(() => ctx.isSlideMediaMounted(props.index))
 
-const frameStyle = computed(() => ctx.getSlideFrameStyle(props.photo))
+const frameStyle = computed(() =>
+  ctx.getSlideFrameStyle(
+    normalizePhotos([props.photo], {
+      owner: 'LightboxSlide',
+      resolveDimensions: ctx.photoConfig.value.dimensions,
+    }).photos[0]!,
+  ),
+)
 
 // Extract pixel dimensions from frame style for slot props
 const frameWidth = computed(() => Number.parseInt(frameStyle.value.width as string) || 0)

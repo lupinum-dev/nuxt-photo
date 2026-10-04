@@ -14,7 +14,7 @@ function snapToBreakpoint(width: number, breakpoints: readonly number[]): number
  * scrollbar-oscillation detection. SSR-safe: initialises from `defaultContainerWidth`
  * and only starts the observer after mount.
  */
-export function useContainerWidth(
+export function useElementWidth(
   containerRef: Readonly<Ref<HTMLElement | null | undefined>>,
   options?: {
     /** Pre-render width so the JS layout runs on the server. Avoids CLS when it matches the breakpoint. */

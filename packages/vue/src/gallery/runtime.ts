@@ -7,7 +7,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import type { PhotoItem } from '../core/types'
+import type { PhotoItem, ResolvedPhotoItem } from '../core/types'
 
 /** Template-ref contract shared by every gallery recipe. Closed handles report null. */
 export interface GalleryHandle<TMeta extends object = Readonly<Record<string, unknown>>> {
@@ -23,7 +23,7 @@ const runtimes = new WeakMap<object, GalleryRuntime>()
 
 /** One writer for gallery identity and visibility. Transport and input only submit requests. */
 export function useGalleryRuntime(
-  photos: Readonly<Ref<readonly PhotoItem[]>>,
+  photos: Readonly<Ref<readonly ResolvedPhotoItem[]>>,
   root?: () => HTMLElement | null,
 ): GalleryRuntime {
   const instance = getCurrentInstance()
@@ -87,11 +87,11 @@ export function useGalleryRuntime(
   return runtime
 }
 export interface GalleryRuntime {
-  photos: Readonly<Ref<readonly PhotoItem[]>>
+  photos: Readonly<Ref<readonly ResolvedPhotoItem[]>>
   isOpen: ComputedRef<boolean>
   activeId: ComputedRef<string | null>
   activeIndex: ComputedRef<number>
-  activePhoto: ComputedRef<PhotoItem | null>
+  activePhoto: ComputedRef<ResolvedPhotoItem | null>
   direction: ComputedRef<'ltr' | 'rtl'>
   requestIndex(index: number): void
   requestVisibility(isOpen: boolean): void

@@ -1,5 +1,11 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { AreaMetrics, PanBounds, PanState, PhotoItem, ZoomState } from '../../core/index'
+import type {
+  AreaMetrics,
+  PanBounds,
+  PanState,
+  ResolvedPhotoItem as PhotoItem,
+  ZoomState,
+} from '../../core/index'
 
 export type GestureInputConfig = {
   state: {

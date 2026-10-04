@@ -1,5 +1,10 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { AreaMetrics, PhotoItem, RectLike, TransitionModeConfig } from '../../core/index'
+import type {
+  AreaMetrics,
+  ResolvedPhotoItem as PhotoItem,
+  RectLike,
+  TransitionModeConfig,
+} from '../../core/index'
 import type { MotionVisualState } from './visual-state'
 
 export type CapturedOpen = {

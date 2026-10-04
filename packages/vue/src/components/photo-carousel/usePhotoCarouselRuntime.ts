@@ -40,7 +40,7 @@ type CarouselRuntimeConfig = {
   dragFree: Readonly<Ref<boolean | undefined>>
   gallery: GalleryRuntime
   autoplay: Readonly<Ref<boolean | PhotoCarouselAutoplayOptions>>
-  showThumbnails: Readonly<Ref<boolean>>
+  hasThumbnails: Readonly<Ref<boolean>>
 }
 
 /** Own both stable Embla instances and expose one slide-per-snap state model. */
@@ -121,7 +121,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   const snaps = computed(() => snapTargets.value)
 
   function syncThumbs() {
-    if (!config.showThumbnails.value) return
+    if (!config.hasThumbnails.value) return
     thumbsApi.value?.scrollTo(selectedIndex.value)
   }
 

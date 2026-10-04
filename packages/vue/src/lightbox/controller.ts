@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import type { PhotoItem } from '../core/index'
+import type { ResolvedPhotoItem as PhotoItem } from '../core/index'
 import type { LightboxController, InternalLightboxContext } from '../provide/keys'
 
 export function createLightboxController<TMeta extends object = Readonly<Record<string, unknown>>>(

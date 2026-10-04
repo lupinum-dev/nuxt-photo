@@ -3,7 +3,7 @@
     ref="containerRef"
     v-bind="$attrs"
     class="np-album"
-    :class="[scopeClass, `np-album--${layoutType}`]"
+    :class="[ui?.root, scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
     <template v-if="renderBranch.kind === 'rows'">
@@ -18,7 +18,7 @@
           class="np-album__item"
           :class="[
             renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
-            itemClass,
+            ui?.item,
           ]"
           :style="item.style"
           v-bind="itemBindings(item.photo, item.index)"
@@ -29,7 +29,7 @@
             :width="item.width"
             :height="item.height"
             :hidden="isHidden(item.photo)"
-            :img-class="imgClass"
+            :image-class="ui?.img"
             :sizes="item.computedSizes"
             :priority="item.index < priority"
           >
@@ -62,7 +62,7 @@
             v-for="entry in group.entries"
             :key="entry.photo.id"
             class="np-album__item"
-            :class="itemClass"
+            :class="ui?.item"
             :style="itemStyle(entry, group)"
             v-bind="itemBindings(entry.photo, entry.index)"
           >
@@ -72,7 +72,7 @@
               :width="entry.width"
               :height="entry.height"
               :hidden="isHidden(entry.photo)"
-              :img-class="imgClass"
+              :image-class="ui?.img"
               :sizes="thumbnailSizes(entry)"
               :priority="entry.index < priority"
             >
@@ -90,7 +90,7 @@
         v-for="(photo, index) in renderBranch.photos"
         :key="photo.id"
         class="np-album__item"
-        :class="itemClass"
+        :class="ui?.item"
         :style="ssrItemStyle(photo)"
         v-bind="itemBindings(photo, index)"
       >
@@ -100,7 +100,7 @@
           :width="photo.width"
           :height="photo.height"
           :hidden="false"
-          :img-class="imgClass"
+          :image-class="ui?.img"
           :sizes="nativeSizes"
           :priority="index < priority"
         >
@@ -116,13 +116,11 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import {
-  providePhotoConfig,
-  isLightboxOptions,
-  type LightboxOptions,
-  type PhotoProvider,
-} from '../config'
-import { computed, defineComponent, h, type Component } from 'vue'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
+import { computed, defineComponent, h } from 'vue'
+import type { PhotoUi } from '../types/ui'
+import { useRecipeLightbox } from './shared/useRecipeLightbox'
+
 import {
   mergeResponsiveBreakpoints,
   DEFAULT_COLUMNS,
@@ -130,8 +128,6 @@ import {
   DEFAULT_SPACING,
   DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
-  type LightboxNavigationMode,
-  type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
   type ResponsivePhotoSizes,
@@ -142,7 +138,7 @@ import {
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { devWarn } from '../core/env'
-import { useAlbumLightbox } from './photo-album/lightbox'
+import { useCollectionLightbox } from './shared/useCollectionLightbox'
 import { useGalleryModel } from '../gallery/model'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 
@@ -176,6 +172,7 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
     active?: string | null
+    ui?: PhotoUi<'PhotoAlbum'>
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -220,35 +217,18 @@ const props = withDefaults(
     /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
     provider?: PhotoProvider | string
     /**
-     * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
+     * `true` opens the built-in lightbox; `false` turns it off. Use `lightbox.component` to replace the viewer. Read once
      * at mount; change the component `key` to remount.
      * @default true
      */
-    lightbox?: boolean | Component | LightboxOptions
-    /**
-     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
-     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
-     * change while mounted.
-     * @default 'auto'
-     */
-    transition?: LightboxTransitionOption
-    /**
-     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
-     * mounted.
-     * @default 'slide'
-     */
-    navigation?: LightboxNavigationMode
-    /** Classes for each photo wrapper. */
-    itemClass?: string
-    /** Classes for each `<img>`. */
-    imgClass?: string
+    lightbox?: boolean | LightboxOptions
   }>(),
   {
+    lightbox: undefined,
     layout: 'rows',
     priority: 0,
     spacing: DEFAULT_SPACING,
     padding: DEFAULT_PADDING,
-    lightbox: true,
   },
 )
 
@@ -278,9 +258,11 @@ if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
-const photoConfig = providePhotoConfig(() => ({
+const { options: recipeLightboxOptions } = useRecipeLightbox('PhotoAlbum', () => props.lightbox)
+
+providePhotoConfig(() => ({
   provider: props.provider,
-  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+  lightbox: recipeLightboxOptions(),
   validation: props.validation,
 }))
 
@@ -303,7 +285,7 @@ const {
   isOpen,
   activeId: ownerActiveId,
   activePhoto: ownerActivePhoto,
-} = useAlbumLightbox(normalizedPhotos, props, (): HTMLElement | null => containerRef.value)
+} = useCollectionLightbox(normalizedPhotos, props, (): HTMLElement | null => containerRef.value)
 
 const { activeId, activePhoto } = useGalleryModel(
   'PhotoAlbum',

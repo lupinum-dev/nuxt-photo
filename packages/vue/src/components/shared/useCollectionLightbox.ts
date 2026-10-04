@@ -10,51 +10,43 @@ import {
 import { useGalleryRuntime } from '../../gallery/runtime'
 import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
-import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../../core/index'
-import { usePhotoConfig, isLightboxOptions, type LightboxOptions } from '../../config'
+import type { ResolvedPhotoItem as PhotoItem } from '../../core/index'
+import { usePhotoConfig, type LightboxOptions } from '../../config'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
-type AlbumLightboxProps = {
-  lightbox?: boolean | Component | LightboxOptions
-  transition?: LightboxTransitionOption
-  navigation?: LightboxNavigationMode
+type CollectionLightboxProps = {
+  lightbox?: boolean | LightboxOptions
 }
 
-export function useAlbumLightbox<TMeta extends object>(
+export function useCollectionLightbox<TMeta extends object>(
   photos: ComputedRef<readonly PhotoItem<TMeta>[]>,
-  props: AlbumLightboxProps,
+  props: CollectionLightboxProps,
   root: () => HTMLElement | null,
+  owner = 'PhotoAlbum',
+  defaultEnabled = true,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
   if (!parentGroup) useGalleryRuntime(photos, root)
-  warnOnSetupOptionChanges('PhotoAlbum', {
-    lightbox: () => props.lightbox,
-  })
+  if (!parentGroup)
+    warnOnSetupOptionChanges(owner, {
+      lightbox: () =>
+        typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
+    })
   const delegatedGroup = parentGroup?.enabled ? parentGroup : null
   const injectedLightbox = usePhotoConfig().value.lightbox.component ?? null
 
   const resolvedLightboxComponent = !parentGroup
-    ? resolveLightboxComponent(
-        isLightboxOptions(props.lightbox) ? true : props.lightbox,
-        injectedLightbox,
-        Lightbox,
-        true,
-      )
+    ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, defaultEnabled)
     : null
   const hasOwnLightbox = resolvedLightboxComponent !== null
   const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)
   const LightboxComponent: Component | null = resolvedLightboxComponent
 
-  const ownCtx = hasOwnLightbox
-    ? provideLightbox(photos, {
-        transition: () => props.transition,
-        navigation: () => props.navigation,
-      })
-    : null
+  const ownCtx = hasOwnLightbox ? provideLightbox(photos) : null
 
   const thumbElsMap: Record<number, HTMLElement | null> = {}
 
@@ -188,6 +180,7 @@ export function useAlbumLightbox<TMeta extends object>(
     hasOwnLightbox,
     LightboxComponent,
     itemBindings,
+    setItemRef,
     isHidden,
     open,
     openById,

@@ -21,6 +21,7 @@
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, onMounted, ref, watch } from 'vue'
 import type { PhotoItem } from '../core/index'
+import { normalizePhotos } from '../core/photo/normalize'
 import { usePhotoConfig, type PhotoProvider } from '../config'
 import { resolvePhotoImage, type PhotoRenderContext } from '../providers/resolve'
 
@@ -38,12 +39,7 @@ const props = withDefaults(
     context?: PhotoRenderContext
     /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
     provider?: PhotoProvider | string
-    /**
-     * Native image `loading` hint. Use `'eager'` for images in the first screen.
-     * @default 'lazy'
-     */
-    loading?: 'lazy' | 'eager'
-    /** Load eagerly with high fetch priority. Explicit `loading` wins. @default false */
+    /** Load eagerly with high fetch priority. @default false */
     priority?: boolean
     /** Layout-computed sizes. Always wins; providers do not own sizes. */
     sizes?: string
@@ -60,8 +56,14 @@ const config = computed(() => {
     typeof props.provider === 'string' ? parent.providers.resolve(props.provider) : props.provider
   return provider ? { ...parent, provider } : parent
 })
-const resolved = computed(() => resolvePhotoImage(props.photo, props.context, config.value))
-const effectiveLoading = computed(() => props.loading ?? (props.priority ? 'eager' : 'lazy'))
+const resolved = computed(() => {
+  const photo = normalizePhotos<TMeta>([props.photo], {
+    owner: 'PhotoImage',
+    resolveDimensions: config.value.dimensions,
+  }).photos[0]!
+  return resolvePhotoImage(photo, props.context, config.value)
+})
+const effectiveLoading = computed(() => (props.priority ? 'eager' : 'lazy'))
 const effectiveSizes = computed(() => {
   const sizes = props.sizes ?? '100vw'
   return effectiveLoading.value === 'lazy' && !sizes?.startsWith('auto')

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { CarouselControl } from '../../src'
 
 import { createSSRApp, h, nextTick } from 'vue'
 import { renderToString } from '@vue/server-renderer'
@@ -179,9 +180,8 @@ describe('SSR hydration', () => {
     const props = {
       photos,
       slideSize: '50%',
-      showDots: true,
-      lightbox: true,
-      transition: 'none' as const,
+      controls: ['arrows', 'thumbnails', 'counter', 'dots'] satisfies CarouselControl[],
+      lightbox: { transition: 'none' as const },
     }
     const ssrApp = createSSRApp({ render: () => h(PhotoCarousel, props) })
     const html = await renderToString(ssrApp)

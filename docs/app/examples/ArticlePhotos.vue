@@ -10,7 +10,7 @@ const details = computed(() => props.photos.slice(1))
 </script>
 
 <template>
-  <PhotoGroup :photos="photos" navigation="fade">
+  <PhotoGroup :photos="photos" :lightbox="{ navigation: 'fade' }">
     <article class="article">
       <h3>A slow week in the hills</h3>
       <Photo v-if="lead" :photo="lead" class="article__lead" />

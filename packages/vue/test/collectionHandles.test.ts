@@ -72,7 +72,7 @@ describe('collection lightbox handles', () => {
     const album = ref<GalleryHandle | null>(null)
     const App = defineComponent({
       setup: () => () =>
-        h(PhotoGroup, { photos: canonical, transition: 'none' }, () =>
+        h(PhotoGroup, { photos: canonical, lightbox: { transition: 'none' } }, () =>
           h(PhotoAlbum, { ref: album, photos: [canonical[0]!] }),
         ),
     })
@@ -119,7 +119,7 @@ describe('collection lightbox handles', () => {
     const group = ref<GalleryHandle | null>(null)
     const App = defineComponent({
       setup: () => () =>
-        h(PhotoGroup, { ref: group, photos, transition: 'none' }, () => [
+        h(PhotoGroup, { ref: group, photos, lightbox: { transition: 'none' } }, () => [
           h(PhotoAlbum, { photos: photos.slice(0, 3) }),
           h(PhotoAlbum, { photos: photos.slice(3) }),
         ]),

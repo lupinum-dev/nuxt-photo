@@ -6,7 +6,7 @@ import {
   fitRect,
   type AreaMetrics,
   type LightboxNavigationMode,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
 } from '../core/index'
 
 type CarouselOptions = {

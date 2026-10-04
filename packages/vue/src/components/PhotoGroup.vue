@@ -1,29 +1,18 @@
 <template>
-  <div ref="rootRef" style="display: contents" v-bind="$attrs">
+  <div ref="rootRef" style="display: contents" :class="ui?.root" v-bind="$attrs">
     <slot :photos="canonicalPhotos" :controller="controller" />
   </div>
   <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, provide, ref, shallowRef, type Component } from 'vue'
+import { computed, provide, ref, shallowRef } from 'vue'
 import { useGalleryRuntime } from '../gallery/runtime'
 import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import type { LightboxProviderController } from '../provide/keys'
-import type {
-  InvalidPhotoPolicy,
-  InvalidPhotosEvent,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../core/index'
-import {
-  providePhotoConfig,
-  isLightboxOptions,
-  type LightboxOptions,
-  type PhotoProvider,
-} from '../config'
+import type { InvalidPhotoPolicy, InvalidPhotosEvent, PhotoItem } from '../core/index'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
@@ -32,6 +21,7 @@ import {
 } from './photo-group/context'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import type { PhotoUi } from '../types/ui'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 import { buildPhotoGroupCapabilityIndex } from './photo-group/capabilities'
 
@@ -53,6 +43,7 @@ const props = withDefaults(
     photos: readonly PhotoItem<TMeta>[]
     /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
     active?: string | null
+    ui?: PhotoUi<'PhotoGroup'>
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -62,26 +53,13 @@ const props = withDefaults(
     /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
     provider?: PhotoProvider | string
     /**
-     * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
+     * `true` opens the built-in lightbox; `false` turns it off. Use `lightbox.component` to replace the viewer. Read once
      * at mount; change the component `key` to remount.
      * @default true
      */
-    lightbox?: boolean | Component | LightboxOptions
-    /**
-     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
-     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
-     * change while mounted.
-     * @default 'auto'
-     */
-    transition?: LightboxTransitionOption
-    /**
-     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
-     * mounted.
-     * @default 'slide'
-     */
-    navigation?: LightboxNavigationMode
+    lightbox?: boolean | LightboxOptions
   }>(),
-  { lightbox: true },
+  { lightbox: undefined },
 )
 
 const emit = defineEmits<{
@@ -91,7 +69,7 @@ const emit = defineEmits<{
 
 const photoConfig = providePhotoConfig(() => ({
   provider: props.provider,
-  lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
+  lightbox: typeof props.lightbox === 'object' ? props.lightbox : undefined,
   validation: props.validation,
 }))
 
@@ -118,22 +96,18 @@ function hasPhoto(id: string) {
 }
 
 const injectedLightbox = photoConfig.value.lightbox.component ?? null
-const lightboxComponent = resolveLightboxComponent(
-  isLightboxOptions(props.lightbox) ? true : props.lightbox,
-  injectedLightbox,
-  Lightbox,
-  true,
-)
+const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
 const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
-  lightbox: () => props.lightbox,
+  lightbox: () =>
+    typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
 })
 const lightboxProvider = enabled
-  ? provideLightbox(canonicalPhotos, {
-      transition: () => props.transition,
-      navigation: () => props.navigation,
-      resolveSlide: (photo) => capabilitiesById.value.get(photo.id)?.renderSlide ?? null,
-    })
+  ? provideLightbox(
+      canonicalPhotos,
+      undefined,
+      (photo) => capabilitiesById.value.get(photo.id)?.renderSlide ?? null,
+    )
   : null
 
 function replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]) {

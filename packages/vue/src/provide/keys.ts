@@ -12,6 +12,7 @@ import type {
   LightboxNavigationMode,
   PanState,
   PhotoItem,
+  ResolvedPhotoItem,
   ZoomState,
 } from '../core/index'
 
@@ -58,7 +59,7 @@ type LightboxRuntimeState = {
   direction: ComputedRef<'ltr' | 'rtl'>
   navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>
-  getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  getSlideFrameStyle: (photo: ResolvedPhotoItem) => CSSProperties
   frameVars: ComputedRef<Record<string, string>>
   isSlideMediaMounted: (index: number) => boolean
   isSlideLeaving: (index: number) => boolean
@@ -89,9 +90,10 @@ type LightboxDomBindings = {
 
 export type InternalLightboxContext = Omit<
   LightboxController,
-  'openById' | 'activeIndex' | 'photos'
+  'openById' | 'activeIndex' | 'photos' | 'activePhoto'
 > & {
-  photos: ComputedRef<PhotoItem[]>
+  photos: ComputedRef<ResolvedPhotoItem[]>
+  activePhoto: ComputedRef<ResolvedPhotoItem | null>
   activeIndex: ComputedRef<number>
 } & LightboxRuntimeState &
   LightboxDomBindings

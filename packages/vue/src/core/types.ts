@@ -14,9 +14,9 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   /** Low-quality preview shown until the image loads. It stays visible if the image fails. */
   readonly placeholderSrc?: string
   /** Real pixel width of the image file, not its displayed size. Used for layout before load. */
-  readonly width: number
+  readonly width?: number
   /** Real pixel height of the image file, not its displayed size. Used for layout before load. */
-  readonly height: number
+  readonly height?: number
   /** Alternative text for the thumbnail and the lightbox image. */
   readonly alt?: string
   /** Short visible text, shown under the photo in the lightbox. */
@@ -27,6 +27,14 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly srcset?: string
   /** Your own typed data, passed through to slots and providers. */
   readonly meta?: Readonly<TMeta>
+}
+
+/** Internal photo shape after dimension validation. */
+export interface ResolvedPhotoItem<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> extends PhotoItem<TMeta> {
+  readonly width: number
+  readonly height: number
 }
 
 // ─── Geometry ───
@@ -94,7 +102,7 @@ export type CloseTransitionPlan = {
 // ─── Layout ───
 
 export type LayoutInput<TMeta extends object = Readonly<Record<string, unknown>>> = {
-  photos: readonly PhotoItem<TMeta>[]
+  photos: readonly ResolvedPhotoItem<TMeta>[]
   containerWidth: number
   spacing?: number
   padding?: number
@@ -117,7 +125,7 @@ export type MasonryLayoutOptions<TMeta extends object = Readonly<Record<string, 
 
 export type LayoutEntry<TMeta extends object = Readonly<Record<string, unknown>>> = {
   index: number
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   width: number
   height: number
   positionIndex: number
@@ -200,7 +208,7 @@ export type ResponsiveResolver<T> = ((containerWidth: number) => T) & {
  * Resolve a `ResponsiveParameter` to its concrete value.
  * Returns `fallback` when `value` is `undefined`.
  */
-export function resolveResponsiveParameter<T>(
+export function resolveResponsiveValue<T>(
   value: ResponsiveParameter<T> | undefined,
   containerWidth: number,
   fallback: T,

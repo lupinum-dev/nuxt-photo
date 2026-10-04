@@ -52,7 +52,7 @@ describe('Nuxt Photo 1.0 public contract', () => {
     expect(publicProps).toContain('dragFree?: boolean')
     expect(publicProps).not.toContain('options?:')
     expect(publicProps).not.toContain('slidesToScroll')
-    expect(carousel).toMatch(/lightbox:\s*false/)
+    expect(carousel).toMatch(/lightbox:\s*undefined/)
   })
 
   it('publishes only the reviewed package entry points', () => {

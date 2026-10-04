@@ -42,8 +42,7 @@ it.each(recipes)(
             ref: handle,
             ...(recipe === Photo ? { photo: photos[0]! } : { photos }),
             active: active.value,
-            lightbox: recipe === PhotoCarousel ? { transition: 'none' } : true,
-            transition: 'none',
+            lightbox: { transition: 'none' },
             'onUpdate:active': (id: string | null) => {
               updates.push(id)
               active.value = id
@@ -117,7 +116,7 @@ it('ignores unknown parent ids with one development warning', async () => {
         ref: handle,
         photos: [makePhoto({ id: 'A' })],
         active: active.value,
-        transition: 'none',
+        lightbox: { transition: 'none' },
       }),
   })
   app.mount(host)
@@ -149,7 +148,7 @@ it('retains album identity through reorder and insertion, and closes when that i
         ref: handle,
         photos: photos.value,
         active: active.value,
-        transition: 'none',
+        lightbox: { transition: 'none' },
         'onUpdate:active': (id: string | null) => {
           active.value = id
         },
@@ -183,7 +182,7 @@ it('honors a parent close while its open request is still pending', async () => 
         ref: handle,
         photos: [makePhoto({ id: 'A' })],
         active: active.value,
-        transition: 'none',
+        lightbox: { transition: 'none' },
       }),
   })
   app.mount(host)

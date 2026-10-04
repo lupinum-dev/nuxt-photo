@@ -1,4 +1,4 @@
-import type { PhotoItem } from '../../types'
+import type { ResolvedPhotoItem as PhotoItem } from '../../types'
 import { findIdealNodeSearch, ratio } from './helpers'
 
 /**

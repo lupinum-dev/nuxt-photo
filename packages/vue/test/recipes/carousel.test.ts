@@ -138,7 +138,10 @@ describe('PhotoCarousel — DOM', () => {
   })
 
   it('suppresses arrows, counter, thumbnails, and dots when only one photo', async () => {
-    const m = mount(PhotoCarousel, { photos: [photos[0]], showDots: true })
+    const m = mount(PhotoCarousel, {
+      photos: [photos[0]],
+      controls: ['arrows', 'thumbnails', 'counter', 'dots'],
+    })
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__slide').length).toBe(1)
     expect(m.container.querySelectorAll('.np-carousel__arrow').length).toBe(0)
@@ -177,18 +180,17 @@ describe('PhotoCarousel — DOM', () => {
     m.unmount()
   })
 
-  it('hides arrows when showArrows is false', async () => {
-    const m = mount(PhotoCarousel, { photos, showArrows: false })
+  it('hides arrows when controls omit arrows', async () => {
+    const m = mount(PhotoCarousel, { photos, controls: ['thumbnails', 'counter'] })
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__arrow').length).toBe(0)
     m.unmount()
   })
 
-  it('shows dots when showDots is true', async () => {
+  it('shows dots when controls include dots', async () => {
     const m = mount(PhotoCarousel, {
       photos,
-      showDots: true,
-      showThumbnails: false,
+      controls: ['arrows', 'counter', 'dots'],
     })
     await flushUi()
     expect(m.container.querySelectorAll('.np-carousel__dot').length).toBe(1)
@@ -199,8 +201,7 @@ describe('PhotoCarousel — DOM', () => {
     const fivePhotos = [...photos, makePhoto({ id: 'c-5' })]
     const props = reactive({
       photos: fivePhotos,
-      showDots: true,
-      showThumbnails: false,
+      controls: ['arrows', 'counter', 'dots'],
       slideSize: '33.333%',
       dragFree: false,
     })
@@ -390,7 +391,11 @@ describe('PhotoCarousel — DOM', () => {
   ])('forwards public layout slots %s', async (_label, lightbox) => {
     const m = mount(
       PhotoCarousel,
-      { photos, lightbox, showDots: true, transition: 'none' },
+      {
+        photos,
+        lightbox: lightbox ? { transition: 'none' } : false,
+        controls: ['arrows', 'thumbnails', 'counter', 'dots'],
+      },
       {
         slide: ({ photo }: { photo: PhotoItem }) => h('span', { class: 'slot-slide' }, photo.id),
         thumb: ({ photo }: { photo: PhotoItem }) => h('span', { class: 'slot-thumb' }, photo.id),
@@ -416,7 +421,7 @@ describe('PhotoCarousel — DOM', () => {
   ])('forwards prev and next slots %s', async (_label, lightbox) => {
     const m = mount(
       PhotoCarousel,
-      { photos, lightbox, transition: 'none' },
+      { photos, lightbox: lightbox ? { transition: 'none' } : false },
       {
         prev: () => h('span', { class: 'slot-prev' }, 'previous'),
         next: () => h('span', { class: 'slot-next' }, 'next'),
@@ -444,7 +449,7 @@ describe('PhotoCarousel — DOM', () => {
 
     const m = mount(
       PhotoCarousel,
-      { photos, lightbox: true, transition: 'none' },
+      { photos, lightbox: { transition: 'none' } },
       {
         slide: ({ index, open }: { index: number; open: () => Promise<void> | void }) =>
           h(

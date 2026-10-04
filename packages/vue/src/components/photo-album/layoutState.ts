@@ -7,7 +7,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import { useContainerWidth } from '../../composables/useContainerWidth'
+import { useElementWidth } from '../../composables/useElementWidth'
 import {
   computeRowsLayout,
   computeBreakpointStyles,
@@ -20,8 +20,8 @@ import {
   DEFAULT_TARGET_ROW_HEIGHT,
   computeGaps,
   computeWidthDivisor,
-  resolveResponsiveParameter,
-  type PhotoItem,
+  resolveResponsiveValue,
+  type ResolvedPhotoItem as PhotoItem,
   type LayoutEntry,
   type LayoutGroup,
   type ResponsiveParameter,
@@ -94,7 +94,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     })
   })
 
-  const { containerWidth } = useContainerWidth(containerRef, {
+  const { containerWidth } = useElementWidth(containerRef, {
     defaultContainerWidth,
     breakpoints,
   })
@@ -107,14 +107,10 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     const w = containerWidth.value
     return {
       width: w,
-      spacing: resolveResponsiveParameter(spacing.value, w, DEFAULT_SPACING),
-      padding: resolveResponsiveParameter(padding.value, w, DEFAULT_PADDING),
-      columns: resolveResponsiveParameter(columns.value, w, DEFAULT_COLUMNS),
-      targetRowHeight: resolveResponsiveParameter(
-        targetRowHeight.value,
-        w,
-        DEFAULT_TARGET_ROW_HEIGHT,
-      ),
+      spacing: resolveResponsiveValue(spacing.value, w, DEFAULT_SPACING),
+      padding: resolveResponsiveValue(padding.value, w, DEFAULT_PADDING),
+      columns: resolveResponsiveValue(columns.value, w, DEFAULT_COLUMNS),
+      targetRowHeight: resolveResponsiveValue(targetRowHeight.value, w, DEFAULT_TARGET_ROW_HEIGHT),
     }
   })
 

@@ -6,8 +6,8 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "_comment": "Includes shared config/locales and the capped PhotoProvider srcset path.",
-      "brotliLimit": 3200
+      "_comment": "Includes shared config/provider images and runtime validation of optional PhotoItem dimensions.",
+      "brotliLimit": 4100
     },
     "all": {
       "label": "full package import",

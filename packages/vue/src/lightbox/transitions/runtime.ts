@@ -3,7 +3,7 @@ import {
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
   type LightboxNavigationMode,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
   type RectLike,
   type TransitionModeConfig,
 } from '../../core/index'

@@ -9,7 +9,7 @@ defineProps<{ photos: PhotoItem[] }>()
     :photos="photos"
     :layout="{ type: 'columns', columns: responsive({ 0: 2, 480: 3 }) }"
     :spacing="responsive({ 0: 12, 640: 20 })"
-    navigation="crossfade"
+    :lightbox="{ navigation: 'crossfade' }"
   >
     <template #thumbnail="{ photo, hidden }">
       <figure class="work" :class="{ 'work--hidden': hidden }">

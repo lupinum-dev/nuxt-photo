@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createApp, createSSRApp, h, ref } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { makePhoto } from '@test-fixtures/photos'
-import { createPhoto, provideLightbox } from '../../src'
+import { createPhoto } from '../../src'
+import { provideLightbox } from '../../src/composables/provideLightbox'
 import Photo from '../../src/components/Photo.vue'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../../src/components/PhotoGroup.vue'
@@ -85,6 +86,27 @@ describe('recipe validation', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
+  })
+
+  // Catch rendering invalid input, missing reports, or a stale empty render after replacement.
+  it('drops an invalid Photo and emits one report, then renders a valid replacement', async () => {
+    const onInvalidPhotos = vi.fn()
+    const photo = ref<PhotoItem | null>(null)
+    const mounted = await mountComponent({
+      render: () =>
+        h(Photo, { photo: photo.value as PhotoItem, validation: 'drop', onInvalidPhotos }),
+    })
+    expect(mounted.container.querySelector('figure')).toBeNull()
+    expect(mounted.container.querySelector('img')).toBeNull()
+    expect(onInvalidPhotos).toHaveBeenCalledOnce()
+    expect(onInvalidPhotos.mock.calls[0]?.[0]).toMatchObject({ owner: 'Photo' })
+    photo.value = makePhoto({ id: 'replacement' })
+    await flushUi()
+    expect(mounted.container.querySelector('img')?.getAttribute('src')).toBe(
+      '/photos/replacement.jpg',
+    )
+    expect(onInvalidPhotos).toHaveBeenCalledOnce()
+    mounted.unmount()
   })
 
   it.each([

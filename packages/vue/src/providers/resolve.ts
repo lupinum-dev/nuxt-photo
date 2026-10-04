@@ -1,4 +1,4 @@
-import type { PhotoItem } from '../core/types'
+import type { ResolvedPhotoItem as PhotoItem } from '../core/types'
 import type { PhotoProvider, ResolvedPhotoConfig } from '../config'
 
 /** Keep provider-specific inference without changing the provider. */

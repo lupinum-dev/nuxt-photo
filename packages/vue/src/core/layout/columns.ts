@@ -1,4 +1,9 @@
-import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import type {
+  ColumnsLayoutOptions,
+  LayoutEntry,
+  LayoutGroup,
+  ResolvedPhotoItem as PhotoItem,
+} from '../types'
 import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } from './types'
 
 function ratio(item: PhotoItem) {

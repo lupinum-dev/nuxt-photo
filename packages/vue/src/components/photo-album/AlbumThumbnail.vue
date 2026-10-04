@@ -20,7 +20,7 @@
       context="thumb"
       :priority="priority"
       class="np-album__img"
-      :class="imgClass"
+      :class="imageClass"
       :style="{
         display: 'block',
         width: '100%',
@@ -43,7 +43,7 @@ defineProps<{
   height: number
   hidden: boolean
 
-  imgClass?: string
+  imageClass?: string
   sizes?: string
   priority?: boolean
 }>()

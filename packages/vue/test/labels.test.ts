@@ -30,7 +30,7 @@ describe('photo labels', () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: {
         photos: [makePhoto({ id: 'l-1' }), makePhoto({ id: 'l-2' })],
-        transition: 'none',
+        lightbox: { transition: 'none' },
       },
       plugins: [
         createPhoto({
