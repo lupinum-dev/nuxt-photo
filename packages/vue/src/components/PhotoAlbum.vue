@@ -46,7 +46,7 @@
       </div>
     </template>
 
-    <template v-else-if="renderBranch.kind === 'measured'">
+    <template v-else>
       <template v-if="renderBranch.groups.length === 0 && normalizedPhotos.length > 0">
         <div class="np-album__skeleton" />
       </template>
@@ -85,31 +85,6 @@
       </template>
     </template>
 
-    <div v-else :style="renderBranch.wrapperStyle">
-      <div
-        v-for="(photo, index) in renderBranch.photos"
-        :key="photo.id"
-        class="np-album__item"
-        :class="ui?.item"
-        :style="ssrItemStyle(photo)"
-        v-bind="itemBindings(photo, index)"
-      >
-        <AlbumThumbnail
-          :photo="photo"
-          :index="index"
-          :width="photo.width"
-          :height="photo.height"
-          :hidden="false"
-          :image-class="ui?.img"
-          :sizes="nativeSizes"
-          :priority="index < priority"
-        >
-          <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-            <slot name="thumbnail" v-bind="slotProps" />
-          </template>
-        </AlbumThumbnail>
-      </div>
-    </div>
     <span ref="endRef" class="np-album__end" aria-hidden="true" />
   </div>
 
@@ -330,11 +305,9 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
     layoutTargetRowHeight.value,
   ])
 })
-const nativeSizes = computed(() => (typeof props.sizes === 'string' ? props.sizes : undefined))
 
 const {
   containerRef,
-  isMounted,
   scopeClass,
   containerStyle,
   containerQueryCSS,
@@ -343,10 +316,8 @@ const {
   rowItems,
   thumbnailSizes,
   ssrWrapperStyle,
-  ssrItemStyle,
   groupStyle,
   itemStyle,
-  maybeWarnApproximate,
 } = usePhotoAlbumLayoutState({
   photos: normalizedPhotos,
   layout: layoutType,
@@ -360,8 +331,6 @@ const {
   interactive: hasLightbox,
 })
 
-maybeWarnApproximate()
-
 const renderBranch = computed(() => {
   if (layoutType.value === 'rows') {
     return {
@@ -373,17 +342,9 @@ const renderBranch = computed(() => {
     }
   }
 
-  if (isMounted.value || groups.value.length > 0) {
-    return {
-      kind: 'measured' as const,
-      groups: groups.value,
-    }
-  }
-
   return {
-    kind: 'fallback-grid' as const,
-    wrapperStyle: ssrWrapperStyle.value,
-    photos: normalizedPhotos.value,
+    kind: 'measured' as const,
+    groups: groups.value,
   }
 })
 </script>

@@ -109,6 +109,104 @@ afterEach(() => {
 })
 
 describe('SSR hydration', () => {
+  // Catches repartitioning/remounting at the first measurement, even with an SSR estimate.
+  it('keeps SSR columns geometry and image nodes at 1200px and 800px containers', async () => {
+    const ratios = [0.4, 2, 1, 0.7, 1.8, 0.3, 2.5, 1.2, 0.6, 1.4, 0.8, 3]
+    const collection = Array.from({ length: 37 }, (_, index) =>
+      makePhoto({
+        id: `geometry-${index}`,
+        alt: `geometry-${index}`,
+        width: ratios[(index * 17) % ratios.length]! * 1000,
+        height: 1000,
+      }),
+    )
+    // JSDOM does not lay out boxes. Evaluate the rendered CSS lengths against the actual
+    // containing width instead of comparing strings; browser tests also measure real boxes.
+    function pixels(css: string, width: number): number {
+      const expression = css.replace(/calc/g, '').replace(/100%/g, String(width)).replace(/px/g, '')
+      const tokens = expression.match(/\d*\.\d+|\d+|[()+*/-]/g)!
+      expect(tokens.join(''), css).toBe(expression.replace(/\s/g, ''))
+      let position = 0
+      function factor(): number {
+        const token = tokens[position++]
+        if (token === '-') return -factor()
+        if (token !== '(') return Number(token)
+        const value = sum()
+        expect(tokens[position++]).toBe(')')
+        return value
+      }
+      function product(): number {
+        let value = factor()
+        while (tokens[position] === '*' || tokens[position] === '/') {
+          const operator = tokens[position++]
+          const right = factor()
+          value = operator === '*' ? value * right : value / right
+        }
+        return value
+      }
+      function sum(): number {
+        let value = product()
+        while (tokens[position] === '+' || tokens[position] === '-') {
+          const operator = tokens[position++]
+          const right = product()
+          value = operator === '+' ? value + right : value - right
+        }
+        return value
+      }
+      const value = sum()
+      expect(position).toBe(tokens.length)
+      return value
+    }
+    function widths(host: HTMLElement, width: number) {
+      return [...host.querySelectorAll<HTMLElement>('.np-album__column')].flatMap((column) => {
+        const columnWidth = pixels(column.style.width, width)
+        return [...column.querySelectorAll<HTMLElement>('.np-album__item')].map((item) => ({
+          id: item.querySelector('img')!.getAttribute('alt'),
+          width: pixels(item.style.width, columnWidth),
+        }))
+      })
+    }
+    for (const width of [1200, 800]) {
+      vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockReturnValue({
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 600,
+        width,
+        height: 600,
+        toJSON: () => ({}),
+      })
+      const props = {
+        photos: collection,
+        layout: { type: 'columns' as const, columns: 3 },
+        defaultContainerWidth: 1200,
+        spacing: 24,
+        padding: 4,
+        lightbox: false,
+      }
+      const html = await renderToString(createSSRApp({ render: () => h(PhotoAlbum, props) }))
+      const host = document.createElement('div')
+      host.innerHTML = html
+      document.body.appendChild(host)
+      const before = widths(host, width)
+      const images = [...host.querySelectorAll('img')]
+      const app = createSSRApp({ render: () => h(PhotoAlbum, props) })
+      app.mount(host)
+      await nextTick()
+      try {
+        expect(widths(host, width)).toEqual(before)
+        expect(
+          [...host.querySelectorAll('img')].every((image, index) => image === images[index]),
+        ).toBe(true)
+      } finally {
+        app.unmount()
+        host.remove()
+      }
+    }
+  })
+
   it('hydrates deterministic columns SSR without Vue hydration mismatch warnings', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -58,21 +58,13 @@ const color = (reading: (typeof readings.value)[number]) =>
 </script>
 
 <template>
-  <main class="lab-page" :style="{ '--lab-bar-height': `${barHeight}px` }">
+  <main class="lab-page">
     <div ref="bar" class="lab-summary">
-      <div>
-        Images: {{ summary.images }} · In range (0.9–2×): {{ summary.inRangePercent.toFixed(1) }}% ·
-        Floor: {{ summary.floor }} · Median: {{ summary.median.toFixed(2) }}× · Transferred:
-        {{ summary.transferredKB.toFixed(1) }} KB · Formats: {{ summary.formats.join(', ') }} · LCP:
-        {{ summary.lcpMs.toFixed(0) }} ms ({{ summary.lcpLoading }})
-      </div>
-      <div>
-        Provider: {{ summary.provider }} · Ladder: {{ summary.ladder.join(', ') }} · DPR:
-        {{ summary.dpr }}
-      </div>
-      <button type="button" @click="overlay = !overlay">
-        {{ overlay ? 'Hide overlay' : 'Show overlay' }}
-      </button>
+      <LabSummary :summary="summary" :overlay="overlay" @toggle="overlay = !overlay" />
+    </div>
+    <!-- A CSS-sized copy reserves the fixed bar's height before any client measurement. -->
+    <div class="lab-summary-reserve" aria-hidden="true" inert>
+      <LabSummary :summary="summary" :overlay="overlay" />
     </div>
     <header class="lab-header">
       <h1>{{ title }}</h1>
@@ -112,7 +104,7 @@ const color = (reading: (typeof readings.value)[number]) =>
 <style>
 /* Same page, heading and control styling as the playground Layout Explorer. */
 .lab-page {
-  padding: calc(var(--lab-bar-height) + 40px) 48px 120px;
+  padding: 40px 48px 120px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -126,21 +118,33 @@ const color = (reading: (typeof readings.value)[number]) =>
   font-weight: 400;
   letter-spacing: -0.02em;
 }
-.lab-summary {
-  position: fixed;
-  top: 0;
-  inset-inline: 0;
-  z-index: 61;
+.lab-summary,
+.lab-summary-reserve {
   padding: 16px 48px;
   background: #1a1816;
   font-size: 13px;
   line-height: 1.6;
 }
+.lab-summary {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  z-index: 61;
+}
+.lab-summary-reserve {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  visibility: hidden;
+  pointer-events: none;
+}
 /* Keep the existing viewer tools usable below the diagnostic bar. */
 .np-lightbox__topbar {
   top: calc(var(--lab-bar-height, 0px) + 16px);
 }
-.lab-summary button {
+.lab-summary button,
+.lab-summary-reserve button {
   margin-top: 8px;
 }
 .lab-controls {
@@ -192,7 +196,8 @@ const color = (reading: (typeof readings.value)[number]) =>
   .lab-page {
     padding-inline: 20px;
   }
-  .lab-summary {
+  .lab-summary,
+  .lab-summary-reserve {
     padding-inline: 20px;
   }
   .lab-controls {

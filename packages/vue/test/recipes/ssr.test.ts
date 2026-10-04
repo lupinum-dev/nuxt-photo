@@ -141,7 +141,9 @@ describe('SSR', () => {
       expect(html).not.toContain('@container')
       expect(html).not.toContain('np-album__ssr-variant')
       expect(html).not.toContain('data-bp')
-      expect(html).toContain('grid-template-columns')
+      expect(html).toContain('np-album__column')
+      expect(html).not.toContain('grid-template-columns')
+      expect(html).not.toContain('100vw')
     })
   })
 
@@ -184,7 +186,7 @@ describe('SSR', () => {
       expect(html).toContain('ssr-1')
     })
 
-    it('columns with explicit breakpoints still uses the simple SSR fallback without defaultContainerWidth', async () => {
+    it('columns with explicit breakpoints uses the first estimate without duplicate markup', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -202,10 +204,11 @@ describe('SSR', () => {
       expect(html).not.toContain('@container')
       expect(html).not.toContain('np-album__ssr-variant')
       expect(html).not.toContain('data-bp')
-      expect(html).toMatch(/grid-template-columns\s*:\s*repeat\(1\s*,\s*1fr\)/)
+      expect(html.match(/class="np-album__column"/g) ?? []).toHaveLength(1)
+      expect(html).not.toContain('100vw')
     })
 
-    it('responsive columns infer client snap breakpoints but not SSR branches', async () => {
+    it('responsive columns infer an SSR estimate without duplicate branches', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -220,7 +223,9 @@ describe('SSR', () => {
       const html = await renderToString(app)
       expect(html).not.toContain('@container')
       expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).toContain('grid-template-columns')
+      expect(html).toContain('np-album__column')
+      expect(html).not.toContain('grid-template-columns')
+      expect(html).not.toContain('100vw')
     })
 
     it('masonry responsive spacing does not create duplicate SSR branches', async () => {
@@ -236,7 +241,9 @@ describe('SSR', () => {
       const html = await renderToString(app)
       expect(html).not.toContain('np-album__ssr-variant')
       expect(html).not.toContain('@container')
-      expect(html).toContain('grid-template-columns')
+      expect(html).toContain('np-album__column')
+      expect(html).not.toContain('grid-template-columns')
+      expect(html).not.toContain('100vw')
     })
 
     it('deterministic server layout keeps button semantics when lightbox is enabled', async () => {
@@ -258,7 +265,7 @@ describe('SSR', () => {
       expect(html).toContain('tabindex="0"')
     })
 
-    it('columns without any SSR signal falls back to the approximate flat grid', async () => {
+    it('columns without an explicit width renders balanced columns at the default estimate', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -269,7 +276,9 @@ describe('SSR', () => {
       })
       const html = await renderToString(app)
       expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).toContain('grid-template-columns')
+      expect(html).toContain('np-album__column')
+      expect(html).not.toContain('grid-template-columns')
+      expect(html).not.toContain('100vw')
       expect(html).toContain('ssr-1')
     })
   })
