@@ -43,7 +43,7 @@
               <PhotoImage
                 :photo="photo"
                 context="slide"
-                :image-adapter="imageAdapter"
+                :sizes="slideSizes"
                 :loading="index === 0 ? 'eager' : 'lazy'"
                 :priority="index === 0"
                 class="np-carousel__media"
@@ -154,7 +154,7 @@
               <PhotoImage
                 :photo="photo"
                 context="thumb"
-                :image-adapter="imageAdapter"
+                :sizes="thumbnailSizes(photo)"
                 loading="lazy"
                 class="np-carousel__thumb-img"
               />
@@ -176,8 +176,9 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
+import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
+import { useContainerWidth } from '../../composables/useContainerWidth'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 import type { GalleryRuntime } from '../../gallery/runtime'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
@@ -198,7 +199,7 @@ defineSlots<{
 
 const props = defineProps<{
   photos: readonly PhotoItem<TMeta>[]
-  imageAdapter?: ImageAdapter<TMeta>
+
   loop?: boolean
   dragFree?: boolean
   gallery: GalleryRuntime
@@ -255,6 +256,22 @@ const {
   autoplay: toRef(props, 'autoplay'),
   showThumbnails: toRef(props, 'showThumbnails'),
 })
+
+const { containerWidth } = useContainerWidth(emblaRef)
+const slideSizes = computed(() => {
+  const size = props.slideSize ?? '100%'
+  // HTML sizes forbids percentages, including those nested in calc()/clamp().
+  return size.replace(/(\d+(?:\.\d+)?)%/g, (_match, percent: string) =>
+    containerWidth.value > 0
+      ? `${Math.ceil((containerWidth.value * Number(percent)) / 100)}px`
+      : `${percent}vw`,
+  )
+})
+
+function thumbnailSizes(photo: PhotoItem) {
+  // thumbSize controls height; the intrinsic aspect ratio determines rendered width.
+  return `calc(${props.thumbSize ?? '5.5rem'} * ${photo.width / photo.height})`
+}
 
 const showMultiControls = computed(() => props.photos.length > 1)
 

@@ -9,7 +9,7 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly id: string
   /** Image URL. The lightbox uses it; thumbnails use it unless `thumbSrc` is set. */
   readonly src: string
-  /** Smaller image URL for thumbnails, used by the native image adapter. */
+  /** Smaller image URL for thumbnails, used by the native provider. */
   readonly thumbSrc?: string
   /** Low-quality preview shown until the image loads. It stays visible if the image fails. */
   readonly placeholderSrc?: string
@@ -23,9 +23,9 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly caption?: string
   /** Longer visible text in the lightbox. */
   readonly description?: string
-  /** Native `srcset` candidates, used by the native image adapter. */
+  /** Native `srcset` candidates, used by the native provider. */
   readonly srcset?: string
-  /** Your own typed data, passed through to slots and image adapters. */
+  /** Your own typed data, passed through to slots and providers. */
   readonly meta?: Readonly<TMeta>
 }
 
@@ -166,33 +166,10 @@ export interface PhotoCarouselAutoplayOptions {
   readonly stopOnMouseEnter?: boolean
 }
 
-// ─── Image adapter ───
-
-export type ImageSource = {
-  src: string
-  placeholderSrc?: string
-  srcset?: string
-  sizes?: string
-  width?: number
-  height?: number
-}
-
 export type ResponsivePhotoSizes = {
   size: string
   sizes?: Array<{ viewport: string; size: string }>
 }
-
-/**
- * Context in which an image is being rendered.
- * - `'thumb'` — grid thumbnail (smaller, responsive srcset)
- * - `'slide'` — lightbox slide (full-viewport srcset)
- */
-export type ImageContext = 'thumb' | 'slide'
-
-export type ImageAdapter<TMeta extends object = Readonly<Record<string, unknown>>> = (
-  photo: PhotoItem<TMeta>,
-  context: ImageContext,
-) => ImageSource
 
 // ─── Responsive parameters ───
 

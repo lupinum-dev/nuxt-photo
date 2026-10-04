@@ -10,12 +10,7 @@ import {
 import { useGalleryRuntime } from '../../gallery/runtime'
 import { provideLightbox } from '../../composables/index'
 import { PhotoGroupContextKey } from '../photo-group/context'
-import type {
-  ImageAdapter,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../../core/index'
+import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../../core/index'
 import { usePhotoConfig, isLightboxOptions, type LightboxOptions } from '../../config'
 import Lightbox from '../Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
@@ -23,16 +18,15 @@ import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
-type AlbumLightboxProps<TMeta extends object> = {
+type AlbumLightboxProps = {
   lightbox?: boolean | Component | LightboxOptions
   transition?: LightboxTransitionOption
   navigation?: LightboxNavigationMode
-  imageAdapter?: ImageAdapter<TMeta>
 }
 
 export function useAlbumLightbox<TMeta extends object>(
   photos: ComputedRef<readonly PhotoItem<TMeta>[]>,
-  props: AlbumLightboxProps<TMeta>,
+  props: AlbumLightboxProps,
   root: () => HTMLElement | null,
 ) {
   const parentGroup = inject(PhotoGroupContextKey, null)
@@ -59,7 +53,6 @@ export function useAlbumLightbox<TMeta extends object>(
     ? provideLightbox(photos, {
         transition: () => props.transition,
         navigation: () => props.navigation,
-        imageAdapter: computed(() => props.imageAdapter),
       })
     : null
 

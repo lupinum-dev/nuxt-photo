@@ -8,13 +8,9 @@ import {
   type InjectionKey,
   type Plugin,
 } from 'vue'
-import { createNativeImageAdapter } from '../core/image/adapter'
-import type {
-  ImageAdapter,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../core/types'
+import { nativeProvider } from '../providers/native'
+import { defaultProviderRuntime, type ProviderRuntime } from '../providers/runtime'
+import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/types'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import {
   detectPhotoLocale,
@@ -57,8 +53,8 @@ export interface ResolvedPhotoConfig extends Omit<
   labels: PhotoLabels
   lightbox: LightboxOptions
   validation: InvalidPhotoPolicy
-  /** Existing adapter bridge until the provider slice replaces image resolution. */
-  imageAdapter: ImageAdapter
+  provider: PhotoProvider
+  providers: ProviderRuntime
 }
 export const photoConfigKey: InjectionKey<ComputedRef<ResolvedPhotoConfig>> =
   Symbol('nuxt-photo:config')
@@ -90,7 +86,6 @@ export function mergePhotoConfig(
         Object.entries(overrides.lightbox ?? {}).filter(([, value]) => value !== undefined),
       ),
     },
-    imageAdapter: overrides.provider ? providerAdapter(overrides.provider) : parent.imageAdapter,
   }
 }
 function defaults(locale?: string): ResolvedPhotoConfig {
@@ -98,25 +93,14 @@ function defaults(locale?: string): ResolvedPhotoConfig {
     labels: resolvePhotoLabels(undefined, detectPhotoLocale(locale)),
     lightbox: { minZoom: 1.5, transition: 'auto', navigation: 'slide' },
     validation: 'throw',
-    imageAdapter: createNativeImageAdapter(),
+    provider: nativeProvider,
+    providers: defaultProviderRuntime,
   }
 }
-function providerAdapter(provider: PhotoProvider): ImageAdapter {
-  return (photo, context) => {
-    const src = context === 'thumb' ? (photo.thumbSrc ?? photo.src) : photo.src
-    return {
-      src: provider.url(src, { width: photo.width }),
-      srcset: provider.srcset?.(photo, context),
-      placeholderSrc: photo.placeholderSrc ?? provider.placeholder?.(src),
-      width: photo.width,
-      height: photo.height,
-    }
-  }
-}
-/** Install setup-time config. Nuxt supplies its legacy adapter and reactive locale internally. */
+/** Install setup-time config. Nuxt supplies its provider environment and reactive locale internally. */
 export function createPhotoPlugin(
   config: PhotoConfig,
-  adapter?: ImageAdapter,
+  providers?: ProviderRuntime,
   locale?: () => string | undefined,
 ): Plugin {
   validatePhotoConfig(config)
@@ -126,7 +110,7 @@ export function createPhotoPlugin(
         photoConfigKey,
         computed(() => {
           const base = defaults(locale?.())
-          if (adapter) base.imageAdapter = adapter
+          if (providers) base.providers = providers
           return mergePhotoConfig(base, config)
         }),
       )
@@ -146,9 +130,20 @@ export function usePhotoConfig(): ComputedRef<ResolvedPhotoConfig> {
     )
   )
 }
-export function providePhotoConfig(overrides: () => PhotoConfig): ComputedRef<ResolvedPhotoConfig> {
+export function providePhotoConfig(
+  overrides: () => Omit<PhotoConfig, 'provider'> & { provider?: PhotoProvider | string },
+): ComputedRef<ResolvedPhotoConfig> {
   const parent = usePhotoConfig()
-  const config = computed(() => mergePhotoConfig(parent.value, overrides()))
+  const config = computed(() => {
+    const value = overrides()
+    return mergePhotoConfig(parent.value, {
+      ...value,
+      provider:
+        typeof value.provider === 'string'
+          ? parent.value.providers.resolve(value.provider)
+          : value.provider,
+    })
+  })
   const instance = getCurrentInstance()
   if (instance) localConfigs.set(instance, config)
   provide(photoConfigKey, config)

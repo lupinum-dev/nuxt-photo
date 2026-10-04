@@ -5,7 +5,7 @@ import { createApp, defineComponent, h, reactive, ref } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoImage from '../src/primitives/PhotoImage.vue'
-import type { ImageAdapter, PhotoItem } from '../src/core/types'
+import type { PhotoProvider } from '../src/config'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('image previews and sizes', () => {
@@ -15,19 +15,24 @@ describe('image previews and sizes', () => {
     document.body.innerHTML = ''
   })
 
-  it('resets the placeholder when adapter output or context changes', async () => {
+  it('resets the placeholder when provider output or context changes', async () => {
     const version = ref('a')
     const props = reactive<{
       photo: ReturnType<typeof makePhoto>
       context: 'thumb' | 'slide'
-      imageAdapter: ImageAdapter<object>
+      provider: PhotoProvider
     }>({
-      photo: makePhoto({ id: 'preview', placeholderSrc: '/preview.jpg' }),
-      context: 'thumb',
-      imageAdapter: (_photo, context) => ({
-        src: `/${version.value}-${context}.jpg`,
+      photo: makePhoto({
+        id: 'preview',
+        thumbSrc: '/thumb.jpg',
+        src: '/slide.jpg',
         placeholderSrc: '/preview.jpg',
       }),
+      context: 'thumb',
+      provider: {
+        url: (src) => `/${version.value}-${src.slice(1)}`,
+        placeholder: () => '/preview.jpg',
+      },
     })
     const App = defineComponent({ setup: () => () => h(PhotoImage, props) })
     const host = document.createElement('div')
@@ -57,10 +62,11 @@ describe('image previews and sizes', () => {
     await flushUi()
     expect(image.style.backgroundImage).toContain('preview.jpg')
 
-    props.imageAdapter = () => ({ src: '/adapter-c.jpg', placeholderSrc: '/adapter-c-preview.jpg' })
+    props.photo = { ...props.photo, placeholderSrc: undefined }
+    props.provider = { url: () => '/provider-c.jpg', placeholder: () => '/provider-c-preview.jpg' }
     await flushUi()
-    expect(image.src).toContain('/adapter-c.jpg')
-    expect(image.style.backgroundImage).toContain('adapter-c-preview.jpg')
+    expect(image.src).toContain('/provider-c.jpg')
+    expect(image.style.backgroundImage).toContain('provider-c-preview.jpg')
 
     app.unmount()
     host.remove()
@@ -71,11 +77,7 @@ describe('image previews and sizes', () => {
     const props = reactive({
       photo: makePhoto({ id: 'responsive', alt: 'Initial', placeholderSrc: '/preview.jpg' }),
       sizes: '50vw',
-      imageAdapter: () => ({
-        src: '/same.jpg',
-        srcset: `/same-${version.value}.jpg 800w`,
-        placeholderSrc: '/preview.jpg',
-      }),
+      provider: { url: () => '/same.jpg', srcset: () => `/same-${version.value}.jpg 800w` },
     })
     const App = defineComponent({ setup: () => () => h(PhotoImage, props) })
     const host = document.createElement('div')
@@ -166,7 +168,49 @@ describe('image previews and sizes', () => {
     mounted.unmount()
   })
 
-  // Catches adapter fallback overriding measured widths or object sizes in non-row layouts.
+  // Catches custom thumbnails losing layout sizes or eager loading while default thumbnails work.
+  it('passes sizes and priority through the public thumbnail slot', async () => {
+    const App = defineComponent({
+      setup: () => () =>
+        h(
+          PhotoAlbum,
+          {
+            photos: [
+              makePhoto({ width: 400, height: 400 }),
+              makePhoto({ id: 'second', width: 400, height: 400 }),
+            ],
+            layout: { type: 'columns', columns: 2 },
+            defaultContainerWidth: 800,
+            spacing: 8,
+            padding: 4,
+            priority: 1,
+            lightbox: false,
+          },
+          {
+            thumbnail: (props: {
+              photo: ReturnType<typeof makePhoto>
+              sizes?: string
+              priority?: boolean
+            }) => h(PhotoImage, props),
+          },
+        ),
+    })
+    const mounted = await mountComponent(App)
+    const images = Array.from(mounted.container.querySelectorAll('img'))
+    expect(
+      images.map((image) => [
+        image.sizes,
+        image.getAttribute('loading'),
+        image.getAttribute('fetchpriority'),
+      ]),
+    ).toEqual([
+      ['388px', 'eager', 'high'],
+      ['auto, 388px', 'lazy', null],
+    ])
+    mounted.unmount()
+  })
+
+  // Catches unrelated provider settings overriding measured widths or object sizes in non-row layouts.
   it.each(['rows', 'columns', 'masonry'] as const)(
     'sizes and prioritizes %s thumbnails by photo index',
     async (type) => {
@@ -188,7 +232,6 @@ describe('image previews and sizes', () => {
             sizes,
             priority: 2,
             lightbox: false,
-            imageAdapter: (photo: PhotoItem) => ({ src: photo.src, sizes: '400px' }),
           },
         })
         const images = Array.from(mounted.container.querySelectorAll('img'))

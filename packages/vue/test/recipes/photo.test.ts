@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createApp, defineComponent, h, reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
-import type { ImageContext, PhotoItem } from '../../src/core/types'
+import type { PhotoItem } from '../../src/core/types'
 import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 describe('Photo', () => {
@@ -134,9 +134,12 @@ describe('Photo', () => {
             photo,
             lightbox: true,
             transition: 'none',
-            imageAdapter: (_photo: PhotoItem<object>, context: ImageContext) => {
-              if (context === 'slide') throw new Error('slide adapter failed')
-              return { src: photo.src }
+            provider: {
+              url: (src: string) => src,
+              srcset: (_photo: PhotoItem, context: 'thumb' | 'slide') => {
+                if (context === 'slide') throw new Error('slide provider failed')
+                return undefined
+              },
             },
           }),
       ),
@@ -148,7 +151,7 @@ describe('Photo', () => {
     await flushUi()
 
     expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'slide adapter failed' }),
+      expect.objectContaining({ message: 'slide provider failed' }),
       expect.anything(),
       expect.stringContaining('render function'),
     )

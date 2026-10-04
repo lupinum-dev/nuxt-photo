@@ -39,7 +39,7 @@ export default defineConfig({
     },
     {
       name: 'webkit-smoke',
-      grep: /recipe gallery opens|@focus-trap|navigation|direction: rtl|thumbnail click|toggling lightbox/,
+      grep: /image budget|nuxt image|recipe gallery opens|@focus-trap|navigation|direction: rtl|thumbnail click|toggling lightbox/,
       use: {
         browserName: 'webkit',
       },

@@ -5,7 +5,7 @@ import {
   PhotoGroup,
   provideLightbox,
   type CarouselSlideSlotProps,
-  type ImageAdapter,
+  definePhotoProvider,
   type PhotoItem,
 } from '../../src/index'
 
@@ -57,10 +57,10 @@ const photoWithInterfaceMeta: PhotoItem<ConsumerMeta> = {
 }
 void photoWithInterfaceMeta
 
-const metadataAdapter: ImageAdapter<ConsumerMeta> = (photo) => ({
-  src: `/photographers/${photo.meta?.photographer ?? 'unknown'}/${photo.src}`,
+const provider = definePhotoProvider({
+  url: (src: string, options: { width: number }) => `${src}?w=${options.width}`,
 })
-void metadataAdapter
+void provider.url('/one.jpg', { width: 640 })
 
 const metadataController = provideLightbox([photoWithInterfaceMeta])
 const activePhotographer: string | undefined =

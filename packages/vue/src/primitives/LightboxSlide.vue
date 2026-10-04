@@ -26,6 +26,7 @@
             :ref="ctx.setSlideImageRef(index)"
             :photo="photo"
             context="slide"
+            :sizes="frameWidth > 0 ? `${frameWidth}px` : '100vw'"
             loading="eager"
             decoding="async"
             :fetchpriority="isActive ? 'high' : 'low'"

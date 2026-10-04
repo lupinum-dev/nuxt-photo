@@ -6,15 +6,18 @@ const viewports = [
   { width: 1440, height: 900, deviceScaleFactor: 2 },
 ]
 const layouts = [
-  { layout: 'rows', columns: 3 },
-  { layout: 'columns', columns: 2 },
-  { layout: 'columns', columns: 6 },
-  { layout: 'masonry', columns: 3 },
+  { kind: 'album', layout: 'rows', columns: 3 },
+  { kind: 'album', layout: 'columns', columns: 2 },
+  { kind: 'album', layout: 'columns', columns: 6 },
+  { kind: 'album', layout: 'masonry', columns: 3 },
+  { kind: 'carousel', layout: 'rows', columns: 3 },
+  { kind: 'photo', layout: 'rows', columns: 3 },
+  { kind: 'lightbox', layout: 'rows', columns: 3 },
 ]
 
 for (const viewport of viewports) {
-  for (const { layout, columns } of layouts) {
-    test(`image budget ${layout} ${columns} at ${viewport.width}@${viewport.deviceScaleFactor}`, async ({
+  for (const { kind, layout, columns } of layouts) {
+    test(`image budget ${kind} ${layout} ${columns} at ${viewport.width}@${viewport.deviceScaleFactor}`, async ({
       browser,
     }, testInfo) => {
       const context = await browser.newContext({
@@ -23,7 +26,7 @@ for (const viewport of viewports) {
         deviceScaleFactor: viewport.deviceScaleFactor,
       })
       // The phone rows case has the first three photos in the first screen.
-      const priority = layout === 'rows' && viewport.width === 375 ? 3 : 0
+      const priority = kind === 'album' && layout === 'rows' && viewport.width === 375 ? 3 : 0
       const page = await context.newPage()
       const contentTypes: string[] = []
       page.on('response', (response) => {
@@ -31,6 +34,7 @@ for (const viewport of viewports) {
           contentTypes.push(response.headers()['content-type'] ?? '')
       })
       await page.addInitScript(() => {
+        if (!PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) return
         new PerformanceObserver((list) => {
           const entry = list.getEntries().at(-1) as PerformanceEntry & { element?: Element }
           if (entry?.element)
@@ -39,26 +43,48 @@ for (const viewport of viewports) {
         }).observe({ type: 'largest-contentful-paint', buffered: true })
       })
       try {
-        await page.goto(`/image-budget?layout=${layout}&columns=${columns}&priority=${priority}`)
-        const thumbs = page.locator('.np-album__img')
-        await expect(thumbs).toHaveCount(demoPhotos.length)
+        await page.goto(
+          `/image-budget?kind=${kind}&layout=${layout}&columns=${columns}&priority=${priority}`,
+        )
+        if (kind === 'lightbox') {
+          await page.locator('.np-album__item').first().click()
+          await expect(page.getByRole('dialog')).toBeVisible()
+          await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled()
+          await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+        }
+        const selector =
+          kind === 'carousel'
+            ? '.np-carousel img'
+            : kind === 'photo'
+              ? '.np-photo__img'
+              : kind === 'lightbox'
+                ? '[data-np-active] img'
+                : '.np-album__img'
+        const thumbs = page.locator(selector)
+        if (kind === 'album') await expect(thumbs).toHaveCount(demoPhotos.length)
+        await expect(thumbs.first()).toBeVisible()
         for (const photo of demoPhotos.slice(0, priority)) {
           const image = page.getByAltText(photo.alt!)
           await expect(image).toHaveAttribute('loading', 'eager')
           await expect(image).toHaveAttribute('fetchpriority', 'high')
         }
-        await page.waitForFunction(() => {
-          const images = Array.from(document.querySelectorAll<HTMLImageElement>('.np-album__img'))
+        await page.waitForFunction((selector) => {
+          const images = Array.from(document.querySelectorAll<HTMLImageElement>(selector))
           return (
             images.length > 0 &&
             images
               .filter((image) => {
                 const rect = image.getBoundingClientRect()
-                return rect.top < innerHeight && rect.bottom > 0
+                return (
+                  rect.top < innerHeight &&
+                  rect.bottom > 0 &&
+                  rect.left < innerWidth &&
+                  rect.right > 0
+                )
               })
               .every((image) => image.complete && image.naturalWidth > 0)
           )
-        })
+        }, selector)
         const ratios = await thumbs.evaluateAll(async (elements, photos) => {
           const visible = elements.filter((element) => {
             const rect = element.getBoundingClientRect()
@@ -87,6 +113,7 @@ for (const viewport of viewports) {
         const within = ratios.filter((ratio) => ratio >= 0.9 && ratio <= 2).length / ratios.length
         await testInfo.attach('efficiency', {
           body: JSON.stringify({
+            kind,
             layout,
             columns,
             viewport,
@@ -105,7 +132,7 @@ for (const viewport of viewports) {
         expect(contentTypes.length).toBeGreaterThan(0)
         expect(contentTypes.every((type) => type.startsWith('image/webp'))).toBe(true)
 
-        if (priority) {
+        if (priority && testInfo.project.use.browserName === 'chromium') {
           await expect
             .poll(() => page.locator('html').getAttribute('data-lcp-loading'))
             .toBe('eager')

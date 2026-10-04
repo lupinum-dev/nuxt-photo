@@ -1,14 +1,9 @@
-import { computed, toValue, type MaybeRef, type MaybeRefOrGetter } from 'vue'
-import type {
-  ImageAdapter,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../core/index'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/index'
 import { normalizePhotos } from '../core/photo/normalize'
 import { useLightboxRuntimeState } from '../lightbox/runtime'
 import { createLightboxController } from '../lightbox/controller'
-import { providePhotoConfig, type LightboxOptions } from '../config'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import type { LightboxProviderController, LightboxSlideRenderer } from '../provide/keys'
 import { provideLightboxContexts } from '../provide/lightbox'
@@ -45,10 +40,11 @@ export function provideLightbox<TMeta extends object = Readonly<Record<string, u
     history?: boolean
     deepLink?: boolean | string
     tools?: LightboxOptions['tools']
-    imageAdapter?: MaybeRef<ImageAdapter<TMeta> | undefined>
+    provider?: MaybeRefOrGetter<PhotoProvider | string | undefined>
   },
 ): LightboxProviderController<TMeta> {
   const config = providePhotoConfig(() => ({
+    provider: toValue(options?.provider),
     lightbox: {
       component: options?.component,
       history: options?.history,
@@ -72,7 +68,6 @@ export function provideLightbox<TMeta extends object = Readonly<Record<string, u
     photos,
     options?.transition,
     options?.minZoom,
-    options?.imageAdapter as MaybeRef<ImageAdapter | undefined>,
     options?.navigation,
   )
 

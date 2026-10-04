@@ -38,9 +38,6 @@ export type {
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
   PhotoCarouselAutoplayOptions,
-  ImageAdapter,
-  ImageContext,
-  ImageSource,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
   LightboxNavigationMode,
@@ -62,3 +59,4 @@ export type { PhotoLocale } from './provide/labels'
 export { validatePhotos } from './core/photo/normalize'
 
 export type { GalleryHandle } from './gallery/runtime'
+export { definePhotoProvider } from './providers/resolve'

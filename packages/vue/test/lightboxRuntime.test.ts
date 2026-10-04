@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
 import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
+import { createPhoto } from '../src/config'
 import { createKeydownBinding, useLightboxWindowLifecycle } from '../src/lightbox/watchers'
 
 async function flushWatchers() {
@@ -469,25 +470,27 @@ describe('lightbox lifecycle invariants', () => {
     expect(removeKeydown).toHaveBeenCalledWith('keydown', expect.any(Function))
   })
 
-  it('settles closed and rethrows adapter failures during open', async () => {
-    const failure = new Error('adapter-open-failure')
+  it('settles closed and rethrows provider failures during open', async () => {
+    const failure = new Error('provider-open-failure')
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(
-          [makePhoto({ id: 'adapter-open' })],
-          'none',
-          undefined,
-          () => {
-            throw failure
-          },
-        )
+        api = useLightboxRuntimeState([makePhoto({ id: 'provider-open' })], 'none')
         return () => null
       },
     })
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp(App)
+    app.use(
+      createPhoto({
+        provider: {
+          url() {
+            throw failure
+          },
+        },
+      }),
+    )
     app.mount(host)
 
     await expect(api!.open()).rejects.toBe(failure)
@@ -497,26 +500,28 @@ describe('lightbox lifecycle invariants', () => {
     app.unmount()
   })
 
-  it('does not resolve the image adapter again during an instant close', async () => {
+  it('does not resolve the image provider again during an instant close', async () => {
     let fail = false
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(
-          [makePhoto({ id: 'adapter-close' })],
-          'none',
-          undefined,
-          (photo) => {
-            if (fail) throw new Error('adapter unexpectedly called during close')
-            return { src: photo.src }
-          },
-        )
+        api = useLightboxRuntimeState([makePhoto({ id: 'provider-close' })], 'none')
         return () => null
       },
     })
     const host = document.createElement('div')
     document.body.appendChild(host)
     const app = createApp(App)
+    app.use(
+      createPhoto({
+        provider: {
+          url(src) {
+            if (fail) throw new Error('provider unexpectedly called during close')
+            return src
+          },
+        },
+      }),
+    )
     app.mount(host)
 
     await api!.open()

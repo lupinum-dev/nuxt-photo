@@ -12,14 +12,18 @@ import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import type { LightboxProviderController } from '../provide/keys'
 import type {
-  ImageAdapter,
   InvalidPhotoPolicy,
   InvalidPhotosEvent,
   LightboxNavigationMode,
   LightboxTransitionOption,
   PhotoItem,
 } from '../core/index'
-import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
+import {
+  providePhotoConfig,
+  isLightboxOptions,
+  type LightboxOptions,
+  type PhotoProvider,
+} from '../config'
 import Lightbox from './Lightbox.vue'
 import {
   PhotoGroupContextKey,
@@ -55,8 +59,8 @@ const props = withDefaults(
      * @default 'throw'
      */
     validation?: InvalidPhotoPolicy
-    /** Image adapter for this component. Wins over the inherited config and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
      * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
      * at mount; change the component `key` to remount.
@@ -86,6 +90,7 @@ const emit = defineEmits<{
 }>()
 
 const photoConfig = providePhotoConfig(() => ({
+  provider: props.provider,
   lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
   validation: props.validation,
 }))
@@ -123,11 +128,10 @@ const enabled = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoGroup', {
   lightbox: () => props.lightbox,
 })
-const provider = enabled
+const lightboxProvider = enabled
   ? provideLightbox(canonicalPhotos, {
       transition: () => props.transition,
       navigation: () => props.navigation,
-      imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => capabilitiesById.value.get(photo.id)?.renderSlide ?? null,
     })
   : null
@@ -159,14 +163,14 @@ function removeCapabilities(owner: symbol) {
 }
 
 function syncThumbnailRefs() {
-  if (!provider) return
+  if (!lightboxProvider) return
   canonicalPhotos.value.forEach((photo, index) => {
     const element =
       capabilitiesById.value
         .get(photo.id)
         ?.thumbnailCandidates.map((candidate) => candidate())
         .find((candidate) => candidate?.isConnected) ?? null
-    provider.setThumbnailRef(index)(element)
+    lightboxProvider.setThumbnailRef(index)(element)
   })
 }
 
@@ -174,9 +178,9 @@ async function open(index = 0) {
   if (index < 0 || index >= canonicalPhotos.value.length) {
     throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
   }
-  if (!provider) return
+  if (!lightboxProvider) return
   syncThumbnailRefs()
-  await provider.open(index)
+  await lightboxProvider.open(index)
 }
 
 async function activateById(id: string, source?: HTMLElement | null) {
@@ -184,10 +188,10 @@ async function activateById(id: string, source?: HTMLElement | null) {
   if (index === undefined) {
     throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
   }
-  if (!provider) return
+  if (!lightboxProvider) return
   syncThumbnailRefs()
-  if (source) provider.setThumbnailRef(index)(source)
-  await provider.openById(id)
+  if (source) lightboxProvider.setThumbnailRef(index)(source)
+  await lightboxProvider.openById(id)
 }
 
 async function openById(id: string) {
@@ -195,7 +199,7 @@ async function openById(id: string) {
 }
 
 async function close() {
-  await provider?.close()
+  await lightboxProvider?.close()
 }
 
 const disabledController: LightboxProviderController<TMeta> = {
@@ -215,8 +219,8 @@ const disabledController: LightboxProviderController<TMeta> = {
   setThumbnailRef: () => () => {},
 }
 
-const controller: LightboxProviderController<TMeta> = provider
-  ? { ...provider, open, openById }
+const controller: LightboxProviderController<TMeta> = lightboxProvider
+  ? { ...lightboxProvider, open, openById }
   : disabledController
 
 const { activeId, activePhoto } = useGalleryModel(
@@ -228,11 +232,11 @@ const { activeId, activePhoto } = useGalleryModel(
 )
 
 const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
-  if (!provider) return null
-  const index = provider.hiddenThumbnailIndex.value
+  if (!lightboxProvider) return null
+  const index = lightboxProvider.hiddenThumbnailIndex.value
   return index === null ? null : (canonicalPhotos.value[index] ?? null)
 })
-const isOpen = computed(() => provider?.isOpen.value ?? false)
+const isOpen = computed(() => lightboxProvider?.isOpen.value ?? false)
 
 const groupContext: PhotoGroupContext = {
   enabled,

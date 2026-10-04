@@ -15,7 +15,7 @@ function snapToBreakpoint(width: number, breakpoints: readonly number[]): number
  * and only starts the observer after mount.
  */
 export function useContainerWidth(
-  containerRef: Ref<HTMLElement | null>,
+  containerRef: Readonly<Ref<HTMLElement | null | undefined>>,
   options?: {
     /** Pre-render width so the JS layout runs on the server. Avoids CLS when it matches the breakpoint. */
     defaultContainerWidth?: number

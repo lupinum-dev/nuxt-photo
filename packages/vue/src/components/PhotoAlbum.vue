@@ -29,7 +29,6 @@
             :width="item.width"
             :height="item.height"
             :hidden="isHidden(item.photo)"
-            :image-adapter="imageAdapter"
             :img-class="imgClass"
             :sizes="item.computedSizes"
             :priority="item.index < priority"
@@ -73,7 +72,6 @@
               :width="entry.width"
               :height="entry.height"
               :hidden="isHidden(entry.photo)"
-              :image-adapter="imageAdapter"
               :img-class="imgClass"
               :sizes="thumbnailSizes(entry)"
               :priority="entry.index < priority"
@@ -102,7 +100,6 @@
           :width="photo.width"
           :height="photo.height"
           :hidden="false"
-          :image-adapter="imageAdapter"
           :img-class="imgClass"
           :sizes="nativeSizes"
           :priority="index < priority"
@@ -119,7 +116,12 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
+import {
+  providePhotoConfig,
+  isLightboxOptions,
+  type LightboxOptions,
+  type PhotoProvider,
+} from '../config'
 import { computed, defineComponent, h, type Component } from 'vue'
 import {
   mergeResponsiveBreakpoints,
@@ -128,7 +130,6 @@ import {
   DEFAULT_SPACING,
   DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
-  type ImageAdapter,
   type LightboxNavigationMode,
   type LightboxTransitionOption,
   type PhotoItem,
@@ -161,6 +162,8 @@ defineSlots<{
     width: number
     height: number
     hidden: boolean
+    sizes?: string
+    priority?: boolean
   }) => unknown
 }>()
 
@@ -214,8 +217,8 @@ const props = withDefaults(
     sizes?: string | ResponsivePhotoSizes
     /** Number of leading photos to load eagerly with high fetch priority. @default 0 */
     priority?: number
-    /** Image adapter for this component. Wins over the inherited config and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
      * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
      * at mount; change the component `key` to remount.
@@ -276,6 +279,7 @@ if (props.defaultContainerWidth === 0) {
 }
 
 const photoConfig = providePhotoConfig(() => ({
+  provider: props.provider,
   lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
   validation: props.validation,
 }))

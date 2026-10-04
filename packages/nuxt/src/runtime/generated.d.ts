@@ -1,7 +1,12 @@
 declare module '#build/nuxt-photo-internals.mjs' {
+  export interface ProviderRuntime {
+    resolve(name: string): import('@lupinum/vue-photo').PhotoProvider
+    widths(provider: import('@lupinum/vue-photo').PhotoProvider): readonly number[]
+    allowSourceWidth(provider: import('@lupinum/vue-photo').PhotoProvider): boolean
+  }
   export function createPhotoPlugin(
     config: import('@lupinum/vue-photo').PhotoConfig,
-    adapter?: import('@lupinum/vue-photo').ImageAdapter,
+    providers?: ProviderRuntime,
     locale?: () => string | undefined,
   ): import('vue').Plugin
 }

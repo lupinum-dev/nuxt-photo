@@ -11,7 +11,8 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, shallowRef, watch, type ComponentPublicInstance } from 'vue'
-import type { ImageSource, PhotoItem } from '../core/index'
+import type { PhotoItem } from '../core/index'
+import { resolvePhotoImage, type ResolvedPhotoImage } from '../providers/resolve'
 import { useLightboxInject } from '../lightbox/inject'
 
 defineOptions({ inheritAttrs: false })
@@ -68,7 +69,7 @@ function isCrossOrigin(src: string) {
   }
 }
 
-async function decodeThumb(source: ImageSource, cors: boolean) {
+async function decodeThumb(source: ResolvedPhotoImage, cors: boolean) {
   const image = new Image()
   // Must be set before `src`: it decides how the browser requests the image.
   if (cors) image.crossOrigin = 'anonymous'
@@ -83,7 +84,7 @@ async function decodeThumb(source: ImageSource, cors: boolean) {
 }
 
 async function loadThumb(photo: PhotoItem) {
-  const source = ctx.imageAdapter.value(photo, 'thumb')
+  const source = resolvePhotoImage(photo, 'thumb', ctx.photoConfig.value)
   // The canvas can read, and so blur, a cross-origin image only when it was
   // requested with CORS. A server without CORS headers fails that request; the
   // plain request then still gives a glow, softened only by the stretching.

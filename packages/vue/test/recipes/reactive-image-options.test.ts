@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import { provideLightbox } from '../../src/composables/provideLightbox'
-import type { ImageAdapter } from '../../src/core/index'
+import type { PhotoProvider } from '../../src/config'
 import PhotoImage from '../../src/primitives/PhotoImage.vue'
 import { flushUi, installBrowserStubs } from '../support/runtime'
 
@@ -18,13 +18,13 @@ describe('reactive image options', () => {
     document.body.innerHTML = ''
   })
 
-  it('updates the effective provided image adapter', async () => {
-    const firstAdapter: ImageAdapter = () => ({ src: '/first.jpg' })
-    const secondAdapter: ImageAdapter = () => ({ src: '/second.jpg' })
-    const imageAdapter = ref<ImageAdapter>(firstAdapter)
+  it('updates the effective provided image provider', async () => {
+    const firstProvider: PhotoProvider = { url: () => '/first.jpg' }
+    const secondProvider: PhotoProvider = { url: () => '/second.jpg' }
+    const provider = ref<PhotoProvider>(firstProvider)
     const component = defineComponent({
       setup() {
-        provideLightbox([photo], { imageAdapter })
+        provideLightbox([photo], { provider })
         return () => h(PhotoImage, { photo, context: 'slide' })
       },
     })
@@ -36,7 +36,7 @@ describe('reactive image options', () => {
     await flushUi()
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/first.jpg')
 
-    imageAdapter.value = secondAdapter
+    provider.value = secondProvider
     await flushUi()
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/second.jpg')
 

@@ -18,9 +18,6 @@ export type {
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
   PhotoCarouselAutoplayOptions,
-  ImageAdapter,
-  ImageContext,
-  ImageSource,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
   LightboxNavigationMode,
@@ -57,7 +54,7 @@ export {
 export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
-export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
+export { computePhotoSizes } from './image/sizes'
 export { isUsableRect, fitRect, coverPose, restingClip, rubberband } from './geometry/rect'
 
 export {

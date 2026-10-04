@@ -1,3 +1,4 @@
+import type { ResolvedPhotoConfig } from '../config'
 import type {
   ComponentPublicInstance,
   ComputedRef,
@@ -8,7 +9,6 @@ import type {
 } from 'vue'
 import type {
   GestureMode,
-  ImageAdapter,
   LightboxNavigationMode,
   PanState,
   PhotoItem,
@@ -54,7 +54,7 @@ type LightboxRuntimeState = {
   stageMounted: Ref<boolean>
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
-  imageAdapter: ComputedRef<ImageAdapter>
+  photoConfig: ComputedRef<ResolvedPhotoConfig>
   direction: ComputedRef<'ltr' | 'rtl'>
   navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>

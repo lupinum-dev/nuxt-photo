@@ -4,16 +4,13 @@ import {
   nextTick,
   onBeforeUnmount,
   ref,
-  unref,
   toValue,
   watch,
-  type MaybeRef,
   type MaybeRefOrGetter,
 } from 'vue'
 import {
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
-  type ImageAdapter,
   type LightboxNavigationMode,
   type LightboxTransitionOption,
   type PhotoItem,
@@ -25,6 +22,7 @@ import { useLightboxInputHandlers } from './input/pointer'
 import { createGeometrySync, createKeydownBinding, useLightboxWindowLifecycle } from './watchers'
 import { useGalleryRuntime } from '../gallery/runtime'
 import { usePhotoConfig } from '../config'
+import { resolvePhotoImage } from '../providers/resolve'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
@@ -71,7 +69,6 @@ export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
   transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
-  imageAdapter?: MaybeRef<ImageAdapter | undefined>,
   navigationOption?: MaybeRefOrGetter<LightboxNavigationMode | undefined>,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
@@ -86,7 +83,6 @@ export function useLightboxRuntimeState(
   const gallery = useGalleryRuntime(photos)
   const config = usePhotoConfig()
   const resolvedMinZoom = minZoom ?? config.value.lightbox.minZoom
-  const resolvedImageAdapter = computed(() => unref(imageAdapter) ?? config.value.imageAdapter)
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
@@ -253,7 +249,7 @@ export function useLightboxRuntimeState(
     }
 
     const photo = currentPhotos[index]!
-    motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
+    motion.captureOpen(index, resolvePhotoImage(photo, 'thumb', config.value).src)
     if (!isOpen.value) gallery.resolveDirection(motion.getThumbElement(index))
     const target: LightboxIntent = { kind: 'open', id: photo.id }
     desired = target
@@ -372,7 +368,7 @@ export function useLightboxRuntimeState(
     prepareActiveSlide,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
-    getThumbSrc: (photo: PhotoItem) => resolvedImageAdapter.value(photo, 'thumb').src,
+    getThumbSrc: (photo: PhotoItem) => resolvePhotoImage(photo, 'thumb', config.value).src,
     setImageLoadFailed: (failed: boolean, error?: unknown) => {
       activeImageLoadFailed.value = failed
       if (failed) devWarn('Active slide image failed to decode', error)
@@ -422,7 +418,7 @@ export function useLightboxRuntimeState(
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,
-    imageAdapter: resolvedImageAdapter,
+    photoConfig: config,
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,

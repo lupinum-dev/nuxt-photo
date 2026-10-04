@@ -1,5 +1,4 @@
-import { computed, provide } from 'vue'
-import { usePhotoConfig, photoConfigKey } from '../config'
+import { provide } from 'vue'
 import type { PhotoItem } from '../core/index'
 import {
   type InternalLightboxContext,
@@ -17,12 +16,4 @@ export function provideLightboxContexts(
 ) {
   provide(LightboxContextKey, ctx)
   provide(LightboxSlideRendererKey, options?.resolveSlide ?? (() => null))
-  const config = usePhotoConfig()
-  provide(
-    photoConfigKey,
-    computed(() => ({
-      ...config.value,
-      imageAdapter: (photo, context) => ctx.imageAdapter.value(photo, context),
-    })),
-  )
 }

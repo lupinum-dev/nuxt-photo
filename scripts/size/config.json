@@ -6,12 +6,13 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "_comment": "Includes priority loading and sizes=auto (layout-aware images).",
-      "brotliLimit": 1280
+      "_comment": "Includes shared config/locales and the capped PhotoProvider srcset path.",
+      "brotliLimit": 3200
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 37376
+      "brotliLimit": 42200,
+      "_comment": "Includes the accepted shared config, gallery store and PhotoProvider contract."
     },
     "responsive": {
       "label": "responsive named import",
@@ -21,15 +22,18 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 1950
+      "brotliDeltaLimit": 7700,
+      "_comment": "Includes the installed shared config, nine locales and runtime validation."
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 2150
+      "brotliDeltaLimit": 7800,
+      "_comment": "Includes shared config and the PhotoProvider image resolution path."
     },
     "album": {
       "label": "module enabled with PhotoAlbum usage",
-      "brotliDeltaLimit": 34816
+      "brotliDeltaLimit": 42000,
+      "_comment": "Includes shared config, gallery state and layout-owned provider images."
     }
   }
 }

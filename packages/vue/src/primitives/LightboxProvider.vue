@@ -4,13 +4,8 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed } from 'vue'
-import type {
-  ImageAdapter,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-  PhotoItem,
-} from '../core/index'
-import type { LightboxOptions } from '../config'
+import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/index'
+import type { LightboxOptions, PhotoProvider } from '../config'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import { provideLightbox } from '../composables/provideLightbox'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
@@ -45,7 +40,7 @@ const props = defineProps<{
   deepLink?: boolean | string
   tools?: LightboxOptions['tools']
   /** Image adapter for this component. Wins over the inherited config and the module default. */
-  imageAdapter?: ImageAdapter<TMeta>
+  provider?: PhotoProvider | string
 }>()
 
 warnOnSetupOptionChanges('LightboxProvider', {
@@ -63,7 +58,7 @@ provideLightbox(
     history: props.history,
     deepLink: props.deepLink,
     tools: props.tools,
-    imageAdapter: computed(() => props.imageAdapter),
+    provider: computed(() => props.provider),
   },
 )
 </script>

@@ -8,8 +8,9 @@ declare module '#app' {
 }
 
 declare module '#imports' {
-  import type { NuxtImageFunction } from '../src/runtime/image-adapter'
-  export function useImage(): NuxtImageFunction
+  export function useImage(): import('../src/runtime/provider').NuxtImageFunction & {
+    options: import('../src/runtime/provider').NuxtImageOptions
+  }
 }
 
 declare module '#build/nuxt-photo-local-images.mjs' {

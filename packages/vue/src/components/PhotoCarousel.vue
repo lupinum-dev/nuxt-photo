@@ -2,8 +2,8 @@
   <CarouselLayout
     ref="layoutRef"
     v-bind="{ ...$attrs, ...layoutProps }"
-    :on-slide-activate="provider ? openSlide : undefined"
-    :set-slide-ref="provider?.setThumbnailRef"
+    :on-slide-activate="lightboxProvider ? openSlide : undefined"
+    :set-slide-ref="lightboxProvider?.setThumbnailRef"
   >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
@@ -29,7 +29,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, ref, type Component } from 'vue'
-import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
+import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -47,7 +47,12 @@ import { useGalleryRuntime } from '../gallery/runtime'
 import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
-import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
+import {
+  providePhotoConfig,
+  isLightboxOptions,
+  type LightboxOptions,
+  type PhotoProvider,
+} from '../config'
 import Lightbox from './Lightbox.vue'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
@@ -79,8 +84,8 @@ const props = withDefaults(
      * @default 'throw'
      */
     validation?: InvalidPhotoPolicy
-    /** Image adapter for this component. Wins over the inherited config and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
      * Continue from the last slide to the first.
      * @default false
@@ -175,6 +180,7 @@ const emit = defineEmits<{
 }>()
 
 const photoConfig = providePhotoConfig(() => ({
+  provider: props.provider,
   lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
   validation: props.validation,
 }))
@@ -205,18 +211,17 @@ const hasLightbox = lightboxComponent !== null
 warnOnSetupOptionChanges('PhotoCarousel', {
   lightbox: () => props.lightbox,
 })
-const provider = hasLightbox
+const lightboxProvider = hasLightbox
   ? provideLightbox(resolvedPhotos, {
       transition: () => props.transition,
       navigation: () => props.navigation,
-      imageAdapter: computed(() => props.imageAdapter),
     })
   : null
 
 async function open(index = 0) {
   if (!resolvedPhotos.value[index])
     throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
-  await provider?.open(index)
+  await lightboxProvider?.open(index)
 }
 const openSlide = open
 async function openById(id: string) {
@@ -225,7 +230,7 @@ async function openById(id: string) {
   await open(index)
 }
 async function close() {
-  await provider?.close()
+  await lightboxProvider?.close()
 }
 const isOpen = gallery.isOpen
 const { activeId, activePhoto } = useGalleryModel(
@@ -249,7 +254,6 @@ defineExpose({ open, openById, close, isOpen, activeId, activePhoto, scrollTo, n
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
   gallery,
-  imageAdapter: props.imageAdapter,
   loop: props.loop,
   dragFree: props.dragFree,
   autoplay: props.autoplay,

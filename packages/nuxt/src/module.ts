@@ -86,7 +86,7 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
       getContents: () =>
-        `export default ${JSON.stringify({ labels: options.labels, lightbox: options.lightbox, validation: options.validation, provider: options.provider, image: options.image })}`,
+        `export default ${JSON.stringify({ labels: options.labels, lightbox: options.lightbox, validation: options.validation, provider: options.provider })}`,
     })
 
     if (options.localImages) {
@@ -118,7 +118,6 @@ export default defineNuxtModule<NuxtPhotoOptions>({
       }
     }
 
-    let imagePlugin = false
     nuxt.hook('modules:done', () => {
       addTemplate({
         filename: 'nuxt-photo-config.mjs',
@@ -129,52 +128,16 @@ export const dimensions = ${options.localImages ? 'createLocalImageDimensionsRes
 export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
       })
     })
-    if (options.image !== false) {
-      const explicit = options.image?.provider ?? 'auto'
-      if (explicit !== 'native') {
-        nuxt.hook('modules:done', () => {
-          const hasImageModule = hasNuxtModule('@nuxt/image')
-          if (explicit === 'nuxt-image' && !hasImageModule) {
-            throw new Error(
-              '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
-            )
-          }
-
-          if (!hasImageModule) {
-            const hasAdapterConfig =
-              typeof options.image === 'object' && !!(options.image.thumb || options.image.slide)
-            if (hasAdapterConfig) {
-              logger.warn(
-                '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect because `@nuxt/image` is not installed.',
-              )
-            }
-            return
-          }
-
-          imagePlugin = true
-          addPlugin(
-            {
-              src: resolver.resolve('./runtime/plugin'),
-            },
-            { append: true },
-          )
-        })
-      }
-    }
-
-    if (
-      typeof options.image === 'object' &&
-      options.image.provider === 'native' &&
-      (options.image.thumb || options.image.slide)
-    ) {
-      logger.warn(
-        '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect with the native image provider.',
-      )
-    }
-
     nuxt.hook('modules:done', () => {
-      if (!imagePlugin)
+      if (hasNuxtModule('@nuxt/image')) {
+        addPlugin({ src: resolver.resolve('./runtime/plugin') }, { append: true })
+      } else {
+        if (options.provider)
+          throw new TypeError(
+            '[nuxt-photo] nuxtPhoto.provider requires @nuxt/image; install the module or omit the provider name.',
+          )
         addPlugin({ src: resolver.resolve('./runtime/defaults-plugin') }, { append: true })
+      }
     })
 
     if (options.components !== false) {

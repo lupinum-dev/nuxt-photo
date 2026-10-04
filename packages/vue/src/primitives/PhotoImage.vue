@@ -20,23 +20,24 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { computed, onMounted, ref, watch } from 'vue'
-import type { PhotoItem, ImageAdapter, ImageContext } from '../core/index'
-import { usePhotoConfig } from '../config'
+import type { PhotoItem } from '../core/index'
+import { usePhotoConfig, type PhotoProvider } from '../config'
+import { resolvePhotoImage, type PhotoRenderContext } from '../providers/resolve'
 
 defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
-    /** The photo to render through the image adapter. */
+    /** The photo to render through the image provider. */
     photo: PhotoItem<TMeta>
     /**
-     * `'thumb'` for grid images, `'slide'` for lightbox images. The adapter can return different
+     * `'thumb'` for grid images, `'slide'` for lightbox images. The provider can return different
      * URLs for each.
      * @default 'thumb'
      */
-    context?: ImageContext
-    /** Image adapter for this component. Wins over the inherited config and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    context?: PhotoRenderContext
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
      * Native image `loading` hint. Use `'eager'` for images in the first screen.
      * @default 'lazy'
@@ -44,7 +45,7 @@ const props = withDefaults(
     loading?: 'lazy' | 'eager'
     /** Load eagerly with high fetch priority. Explicit `loading` wins. @default false */
     priority?: boolean
-    /** Override the adapter-computed sizes attribute with a layout-computed value. */
+    /** Layout-computed sizes. Always wins; providers do not own sizes. */
     sizes?: string
   }>(),
   {
@@ -52,17 +53,17 @@ const props = withDefaults(
   },
 )
 
-const config = usePhotoConfig()
-
-const resolveImage = computed(
-  (): ImageAdapter<TMeta> =>
-    props.imageAdapter ?? (config.value.imageAdapter as ImageAdapter<TMeta>),
-)
-
-const resolved = computed(() => resolveImage.value(props.photo, props.context))
+const inheritedConfig = usePhotoConfig()
+const config = computed(() => {
+  const parent = inheritedConfig.value
+  const provider =
+    typeof props.provider === 'string' ? parent.providers.resolve(props.provider) : props.provider
+  return provider ? { ...parent, provider } : parent
+})
+const resolved = computed(() => resolvePhotoImage(props.photo, props.context, config.value))
 const effectiveLoading = computed(() => props.loading ?? (props.priority ? 'eager' : 'lazy'))
 const effectiveSizes = computed(() => {
-  const sizes = props.sizes ?? resolved.value.sizes
+  const sizes = props.sizes ?? '100vw'
   return effectiveLoading.value === 'lazy' && !sizes?.startsWith('auto')
     ? `auto, ${sizes ?? '100vw'}`
     : sizes

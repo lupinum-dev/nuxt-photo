@@ -7,9 +7,12 @@ export default defineNuxtConfig({
 
   nuxtPhoto: {
     css: 'all',
-    image: {
-      provider: 'nuxt-image',
-    },
+  },
+
+  image: {
+    // Small carousel thumbnails need small entries in Nuxt Image's canonical ladder.
+    screens: { xs: 128, small: 256, medium: 384 },
+    quality: 80,
   },
 
   shiki: {

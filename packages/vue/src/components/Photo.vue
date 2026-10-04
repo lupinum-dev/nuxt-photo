@@ -8,9 +8,9 @@
     <PhotoImage
       :photo="resolvedPhoto"
       context="thumb"
-      :image-adapter="imageAdapter"
       :loading="loading"
       :priority="priority"
+      :sizes="containerWidth > 0 ? `${containerWidth}px` : '100vw'"
       class="np-photo__img"
       :class="imgClass"
     />
@@ -35,13 +35,19 @@ import {
   type VNodeChild,
 } from 'vue'
 
+import { useContainerWidth } from '../composables/useContainerWidth'
 import { useGalleryRuntime } from '../gallery/runtime'
 import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
-import type { PhotoItem, ImageAdapter } from '../core/index'
+import type { PhotoItem } from '../core/index'
 import type { LightboxNavigationMode, LightboxTransitionOption } from '../core/index'
-import { providePhotoConfig, isLightboxOptions, type LightboxOptions } from '../config'
+import {
+  providePhotoConfig,
+  isLightboxOptions,
+  type LightboxOptions,
+  type PhotoProvider,
+} from '../config'
 import Lightbox from './Lightbox.vue'
 import { PhotoGroupContextKey } from './photo-group/context'
 import { normalizePhotos } from '../core/photo/normalize'
@@ -70,8 +76,8 @@ const props = defineProps<{
    * the group's navigation.
    */
   lightboxIgnore?: boolean
-  /** Image adapter for this component. Wins over the inherited config and the module default. */
-  imageAdapter?: ImageAdapter<TMeta>
+  /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+  provider?: PhotoProvider | string
   /**
    * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
    * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
@@ -103,6 +109,7 @@ const slots = defineSlots<{
 }>()
 
 const photoConfig = providePhotoConfig(() => ({
+  provider: props.provider,
   lightbox: isLightboxOptions(props.lightbox) ? props.lightbox : undefined,
 }))
 
@@ -147,7 +154,6 @@ const soloCtx = isSolo.value
   ? provideLightbox(resolvedPhoto, {
       transition: () => props.transition,
       navigation: () => props.navigation,
-      imageAdapter: computed(() => props.imageAdapter),
       resolveSlide: (photo) => {
         if ((photo !== props.photo && String(photo.id) !== String(props.photo.id)) || !slots.slide)
           return null
@@ -158,6 +164,7 @@ const soloCtx = isSolo.value
 
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
+const { containerWidth } = useContainerWidth(thumbRef)
 
 // Is this photo's thumb hidden during a transition?
 const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
