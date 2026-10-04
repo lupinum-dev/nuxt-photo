@@ -49,6 +49,9 @@ export interface ResolvedPhotoConfig extends Omit<
   validation: InvalidPhotoPolicy
   provider: PhotoProvider
   providers: ProviderRuntime
+  /** Nuxt supplies the request URL and its SSR teleport destination internally. */
+  initialUrl?: string
+  teleportTarget?: string
 }
 export const photoConfigKey: InjectionKey<ComputedRef<ResolvedPhotoConfig>> =
   Symbol('nuxt-photo:config')
@@ -82,7 +85,7 @@ export function defaultPhotoConfig(locale?: string): ResolvedPhotoConfig {
   return {
     labels: {},
     labelLocale: locale,
-    lightbox: { minZoom: 1.5, transition: 'auto', navigation: 'slide' },
+    lightbox: { minZoom: 1.5, transition: 'auto', navigation: 'slide', history: true },
     validation: 'throw',
     provider: nativeProvider,
     providers: defaultProviderRuntime,

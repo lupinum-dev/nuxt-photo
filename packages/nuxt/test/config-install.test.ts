@@ -33,7 +33,7 @@ it('follows the active i18n composer locale and keeps per-key overrides', async 
   document.body.append(container)
   app.mount(container)
   try {
-    expect(labelCount).toBe(14)
+    expect(labelCount).toBe(18)
     expect(container.textContent).toBe('Custom close / Weiter / Bild 2 von 7')
     locale.value = 'fr'
     await nextTick()

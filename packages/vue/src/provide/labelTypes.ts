@@ -11,6 +11,10 @@ export interface PhotoLabels {
   nextSlide: string
   pauseAutoplay: string
   playAutoplay: string
+  download: string
+  share: string
+  fullscreen: string
+  exitFullscreen: string
   goToSlide: (index: number) => string
   viewPhoto: (index: number) => string
   slideStatus: (index: number, count: number) => string
@@ -32,6 +36,10 @@ export const PHOTO_LABEL_KEYS = [
   'nextSlide',
   'pauseAutoplay',
   'playAutoplay',
+  'download',
+  'share',
+  'fullscreen',
+  'exitFullscreen',
   'goToSlide',
   'viewPhoto',
   'slideStatus',

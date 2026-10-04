@@ -15,6 +15,7 @@
         class="np-lightbox__controls"
         v-slot="{
           activeIndex,
+          activePhoto,
           count,
           prev,
           next,
@@ -36,6 +37,7 @@
             <slot
               name="actions"
               :active-index="activeIndex"
+              :active-photo="activePhoto"
               :count="count"
               :prev="prev"
               :next="next"
@@ -64,6 +66,8 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
               </button>
               <div class="np-lightbox__tools">
+                <slot name="tools" :photo="activePhoto" :index="activeIndex" />
+                <LightboxTools />
                 <button
                   class="np-lightbox__btn np-lightbox__btn--zoom"
                   type="button"
@@ -97,22 +101,24 @@
 
       <div class="np-lightbox__stage">
         <LightboxViewport
-          v-slot="{ photos, viewportRef, imageLoadFailed }"
+          v-slot="{ photos, viewportRef, imageLoadFailed, isSlideMounted }"
           class="np-lightbox__media"
         >
           <div class="np-lightbox__viewport" :ref="viewportRef">
             <div class="np-lightbox__container">
-              <LightboxSlide
-                v-for="(photo, i) in photos"
-                :key="photo.id"
-                :photo="photo"
-                :index="i"
-                class="np-lightbox__slide"
-              >
-                <template v-if="$slots.slide" #default="slotProps">
-                  <slot name="slide" v-bind="slotProps" />
-                </template>
-              </LightboxSlide>
+              <template v-for="(photo, i) in photos" :key="photo.id">
+                <LightboxSlide
+                  v-if="isSlideMounted(i)"
+                  :photo="photo"
+                  :index="i"
+                  class="np-lightbox__slide"
+                >
+                  <template v-if="$slots.slide" #default="slotProps">
+                    <slot name="slide" v-bind="slotProps" />
+                  </template>
+                </LightboxSlide>
+                <div v-else class="np-lightbox__slide-spacer" aria-hidden="true" />
+              </template>
             </div>
           </div>
           <div v-if="imageLoadFailed" class="np-lightbox__fallback" role="status">
@@ -147,6 +153,7 @@ import {
   LightboxViewport,
 } from '../primitives/index'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
+import LightboxTools from '../internal/LightboxTools.vue'
 import type {
   LightboxCaptionSlotProps,
   LightboxControlsSlotProps,
@@ -160,10 +167,7 @@ interface LightboxCounterSlotProps {
   count: number
 }
 
-interface LightboxActionsSlotProps extends Omit<
-  LightboxControlsSlotProps,
-  'activePhoto' | 'photos'
-> {}
+interface LightboxActionsSlotProps extends Omit<LightboxControlsSlotProps, 'photos'> {}
 
 interface LightboxCaptionRecipeSlotProps {
   photo: LightboxCaptionSlotProps['photo']
@@ -173,6 +177,7 @@ interface LightboxCaptionRecipeSlotProps {
 defineSlots<{
   counter?: (props: LightboxCounterSlotProps) => unknown
   actions?: (props: LightboxActionsSlotProps) => unknown
+  tools?: (props: LightboxCaptionRecipeSlotProps) => unknown
   slide?: (props: LightboxSlideSlotProps) => unknown
   caption?: (props: LightboxCaptionRecipeSlotProps) => unknown
 }>()

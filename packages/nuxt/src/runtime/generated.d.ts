@@ -9,6 +9,7 @@ declare module '#build/nuxt-photo-internals.mjs' {
     config: import('@lupinum/vue-photo').PhotoConfig,
     providers?: ProviderRuntime,
     locale?: () => string | undefined,
+    environment?: { initialUrl?: string; teleportTarget?: string },
   ): void
 }
 declare module '#build/nuxt-photo-options.mjs' {

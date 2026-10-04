@@ -11,8 +11,8 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 42200,
-      "_comment": "All Vue components, gallery state, provider images, synchronous locales and Vue config validation; retain the existing stricter cap."
+      "brotliLimit": 47800,
+      "_comment": "History/deep links, browser tools and their translated labels add contract cost to the full Vue import; retain all other budgets."
     },
     "responsive": {
       "label": "responsive named import",

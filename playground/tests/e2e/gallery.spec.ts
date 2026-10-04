@@ -65,8 +65,8 @@ test('recipe gallery opens, navigates, zooms, and closes cleanly', async ({ page
 
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
-  await expect(page.locator('[data-np-slide-frame]')).toHaveCount(12)
-  await expect(page.locator('[data-np-slide-img]')).toHaveCount(3)
+  await expect(page.locator('[data-np-slide-frame]')).toHaveCount(7)
+  await expect(page.locator('[data-np-slide-img]')).toHaveCount(7)
   await expect(page.locator('.np-lightbox__counter')).toContainText('1 / 12')
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe('hidden')
 

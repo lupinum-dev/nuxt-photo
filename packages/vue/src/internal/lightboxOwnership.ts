@@ -6,6 +6,10 @@ type LightboxOwner = {
 let activeOwner: LightboxOwner | null = null
 let handoff: Promise<void> = Promise.resolve()
 
+export function ownsLightboxScreen(id: symbol): boolean {
+  return activeOwner?.id === id
+}
+
 /** Ensure only one provider owns modal focus and page isolation at a time. */
 export function acquireLightboxOwnership(owner: LightboxOwner): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve()

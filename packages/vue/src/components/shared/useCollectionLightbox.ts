@@ -2,6 +2,7 @@ import {
   computed,
   inject,
   onBeforeUnmount,
+  onMounted,
   watch,
   type Component,
   type ComponentPublicInstance,
@@ -62,6 +63,8 @@ export function useCollectionLightbox<TMeta extends object>(
       ownCtx.setThumbnailRef(Number(index))(element)
     }
   }
+
+  onMounted(syncOwnThumbRefs)
 
   function activatePhoto(photo: PhotoItem<TMeta>, index: number) {
     if (delegatedGroup) {

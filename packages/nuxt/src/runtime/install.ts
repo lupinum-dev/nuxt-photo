@@ -19,5 +19,6 @@ export function installNuxtPhoto(
     { provider, labels, lightbox: options.lightbox, validation: options.validation, dimensions },
     providers,
     locale,
+    { initialUrl: nuxtApp.ssrContext?.url, teleportTarget: '#teleports' },
   )
 }

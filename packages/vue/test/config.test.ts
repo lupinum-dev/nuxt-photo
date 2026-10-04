@@ -58,11 +58,11 @@ it.each([
   },
 )
 
-it('each bundled locale supplies all fourteen labels and indexed text', () => {
+it('each bundled locale supplies all eighteen labels and indexed text', () => {
   for (const locale of PHOTO_LOCALES) {
     const labels = resolvePhotoLabels(locale)
     if (!templates[locale]) throw new Error(`Missing plain Vue locale: ${locale}`)
-    expect(Object.keys(labels)).toHaveLength(14)
+    expect(Object.keys(labels)).toHaveLength(18)
     for (const value of Object.values(labels))
       expect(typeof value === 'string' ? value.length : value(2, 7).length).toBeGreaterThan(0)
     expect(labels.goToSlide(2)).toContain('2')

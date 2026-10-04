@@ -1,9 +1,10 @@
 <template>
-  <Teleport v-if="ctx.isOpen.value" to="body">
+  <Teleport v-if="ctx.isOpen.value" :to="ctx.photoConfig.value.teleportTarget ?? 'body'">
     <div
       ref="rootRef"
       tabindex="-1"
       data-np-lightbox-root
+      :data-np-initial="ctx.initialOpening.value || undefined"
       :dir="ctx.direction.value"
       :data-np-navigation="ctx.navigationMode.value"
       :style="ctx.frameVars.value"
@@ -26,6 +27,13 @@ import LightboxTransitionLayer from '../internal/LightboxTransitionLayer.vue'
 const ctx = useLightboxInject('LightboxRoot')
 
 const rootRef = ref<HTMLElement | null>(null)
+watch(
+  rootRef,
+  (element) => {
+    ctx.rootRef.value = element
+  },
+  { flush: 'sync' },
+)
 let restoreFocusEl: HTMLElement | null = null
 let restoreSiblings: (() => void) | null = null
 
@@ -38,7 +46,7 @@ function isolatePageSiblings(root: HTMLElement) {
   })
 
   function isolateElement(element: HTMLElement) {
-    if (element === root || previous.has(element)) return
+    if (element.contains(root) || previous.has(element)) return
     previous.set(element, {
       inert: element.inert,
       ariaHidden: element.getAttribute('aria-hidden'),
@@ -131,13 +139,14 @@ function handleKeydownCapture(event: KeyboardEvent) {
 watch(
   () => ctx.isOpen.value,
   async (isOpen) => {
+    if (typeof document === 'undefined') return
     if (isOpen) {
       restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
       await nextTick()
       if (rootRef.value) {
         isolatePageSiblings(rootRef.value)
       }
-      rootRef.value?.focus()
+      rootRef.value?.focus({ preventScroll: true })
       if (rootRef.value && document.activeElement !== rootRef.value) {
         const firstFocusable = getFocusableElements(rootRef.value)[0]
         firstFocusable?.focus()
@@ -152,8 +161,9 @@ watch(
     if (!target?.isConnected) return
 
     await nextTick()
-    target.focus()
+    target.focus({ preventScroll: true })
   },
+  { immediate: true },
 )
 
 onBeforeUnmount(() => {

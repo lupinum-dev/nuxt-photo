@@ -56,6 +56,8 @@ type LightboxRuntimeState = {
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
   photoConfig: ComputedRef<ResolvedPhotoConfig>
+  initialOpening: Ref<boolean>
+  rootRef: Ref<HTMLElement | null>
   direction: ComputedRef<'ltr' | 'rtl'>
   navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>

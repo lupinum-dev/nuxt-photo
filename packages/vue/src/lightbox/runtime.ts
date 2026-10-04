@@ -3,6 +3,7 @@ import {
   getCurrentInstance,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   toValue,
   watch,
@@ -27,7 +28,12 @@ import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
-import { acquireLightboxOwnership, releaseLightboxOwnership } from '../internal/lightboxOwnership'
+import {
+  acquireLightboxOwnership,
+  releaseLightboxOwnership,
+  ownsLightboxScreen,
+} from '../internal/lightboxOwnership'
+import { createLightboxHistory, initialPhotoId } from './history'
 
 export function getMountedSlideIndices(
   active: number,
@@ -35,7 +41,9 @@ export function getMountedSlideIndices(
   leaving: Iterable<number> = [],
 ) {
   if (count <= 0) return new Set<number>()
-  const mounted = new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
+  const mounted = new Set<number>()
+  for (let offset = -3; offset <= 3; offset++)
+    mounted.add((((active + offset) % count) + count) % count)
   // A photo that is still fading out keeps its image until the fade ends.
   for (const index of leaving) if (index < count) mounted.add(index)
   return mounted
@@ -82,6 +90,14 @@ export function useLightboxRuntimeState(
 
   const gallery = useGalleryRuntime(photos)
   const config = usePhotoConfig()
+  const initialId = initialPhotoId(
+    typeof window === 'undefined' ? config.value.initialUrl : window.location.href,
+    config.value.lightbox.deepLink,
+  )
+  const initialIndex = photos.value.findIndex((photo) => photo.id === initialId)
+  const initialOpening = ref(initialIndex >= 0)
+  if (initialOpening.value) gallery.requestIndex(initialIndex)
+  const rootRef = ref<HTMLElement | null>(null)
   const resolvedMinZoom = minZoom ?? config.value.lightbox.minZoom
 
   const reportAsyncError = useAsyncErrorReporter()
@@ -98,6 +114,7 @@ export function useLightboxRuntimeState(
   motionQuery?.addEventListener('change', syncReducedMotion)
 
   const transitionConfig = computed(() => {
+    if (initialOpening.value) return { ...DEFAULT_TRANSITION_CONFIG, mode: 'none' as const }
     return resolveTransitionConfig(
       toValue(transitionOption) ?? config.value.lightbox.transition,
       reducedMotion.value,
@@ -111,7 +128,7 @@ export function useLightboxRuntimeState(
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
   const frameAreaMetrics = ref<AreaMetrics | null>(null)
-  const lifecycleStatus = ref<LightboxLifecycleStatus>('closed')
+  const lifecycleStatus = ref<LightboxLifecycleStatus>(initialOpening.value ? 'opening' : 'closed')
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
@@ -137,6 +154,7 @@ export function useLightboxRuntimeState(
     () => reducedMotion.value,
     () => navigationMode.value,
   )
+  if (initialOpening.value) motion.stageMounted.value = true
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
 
@@ -150,9 +168,15 @@ export function useLightboxRuntimeState(
 
   watch(lifecycleStatus, (status) => gallery.requestVisibility(status !== 'closed'), {
     flush: 'sync',
+    immediate: true,
   })
   const isOpen = gallery.isOpen
   let desired: LightboxIntent = { kind: 'closed' }
+
+  function releaseClosedOwnership() {
+    if (lifecycleStatus.value === 'closed' && desired.kind === 'closed')
+      releaseLightboxOwnership(ownershipId)
+  }
   let activeRun: ActiveRun | null = null
   let reconcilePromise: Promise<void> | null = null
 
@@ -242,7 +266,7 @@ export function useLightboxRuntimeState(
     return reconcilePromise
   }
 
-  async function open(index = 0) {
+  async function open(index = 0, fromInitialLink = false) {
     const currentPhotos = photos.value
     if (index < 0 || index >= currentPhotos.length) {
       throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
@@ -260,23 +284,22 @@ export function useLightboxRuntimeState(
         await ensureReconciled()
         return
       }
+      await locationHistory.enter(photo.id, fromInitialLink)
+      if (desired !== target) return
       await ensureReconciled()
     } finally {
-      if (lifecycleStatus.value === 'closed') {
-        releaseLightboxOwnership(ownershipId)
-      }
+      releaseClosedOwnership()
     }
   }
 
-  async function close() {
+  async function close(fromPop = false) {
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
+    const historyClosed = fromPop ? Promise.resolve() : locationHistory.leave()
     try {
-      await ensureReconciled()
+      await Promise.all([ensureReconciled(), historyClosed])
     } finally {
-      if (lifecycleStatus.value === 'closed') {
-        releaseLightboxOwnership(ownershipId)
-      }
+      releaseClosedOwnership()
     }
   }
 
@@ -386,6 +409,21 @@ export function useLightboxRuntimeState(
   watch(carousel.activeIndex, () => {
     if (lifecycleStatus.value !== 'open') return
     reportAsyncError('prepare-active-slide', prepareActiveSlide(true))
+    if (gallery.activeId.value) locationHistory.navigate(gallery.activeId.value)
+  })
+  const locationHistory = createLightboxHistory({
+    config: () => config.value.lightbox,
+    ownsScreen: () => ownsLightboxScreen(ownershipId),
+    requestClose: () => reportAsyncError('history-close', close(true)),
+  })
+  onMounted(() => {
+    if (initialOpening.value)
+      reportAsyncError(
+        'initial-deep-link',
+        open(initialIndex, true).finally(() => {
+          initialOpening.value = false
+        }),
+      )
   })
   useLightboxWindowLifecycle({
     isMounted: isOpen,
@@ -396,6 +434,7 @@ export function useLightboxRuntimeState(
   })
 
   onBeforeUnmount(() => {
+    locationHistory.dispose()
     motionQuery?.removeEventListener('change', syncReducedMotion)
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
@@ -419,6 +458,8 @@ export function useLightboxRuntimeState(
     activePhoto: carousel.currentPhoto,
     isOpen,
     photoConfig: config,
+    initialOpening,
+    rootRef,
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,
@@ -459,7 +500,7 @@ export function useLightboxRuntimeState(
     onWheel: gestures.onWheel,
 
     open,
-    close,
+    close: () => close(),
     next,
     prev,
     toggleZoom: panzoom.toggleZoom,

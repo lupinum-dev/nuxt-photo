@@ -134,7 +134,7 @@ describe('nuxt-photo module', () => {
     )![0]
     const catalog = JSON.parse(template.getContents().slice('export default '.length))
     expect(Object.keys(catalog)).toEqual(expected)
-    for (const values of Object.values(catalog)) expect(values).toHaveLength(14)
+    for (const values of Object.values(catalog)) expect(values).toHaveLength(18)
     expect(catalog.en[0]).toBe('Photo viewer')
     const plugin = addVitePlugin.mock.calls[0]![0]
     expect(

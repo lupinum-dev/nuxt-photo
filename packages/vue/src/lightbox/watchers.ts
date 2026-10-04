@@ -76,20 +76,25 @@ export function useLightboxWindowLifecycle(config: {
     config.refreshZoomState(false)
   }
 
-  watch(config.isMounted, (mounted) => {
-    if (mounted) {
-      if (!didLock) {
-        lockBodyScroll(true)
-        didLock = true
+  watch(
+    config.isMounted,
+    (mounted) => {
+      if (typeof document === 'undefined') return
+      if (mounted) {
+        if (!didLock) {
+          lockBodyScroll(true)
+          didLock = true
+        }
+        return
       }
-      return
-    }
 
-    if (didLock) {
-      lockBodyScroll(false)
-      didLock = false
-    }
-  })
+      if (didLock) {
+        lockBodyScroll(false)
+        didLock = false
+      }
+    },
+    { immediate: true },
+  )
 
   onMounted(() => {
     if (typeof window !== 'undefined') {

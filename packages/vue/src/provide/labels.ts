@@ -14,7 +14,7 @@ export function resolvePhotoLabels(language?: string): Readonly<PhotoLabels> {
     en: PhotoLabelTemplates
   } = templates
   const values = catalog[detectPhotoLocale(language)] ?? catalog.en
-  // The exhaustive metadata and the 14-value tuple share the public label order.
+  // The exhaustive metadata and the 18-value tuple share the public label order.
   // Object.fromEntries cannot retain those per-key types.
   return Object.freeze(
     Object.fromEntries(
