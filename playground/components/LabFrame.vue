@@ -1,0 +1,185 @@
+<script setup lang="ts">
+import type { PhotoItem } from '@lupinum/nuxt-photo/app'
+import { useLabMeasurement } from '../lab/measurement'
+
+const props = defineProps<{
+  title: string
+  photos: readonly PhotoItem[]
+  active?: string | null
+  requests?: boolean
+}>()
+const image = useImage()
+const provider = image.options.provider
+const screens = [...new Set(Object.values(image.options.screens))].sort((a, b) => a - b)
+const ladder =
+  provider === 'vercel'
+    ? screens
+    : [
+        ...new Set(
+          screens.flatMap((width) => image.options.densities.map((density) => width * density)),
+        ),
+      ].sort((a, b) => a - b)
+const bar = ref<HTMLElement | null>(null)
+const barHeight = ref(0)
+const overlay = ref(false)
+const { summary, readings, slideRequests } = useLabMeasurement(
+  () => props.photos,
+  provider,
+  ladder,
+  () => props.active,
+  bar,
+)
+let resizeFrame = 0
+function sizeBar() {
+  cancelAnimationFrame(resizeFrame)
+  resizeFrame = requestAnimationFrame(() => {
+    const height = bar.value?.offsetHeight ?? 0
+    if (barHeight.value === height) return
+    barHeight.value = height
+    document.documentElement.style.setProperty('--lab-bar-height', `${height}px`)
+  })
+}
+onMounted(() => {
+  sizeBar()
+  window.addEventListener('resize', sizeBar)
+})
+onUpdated(sizeBar)
+onBeforeUnmount(() => {
+  cancelAnimationFrame(resizeFrame)
+  window.removeEventListener('resize', sizeBar)
+  document.documentElement.style.removeProperty('--lab-bar-height')
+})
+const color = (ratio: number) =>
+  ratio >= 0.9 && ratio <= 2 ? '#16a34a' : ratio <= 3 ? '#d97706' : '#dc2626'
+</script>
+
+<template>
+  <main class="lab-page" :style="{ '--lab-bar-height': `${barHeight}px` }">
+    <div ref="bar" class="lab-summary">
+      <div>
+        Images: {{ summary.images }} · In range (0.9–2×): {{ summary.inRangePercent.toFixed(1) }}% ·
+        Median: {{ summary.median.toFixed(2) }}× · Transferred:
+        {{ summary.transferredKB.toFixed(1) }} KB · Formats: {{ summary.formats.join(', ') }} · LCP:
+        {{ summary.lcpMs.toFixed(0) }} ms ({{ summary.lcpLoading }})
+      </div>
+      <div>
+        Provider: {{ summary.provider }} · Ladder: {{ summary.ladder.join(', ') }} · DPR:
+        {{ summary.dpr }}
+      </div>
+      <button type="button" @click="overlay = !overlay">
+        {{ overlay ? 'Hide overlay' : 'Show overlay' }}
+      </button>
+    </div>
+    <header class="lab-header">
+      <h1>{{ title }}</h1>
+    </header>
+    <div class="lab-content"><slot /></div>
+    <ul v-if="requests">
+      <li v-for="url in slideRequests" :key="url">
+        <code>{{ url }}</code>
+      </li>
+    </ul>
+    <Teleport to="body">
+      <div v-if="overlay" class="lab-overlays" aria-hidden="true">
+        <span
+          v-for="(reading, index) in readings"
+          :key="index"
+          class="lab-badge"
+          :style="{
+            left: `${Math.max(0, reading.left)}px`,
+            maxWidth: `calc(100vw - ${Math.max(0, reading.left)}px)`,
+            top: `${reading.top}px`,
+            background: color(reading.ratio),
+          }"
+          >need {{ Math.round(reading.needed) }}px · got {{ reading.got }}px ·
+          {{ reading.ratio.toFixed(2) }}× · {{ reading.kb.toFixed(1) }} KB · {{ reading.format }} ·
+          {{ reading.loading }}{{ reading.high ? ', high' : '' }}</span
+        >
+      </div>
+    </Teleport>
+  </main>
+</template>
+
+<style>
+/* Same page, heading and control styling as the playground Layout Explorer. */
+.lab-page {
+  padding: calc(var(--lab-bar-height) + 40px) 48px 120px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.lab-header {
+  margin-bottom: 48px;
+}
+.lab-header h1 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.lab-summary {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  z-index: 61;
+  padding: 16px 48px;
+  background: #1a1816;
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* Keep the existing viewer tools usable below the diagnostic bar. */
+.np-lightbox__topbar {
+  top: calc(var(--lab-bar-height, 0px) + 16px);
+}
+.lab-summary button {
+  margin-top: 8px;
+}
+.lab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-bottom: 48px;
+  padding: 24px;
+  background: rgba(255, 248, 240, 0.02);
+  border: 1px solid rgba(200, 149, 108, 0.1);
+  border-radius: 6px;
+}
+.lab-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(237, 232, 227, 0.45);
+}
+.lab-controls input {
+  width: 100px;
+}
+.lab-badge {
+  position: fixed;
+  z-index: 62;
+  pointer-events: none;
+  color: white;
+  font: 11px monospace;
+  padding: 2px 4px;
+  max-width: 100vw;
+}
+.lab-content .lab-photo {
+  display: block;
+  width: 100%;
+}
+.lab-content .lab-photo img {
+  width: 100%;
+}
+@media (max-width: 700px) {
+  .lab-page {
+    padding-inline: 20px;
+  }
+  .lab-summary {
+    padding-inline: 20px;
+  }
+  .lab-controls {
+    gap: 16px;
+  }
+}
+</style>

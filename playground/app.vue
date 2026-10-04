@@ -7,6 +7,7 @@
         <NuxtLink to="/layouts" class="nav__link">Layouts</NuxtLink>
         <NuxtLink to="/carousel" class="nav__link">Carousel</NuxtLink>
         <NuxtLink to="/headless" class="nav__link">Headless</NuxtLink>
+        <NuxtLink to="/lab" class="nav__link">Image Lab</NuxtLink>
         <NuxtLink to="/nuxt-image" class="nav__link">NuxtImage</NuxtLink>
       </div>
     </nav>

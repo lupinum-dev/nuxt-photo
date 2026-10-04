@@ -10,9 +10,20 @@ export default defineNuxtConfig({
   },
 
   image: {
-    // Small carousel thumbnails need small entries in Nuxt Image's canonical ladder.
-    screens: { xs: 128, small: 256, medium: 384 },
+    // Six balanced columns with the tall special need 16–64px renditions; keep them in the canonical ladder.
+    screens: {
+      micro: 16,
+      tiny: 32,
+      thumbnail: 64,
+      xs: 128,
+      small: 256,
+      medium: 384,
+      '3xl': 1920,
+      '4xl': 2560,
+      '5xl': 3072,
+    },
     quality: 80,
+    provider: process.env.NUXT_PHOTO_LAB_PROVIDER === 'vercel' ? 'vercel' : 'ipx',
   },
 
   shiki: {
