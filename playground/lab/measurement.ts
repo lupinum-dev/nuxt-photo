@@ -4,6 +4,7 @@ import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 export interface LabSummary {
   images: number
   inRangePercent: number
+  floor: number
   median: number
   min: number
   max: number
@@ -26,6 +27,9 @@ interface Reading {
   needed: number
   got: number
   ratio: number
+  floor: boolean
+  inRange: boolean
+  srcset: string
   kb: number
   format: string
   loading: string
@@ -117,8 +121,9 @@ export function useLabMeasurement(
     return {
       images: ratios.length,
       inRangePercent: ratios.length
-        ? (100 * ratios.filter((ratio) => ratio >= 0.9 && ratio <= 2).length) / ratios.length
+        ? (100 * readings.value.filter((reading) => reading.inRange).length) / ratios.length
         : 0,
+      floor: readings.value.filter((reading) => reading.floor).length,
       median: ratios.length
         ? (ratios[middle]! + ratios[Math.floor((ratios.length - 1) / 2)]!) / 2
         : 0,
@@ -168,11 +173,23 @@ export function useLabMeasurement(
           const url = image.currentSrc
           const [got, format] = await Promise.all([fileWidth(url), fileFormat(url)])
           const needed = Math.min(rect.width * devicePixelRatio, photo.width)
+          // Source capping can put this image's floor below the global provider ladder.
+          const srcset = image.srcset
+          const widths = srcset
+            .split(',')
+            .map((candidate) => Number(candidate.trim().match(/\s(\d+)w$/)?.[1]))
+            .filter((width) => width > 0)
+          const smallest = Math.min(...widths)
+          const floor = got === smallest && got >= needed * 0.9
+          const ratio = got / needed
           return {
             url,
             needed,
             got,
-            ratio: got / needed,
+            ratio,
+            floor,
+            inRange: (ratio >= 0.9 && ratio <= 2) || floor,
+            srcset,
             kb: bytes(url) / 1024,
             format,
             loading: image.getAttribute('loading') ?? 'eager',
@@ -223,6 +240,7 @@ export function useLabMeasurement(
     api = { summary: () => structuredClone(summary.value) }
     window.__lab = api
     document.addEventListener('load', schedule, true)
+    document.addEventListener('transitionend', schedule, true)
     window.addEventListener('scroll', schedule, true)
     window.addEventListener('resize', schedule)
     document.addEventListener('click', interaction)
@@ -231,7 +249,11 @@ export function useLabMeasurement(
       if (
         records.some(
           (record) =>
-            record.type === 'attributes' ||
+            (record.type === 'attributes' &&
+              (!['style', 'class'].includes(record.attributeName ?? '') ||
+                (record.target instanceof Element &&
+                  record.target.closest('.lab-content, [role="dialog"]') &&
+                  (record.target.matches('img') || record.target.querySelector('img'))))) ||
             [...record.addedNodes, ...record.removedNodes].some(
               (node) =>
                 node instanceof Element && (node.matches('img') || node.querySelector('img')),
@@ -244,7 +266,9 @@ export function useLabMeasurement(
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'srcset', 'sizes', 'data-np-active'],
+      // A late flight reveal changes opacity without changing the source or active id.
+      // Scope style/class observations to galleries so our own badges cannot cause a loop.
+      attributeFilter: ['src', 'srcset', 'sizes', 'data-np-active', 'style', 'class'],
     })
     if (PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint')) {
       paint = new PerformanceObserver((list) => {
@@ -265,6 +289,7 @@ export function useLabMeasurement(
     mutation?.disconnect()
     paint?.disconnect()
     document.removeEventListener('load', schedule, true)
+    document.removeEventListener('transitionend', schedule, true)
     window.removeEventListener('scroll', schedule, true)
     window.removeEventListener('resize', schedule)
     document.removeEventListener('click', interaction)

@@ -52,9 +52,9 @@ onBeforeUnmount(() => {
   document.documentElement.style.removeProperty('--lab-bar-height')
 })
 const badgeText = (reading: (typeof readings.value)[number]) =>
-  `need ${Math.round(reading.needed)}px · got ${reading.got}px · ${reading.ratio.toFixed(2)}× · ${reading.kb.toFixed(1)} KB · ${reading.format} · ${reading.loading}${reading.high ? ', high' : ''}`
-const color = (ratio: number) =>
-  ratio >= 0.9 && ratio <= 2 ? '#16a34a' : ratio <= 3 ? '#d97706' : '#dc2626'
+  `need ${Math.round(reading.needed)}px · got ${reading.got}px · ${reading.ratio.toFixed(2)}× · ${reading.kb.toFixed(1)} KB · ${reading.format} · ${reading.loading}${reading.high ? ', high' : ''}${reading.floor ? ' · floor' : ''}`
+const color = (reading: (typeof readings.value)[number]) =>
+  reading.inRange ? '#16a34a' : reading.ratio <= 3 ? '#d97706' : '#dc2626'
 </script>
 
 <template>
@@ -62,7 +62,7 @@ const color = (ratio: number) =>
     <div ref="bar" class="lab-summary">
       <div>
         Images: {{ summary.images }} · In range (0.9–2×): {{ summary.inRangePercent.toFixed(1) }}% ·
-        Median: {{ summary.median.toFixed(2) }}× · Transferred:
+        Floor: {{ summary.floor }} · Median: {{ summary.median.toFixed(2) }}× · Transferred:
         {{ summary.transferredKB.toFixed(1) }} KB · Formats: {{ summary.formats.join(', ') }} · LCP:
         {{ summary.lcpMs.toFixed(0) }} ms ({{ summary.lcpLoading }})
       </div>
@@ -99,7 +99,8 @@ const color = (ratio: number) =>
             class="lab-badge"
             :title="badgeText(reading)"
             :data-url="reading.url"
-            :style="{ background: color(reading.ratio) }"
+            :data-srcset="reading.srcset"
+            :style="{ background: color(reading) }"
             >{{ badgeText(reading) }}</span
           >
         </div>

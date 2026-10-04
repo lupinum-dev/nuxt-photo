@@ -15,13 +15,14 @@ const scenarios = [
   { name: 'lightbox', path: '/lab/lightbox' },
 ]
 const badge =
-  /^need \d+px · got \d+px · \d+\.\d{2}× · \d+\.\d KB · [\w+.-]+ · (eager|lazy)(, high)?$/
+  /^need \d+px · got \d+px · \d+\.\d{2}× · \d+\.\d KB · [\w+.-]+ · (eager|lazy)(, high)?( · floor)?$/
 
 for (const viewport of viewports) {
   for (const scenario of scenarios) {
     test(`image budget lab ${scenario.name} at ${viewport.width}@${viewport.deviceScaleFactor}`, async ({
       browser,
     }, testInfo) => {
+      // Each scenario owns a new context: no cookies, storage, or HTTP cache from prior measurements.
       const context = await browser.newContext({
         baseURL: testInfo.project.use.baseURL,
         viewport,
@@ -80,10 +81,34 @@ for (const viewport of viewports) {
             title: element.getAttribute('title'),
             text: element.textContent,
             url: element.getAttribute('data-url'),
+            srcset: element.getAttribute('data-srcset'),
+            background: getComputedStyle(element).backgroundColor,
           })),
         )
         await writeFile(testInfo.outputPath('readings.json'), JSON.stringify(details, null, 2))
-        for (const detail of details) expect(detail.title).toBe(detail.text)
+        let floors = 0
+        for (const detail of details) {
+          expect(detail.title).toBe(detail.text)
+          const hasFloor = detail.text!.endsWith(' · floor')
+          if (hasFloor) {
+            floors++
+            const got = Number(detail.text!.match(/ · got (\d+)px/)![1])
+            const widths = detail
+              .srcset!.split(',')
+              .map((candidate) => Number(candidate.trim().split(/\s+/).at(-1)!.replace(/w$/, '')))
+            expect(got).toBe(Math.min(...widths))
+            expect(detail.background).toBe('rgb(22, 163, 74)')
+          }
+        }
+        expect(floors).toBe(summary.floor)
+        await expect(page.locator('.lab-summary')).toContainText(` · Floor: ${summary.floor}`)
+        if (scenario.name === 'album columns 6' && viewport.width === 375) {
+          // Capped 80px tall-source srcset must qualify, even below the 128px provider floor.
+          const tall = details.find((detail) => detail.url?.endsWith('/lab/tall.jpg'))!
+          expect(tall.text).toContain('got 80px')
+          expect(tall.text).toContain(' · floor')
+          expect(tall.background).toBe('rgb(22, 163, 74)')
+        }
         const styles = await page.locator('.lab-badge').evaluateAll((elements) =>
           elements.map((element) => {
             const style = getComputedStyle(element)
