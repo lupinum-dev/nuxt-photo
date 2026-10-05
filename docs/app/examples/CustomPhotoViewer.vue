@@ -33,16 +33,21 @@ defineProps<{ photos: readonly PhotoItem[] }>()
     <LightboxRoot class="photo-viewer" role="dialog" aria-modal="true" aria-label="Photo viewer">
       <LightboxOverlay class="photo-viewer__backdrop" />
 
-      <LightboxViewport v-slot="{ photos: slides, viewportRef }" class="photo-viewer__viewport">
+      <LightboxViewport
+        v-slot="{ photos: slides, viewportRef, isSlideMounted }"
+        class="photo-viewer__viewport"
+      >
         <div :ref="viewportRef" class="photo-viewer__track-window">
           <div class="photo-viewer__track">
-            <LightboxSlide
-              v-for="(photo, index) in slides"
-              :key="photo.id"
-              :photo="photo"
-              :index="index"
-              class="photo-viewer__slide"
-            />
+            <template v-for="(photo, index) in slides" :key="photo.id">
+              <LightboxSlide
+                v-if="isSlideMounted(index)"
+                :photo="photo"
+                :index="index"
+                class="photo-viewer__slide"
+              />
+              <div v-else class="photo-viewer__slide" aria-hidden="true" />
+            </template>
           </div>
         </div>
       </LightboxViewport>

@@ -11,9 +11,15 @@ defineProps<{ photos: PhotoItem[] }>()
     :spacing="responsive({ 0: 12, 640: 20 })"
     :lightbox="{ navigation: 'crossfade' }"
   >
-    <template #thumbnail="{ photo, hidden }">
+    <template #thumbnail="{ photo, hidden, sizes, priority }">
       <figure class="work" :class="{ 'work--hidden': hidden }">
-        <PhotoImage :photo="photo" context="thumb" class="work__image" />
+        <PhotoImage
+          :photo="photo"
+          context="thumb"
+          :sizes="sizes"
+          :priority="priority"
+          class="work__image"
+        />
         <figcaption class="work__caption">{{ photo.caption }}</figcaption>
       </figure>
     </template>
