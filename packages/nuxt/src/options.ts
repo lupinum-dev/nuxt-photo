@@ -37,7 +37,10 @@ export interface NuxtPhotoOptions {
   autoImports?: boolean | { prefix?: string }
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
-  lightbox?: LightboxOptions
+  lightbox?: Omit<LightboxOptions, 'component'> & {
+    /** App-wide lightbox component path or alias, resolved at module setup. */
+    component?: string
+  }
   validation?: InvalidPhotoPolicy
   provider?: string
   labels?: PhotoLocale | NuxtPhotoLabelsConfig
@@ -144,5 +147,6 @@ export function validateNuxtPhotoOptions(value: unknown): asserts value is NuxtP
           : resolveNuxtPhotoLabels(options.labels as NuxtPhotoLabelsConfig | undefined),
     },
     'nuxtPhoto',
+    'path',
   )
 }

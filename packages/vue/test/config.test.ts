@@ -28,6 +28,10 @@ it.each([
   [{ thumb: {} }, 'Unknown `photo.thumb` option.'],
   [{ lightbox: { navigation: 3 } }, '`photo.lightbox.navigation` must be'],
   [{ lightbox: { transition: false } }, '`photo.lightbox.transition` must be an object'],
+  [
+    { lightbox: { component: '~/components/CaptionLightbox.vue' } },
+    '`photo.lightbox.component` must be a Vue component object or function',
+  ],
   [{ validation: false }, '`photo.validation` must be'],
   [{ labels: { close: 1 } }, '`photo.labels.close` must be a string'],
   [{ labels: 'xx' }, '`photo.labels` must be'],
