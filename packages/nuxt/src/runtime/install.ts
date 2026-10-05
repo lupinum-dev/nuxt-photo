@@ -18,24 +18,28 @@ export function installNuxtPhoto(
 ) {
   if (import.meta.server) {
     const preloaded = new Set<string>()
-    installImagePreload(nuxtApp.vueApp, ({ src, srcset, sizes }) => {
-      const key = srcset ?? src
-      if (preloaded.has(key) || preloaded.size >= 6) return
-      preloaded.add(key)
-      useHead({
-        link: [
-          {
-            rel: 'preload',
-            as: 'image',
-            imagesrcset: srcset,
-            imagesizes: sizes,
-            href: srcset ? undefined : src,
-            fetchpriority: 'high',
-            key,
-          },
-        ],
-      })
-    })
+    // Generated .mjs templates do not retain contextual callback types in consumer apps.
+    installImagePreload(
+      nuxtApp.vueApp,
+      ({ src, srcset, sizes }: { src: string; srcset?: string; sizes: string }) => {
+        const key = srcset ?? src
+        if (preloaded.has(key) || preloaded.size >= 6) return
+        preloaded.add(key)
+        useHead({
+          link: [
+            {
+              rel: 'preload',
+              as: 'image',
+              imagesrcset: srcset,
+              imagesizes: sizes,
+              href: srcset ? undefined : src,
+              fetchpriority: 'high',
+              key,
+            },
+          ],
+        })
+      },
+    )
   }
   const labels =
     typeof options.labels === 'string' ? options.labels : resolveNuxtPhotoLabels(options.labels)
