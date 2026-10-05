@@ -30,6 +30,7 @@
             priority
             :fetchpriority="isActive ? 'high' : 'low'"
             data-np-slide-img
+            @load="ctx.onSlideImageLoad(index)"
           />
         </div>
       </div>

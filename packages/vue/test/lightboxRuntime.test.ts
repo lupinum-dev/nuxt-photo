@@ -22,10 +22,10 @@ async function flushUntil(predicate: () => boolean, attempts = 8) {
 
 describe('lightbox media window', () => {
   it.each([
-    { active: 0, count: 5, expected: [0, 1, 2, 3, 4] },
-    { active: 2, count: 5, expected: [0, 1, 2, 3, 4] },
-    { active: 4, count: 5, expected: [0, 1, 2, 3, 4] },
-    { active: 250, count: 500, expected: [247, 248, 249, 250, 251, 252, 253] },
+    { active: 0, count: 5, expected: [0, 1, 4] },
+    { active: 2, count: 5, expected: [1, 2, 3] },
+    { active: 4, count: 5, expected: [0, 3, 4] },
+    { active: 250, count: 500, expected: [249, 250, 251] },
     { active: 0, count: 1, expected: [0] },
     { active: 1, count: 2, expected: [0, 1] },
   ])('mounts modular neighbors for $active of $count', ({ active, count, expected }) => {
