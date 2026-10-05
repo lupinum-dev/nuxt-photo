@@ -23,6 +23,7 @@ import {
   computeWidthDivisor,
   resolveResponsiveValue,
   type ResolvedPhotoItem as PhotoItem,
+  type AlbumLayout,
   type LayoutEntry,
   type LayoutGroup,
   type RowsLayoutOptions,
@@ -43,7 +44,7 @@ export type RowItem<TMeta extends object = Readonly<Record<string, unknown>>> = 
 
 interface AlbumLayoutRenderingOptions<TMeta extends object> {
   photos: Ref<readonly PhotoItem<TMeta>[]>
-  layout: Ref<'rows' | 'columns' | 'masonry'>
+  layout: Ref<AlbumLayout['type']>
   columns: Ref<ResponsiveParameter<number>>
   spacing: Ref<ResponsiveParameter<number>>
   padding: Ref<ResponsiveParameter<number>>
@@ -75,6 +76,10 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   const containerName = computed(() => `np-${albumId.replace(/[^a-z0-9]/gi, '')}`)
   const scopeClass = computed(() => `np-scope-${containerName.value}`)
   const containerQueriesActive = computed(() => !!breakpoints.value?.length)
+  // Grid, bento, mosaic and accordion are positioned by CSS alone.
+  const isFrame = computed(
+    () => layout.value !== 'rows' && layout.value !== 'columns' && layout.value !== 'masonry',
+  )
 
   // When defaultContainerWidth is set, items render inline calc widths and the
   // observed width snaps at breakpoints — inline styles would outrank any
@@ -219,6 +224,8 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
         return computeColumnsLayout({ ...input, columns: resolvedColumns.value })
       case 'masonry':
         return computeMasonryLayout({ ...input, columns: resolvedColumns.value })
+      default:
+        return []
     }
   })
 
@@ -353,7 +360,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   })
 
   const containerStyle = computed<CSSProperties>(() => {
-    if (layout.value === 'rows' && containerQueriesRender.value) {
+    if (isFrame.value || (layout.value === 'rows' && containerQueriesRender.value)) {
       return {
         width: '100%',
         containerType: 'inline-size',
@@ -377,6 +384,8 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   return {
     containerRef,
     containerWidth,
+    layoutWidth,
+    containerName,
     scopeClass,
     containerStyle,
     containerQueryCSS,

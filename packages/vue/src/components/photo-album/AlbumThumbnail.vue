@@ -21,12 +21,16 @@
       :priority="priority"
       class="np-album__img"
       :class="imageClass"
-      :style="{
-        display: 'block',
-        width: '100%',
-        height: 'auto',
-        aspectRatio: `${photo.width} / ${photo.height}`,
-      }"
+      :style="
+        cover
+          ? { display: 'block', width: '100%', height: '100%', objectFit: 'cover' }
+          : {
+              display: 'block',
+              width: '100%',
+              height: 'auto',
+              aspectRatio: `${photo.width} / ${photo.height}`,
+            }
+      "
       :sizes="sizes"
     />
   </div>
@@ -46,6 +50,8 @@ defineProps<{
   imageClass?: string
   sizes?: string
   priority?: boolean
+  /** Fill a tile whose shape the layout sets, cropping the photo. */
+  cover?: boolean
 }>()
 
 defineSlots<{

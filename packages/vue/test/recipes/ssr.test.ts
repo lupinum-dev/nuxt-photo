@@ -4,7 +4,7 @@ import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
-import { responsive } from '../../src/core/index'
+import { computeFrameLayout, responsive } from '../../src/core/index'
 import { computeBreakpointStyles } from '../../src/core/index'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import Photo from '../../src/components/Photo.vue'
@@ -400,4 +400,69 @@ describe('computeBreakpointStyles', () => {
     expect(css).toContain('calc(')
     expect(css).toContain('flex:0 0 auto')
   })
+})
+
+describe('CSS-only album SSR', () => {
+  it.each(['grid', 'mosaic', 'accordion'] as const)(
+    'renders %s completely regardless of default width',
+    async (type) => {
+      const framePhotos = Array.from({ length: 8 }, (_, index) =>
+        makePhoto({ id: `frame-${index}`, width: 1200 + index * 100, height: 900 }),
+      )
+      const render = (defaultContainerWidth?: number) =>
+        renderToString(
+          createSSRApp({
+            render: () =>
+              h(PhotoAlbum, {
+                photos: framePhotos,
+                layout: { type, max: 5 },
+                lightbox: false,
+                defaultContainerWidth,
+              }),
+          }),
+        )
+      // Only the sizes estimate may follow defaultContainerWidth; CSS owns the geometry.
+      const withoutSizes = (markup: string) => markup.replaceAll(/ sizes="[^"]*"/g, '')
+      const html = await render()
+      expect(withoutSizes(html)).toBe(withoutSizes(await render(900)))
+      expect(html).toContain(`np-album--${type}`)
+      expect(html).toContain('container-type:inline-size')
+      expect(html).toMatch(/<style>@container/)
+      expect(html).not.toContain('np-album__skeleton')
+      expect(html.match(/class="np-album__item"/g)).toHaveLength(type === 'mosaic' ? 5 : 8)
+      expect(html.match(/object-fit:cover/g)).toHaveLength(type === 'mosaic' ? 5 : 8)
+      if (type === 'mosaic') expect(html).toContain('+3')
+    },
+  )
+})
+
+it('renders responsive bento CSS with the primary reading order and item classes', async () => {
+  const photos = Array.from({ length: 12 }, (_, index) =>
+    makePhoto({ id: `bento-${index}`, width: [1600, 900, 1200][index % 3], height: 1000 }),
+  )
+  const columns = responsive({ 0: 2, 768: 4 })
+  const html = await renderToString(
+    createSSRApp({
+      render: () => h(PhotoAlbum, { photos, layout: { type: 'bento', columns }, lightbox: false }),
+    }),
+  )
+  const frame = computeFrameLayout({
+    type: 'bento',
+    photos,
+    columns,
+    containerName: 'album',
+    breakpoints: [768],
+  })
+  expect(html).toContain('np-album--bento')
+  expect(html).toContain('container-type:inline-size')
+  expect(html).toMatch(/<style>.*grid-column/s)
+  expect(html).toContain('(width < 768px)')
+  expect(html).toContain('(width >= 768px)')
+  expect([...html.matchAll(/src="\/photos\/(bento-\d+)\.jpg"/g)].map((match) => match[1])).toEqual(
+    frame.order.map((index) => photos[index]!.id),
+  )
+  expect(
+    [...html.matchAll(/class="np-album__item np-item-(\d+)"/g)].map((match) => Number(match[1])),
+  ).toEqual(Array.from({ length: 12 }, (_, index) => index))
+  expect(html.match(/object-fit:cover/g)).toHaveLength(12)
 })

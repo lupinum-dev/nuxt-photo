@@ -6,7 +6,38 @@
     :class="[ui?.root, scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
-    <template v-if="renderBranch.kind === 'rows'">
+    <template v-if="renderBranch.kind === 'frame'">
+      <ContainerQueryStyle v-if="frame.css" :css="frame.css" />
+      <div class="np-album__frame" :style="frame.frameStyle">
+        <div
+          v-for="(item, position) in frame.items"
+          :key="normalizedPhotos[item.index]!.id"
+          class="np-album__item"
+          :class="[item.className, ui?.item]"
+          :style="{ ...item.style, ...(hasLightbox ? { cursor: 'pointer' } : {}) }"
+          v-bind="itemBindings(normalizedPhotos[item.index]!, position)"
+        >
+          <AlbumThumbnail
+            :photo="normalizedPhotos[item.index]!"
+            :index="item.index"
+            :width="normalizedPhotos[item.index]!.width"
+            :height="normalizedPhotos[item.index]!.height"
+            :hidden="isHidden(normalizedPhotos[item.index]!)"
+            :image-class="ui?.img"
+            :sizes="frameSizes(position)"
+            :priority="position < priority"
+            cover
+          >
+            <template v-if="$slots.thumbnail" #thumbnail="slotProps">
+              <slot name="thumbnail" v-bind="slotProps" />
+            </template>
+          </AlbumThumbnail>
+          <span v-if="item.more" class="np-album__more" aria-hidden="true">+{{ item.more }}</span>
+        </div>
+      </div>
+    </template>
+
+    <template v-else-if="renderBranch.kind === 'rows'">
       <template v-if="renderBranch.containerQueryCss">
         <ContainerQueryStyle :css="renderBranch.containerQueryCss" />
       </template>
@@ -99,6 +130,9 @@ import { useRecipeLightbox } from './shared/useRecipeLightbox'
 
 import {
   mergeResponsiveBreakpoints,
+  computeFrameLayout,
+  computePhotoSizes,
+  type FrameLayout,
   DEFAULT_COLUMNS,
   DEFAULT_PADDING,
   DEFAULT_SPACING,
@@ -157,12 +191,12 @@ const props = withDefaults(
      */
     validation?: InvalidPhotoPolicy
     /**
-     * `'rows'`, `'columns'`, `'masonry'`, or an object with options: `{ type: 'rows',
-     * targetRowHeight: 300 }` or `{ type: 'columns', columns: 3 }`. Options accept `responsive()`
-     * values.
+     * `'rows'`, `'columns'`, `'masonry'`, `'grid'`, `'bento'`, `'mosaic'`, `'accordion'`, or an
+     * object with options: `{ type: 'rows', targetRowHeight: 300 }` or `{ type: 'grid', columns: 3 }`.
+     * Options accept `responsive()` values.
      * @default 'rows'
      */
-    layout?: AlbumLayout | AlbumLayout['type']
+    layout?: AlbumLayout<TMeta> | AlbumLayout['type']
     /**
      * Gap between photos in pixels. Accepts a number, `responsive({ 0: 4, 768: 8 })`, or a function
      * of the container width.
@@ -220,17 +254,23 @@ const endRef = useAlbumEndReached(
   () => emit('end-reached'),
 )
 
-const normalizedLayout = computed<AlbumLayout>(() => {
+const LAYOUT_TYPES: readonly AlbumLayout['type'][] = [
+  'rows',
+  'columns',
+  'masonry',
+  'grid',
+  'bento',
+  'mosaic',
+  'accordion',
+]
+
+const normalizedLayout = computed<AlbumLayout<TMeta>>(() => {
   const raw = props.layout
   if (typeof raw === 'object') return raw
 
-  switch (raw) {
-    case 'rows':
-      return { type: 'rows' }
-    case 'columns':
-      return { type: 'columns' }
-    case 'masonry':
-      return { type: 'masonry' }
+  switch (true) {
+    case LAYOUT_TYPES.includes(raw):
+      return { type: raw } as AlbumLayout<TMeta>
     default:
       devWarn(`Unknown layout type "${raw}", falling back to "rows"`)
       return { type: 'rows' }
@@ -256,36 +296,13 @@ const normalizedPhotos = useRecipePhotos<TMeta>(
   (event) => emit('invalidPhotos', event),
 )
 
-const {
-  hasLightbox,
-  hasOwnLightbox,
-  LightboxComponent,
-  itemBindings,
-  isHidden,
-  open,
-  openById,
-  close,
-  isOpen,
-  activeId: ownerActiveId,
-  activePhoto: ownerActivePhoto,
-} = useCollectionLightbox(normalizedPhotos, props, (): HTMLElement | null => containerRef.value)
-
-const { activeId, activePhoto } = useGalleryModel(
-  'PhotoAlbum',
-  () => props.active,
-  () => normalizedPhotos.value,
-  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
-  (id) => emit('update:active', id),
-)
-
-defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
-
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
   const layout = normalizedLayout.value
-  if (layout.type === 'columns' || layout.type === 'masonry') {
+  if (layout.type === 'columns' || layout.type === 'masonry' || layout.type === 'grid') {
     return layout.columns ?? DEFAULT_COLUMNS
   }
+  if (layout.type === 'bento') return layout.columns ?? 4
   return DEFAULT_COLUMNS
 })
 const layoutTargetRowHeight = computed(() => {
@@ -308,6 +325,8 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
 
 const {
   containerRef,
+  layoutWidth,
+  containerName,
   scopeClass,
   containerStyle,
   containerQueryCSS,
@@ -328,10 +347,94 @@ const {
   defaultContainerWidth: props.defaultContainerWidth,
   breakpoints: effectiveBreakpoints,
   sizes: computed(() => props.sizes),
-  interactive: hasLightbox,
+  interactive: computed((): boolean => hasLightbox.value),
 })
 
+const isFrame = computed(() => !['rows', 'columns', 'masonry'].includes(layoutType.value))
+let warnedFunction = false
+const frame = computed<FrameLayout>(() => {
+  const layout = normalizedLayout.value
+  if (
+    layout.type !== 'grid' &&
+    layout.type !== 'bento' &&
+    layout.type !== 'mosaic' &&
+    layout.type !== 'accordion'
+  ) {
+    return { css: '', frameStyle: {}, items: [], order: [], widths: [] }
+  }
+  if (
+    !effectiveBreakpoints.value?.length &&
+    !warnedFunction &&
+    [
+      props.spacing,
+      props.padding,
+      layout.type === 'grid' || layout.type === 'bento' ? layout.columns : undefined,
+    ].some((value) => typeof value === 'function')
+  ) {
+    warnedFunction = true
+    devWarn(
+      `${layout.type} layout renders with CSS only; a function value needs responsive() or the breakpoints prop. Using its value at width 0.`,
+    )
+  }
+  return computeFrameLayout({
+    ...layout,
+    photos: normalizedPhotos.value,
+    containerName: containerName.value,
+    breakpoints: effectiveBreakpoints.value,
+    spacing: props.spacing,
+    padding: props.padding,
+  })
+})
+
+// Bento and mosaic reorder photos; the lightbox follows the order on screen.
+const orderedPhotos = computed(() =>
+  isFrame.value
+    ? frame.value.order.map((index) => normalizedPhotos.value[index]!)
+    : normalizedPhotos.value,
+)
+
+/** The tile's share of the measured (or, on the server, estimated) album width. */
+function frameSizes(position: number): string {
+  const width = layoutWidth.value
+  const range = [...frame.value.widths].reverse().find((entry) => entry.start <= width)
+  const tile = Math.ceil((range?.shares[position] ?? 1) * width)
+  return computePhotoSizes(tile, width, 1, 0, 0, props.sizes) ?? `${tile}px`
+}
+
+const {
+  hasLightbox,
+  hasOwnLightbox,
+  LightboxComponent,
+  itemBindings,
+  isHidden,
+  open: openAt,
+  openById,
+  close,
+  isOpen,
+  activeId: ownerActiveId,
+  activePhoto: ownerActivePhoto,
+} = useCollectionLightbox(orderedPhotos, props, (): HTMLElement | null => containerRef.value)
+
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoAlbum',
+  () => props.active,
+  () => normalizedPhotos.value,
+  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
+  (id) => emit('update:active', id),
+)
+
+/** Opens by position in `photos`, which differs from the display order in bento and mosaic. */
+async function open(index = 0) {
+  if (!isFrame.value) return openAt(index)
+  const photo = normalizedPhotos.value[index]
+  if (!photo) throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
+  return openById(photo.id)
+}
+
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
+
 const renderBranch = computed(() => {
+  if (isFrame.value) return { kind: 'frame' as const }
   if (layoutType.value === 'rows') {
     return {
       kind: 'rows' as const,

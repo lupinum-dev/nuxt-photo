@@ -159,6 +159,35 @@ export type MasonryAlbumLayout = {
   columns?: ResponsiveParameter<number>
 }
 
+export type GridAlbumLayout = {
+  type: 'grid'
+  /** Columns. Accepts responsive(). @default 3 */
+  columns?: ResponsiveParameter<number>
+  /** Width / height of every tile. @default 1 */
+  aspectRatio?: number
+}
+export type BentoAlbumLayout<TMeta extends object = Readonly<Record<string, unknown>>> = {
+  type: 'bento'
+  /** Columns. Accepts responsive(). The photo order is chosen at the largest count; smaller counts keep that order. @default 4 */
+  columns?: ResponsiveParameter<number>
+  /** Width / height of one grid cell. @default 4 / 3 */
+  aspectRatio?: number
+  /** Photos that get a big tile. @default the first photo */
+  featured?: (photo: PhotoItem<TMeta>, index: number) => boolean
+}
+export type MosaicAlbumLayout = {
+  type: 'mosaic'
+  /** Width / height of the whole frame. @default 4 / 3 */
+  aspectRatio?: number
+  /** Photos shown in the frame; the last tile shows how many more there are. @default 5 */
+  max?: number
+}
+export type AccordionAlbumLayout = {
+  type: 'accordion'
+  /** Width / height of the whole strip. @default 2 */
+  aspectRatio?: number
+}
+
 /**
  * Discriminated layout config for `PhotoAlbum`.
  * Each variant only accepts the props relevant to that layout type.
@@ -166,7 +195,14 @@ export type MasonryAlbumLayout = {
  * @example
  * <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 280 }" />
  */
-export type AlbumLayout = RowsAlbumLayout | ColumnsAlbumLayout | MasonryAlbumLayout
+export type AlbumLayout<TMeta extends object = Readonly<Record<string, unknown>>> =
+  | RowsAlbumLayout
+  | ColumnsAlbumLayout
+  | MasonryAlbumLayout
+  | GridAlbumLayout
+  | BentoAlbumLayout<TMeta>
+  | MosaicAlbumLayout
+  | AccordionAlbumLayout
 
 // ─── Carousel ───
 
