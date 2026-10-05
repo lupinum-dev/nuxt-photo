@@ -356,3 +356,82 @@ test('image budget lab reports blank time without a painted placeholder', async 
   expect(reading.blankMs).toBeGreaterThan(800)
   expect(await page.locator('.lab-summary').textContent()).toContain('Blank:')
 })
+
+test('image budget lab does not backdate blank time from a delayed intersection', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const NativeObserver = window.IntersectionObserver
+    window.IntersectionObserver = class extends NativeObserver {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        super((entries, observer) => {
+          if (!entries.some((entry) => entry.target.id === 'delayed-intersection')) {
+            callback(entries, observer)
+            return
+          }
+          setTimeout(() => {
+            document.getElementById('delayed-intersection')!.style.backgroundColor = 'transparent'
+            // Let the real MutationObserver see the current appearance before
+            // delivering the older visibility entry, as separate browser tasks do.
+            setTimeout(() => callback(entries, observer), 0)
+          }, 400)
+        }, options)
+      }
+    }
+  })
+  await page.goto('/lab/photo')
+  await page.waitForFunction(() => !!window.__lab)
+  await page.route('**/lab/normal-05.jpg?delayed-intersection', async (route) => {
+    await new Promise((done) => setTimeout(done, 1400))
+    await route.continue()
+  })
+  await page.evaluate(() => {
+    const image = document.createElement('img')
+    image.id = 'delayed-intersection'
+    image.style.cssText =
+      'position:fixed;top:400px;left:100px;width:200px;height:200px;background-color:red'
+    image.src = '/lab/normal-05.jpg?delayed-intersection'
+    document.querySelector('.lab-content')!.append(image)
+  })
+  await page.waitForFunction(() =>
+    window
+      .__labTiming!.snapshot()
+      .images.some((image) => image.url.includes('delayed-intersection') && !image.pending),
+  )
+  await page.waitForTimeout(100)
+  const reading = await page.evaluate(
+    () =>
+      window
+        .__labTiming!.snapshot()
+        .images.find((image) => image.url.includes('delayed-intersection'))!,
+  )
+  expect(reading.blankMs).toBeGreaterThan(500)
+  // The first 400 ms had a red placeholder, even though the visibility entry arrived later.
+  expect(reading.waitMs - reading.blankMs).toBeGreaterThan(300)
+})
+
+test('image budget lab CLS counts gallery sources and ignores diagnostic sources', async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.use.browserName !== 'chromium',
+    'Layout shift entries require Chromium',
+  )
+  await page.goto('/lab/photo')
+  await page.waitForFunction(
+    () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
+  )
+  await page.waitForTimeout(600)
+  await page.locator('.lab-summary').evaluate((bar) => {
+    bar.style.paddingLeft = '100px'
+  })
+  await page.waitForTimeout(200)
+  expect(await page.evaluate(() => window.__lab!.summary().cls)).toBe(0)
+  await page
+    .locator('.lab-content img')
+    .first()
+    .evaluate((image) => {
+      image.style.marginTop = '100px'
+    })
+  await expect.poll(() => page.evaluate(() => window.__lab!.summary().cls)).toBeGreaterThan(0)
+})

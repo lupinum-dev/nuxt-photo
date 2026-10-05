@@ -60,8 +60,18 @@ export function startLabTiming() {
       for (const entry of list.getEntries() as (PerformanceEntry & {
         value: number
         hadRecentInput: boolean
+        sources?: { node?: Node }[]
       })[]) {
-        if (entry.hadRecentInput) continue
+        // The Lab bar and controls are instrumentation, not the gallery under test.
+        if (
+          entry.hadRecentInput ||
+          !entry.sources?.some(
+            ({ node }) =>
+              node instanceof Element &&
+              node.closest('.np-album, .np-carousel, .np-photo, .np-lightbox'),
+          )
+        )
+          continue
         if (
           session === 0 ||
           entry.startTime - lastShift > 1000 ||
@@ -76,14 +86,16 @@ export function startLabTiming() {
       }
     }).observe({ type: 'layout-shift', buffered: true })
   }
-  function update(state: State, time = performance.now()) {
+  function update(state: State, firstVisibleTime = performance.now(), sampleBlank = true) {
+    const time = performance.now()
     let shown = state.intersecting && state.image.isConnected
     for (let node: HTMLElement | null = state.image; shown && node; node = node.parentElement) {
       const style = getComputedStyle(node)
       shown =
         style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0
     }
-    if (shown && state.first === null) state.first = time
+    if (shown && state.first === null) state.first = firstVisibleTime
+    if (!sampleBlank) return
     const blank = shown && !state.painted && !state.placeholder && !state.colour
     if (blank && state.blankStart === null) state.blankStart = time
     if (!blank && state.blankStart !== null) {
@@ -138,7 +150,12 @@ export function startLabTiming() {
         entry.isIntersecting &&
         entry.intersectionRect.width > 0 &&
         entry.intersectionRect.height > 0
-      update(state, entry.time)
+      // Intersection entries can arrive after decode and placeholder removal.
+      // Keep their timestamp for wait time, but sample blank time at the next
+      // paint, after pending decode callbacks, rather than backdating today's
+      // appearance to an earlier frame that still had its placeholder.
+      update(state, entry.time, false)
+      requestAnimationFrame(() => update(state))
     }
   })
   function scan(root: ParentNode) {
