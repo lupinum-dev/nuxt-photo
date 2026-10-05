@@ -138,8 +138,10 @@ const thumbRef = ref<HTMLElement | null>(null)
 const { containerWidth } = useElementWidth(thumbRef)
 // A priority image keeps its server-rendered sizes, so its preload and the image request
 // the same file. Lazy images have not loaded yet and may use the measured width.
-const imageSizes = computed(() =>
-  props.sizes ?? (!props.priority && containerWidth.value > 0 ? `${containerWidth.value}px` : '100vw'),
+const imageSizes = computed(
+  () =>
+    props.sizes ??
+    (!props.priority && containerWidth.value > 0 ? `${containerWidth.value}px` : '100vw'),
 )
 
 // Is this photo's thumb hidden during a transition?
