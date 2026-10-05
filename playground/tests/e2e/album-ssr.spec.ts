@@ -85,20 +85,23 @@ for (const { width, height, columns, count } of [
           }
           outgoing.end()
         } else {
-          try {
-            const url = new URL(incoming.url ?? '/', base)
-            if (url.origin !== base.origin) {
-              outgoing.writeHead(403).end()
-              return
-            }
-            const asset = await fetch(url, { redirect: 'error' })
-            outgoing.writeHead(asset.status, {
-              'content-type': asset.headers.get('content-type') ?? 'application/octet-stream',
-            })
-            outgoing.end(Buffer.from(await asset.arrayBuffer()))
-          } catch {
-            outgoing.writeHead(502).end()
+          // Forward only the path; host and port are fixed to the local app.
+          const forwardPath = incoming.url ?? '/'
+          if (!forwardPath.startsWith('/') || forwardPath.startsWith('//')) {
+            outgoing.writeHead(403).end()
+            return
           }
+          const upstream = httpRequest(
+            { hostname: base.hostname, port: base.port, path: forwardPath },
+            (asset) => {
+              outgoing.writeHead(asset.statusCode ?? 502, {
+                'content-type': asset.headers['content-type'] ?? 'application/octet-stream',
+              })
+              asset.pipe(outgoing)
+            },
+          )
+          upstream.once('error', () => outgoing.writeHead(502).end())
+          upstream.end()
         }
       })
       const port = 47080 + testInfo.workerIndex
