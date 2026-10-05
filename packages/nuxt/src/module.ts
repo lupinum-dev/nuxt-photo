@@ -127,16 +127,13 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     })
     addServerTemplate({
       filename: '#nuxt-photo-folders',
-      getContents: () => `import { defineEventHandler, getQuery } from 'h3'
-const manifest = ${JSON.stringify(manifest)}
-export default defineEventHandler(event => {
-  const folder = getQuery(event).folder
-  if (typeof folder !== 'string') return []
-  const prefix = '/' + folder.replace(/^\\/+|\\/+$/g, '') + '/'
-  return Object.entries(manifest).filter(([src]) => src.startsWith(prefix) && !src.slice(prefix.length).includes('/')).map(([src, image]) => ({ ...image, src: ${JSON.stringify(nuxt.options.app.baseURL.replace(/\/$/, ''))} + src, id: src.slice(1).replace(/\\.[^/.]+$/, '') }))
-})`,
+      getContents: () =>
+        `export const manifest = ${JSON.stringify(manifest)}\nexport const baseURL = ${JSON.stringify(nuxt.options.app.baseURL.replace(/\/$/, ''))}`,
     })
-    addServerHandler({ route: '/__nuxt_photo/folder', handler: '#nuxt-photo-folders' })
+    addServerHandler({
+      route: '/__nuxt_photo/folder',
+      handler: resolver.resolve('./runtime/server/photo-folder'),
+    })
     const template = options.localImages
       ? addTemplate({
           filename: 'nuxt-photo-local-images.mjs',

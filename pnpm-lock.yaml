@@ -193,6 +193,9 @@ importers:
       '@nuxt/schema':
         specifier: 4.5.2
         version: 4.5.2
+      h3:
+        specifier: 1.15.11
+        version: 1.15.11
       image-size:
         specifier: 2.0.4
         version: 2.0.4
