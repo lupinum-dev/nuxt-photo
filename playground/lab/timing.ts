@@ -43,6 +43,7 @@ export function startLabTiming() {
     loaded: number | null
     painted: boolean
     placeholder: boolean
+    colour: boolean
     background: string
     intersecting: boolean
     blankStart: number | null
@@ -83,7 +84,7 @@ export function startLabTiming() {
         style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0
     }
     if (shown && state.first === null) state.first = time
-    const blank = shown && !state.painted && !state.placeholder
+    const blank = shown && !state.painted && !state.placeholder && !state.colour
     if (blank && state.blankStart === null) state.blankStart = time
     if (!blank && state.blankStart !== null) {
       state.blank += Math.max(0, time - state.blankStart)
@@ -106,7 +107,10 @@ export function startLabTiming() {
       })
   }
   function placeholder(state: State) {
-    const background = getComputedStyle(state.image).backgroundImage
+    const style = getComputedStyle(state.image)
+    state.colour =
+      style.backgroundColor !== 'transparent' && style.backgroundColor !== 'rgba(0, 0, 0, 0)'
+    const background = style.backgroundImage
     if (background === state.background) return
     state.background = background
     state.placeholder = false
@@ -152,6 +156,7 @@ export function startLabTiming() {
           loaded: null,
           painted: false,
           placeholder: false,
+          colour: false,
           background: '',
           intersecting: false,
           blankStart: null,

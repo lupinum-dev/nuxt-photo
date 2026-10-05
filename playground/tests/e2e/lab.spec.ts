@@ -68,6 +68,8 @@ for (const viewport of viewports) {
           JSON.stringify({ scenario: scenario.name, viewport, ...summary }, null, 2),
         )
         expect(summary.provider).toBe('ipx')
+        if (summary.cls !== null) expect(summary.cls).toBe(0)
+        expect(summary.blankTotalMs).toBe(0)
         expect(summary.dpr).toBe(viewport.deviceScaleFactor)
         expect(summary.ladder).toEqual([
           128, 256, 384, 512, 640, 768, 1024, 1280, 1536, 1920, 2048, 2560, 3072, 3840, 5120, 6144,
@@ -196,6 +198,10 @@ test('image budget lab cold sources and visible wait are honest', async ({ page 
     if (route.request().method() === 'GET') await new Promise((done) => setTimeout(done, 1500))
     await route.continue()
   })
+  const html = await (await page.request.get('/lab/photo?cold=1')).text()
+  expect(html).toContain('loading="lazy"')
+  expect(html).toContain('decoding="async"')
+  expect(html).toContain('background-color:#')
   await page.goto('/lab/photo?cold=1', { waitUntil: 'domcontentloaded' })
   await page.waitForFunction(() => !!window.__lab)
   await page.waitForFunction(

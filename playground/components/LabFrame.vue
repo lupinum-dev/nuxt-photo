@@ -38,10 +38,22 @@ const { summary, readings, slideRequests } = useLabMeasurement(
   bar,
 )
 let resizeFrame = 0
+let previousSummaryWidth: number | undefined
 function sizeBar() {
   cancelAnimationFrame(resizeFrame)
   resizeFrame = requestAnimationFrame(() => {
-    const height = bar.value?.offsetHeight ?? 0
+    const element = bar.value
+    const width = element?.firstElementChild?.getBoundingClientRect().width
+    // Keep the viewed diagnostics anchored when values grow to the left of a scrolled bar.
+    if (
+      element &&
+      width !== undefined &&
+      previousSummaryWidth !== undefined &&
+      element.scrollLeft > 0
+    )
+      element.scrollLeft += width - previousSummaryWidth
+    previousSummaryWidth = width
+    const height = element?.offsetHeight ?? 0
     if (barHeight.value === height) return
     barHeight.value = height
     document.documentElement.style.setProperty('--lab-bar-height', `${height}px`)
@@ -205,6 +217,16 @@ const color = (reading: (typeof readings.value)[number]) =>
   .lab-summary,
   .lab-summary-reserve {
     padding-inline: 20px;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  .lab-summary > div,
+  .lab-summary-reserve > div {
+    display: inline-block;
+  }
+  .lab-summary button,
+  .lab-summary-reserve button {
+    margin-top: 0;
   }
   .lab-controls {
     gap: 16px;
