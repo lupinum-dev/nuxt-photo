@@ -29,7 +29,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-// F13: real Embla and MutationObserver must not replace photo identity with an old numeric snap.
+// Real Embla and MutationObserver must not replace photo identity with an old numeric snap.
 it('keeps photo X in both the open lightbox and inline carousel after removing an earlier photo', async () => {
   const photos = ref(['before', 'middle', 'X', 'after'].map((id) => makePhoto({ id, caption: id })))
   const host = document.createElement('div')
