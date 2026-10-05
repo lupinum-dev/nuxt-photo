@@ -141,7 +141,7 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(srcDir, 'App.vue'),
     [
       '<script setup lang="ts">',
-      "import { PhotoAlbum, PhotoValidationError, responsive, useContainerWidth, type LightboxCaptionSlotProps, type PhotoItem } from '@lupinum/vue-photo'",
+      "import { PhotoAlbum, PhotoValidationError, responsive, type LightboxCaptionSlotProps, type PhotoItem } from '@lupinum/vue-photo'",
       "import '@lupinum/vue-photo/styles.css'",
       '',
       'const photos: readonly PhotoItem[] = [',
@@ -151,7 +151,6 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
       'const spacing = responsive({ 0: 4, 800: 8 })',
       "const caption: LightboxCaptionSlotProps['photo'] = photos[0] ?? null",
       'void PhotoValidationError',
-      'void useContainerWidth',
       'void caption',
       '</script>',
       '',
@@ -301,7 +300,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     [
       'export default defineNuxtConfig({',
       "  modules: ['@lupinum/nuxt-photo'],",
-      "  nuxtPhoto: { css: 'all', image: false },",
+      "  nuxtPhoto: { css: 'all' },",
       '})',
       '',
     ].join('\n'),
