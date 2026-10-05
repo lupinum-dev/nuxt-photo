@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
+import ts from 'typescript'
 
 const root = resolve(import.meta.dirname, '../..')
 const contentRoot = resolve(root, 'docs/content/docs')
@@ -130,24 +131,31 @@ for (const filename of publicCssFiles) {
 requireMarkers('CSS reference', cssDocs, [...cssVariables])
 
 const typeDocs = await readFile(resolve(contentRoot, '3.reference/10.types.md'), 'utf8')
-requireMarkers('Types reference', typeDocs, [
-  'LightboxHandle',
-  'LightboxController',
-  'LightboxProviderController',
-  'PhotoLabels',
-  'PhotoDefaults',
-  'PhotoCarouselAutoplayOptions',
-  'ResponsivePhotoSizes',
-  'LightboxControlsSlotProps',
-  'LightboxCaptionSlotProps',
-  'LightboxSlideSlotProps',
-  'LightboxViewportSlotProps',
-  'CarouselSlideSlotProps',
-  'CarouselThumbSlotProps',
-  'CarouselCaptionSlotProps',
-  'CarouselControlsSlotProps',
-  'CarouselDotsSlotProps',
-])
+const publicIndex = ts.createSourceFile(
+  'index.ts',
+  await readFile(resolve(root, 'packages/vue/src/index.ts'), 'utf8'),
+  ts.ScriptTarget.Latest,
+  true,
+)
+const publicTypes = new Set()
+for (const statement of publicIndex.statements) {
+  if (!ts.isExportDeclaration(statement) || !statement.exportClause) continue
+  if (!ts.isNamedExports(statement.exportClause)) continue
+  for (const specifier of statement.exportClause.elements) {
+    if (statement.isTypeOnly || specifier.isTypeOnly) publicTypes.add(specifier.name.text)
+  }
+}
+
+// Compare the complete public inventory, not incidental mentions in examples.
+const documentedTypeBlock = typeDocs.match(/```text \[Public types\]\n([\s\S]*?)\n```/)?.[1]
+if (!documentedTypeBlock) failures.push('Types reference is missing its public types inventory.')
+const documentedTypes = new Set(documentedTypeBlock?.match(/[A-Za-z][A-Za-z0-9]*/g) ?? [])
+for (const name of publicTypes) {
+  if (!documentedTypes.has(name)) failures.push(`Types reference is missing documented ${name}.`)
+}
+for (const name of documentedTypes) {
+  if (!publicTypes.has(name)) failures.push(`Types reference lists unsupported type ${name}.`)
+}
 
 const exportsDocs = await readFile(
   resolve(contentRoot, '3.reference/12.package-exports.md'),
