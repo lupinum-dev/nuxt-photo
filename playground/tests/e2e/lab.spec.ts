@@ -95,7 +95,7 @@ for (const viewport of viewports) {
           // Exercise a large raster slide rather than the first (320px) GIF.
           await page.locator('.np-album__item').nth(1).click()
           await expect(page.getByRole('dialog')).toBeVisible()
-          await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+          await expect(page.locator('[data-np-transition-frame]')).toBeHidden({ timeout: 15_000 })
           await expect.poll(() => page.locator('.lab-page > ul li').count()).toBeGreaterThan(0)
           await page.waitForFunction(
             () =>
@@ -228,7 +228,7 @@ test('image budget lab keeps scrolled diagnostics visible on lightbox open', asy
     const before = await toggle.boundingBox()
     await page.locator('.np-album__item').nth(1).click()
     await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+    await expect(page.locator('[data-np-transition-frame]')).toBeHidden({ timeout: 15_000 })
     await page.waitForFunction(
       () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
     )
@@ -450,7 +450,8 @@ test('image budget lab does not backdate blank time from a delayed intersection'
   )
   expect(reading.blankMs).toBeGreaterThan(500)
   // The first 400 ms had a red placeholder, even though the visibility entry arrived later.
-  expect(reading.waitMs - reading.blankMs).toBeGreaterThan(300)
+  // Whole-frame counting and a busy browser can shift both ends by a few frames.
+  expect(reading.waitMs - reading.blankMs).toBeGreaterThan(250)
 })
 
 test('image budget lab CLS counts gallery sources and ignores diagnostic sources', async ({

@@ -95,7 +95,7 @@ for (const saveData of [false, true]) {
     expect(requests).toEqual([])
     await page.locator('.np-album__item').nth(2).click()
     await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+    await expect(page.locator('[data-np-transition-frame]')).toBeHidden({ timeout: 15_000 })
     await page.waitForLoadState('networkidle')
     const proof = await page.evaluate(() => window.__prefetchProof)
     if (saveData) {

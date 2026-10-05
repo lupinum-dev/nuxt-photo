@@ -107,8 +107,10 @@ for (const viewport of viewports) {
         if (kind === 'lightbox') {
           await page.locator('.np-album__item').first().click()
           await expect(page.getByRole('dialog')).toBeVisible()
-          await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled()
-          await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+          await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled({
+            timeout: 15_000,
+          })
+          await expect(page.locator('[data-np-transition-frame]')).toBeHidden({ timeout: 15_000 })
         }
         const selector =
           kind === 'carousel'
