@@ -1,11 +1,12 @@
 <template>
-  <!-- Set loading and sizes before srcset so new lazy images defer source selection. -->
+  <!-- Vue sets attributes in this order. sizes before loading: a promoted image must drop
+       `auto` before it turns eager. Both before srcset: new lazy images defer selection. -->
   <img
     ref="imageRef"
+    :sizes="effectiveSizes"
     :loading="effectiveLoading"
     :decoding="priority ? undefined : 'async'"
     :fetchpriority="priority ? 'high' : undefined"
-    :sizes="effectiveSizes"
     :srcset="resolved.srcset"
     :src="resolved.src"
     :width="resolved.width"
@@ -70,10 +71,15 @@ const resolved = computed(() => {
 })
 const ahead = ref(false)
 const effectiveLoading = computed(() => (props.priority || ahead.value ? 'eager' : 'lazy'))
-const effectiveSizes = computed(() => {
-  const sizes = props.sizes ?? '100vw'
-  return !props.priority && !sizes?.startsWith('auto') ? `auto, ${sizes ?? '100vw'}` : sizes
+// `auto` is valid only on lazy images; an eager image with `auto` makes browsers pick the
+// full viewport width. Promotion to eager therefore switches to the plain layout value.
+const baseSizes = computed(() => {
+  const sizes = (props.sizes ?? '100vw').replace(/^auto\s*(,\s*|$)/, '')
+  return sizes || '100vw'
 })
+const effectiveSizes = computed(() =>
+  effectiveLoading.value === 'lazy' ? `auto, ${baseSizes.value}` : baseSizes.value,
+)
 if (props.priority) {
   const preload = inject(ImagePreloadKey, undefined)
   preload?.({ ...resolved.value, sizes: effectiveSizes.value })
@@ -81,7 +87,7 @@ if (props.priority) {
 const imageRef = ref<HTMLImageElement | null>(null)
 const { loaded, failed, handleLoad, handleError, resetRequestState } = useImagePaint(imageRef)
 const requestKey = computed(() =>
-  JSON.stringify([resolved.value.src, resolved.value.srcset ?? '', effectiveSizes.value ?? '']),
+  JSON.stringify([resolved.value.src, resolved.value.srcset ?? '', baseSizes.value]),
 )
 
 const placeholderStyle = computed(() => {
