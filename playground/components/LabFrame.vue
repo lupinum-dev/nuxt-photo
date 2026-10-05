@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
   document.documentElement.style.removeProperty('--lab-bar-height')
 })
 const badgeText = (reading: (typeof readings.value)[number]) =>
-  `need ${Math.round(reading.needed)}px · got ${reading.got}px · ${reading.ratio.toFixed(2)}× · ${reading.kb.toFixed(1)} KB · ${reading.format} · ${reading.loading}${reading.high ? ', high' : ''}${reading.floor ? ' · floor' : ''}`
+  `need ${Math.round(reading.needed)}px · got ${reading.got}px · ${reading.ratio.toFixed(2)}× · ${reading.kb.toFixed(1)} KB · ${reading.format} · ${reading.loading}${reading.high ? ', high' : ''}${reading.floor ? ' · floor' : ''}${reading.reused ? ' · reused' : ''}`
 const color = (reading: (typeof readings.value)[number]) =>
   reading.inRange ? '#16a34a' : reading.ratio <= 3 ? '#d97706' : '#dc2626'
 </script>

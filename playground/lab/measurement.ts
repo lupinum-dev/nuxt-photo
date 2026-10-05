@@ -36,6 +36,7 @@ interface Reading {
   got: number
   ratio: number
   floor: boolean
+  reused: boolean
   inRange: boolean
   srcset: string
   kb: number
@@ -136,6 +137,9 @@ export function useLabMeasurement(
   const preloaded = ref(false)
   const timing = ref<LabTiming>({ images: [], cls: null })
   const slideRequests = ref<string[]>([])
+  // Keep the original file owner across measurements, including offscreen slides.
+  // Diagnostic decode probes must not become owners of the files they inspect.
+  const fileOwners = new Map<string, HTMLImageElement>()
   let openedAt = Infinity
   watch(active, (id, previous) => {
     if (id && !previous) openedAt = performance.now()
@@ -185,6 +189,12 @@ export function useLabMeasurement(
     const version = ++revision
     timing.value = window.__labTiming?.snapshot() ?? timing.value
     const dialog = document.querySelector('[role="dialog"]')
+    for (const image of document.querySelectorAll<HTMLImageElement>(
+      '.lab-content img, [role="dialog"] img',
+    )) {
+      if (image.complete && image.naturalWidth && !fileOwners.has(image.currentSrc))
+        fileOwners.set(image.currentSrc, image)
+    }
     const candidates = [
       ...document.querySelectorAll<HTMLImageElement>(
         dialog ? '[role="dialog"] [data-np-active] img[data-np-slide-img]' : '.lab-content img',
@@ -202,6 +212,7 @@ export function useLabMeasurement(
           if (!photo?.width) throw new Error(`Lab image has no source width: ${image.alt}`)
           const rect = image.getBoundingClientRect()
           const url = image.currentSrc
+          const reused = fileOwners.get(url) !== image
           const [got, format] = await Promise.all([fileWidth(url), fileFormat(url)])
           const needed = Math.min(rect.width * devicePixelRatio, photo.width)
           // Source capping can put this image's floor below the global provider ladder.
@@ -219,7 +230,8 @@ export function useLabMeasurement(
             got,
             ratio,
             floor,
-            inRange: (ratio >= 0.9 && ratio <= 2) || floor,
+            reused,
+            inRange: (ratio >= 0.9 && ratio <= 2) || floor || reused,
             srcset,
             kb: bytes(url) / 1024,
             format,

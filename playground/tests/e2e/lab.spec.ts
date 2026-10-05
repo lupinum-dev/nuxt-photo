@@ -15,7 +15,57 @@ const scenarios = [
   { name: 'lightbox', path: '/lab/lightbox' },
 ]
 const badge =
-  /^need \d+px · got \d+px · \d+\.\d{2}× · \d+\.\d KB · [\w+.-]+ · (eager|lazy)(, high)?( · floor)?$/
+  /^need \d+px · got \d+px · \d+\.\d{2}× · \d+\.\d KB · [\w+.-]+ · (eager|lazy)(, high)?( · floor)?( · reused)?$/
+
+test('image budget lab counts an already downloaded thumbnail file as in range', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/lab/photo')
+  await page.waitForFunction(
+    () => window.__lab?.summary().images === 2 && !window.__lab.summary().pending,
+  )
+  await page.waitForLoadState('networkidle')
+  const before = await page.evaluate(() => window.__lab!.summary())
+  const transferBytes = () =>
+    page.evaluate(() => {
+      const url = document.querySelector<HTMLImageElement>('.lab-content img')!.currentSrc
+      return (performance.getEntriesByName(url, 'resource') as PerformanceResourceTiming[]).reduce(
+        (total, entry) => total + entry.transferSize,
+        0,
+      )
+    })
+  const transferredBefore = await transferBytes()
+  await page.evaluate(() => {
+    const original = document.querySelector<HTMLImageElement>('.lab-content img')!
+    const thumbnail = document.createElement('img')
+    thumbnail.alt = original.alt
+    thumbnail.src = original.currentSrc
+    thumbnail.style.cssText = 'position:fixed;top:400px;left:100px;width:64px;height:64px'
+    document.querySelector('.lab-content')!.append(thumbnail)
+  })
+  await page.waitForFunction(
+    () => window.__lab?.summary().images === 3 && !window.__lab.summary().pending,
+  )
+  await page.getByRole('button', { name: 'Show overlay', exact: true }).click()
+  const reused = page.locator('.lab-badge').filter({ hasText: ' · reused' })
+  await expect(reused).toHaveCount(1)
+  await expect(reused).toContainText('need 64px')
+  await expect(reused).toHaveCSS('background-color', 'rgb(22, 163, 74)')
+  const after = await page.evaluate(() => window.__lab!.summary())
+  expect(after.max).toBeGreaterThan(2)
+  expect(after.inRangePercent).toBe(100)
+  await page.waitForLoadState('networkidle')
+  const transferredAfter = await transferBytes()
+  await writeFile(
+    testInfo.outputPath('reuse.json'),
+    JSON.stringify({ before, after, transferredBefore, transferredAfter }, null, 2),
+  )
+  // WebKit repeats nonzero transfer sizes for cache hits; byte equality is not a
+  // reliable network proof there. Both browsers still check the badge and summary.
+  if (testInfo.project.use.browserName === 'chromium')
+    expect(transferredAfter).toBe(transferredBefore)
+  await page.screenshot({ path: testInfo.outputPath('reuse.png') })
+})
 
 for (const viewport of viewports) {
   for (const scenario of scenarios) {
@@ -91,7 +141,7 @@ for (const viewport of viewports) {
         let floors = 0
         for (const detail of details) {
           expect(detail.title).toBe(detail.text)
-          const hasFloor = detail.text!.endsWith(' · floor')
+          const hasFloor = detail.text!.includes(' · floor')
           if (hasFloor) {
             floors++
             const got = Number(detail.text!.match(/ · got (\d+)px/)![1])
