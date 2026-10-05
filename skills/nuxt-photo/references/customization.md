@@ -289,12 +289,27 @@ browser loads them before anything else:
 </template>
 ```
 
-`priority` sets `loading="eager"` and `fetchpriority="high"`. On `PhotoAlbum`
-it is the number of thumbnails, counted from the start. Set it to the number
-of thumbnails in the first screen; a higher number delays the rest of the
-page. The first slide of `PhotoCarousel` always has high priority.
+`priority` sets `loading="eager"` and `fetchpriority="high"`. In Nuxt it
+also adds a `<link rel="preload">` for the image to the page head, so the
+browser starts the download before it reads the rest of the page. At most six
+images get a preload. On `PhotoAlbum`, `priority` is the number of
+thumbnails, counted from the start. Set it to the number of thumbnails in the
+first screen; a higher number delays the rest of the page. The first slide of
+`PhotoCarousel` always has high priority.
 
-The lightbox requests a slide only when it opens.
+A `<Photo>` cannot know its width before the page is shown, so it uses
+`100vw`. When the photo is narrower, say so, or the browser downloads a file
+for the full screen width:
+
+```vue
+<Photo :photo="cover" priority sizes="(min-width: 1024px) 720px, 100vw" />
+```
+
+Images below the first screen start loading about one and a half screen
+heights before they scroll into view, in every browser. The lightbox requests
+a slide only when it opens. After the open photo has loaded, it loads the
+previous and the next photo in the background, so the next swipe shows a
+ready image. With the browser's data saver on, it skips this.
 
 ### Check the result
 

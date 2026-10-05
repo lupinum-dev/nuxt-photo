@@ -123,20 +123,20 @@ test('lightbox navigation ignores unknown ids and keeps two gallery parameters i
   )
 })
 
-test('lightbox navigation mounts seven slide components for 500 photos and keeps navigating', async ({
+test('lightbox navigation mounts three slide components for 500 photos and keeps navigating', async ({
   page,
 }) => {
   await gotoFeatures(page, '/lightbox-features')
   await page.getByTestId('open-middle').click()
   await expect(page.locator('.np-lightbox__counter')).toHaveText('251 / 500')
-  await expect(page.locator('[data-np-slide]')).toHaveCount(7)
+  await expect(page.locator('[data-np-slide]')).toHaveCount(3)
   await expect(page.locator('[data-np-slide][data-np-active] img')).toHaveAttribute(
     'alt',
     'Feature photo 250',
   )
   await page.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(page.locator('.np-lightbox__counter')).toHaveText('252 / 500')
-  await expect(page.locator('[data-np-slide]')).toHaveCount(7)
+  await expect(page.locator('[data-np-slide]')).toHaveCount(3)
   await expect(page.locator('[data-np-slide][data-np-active] img')).toHaveAttribute(
     'alt',
     'Feature photo 251',
