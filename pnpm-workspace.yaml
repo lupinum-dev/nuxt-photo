@@ -10,7 +10,7 @@ catalog:
   typescript: 5.9.3
   vite: npm:@voidzero-dev/vite-plus-core@0.3.3
   vite-plus: 0.3.3
-  vitest: 4.1.11
+  vitest: 5.0.3
   vue: 3.5.43
   vue-tsc: 3.3.12
 
@@ -21,9 +21,9 @@ overrides:
   # Remove an override after every parent resolves a patched version. Review after 2026-11-01.
   '@hono/node-server': 1.19.17
   # Keep vite-plus's bundled Vitest browser packages on the same release as vitest.
-  '@vitest/browser': 4.1.11
-  '@vitest/browser-preview': 4.1.11
-  '@vitest/mocker': 4.1.11
+  '@vitest/browser': 5.0.3
+  '@vitest/browser-preview': 5.0.3
+  '@vitest/mocker': 5.0.3
   'brace-expansion@>=2.0.0 <3.0.0': 2.1.7
   'brace-expansion@>=4.0.0 <5.0.12': 5.0.12
   browserslist: 4.29.3
