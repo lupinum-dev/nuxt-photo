@@ -1,6 +1,7 @@
 import type { PhotoConfig } from './index'
 import {
   PHOTO_LOCALES,
+  findPhotoLocale,
   PHOTO_LABEL_KEYS,
   PHOTO_LABEL_FUNCTION_KEYS,
   type PhotoLabels,
@@ -52,8 +53,10 @@ export function validatePhotoConfig(
         error(`${path}.provider.${key}`, 'a function')
   }
   if (value.labels !== undefined) {
-    if (typeof value.labels === 'string') enumeration(value.labels, PHOTO_LOCALES, `${path}.labels`)
-    else {
+    if (typeof value.labels === 'string') {
+      if (!findPhotoLocale(value.labels))
+        error(`${path}.labels`, `a supported locale (${PHOTO_LOCALES.join(', ')}) or regional tag`)
+    } else {
       record(value.labels, `${path}.labels`)
       keys(value.labels, [...PHOTO_LABEL_KEYS], `${path}.labels`)
       for (const [key, label] of Object.entries(value.labels)) {
