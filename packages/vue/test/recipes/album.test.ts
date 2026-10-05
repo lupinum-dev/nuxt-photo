@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { createApp, h, ref } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
@@ -12,6 +13,30 @@ describe('PhotoAlbum', () => {
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
   })
+
+  it.each(['grid', 'bento', 'mosaic', 'accordion'] as const)(
+    'samples %s function values at zero and warns once',
+    async (type) => {
+      const warn = vi.spyOn(console, 'warn')
+      const spacing = vi.fn((width: number) => (width < 640 ? 4 : 8))
+      const mounted = await mountComponent(PhotoAlbum, {
+        props: {
+          photos: [makePhoto({ id: 'function-value' })],
+          layout: type,
+          spacing,
+          defaultContainerWidth: 900,
+          lightbox: false,
+        },
+      })
+      expect(spacing.mock.calls).toEqual([[0]])
+      expect(warn).toHaveBeenCalledExactlyOnceWith(
+        `[nuxt-photo] ${type} layout renders with CSS only; a function value needs responsive() or the breakpoints prop. Using its value at width 0.`,
+      )
+      expect(mounted.container.querySelector('style')?.textContent).toContain('--np-gap:4px')
+      mounted.unmount()
+      warn.mockRestore()
+    },
+  )
 
   it('forwards fallthrough attrs to its rendered album root', async () => {
     const onClick = vi.fn()
@@ -123,5 +148,44 @@ describe('PhotoAlbum', () => {
     expect(observe).toHaveBeenCalledWith(mounted.container.querySelector('.np-album__end'))
     mounted.unmount()
     expect(disconnect).toHaveBeenCalled()
+  })
+})
+
+describe('bento lightbox order', () => {
+  beforeEach(installBrowserStubs)
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    document.body.innerHTML = ''
+  })
+
+  it('opens the second DOM item in reading order while open(index) uses the photos prop', async () => {
+    const photos = Array.from({ length: 12 }, (_, index) =>
+      makePhoto({ id: `bento-${index}`, width: [1600, 900, 1200][index % 3], height: 1000 }),
+    )
+    const album = ref<{ open: (index: number) => Promise<void>; close: () => Promise<void> }>()
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp({
+      render: () => h(PhotoAlbum, { ref: album, photos, layout: 'bento', transition: 'none' }),
+    })
+    app.mount(host)
+    await flushUi()
+    const second = host.querySelectorAll<HTMLElement>('.np-album__item')[1]!
+    const src = second.querySelector('img')!.getAttribute('src')
+    expect(src).not.toBe(photos[1]!.src)
+    second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushUi()
+    expect(document.querySelector('.np-lightbox__counter')?.textContent).toContain('2 / 12')
+    expect(document.querySelector('.np-lightbox__caption')?.textContent).toContain(
+      photos.find((photo) => photo.src === src)!.caption,
+    )
+    await album.value!.close()
+    await flushUi()
+    void album.value!.open(1)
+    await flushUi()
+    expect(document.querySelector('.np-lightbox__caption')?.textContent).toContain(
+      photos[1]!.caption,
+    )
+    app.unmount()
   })
 })

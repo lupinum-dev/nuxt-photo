@@ -11,8 +11,8 @@
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 47800,
-      "_comment": "History/deep links, browser tools and their translated labels add contract cost to the full Vue import; retain all other budgets."
+      "brotliLimit": 49600,
+      "_comment": "History/deep links, browser tools, their translated labels and the CSS-only album layouts add contract cost to the full Vue import; retain all other budgets."
     },
     "responsive": {
       "label": "responsive named import",
@@ -22,18 +22,18 @@
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 2880,
-      "_comment": "Structure CSS, config injection, native provider defaults and Nuxt label-template helpers."
+      "brotliDeltaLimit": 3200,
+      "_comment": "Structure CSS (including the CSS-only album layouts), config injection, native provider defaults and Nuxt label-template helpers."
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 3050,
+      "brotliDeltaLimit": 3400,
       "_comment": "Structure CSS, shared config, provider-based PhotoImage rendering and photo-data validation."
     },
     "album": {
       "label": "module enabled with PhotoAlbum usage",
-      "brotliDeltaLimit": 40800,
-      "_comment": "Structure CSS, album layout, gallery/lightbox state, provider images and app-selected labels."
+      "brotliDeltaLimit": 44200,
+      "_comment": "Structure CSS, album layouts including grid, bento, mosaic and accordion, gallery/lightbox state, provider images and app-selected labels."
     }
   }
 }

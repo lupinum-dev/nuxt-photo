@@ -1,5 +1,5 @@
 import type { CSSProperties, Ref } from 'vue'
-import type { LayoutEntry, LayoutGroup } from '../../core/index'
+import type { AlbumLayout, LayoutEntry, LayoutGroup } from '../../core/index'
 import { round } from '../../core/utils/math'
 
 export type AlbumStyleContext = {
@@ -7,7 +7,7 @@ export type AlbumStyleContext = {
   spacing: number
   padding: number
   columnsCount: number
-  layoutType: 'rows' | 'columns' | 'masonry'
+  layoutType: AlbumLayout['type']
 }
 
 export function albumGroupStyle<TMeta extends object>(

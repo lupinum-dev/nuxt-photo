@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { computed, createApp, defineComponent, h, nextTick, provide, ref } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
+import { computeFrameLayout } from '../src/core/index'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 import type { GalleryHandle } from '../src/gallery/runtime'
@@ -14,6 +15,55 @@ describe('collection lightbox handles', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
+  })
+
+  it('keeps mosaic reading order and hidden-photo handles aligned', async () => {
+    const photos = Array.from({ length: 8 }, (_, index) =>
+      makePhoto({
+        id: `mosaic-${index}`,
+        alt: `Photo ${index}`,
+        width: 900 + index * 200,
+        height: 1000,
+      }),
+    )
+    const frame = computeFrameLayout({ type: 'mosaic', photos, max: 5, containerName: 'test' })
+    const album = ref<GalleryHandle | null>(null)
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const app = createApp({
+      render: () =>
+        h(
+          PhotoAlbum,
+          {
+            ref: album,
+            photos,
+            layout: { type: 'mosaic', max: 5 },
+            lightbox: { transition: 'none' },
+          },
+          {
+            thumbnail: ({ photo }: { photo: { id: string } }) =>
+              h('span', { 'data-photo': photo.id }),
+          },
+        ),
+    })
+    app.mount(host)
+    await flushUi()
+    const items = Array.from(host.querySelectorAll('.np-album__item'))
+    expect(
+      items.map((item) => item.querySelector('[data-photo]')?.getAttribute('data-photo')),
+    ).toEqual(frame.order.slice(0, 5).map((index) => photos[index]!.id))
+    expect(items.at(-1)?.getAttribute('aria-label')).toBe(`Photo ${frame.order[4]}`)
+    const opening = album.value!.open(6)
+    await flushUi()
+    expect(document.body.querySelector('.np-lightbox__counter')?.textContent).toContain('7 / 8')
+    expect(document.body.querySelector('[data-np-active] img')?.getAttribute('alt')).toBe('Photo 6')
+    document.body
+      .querySelectorAll('.np-lightbox img')
+      .forEach((image) => image.dispatchEvent(new Event('load')))
+    await opening
+    await expect(album.value!.open(99)).rejects.toThrow('[nuxt-photo] No photo found at index 99')
+    app.unmount()
+    host.remove()
   })
 
   it('maps nested album-local indexes through stable photo ids', async () => {

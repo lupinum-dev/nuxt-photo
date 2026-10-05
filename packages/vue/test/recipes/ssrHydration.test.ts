@@ -383,3 +383,39 @@ describe('SSR hydration', () => {
     app.unmount()
   })
 })
+
+describe('CSS-only album hydration', () => {
+  it.each(['grid', 'mosaic', 'accordion'] as const)(
+    'hydrates %s without warnings',
+    async (type) => {
+      const warn = vi.spyOn(console, 'warn')
+      const error = vi.spyOn(console, 'error')
+      const { host, app } = await hydrateAlbum({
+        photos: Array.from({ length: 8 }, (_, index) => makePhoto({ id: `css-${index}` })),
+        layout: { type, max: 5, columns: responsive({ 0: 2, 640: 3 }) },
+        spacing: responsive({ 0: 4, 800: 8 }),
+        lightbox: false,
+      })
+      expect(host.querySelectorAll('.np-album__item')).toHaveLength(type === 'mosaic' ? 5 : 8)
+      expectNoHydrationWarnings(warn, error)
+      app.unmount()
+    },
+  )
+})
+
+it.each([4, responsive({ 0: 2, 768: 4 })])(
+  'hydrates bento columns %j without warnings',
+  async (columns) => {
+    const warn = vi.spyOn(console, 'warn')
+    const error = vi.spyOn(console, 'error')
+    const { host, app } = await hydrateAlbum({
+      photos: Array.from({ length: 12 }, (_, index) => makePhoto({ id: `bento-${index}` })),
+      layout: { type: 'bento', columns },
+      lightbox: false,
+    })
+    expect(host.querySelectorAll('.np-album__item')).toHaveLength(12)
+    expect(warn).not.toHaveBeenCalled()
+    expect(error).not.toHaveBeenCalled()
+    app.unmount()
+  },
+)

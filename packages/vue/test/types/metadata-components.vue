@@ -3,6 +3,7 @@ import { Photo, PhotoAlbum, PhotoCarousel, PhotoGroup, type PhotoItem } from '..
 
 interface ConsumerMeta {
   photographer: string
+  cover?: boolean
 }
 
 const photos: readonly PhotoItem<ConsumerMeta>[] = [
@@ -21,7 +22,10 @@ const photos: readonly PhotoItem<ConsumerMeta>[] = [
     <template #slide="{ photo }">{{ photo.meta?.photographer }}</template>
   </Photo>
 
-  <PhotoAlbum :photos="photos">
+  <PhotoAlbum
+    :photos="photos"
+    :layout="{ type: 'bento', featured: (photo) => photo.meta?.cover === true }"
+  >
     <template #thumbnail="{ photo }">{{ photo.meta?.photographer }}</template>
   </PhotoAlbum>
 

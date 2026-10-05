@@ -7,6 +7,8 @@ import {
   type CarouselSlideSlotProps,
   definePhotoProvider,
   type PhotoItem,
+  type AlbumLayout,
+  type BentoAlbumLayout,
 } from '../../src/index'
 
 type GenericComponentProps<T> = T extends (...args: infer Args) => unknown ? Args[0] : never
@@ -153,3 +155,19 @@ declare const removedTypes: [
   ResponsiveResolver,
 ]
 void removedTypes
+
+const bentoLayout: BentoAlbumLayout<{ cover?: boolean }> = {
+  type: 'bento',
+  featured: (photo, index) => {
+    const cover: boolean | undefined = photo.meta?.cover
+    return cover === true && index >= 0
+  },
+}
+const genericLayout: AlbumLayout<{ cover?: boolean }> = bentoLayout
+void genericLayout
+const invalidBentoLayout: BentoAlbumLayout = {
+  type: 'bento',
+  // @ts-expect-error Bento rejects unknown layout options.
+  unknownOption: true,
+}
+void invalidBentoLayout

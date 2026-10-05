@@ -24,9 +24,14 @@
         </div>
       </div>
 
-      <div v-if="layout !== 'rows'" class="control-group">
+      <div v-if="['columns', 'masonry', 'grid', 'bento'].includes(layout)" class="control-group">
         <label class="control-label">Columns: {{ columns }}</label>
         <input type="range" :min="2" :max="6" v-model.number="columns" class="control-range" />
+      </div>
+
+      <div v-if="layout === 'mosaic'" class="control-group">
+        <label class="control-label">Max: {{ max }}</label>
+        <input type="range" :min="1" :max="9" v-model.number="max" class="control-range" />
       </div>
 
       <div v-if="layout === 'rows'" class="control-group">
@@ -66,14 +71,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { AlbumLayout } from '@lupinum/nuxt-photo/app'
+import { responsive, type AlbumLayout } from '@lupinum/nuxt-photo/app'
 import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'Layouts — nuxt-photo' })
 
-const layouts = ['rows', 'columns', 'masonry'] as const
-const layout = ref<'rows' | 'columns' | 'masonry'>('rows')
+const layouts = ['rows', 'columns', 'masonry', 'grid', 'bento', 'mosaic', 'accordion'] as const
+const route = useRoute()
+const layout = ref(layouts.find((name) => name === route.query.layout) ?? 'rows')
 const columns = ref(3)
+const max = ref(5)
 const spacing = ref(6)
 const targetRowHeight = ref(280)
 
@@ -85,6 +92,14 @@ const albumLayout = computed<AlbumLayout>(() => {
       return { type: 'columns', columns: columns.value }
     case 'masonry':
       return { type: 'masonry', columns: columns.value }
+    case 'grid':
+      return { type: 'grid', columns: responsive({ 0: 2, 640: columns.value }) }
+    case 'bento':
+      return { type: 'bento', columns: responsive({ 0: 2, 640: columns.value }) }
+    case 'mosaic':
+      return { type: 'mosaic', max: max.value }
+    case 'accordion':
+      return { type: 'accordion' }
   }
 
   return { type: 'rows', targetRowHeight: targetRowHeight.value }
@@ -168,6 +183,7 @@ const templateCode = `<!-- Layer 1: album with baked-in lightbox -->
 
 .control-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
 }
 

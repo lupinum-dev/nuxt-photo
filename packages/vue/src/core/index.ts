@@ -18,6 +18,10 @@ export type {
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
+  GridAlbumLayout,
+  BentoAlbumLayout,
+  MosaicAlbumLayout,
+  AccordionAlbumLayout,
   PhotoCarouselAutoplayOptions,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
@@ -76,3 +80,5 @@ export {
   chooseCloseTransition,
   type TransitionModeConfig,
 } from './transition/transitionChoice'
+
+export { computeFrameLayout, type FrameLayout } from './layout/frame'
