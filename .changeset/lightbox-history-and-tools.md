@@ -1,7 +1,9 @@
 ---
-'@lupinum/vue-photo': major
-'@lupinum/nuxt-photo': major
+'@lupinum/vue-photo': minor
+'@lupinum/nuxt-photo': minor
 ---
+
+Add lightbox history, deep links and download, share and full-screen tools.
 
 Back closes the lightbox. Opening adds a browser history entry; set `lightbox: { history: false }` to turn it off.
 

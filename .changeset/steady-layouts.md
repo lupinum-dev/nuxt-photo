@@ -3,7 +3,7 @@
 '@lupinum/nuxt-photo': patch
 ---
 
-Keep albums in place and fast.
+Fix album layout shifts, slow large albums and several lightbox and carousel issues.
 
 - Columns, masonry and rows render the same geometry on the server as in the browser, so nothing shifts while the page streams in or hydrates.
 - Columns albums with thousands of photos lay out in milliseconds instead of freezing the page; large rows albums are faster too.

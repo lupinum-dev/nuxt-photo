@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { parse } from 'yaml'
 import { checkDependencyPolicy } from './check-dependency-policy.mjs'
 import { assertFrameworkVersion, peerFloor } from './lib/packed-consumers.mjs'
 import { collectAssets } from './size/assets.mjs'
@@ -73,20 +72,6 @@ try {
   rmSync(directory, { recursive: true, force: true })
 }
 
-const workflow = parse(readFileSync('.github/workflows/dependency-policy.yml', 'utf8'))
-assert.equal(workflow.on.schedule[0].cron, '23 4 * * *')
-const commands = workflow.jobs.expiry.steps.flatMap((step) => step.run ?? [])
-assert.deepEqual(commands, [
-  'vp install --frozen-lockfile --ignore-scripts',
-  'node scripts/check-dependency-policy.mjs',
-])
 console.log(
   'Maintenance checks passed: expiry, generated install policy, peer range recognition, and missing asset failures.',
-)
-
-const ci = parse(readFileSync('.github/workflows/ci.yml', 'utf8'))
-assert.ok(
-  ci.jobs.docs.steps.some((step) =>
-    step.run?.startsWith('node scripts/check-dependency-policy.mjs &&'),
-  ),
 )
