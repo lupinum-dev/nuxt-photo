@@ -50,10 +50,7 @@ for (const [file, source] of sources) {
   }
 
   const allowsVueImports =
-    file.endsWith('/1.start/5.plain-vue.md') ||
-    file.endsWith('/3.reference/12.package-exports.md') ||
-    // The migration guide shows the removed Vue subpaths next to their replacement.
-    file.endsWith('/4.help/3.upgrade-from-0-2-to-1-0.md')
+    file.endsWith('/1.start/5.plain-vue.md') || file.endsWith('/3.reference/12.package-exports.md')
   if (
     !allowsVueImports &&
     /(?:from\s+|import\s+)["']@lupinum\/vue-photo(?:\/[^"']*)?["']/.test(source)
@@ -110,7 +107,7 @@ for (const primitive of [
   requireMarkers('Primitives reference', primitivesDocs, namesFromBlock(source, 'defineSlots'))
 }
 
-const labelsSource = await readFile(resolve(root, 'packages/vue/src/provide/labels.ts'), 'utf8')
+const labelsSource = await readFile(resolve(root, 'packages/vue/src/provide/labelTypes.ts'), 'utf8')
 const labelsDocs = await readFile(
   resolve(contentRoot, '3.reference/9.configuration-and-labels.md'),
   'utf8',
@@ -119,6 +116,7 @@ const labelBlock = labelsSource.match(/interface PhotoLabels \{([\s\S]*?)\n\}/)?
 const labelNames = [...labelBlock.matchAll(/^\s*([A-Za-z][A-Za-z0-9]*):/gm)].map(
   (match) => match[1],
 )
+if (labelNames.length === 0) throw new Error('Could not read the PhotoLabels interface')
 requireMarkers('Configuration and labels reference', labelsDocs, labelNames)
 
 const cssDocs = await readFile(resolve(contentRoot, '3.reference/11.css.md'), 'utf8')
