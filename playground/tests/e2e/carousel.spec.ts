@@ -28,6 +28,9 @@ test('rapid arrow navigation keeps all ten pointer presses after settling', asyn
 
   const carousel = page.locator('.np-carousel').first()
   const counter = carousel.locator('.np-carousel__counter')
+  // SSR thumbnails are clickable before Vue attaches handlers. Embla enables Next
+  // only after initialization, so wait for that existing interactive state.
+  await expect(carousel.getByRole('button', { name: 'Next slide' })).toBeEnabled()
   await carousel.locator('.np-carousel__thumb').nth(19).click()
   await expect(counter).toContainText('20 / 40')
   await page.waitForTimeout(1500)
