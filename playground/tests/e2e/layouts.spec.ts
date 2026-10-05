@@ -92,6 +92,11 @@ test('css-only layouts render the same tile boxes before and after hydration', a
         contentType: 'application/json',
       })
       expect.soft(before.items.length, label).toBeGreaterThan(0)
+      // Equal boxes prove nothing if missing CSS collapsed every tile.
+      for (const [index, item] of before.items.entries()) {
+        expect.soft(item.width, `${label} item ${index}`).toBeGreaterThan(0)
+        expect.soft(item.height, `${label} item ${index}`).toBeGreaterThan(0)
+      }
       expect.soft(after.items.length, label).toBe(before.items.length)
       expect
         .soft(

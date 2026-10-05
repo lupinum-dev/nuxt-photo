@@ -25,7 +25,10 @@
       </div>
 
       <div v-if="['columns', 'masonry', 'grid', 'bento'].includes(layout)" class="control-group">
-        <label class="control-label">Columns: {{ columns }}</label>
+        <label class="control-label">
+          Columns: {{ columns
+          }}{{ layout === 'grid' || layout === 'bento' ? ' from 640 px, 2 below' : '' }}
+        </label>
         <input type="range" :min="2" :max="6" v-model.number="columns" class="control-range" />
       </div>
 
