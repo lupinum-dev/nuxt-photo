@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
-import { createServer } from 'node:http'
+import { createServer, request as httpRequest } from 'node:http'
 
 const viewports = [
   { width: 1440, height: 900, deviceScaleFactor: 2 },
@@ -55,6 +55,7 @@ test('columns and masonry stay in place while SSR HTML streams', async ({
     const ends = [...starts.slice(1), html.length]
     const releases: (() => void)[] = []
     const gates = ends.map(() => new Promise<void>((resolve) => releases.push(resolve)))
+    const base = new URL(testInfo.project.use.baseURL!)
     const server = createServer(async (incoming, outgoing) => {
       if (incoming.url === path) {
         outgoing.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
@@ -67,7 +68,12 @@ test('columns and masonry stay in place while SSR HTML streams', async ({
         outgoing.end()
       } else {
         try {
-          const asset = await fetch(new URL(incoming.url!, testInfo.project.use.baseURL))
+          const url = new URL(incoming.url ?? '/', base)
+          if (url.origin !== base.origin) {
+            outgoing.writeHead(403).end()
+            return
+          }
+          const asset = await fetch(url, { redirect: 'error' })
           outgoing.writeHead(asset.status, {
             'content-type': asset.headers.get('content-type') ?? 'application/octet-stream',
           })
@@ -84,6 +90,18 @@ test('columns and masonry stay in place while SSR HTML streams', async ({
     })
     const positions: number[][] = []
     try {
+      // Absolute and protocol-relative request targets must never leave the local app.
+      for (const target of ['http://example.invalid/asset', '//example.invalid/asset']) {
+        const status = await new Promise<number | undefined>((resolve, reject) => {
+          const probe = httpRequest({ hostname: '127.0.0.1', port, path: target }, (response) => {
+            response.resume()
+            resolve(response.statusCode)
+          })
+          probe.once('error', reject)
+          probe.end()
+        })
+        expect(status).toBe(403)
+      }
       await page.goto(`http://127.0.0.1:${port}${path}`, { waitUntil: 'commit' })
       expect(
         await page.evaluate(() => PerformanceObserver.supportedEntryTypes.includes('layout-shift')),
