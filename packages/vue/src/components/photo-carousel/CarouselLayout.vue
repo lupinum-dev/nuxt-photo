@@ -44,7 +44,7 @@
               <PhotoImage
                 :photo="photo"
                 context="slide"
-                :sizes="slideSizes"
+                :sizes="index === 0 ? firstSlideSizes : slideSizes"
                 :priority="index === 0"
                 class="np-carousel__media"
                 :class="ui?.img"
@@ -250,15 +250,16 @@ const {
 })
 
 const { containerWidth } = useElementWidth(emblaRef)
-const slideSizes = computed(() => {
-  const size = props.slideSize ?? '100%'
-  // HTML sizes forbids percentages, including those nested in calc()/clamp().
-  return size.replace(/(\d+(?:\.\d+)?)%/g, (_match, percent: string) =>
-    containerWidth.value > 0
-      ? `${Math.ceil((containerWidth.value * Number(percent)) / 100)}px`
-      : `${percent}vw`,
+// HTML sizes forbids percentages, including those nested in calc()/clamp().
+function resolveSlideSizes(width: number) {
+  return (props.slideSize ?? '100%').replace(/(\d+(?:\.\d+)?)%/g, (_match, percent: string) =>
+    width > 0 ? `${Math.ceil((width * Number(percent)) / 100)}px` : `${percent}vw`,
   )
-})
+}
+const slideSizes = computed(() => resolveSlideSizes(containerWidth.value))
+// The first slide is preloaded during SSR. It keeps the server value, so the preload and
+// the image request the same file instead of downloading a second size after hydration.
+const firstSlideSizes = computed(() => resolveSlideSizes(0))
 
 function thumbnailSizes(photo: PhotoItem) {
   // thumbSize controls height; the intrinsic aspect ratio determines rendered width.

@@ -1,5 +1,83 @@
 import { expect, gotoPlayground, stubImageRequests, test } from './helpers'
 
+test('first carousel slide downloads once and retains SSR sizes', async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium', 'Chromium request-selection regression')
+  for (const viewport of [
+    { width: 375, height: 812, deviceScaleFactor: 3 },
+    { width: 1440, height: 900, deviceScaleFactor: 2 },
+  ]) {
+    const context = await browser.newContext({
+      baseURL: testInfo.project.use.baseURL,
+      viewport: { width: viewport.width, height: viewport.height },
+      deviceScaleFactor: viewport.deviceScaleFactor,
+    })
+    try {
+      const page = await context.newPage()
+      const requests: string[] = []
+      page.on('request', (request) => {
+        if (request.resourceType() === 'image') requests.push(request.url())
+      })
+      // Exclude thumbnail requests: this regression measures the SSR preload and slide.
+      const response = await page.goto('/image-budget?kind=carousel&thumbnails=0', {
+        waitUntil: 'load',
+      })
+      expect(response?.ok()).toBe(true)
+      const ssr = await page.evaluate(
+        (html) => {
+          const doc = new DOMParser().parseFromString(html, 'text/html')
+          const image = doc.querySelector('.np-carousel__media')!
+          const preload = doc.querySelector('link[rel="preload"][as="image"]')!
+          return {
+            sizes: image.getAttribute('sizes'),
+            preloadSizes: preload.getAttribute('imagesizes'),
+            srcset: image.getAttribute('srcset')!,
+            preloadSrcset: preload.getAttribute('imagesrcset'),
+          }
+        },
+        await response!.text(),
+      )
+      await expect(page.getByRole('button', { name: 'Next slide' })).toBeEnabled()
+      await page.waitForTimeout(2000)
+      const image = page.locator('.np-carousel__media').first()
+      await expect(image).toBeVisible()
+      expect(
+        await image.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0),
+      ).toBe(true)
+      const currentSrc = await image.evaluate((image: HTMLImageElement) => {
+        return image.currentSrc
+      })
+      const candidates = ssr.srcset
+        .split(',')
+        .map((candidate) => new URL(candidate.trim().split(' ')[0]!, page.url()).href)
+      const photoRequests = requests.filter((url) => candidates.includes(url))
+      const preloadRequests = await page.evaluate(
+        (candidates) =>
+          performance
+            .getEntriesByType('resource')
+            .filter(
+              (entry) =>
+                candidates.includes(entry.name) &&
+                (entry as PerformanceResourceTiming).initiatorType === 'link',
+            )
+            .map((entry) => entry.name),
+        candidates,
+      )
+      await testInfo.attach(`first-slide-${viewport.width}@${viewport.deviceScaleFactor}`, {
+        body: JSON.stringify({ viewport, ssr, currentSrc, photoRequests, preloadRequests }),
+        contentType: 'application/json',
+      })
+      expect(ssr.sizes).toBe('70vw')
+      expect(ssr.preloadSizes).toBe(ssr.sizes)
+      expect(ssr.preloadSrcset).toBe(ssr.srcset)
+      expect.soft(photoRequests).toEqual([currentSrc])
+      expect.soft(preloadRequests).toEqual([currentSrc])
+      await expect.soft(image).toHaveAttribute('sizes', ssr.sizes!)
+    } finally {
+      await context.close()
+    }
+  }
+})
+
 test('renders carousel slides and thumbnails', async ({ page }) => {
   await stubImageRequests(page)
   await gotoPlayground(page, '/carousel')

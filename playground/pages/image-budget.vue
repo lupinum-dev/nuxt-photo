@@ -1,6 +1,12 @@
 <template>
   <main style="padding: 16px">
-    <PhotoCarousel v-if="kind === 'carousel'" :photos="photos" slide-size="70%" :lightbox="false" />
+    <PhotoCarousel
+      v-if="kind === 'carousel'"
+      :photos="photos"
+      slide-size="70%"
+      :lightbox="false"
+      :controls="route.query.thumbnails === '0' ? ['arrows', 'counter'] : undefined"
+    />
     <Photo
       v-else-if="kind === 'photo'"
       :photo="photos[0]!"
