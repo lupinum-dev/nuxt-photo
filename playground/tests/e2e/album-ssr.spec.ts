@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 
 const viewports = [
   { width: 1440, height: 900, deviceScaleFactor: 2 },
@@ -13,8 +14,121 @@ declare global {
       supported: boolean
       images: HTMLImageElement[]
     }
+    __streamProof: { shifts: number[] }
   }
 }
+
+// Catch free-space redistribution of columns that have already painted while
+// the HTML parser waits for later siblings. A fulfilled route cannot stream.
+test('columns and masonry stay in place while SSR HTML streams', async ({
+  page,
+  request,
+}, testInfo) => {
+  test.skip(testInfo.project.use.browserName !== 'chromium', 'Layout Instability API proof')
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.addInitScript(() => {
+    window.__streamProof = { shifts: [] }
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const shift = entry as PerformanceEntry & {
+          value: number
+          hadRecentInput: boolean
+          sources: { node?: Node }[]
+        }
+        if (
+          !shift.hadRecentInput &&
+          shift.sources.some(({ node }) => node instanceof Element && node.closest('.np-album'))
+        )
+          window.__streamProof.shifts.push(shift.value)
+      }
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+  for (const layout of ['columns', 'masonry']) {
+    const path = `/lab/album?layout=${layout}&columns=4&n=200`
+    const response = await request.get(path)
+    expect(response.ok()).toBe(true)
+    const html = await response.text()
+    const starts = [...html.matchAll(/<div[^>]*class="np-album__column"/g)].map(
+      (match) => match.index,
+    )
+    expect(starts).toHaveLength(4)
+    const ends = [...starts.slice(1), html.length]
+    const releases: (() => void)[] = []
+    const gates = ends.map(() => new Promise<void>((resolve) => releases.push(resolve)))
+    const server = createServer(async (incoming, outgoing) => {
+      if (incoming.url === path) {
+        outgoing.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+        let start = 0
+        for (const [index, end] of ends.entries()) {
+          outgoing.write(html.slice(start, end))
+          start = end
+          await gates[index]
+        }
+        outgoing.end()
+      } else {
+        try {
+          const asset = await fetch(new URL(incoming.url!, testInfo.project.use.baseURL))
+          outgoing.writeHead(asset.status, {
+            'content-type': asset.headers.get('content-type') ?? 'application/octet-stream',
+          })
+          outgoing.end(Buffer.from(await asset.arrayBuffer()))
+        } catch {
+          outgoing.writeHead(502).end()
+        }
+      }
+    })
+    const port = 47080 + testInfo.workerIndex
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject)
+      server.listen(port, '127.0.0.1', resolve)
+    })
+    const positions: number[][] = []
+    try {
+      await page.goto(`http://127.0.0.1:${port}${path}`, { waitUntil: 'commit' })
+      expect(
+        await page.evaluate(() => PerformanceObserver.supportedEntryTypes.includes('layout-shift')),
+      ).toBe(true)
+      for (let count = 1; count <= 4; count++) {
+        await expect(page.locator('.np-album__column')).toHaveCount(count)
+        await page.waitForFunction(
+          () => getComputedStyle(document.querySelector('.np-album')!).display === 'flex',
+        )
+        await page.evaluate(() => Promise.all([...document.fonts].map((font) => font.load())))
+        // Keep each incomplete document painted before delivering the next column.
+        await page.waitForTimeout(200)
+        positions.push(
+          await page
+            .locator('.np-album__column')
+            .evaluateAll((columns) => columns.map((column) => column.getBoundingClientRect().x)),
+        )
+        releases[count - 1]!()
+      }
+      await page.waitForLoadState('networkidle')
+      await expect(page.locator('.np-album img')).toHaveCount(200)
+      const shifts = await page.evaluate(() => window.__streamProof.shifts)
+      const cls = shifts.reduce((sum, value) => sum + value, 0)
+      await writeFile(
+        testInfo.outputPath(`stream-${layout}.json`),
+        JSON.stringify({ layout, positions, shifts, cls }, null, 2),
+      )
+      expect.soft(cls, `${layout} streamed CLS`).toBe(0)
+      expect
+        .soft(
+          positions.map((stage) => stage[0]),
+          `${layout} first column x`,
+        )
+        .toEqual(Array(4).fill(positions[0]![0]))
+      for (const [index, stage] of positions.entries())
+        expect
+          .soft(stage, `${layout} existing columns at stage ${index + 1}`)
+          .toEqual(positions[3]!.slice(0, stage.length))
+    } finally {
+      releases.forEach((release) => release())
+      server.closeAllConnections()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+    }
+  }
+})
 
 for (const layout of ['columns', 'masonry']) {
   for (const viewport of viewports) {

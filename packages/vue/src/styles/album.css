@@ -16,9 +16,11 @@
   flex-direction: column;
 }
 
+/* Column widths and left margins place every column; free-space distribution would
+   move earlier columns while a streamed page is still parsing later ones. */
 .np-album--columns,
 .np-album--masonry {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 /* Row group */
