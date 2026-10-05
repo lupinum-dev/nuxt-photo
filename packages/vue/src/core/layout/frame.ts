@@ -148,19 +148,17 @@ export function computeFrameLayout<TMeta extends object>(options: {
       ...(hidden > 0 && position === tiles.length - 1 ? { more: hidden } : {}),
     }))
   } else {
-    items = photos.map(
-      (photo, index): FrameItem => ({
-        index,
-        style:
-          type === 'grid'
-            ? {}
-            : {
-                '--np-open': String(
-                  round(computeAccordionGrow(photo.width / photo.height, ratio, photos.length), 4),
-                ),
-              },
-      }),
-    )
+    items = photos.map((photo, index): FrameItem => ({
+      index,
+      style:
+        type === 'grid'
+          ? {}
+          : {
+              '--np-open': String(
+                round(computeAccordionGrow(photo.width / photo.height, ratio, photos.length), 4),
+              ),
+            },
+    }))
   }
   const shareAt = (columns: number): number[] => {
     if (type === 'bento') return bentoShares.get(columns)!

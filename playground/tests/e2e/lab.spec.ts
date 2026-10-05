@@ -349,8 +349,8 @@ test('image budget lab reports blank time without a painted placeholder', async 
       .__lab!.summary()
       .imageTimings.some((image) => image.url.includes('blank-proof') && !image.pending),
   )
-  const reading = await page.evaluate(
-    () => window.__lab!.summary().imageTimings.find((image) => image.url.includes('blank-proof'))!,
+  const reading = await page.evaluate(() =>
+    window.__lab!.summary().imageTimings.find((image) => image.url.includes('blank-proof'))!,
   )
   expect(reading.waitMs).toBeGreaterThan(800)
   expect(reading.blankMs).toBeGreaterThan(800)
@@ -442,11 +442,10 @@ test('image budget lab does not backdate blank time from a delayed intersection'
       .images.some((image) => image.url.includes('delayed-intersection') && !image.pending),
   )
   await page.waitForTimeout(100)
-  const reading = await page.evaluate(
-    () =>
-      window
-        .__labTiming!.snapshot()
-        .images.find((image) => image.url.includes('delayed-intersection'))!,
+  const reading = await page.evaluate(() =>
+    window
+      .__labTiming!.snapshot()
+      .images.find((image) => image.url.includes('delayed-intersection'))!,
   )
   expect(reading.blankMs).toBeGreaterThan(500)
   // The first 400 ms had a red placeholder, even though the visibility entry arrived later.

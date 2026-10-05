@@ -28,9 +28,17 @@ if (html.includes('Server Error') || html.includes('data-error="500"')) {
 
 console.log('✓ Docs production route rendered /docs/start/introduction')
 
+const publicOutput = fileURLToPath(new URL(`../docs/${outputDirectory}/`, import.meta.url))
+// Prerendered HTML alone can survive an incomplete Nitro build without its assets.
+const assets = await readdir(`${publicOutput}_nuxt`, { recursive: true })
+for (const extension of ['.css', '.js']) {
+  if (!assets.some((file) => file.endsWith(extension))) {
+    throw new Error(`Docs production build is missing ${extension} assets.`)
+  }
+}
+console.log('✓ Docs production build contains CSS and JavaScript assets')
 // Agents read the Markdown versions. Every page must reach them as complete
 // text: no component placeholders and no examples without their code.
-const publicOutput = fileURLToPath(new URL(`../docs/${outputDirectory}/`, import.meta.url))
 const agentFiles = [
   'llms.txt',
   'llms-full.txt',

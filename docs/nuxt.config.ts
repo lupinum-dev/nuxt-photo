@@ -13,7 +13,14 @@ const customComponents = ['album-layout-lab'] as const
 const components = Object.fromEntries(
   customComponents.map((name) => [
     name,
-    { kind: 'block', props: {}, slots: ['default'], media: null },
+    {
+      kind: 'block',
+      props: {},
+      slots: ['default'],
+      allowedParents: null,
+      allowedChildren: null,
+      media: null,
+    },
   ]),
 )
 
@@ -56,23 +63,28 @@ export default defineNuxtConfig({
   },
   content: {
     componentPolicy: {
+      version: 2,
       components: {
         ...components,
         'pm-install': {
           kind: 'block',
-          props: { name: { type: 'string', required: true } },
+          props: { name: { types: ['string'], required: true, allowedValues: null } },
           slots: ['default'],
+          allowedParents: null,
+          allowedChildren: null,
           media: null,
         },
         example: {
           kind: 'block',
           props: {
-            name: { type: 'string', required: true },
-            also: { type: 'string', required: false },
-            code: { type: 'string', required: false },
-            photos: { type: 'string', required: false },
+            name: { types: ['string'], required: true, allowedValues: null },
+            also: { types: ['string'], required: false, allowedValues: null },
+            code: { types: ['string'], required: false, allowedValues: null },
+            photos: { types: ['string'], required: false, allowedValues: null },
           },
           slots: [],
+          allowedParents: null,
+          allowedChildren: null,
           media: null,
         },
       },

@@ -51,7 +51,7 @@
     "image-size": "2.0.4"
   },
   "devDependencies": {
-    "@nuxt/module-builder": "^1.0.2",
+    "@nuxt/module-builder": "^1.0.3",
     "nuxt": "catalog:",
     "sharp": "^0.35.5",
     "typescript": "catalog:",

@@ -319,7 +319,7 @@ function verifyChangesets() {
   )
   assert(config.access === 'public', 'Changesets access must be public.')
   assert(config.baseBranch === 'main', 'Changesets baseBranch must be main.')
-  assert(config.prettier === false, 'Changesets must defer formatting to Oxfmt.')
+  assert(config.format === false, 'Changesets must defer formatting to Oxfmt.')
 }
 
 function verifyRenovate() {
