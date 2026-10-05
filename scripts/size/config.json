@@ -6,8 +6,8 @@
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "_comment": "Image rendering, provider resolution, single-photo data validation and config injection.",
-      "brotliLimit": 2730
+      "_comment": "Image rendering, provider resolution, photo-data validation, shared load-ahead observation and decoded placeholder-colour handoff.",
+      "brotliLimit": 3230
     },
     "all": {
       "label": "full package import",

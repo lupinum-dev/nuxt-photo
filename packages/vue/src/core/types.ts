@@ -13,6 +13,8 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly thumbSrc?: string
   /** Low-quality preview shown until the image loads. It stays visible if the image fails. */
   readonly placeholderSrc?: string
+  /** @internal Build-time average preview colour. */
+  readonly _placeholderColor?: string
   /** Real pixel width of the image file, not its displayed size. Used for layout before load. */
   readonly width?: number
   /** Real pixel height of the image file, not its displayed size. Used for layout before load. */

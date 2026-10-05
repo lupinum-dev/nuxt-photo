@@ -28,7 +28,6 @@
             context="slide"
             :sizes="frameWidth > 0 ? `${frameWidth}px` : '100vw'"
             priority
-            decoding="async"
             :fetchpriority="isActive ? 'high' : 'low'"
             data-np-slide-img
           />

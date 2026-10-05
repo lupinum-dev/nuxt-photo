@@ -37,7 +37,9 @@ export interface PhotoConfig {
   /** Throw on invalid data by default; collection recipes can opt into dropping invalid photos. */
   validation?: InvalidPhotoPolicy
   /** Resolve missing intrinsic dimensions before validating photo data. */
-  dimensions?: (src: string) => { width: number; height: number } | undefined
+  dimensions?: (
+    src: string,
+  ) => { width: number; height: number; _placeholderColor?: string } | undefined
 }
 export interface ResolvedPhotoConfig extends Omit<
   PhotoConfig,

@@ -53,6 +53,7 @@ describe('local image dimensions', () => {
         cacheDir,
       }
       const first = await readLocalImages(dir, { warn }, options)
+      expect(first['/image.png']?._placeholderColor).toBe('#0201fe')
       expect(first['/image.png']?.placeholderSrc).toMatch(/^data:image\/webp;base64,/)
       const { imageSize } = await import('image-size')
       const preview = Buffer.from(first['/image.png']!.placeholderSrc!.split(',')[1]!, 'base64')
@@ -60,7 +61,11 @@ describe('local image dimensions', () => {
       expect(await readLocalImages(dir, { warn }, options)).toEqual(first)
       await writeFile(file, await readFile(join(fixtureDir, 'with space.png')))
       const changed = await readLocalImages(dir, { warn }, options)
-      expect(changed['/image.png']).toMatchObject({ width: 14, height: 10 })
+      expect(changed['/image.png']).toMatchObject({
+        width: 14,
+        height: 10,
+        _placeholderColor: '#028002',
+      })
       expect(changed['/image.png']?.placeholderSrc).not.toBe(first['/image.png']?.placeholderSrc)
       expect(warn).not.toHaveBeenCalled()
     } finally {

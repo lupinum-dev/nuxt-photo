@@ -3,6 +3,7 @@
   <img
     ref="imageRef"
     :loading="effectiveLoading"
+    :decoding="priority ? undefined : 'async'"
     :fetchpriority="priority ? 'high' : undefined"
     :sizes="effectiveSizes"
     :srcset="resolved.srcset"
@@ -19,11 +20,14 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PhotoItem } from '../core/index'
 import { normalizePhoto } from '../core/photo/normalize'
 import { usePhotoConfig, type PhotoProvider } from '../config'
 import { resolvePhotoImage, type PhotoRenderContext } from '../providers/resolve'
+
+import { observeAhead } from './loadAhead'
+import { useImagePaint } from './imagePaint'
 
 defineOptions({ inheritAttrs: false })
 
@@ -63,50 +67,53 @@ const resolved = computed(() => {
   })
   return resolvePhotoImage(photo, props.context, config.value)
 })
-const effectiveLoading = computed(() => (props.priority ? 'eager' : 'lazy'))
+const ahead = ref(false)
+const effectiveLoading = computed(() => (props.priority || ahead.value ? 'eager' : 'lazy'))
 const effectiveSizes = computed(() => {
   const sizes = props.sizes ?? '100vw'
-  return effectiveLoading.value === 'lazy' && !sizes?.startsWith('auto')
-    ? `auto, ${sizes ?? '100vw'}`
-    : sizes
+  return !props.priority && !sizes?.startsWith('auto') ? `auto, ${sizes ?? '100vw'}` : sizes
 })
 const imageRef = ref<HTMLImageElement | null>(null)
-const loaded = ref(false)
-const failed = ref(false)
+const { loaded, failed, handleLoad, handleError, resetRequestState } = useImagePaint(imageRef)
 const requestKey = computed(() =>
   JSON.stringify([resolved.value.src, resolved.value.srcset ?? '', effectiveSizes.value ?? '']),
 )
 
 const placeholderStyle = computed(() => {
   const placeholder = resolved.value.placeholderSrc
-  if (!placeholder || (loaded.value && !failed.value)) return undefined
+  if (loaded.value && !failed.value) return undefined
   return {
-    backgroundImage: `url(${JSON.stringify(placeholder)})`,
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: 'cover',
+    backgroundColor:
+      props.photo._placeholderColor ??
+      config.value.dimensions?.(props.photo.src)?._placeholderColor ??
+      'var(--np-placeholder-bg, #e5e7eb)',
+    ...(placeholder && {
+      backgroundImage: `url(${JSON.stringify(placeholder)})`,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: 'cover',
+    }),
   }
 })
 
-function handleLoad() {
-  loaded.value = true
-  failed.value = false
-}
-
-function handleError() {
-  loaded.value = false
-  failed.value = true
-}
-
-function resetRequestState() {
-  const image = imageRef.value
-  if (!image) return
-  loaded.value = false
-  failed.value = false
-  if (image.complete && image.naturalWidth > 0) handleLoad()
-}
-
+let stopAhead: (() => void) | undefined
+onBeforeUnmount(() => {
+  stopAhead?.()
+})
 onMounted(() => {
+  watch(
+    () => props.priority,
+    (priority) => {
+      stopAhead?.()
+      stopAhead =
+        !priority && imageRef.value
+          ? observeAhead(imageRef.value, () => {
+              ahead.value = true
+            })
+          : undefined
+    },
+    { immediate: true },
+  )
   watch(requestKey, resetRequestState, { immediate: true, flush: 'post' })
 })
 </script>

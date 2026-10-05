@@ -15,6 +15,68 @@ describe('image previews and sizes', () => {
     document.body.innerHTML = ''
   })
 
+  // Catches per-image observers, premature eager loading and ignoring data-saving mode.
+  it.each([false, true])('shares load-ahead observation (saveData=%s)', async (saveData) => {
+    const instances: {
+      callback: IntersectionObserverCallback
+      options?: IntersectionObserverInit
+    }[] = []
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          instances.push({ callback, options })
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    )
+    Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData } })
+    const mounted = await mountComponent(
+      defineComponent({
+        setup: () => () =>
+          Array.from({ length: 20 }, (_, i) =>
+            h(PhotoImage, { photo: makePhoto({ id: String(i) }), priority: i === 0 }),
+          ),
+      }),
+    )
+    try {
+      const images = [...mounted.container.querySelectorAll('img')]
+      expect(instances).toHaveLength(1)
+      expect(instances[0]!.options).toEqual({
+        root: null,
+        rootMargin: `${innerHeight * (saveData ? 0.5 : 1.5)}px 0px`,
+      })
+      expect(images[1]!.getAttribute('loading')).toBe('lazy')
+      const notify = (index: number, isIntersecting: boolean) =>
+        instances[0]!.callback(
+          [
+            {
+              target: images[index]!,
+              isIntersecting,
+              time: performance.now(),
+              boundingClientRect: images[index]!.getBoundingClientRect(),
+              intersectionRect: images[index]!.getBoundingClientRect(),
+              intersectionRatio: isIntersecting ? 1 : 0,
+              rootBounds: null,
+            },
+          ],
+          {} as IntersectionObserver,
+        )
+      notify(1, false)
+      notify(2, true)
+      await flushUi()
+      expect(images[0]!.getAttribute('loading')).toBe('eager')
+      expect(images[1]!.getAttribute('loading')).toBe('lazy')
+      expect(images[2]!.getAttribute('loading')).toBe('eager')
+      expect(instances).toHaveLength(1)
+    } finally {
+      mounted.unmount()
+      Reflect.deleteProperty(navigator, 'connection')
+    }
+  })
+
   it('resets the placeholder when provider output or context changes', async () => {
     const version = ref('a')
     const props = reactive<{
@@ -43,6 +105,7 @@ describe('image previews and sizes', () => {
     const image = host.querySelector('img') as HTMLImageElement
 
     expect(image.style.backgroundImage).toContain('preview.jpg')
+    expect(image.style.backgroundColor).toContain('--np-placeholder-bg')
     image.dispatchEvent(new Event('load'))
     await flushUi()
     expect(image.style.backgroundImage).toBe('')
@@ -162,6 +225,7 @@ describe('image previews and sizes', () => {
     expect(image.sizes).toBe(row.expected)
     expect(image.getAttribute('loading')).toBe(row.hint)
     expect(image.getAttribute('fetchpriority')).toBe(row.priority ? 'high' : null)
+    expect(image.getAttribute('decoding')).toBe(row.priority ? null : 'async')
     mounted.unmount()
   })
 

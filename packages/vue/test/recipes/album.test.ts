@@ -81,11 +81,18 @@ describe('PhotoAlbum', () => {
     vi.stubGlobal(
       'IntersectionObserver',
       class {
-        constructor(callback: IntersectionObserverCallback, options: IntersectionObserverInit) {
-          expect(options.rootMargin).toBe(`0px 0px ${window.innerHeight}px 0px`)
-          callbacks.push(callback)
+        constructor(
+          private callback: IntersectionObserverCallback,
+          private options: IntersectionObserverInit,
+        ) {}
+        observe(target: Element) {
+          observe(target)
+          if (target.matches('.np-album__end')) {
+            expect(this.options.rootMargin).toBe(`0px 0px ${window.innerHeight}px 0px`)
+            callbacks.push(this.callback)
+          }
         }
-        observe = observe
+        unobserve() {}
         disconnect = disconnect
       },
     )

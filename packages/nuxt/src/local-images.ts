@@ -12,6 +12,7 @@ export interface LocalImage {
   width: number
   height: number
   placeholderSrc?: string
+  _placeholderColor?: string
 }
 
 export async function readLocalImages(
@@ -31,8 +32,9 @@ export async function readLocalImages(
     resize(options: { width: number; withoutEnlargement: boolean }): SharpImage
     webp(options: { quality: number }): SharpImage
     toBuffer(): Promise<Buffer>
+    stats(): Promise<{ channels: { mean: number }[] }>
   }
-  let sharp: ((file: string) => SharpImage) | undefined
+  let sharp: ((file: string | Buffer) => SharpImage) | undefined
   if (options.previews !== false) {
     try {
       const paths = [options.rootDir ?? publicDir, import.meta.dirname]
@@ -54,7 +56,12 @@ export async function readLocalImages(
   }
   const cacheDir =
     options.cacheDir ?? join(options.rootDir ?? publicDir, 'node_modules/.cache/nuxt-photo')
-  const cacheFile = join(cacheDir, createHash('sha256').update(publicDir).digest('hex') + '.json')
+  const cacheFile = join(
+    cacheDir,
+    createHash('sha256')
+      .update(publicDir + ':preview-colour-v1')
+      .digest('hex') + '.json',
+  )
   type Cached = { mtime: number; size: number; image: LocalImage }
   let cache: Record<string, Cached> = {}
   if (sharp) {
@@ -123,6 +130,13 @@ export async function readLocalImages(
                 .webp({ quality: 40 })
                 .toBuffer()
               image.placeholderSrc = 'data:image/webp;base64,' + preview.toString('base64')
+              const { channels } = await sharp(preview).stats()
+              image._placeholderColor =
+                '#' +
+                channels
+                  .slice(0, 3)
+                  .map(({ mean }) => Math.round(mean).toString(16).padStart(2, '0'))
+                  .join('')
             } catch {
               unpreviewable.push(url)
             }

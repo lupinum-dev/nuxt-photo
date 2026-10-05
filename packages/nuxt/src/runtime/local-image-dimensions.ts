@@ -6,7 +6,7 @@ export function createLocalImageDimensionsResolver(
   dimensions: Readonly<Record<string, LocalImage>>,
   baseURL: string,
 ) {
-  return (src: string): { width: number; height: number } | undefined => {
+  return (src: string): LocalImage | undefined => {
     if (/^(?:https?:|\/\/)/i.test(src)) return undefined
     let path = src.split(/[?#]/, 1)[0]!
     const prefix = baseURL.endsWith('/') ? baseURL : baseURL + '/'
