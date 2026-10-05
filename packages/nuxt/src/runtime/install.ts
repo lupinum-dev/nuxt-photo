@@ -1,7 +1,12 @@
 import type { NuxtApp } from '#app'
 import type { PhotoProvider } from '@lupinum/vue-photo'
 import type { ProviderRuntime } from './provider'
-import { installPhotoConfig, nativeProvider } from '#build/nuxt-photo-internals.mjs'
+import {
+  installImagePreload,
+  installPhotoConfig,
+  nativeProvider,
+} from '#build/nuxt-photo-internals.mjs'
+import { useHead } from '#imports'
 import options from '#build/nuxt-photo-options.mjs'
 import { dimensions, hasI18n, decorateProvider } from '#build/nuxt-photo-config.mjs'
 import { resolveNuxtPhotoLabels, resolveNuxtPhotoLocale } from './labels'
@@ -11,6 +16,27 @@ export function installNuxtPhoto(
   provider?: PhotoProvider,
   providers?: ProviderRuntime,
 ) {
+  if (import.meta.server) {
+    const preloaded = new Set<string>()
+    installImagePreload(nuxtApp.vueApp, ({ src, srcset, sizes }) => {
+      const key = srcset ?? src
+      if (preloaded.has(key) || preloaded.size >= 6) return
+      preloaded.add(key)
+      useHead({
+        link: [
+          {
+            rel: 'preload',
+            as: 'image',
+            imagesrcset: srcset,
+            imagesizes: sizes,
+            href: srcset ? undefined : src,
+            fetchpriority: 'high',
+            key,
+          },
+        ],
+      })
+    })
+  }
   const labels =
     typeof options.labels === 'string' ? options.labels : resolveNuxtPhotoLabels(options.labels)
   const locale = () => resolveNuxtPhotoLocale(hasI18n ? nuxtApp.$i18n : undefined)

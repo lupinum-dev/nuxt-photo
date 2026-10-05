@@ -204,7 +204,7 @@ describe('nuxt-photo module', () => {
         .find(([t]) => t.filename === 'nuxt-photo-internals.mjs')![0]
         .getContents(),
     ).toBe(
-      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"\nexport { nativeProvider } from "/resolved/@lupinum/vue-photo/dist/providers/native.mjs"\nexport { DEFAULT_WIDTHS } from "/resolved/@lupinum/vue-photo/dist/providers/runtime.mjs"',
+      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"\nexport { installImagePreload } from "/resolved/@lupinum/vue-photo/dist/internal/imagePreload.mjs"\nexport { nativeProvider } from "/resolved/@lupinum/vue-photo/dist/providers/native.mjs"\nexport { DEFAULT_WIDTHS } from "/resolved/@lupinum/vue-photo/dist/providers/runtime.mjs"',
     )
   })
 

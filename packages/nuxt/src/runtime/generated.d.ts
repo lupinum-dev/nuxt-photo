@@ -1,4 +1,8 @@
 declare module '#build/nuxt-photo-internals.mjs' {
+  export function installImagePreload(
+    app: import('vue').App,
+    preload: (image: { src: string; srcset?: string; sizes: string }) => void,
+  ): void
   export const DEFAULT_WIDTHS: readonly number[]
   export const nativeProvider: import('@lupinum/vue-photo').PhotoProvider
   export interface ProviderRuntime {

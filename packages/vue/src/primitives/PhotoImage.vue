@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { PhotoItem } from '../core/index'
 import { normalizePhoto } from '../core/photo/normalize'
 import { usePhotoConfig, type PhotoProvider } from '../config'
@@ -28,6 +28,7 @@ import { resolvePhotoImage, type PhotoRenderContext } from '../providers/resolve
 
 import { observeAhead } from './loadAhead'
 import { useImagePaint } from './imagePaint'
+import { ImagePreloadKey } from '../internal/imagePreload'
 
 defineOptions({ inheritAttrs: false })
 
@@ -73,6 +74,10 @@ const effectiveSizes = computed(() => {
   const sizes = props.sizes ?? '100vw'
   return !props.priority && !sizes?.startsWith('auto') ? `auto, ${sizes ?? '100vw'}` : sizes
 })
+if (props.priority) {
+  const preload = inject(ImagePreloadKey, undefined)
+  preload?.({ ...resolved.value, sizes: effectiveSizes.value })
+}
 const imageRef = ref<HTMLImageElement | null>(null)
 const { loaded, failed, handleLoad, handleError, resetRequestState } = useImagePaint(imageRef)
 const requestKey = computed(() =>
