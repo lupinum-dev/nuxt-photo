@@ -5,7 +5,7 @@
 
 Download every image at the size it is shown, and show it without waiting.
 
-- `PhotoProvider` and `definePhotoProvider({ url })` replace image adapters. The `imageAdapter` prop and the `ImageAdapter`, `ImageSource` and `ImageContext` types are removed. In Nuxt, `nuxtPhoto.provider` or a component's `provider` prop names a Nuxt Image provider; without Nuxt Image, images use the photo's own `src`.
+- `definePhotoProvider({ url })` connects any image service. In Nuxt, `nuxtPhoto.provider` or a component's `provider` prop names a Nuxt Image provider; without Nuxt Image, images use the photo's own `src`.
 - Nuxt Image's `image` config owns quality, format, `screens` and `densities`. The library builds `srcset` from them (on Vercel from `screens` only, so every width is accepted), never wider than the source file, from 128 px up.
 - The layout writes `sizes` from the real thumbnail width, already exact in the server HTML. `Photo` takes a `sizes` prop for photos that are not full width.
 - `priority` loads the first images first and preloads them during server rendering, at most six per page.
