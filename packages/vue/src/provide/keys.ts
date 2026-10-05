@@ -64,6 +64,7 @@ type LightboxRuntimeState = {
   getSlideFrameStyle: (photo: ResolvedPhotoItem) => CSSProperties
   frameVars: ComputedRef<Record<string, string>>
   isSlideMediaMounted: (index: number) => boolean
+  onSlideImageLoad: (index: number) => void
   isSlideLeaving: (index: number) => boolean
 }
 

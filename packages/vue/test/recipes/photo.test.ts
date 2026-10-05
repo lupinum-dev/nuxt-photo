@@ -38,6 +38,38 @@ describe('Photo', () => {
     mounted.unmount()
   })
 
+  it.each([
+    [true, undefined, '100vw'],
+    [false, undefined, 'auto, 480px'],
+    [true, '(min-width: 768px) 720px, 100vw', '(min-width: 768px) 720px, 100vw'],
+  ] as const)(
+    'keeps priority %s sizes %s stable after measuring the width',
+    async (priority, sizes, expected) => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
+        DOMRect.fromRect({ width: 480, height: 320 }),
+      )
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(private readonly callback: ResizeObserverCallback) {}
+          observe() {
+            this.callback(
+              [{ contentRect: { width: 480 } } as ResizeObserverEntry],
+              this as unknown as ResizeObserver,
+            )
+          }
+          disconnect() {}
+        },
+      )
+      const mounted = await mountComponent(Photo, {
+        props: { photo: makePhoto(), priority, sizes },
+      })
+      await flushUi()
+      expect(mounted.container.querySelector('img')!.getAttribute('sizes')).toBe(expected)
+      mounted.unmount()
+    },
+  )
+
   it('merges consumer attrs and listeners with interactive trigger behavior', async () => {
     const onClick = vi.fn()
     const mounted = await mountComponent(Photo, {

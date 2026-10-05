@@ -11,7 +11,7 @@
       :photo="resolvedPhoto"
       context="thumb"
       :priority="priority"
-      :sizes="containerWidth > 0 ? `${containerWidth}px` : '100vw'"
+      :sizes="imageSizes"
       class="np-photo__img"
       :class="ui?.img"
     />
@@ -70,6 +70,12 @@ const props = withDefaults(
     provider?: PhotoProvider | string
     /** Load eagerly with high fetch priority. @default false */
     priority?: boolean
+    /**
+     * The photo's width on screen as an HTML `sizes` value, such as
+     * `(min-width: 768px) 720px, 100vw`. Set it when the photo is not full width.
+     * @default '100vw'
+     */
+    sizes?: string
   }>(),
   { lightbox: undefined },
 )
@@ -130,6 +136,13 @@ const soloCtx = isSolo.value
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
 const { containerWidth } = useElementWidth(thumbRef)
+// A priority image keeps its server-rendered sizes, so its preload and the image request
+// the same file. Lazy images have not loaded yet and may use the measured width.
+const imageSizes = computed(
+  () =>
+    props.sizes ??
+    (!props.priority && containerWidth.value > 0 ? `${containerWidth.value}px` : '100vw'),
+)
 
 // Is this photo's thumb hidden during a transition?
 const isHidden = computed(() => group?.hiddenPhoto.value?.id === resolvedPhoto.value?.id)

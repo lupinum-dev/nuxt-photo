@@ -261,7 +261,13 @@ test('image budget lab cold sources and visible wait are honest', async ({ page 
   expect(summary.waitMaxMs).toBeGreaterThan(500)
   expect(summary.imageTimings.some((image) => image.waitMs > 500)).toBe(true)
   expect(summary.blankTotalMs).toBeGreaterThanOrEqual(0)
-  expect(summary.preloaded).toBe(false) // No preload feature has been added yet.
+  // The LCP observer may select the other image or text; check the priority image's head contract directly.
+  await expect(page.locator('head link[rel=preload][as=image]')).toHaveCount(1)
+  const priorityImage = page.locator('.lab-content img').first()
+  await expect(page.locator('head link[rel=preload][as=image]')).toHaveAttribute(
+    'imagesrcset',
+    (await priorityImage.getAttribute('srcset'))!,
+  )
   expect(heads.length).toBeGreaterThan(0)
   expect(heads.every((accept) => accept === imageAccept)).toBe(true)
   await page.reload({ waitUntil: 'domcontentloaded' })

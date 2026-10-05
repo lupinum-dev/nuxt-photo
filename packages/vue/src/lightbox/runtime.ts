@@ -39,10 +39,11 @@ export function getMountedSlideIndices(
   active: number,
   count: number,
   leaving: Iterable<number> = [],
+  neighboursReady = true,
 ) {
   if (count <= 0) return new Set<number>()
   const mounted = new Set<number>()
-  for (let offset = -3; offset <= 3; offset++)
+  for (let offset = neighboursReady ? -1 : 0; offset <= (neighboursReady ? 1 : 0); offset++)
     mounted.add((((active + offset) % count) + count) % count)
   // A photo that is still fading out keeps its image until the fade ends.
   for (const index of leaving) if (index < count) mounted.add(index)
@@ -129,6 +130,9 @@ export function useLightboxRuntimeState(
   const areaMetrics = ref<AreaMetrics | null>(null)
   const frameAreaMetrics = ref<AreaMetrics | null>(null)
   const lifecycleStatus = ref<LightboxLifecycleStatus>(initialOpening.value ? 'opening' : 'closed')
+  const loadedSlides = ref(new Set<PhotoItem>())
+  const prefetchedAround = ref(-1)
+  const prefetched = new Set<string>()
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
@@ -153,6 +157,49 @@ export function useLightboxRuntimeState(
     () => transitionConfig.value,
     () => reducedMotion.value,
     () => navigationMode.value,
+  )
+  watch(
+    [
+      lifecycleStatus,
+      carousel.activeIndex,
+      () => {
+        const photo = photos.value[carousel.activeIndex.value]
+        return !!photo && loadedSlides.value.has(photo)
+      },
+      motion.transitionInProgress,
+    ],
+    ([status, active, loaded, moving]) => {
+      if (status === 'closed') {
+        prefetched.clear()
+        loadedSlides.value.clear()
+        prefetchedAround.value = -1
+        return
+      }
+      if (status !== 'open' || moving || !loaded || typeof Image === 'undefined') return
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection
+      if (connection?.saveData) return
+      const count = photos.value.length
+      for (const offset of [-1, 1]) {
+        const index = (active + offset + count) % count
+        if (index === active) continue
+        const photo = photos.value[index]!
+        const resolved = resolvePhotoImage(photo, 'slide', config.value)
+        const key = resolved.srcset ?? resolved.src
+        if (prefetched.has(key)) continue
+        prefetched.add(key)
+        const image = new Image()
+        image.fetchPriority = 'low'
+        image.decoding = 'async'
+        // Match LightboxSlide's fitted width and set it before source selection.
+        const width = Number.parseInt(String(carousel.getSlideFrameStyle(photo).width)) || 0
+        image.sizes = width > 0 ? `${width}px` : '100vw'
+        if (resolved.srcset) image.srcset = resolved.srcset
+        image.src = resolved.src
+      }
+      prefetchedAround.value = active
+    },
+    { flush: 'post' },
   )
   if (initialOpening.value) motion.stageMounted.value = true
   isZoomedIn = () => panzoom.isZoomedIn.value
@@ -485,6 +532,14 @@ export function useLightboxRuntimeState(
     setSlideZoomRef: panzoom.setSlideZoomRef,
     setSlideFrameRef: motion.setSlideFrameRef,
     setSlideImageRef: motion.setSlideImageRef,
+    onSlideImageLoad: (index: number) => {
+      const photo = photos.value[index]
+      if (photo) {
+        loadedSlides.value.add(photo)
+        const image = resolvePhotoImage(photo, 'slide', config.value)
+        prefetched.add(image.srcset ?? image.src)
+      }
+    },
     setOverlayRef: motion.setOverlayRef,
     setViewportRef: motion.setViewportRef,
     setControlsRef: motion.setControlsRef,
@@ -514,6 +569,7 @@ export function useLightboxRuntimeState(
         carousel.activeIndex.value,
         count,
         motion.leavingSlides.value,
+        prefetchedAround.value === carousel.activeIndex.value,
       ).has(index)
     },
   }
