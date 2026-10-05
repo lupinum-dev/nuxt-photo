@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 import type { PhotoItem } from '@lupinum/vue-photo'
 
 import type { usePhotoFolder as PublicUsePhotoFolder } from './usePhotoFolder.d'
+import { trimFolderSlashes } from './trimFolderSlashes'
 
 type FolderOptions = NonNullable<Parameters<typeof PublicUsePhotoFolder>[1]>
 const warned = new Set<string>()
@@ -14,7 +15,7 @@ export async function usePhotoFolder(
   folder: string,
   options: FolderOptions = {},
 ): Promise<Ref<PhotoItem[]>> {
-  const normalized = folder.replace(/^\/+|\/+$/g, '')
+  const normalized = trimFolderSlashes(folder)
   const maps = (value?: Record<string, string>) =>
     Object.entries(value ?? {}).sort(([a], [b]) => compare(a, b))
   const key =
