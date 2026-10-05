@@ -10,6 +10,7 @@ import {
 import { nativeProvider } from '../providers/native'
 import { defaultProviderRuntime, type ProviderRuntime } from '../providers/runtime'
 import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/types'
+import { DEFAULT_MIN_ZOOM } from '../core/viewer/zoom'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import type { PhotoLabels, PhotoLocale } from '../provide/labels'
 
@@ -87,7 +88,7 @@ export function defaultPhotoConfig(locale?: string): ResolvedPhotoConfig {
   return {
     labels: {},
     labelLocale: locale,
-    lightbox: { minZoom: 1.5, transition: 'auto', navigation: 'slide', history: true },
+    lightbox: { minZoom: DEFAULT_MIN_ZOOM, transition: 'auto', navigation: 'slide', history: true },
     validation: 'throw',
     provider: nativeProvider,
     providers: defaultProviderRuntime,

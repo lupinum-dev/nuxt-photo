@@ -68,7 +68,7 @@ export function resolveTransitionConfig(
 /**
  * Internal Vue lightbox state.
  *
- * Public customisation should go through `provideLightbox`; this function
+ * Custom lightboxes use `LightboxProvider` and `useLightbox`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
  * Lifecycle intent is reconciled by one abortable runner. The gallery owns identity and visibility;

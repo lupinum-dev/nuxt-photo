@@ -65,8 +65,8 @@ for (const { width, height, columns, count } of [
         (match) => match.index,
       )
       expect(starts).toHaveLength(columns)
-      // Pause inside the second column too: space-between used to spread its
-      // first two items over a complete sibling's height, then move them back.
+      // Also pause inside the second column: items of a partly parsed column
+      // must not move when the rest of the column arrives.
       const partial = [...html.matchAll(/<div[^>]*class="np-album__item"/g)].filter(
         (match) => match.index > starts[1]! && match.index < starts[2]!,
       )[2]!.index

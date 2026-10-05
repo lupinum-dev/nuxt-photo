@@ -71,10 +71,10 @@ function findColumnBreaks<TMeta extends object>(
 
   for (let column = 1; column <= columns; column++) {
     const nextCosts = new Float64Array(count + 1).fill(Infinity)
-    // Visit starts in the original order so equal costs retain the first start.
-    // Extend each segment in O(1), using exactly the old height addition order.
-    // A partial cost above a feasible complete cost cannot win: all remaining
-    // costs are nonnegative. Retain equality to preserve the old tie behavior.
+    // Visit starts in order so equal costs keep the first start.
+    // Extend each segment in O(1), adding heights in photo order so rounding is
+    // stable. A partial cost above a feasible complete cost cannot win: all
+    // remaining costs are nonnegative. Equal costs are kept, not pruned.
     // The worst case remains O(columns * count²), without a heuristic window.
     for (let start = column - 1; start < count; start++) {
       const priorCost = costs[start]!
