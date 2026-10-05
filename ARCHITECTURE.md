@@ -27,7 +27,11 @@ second list of application symbols.
 - `packages/vue/src/internal` owns shared implementation details that are not public.
 
 Imports flow from components toward core. Core does not import Vue components.
-Nuxt source imports the public Vue package instead of source-tree internals.
+Nuxt runtime code imports the public Vue package. Two exceptions are deliberate:
+the module's build-time code (`options.ts`, `locales.ts`) bundles the Vue config
+validator and label templates from source, so setup validates exactly like
+`createPhoto`; and `module.ts` exposes four internals of the built Vue package to
+the Nuxt plugin through the generated `#build/nuxt-photo-internals.mjs`.
 
 ## Runtime ownership
 
