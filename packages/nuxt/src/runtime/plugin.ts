@@ -1,14 +1,19 @@
-import { defineNuxtPlugin, type NuxtApp, useAppConfig } from '#app'
-import { useImage } from '#imports'
-import { ImageAdapterKey } from '@lupinum/vue-photo'
-import { createNuxtImageAdapter } from './image-adapter'
+import type { NuxtApp } from '#app'
+import { defineNuxtPlugin, useImage } from '#imports'
+import options from '#build/nuxt-photo-options.mjs'
+import { DEFAULT_WIDTHS } from '#build/nuxt-photo-internals.mjs'
+import { createNuxtPhotoProviders } from './provider'
+import { installNuxtPhoto } from './install'
 
 export default defineNuxtPlugin({
-  name: 'nuxt-photo:image-adapter',
+  name: 'nuxt-photo:config',
   setup(nuxtApp: NuxtApp) {
     const image = useImage()
-    const config = useAppConfig().nuxtPhoto?.image
-
-    nuxtApp.vueApp.provide(ImageAdapterKey, createNuxtImageAdapter(image, config))
+    const providers = createNuxtPhotoProviders(image, image.options, DEFAULT_WIDTHS)
+    installNuxtPhoto(
+      nuxtApp,
+      providers.resolve(options.provider ?? image.options.provider),
+      providers.runtime,
+    )
   },
 })

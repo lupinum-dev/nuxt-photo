@@ -1,24 +1,26 @@
-import { dirname, resolve } from 'node:path'
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { stat } from 'node:fs/promises'
 import {
   addComponent,
+  addTemplate,
+  addServerTemplate,
+  addServerHandler,
+  updateTemplates,
   addImports,
   addPlugin,
-  addTypeTemplate,
+  addVitePlugin,
   createResolver,
+  resolvePath,
   defineNuxtModule,
   hasNuxtModule,
   useLogger,
+  useNitro,
 } from '@nuxt/kit'
 import type { NuxtModule } from '@nuxt/schema'
-import {
-  NUXT_PHOTO_DEFAULTS,
-  validateNuxtPhotoOptions,
-  type NuxtPhotoAppConfig,
-  type NuxtPhotoOptions,
-} from './options'
-export type { NuxtPhotoAppConfig, NuxtPhotoOptions } from './options'
-
-type NuxtPhotoAppConfigState = { nuxtPhoto?: NuxtPhotoAppConfig }
+import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
+import { readLocalImages } from './local-images'
+import { generatePhotoLocales } from './locales'
+export type { NuxtPhotoOptions } from './options'
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
 const RECIPE_COMPONENTS: Array<{ export: string; name: string }> = [
@@ -41,7 +43,7 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
-const AUTO_IMPORTS = ['useLightbox', 'provideLightbox', 'usePhotoLabels', 'responsive'] as const
+const AUTO_IMPORTS = ['useLightbox', 'usePhotoLabels', 'usePhotoFolder', 'responsive'] as const
 
 function resolveRecipeComponent(vueDistDir: string, name: string) {
   return resolve(vueDistDir, 'components', `${name}.vue`)
@@ -79,133 +81,139 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
+    let lightboxComponent: string | undefined
+    if (options.lightbox?.component !== undefined) {
+      try {
+        lightboxComponent = await resolvePath(options.lightbox.component)
+        // resolvePath returns normalized input when no file exists.
+        if (!(await stat(lightboxComponent)).isFile()) throw new Error('Not a file')
+      } catch (cause) {
+        throw new TypeError(
+          `[nuxt-photo] \`nuxtPhoto.lightbox.component\` could not resolve ${JSON.stringify(options.lightbox.component)}; use an existing component path or alias.`,
+          { cause },
+        )
+      }
+    }
+
     const logger = useLogger('nuxt-photo')
     const resolver = createResolver(import.meta.url)
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
-    const minZoom = options.lightbox?.minZoom
 
-    addTypeTemplate({
-      filename: 'types/nuxt-photo-app-config.d.ts',
-      getContents: () => `import type { NuxtPhotoAppConfig } from '@lupinum/nuxt-photo'
-
-declare module '@nuxt/schema' {
-  interface AppConfig {
-    nuxtPhoto?: NuxtPhotoAppConfig
-  }
-}
-
-declare module 'nuxt/schema' {
-  interface AppConfig {
-    nuxtPhoto?: NuxtPhotoAppConfig
-  }
-}
-
-export {}`,
+    addTemplate({
+      filename: 'nuxt-photo-internals.mjs',
+      getContents: () =>
+        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}\nexport { installImagePreload } from ${JSON.stringify(resolve(vueDistDir, 'internal/imagePreload.mjs'))}\nexport { nativeProvider } from ${JSON.stringify(resolve(vueDistDir, 'providers/native.mjs'))}\nexport { DEFAULT_WIDTHS } from ${JSON.stringify(resolve(vueDistDir, 'providers/runtime.mjs'))}`,
+    })
+    addTemplate({
+      filename: 'nuxt-photo-options.mjs',
+      getContents: () => {
+        const config = JSON.stringify({
+          labels: options.labels,
+          lightbox: options.lightbox ? { ...options.lightbox, component: undefined } : undefined,
+          validation: options.validation,
+          provider: options.provider,
+        })
+        return lightboxComponent
+          ? `import LightboxComponent from ${JSON.stringify(lightboxComponent)}\nconst options = ${config}\noptions.lightbox.component = LightboxComponent\nexport default options`
+          : `export default ${config}`
+      },
     })
 
-    if (options.image !== false) {
-      const explicit = options.image?.provider ?? 'auto'
-      if (explicit !== 'native') {
-        nuxt.hook('modules:done', () => {
-          const hasImageModule = hasNuxtModule('@nuxt/image')
-          if (explicit === 'nuxt-image' && !hasImageModule) {
-            throw new Error(
-              '[nuxt-photo] `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` to be installed in `modules`.',
-            )
-          }
-
-          if (!hasImageModule) {
-            const hasAdapterConfig =
-              typeof options.image === 'object' && !!(options.image.thumb || options.image.slide)
-            if (hasAdapterConfig) {
-              logger.warn(
-                '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect because `@nuxt/image` is not installed.',
-              )
-            }
-            return
-          }
-
-          addPlugin(
-            {
-              src: resolver.resolve('./runtime/plugin'),
-            },
-            { append: true },
-          )
-
-          if (typeof options.image !== 'object') return
-
-          const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
-          appConfig.nuxtPhoto = {
-            ...appConfig.nuxtPhoto,
-            image: {
-              ...appConfig.nuxtPhoto?.image,
-              ...(options.image.thumb
-                ? {
-                    thumb: {
-                      ...appConfig.nuxtPhoto?.image?.thumb,
-                      ...options.image.thumb,
-                    },
-                  }
-                : {}),
-              ...(options.image.slide
-                ? {
-                    slide: {
-                      ...appConfig.nuxtPhoto?.image?.slide,
-                      ...options.image.slide,
-                    },
-                  }
-                : {}),
-            },
-          }
+    // Folder data stays in Nitro; only localImages opts into a client-wide lookup.
+    const publicDir = resolve(nuxt.options.rootDir, nuxt.options.dir.public)
+    let manifest = await readLocalImages(publicDir, logger, {
+      rootDir: nuxt.options.rootDir,
+      clientManifest: options.localImages,
+    })
+    addServerTemplate({
+      filename: '#nuxt-photo-folders',
+      getContents: () =>
+        `export const manifest = ${JSON.stringify(manifest)}\nexport const baseURL = ${JSON.stringify(nuxt.options.app.baseURL.replace(/\/$/, ''))}`,
+    })
+    addServerHandler({
+      route: '/__nuxt_photo/folder',
+      handler: resolver.resolve('./runtime/server/photo-folder'),
+    })
+    const template = options.localImages
+      ? addTemplate({
+          filename: 'nuxt-photo-local-images.mjs',
+          getContents: () => `export default Object.freeze(${JSON.stringify(manifest)})`,
         })
-      }
-    }
-
-    if (
-      typeof options.image === 'object' &&
-      options.image.provider === 'native' &&
-      (options.image.thumb || options.image.slide)
-    ) {
-      logger.warn(
-        '`nuxtPhoto.image.thumb` and `nuxtPhoto.image.slide` have no effect with the native image provider.',
-      )
-    }
-
-    if (minZoom != null || options.labels != null) {
-      const appConfig = nuxt.options.appConfig as NuxtPhotoAppConfigState
-
-      appConfig.nuxtPhoto = {
-        ...appConfig.nuxtPhoto,
-        ...(minZoom != null ? { lightbox: { ...appConfig.nuxtPhoto?.lightbox, minZoom } } : {}),
-        ...(options.labels
-          ? { labels: { ...appConfig.nuxtPhoto?.labels, ...options.labels } }
-          : {}),
-      }
-    }
-
-    const defaultsPlugin = resolver.resolve('./runtime/defaults-plugin')
-    const inlineDefaults = (nuxt.options.appConfig as NuxtPhotoAppConfigState).nuxtPhoto
-    if (
-      minZoom != null ||
-      options.labels != null ||
-      inlineDefaults?.lightbox?.minZoom != null ||
-      inlineDefaults?.labels != null
-    ) {
-      addPlugin({ src: defaultsPlugin }, { append: true })
-    } else {
-      // `app.config.ts` files are discovered after module setup. Register the
-      // defaults bridge only for apps that actually have an app-config source,
-      // keeping the unused-module bundle free of Vue Photo runtime code.
-      nuxt.hook('app:resolve', (app) => {
+      : undefined
+    if (nuxt.options.dev) {
+      // Nitro virtual templates are evaluated on rebuild, not by updateTemplates.
+      let reloadFolders: (() => Promise<void>) | undefined
+      nuxt.hook('ready', () => {
+        const nitro = useNitro()
+        reloadFolders = () => nitro.hooks.callHook('rollup:reload')
+      })
+      if (!nuxt.options.watch.includes(publicDir)) nuxt.options.watch.push(publicDir)
+      nuxt.hook('builder:watch', async (_event, path) => {
+        const changed = resolve(nuxt.options.srcDir, path)
+        const withinPublic = relative(publicDir, changed)
         if (
-          app.configs.length === 0 ||
-          app.plugins.some((plugin) => plugin.src === defaultsPlugin)
+          withinPublic === '' ||
+          (withinPublic !== '..' &&
+            !withinPublic.startsWith('..' + sep) &&
+            !isAbsolute(withinPublic))
         ) {
-          return
+          manifest = await readLocalImages(publicDir, logger, {
+            rootDir: nuxt.options.rootDir,
+            clientManifest: options.localImages,
+          })
+          await reloadFolders?.()
+          if (template)
+            await updateTemplates({
+              filter: (candidate) => candidate.filename === template.filename,
+            })
         }
-        app.plugins.push({ src: defaultsPlugin })
       })
     }
+
+    nuxt.hook('modules:done', () => {
+      const i18n = hasNuxtModule('@nuxtjs/i18n')
+      // @nuxtjs/i18n is optional; keep its config boundary independent of its type augmentation.
+      const i18nConfig = 'i18n' in nuxt.options ? nuxt.options.i18n : undefined
+      const i18nLocales =
+        i18n && i18nConfig && typeof i18nConfig === 'object' && 'locales' in i18nConfig
+          ? i18nConfig.locales
+          : undefined
+      const localeTemplate = addTemplate({
+        filename: 'nuxt-photo-locales.mjs',
+        write: true,
+        getContents: () => generatePhotoLocales(options.labels, i18nLocales),
+      })
+      const catalogPath = resolve(vueDistDir, 'provide/photoLocaleTemplates.mjs')
+      // Apply the same synchronous catalog to client and SSR recipes without changing Vue exports.
+      addVitePlugin({
+        name: 'nuxt-photo-locales',
+        enforce: 'pre',
+        resolveId(source, importer) {
+          if (importer && resolve(dirname(importer.split('?')[0]!), source) === catalogPath)
+            return localeTemplate.dst
+        },
+      })
+      addTemplate({
+        filename: 'nuxt-photo-config.mjs',
+        getContents:
+          () => `${options.localImages ? "import manifest from '#build/nuxt-photo-local-images.mjs'" : ''}
+import { createLocalImageDimensionsResolver, withLocalPlaceholders } from ${JSON.stringify(resolver.resolve('./runtime/local-image-dimensions'))}
+export const dimensions = ${options.localImages ? 'createLocalImageDimensionsResolver(manifest, ' + JSON.stringify(nuxt.options.app.baseURL) + ')' : 'undefined'}
+export const decorateProvider = ${options.localImages ? 'provider => withLocalPlaceholders(provider, dimensions)' : 'provider => provider'}
+export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
+      })
+    })
+    nuxt.hook('modules:done', () => {
+      if (hasNuxtModule('@nuxt/image')) {
+        addPlugin({ src: resolver.resolve('./runtime/plugin') }, { append: true })
+      } else {
+        if (options.provider)
+          throw new TypeError(
+            '[nuxt-photo] nuxtPhoto.provider requires @nuxt/image; install the module or omit the provider name.',
+          )
+        addPlugin({ src: resolver.resolve('./runtime/defaults-plugin') }, { append: true })
+      }
+    })
 
     if (options.components !== false) {
       const prefix = typeof options.components === 'object' ? (options.components.prefix ?? '') : ''

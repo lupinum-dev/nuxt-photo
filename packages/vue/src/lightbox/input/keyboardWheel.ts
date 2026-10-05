@@ -5,6 +5,7 @@ const TRACKPAD_WHEEL_THROTTLE_MS = 200
 const MOUSE_WHEEL_THROTTLE_MS = 45
 
 type KeyboardWheelConfig = {
+  direction?: Readonly<Ref<'ltr' | 'rtl'>>
   isOpen: Readonly<Ref<boolean>>
   animating: Readonly<Ref<boolean>>
   isZoomedIn: ComputedRef<boolean>
@@ -78,7 +79,7 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
     }
 
     const baseDirection = event.key === 'ArrowRight' ? -1 : event.key === 'ArrowLeft' ? 1 : 0
-    const rtl = document.documentElement.dir.toLowerCase() === 'rtl'
+    const rtl = config.direction?.value === 'rtl'
     const direction = rtl ? -baseDirection : baseDirection
     if (!direction) return
 

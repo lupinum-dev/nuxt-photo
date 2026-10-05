@@ -1,9 +1,11 @@
 <template>
-  <Teleport v-if="ctx.isOpen.value" to="body">
+  <Teleport v-if="ctx.isOpen.value" :to="ctx.photoConfig.value.teleportTarget ?? 'body'">
     <div
       ref="rootRef"
       tabindex="-1"
       data-np-lightbox-root
+      :data-np-initial="ctx.initialOpening.value || undefined"
+      :dir="ctx.direction.value"
       :data-np-navigation="ctx.navigationMode.value"
       :style="ctx.frameVars.value"
       v-bind="$attrs"
@@ -25,6 +27,13 @@ import LightboxTransitionLayer from '../internal/LightboxTransitionLayer.vue'
 const ctx = useLightboxInject('LightboxRoot')
 
 const rootRef = ref<HTMLElement | null>(null)
+watch(
+  rootRef,
+  (element) => {
+    ctx.rootRef.value = element
+  },
+  { flush: 'sync' },
+)
 let restoreFocusEl: HTMLElement | null = null
 let restoreSiblings: (() => void) | null = null
 
@@ -37,7 +46,7 @@ function isolatePageSiblings(root: HTMLElement) {
   })
 
   function isolateElement(element: HTMLElement) {
-    if (element === root || previous.has(element)) return
+    if (element.contains(root) || previous.has(element)) return
     previous.set(element, {
       inert: element.inert,
       ariaHidden: element.getAttribute('aria-hidden'),
@@ -78,11 +87,12 @@ function getFocusableElements(root: HTMLElement) {
     ),
   ).filter(
     (el) =>
-      !el.hasAttribute('disabled') &&
+      !el.matches('input[type="hidden"], :disabled') &&
       el.getAttribute('aria-hidden') !== 'true' &&
       !el.closest('[inert]') &&
-      // A caption hidden while zoomed cannot take focus; the trap must skip it.
-      getComputedStyle(el).visibility !== 'hidden',
+      getComputedStyle(el).visibility !== 'hidden' &&
+      getComputedStyle(el).visibility !== 'collapse' &&
+      (el.checkVisibility?.() ?? el.getClientRects().length > 0),
   )
 }
 
@@ -109,34 +119,34 @@ function handleKeydownCapture(event: KeyboardEvent) {
     return
   }
 
-  const first = focusables[0]!
-  const last = focusables[focusables.length - 1]!
-  const active = document.activeElement as HTMLElement | null
-
-  if (event.shiftKey) {
-    if (!active || active === first || active === root) {
-      event.preventDefault()
-      last.focus()
-    }
-    return
+  event.preventDefault()
+  const activeIndex = focusables.findIndex((element) => element === document.activeElement)
+  let nextIndex = event.shiftKey
+    ? (activeIndex <= 0 ? focusables.length : activeIndex) - 1
+    : (activeIndex + 1) % focusables.length
+  const direction = event.shiftKey ? -1 : 1
+  // A rendered candidate may still refuse focus. Try each candidate once
+  // instead of leaving the next Tab aimed at the same unreachable element.
+  for (let attempt = 0; attempt < focusables.length; attempt++) {
+    const target = focusables[nextIndex]!
+    target.focus()
+    if (document.activeElement === target) return
+    nextIndex = (nextIndex + direction + focusables.length) % focusables.length
   }
-
-  if (active === last) {
-    event.preventDefault()
-    first.focus()
-  }
+  root.focus()
 }
 
 watch(
   () => ctx.isOpen.value,
   async (isOpen) => {
+    if (typeof document === 'undefined') return
     if (isOpen) {
       restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null
       await nextTick()
       if (rootRef.value) {
         isolatePageSiblings(rootRef.value)
       }
-      rootRef.value?.focus()
+      rootRef.value?.focus({ preventScroll: true })
       if (rootRef.value && document.activeElement !== rootRef.value) {
         const firstFocusable = getFocusableElements(rootRef.value)[0]
         firstFocusable?.focus()
@@ -151,8 +161,9 @@ watch(
     if (!target?.isConnected) return
 
     await nextTick()
-    target.focus()
+    target.focus({ preventScroll: true })
   },
+  { immediate: true },
 )
 
 onBeforeUnmount(() => {

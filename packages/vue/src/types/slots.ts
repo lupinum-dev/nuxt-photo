@@ -39,6 +39,7 @@ export interface LightboxViewportSlotProps<
   photos: readonly PhotoItem<TMeta>[]
   viewportRef: Ref<HTMLElement | null | undefined>
   imageLoadFailed: boolean
+  isSlideMounted: (index: number) => boolean
 }
 
 // ─── PhotoCarousel slot props ──────────────────────────────────────────────

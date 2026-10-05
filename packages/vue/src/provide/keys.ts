@@ -1,5 +1,5 @@
+import type { ResolvedPhotoConfig } from '../config'
 import type {
-  Component,
   ComponentPublicInstance,
   ComputedRef,
   CSSProperties,
@@ -9,13 +9,12 @@ import type {
 } from 'vue'
 import type {
   GestureMode,
-  ImageAdapter,
   LightboxNavigationMode,
   PanState,
   PhotoItem,
+  ResolvedPhotoItem,
   ZoomState,
 } from '../core/index'
-import type { PhotoLabels } from './labels'
 
 export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 
@@ -23,6 +22,7 @@ export type LightboxLifecycleStatus = 'closed' | 'opening' | 'open' | 'closing'
 export interface LightboxController<TMeta extends object = Readonly<Record<string, unknown>>> {
   readonly photos: ComputedRef<readonly PhotoItem<TMeta>[]>
   readonly count: ComputedRef<number>
+  readonly activeId: ComputedRef<string | null>
   readonly activeIndex: ComputedRef<number>
   readonly activePhoto: ComputedRef<PhotoItem<TMeta> | null>
   readonly isOpen: ComputedRef<boolean>
@@ -41,14 +41,6 @@ export interface LightboxProviderController<
   setThumbnailRef(index: number): (element: Element | ComponentPublicInstance | null) => void
 }
 
-/** Public template-ref contract exposed by collection recipes. */
-export interface LightboxHandle {
-  open(index?: number): Promise<void>
-  openById(id: string): Promise<void>
-  close(): Promise<void>
-  readonly isOpen: boolean
-}
-
 type LightboxRuntimeState = {
   lifecycleStatus: Ref<LightboxLifecycleStatus>
   zoomState: Ref<ZoomState>
@@ -63,12 +55,16 @@ type LightboxRuntimeState = {
   stageMounted: Ref<boolean>
   activeImagePending: Ref<boolean>
   transitionInProgress: ComputedRef<boolean>
-  imageAdapter: ComputedRef<ImageAdapter>
+  photoConfig: ComputedRef<ResolvedPhotoConfig>
+  initialOpening: Ref<boolean>
+  rootRef: Ref<HTMLElement | null>
+  direction: ComputedRef<'ltr' | 'rtl'>
   navigationMode: ComputedRef<LightboxNavigationMode>
   gesturePhase: Ref<GestureMode>
-  getSlideFrameStyle: (photo: PhotoItem) => CSSProperties
+  getSlideFrameStyle: (photo: ResolvedPhotoItem) => CSSProperties
   frameVars: ComputedRef<Record<string, string>>
   isSlideMediaMounted: (index: number) => boolean
+  onSlideImageLoad: (index: number) => void
   isSlideLeaving: (index: number) => boolean
 }
 
@@ -97,10 +93,11 @@ type LightboxDomBindings = {
 
 export type InternalLightboxContext = Omit<
   LightboxController,
-  'openById' | 'activeIndex' | 'photos'
+  'openById' | 'activeIndex' | 'photos' | 'activePhoto'
 > & {
-  photos: ComputedRef<PhotoItem[]>
-  activeIndex: Ref<number>
+  photos: ComputedRef<ResolvedPhotoItem[]>
+  activePhoto: ComputedRef<ResolvedPhotoItem | null>
+  activeIndex: ComputedRef<number>
 } & LightboxRuntimeState &
   LightboxDomBindings
 
@@ -112,21 +109,3 @@ export const LightboxContextKey: InjectionKey<InternalLightboxContext> =
 export const LightboxSlideRendererKey: InjectionKey<
   (photo: PhotoItem) => LightboxSlideRenderer | null
 > = Symbol('nuxt-photo:lightbox-slide-renderer')
-export const ImageAdapterKey: InjectionKey<ImageAdapter> = Symbol('nuxt-photo:image-adapter')
-
-/**
- * Provide a custom lightbox component globally so Photo/PhotoGroup/PhotoAlbum
- * use it by default without requiring per-instance :lightbox props.
- *
- * Usage in app.vue:
- *   import MyLightbox from '~/components/Lightbox.vue'
- *   provide(LightboxComponentKey, MyLightbox)
- */
-export const LightboxComponentKey: InjectionKey<Component> = Symbol('nuxt-photo:lightbox-component')
-
-/** Global defaults for photo recipes and the lightbox, typically provided once per app. */
-export interface PhotoDefaults {
-  minZoom?: number
-  labels?: Partial<PhotoLabels>
-}
-export const PhotoDefaultsKey: InjectionKey<PhotoDefaults> = Symbol('nuxt-photo:photo-defaults')

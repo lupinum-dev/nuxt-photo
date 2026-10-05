@@ -26,6 +26,7 @@ function createGestureConfig(
   })
 
   const config = {
+    direction: ref<'ltr' | 'rtl'>('ltr'),
     isOpen: ref(true),
     animating: ref(false),
     isZoomedIn: computed(() => isZoomedIn.value),
@@ -71,6 +72,7 @@ function createGestureConfig(
   const input = {
     state: {
       isOpen: config.isOpen,
+      direction: config.direction,
       animating: config.animating,
       isZoomedIn: config.isZoomedIn,
       zoomAllowed: config.zoomAllowed,
@@ -146,9 +148,9 @@ describe('useLightboxInputHandlers', () => {
     expect(config.setPanzoomImmediate).not.toHaveBeenCalled()
   })
 
-  it('mirrors arrow-key navigation in an RTL document', () => {
-    document.documentElement.dir = 'rtl'
+  it('mirrors arrow-key navigation with the resolved gallery direction', () => {
     const { config } = createGestureConfig(false)
+    config.direction.value = 'rtl'
     const gestures = useLightboxInputHandlers(config)
 
     gestures.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
@@ -156,7 +158,6 @@ describe('useLightboxInputHandlers', () => {
 
     expect(config.goToPrev).toHaveBeenCalledTimes(1)
     expect(config.goToNext).toHaveBeenCalledTimes(1)
-    document.documentElement.dir = ''
   })
 
   it('jumps to the first and last slide with Home and End', () => {

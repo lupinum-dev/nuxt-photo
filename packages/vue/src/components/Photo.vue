@@ -1,109 +1,113 @@
 <template>
   <figure
+    v-if="resolvedPhoto"
     ref="thumbRef"
     class="np-photo"
+    :class="ui?.root"
     v-bind="mergeProps(interactiveAttrs, $attrs)"
     :style="figureStyle"
   >
     <PhotoImage
-      :photo="photo"
+      :photo="resolvedPhoto"
       context="thumb"
-      :image-adapter="imageAdapter"
-      :loading="loading ?? 'lazy'"
+      :priority="priority"
+      :sizes="imageSizes"
       class="np-photo__img"
-      :class="imgClass"
+      :class="ui?.img"
     />
-    <figcaption v-if="photo.caption" class="np-photo__caption" :class="captionClass">
-      {{ photo.caption }}
+    <figcaption v-if="resolvedPhoto.caption" class="np-photo__caption" :class="ui?.caption">
+      {{ resolvedPhoto.caption }}
     </figcaption>
   </figure>
-  <component :is="soloLightboxComponent" v-if="isSolo && soloCtx" />
+  <component :is="soloLightboxComponent" v-if="isSolo && soloCtx && resolvedPhoto" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import {
-  ref,
-  computed,
-  inject,
-  onMounted,
-  onBeforeUnmount,
-  watch,
-  watchEffect,
-  mergeProps,
-  type Component,
-  type VNodeChild,
-} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, mergeProps, type VNodeChild } from 'vue'
 
+import { useElementWidth } from '../composables/useElementWidth'
+import { useGalleryRuntime } from '../gallery/runtime'
+import { useGalleryModel } from '../gallery/model'
 import { provideLightbox } from '../composables/index'
 import { PhotoImage } from '../primitives/index'
-import { LightboxComponentKey } from '../provide/keys'
-import type { PhotoItem, ImageAdapter } from '../core/index'
-import type { LightboxNavigationMode, LightboxTransitionOption } from '../core/index'
+import type { PhotoItem } from '../core/index'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
 import Lightbox from './Lightbox.vue'
-import { PhotoGroupContextKey } from './photo-group/context'
-import { normalizePhotos } from '../core/photo/normalize'
+import type { InvalidPhotoPolicy, InvalidPhotosEvent } from '../core/photo/normalize'
+import { useRecipePhotos } from './shared/useRecipePhotos'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
 import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
 
+import type { PhotoUi } from '../types/ui'
+import { useRecipeLightbox } from './shared/useRecipeLightbox'
+
 defineOptions({ inheritAttrs: false })
 
-const props = defineProps<{
-  /**
-   * The photo to render. Needs a stable `id`, a `src`, and the real pixel `width` and `height`.
-   * Invalid data throws.
-   */
-  photo: PhotoItem<TMeta>
-  /**
-   * `true` opens a one-photo lightbox, a component replaces it. Ignored inside `PhotoGroup`, which
-   * owns the lightbox. Read once at mount; change the component `key` to remount.
-   */
-  lightbox?: boolean | Component
-  /**
-   * Inside a `PhotoGroup`, render a plain image that does not open the lightbox. The photo stays in
-   * the group's navigation.
-   */
-  lightboxIgnore?: boolean
-  /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
-  imageAdapter?: ImageAdapter<TMeta>
-  /**
-   * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
-   * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
-   * change while mounted.
-   * @default 'auto'
-   */
-  transition?: LightboxTransitionOption
-  /**
-   * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
-   * mounted.
-   * @default 'slide'
-   */
-  navigation?: LightboxNavigationMode
-  /**
-   * Native image `loading` hint. Use `'eager'` for images in the first screen.
-   * @default 'lazy'
-   */
-  loading?: 'lazy' | 'eager'
-  /** Classes for each `<img>`. */
-  imgClass?: string
-  /** Classes for the caption. */
-  captionClass?: string
+const props = withDefaults(
+  defineProps<{
+    /**
+     * The photo to render. Needs a stable `id`, a `src`, and the real pixel `width` and `height`.
+     * Invalid data throws.
+     */
+    photo: PhotoItem<TMeta>
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
+    ui?: PhotoUi<'Photo'>
+    validation?: InvalidPhotoPolicy
+    /**
+     * `true` opens a one-photo lightbox; `lightbox.component` replaces the viewer. Ignored inside `PhotoGroup`, which
+     * owns the lightbox. Read once at mount; change the component `key` to remount.
+     */
+    lightbox?: boolean | LightboxOptions
+    /**
+     * Inside a `PhotoGroup`, render a plain image that does not open the lightbox. The photo stays in
+     * the group's navigation.
+     */
+    lightboxIgnore?: boolean
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
+    /** Load eagerly with high fetch priority. @default false */
+    priority?: boolean
+    /**
+     * The photo's width on screen as an HTML `sizes` value, such as
+     * `(min-width: 768px) 720px, 100vw`. Set it when the photo is not full width.
+     * @default '100vw'
+     */
+    sizes?: string
+  }>(),
+  { lightbox: undefined },
+)
+const emit = defineEmits<{
+  'update:active': [id: string | null]
+  invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 const slots = defineSlots<{
   slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
 
-function validatePhoto() {
-  normalizePhotos<TMeta>([props.photo], { owner: 'Photo', onInvalid: 'throw' })
-}
-watchEffect(validatePhoto)
+const { group, options: recipeLightboxOptions } = useRecipeLightbox('Photo', () => props.lightbox)
+
+const photoConfig = providePhotoConfig(() => ({
+  provider: props.provider,
+  validation: props.validation,
+  lightbox: recipeLightboxOptions(),
+}))
+
+const normalizedPhotos = useRecipePhotos<TMeta>(
+  () => [props.photo],
+  'Photo',
+  () => props.validation,
+  (event) => emit('invalidPhotos', event),
+)
+const resolvedPhoto = computed(() => normalizedPhotos.value[0] ?? null)
 
 // Inject parent group context (null if none)
-const group = inject(PhotoGroupContextKey, null)
+if (!group) useGalleryRuntime(normalizedPhotos, () => thumbRef.value)
 
 // Global lightbox override
-const injectedLightbox = inject(LightboxComponentKey, null)
+const injectedLightbox = photoConfig.value.lightbox.component ?? null
 
 const soloLightboxComponent = !group
   ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, false)
@@ -111,41 +115,44 @@ const soloLightboxComponent = !group
 // Standalone mode: lightbox capability set and no parent group.
 const hasSoloProvider = soloLightboxComponent !== null
 const isSolo = computed(() => hasSoloProvider)
-warnOnSetupOptionChanges('Photo', {
-  lightbox: () => props.lightbox,
-})
+if (!group)
+  warnOnSetupOptionChanges('Photo', {
+    lightbox: () =>
+      typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
+  })
 
 // Solo lightbox context — only created when solo (outside group)
 const soloCtx = isSolo.value
-  ? provideLightbox(
-      computed(() => props.photo),
-      {
-        transition: () => props.transition,
-        navigation: () => props.navigation,
-        imageAdapter: computed(() => props.imageAdapter),
-        resolveSlide: (photo) => {
-          if (
-            (photo !== props.photo && String(photo.id) !== String(props.photo.id)) ||
-            !slots.slide
-          )
-            return null
-          return (slotProps) => slots.slide?.(slotProps) ?? null
-        },
-      },
-    )
+  ? provideLightbox(normalizedPhotos, undefined, (photo) => {
+      if (
+        (photo !== props.photo && String(photo.id) !== String(resolvedPhoto.value?.id)) ||
+        !slots.slide
+      )
+        return null
+      return (slotProps) => slots.slide?.(slotProps) ?? null
+    })
   : null
 
 // Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
+const { containerWidth } = useElementWidth(thumbRef)
+// A priority image keeps its server-rendered sizes, so its preload and the image request
+// the same file. Lazy images have not loaded yet and may use the measured width.
+const imageSizes = computed(
+  () =>
+    props.sizes ??
+    (!props.priority && containerWidth.value > 0 ? `${containerWidth.value}px` : '100vw'),
+)
 
 // Is this photo's thumb hidden during a transition?
-const isHidden = computed(() => group?.hiddenPhoto.value?.id === props.photo.id)
+const isHidden = computed(() => group?.hiddenPhoto.value?.id === resolvedPhoto.value?.id)
 
 // Group mode: the parent owns the canonical collection; this photo is a trigger.
-const isGrouped = computed(
-  () => !!group && group.enabled && group.hasPhoto(props.photo.id) && !props.lightboxIgnore,
-)
-const isInteractive = computed(() => isSolo.value || isGrouped.value)
+const isGrouped = computed(() => {
+  const photo = resolvedPhoto.value
+  return !!photo && !!group && group.enabled && group.hasPhoto(photo.id) && !props.lightboxIgnore
+})
+const isInteractive = computed(() => !!resolvedPhoto.value && (isSolo.value || isGrouped.value))
 
 const figureStyle = computed(() => {
   if (isSolo.value) {
@@ -162,19 +169,18 @@ const figureStyle = computed(() => {
 })
 
 function handleClick() {
-  if (isSolo.value) return soloOpen()
-  else if (isGrouped.value) return group!.activateById(props.photo.id, thumbRef.value)
+  return open()
 }
 
 const labels = usePhotoLabels()
 
 const interactiveAttrs = computed(() => {
-  if (!isInteractive.value) return {}
+  if (!isInteractive.value || !resolvedPhoto.value) return {}
   return createPhotoTriggerBindings(
-    props.photo,
+    resolvedPhoto.value,
     0,
     handleClick,
-    props.photo.alt || labels.viewPhoto(1),
+    resolvedPhoto.value.alt || labels.viewPhoto(1),
   )
 })
 
@@ -183,7 +189,7 @@ const id = Symbol()
 const registered = ref(false)
 
 function shouldRegisterWithGroup() {
-  return group && group.enabled && !props.lightboxIgnore && !isSolo.value
+  return resolvedPhoto.value && group && group.enabled && !props.lightboxIgnore && !isSolo.value
 }
 
 function unregisterFromGroup() {
@@ -193,10 +199,11 @@ function unregisterFromGroup() {
 }
 
 function registerWithGroup() {
-  if (!shouldRegisterWithGroup()) return
+  const photo = resolvedPhoto.value
+  if (!shouldRegisterWithGroup() || !photo) return
   group!.replaceCapabilities(id, [
     {
-      id: props.photo.id,
+      id: photo.id,
       getThumbnailElement: () => thumbRef.value,
       renderSlide: slots.slide
         ? (slotProps) =>
@@ -216,7 +223,7 @@ onMounted(() => {
 registerWithGroup()
 
 watch(
-  () => [props.photo.id, props.lightboxIgnore],
+  () => [resolvedPhoto.value?.id, props.lightboxIgnore],
   () => {
     unregisterFromGroup()
     registerWithGroup()
@@ -225,9 +232,41 @@ watch(
 
 onBeforeUnmount(unregisterFromGroup)
 
-async function soloOpen() {
+async function open(index = 0) {
+  const photo = resolvedPhoto.value
+  if (index !== 0 || !photo)
+    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
+  if (isGrouped.value) return group!.activateById(photo.id, thumbRef.value)
   if (!soloCtx) return
   soloCtx.setThumbnailRef(0)(thumbRef.value)
   await soloCtx.open(0)
 }
+async function openById(id: string) {
+  if (id !== resolvedPhoto.value?.id)
+    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
+  await open()
+}
+async function close() {
+  if (isGrouped.value) await group!.close()
+  else await soloCtx?.close()
+}
+const isOpen = computed(() =>
+  isGrouped.value
+    ? !!group?.isOpen.value && group.activeId.value === resolvedPhoto.value?.id
+    : (soloCtx?.isOpen.value ?? false),
+)
+const { activeId, activePhoto } = useGalleryModel(
+  'Photo',
+  () => props.active,
+  () => normalizedPhotos.value,
+  {
+    isOpen,
+    activeId: computed(() => (isOpen.value ? (resolvedPhoto.value?.id ?? null) : null)),
+    activePhoto: computed(() => (isOpen.value ? resolvedPhoto.value : null)),
+    openById,
+    close,
+  },
+  (id) => emit('update:active', id),
+)
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 </script>

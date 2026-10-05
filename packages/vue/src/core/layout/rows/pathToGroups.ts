@@ -1,4 +1,4 @@
-import type { LayoutGroup, PhotoItem } from '../../types'
+import type { LayoutGroup, ResolvedPhotoItem as PhotoItem } from '../../types'
 import { getCommonHeight, ratio } from './helpers'
 
 /** Convert row-break indices into concrete layout groups with sized entries. */
@@ -12,9 +12,10 @@ export function pathToGroups<TMeta extends object>(
   const groups: LayoutGroup<TMeta>[] = []
 
   for (let rowIndex = 1; rowIndex < path.length; rowIndex += 1) {
+    const start = path[rowIndex - 1]!
     const rowItems = photos
-      .map((photo, index) => ({ photo, index }))
-      .slice(path[rowIndex - 1], path[rowIndex])
+      .slice(start, path[rowIndex])
+      .map((photo, offset) => ({ photo, index: start + offset }))
 
     const height = getCommonHeight(
       rowItems.map(({ photo }) => photo),

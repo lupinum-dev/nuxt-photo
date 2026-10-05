@@ -1,8 +1,14 @@
-import { normalizePhotos, type InvalidPhotoPolicy, type InvalidPhotosEvent } from './normalize'
-import type { PhotoItem } from '../types'
+import {
+  normalizePhotos,
+  type InvalidPhotoPolicy,
+  type NormalizePhotosOptions,
+  type InvalidPhotosEvent,
+} from './normalize'
+import type { ResolvedPhotoItem as PhotoItem } from '../types'
 
 export type ResolveRecipePhotosOptions = {
   validation?: InvalidPhotoPolicy
+  resolveDimensions?: NormalizePhotosOptions['resolveDimensions']
 }
 
 export type ResolveRecipePhotosResult<TMeta extends object = Readonly<Record<string, unknown>>> = {
@@ -19,6 +25,7 @@ export function resolveRecipePhotos<TMeta extends object = Readonly<Record<strin
   const result = normalizePhotos<TMeta>(rawPhotos, {
     owner,
     onInvalid: validation,
+    resolveDimensions: options.resolveDimensions,
   })
 
   return {

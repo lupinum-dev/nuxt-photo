@@ -15,6 +15,6 @@ describe('setup-time lightbox capability', () => {
   it('handles explicit disable, built-in enable, and custom components', () => {
     expect(resolveLightboxComponent(false, injected, fallback, true)).toBeNull()
     expect(resolveLightboxComponent(true, injected, fallback, false)).toBe(injected)
-    expect(resolveLightboxComponent(custom, injected, fallback, false)).toBe(custom)
+    expect(resolveLightboxComponent({ component: custom }, injected, fallback, false)).toBe(custom)
   })
 })

@@ -25,6 +25,7 @@
       :photos="ctx.photos.value"
       :viewport-ref="ctx.emblaRef"
       :image-load-failed="ctx.activeImageLoadFailed.value"
+      :is-slide-mounted="ctx.isSlideMediaMounted"
     />
   </div>
 </template>

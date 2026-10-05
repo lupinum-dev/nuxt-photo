@@ -1,45 +1,41 @@
-/** Complete user-visible and assistive text rendered by Nuxt Photo. */
-export interface PhotoLabels {
-  photoViewer: string
-  previous: string
-  next: string
-  zoom: string
-  fit: string
-  close: string
-  loadFailed: string
-  previousSlide: string
-  nextSlide: string
-  pauseAutoplay: string
-  playAutoplay: string
-  goToSlide: (index: number) => string
-  viewPhoto: (index: number) => string
-  slideStatus: (index: number, count: number) => string
+import templates, { type PhotoLabelTemplates } from './photoLocaleTemplates'
+import {
+  findPhotoLocale,
+  PHOTO_LABEL_KEYS,
+  PHOTO_LABEL_FUNCTION_KEYS,
+  type PhotoLabels,
+  type PHOTO_LOCALES,
+} from './labelTypes'
+export { PHOTO_LOCALES, type PhotoLabels, type PhotoLocale } from './labelTypes'
+
+/** Resolve synchronously on use; unused locales need no label objects or template closures. */
+export function resolvePhotoLabels(language?: string): Readonly<PhotoLabels> {
+  const catalog: Readonly<Partial<Record<(typeof PHOTO_LOCALES)[number], PhotoLabelTemplates>>> & {
+    en: PhotoLabelTemplates
+  } = templates
+  const values = catalog[detectPhotoLocale(language)] ?? catalog.en
+  // The exhaustive metadata and the 18-value tuple share the public label order.
+  // Object.fromEntries cannot retain those per-key types.
+  return Object.freeze(
+    Object.fromEntries(
+      PHOTO_LABEL_KEYS.map((key, position) => {
+        const template = values[position]!
+        return [
+          key,
+          !PHOTO_LABEL_FUNCTION_KEYS.includes(key)
+            ? template
+            : (index: number, count?: number) =>
+                template.replaceAll('{index}', String(index)).replaceAll('{count}', String(count)),
+        ]
+      }),
+    ) as unknown as PhotoLabels,
+  )
 }
 
-export const DEFAULT_PHOTO_LABELS: Readonly<PhotoLabels> = Object.freeze({
-  photoViewer: 'Photo viewer',
-  previous: 'Previous',
-  next: 'Next',
-  zoom: 'Zoom',
-  fit: 'Fit',
-  close: 'Close',
-  loadFailed: 'Image could not be loaded.',
-  previousSlide: 'Previous slide',
-  nextSlide: 'Next slide',
-  pauseAutoplay: 'Pause slideshow',
-  playAutoplay: 'Play slideshow',
-  goToSlide: (index: number) => `Go to slide ${index}`,
-  viewPhoto: (index: number) => `View photo ${index}`,
-  slideStatus: (index: number, count: number) => `Slide ${index} of ${count}`,
-})
-
-export function resolvePhotoLabels(partial?: Partial<PhotoLabels>): PhotoLabels {
-  const labels = { ...DEFAULT_PHOTO_LABELS }
-  if (!partial) return labels
-
-  for (const key of Object.keys(DEFAULT_PHOTO_LABELS) as Array<keyof PhotoLabels>) {
-    const value = partial[key]
-    if (value !== undefined) Object.assign(labels, { [key]: value })
-  }
-  return labels
+export function detectPhotoLocale(language?: string) {
+  return (
+    findPhotoLocale(
+      language ?? (typeof document === 'undefined' ? 'en' : document.documentElement.lang),
+    ) ?? 'en'
+  )
 }

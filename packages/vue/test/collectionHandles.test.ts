@@ -5,7 +5,7 @@ import { computed, createApp, defineComponent, h, nextTick, provide, ref } from 
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
-import type { LightboxHandle } from '../src/provide/keys'
+import type { GalleryHandle } from '../src/gallery/runtime'
 import { PhotoGroupContextKey, type PhotoGroupContext } from '../src/components/photo-group/context'
 import { flushUi, installBrowserStubs } from './support/runtime'
 
@@ -24,7 +24,7 @@ describe('collection lightbox handles', () => {
       makePhoto({ id: 'after' }),
     ]
     const albumPhotos = canonical.slice(1, 3)
-    const album = ref<LightboxHandle | null>(null)
+    const album = ref<GalleryHandle | null>(null)
     const activateById = vi.fn(async () => {})
     const close = vi.fn(async () => {})
     const context: PhotoGroupContext = {
@@ -38,6 +38,8 @@ describe('collection lightbox handles', () => {
       photos: computed(() => canonical),
       hiddenPhoto: computed(() => null),
       isOpen: computed(() => true),
+      activeId: computed(() => canonical[0]?.id ?? null),
+      activePhoto: computed(() => canonical[0] ?? null),
     }
 
     const App = defineComponent({
@@ -67,10 +69,10 @@ describe('collection lightbox handles', () => {
 
   it('rejects ids outside an album even when its parent group contains them', async () => {
     const canonical = [makePhoto({ id: 'inside' }), makePhoto({ id: 'outside' })]
-    const album = ref<LightboxHandle | null>(null)
+    const album = ref<GalleryHandle | null>(null)
     const App = defineComponent({
       setup: () => () =>
-        h(PhotoGroup, { photos: canonical, transition: 'none' }, () =>
+        h(PhotoGroup, { photos: canonical, lightbox: { transition: 'none' } }, () =>
           h(PhotoAlbum, { ref: album, photos: [canonical[0]!] }),
         ),
     })
@@ -86,7 +88,7 @@ describe('collection lightbox handles', () => {
   })
 
   it('exposes the collection handle from PhotoGroup', async () => {
-    const group = ref<LightboxHandle | null>(null)
+    const group = ref<GalleryHandle | null>(null)
     const photos = [makePhoto({ id: 'group-photo' })]
     const App = defineComponent({
       setup: () => () => h(PhotoGroup, { ref: group, photos, lightbox: false }),
@@ -114,10 +116,10 @@ describe('collection lightbox handles', () => {
       },
     )
     const photos = Array.from({ length: 8 }, (_, index) => makePhoto({ id: `group-${index + 1}` }))
-    const group = ref<LightboxHandle | null>(null)
+    const group = ref<GalleryHandle | null>(null)
     const App = defineComponent({
       setup: () => () =>
-        h(PhotoGroup, { ref: group, photos, transition: 'none' }, () => [
+        h(PhotoGroup, { ref: group, photos, lightbox: { transition: 'none' } }, () => [
           h(PhotoAlbum, { photos: photos.slice(0, 3) }),
           h(PhotoAlbum, { photos: photos.slice(3) }),
         ]),

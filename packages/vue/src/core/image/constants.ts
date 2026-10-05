@@ -1,2 +1,1 @@
-export const IMAGE_LOAD_CACHE_LIMIT = 500
 export const IMAGE_LOAD_TIMEOUT_MS = 15_000

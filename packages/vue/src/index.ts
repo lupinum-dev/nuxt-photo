@@ -1,6 +1,6 @@
 // @lupinum/vue-photo — Vue components, composables, and photo utilities
 export { Lightbox, Photo, PhotoAlbum, PhotoCarousel, PhotoGroup } from './components'
-export { useLightbox, provideLightbox, useContainerWidth, usePhotoLabels } from './composables'
+export { useLightbox, usePhotoLabels } from './composables'
 export {
   LightboxProvider,
   LightboxRoot,
@@ -24,18 +24,8 @@ export type {
   CarouselControlsSlotProps,
   CarouselDotsSlotProps,
 } from './types'
-export {
-  ImageAdapterKey,
-  LightboxComponentKey,
-  PhotoDefaultsKey,
-  type LightboxController,
-  type LightboxHandle,
-  type LightboxProviderController,
-  type PhotoDefaults,
-  type LightboxSlideRenderer,
-  type PhotoLabels,
-} from './provide'
-export { responsive, resolveResponsiveParameter } from './core/types'
+export { type LightboxController, type PhotoLabels } from './provide'
+export { responsive } from './core/types'
 export type {
   PhotoItem,
   AlbumLayout,
@@ -43,15 +33,10 @@ export type {
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
   PhotoCarouselAutoplayOptions,
-  ImageAdapter,
-  ImageContext,
-  ImageSource,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
   LightboxNavigationMode,
-  TransitionMode,
   ResponsiveParameter,
-  ResponsiveResolver,
 } from './core/types'
 export type {
   InvalidPhotoPolicy,
@@ -60,3 +45,13 @@ export type {
   PhotoValidationIssueCode,
 } from './core/photo/normalize'
 export { PhotoValidationError } from './core/photo/normalize'
+
+export { createPhoto } from './config/plugin'
+export type { PhotoConfig, PhotoProvider, LightboxOptions, LightboxTool } from './config'
+export type { PhotoLocale } from './provide/labels'
+export { validatePhotos } from './core/photo/normalize'
+
+export type { GalleryHandle } from './gallery/runtime'
+export { definePhotoProvider } from './providers/resolve'
+
+export type { PhotoUi, CarouselControl } from './types'

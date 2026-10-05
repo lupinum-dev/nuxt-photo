@@ -1,6 +1,6 @@
 // Internal framework-free barrel used by the Vue implementation.
 
-export { responsive, resolveResponsiveParameter, mergeResponsiveBreakpoints } from './types'
+export { responsive, resolveResponsiveValue, mergeResponsiveBreakpoints } from './types'
 export {
   normalizePhotos,
   type NormalizePhotosOptions,
@@ -13,14 +13,12 @@ export {
 } from './photo/normalize'
 export type {
   PhotoItem,
+  ResolvedPhotoItem,
   AlbumLayout,
   RowsAlbumLayout,
   ColumnsAlbumLayout,
   MasonryAlbumLayout,
   PhotoCarouselAutoplayOptions,
-  ImageAdapter,
-  ImageContext,
-  ImageSource,
   ResponsivePhotoSizes,
   LightboxTransitionOption,
   LightboxNavigationMode,
@@ -57,15 +55,8 @@ export {
 export { computeColumnsLayout } from './layout/columns'
 export { computeMasonryLayout } from './layout/masonry'
 
-export { createNativeImageAdapter, computePhotoSizes } from './image/adapter'
-export {
-  isUsableRect,
-  getLoopedIndex,
-  fitRect,
-  coverPose,
-  restingClip,
-  rubberband,
-} from './geometry/rect'
+export { computePhotoSizes } from './image/sizes'
+export { isUsableRect, fitRect, coverPose, restingClip, rubberband } from './geometry/rect'
 
 export {
   DEFAULT_MIN_ZOOM,

@@ -21,7 +21,7 @@
     <div class="gallery-section">
       <PhotoAlbum
         :photos="photos"
-        :navigation="navigation"
+        :lightbox="{ navigation }"
         :layout="{ type: 'rows', targetRowHeight: 280 }"
         :spacing="6"
         :breakpoints="[375, 600, 900, 1200]"

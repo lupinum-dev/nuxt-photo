@@ -1,5 +1,10 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { AreaMetrics, PhotoItem, RectLike, TransitionModeConfig } from '../../core/index'
+import type {
+  AreaMetrics,
+  ResolvedPhotoItem as PhotoItem,
+  RectLike,
+  TransitionModeConfig,
+} from '../../core/index'
 import type { MotionVisualState } from './visual-state'
 
 export type CapturedOpen = {
@@ -26,7 +31,7 @@ export type CloseMotionCallbacks = SharedMotionCallbacks & {
 }
 
 export type SharedTransitionContext = {
-  activeIndex: Ref<number>
+  activeIndex: Readonly<Ref<number>>
   currentPhoto: ComputedRef<PhotoItem | null>
   areaMetrics: Ref<AreaMetrics | null>
   getAbsoluteFrameRect: (photo: PhotoItem) => RectLike | null

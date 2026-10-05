@@ -192,7 +192,7 @@ bytes, provenance presence, and `next` or `latest` tags. Finally, it creates one
 GitHub release from the certified notes and attaches both tarballs and the
 release evidence.
 
-Never run `npm publish`, `pnpm publish`, or `changelogen --release`. Never
+Never run `npm publish` or `pnpm publish`. Never
 rebuild a retained artifact during publication. The only manual-tag exception
 is a historical npm publication whose exact source and retained evidence were
 verified first. Use only the workflow's exact `HUMAN-ONLY` lightweight-tag

@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
+    "test:scroll-wait": "playwright test --config tests/perf/playwright.config.ts",
     "types:prepare": "nuxi prepare",
     "build": "nuxt build",
     "generate": "nuxt generate",

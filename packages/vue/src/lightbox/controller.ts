@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import type { PhotoItem } from '../core/index'
+import type { ResolvedPhotoItem as PhotoItem } from '../core/index'
 import type { LightboxController, InternalLightboxContext } from '../provide/keys'
 
 export function createLightboxController<TMeta extends object = Readonly<Record<string, unknown>>>(
@@ -16,6 +16,7 @@ export function createLightboxController<TMeta extends object = Readonly<Record<
   return {
     photos: computed(() => context.photos.value as readonly PhotoItem<TMeta>[]),
     count: computed(() => context.count.value),
+    activeId: computed(() => context.activeId.value),
     activeIndex: computed(() => context.activeIndex.value),
     activePhoto: computed(() => context.activePhoto.value as PhotoItem<TMeta> | null),
     isOpen: computed(() => context.isOpen.value),

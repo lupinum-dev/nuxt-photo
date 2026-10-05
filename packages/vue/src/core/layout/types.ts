@@ -1,4 +1,4 @@
-import type { PhotoItem } from '../types'
+import type { ResolvedPhotoItem as PhotoItem } from '../types'
 
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
 export function validatePhotoDimensions<TMeta extends object>(

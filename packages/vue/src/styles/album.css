@@ -16,9 +16,11 @@
   flex-direction: column;
 }
 
+/* Column widths and left margins place every column; free-space distribution would
+   move earlier columns while a streamed page is still parsing later ones. */
 .np-album--columns,
 .np-album--masonry {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 /* Row group */
@@ -33,15 +35,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-}
-
-/* Columns layout aligns column groups to space-between */
-.np-album--columns .np-album__column {
-  justify-content: space-between;
-}
-
-/* Masonry columns start from top */
-.np-album--masonry .np-album__column {
+  /* Fixed item spacing must survive partial columns while SSR HTML parses. */
   justify-content: flex-start;
 }
 
@@ -60,4 +54,13 @@
 .np-album__skeleton {
   width: 100%;
   min-height: 200px;
+}
+
+/* Absolute positioning keeps the sentinel out of row and column layout math. */
+.np-album__end {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }

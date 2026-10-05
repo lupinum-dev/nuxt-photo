@@ -10,11 +10,11 @@ same layout that the browser will show.
 
 ### Choose a layout
 
-| Layout    | What it does                                                      | Use it when                             |
-| --------- | ----------------------------------------------------------------- | --------------------------------------- |
-| `rows`    | Photos share a row height and each row fills the width. Default.  | Photos have mixed shapes.               |
-| `columns` | Photos go into a fixed number of equal columns, in reading order. | The column count and order matter.      |
-| `masonry` | Each photo goes into the shortest column.                         | Density matters more than strict order. |
+| Layout    | What it does                                                                                                      | Use it when                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `rows`    | Photos share a row height and each row fills the width. Default.                                                  | Photos have mixed shapes.               |
+| `columns` | Photos fill a fixed number of columns in reading order. Column widths vary so all columns end at the same height. | The column count and order matter.      |
+| `masonry` | Equal-width columns. Each photo goes into the shortest column.                                                    | Density matters more than strict order. |
 
 ```vue
 <PhotoAlbum :photos="photos" :layout="{ type: 'rows', targetRowHeight: 240 }" />
@@ -107,17 +107,34 @@ _Source: https://nuxt-photo.lupinum.com/docs/guides/responsive-layouts_
 
 ## Deliver images
 
-Every image Nuxt Photo renders goes through an image adapter: a function that
-turns a photo into the final `src`, `srcset`, and `sizes`, once for the
-thumbnail and once for the lightbox slide. You choose the adapter once in
-`nuxt.config.ts`.
+Nuxt Photo asks your image service for the widths a photo can be shown at, and
+tells the browser how wide each photo is on screen. The browser then downloads
+one file close to the size it needs. With `@nuxt/image` installed this works
+without Nuxt Photo options: quality, format, widths and the provider all come
+from your `image` config.
 
-| Delivery     | Use it when                                                          |
-| ------------ | -------------------------------------------------------------------- |
-| `auto`       | Default. Uses Nuxt Image when it is installed, native images if not. |
-| `native`     | Your files or CDN URLs are already sized for the browser.            |
-| `nuxt-image` | Nuxt Image should resize and convert every image.                    |
-| Custom       | Your image service needs its own URLs or signing.                    |
+### How a size is chosen
+
+Every image gets two attributes:
+
+| Attribute | Who writes it                                         | What it says                                          |
+| --------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| `srcset`  | Nuxt Photo, from the widths your image service allows | The files that exist: `…?w=256 256w, …?w=640 640w, …` |
+| `sizes`   | The component that knows the layout                   | How wide this image is on screen: `auto, 212px`       |
+
+The browser multiplies the `sizes` width by the screen's pixel density and
+picks the smallest file that is large enough. Two rules keep this correct:
+
+- **No file is wider than the source.** A 1000 px photo never gets a `1280w`
+  entry. The source width is the last entry when it falls between two widths.
+- **The layout owns `sizes`.** `PhotoAlbum` writes the exact width of each
+  thumbnail from its layout, already in the server-rendered HTML.
+  `PhotoCarousel` uses `slideSize` and the measured track. The lightbox uses
+  the size of its frame. `<Photo>` uses `auto` with a fallback. A `sizes` prop
+  on `PhotoAlbum` or `PhotoImage` replaces the computed value.
+
+`sizes="auto, …"` lets browsers that support it use the measured width of a
+lazy image. Other browsers use the pixel value after it.
 
 ### Use Nuxt Image
 
@@ -128,50 +145,139 @@ pnpm add @nuxt/image
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
   modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
-  nuxtPhoto: {
-    css: 'all',
-    image: { provider: 'nuxt-image' },
+  image: {
+    quality: 80,
   },
 })
 ```
 
-Thumbnails and lightbox slides now use Nuxt Image's default provider (IPX for
-local files). The module order does not matter. With `provider: 'auto'` the
-same config also works when Nuxt Image is missing; with `'nuxt-image'` a
-missing module is an error.
+Nuxt Photo detects `@nuxt/image` and uses its default provider. Module order
+does not matter. These Nuxt Image options apply to every Nuxt Photo image:
 
-Remote images need their host in Nuxt Image's `domains`, without `https://`:
+| Nuxt Image option       | Effect in Nuxt Photo                                                                                                                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider`              | Builds every URL. Choose another one for Nuxt Photo only with `nuxtPhoto.provider: 'cloudinary'`, or per component with `provider="cloudinary"`.                                          |
+| `screens` × `densities` | The widths in `srcset`. With the defaults this is 640 to 3072 px. For IPX and other providers that accept any width, Nuxt Photo adds 128, 256, 384 and 512 px below that, for thumbnails. |
+| `quality`               | Sent with every image.                                                                                                                                                                    |
+| `format`                | The first format is sent to IPX. Without a `format`, IPX gets `webp`. Vercel, Netlify and Cloudinary choose AVIF or WebP from the browser's `Accept` header instead.                      |
+| `domains`               | Hosts of remote images, without `https://`. A remote image whose host is missing fails to load.                                                                                           |
 
-```ts [nuxt.config.ts]
-export default defineNuxtConfig({
-  image: { domains: ['images.example.com'] },
-})
-```
+Animated GIFs never get a format, so they keep their animation. SVG files
+are passed through unchanged, with no `srcset`.
 
-### Use Cloudinary or another provider
+### Deploy on Vercel
 
-Nuxt Photo calls Nuxt Image with its default provider, so any
-[Nuxt Image provider](https://image.nuxt.com/providers/introduction) works. For
-Cloudinary:
+On Vercel, Nuxt Image uses the `vercel` provider by itself. Vercel only
+serves widths from a list that Nuxt Image builds from `image.screens` alone,
+not from screens × densities. Nuxt Photo uses exactly that list, so no width
+is rejected. The default screens run from 640 to 1536 px, so add small widths
+for thumbnails and large widths for 2× screens:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
   modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
   image: {
-    provider: 'cloudinary',
+    quality: 80,
+    screens: {
+      '3xs': 128,
+      '2xs': 256,
+      xs: 384,
+      '3xl': 1920,
+      '4xl': 2560,
+      '5xl': 3072,
+    },
+  },
+})
+```
+
+The default screens (`sm` to `2xl`) stay, because Nuxt Image merges this
+object with its defaults. Without the small screens, a 64 px thumbnail
+downloads a 640 px file. Without the large ones, a lightbox on a 2× laptop
+gets at most 1536 px.
+
+Vercel keeps each transformed image on its CDN. For files in `public/` this
+lasts up to 31 days, and a redeploy does not reset it. For remote images it
+lasts for the longer of the source's `Cache-Control: max-age` and
+`minimumCacheTTL`, which Nuxt Image sets to 300 seconds. When your CMS gives
+an edited image a new URL, raise it so visitors do not wait for a new
+transform every five minutes:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  nitro: {
+    vercel: { config: { images: { minimumCacheTTL: 2678400 } } },
+  },
+})
+```
+
+Use the `vercel` provider for server-rendered sites on Vercel. IPX inside a
+Vercel function cannot read `public/`, so local images return 404.
+
+### Let browsers keep images
+
+Without a cache header, browsers ask the server again for every image on every
+visit. That costs a round trip per image while scrolling, even when the CDN
+answers from its cache. Two defaults cause it:
+
+| Where                      | Default                      | Effect                                                     |
+| -------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| Vercel, files in `public/` | `max-age=0, must-revalidate` | The optimized image inherits it.                           |
+| IPX                        | `image.ipx.maxAge: 60`       | Browsers and CDNs keep a transformed image for one minute. |
+
+Give image folders a long cache time:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  routeRules: {
+    '/photos/**': {
+      headers: { 'cache-control': 'public, max-age=2592000, stale-while-revalidate=604800' },
+    },
+  },
+  image: {
+    ipx: { maxAge: 2592000 },
+  },
+})
+```
+
+Vercel passes the source file's `max-age` on to the optimized image. Use 30
+days: Vercel keeps an optimized image up to 31 days, and a shorter `max-age`
+makes browsers ask again once the cached copy is older than that. When you
+replace an image, give it a new file name, so browsers do not keep the old
+one.
+
+### Generate a static site
+
+With `nuxi generate`, Nuxt Image uses `ipxStatic`: every width in every
+`srcset` is written to `.output/public` at build time, and no image is
+transformed when a visitor scrolls. The build takes longer with many photos.
+Thumbnails and slides that the server renders are included. A gallery that
+renders only in the browser (inside `<ClientOnly>`) is not; prerender its
+route or use a provider that transforms at request time.
+
+When IPX transforms at request time on your own server, keep `format` at
+`webp`. AVIF takes much longer to encode, and the first visitor waits for it.
+
+### Use Cloudinary or another provider
+
+Any [Nuxt Image provider](https://image.nuxt.com/providers/introduction)
+works. Set it as the default provider, or only for Nuxt Photo:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
+  image: {
     cloudinary: {
       baseURL: 'https://res.cloudinary.com/<your-cloud-name>/image/upload/',
     },
   },
   nuxtPhoto: {
-    css: 'all',
-    image: { provider: 'nuxt-image' },
+    provider: 'cloudinary',
   },
 })
 ```
 
-Set each photo's `src` to the asset path after `baseURL`, and keep the
-original size:
+Set each photo's `src` to the asset path after `baseURL`, with its original
+size:
 
 ```ts
 const photo: PhotoItem = {
@@ -183,231 +289,214 @@ const photo: PhotoItem = {
 }
 ```
 
-Cloudinary's upload and Admin APIs return `public_id`, `format`, `width`, and
-`height` for every asset.
-
-### Set thumbnail and slide sizes
-
-```ts [nuxt.config.ts]
-export default defineNuxtConfig({
-  nuxtPhoto: {
-    image: {
-      provider: 'nuxt-image',
-      thumb: {
-        sizes: 'sm:100vw md:50vw lg:400px',
-        quality: 80,
-      },
-      slide: {
-        widths: [640, 960, 1240, 1600, 2000],
-        maxWidth: 1240,
-        sizes: 'min(1240px, calc(100vw - 72px))',
-        quality: 85,
-      },
-    },
-  },
-})
-```
-
-These are the defaults. Thumbnail `sizes` tells the browser how wide a
-thumbnail is on screen, so it downloads a file of that size. Match it to your
-layout: three columns in a 1200-pixel page need about `400px`. Slide `widths`
-are the files generated for the lightbox; widths larger than 1.5 times the
-original are skipped (`maxDensity`).
-
-### Use native images
-
-With `provider: 'native'`, or without Nuxt Image, the browser gets your URLs
-unchanged:
-
-- Thumbnails use `thumbSrc` when you set it, otherwise `src`.
-- Slides use `src`.
-- `srcset` is passed through, except for a thumbnail that uses `thumbSrc`.
-- No `sizes` is set. Pass `sizes` to `PhotoAlbum` when you use `srcset`.
-
-```vue
-<PhotoAlbum :photos="photos" sizes="(min-width: 1024px) 33vw, 50vw" />
-```
+For an image service without a Nuxt Image provider, or in plain Vue, write a
+`PhotoProvider`: see [integrate a custom image service](https://nuxt-photo.lupinum.com/docs/guides/integrate-a-custom-image-service).
 
 ### Show a placeholder while an image loads
 
-`placeholderSrc` on a photo is shown until the image loads, for example a tiny
-blurred version or a data URL:
+Nuxt Photo never shows an empty box. Each photo frame shows, in this order:
 
-```ts
-const photo: PhotoItem = {
-  id: 'canyon',
-  src: '/photos/canyon.jpg',
-  placeholderSrc: 'data:image/webp;base64,UklGR...',
-  width: 1280,
-  height: 853,
-}
+1. `placeholderSrc` from the photo, when you set it.
+2. For files in `public/`: a blurred preview at most 32 px wide, made at
+   build time and inlined as a data URL. Nuxt Photo makes it with `sharp`,
+   which `@nuxt/image` already installs for IPX. Without `sharp` there is no
+   preview, and the build logs one warning. Photos from
+   [`usePhotoFolder`](https://nuxt-photo.lupinum.com/docs/guides/use-your-photos) and, with `localImages`,
+   hand-written arrays get it.
+3. For remote images on IPX: a 24 px image from the provider.
+4. Otherwise the background color `--np-placeholder-bg`.
+
+When an image fails to load, the placeholder stays, so the layout does not
+show an empty frame.
+
+### Load the first screen first
+
+Images are lazy by default. Mark the images a visitor sees first, so the
+browser loads them before anything else:
+
+```vue [app/pages/index.vue]
+<template>
+  <Photo :photo="cover" priority />
+  <PhotoAlbum :photos="photos" :priority="6" />
+</template>
 ```
 
-When the image request changes, the placeholder shows again. When the image
-fails, the placeholder stays, so the layout does not show an empty frame.
+`priority` sets `loading="eager"` and `fetchpriority="high"`. In Nuxt it
+also adds a `<link rel="preload">` for the image to the page head, so the
+browser starts the download before it reads the rest of the page. At most six
+images get a preload. On `PhotoAlbum`, `priority` is the number of
+thumbnails, counted from the start. Set it to the number of thumbnails in the
+first screen; a higher number delays the rest of the page. The first slide of
+`PhotoCarousel` always has high priority.
 
-### Loading
+A `<Photo>` cannot know its width before the page is shown, so it uses
+`100vw`. When the photo is narrower, say so, or the browser downloads a file
+for the full screen width:
 
-Images are lazy by default. The browser still chooses when to load them and
-which `srcset` candidate fits. Pass `loading="eager"` to a `Photo` in the first
-screen, such as a cover image.
+```vue
+<Photo :photo="cover" priority sizes="(min-width: 1024px) 720px, 100vw" />
+```
+
+Images below the first screen start loading about one and a half screen
+heights before they scroll into view, in every browser. The lightbox requests
+a slide only when it opens. After the open photo has loaded, it loads the
+previous and the next photo in the background, so the next swipe shows a
+ready image. With the browser's data saver on, it skips this.
 
 ### Check the result
 
-Open the browser's network panel and reload. Thumbnails request files close to
-their displayed width, and the lightbox requests a larger file only when it
-opens. With Nuxt Image, the URLs go through your provider (`/_ipx/...` for
-local files). If local images work and remote ones fail, add the host to
-`image.domains`.
+Open the network panel, disable the cache, and reload:
+
+- Thumbnails request files close to their displayed width times the screen's
+  pixel density, never wider than the source.
+- With Nuxt Image, image URLs go through your provider: `/_ipx/…` for IPX,
+  `/_vercel/image?…` on Vercel. On Vercel, a second load shows
+  `x-vercel-cache: HIT`.
+- Images below the first screen are requested as you scroll toward them, and
+  a placeholder is visible until each one is ready.
+- If local images work and remote ones fail, add the host to `image.domains`.
 
 _Source: https://nuxt-photo.lupinum.com/docs/guides/deliver-images_
 
 ## Integrate a custom image service
 
-Write an image adapter when Nuxt Image does not fit: your CDN has its own URL
-format, your CMS returns image API URLs, or URLs must be signed. An adapter is
-one function that returns the image attributes for a photo in a context:
+A provider turns a photo's `src` and a width into a URL. Nuxt Photo calls it
+once per width it offers, builds `srcset` from the results, and the layout
+writes `sizes`. You only describe how your service makes a URL.
 
-```ts
-type ImageAdapter = (photo: PhotoItem, context: 'thumb' | 'slide') => ImageSource
+In Nuxt, check first whether a
+[Nuxt Image provider](https://image.nuxt.com/providers/introduction) exists for
+your service. Then [Deliver images](https://nuxt-photo.lupinum.com/docs/guides/deliver-images) is all you
+need.
 
-type ImageSource = {
-  src: string
-  srcset?: string
-  sizes?: string
-  placeholderSrc?: string
-  width?: number
-  height?: number
-}
-```
+### Write the provider
 
-### 1. Write the adapter
-
-```ts [app/utils/photo-adapter.ts]
-import type { ImageAdapter, PhotoItem } from '@lupinum/nuxt-photo/app'
+```ts [app/utils/cdn-provider.ts]
+import { definePhotoProvider } from '@lupinum/nuxt-photo/app'
 
 const CDN = 'https://cdn.example.com/transform'
 
-function url(photo: PhotoItem, width: number) {
-  return `${CDN}/${photo.id}?w=${width}&fmt=auto`
-}
-
-function srcset(photo: PhotoItem, widths: number[]) {
-  return widths.map((width) => `${url(photo, width)} ${width}w`).join(', ')
-}
-
-export const cdnAdapter: ImageAdapter = (photo, context) => {
-  if (context === 'thumb') {
-    return {
-      src: url(photo, 480),
-      srcset: srcset(photo, [480, 960]),
-      sizes: '(min-width: 1024px) 400px, 50vw',
-      width: photo.width,
-      height: photo.height,
-    }
-  }
-
-  return {
-    src: url(photo, 1920),
-    srcset: srcset(photo, [960, 1440, 1920, 2560]),
-    sizes: '100vw',
-    width: photo.width,
-    height: photo.height,
-  }
-}
-```
-
-Give thumbnails small files and slides large ones. Always return a `src`. The
-photo's own `width` and `height` still drive the layout; the adapter's values
-are written onto the `<img>`.
-
-### 2. Use it for the whole app
-
-Turn off the built-in adapter and provide yours in a plugin that runs on the
-server and in the browser:
-
-```ts [nuxt.config.ts]
-export default defineNuxtConfig({
-  modules: ['@lupinum/nuxt-photo'],
-  nuxtPhoto: {
-    css: 'all',
-    image: false,
+export const cdnProvider = definePhotoProvider({
+  url(src, { width }) {
+    return `${CDN}${src}?w=${width}&fmt=auto`
   },
 })
 ```
 
-```ts [app/plugins/photo-adapter.ts]
-import { ImageAdapterKey } from '@lupinum/nuxt-photo/app'
-import { cdnAdapter } from '~/utils/photo-adapter'
-
-export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.provide(ImageAdapterKey, cdnAdapter)
-})
-```
-
-Every thumbnail and slide now goes through `cdnAdapter`.
-
-### Use an adapter for one component
-
-Pass `image-adapter` to a component. It wins over the app adapter, which wins
-over the module default:
-
-```vue
-<PhotoAlbum :photos="cmsPhotos" :image-adapter="cdnAdapter" />
-<PhotoAlbum :photos="stockPhotos" :image-adapter="stockAdapter" />
-```
-
-`Photo`, `PhotoGroup`, `PhotoCarousel`, `PhotoImage`, and `LightboxProvider`
-take the same prop.
-
-### Keep signed URLs stable
-
-The adapter runs on the server and again in the browser. It must return the
-same result both times, or hydration fails. Do not call `Date.now()` or create
-random values inside it. Sign URLs before rendering, in your API or data
-loader, and let the adapter read them from the photo:
-
 ```ts
-const signedAdapter: ImageAdapter = (photo, context) => ({
-  src: context === 'thumb' ? (photo.thumbSrc ?? photo.src) : photo.src,
-  width: photo.width,
-  height: photo.height,
-})
-```
-
-### Build Cloudinary URLs without Nuxt Image
-
-```ts
-const CLOUD = '<your-cloud-name>'
-
-const cloudinaryAdapter: ImageAdapter = (photo, context) => {
-  const transform =
-    context === 'thumb' ? 'c_fill,w_480,h_360,q_auto,f_auto' : 'c_limit,w_1920,q_auto,f_auto'
-  return {
-    src: `https://res.cloudinary.com/${CLOUD}/image/upload/${transform}/${photo.src}`,
-    width: photo.width,
-    height: photo.height,
-  }
+interface PhotoProvider {
+  url(src: string, options: { width: number }): string
+  placeholder?(src: string): string | undefined
+  srcset?(photo: PhotoItem, context: 'thumb' | 'slide'): string | undefined
 }
 ```
 
-Here `photo.src` is the Cloudinary public ID. `f_auto` lets Cloudinary choose
-AVIF or WebP. An adapter renders one `<img>`, so it cannot return `<picture>`
-sources; negotiate the format on the server like this instead.
+- `url` gets `photo.src`, or `photo.thumbSrc` for thumbnails. It must accept
+  any positive width: Nuxt Photo asks for 128 to 2560 px, never wider than
+  the photo's `width`.
+- `placeholder` returns a small image URL to show while the photo loads, for
+  example the same URL with `w=24`.
+- `srcset` is for services that only have fixed sizes. Return a complete
+  `srcset` string, and Nuxt Photo uses it instead of calling `url` per width.
+- Let the service choose the format from the browser's `Accept` header
+  (`fmt=auto`, `f_auto`). One `<img>` cannot offer AVIF and WebP
+  alternatives.
 
-### Test the adapter
+### Use it for one component
 
-An adapter is a plain function. Test it without Vue:
+```vue
+<PhotoAlbum :photos="cmsPhotos" :provider="cdnProvider" />
+<PhotoAlbum :photos="stockPhotos" :provider="stockProvider" />
+```
 
-```ts [test/photo-adapter.test.ts]
+Every ready-made component and `PhotoImage` take the same
+prop. In Nuxt, `provider` also accepts a Nuxt Image provider name, such as
+`provider="cloudinary"`.
+
+### Use it for the whole app
+
+In plain Vue, pass it to `createPhoto({ provider })`; see
+[use Nuxt Photo with Vue](https://nuxt-photo.lupinum.com/docs/start/plain-vue).
+
+In Nuxt, register your service as a Nuxt Image custom provider, so
+`<NuxtImg>` and Nuxt Photo share it, and select it by name:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
+  image: {
+    providers: {
+      cdn: { provider: '~/providers/cdn.ts' },
+    },
+  },
+  nuxtPhoto: { provider: 'cdn' },
+})
+```
+
+Nuxt Image documents the provider file in
+[custom providers](https://image.nuxt.com/advanced/custom-provider). Nuxt Photo
+then takes widths, quality and format from your Nuxt Image config.
+
+### Use fixed renditions
+
+When your CMS stores a few fixed sizes per image, return them as `srcset`:
+
+```ts [app/utils/cms-provider.ts]
+import { definePhotoProvider, type PhotoItem } from '@lupinum/nuxt-photo/app'
+
+type Renditions = { renditions: { url: string; width: number }[] }
+
+export const cmsProvider = definePhotoProvider({
+  url: (src) => src,
+  srcset(photo: PhotoItem) {
+    const meta = photo.meta as Renditions | undefined
+    return meta?.renditions.map((r) => `${r.url} ${r.width}w`).join(', ')
+  },
+})
+```
+
+Put the renditions on the photo's `meta` when you map your records; see
+[use your own photos](https://nuxt-photo.lupinum.com/docs/guides/use-your-photos).
+
+### Keep signed URLs stable
+
+The provider runs on the server and again in the browser. It must return the
+same URL both times, or hydration fails. Do not call `Date.now()` or create
+random values in it. Sign URLs before rendering, in your API or data loader,
+store them on the photo, and return them from `url`.
+
+### Build Cloudinary URLs without Nuxt Image
+
+```ts [app/utils/cloudinary-provider.ts]
+import { definePhotoProvider } from '@lupinum/nuxt-photo/app'
+
+const CLOUD = '<your-cloud-name>'
+
+export const cloudinaryProvider = definePhotoProvider({
+  url(src, { width }) {
+    return `https://res.cloudinary.com/${CLOUD}/image/upload/c_limit,w_${width},q_auto,f_auto${src}`
+  },
+  placeholder(src) {
+    return `https://res.cloudinary.com/${CLOUD}/image/upload/w_24,q_30,e_blur:200,f_auto${src}`
+  },
+})
+```
+
+Here `photo.src` is the public ID with a leading slash, such as
+`/trips/lake.jpg`.
+
+### Test the provider
+
+A provider is a plain object. Test it without Vue:
+
+```ts [test/cdn-provider.test.ts]
 import { expect, it } from 'vitest'
-import { cdnAdapter } from '../app/utils/photo-adapter'
+import { cdnProvider } from '../app/utils/cdn-provider'
 
-const photo = { id: 'canyon', src: 'canyon.jpg', width: 1280, height: 853 }
-
-it('gives thumbnails small files and slides large ones', () => {
-  expect(cdnAdapter(photo, 'thumb').src).toContain('w=480')
-  expect(cdnAdapter(photo, 'slide').src).toContain('w=1920')
+it('asks the CDN for the requested width', () => {
+  expect(cdnProvider.url('/trips/lake.jpg', { width: 640 })).toBe(
+    'https://cdn.example.com/transform/trips/lake.jpg?w=640&fmt=auto',
+  )
 })
 ```
 
@@ -470,17 +559,35 @@ The mat around the photo is structure, so its variables work in both modes:
 The [CSS reference](https://nuxt-photo.lupinum.com/docs/reference/css#css-variables) lists every variable and
 class.
 
-### Add classes to albums and carousels
+### Match the placeholder to your page
 
-Ready-made components take class props that add to their own classes:
+Before a photo loads, its frame shows the photo's blurred preview or average
+color. Photos without either show `--np-placeholder-bg`, a light gray. Set
+it for dark pages:
 
-```vue
-<PhotoAlbum :photos="photos" item-class="gallery-item" img-class="gallery-image" />
+```css [app/assets/css/main.css]
+:root {
+  --np-placeholder-bg: #e7e5e4;
+}
+
+.dark {
+  --np-placeholder-bg: #292524;
+}
 ```
 
-`PhotoAlbum` has `itemClass` and `imgClass`. `Photo` has `imgClass` and
-`captionClass`. `PhotoCarousel` has `slideClass`, `imgClass`, `thumbClass`,
-`captionClass`, and `controlsClass`.
+### Add classes to albums and carousels
+
+Ready-made components take a `ui` object. Its classes are added to the component's own classes:
+
+```vue
+<PhotoAlbum :photos="photos" :ui="{ item: 'gallery-item', img: 'gallery-image' }" />
+```
+
+| Component       | `ui` keys                                              |
+| --------------- | ------------------------------------------------------ |
+| `Photo`         | `root`, `img`, `caption`                               |
+| `PhotoAlbum`    | `root`, `item`, `img`                                  |
+| `PhotoCarousel` | `root`, `slide`, `img`, `thumb`, `caption`, `controls` |
 
 In a `<style scoped>` block, reach the component's own classes with `:deep()`:
 
@@ -512,13 +619,15 @@ export default defineNuxtConfig({
 @import 'tailwindcss';
 ```
 
-Style albums with the class props:
+Style albums with `ui`:
 
 ```vue
 <PhotoAlbum
   :photos="photos"
-  item-class="group overflow-hidden rounded-xl bg-stone-900"
-  img-class="transition duration-300 group-hover:scale-[1.02]"
+  :ui="{
+    item: 'group overflow-hidden rounded-xl bg-stone-900',
+    img: 'transition duration-300 group-hover:scale-[1.02]',
+  }"
 />
 ```
 
@@ -563,7 +672,7 @@ defineProps<{ photos: PhotoItem[] }>()
 <template>
   <PhotoAlbum
     :photos="photos"
-    :lightbox="TailwindLightbox"
+    :lightbox="{ component: TailwindLightbox }"
     :layout="{ type: 'rows', targetRowHeight: 180 }"
     :spacing="6"
   />
@@ -661,17 +770,21 @@ defineProps<{ photos: PhotoItem[] }>()
       </button>
     </LightboxControls>
 
-    <LightboxViewport v-slot="{ photos, viewportRef }" class="absolute inset-0 z-10 touch-none">
+    <LightboxViewport
+      v-slot="{ photos, viewportRef, isSlideMounted }"
+      class="absolute inset-0 z-10 touch-none"
+    >
       <div class="absolute inset-0 overflow-hidden" :ref="viewportRef">
         <div class="flex h-full touch-none">
-          <LightboxSlide
-            v-for="(photo, i) in photos"
-            :key="photo.id"
-            :photo="photo"
-            :index="i"
-            class="grid min-w-0 flex-[0_0_100%] place-items-center"
-            img-class="rounded-md shadow-[0_30px_80px_rgb(0_0_0/0.45),0_2px_10px_rgb(0_0_0/0.35)] in-data-zoomed:rounded-none in-data-zoomed:shadow-none"
-          />
+          <template v-for="(photo, i) in photos" :key="photo.id">
+            <LightboxSlide
+              v-if="isSlideMounted(i)"
+              :photo="photo"
+              :index="i"
+              class="grid min-w-0 flex-[0_0_100%] place-items-center [&_img]:rounded-md [&_img]:shadow-[0_30px_80px_rgb(0_0_0/0.45),0_2px_10px_rgb(0_0_0/0.35)] in-data-zoomed:[&_img]:rounded-none in-data-zoomed:[&_img]:shadow-none"
+            />
+            <div v-else class="min-w-0 flex-[0_0_100%]" aria-hidden="true" />
+          </template>
         </div>
       </div>
     </LightboxViewport>
@@ -748,7 +861,7 @@ need a slot only to change how they look.
 | You want to change                              | Use                                                                                                      |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Colors, mat, buttons                            | CSS variables: [Style and theme](https://nuxt-photo.lupinum.com/docs/guides/style-and-theme)             |
-| How photos change: slide, fade, crossfade       | The `navigation` prop                                                                                    |
+| How photos change: slide, fade, crossfade       | The `lightbox.navigation` option                                                                         |
 | Caption, counter, action buttons, slide content | `Lightbox` slots, on this page                                                                           |
 | Your own thumbnail layout                       | [A custom thumbnail layout](https://nuxt-photo.lupinum.com/docs/guides/create-a-custom-thumbnail-layout) |
 | The whole lightbox markup                       | [Lightbox from primitives](https://nuxt-photo.lupinum.com/docs/guides/build-a-lightbox-from-primitives)  |
@@ -759,13 +872,57 @@ lightbox, and a custom thumbnail layout does not need a custom viewer.
 ### Fade or crossfade between photos
 
 ```vue
-<PhotoAlbum :photos="photos" navigation="crossfade" />
+<PhotoAlbum :photos="photos" :lightbox="{ navigation: 'crossfade' }" />
 ```
 
 `slide` (default) moves photos on a strip, `fade` fades the current photo out
 and the next in, and `crossfade` fades the next photo in over the current one.
-Swiping works in every mode. The prop is on `Photo`, `PhotoAlbum`,
-`PhotoGroup`, and `PhotoCarousel`, and it can change while mounted.
+Swiping works in every mode. The `lightbox` option is the same on `Photo`,
+`PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`.
+
+### Add download, share and full screen buttons
+
+```vue
+<PhotoAlbum :photos="photos" :lightbox="{ tools: ['download', 'share', 'fullscreen'] }" />
+```
+
+The buttons appear before the zoom button, in the order you list them:
+
+| Tool         | What it does                                                                                                                     |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `download`   | Downloads `photo.src`. For an image on another domain the browser ignores the download request, so the photo opens in a new tab. |
+| `share`      | Opens the system share sheet with the photo's `alt` or `caption` and the page URL; with `deepLink`, the URL opens this photo.    |
+| `fullscreen` | Shows the lightbox in full screen, and leaves it on a second press.                                                              |
+
+`share` and `fullscreen` are not rendered when the browser does not support
+them; iPhone Safari has no full screen for elements. Their labels are in
+every bundled language.
+
+To add your own button next to them, use the `tools` slot. It keeps the
+built-in tools, zoom and close:
+
+```vue [app/components/LikeLightbox.vue]
+<script setup lang="ts">
+import { Lightbox } from '@lupinum/nuxt-photo/app'
+
+defineEmits<{ like: [id: string] }>()
+</script>
+
+<template>
+  <Lightbox>
+    <template #tools="{ photo }">
+      <button
+        type="button"
+        class="np-lightbox__btn"
+        aria-label="Like"
+        @click="$emit('like', photo.id)"
+      >
+        ♥
+      </button>
+    </template>
+  </Lightbox>
+</template>
+```
 
 ### Replace the caption and counter
 
@@ -785,7 +942,7 @@ defineProps<{ photos: PhotoItem[] }>()
 <template>
   <PhotoAlbum
     :photos="photos"
-    :lightbox="CaptionLightbox"
+    :lightbox="{ component: CaptionLightbox }"
     :layout="{ type: 'rows', targetRowHeight: 150 }"
     :spacing="6"
   />
@@ -850,14 +1007,17 @@ import { Lightbox } from '@lupinum/nuxt-photo/app'
 
 Slot props:
 
-| Slot      | Props                                                                                              |
-| --------- | -------------------------------------------------------------------------------------------------- |
-| `counter` | `{ activeIndex, count }`                                                                           |
-| `caption` | `{ photo, index }`                                                                                 |
-| `actions` | `{ activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }` |
-| `slide`   | `{ photo, index, width, height }`                                                                  |
+| Slot      | Props                                                                                                           |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| `counter` | `{ activeIndex, count }`                                                                                        |
+| `caption` | `{ photo, index }`                                                                                              |
+| `tools`   | `{ photo, index }`                                                                                              |
+| `actions` | `{ activePhoto, activeIndex, count, prev, next, close, toggleZoom, isZoomedIn, zoomAllowed, controlsDisabled }` |
+| `slide`   | `{ photo, index, width, height }`                                                                               |
 
 ### Replace the action buttons
+
+The `actions` slot replaces all buttons above the photo: tools, zoom and close.
 
 ```vue [app/components/AppLightbox.vue]
 <script setup lang="ts">
@@ -949,27 +1109,29 @@ import { Lightbox, PhotoImage } from '@lupinum/nuxt-photo/app'
 Pass the component per gallery:
 
 ```vue
-<PhotoAlbum :photos="photos" :lightbox="CaptionLightbox" />
-<PhotoGroup :photos="photos" :lightbox="CaptionLightbox">...</PhotoGroup>
-<PhotoCarousel :photos="photos" :lightbox="CaptionLightbox" />
+<PhotoAlbum :photos="photos" :lightbox="{ component: CaptionLightbox }" />
+<PhotoGroup :photos="photos" :lightbox="{ component: CaptionLightbox }">...</PhotoGroup>
+<PhotoCarousel :photos="photos" :lightbox="{ component: CaptionLightbox }" />
 ```
 
-Or provide it once for the app:
+Or set it once for the app, as a file path:
 
-```ts [app/plugins/photo-lightbox.ts]
-import { LightboxComponentKey } from '@lupinum/nuxt-photo/app'
-import CaptionLightbox from '~/components/CaptionLightbox.vue'
-
-export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.provide(LightboxComponentKey, CaptionLightbox)
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  nuxtPhoto: {
+    lightbox: { component: '~/components/CaptionLightbox.vue' },
+  },
 })
 ```
 
-A component in the `lightbox` prop still wins. The app-wide component does not
+In plain Vue, pass the component itself:
+`app.use(createPhoto({ lightbox: { component: CaptionLightbox } }))`.
+
+A `component` set on a gallery still wins. The app-wide component does not
 turn a lightbox on: `Photo` and `PhotoCarousel` still need `lightbox`.
 
 Your component renders inside the provider that the gallery creates. Do not
-call `provideLightbox()` in it, or it gets a second, empty state.
+wrap it in another `LightboxProvider`, or it gets a second, empty state.
 
 ### Check the result
 

@@ -9,24 +9,34 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly id: string
   /** Image URL. The lightbox uses it; thumbnails use it unless `thumbSrc` is set. */
   readonly src: string
-  /** Smaller image URL for thumbnails, used by the native image adapter. */
+  /** Smaller image URL for thumbnails, used by the native provider. */
   readonly thumbSrc?: string
   /** Low-quality preview shown until the image loads. It stays visible if the image fails. */
   readonly placeholderSrc?: string
+  /** @internal Build-time average preview colour. */
+  readonly _placeholderColor?: string
   /** Real pixel width of the image file, not its displayed size. Used for layout before load. */
-  readonly width: number
+  readonly width?: number
   /** Real pixel height of the image file, not its displayed size. Used for layout before load. */
-  readonly height: number
+  readonly height?: number
   /** Alternative text for the thumbnail and the lightbox image. */
   readonly alt?: string
   /** Short visible text, shown under the photo in the lightbox. */
   readonly caption?: string
   /** Longer visible text in the lightbox. */
   readonly description?: string
-  /** Native `srcset` candidates, used by the native image adapter. */
+  /** Native `srcset` candidates, used by the native provider. */
   readonly srcset?: string
-  /** Your own typed data, passed through to slots and image adapters. */
+  /** Your own typed data, passed through to slots and providers. */
   readonly meta?: Readonly<TMeta>
+}
+
+/** Internal photo shape after dimension validation. */
+export interface ResolvedPhotoItem<
+  TMeta extends object = Readonly<Record<string, unknown>>,
+> extends PhotoItem<TMeta> {
+  readonly width: number
+  readonly height: number
 }
 
 // ─── Geometry ───
@@ -94,7 +104,7 @@ export type CloseTransitionPlan = {
 // ─── Layout ───
 
 export type LayoutInput<TMeta extends object = Readonly<Record<string, unknown>>> = {
-  photos: readonly PhotoItem<TMeta>[]
+  photos: readonly ResolvedPhotoItem<TMeta>[]
   containerWidth: number
   spacing?: number
   padding?: number
@@ -117,7 +127,7 @@ export type MasonryLayoutOptions<TMeta extends object = Readonly<Record<string, 
 
 export type LayoutEntry<TMeta extends object = Readonly<Record<string, unknown>>> = {
   index: number
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   width: number
   height: number
   positionIndex: number
@@ -166,33 +176,10 @@ export interface PhotoCarouselAutoplayOptions {
   readonly stopOnMouseEnter?: boolean
 }
 
-// ─── Image adapter ───
-
-export type ImageSource = {
-  src: string
-  placeholderSrc?: string
-  srcset?: string
-  sizes?: string
-  width?: number
-  height?: number
-}
-
 export type ResponsivePhotoSizes = {
   size: string
   sizes?: Array<{ viewport: string; size: string }>
 }
-
-/**
- * Context in which an image is being rendered.
- * - `'thumb'` — grid thumbnail (smaller, responsive srcset)
- * - `'slide'` — lightbox slide (full-viewport srcset)
- */
-export type ImageContext = 'thumb' | 'slide'
-
-export type ImageAdapter<TMeta extends object = Readonly<Record<string, unknown>>> = (
-  photo: PhotoItem<TMeta>,
-  context: ImageContext,
-) => ImageSource
 
 // ─── Responsive parameters ───
 
@@ -223,7 +210,7 @@ export type ResponsiveResolver<T> = ((containerWidth: number) => T) & {
  * Resolve a `ResponsiveParameter` to its concrete value.
  * Returns `fallback` when `value` is `undefined`.
  */
-export function resolveResponsiveParameter<T>(
+export function resolveResponsiveValue<T>(
   value: ResponsiveParameter<T> | undefined,
   containerWidth: number,
   fallback: T,

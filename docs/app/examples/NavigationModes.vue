@@ -18,7 +18,7 @@ const navigation = ref<LightboxNavigationMode>('crossfade')
   </fieldset>
   <PhotoAlbum
     :photos="photos"
-    :navigation="navigation"
+    :lightbox="{ navigation }"
     :layout="{ type: 'rows', targetRowHeight: 140 }"
     :spacing="6"
   />

@@ -20,11 +20,6 @@ export function isUsableRect(
   return true
 }
 
-/** Wrap an index into the `[0, length)` range for circular navigation. */
-export function getLoopedIndex(index: number, length: number): number {
-  return (index + length) % length
-}
-
 /** Fit an aspect ratio into a container while preserving its center point. */
 export function fitRect(container: RectLike, aspect: number): RectLike {
   let width = container.width

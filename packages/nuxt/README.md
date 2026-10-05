@@ -4,7 +4,7 @@
 
 <h1 align="center">@lupinum/nuxt-photo</h1>
 
-<p align="center">Add Nuxt Photo components, auto-imports, and CSS integration through one Nuxt module.</p>
+<p align="center">Photo albums, carousels and a lightbox for Nuxt, with images sized to the layout through Nuxt Image.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@lupinum/nuxt-photo"><img src="https://img.shields.io/npm/v/@lupinum/nuxt-photo?color=00DC82" alt="npm version"></a>
@@ -13,18 +13,17 @@
 </p>
 
 > [!WARNING]
-> Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag and review the
-> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
+> Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag.
 
 ## Purpose
 
-Use this package for the standard Nuxt experience. It registers the recipe components, imports common helpers, loads the selected CSS profile, and can connect to Nuxt Image.
+Use this package for the standard Nuxt experience. It registers the components, auto-imports the helpers, loads the CSS, and uses Nuxt Image when it is installed.
 
 ## Requirements
 
 - Node.js 22.18 or 24.11 and later maintenance releases
 - Nuxt 4.4.8 or later
-- Known width and height values for each photo
+- The pixel width and height of each photo, or `localImages: true` for files in `public/`
 
 ## Installation
 
@@ -58,12 +57,16 @@ const photos: PhotoItem[] = [
 ## Exports
 
 - `@lupinum/nuxt-photo` exports the Nuxt module.
-- `@lupinum/nuxt-photo/app` exports runtime types and helpers.
-- Auto-imports include `useLightbox`, `provideLightbox`, `usePhotoLabels`, and `responsive`.
+- `@lupinum/nuxt-photo/app` exports the components, types and helpers for
+  explicit imports.
+- Auto-imports: `useLightbox`, `usePhotoLabels`, `usePhotoFolder` and
+  `responsive`.
 
-Install `@nuxt/image` separately when you need provider-backed image rendering. Nuxt Photo also works with native images.
+With `@nuxt/image` installed, images use its provider, `screens` and quality.
+Without it, images use the photo's own `src`.
 
-App-wide lightbox labels can be localized through the typed `nuxtPhoto.labels` module option or the `nuxtPhoto.labels` key in `app.config.ts`. Indexed labels support `{index}` and slide announcements also support `{count}`.
+Configure everything in `nuxtPhoto` in `nuxt.config.ts`. Labels follow the
+active `@nuxtjs/i18n` locale; ten languages are bundled.
 
 ## Documentation
 

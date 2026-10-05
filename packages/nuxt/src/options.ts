@@ -1,16 +1,11 @@
-export type NuxtPhotoImageAdapterConfig = {
-  thumb?: {
-    sizes?: string
-    quality?: number
-  }
-  slide?: {
-    widths?: number[]
-    maxWidth?: number
-    maxDensity?: number
-    sizes?: string
-    quality?: number
-  }
-}
+import { validatePhotoConfig } from '../../vue/src/config/validate'
+import type {
+  PhotoLabels,
+  PhotoLocale,
+  LightboxOptions,
+  InvalidPhotoPolicy,
+} from '@lupinum/vue-photo'
+import { resolveNuxtPhotoLabels } from './runtime/labels'
 
 /** String templates use `{index}` and, for `slideStatus`, `{count}`. */
 export type NuxtPhotoLabelsConfig = Partial<Record<keyof PhotoLabels, string>>
@@ -27,39 +22,35 @@ export const NUXT_PHOTO_LABEL_KEYS = {
   nextSlide: true,
   pauseAutoplay: true,
   playAutoplay: true,
+  download: true,
+  share: true,
+  fullscreen: true,
+  exitFullscreen: true,
   goToSlide: true,
   viewPhoto: true,
   slideStatus: true,
 } as const satisfies Record<keyof PhotoLabels, true>
 
-export type NuxtPhotoAppConfig = {
-  image?: NuxtPhotoImageAdapterConfig
-  lightbox?: {
-    minZoom?: number
-  }
-  labels?: NuxtPhotoLabelsConfig
-}
-
-type NuxtPhotoImageOptions =
-  | false
-  | ({
-      provider?: 'auto' | 'nuxt-image' | 'native'
-    } & NuxtPhotoImageAdapterConfig)
-
 export interface NuxtPhotoOptions {
+  /** Read public image dimensions at build time and during dev. Default: false. */
+  localImages?: boolean
   autoImports?: boolean | { prefix?: string }
   components?: boolean | { prefix?: string; primitives?: boolean }
   css?: 'none' | 'structure' | 'all'
-  image?: NuxtPhotoImageOptions
-  lightbox?: NuxtPhotoAppConfig['lightbox']
-  labels?: NuxtPhotoLabelsConfig
+  lightbox?: Omit<LightboxOptions, 'component'> & {
+    /** App-wide lightbox component path or alias, resolved at module setup. */
+    component?: string
+  }
+  validation?: InvalidPhotoPolicy
+  provider?: string
+  labels?: PhotoLocale | NuxtPhotoLabelsConfig
 }
 
 export const NUXT_PHOTO_DEFAULTS = {
+  localImages: false,
   autoImports: true,
   components: { prefix: '' },
   css: 'structure',
-  image: { provider: 'auto' },
 } satisfies NuxtPhotoOptions
 
 function configError(path: string, expected: string) {
@@ -67,7 +58,11 @@ function configError(path: string, expected: string) {
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
+  )
 }
 
 function assertPlainRecord(value: unknown, path: string): asserts value is Record<string, unknown> {
@@ -93,105 +88,65 @@ function assertBoolean(value: unknown, path: string) {
   }
 }
 
-function assertFiniteNumber(value: unknown, path: string) {
-  if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value))) {
-    throw configError(path, 'a finite number')
-  }
-}
-
-function assertPositiveNumber(value: unknown, path: string) {
-  assertFiniteNumber(value, path)
-  if (typeof value === 'number' && value <= 0) {
-    throw configError(path, 'greater than 0')
-  }
-}
-
-function assertQuality(value: unknown, path: string) {
-  assertFiniteNumber(value, path)
-  if (typeof value === 'number' && (value < 1 || value > 100)) {
-    throw configError(path, 'between 1 and 100')
-  }
-}
-
-function assertWidths(value: unknown, path: string) {
-  if (value === undefined) return
-  if (
-    !Array.isArray(value) ||
-    value.length === 0 ||
-    value.some((item) => typeof item !== 'number' || !Number.isInteger(item) || item <= 0)
-  ) {
-    throw configError(path, 'a non-empty array of positive integers')
-  }
-}
-
 function validateToggleRecord(value: unknown, path: string) {
   if (value === undefined || typeof value === 'boolean') return
   if (!isPlainRecord(value)) throw configError(path, 'a boolean or object')
-  assertKnownKeys(value, path === 'components' ? ['prefix', 'primitives'] : ['prefix'], path)
-  assertString(value.prefix, `${path}.prefix`)
+  const record = { ...value }
+  assertKnownKeys(record, path === 'components' ? ['prefix', 'primitives'] : ['prefix'], path)
+  assertString(record.prefix, `${path}.prefix`)
   if (path === 'components') {
-    assertBoolean(value.primitives, 'components.primitives')
+    assertBoolean(record.primitives, 'components.primitives')
   }
 }
 
 /** Validate all runtime configuration before the module mutates Nuxt state. */
-export function validateNuxtPhotoOptions(options: unknown): asserts options is NuxtPhotoOptions {
-  assertPlainRecord(options, '')
-  assertKnownKeys(options, ['autoImports', 'components', 'css', 'image', 'lightbox', 'labels'], '')
+export function validateNuxtPhotoOptions(value: unknown): asserts value is NuxtPhotoOptions {
+  assertPlainRecord(value, '')
+  const options = { ...value }
+  assertKnownKeys(
+    options,
+    [
+      'autoImports',
+      'components',
+      'css',
+      'lightbox',
+      'labels',
+      'localImages',
+      'validation',
+      'provider',
+    ],
+    '',
+  )
 
-  if (options.css !== undefined && !['none', 'structure', 'all'].includes(String(options.css))) {
+  if (
+    options.css !== undefined &&
+    (typeof options.css !== 'string' || !['none', 'structure', 'all'].includes(options.css))
+  ) {
     throw configError('css', '"none", "structure", or "all"')
   }
 
+  assertBoolean(options.localImages, 'localImages')
   validateToggleRecord(options.autoImports, 'autoImports')
   validateToggleRecord(options.components, 'components')
 
-  if (options.image !== undefined && options.image !== false) {
-    if (!isPlainRecord(options.image)) {
-      throw configError('image', 'false or an object')
-    }
-    assertKnownKeys(options.image, ['provider', 'thumb', 'slide'], 'image')
-    if (
-      options.image.provider !== undefined &&
-      !['auto', 'nuxt-image', 'native'].includes(String(options.image.provider))
-    ) {
-      throw configError('image.provider', '"auto", "nuxt-image", or "native"')
-    }
-
-    if (options.image.thumb !== undefined) {
-      assertPlainRecord(options.image.thumb, 'image.thumb')
-      assertKnownKeys(options.image.thumb, ['sizes', 'quality'], 'image.thumb')
-      assertString(options.image.thumb.sizes, 'image.thumb.sizes')
-      assertQuality(options.image.thumb.quality, 'image.thumb.quality')
-    }
-
-    if (options.image.slide !== undefined) {
-      assertPlainRecord(options.image.slide, 'image.slide')
-      assertKnownKeys(
-        options.image.slide,
-        ['widths', 'maxWidth', 'maxDensity', 'sizes', 'quality'],
-        'image.slide',
-      )
-      assertWidths(options.image.slide.widths, 'image.slide.widths')
-      assertPositiveNumber(options.image.slide.maxWidth, 'image.slide.maxWidth')
-      assertPositiveNumber(options.image.slide.maxDensity, 'image.slide.maxDensity')
-      assertString(options.image.slide.sizes, 'image.slide.sizes')
-      assertQuality(options.image.slide.quality, 'image.slide.quality')
-    }
-  }
-
-  if (options.lightbox !== undefined) {
-    assertPlainRecord(options.lightbox, 'lightbox')
-    assertKnownKeys(options.lightbox, ['minZoom'], 'lightbox')
-    assertPositiveNumber(options.lightbox.minZoom, 'lightbox.minZoom')
-  }
-
-  if (options.labels !== undefined) {
+  assertString(options.provider, 'provider')
+  if (options.labels !== undefined && typeof options.labels !== 'string') {
     assertPlainRecord(options.labels, 'labels')
     assertKnownKeys(options.labels, Object.keys(NUXT_PHOTO_LABEL_KEYS), 'labels')
-    for (const key of Object.keys(options.labels)) {
+    for (const key of Object.keys(options.labels))
       assertString(options.labels[key], `labels.${key}`)
-    }
   }
+  // Both entry points use the core validator; Nuxt converts string templates first.
+  validatePhotoConfig(
+    {
+      lightbox: options.lightbox,
+      validation: options.validation,
+      labels:
+        typeof options.labels === 'string'
+          ? options.labels
+          : resolveNuxtPhotoLabels(options.labels as NuxtPhotoLabelsConfig | undefined),
+    },
+    'nuxtPhoto',
+    'path',
+  )
 }
-import type { PhotoLabels } from '@lupinum/vue-photo'

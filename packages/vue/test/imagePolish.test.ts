@@ -5,7 +5,7 @@ import { createApp, defineComponent, h, reactive, ref } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoImage from '../src/primitives/PhotoImage.vue'
-import type { ImageAdapter } from '../src/core/types'
+import type { PhotoProvider } from '../src/config'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('image previews and sizes', () => {
@@ -15,19 +15,86 @@ describe('image previews and sizes', () => {
     document.body.innerHTML = ''
   })
 
-  it('resets the placeholder when adapter output or context changes', async () => {
+  // Catches per-image observers, premature eager loading and ignoring data-saving mode.
+  it.each([false, true])('shares load-ahead observation (saveData=%s)', async (saveData) => {
+    const instances: {
+      callback: IntersectionObserverCallback
+      options?: IntersectionObserverInit
+    }[] = []
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          instances.push({ callback, options })
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    )
+    Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData } })
+    const mounted = await mountComponent(
+      defineComponent({
+        setup: () => () =>
+          Array.from({ length: 20 }, (_, i) =>
+            h(PhotoImage, { photo: makePhoto({ id: String(i) }), priority: i === 0 }),
+          ),
+      }),
+    )
+    try {
+      const images = [...mounted.container.querySelectorAll('img')]
+      expect(instances).toHaveLength(1)
+      expect(instances[0]!.options).toEqual({
+        root: null,
+        rootMargin: `${innerHeight * (saveData ? 0.5 : 1.5)}px 0px`,
+      })
+      expect(images[1]!.getAttribute('loading')).toBe('lazy')
+      const notify = (index: number, isIntersecting: boolean) =>
+        instances[0]!.callback(
+          [
+            {
+              target: images[index]!,
+              isIntersecting,
+              time: performance.now(),
+              boundingClientRect: images[index]!.getBoundingClientRect(),
+              intersectionRect: images[index]!.getBoundingClientRect(),
+              intersectionRatio: isIntersecting ? 1 : 0,
+              rootBounds: null,
+            },
+          ],
+          {} as IntersectionObserver,
+        )
+      notify(1, false)
+      notify(2, true)
+      await flushUi()
+      expect(images[0]!.getAttribute('loading')).toBe('eager')
+      expect(images[1]!.getAttribute('loading')).toBe('lazy')
+      expect(images[2]!.getAttribute('loading')).toBe('eager')
+      expect(instances).toHaveLength(1)
+    } finally {
+      mounted.unmount()
+      Reflect.deleteProperty(navigator, 'connection')
+    }
+  })
+
+  it('resets the placeholder when provider output or context changes', async () => {
     const version = ref('a')
     const props = reactive<{
       photo: ReturnType<typeof makePhoto>
       context: 'thumb' | 'slide'
-      imageAdapter: ImageAdapter<object>
+      provider: PhotoProvider
     }>({
-      photo: makePhoto({ id: 'preview', placeholderSrc: '/preview.jpg' }),
-      context: 'thumb',
-      imageAdapter: (_photo, context) => ({
-        src: `/${version.value}-${context}.jpg`,
+      photo: makePhoto({
+        id: 'preview',
+        thumbSrc: '/thumb.jpg',
+        src: '/slide.jpg',
         placeholderSrc: '/preview.jpg',
       }),
+      context: 'thumb',
+      provider: {
+        url: (src) => `/${version.value}-${src.slice(1)}`,
+        placeholder: () => '/preview.jpg',
+      },
     })
     const App = defineComponent({ setup: () => () => h(PhotoImage, props) })
     const host = document.createElement('div')
@@ -38,6 +105,7 @@ describe('image previews and sizes', () => {
     const image = host.querySelector('img') as HTMLImageElement
 
     expect(image.style.backgroundImage).toContain('preview.jpg')
+    expect(image.style.backgroundColor).toContain('--np-placeholder-bg')
     image.dispatchEvent(new Event('load'))
     await flushUi()
     expect(image.style.backgroundImage).toBe('')
@@ -57,10 +125,11 @@ describe('image previews and sizes', () => {
     await flushUi()
     expect(image.style.backgroundImage).toContain('preview.jpg')
 
-    props.imageAdapter = () => ({ src: '/adapter-c.jpg', placeholderSrc: '/adapter-c-preview.jpg' })
+    props.photo = { ...props.photo, placeholderSrc: undefined }
+    props.provider = { url: () => '/provider-c.jpg', placeholder: () => '/provider-c-preview.jpg' }
     await flushUi()
-    expect(image.src).toContain('/adapter-c.jpg')
-    expect(image.style.backgroundImage).toContain('adapter-c-preview.jpg')
+    expect(image.src).toContain('/provider-c.jpg')
+    expect(image.style.backgroundImage).toContain('provider-c-preview.jpg')
 
     app.unmount()
     host.remove()
@@ -71,11 +140,7 @@ describe('image previews and sizes', () => {
     const props = reactive({
       photo: makePhoto({ id: 'responsive', alt: 'Initial', placeholderSrc: '/preview.jpg' }),
       sizes: '50vw',
-      imageAdapter: () => ({
-        src: '/same.jpg',
-        srcset: `/same-${version.value}.jpg 800w`,
-        placeholderSrc: '/preview.jpg',
-      }),
+      provider: { url: () => '/same.jpg', srcset: () => `/same-${version.value}.jpg 800w` },
     })
     const App = defineComponent({ setup: () => () => h(PhotoImage, props) })
     const host = document.createElement('div')
@@ -121,7 +186,7 @@ describe('image previews and sizes', () => {
     mounted.unmount()
   })
 
-  it.each(['rows', 'columns'] as const)(
+  it.each(['rows', 'columns', 'masonry'] as const)(
     'passes native sizes strings through %s layouts',
     async (layout) => {
       const mounted = await mountComponent(PhotoAlbum, {
@@ -135,9 +200,114 @@ describe('image previews and sizes', () => {
       })
 
       expect(Array.from(mounted.container.querySelectorAll('img'), (image) => image.sizes)).toEqual(
-        ['(max-width: 600px) 100vw, 50vw', '(max-width: 600px) 100vw, 50vw'],
+        ['auto, (max-width: 600px) 100vw, 50vw', 'auto, (max-width: 600px) 100vw, 50vw'],
       )
       mounted.unmount()
+    },
+  )
+
+  // Catches missing auto fallback, duplicate auto prefixes, and lazy hints on priority images.
+  it.each([
+    {
+      sizes: undefined,
+      priority: false,
+      expected: 'auto, 100vw',
+      hint: 'lazy',
+    },
+    { sizes: '50vw', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: 'auto, 50vw', priority: false, expected: 'auto, 50vw', hint: 'lazy' },
+    { sizes: '50vw', priority: true, expected: '50vw', hint: 'eager' },
+  ] as const)('renders sizes $expected with loading $hint and priority $priority', async (row) => {
+    const mounted = await mountComponent(PhotoImage, {
+      props: { photo: makePhoto(), sizes: row.sizes, priority: row.priority },
+    })
+    const image = mounted.container.querySelector('img')!
+    expect(image.sizes).toBe(row.expected)
+    expect(image.getAttribute('loading')).toBe(row.hint)
+    expect(image.getAttribute('fetchpriority')).toBe(row.priority ? 'high' : null)
+    expect(image.getAttribute('decoding')).toBe(row.priority ? null : 'async')
+    mounted.unmount()
+  })
+
+  // Catches custom thumbnails losing layout sizes or eager loading while default thumbnails work.
+  it('passes sizes and priority through the public thumbnail slot', async () => {
+    const App = defineComponent({
+      setup: () => () =>
+        h(
+          PhotoAlbum,
+          {
+            photos: [
+              makePhoto({ width: 400, height: 400 }),
+              makePhoto({ id: 'second', width: 400, height: 400 }),
+            ],
+            layout: { type: 'columns', columns: 2 },
+            defaultContainerWidth: 800,
+            spacing: 8,
+            padding: 4,
+            priority: 1,
+            lightbox: false,
+          },
+          {
+            thumbnail: (props: {
+              photo: ReturnType<typeof makePhoto>
+              sizes?: string
+              priority?: boolean
+            }) => h(PhotoImage, props),
+          },
+        ),
+    })
+    const mounted = await mountComponent(App)
+    const images = Array.from(mounted.container.querySelectorAll('img'))
+    expect(
+      images.map((image) => [
+        image.sizes,
+        image.getAttribute('loading'),
+        image.getAttribute('fetchpriority'),
+      ]),
+    ).toEqual([
+      ['388px', 'eager', 'high'],
+      ['auto, 388px', 'lazy', null],
+    ])
+    mounted.unmount()
+  })
+
+  // Catches unrelated provider settings overriding measured widths or object sizes in non-row layouts.
+  it.each(['rows', 'columns', 'masonry'] as const)(
+    'sizes and prioritizes %s thumbnails by photo index',
+    async (type) => {
+      for (const sizes of [undefined, '70vw', { size: '100vw' }]) {
+        const mounted = await mountComponent(PhotoAlbum, {
+          props: {
+            photos: Array.from({ length: 4 }, (_, index) =>
+              makePhoto({
+                id: `budget-${index}`,
+                src: `/budget-${index}.jpg`,
+                width: 400,
+                height: 400,
+              }),
+            ),
+            layout: type === 'rows' ? { type, targetRowHeight: 400 } : { type, columns: 2 },
+            defaultContainerWidth: 800,
+            spacing: 8,
+            padding: 4,
+            sizes,
+            priority: 2,
+            lightbox: false,
+          },
+        })
+        const images = Array.from(mounted.container.querySelectorAll('img'))
+        expect(images).toHaveLength(4)
+        for (const image of images) {
+          const index = Number(image.src.match(/budget-(\d)/)?.[1])
+          const eager = index < 2
+          expect(image.getAttribute('loading')).toBe(eager ? 'eager' : 'lazy')
+          expect(image.getAttribute('fetchpriority')).toBe(eager ? 'high' : null)
+          const expected =
+            typeof sizes === 'string' ? sizes : sizes ? 'calc((100vw - 24px) / 2)' : '388px'
+          expect(image.sizes).toBe(`${eager ? '' : 'auto, '}${expected}`)
+        }
+        mounted.unmount()
+      }
     },
   )
 })

@@ -1,89 +1,121 @@
+import { createSSRApp, h } from 'vue'
+import { renderToString } from '@vue/server-renderer'
+import { installPhotoConfig } from '../../vue/src/config/install'
+import { PhotoImage } from '../../vue/src'
+import { DEFAULT_WIDTHS } from '../../vue/src/providers/runtime'
 import { describe, expect, it, vi } from 'vite-plus/test'
-import type { PhotoItem } from '@lupinum/vue-photo'
-import {
-  createNuxtImageAdapter,
-  DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG,
-  type NuxtImageFunction,
-} from '../src/runtime/image-adapter'
+import { createNuxtPhotoProviders, type NuxtImageFunction } from '../src/runtime/provider'
 
-function createImageMock() {
-  const image = vi.fn(
-    (src: string, options: { width: number; quality: number }) =>
-      `/_ipx/w_${options.width},q_${options.quality}${src}`,
-  ) as NuxtImageFunction & ReturnType<typeof vi.fn>
-
-  image.getSizes = vi.fn((src: string, options: { sizes: string; quality: number }) => ({
-    src: `/_ipx/thumb,q_${options.quality}${src}`,
-    srcset: `/_ipx/thumb-400,q_${options.quality}${src} 400w`,
-    sizes: options.sizes,
-  }))
-
-  return image
+const image: NuxtImageFunction = (src, { width, quality, format }, { provider }) =>
+  `${provider}:${src}?w=${width}&q=${quality}${format ? `&f=${format}` : ''}`
+const options = {
+  provider: 'ipx',
+  screens: { sm: 320, md: 640 },
+  densities: [2, 1, 2],
+  quality: 72,
 }
 
-const photo: PhotoItem = {
-  id: 'nuxt-image',
-  src: '/photos/full.jpg',
-  thumbSrc: '/photos/thumb.jpg',
-  width: 1600,
-  height: 1000,
-}
-
-describe('nuxt image adapter', () => {
-  it('uses thumbSrc for thumbnails and configurable thumb options', () => {
-    const image = createImageMock()
-    const adapter = createNuxtImageAdapter(image, {
-      thumb: {
-        sizes: 'sm:100vw lg:360px',
-        quality: 72,
-      },
-    })
-
-    const thumb = adapter(photo, 'thumb')
-
-    expect(image.getSizes).toHaveBeenCalledWith('/photos/thumb.jpg', {
-      sizes: 'sm:100vw lg:360px',
-      quality: 72,
-    })
-    expect(thumb).toMatchObject({
-      src: '/_ipx/thumb,q_72/photos/thumb.jpg',
-      sizes: 'sm:100vw lg:360px',
-      width: 1600,
-      height: 1000,
-    })
+describe('Nuxt photo providers', () => {
+  // Catch oversized thumbnails with default screens, without violating Vercel's allowlist.
+  it.each([
+    [
+      'ipx',
+      { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 },
+      [1, 2],
+      [128, 256, 384, 512, 640, 768, 1024, 1280, 1536, 2048, 2560, 3072],
+    ],
+    [
+      'vercel',
+      { sm: 640, md: 768, lg: 1024, xl: 1280, '2xl': 1536 },
+      [1, 2],
+      [640, 768, 1024, 1280, 1536],
+    ],
+    ['ipx', { sm: 320, md: 640 }, [2, 1, 2], [128, 256, 320, 640, 1280]],
+    ['cloudinary', { sm: 800, md: 1200 }, [0.5, 2], [128, 256, 384, 400, 600, 1600, 2400]],
+    ['vercel', { sm: 320, md: 640 }, [2, 1, 2], [320, 640]],
+  ] as const)(
+    'uses the correct %s ladder for screens %j and densities %j',
+    (provider, screens, densities, expected) => {
+      const { resolve, runtime } = createNuxtPhotoProviders(
+        image,
+        { ...options, screens, densities: [...densities] },
+        DEFAULT_WIDTHS,
+      )
+      expect(runtime.widths(resolve(provider))).toEqual(expected)
+    },
+  )
+  it('uses screens × densities, app quality/format, and only IPX placeholders', () => {
+    const { resolve, runtime } = createNuxtPhotoProviders(image, options, DEFAULT_WIDTHS)
+    const ipx = resolve('ipx')
+    expect(runtime.widths(ipx)).toEqual([128, 256, 320, 640, 1280])
+    expect(ipx.url('/full.jpg', { width: 640 })).toBe('ipx:/full.jpg?w=640&q=72&f=webp')
+    expect(ipx.placeholder!('/full.jpg')).toBe('ipx:/full.jpg?w=24&q=30&f=webp')
+    const custom = createNuxtPhotoProviders(
+      image,
+      { ...options, format: ['avif'] },
+      DEFAULT_WIDTHS,
+    ).resolve('cloudinary')
+    expect(custom.url('/full.jpg', { width: 320 })).toBe('cloudinary:/full.jpg?w=320&q=72&f=avif')
+    expect(custom.placeholder).toBeUndefined()
+    expect(resolve('ipx')).toBe(ipx)
   })
 
-  it('uses src for slides and honors configured widths, caps, density, sizes, and quality', () => {
-    const image = createImageMock()
-    const adapter = createNuxtImageAdapter(image, {
-      slide: {
-        widths: [400, 800, 1200, 1800],
-        maxWidth: 900,
-        maxDensity: 1,
-        sizes: '90vw',
-        quality: 77,
-      },
-    })
-
-    const slide = adapter(photo, 'slide')
-
-    expect(slide.src).toBe('/_ipx/w_900,q_77/photos/full.jpg')
-    expect(slide.srcset).toContain('/_ipx/w_400,q_77/photos/full.jpg 400w')
-    expect(slide.srcset).toContain('/_ipx/w_800,q_77/photos/full.jpg 800w')
-    expect(slide.srcset).toContain('/_ipx/w_1200,q_77/photos/full.jpg 1200w')
-    expect(slide.srcset).not.toContain('1800w')
-    expect(slide.sizes).toBe('90vw')
+  it('matches the installed Vercel allowlist without density products or terminal widths', () => {
+    const { resolve, runtime } = createNuxtPhotoProviders(image, options, DEFAULT_WIDTHS)
+    const vercel = resolve('vercel')
+    expect(runtime.widths(vercel)).toEqual([320, 640])
+    expect(runtime.allowSourceWidth(vercel)).toBe(false)
+    expect(vercel.placeholder).toBeUndefined()
   })
 
-  it('keeps the existing default slide cap and fallback width behavior', () => {
-    const image = createImageMock()
-    const adapter = createNuxtImageAdapter(image)
-    const tiny = { ...photo, width: 300 }
+  it.each([
+    [500, [320]],
+    [200, []],
+  ])(
+    'keeps actual Vercel requests on-list and at or below source width %s',
+    async (width, requested) => {
+      const mock = vi.fn(image)
+      const { resolve, runtime } = createNuxtPhotoProviders(mock, options, DEFAULT_WIDTHS)
+      const app = createSSRApp({
+        render: () =>
+          h(PhotoImage, {
+            photo: { id: 'vercel', src: '/photo.jpg', width, height: 200 },
+          }),
+      })
+      installPhotoConfig(app, { provider: resolve('vercel') }, runtime)
+      const html = await renderToString(app)
+      expect(mock.mock.calls.map(([, modifiers]) => modifiers.width)).toEqual(requested)
+      if (width === 500) expect(html).toContain('srcset="vercel:/photo.jpg?w=320&amp;q=72 320w"')
+      else expect(html).toContain('src="/photo.jpg"')
+      expect(html).not.toContain('640w')
+    },
+  )
 
-    const slide = adapter(tiny, 'slide')
+  it.each(['ipx', 'ipxStatic', 'vercel'])('preserves GIF and SVG with %s', (name) => {
+    const mock = vi.fn(image)
+    const provider = createNuxtPhotoProviders(
+      mock,
+      { ...options, format: ['avif'] },
+      DEFAULT_WIDTHS,
+    ).resolve(name)
+    expect(provider.url('/animated.GIF?x=1#foo.jpg', { width: 320 })).toBe(
+      `${name}:/animated.GIF?x=1#foo.jpg?w=320&q=72`,
+    )
+    expect(provider.url('/vector%20art.SVG?x=1', { width: 320 })).toBe('/vector%20art.SVG?x=1')
+    expect(provider.placeholder?.('/vector.svg')).toBeUndefined()
+    expect(mock).toHaveBeenCalledTimes(1)
+    if (provider.placeholder)
+      expect(provider.placeholder('/animated.gif')).toBe(`${name}:/animated.gif?w=24&q=30`)
+  })
 
-    expect(slide.src).toBe('/_ipx/w_300,q_85/photos/full.jpg')
-    expect(slide.srcset).toBe('/_ipx/w_300,q_85/photos/full.jpg 300w')
-    expect(slide.sizes).toBe(DEFAULT_NUXT_IMAGE_ADAPTER_CONFIG.slide.sizes)
+  it.each([
+    ['/with%20space.jpg', '/with space.jpg'],
+    ['/with%2520space.jpg', '/with%20space.jpg'],
+    ['/bad%escape.jpg', '/bad%escape.jpg'],
+    ['https://example.com/with%20space.jpg', 'https://example.com/with%20space.jpg'],
+    ['//example.com/with%20space.jpg', '//example.com/with%20space.jpg'],
+  ])('decodes local paths once: %s', (src, decoded) => {
+    const provider = createNuxtPhotoProviders(image, options, DEFAULT_WIDTHS).resolve('ipx')
+    expect(provider.url(src, { width: 320 })).toBe(`ipx:${decoded}?w=320&q=72&f=webp`)
   })
 })

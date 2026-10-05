@@ -1,6 +1,6 @@
 import { expect, test } from './helpers'
 
-test('nuxt image demo uses the explicit provider contract with clean local components', async ({
+test('nuxt image demo uses the automatic provider contract with clean local components', async ({
   request,
 }) => {
   const response = await request.get('/nuxt-image')
@@ -8,7 +8,7 @@ test('nuxt image demo uses the explicit provider contract with clean local compo
   const html = await response.text()
 
   expect(html).toContain('NuxtImage support')
-  expect(html).toContain('nuxtPhoto.image.provider = &#39;nuxt-image&#39;')
+  expect(html).toContain('Nuxt Image resolves image URLs')
   expect(html).toContain('&lt;PhotoAlbum&gt;')
-  expect(html).toContain('src="/_ipx/w_1280/')
+  expect(html).toContain('src="/_ipx/w_1280&amp;q_80&amp;f_webp/photos/moss-canyon.jpg"')
 })

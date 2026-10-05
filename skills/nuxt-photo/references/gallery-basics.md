@@ -22,11 +22,17 @@ defineProps<{ photos: PhotoItem[] }>()
     :photos="photos"
     :layout="{ type: 'columns', columns: responsive({ 0: 2, 480: 3 }) }"
     :spacing="responsive({ 0: 12, 640: 20 })"
-    navigation="crossfade"
+    :lightbox="{ navigation: 'crossfade' }"
   >
-    <template #thumbnail="{ photo, hidden }">
+    <template #thumbnail="{ photo, hidden, sizes, priority }">
       <figure class="work" :class="{ 'work--hidden': hidden }">
-        <PhotoImage :photo="photo" context="thumb" class="work__image" />
+        <PhotoImage
+          :photo="photo"
+          context="thumb"
+          :sizes="sizes"
+          :priority="priority"
+          class="work__image"
+        />
         <figcaption class="work__caption">{{ photo.caption }}</figcaption>
       </figure>
     </template>
@@ -121,9 +127,7 @@ _Source: https://nuxt-photo.lupinum.com/docs/start/introduction_
 In five minutes you have a styled album with a working lightbox.
 
 ::warning
-These docs describe the Nuxt Photo 1.0 beta. Install the `next` tag; npm
-`latest` still points to 0.2. To upgrade an existing app, follow
-[Upgrade from 0.2 to 1.0](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
+These docs describe the Nuxt Photo 1.0 beta. Install the `next` tag.
 ::
 
 You need Nuxt **4.4.8** or later in Nuxt 4, and Node **22.18+** or **24.11+**.
@@ -229,6 +233,63 @@ Every component takes the same photo shape, `PhotoItem`. Convert your CMS or
 API records to it once, where the data enters your app, and pass the result to
 any component.
 
+### Show a folder of images
+
+For images in `public/`, let Nuxt Photo read the folder. It reads each file's
+size at build time and makes a blurred preview, so you write no photo data:
+
+```vue [app/pages/trips.vue]
+<script setup lang="ts">
+const photos = await usePhotoFolder('trips', {
+  alt: {
+    'lake-at-dawn': 'Fog over a lake at sunrise',
+    'ridge-trail': 'Two hikers on a ridge trail',
+  },
+})
+</script>
+
+<template>
+  <PhotoAlbum :photos="photos" />
+</template>
+```
+
+- `usePhotoFolder` is async: `await` it in `<script setup>`. It returns a
+  `Ref<PhotoItem[]>`.
+- The server reads the folder. Only this folder's photos travel to the
+  browser, with the page data. Static generation (`nuxi generate`) works the
+  same way.
+- It reads the files directly in `public/trips`, not subfolders. The `id` is
+  the path without the extension, such as `trips/lake-at-dawn`.
+- `alt` and `caption` are keyed by the file name without its extension.
+  During development, a folder with photos that have no `alt` logs one
+  warning.
+- `sort: 'name-desc'` reverses the file name order. Prefix file names with a
+  number or date when the order matters.
+- New files in the folder appear during `nuxt dev` without a restart.
+
+#### Leave out width and height for local files
+
+A hand-written array can leave out `width` and `height` for files in
+`public/` when you turn on `localImages`:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@nuxt/image', '@lupinum/nuxt-photo'],
+  nuxtPhoto: { localImages: true },
+})
+```
+
+```ts
+const photos: PhotoItem[] = [
+  { id: 'lake', src: '/trips/lake-at-dawn.jpg', alt: 'Fog over a lake at sunrise' },
+]
+```
+
+`localImages` sends the size and preview of every image in `public/` to the
+browser, in the app bundle. With many images that adds up; prefer
+`usePhotoFolder` for galleries. Remote images always need `width` and
+`height`.
+
 ### Map your records
 
 ```vue [app/pages/gallery.vue]
@@ -277,15 +338,19 @@ order changes.
 | ---------------- | -------- | --------------------------------------------------------------- |
 | `id`             | Yes      | Stable, unique string. Use the asset ID, never the array index. |
 | `src`            | Yes      | Image URL. The lightbox uses it.                                |
-| `width`          | Yes      | Real pixel width of the image file, a positive number.          |
-| `height`         | Yes      | Real pixel height of the image file, a positive number.         |
+| `width`          | Yes\*    | Real pixel width of the image file, a positive number.          |
+| `height`         | Yes\*    | Real pixel height of the image file, a positive number.         |
 | `alt`            | No       | Alternative text. Add it unless the image is decorative.        |
 | `caption`        | No       | Short text under the photo in the lightbox.                     |
 | `description`    | No       | Longer text in the lightbox.                                    |
-| `thumbSrc`       | No       | Smaller file for thumbnails.                                    |
-| `srcset`         | No       | Native responsive candidates.                                   |
+| `thumbSrc`       | No       | Another crop for thumbnails. It is resized like `src`.          |
+| `srcset`         | No       | Your own fixed sizes. Used only without an image provider.      |
 | `placeholderSrc` | No       | Low-quality preview until the image loads.                      |
-| `meta`           | No       | Your own data, passed to slots and image adapters.              |
+| `meta`           | No       | Your own data, passed to slots and providers.                   |
+
+\* Not needed for files in `public/` that come from `usePhotoFolder` or, with
+`localImages`, from a hand-written array. Without them, the error says so:
+`photo "lake" has no width; pass width and height, or in Nuxt use localImages / usePhotoFolder for files in public/`.
 
 `width` and `height` describe the original file, even when your image service
 returns a smaller version. Nuxt Photo uses them for the aspect ratio: the
@@ -316,7 +381,7 @@ control without your normal server-side request protections.
 
 ### Keep your own data on the photo
 
-`meta` carries typed data to slots and image adapters:
+`meta` carries typed data to slots and providers:
 
 ```ts
 type Credit = { photographer: string }
@@ -352,8 +417,10 @@ function reportInvalidPhotos(event: InvalidPhotosEvent) {
 </template>
 ```
 
-`validation="drop"` works on `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`.
-A single `Photo` always throws.
+`validation="drop"` works on every component. A `Photo` with an invalid photo
+then renders nothing and emits `invalid-photos`. To check records yourself,
+for example before you store them, call `validatePhotos(records)`: it returns the
+valid `photos` and the `issues`, and never throws.
 
 ### Keep URLs stable during server rendering
 
@@ -390,7 +457,7 @@ const details = computed(() => props.photos.slice(1))
 </script>
 
 <template>
-  <PhotoGroup :photos="photos" navigation="fade">
+  <PhotoGroup :photos="photos" :lightbox="{ navigation: 'fade' }">
     <article class="article">
       <h3>A slow week in the hills</h3>
       <Photo v-if="lead" :photo="lead" class="article__lead" />

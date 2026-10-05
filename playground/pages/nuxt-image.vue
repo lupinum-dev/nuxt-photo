@@ -4,9 +4,8 @@
       <p class="hero__eyebrow">@nuxt/image Integration</p>
       <h1 class="hero__title">First-class NuxtImage support.</h1>
       <p class="hero__lede">
-        Set <code>nuxtPhoto.image.provider = 'nuxt-image'</code> and nuxt-photo routes all images
-        through Nuxt Image's optimization pipeline. Thumbnails get responsive <code>srcset</code>,
-        lightbox slides get full-viewport <code>srcset</code>, and no adapter prop is needed.
+        With <code>@nuxt/image</code> installed, Nuxt Image resolves image URLs automatically.
+        Thumbnails and lightbox slides get responsive <code>srcset</code>.
       </p>
     </header>
 
@@ -55,9 +54,15 @@
           :spacing="6"
           :default-container-width="1100"
         >
-          <template #thumbnail="{ photo }">
+          <template #thumbnail="{ photo, sizes, priority }">
             <div class="custom-thumb" :style="{ aspectRatio: `${photo.width} / ${photo.height}` }">
-              <PhotoImage :photo="photo" context="thumb" class="custom-thumb__img" />
+              <PhotoImage
+                :photo="photo"
+                :sizes="sizes"
+                :priority="priority"
+                context="thumb"
+                class="custom-thumb__img"
+              />
               <div class="custom-thumb__overlay">
                 <span class="custom-thumb__caption">{{ photo.caption }}</span>
               </div>
@@ -118,9 +123,9 @@ const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
   :layout="{ type: 'columns', columns: 3 }"
   :default-container-width="1100"
 >
-  <template #thumbnail="{ photo }">
+  <template #thumbnail="{ photo, sizes, priority }">
     <div class="my-thumb">
-      <PhotoImage :photo="photo" context="thumb" />
+      <PhotoImage :photo="photo" :sizes="sizes" :priority="priority" context="thumb" />
       <span>{{ photo.caption }}</span>
     </div>
   </template>

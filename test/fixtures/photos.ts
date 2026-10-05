@@ -1,6 +1,11 @@
 import type { PhotoItem } from '@lupinum/vue-photo'
 
-export function makePhoto(overrides: Partial<PhotoItem> = {}): PhotoItem {
+interface FixturePhoto extends PhotoItem {
+  readonly width: number
+  readonly height: number
+}
+
+export function makePhoto(overrides: Partial<FixturePhoto> = {}): FixturePhoto {
   const id = overrides.id ?? `photo-${Math.random().toString(36).slice(2, 8)}`
 
   return {
@@ -16,7 +21,7 @@ export function makePhoto(overrides: Partial<PhotoItem> = {}): PhotoItem {
   }
 }
 
-export function createPhotoSet(): PhotoItem[] {
+export function createPhotoSet(): FixturePhoto[] {
   return [
     makePhoto({ id: 'desert', width: 1600, height: 1000, alt: 'Desert' }),
     makePhoto({ id: 'ocean', width: 1200, height: 1500, alt: 'Ocean' }),

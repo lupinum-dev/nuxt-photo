@@ -10,34 +10,34 @@ component name, such as `PhotoAlbum:`.
 
 ### Error messages
 
-#### `photo at index 3 is missing a non-empty string id`
+#### `PhotoAlbum: photo at index 3 is missing a non-empty string id; use a stable ID from your data, not the array index`
 
 A photo has no `id`, or it is not a string. Use a stable ID from your data,
 such as the CMS asset ID, converted to a string. Do not use the array index: it
 changes when the order changes.
 
-#### `photo "canyon" is missing a non-empty src`
+#### `PhotoAlbum: photo "canyon" is missing a non-empty src`
 
 The photo has no image URL. Check the field you map to `src`.
 
-#### `photo "canyon" has invalid width` or `invalid height`
+#### `PhotoAlbum: photo "canyon" has invalid width 0; use the real pixel width of the image file` or `PhotoAlbum: photo "canyon" has invalid height 0; use the real pixel height of the image file`
 
 `width` and `height` must be positive numbers: the real pixel size of the image
 file. A string such as `"1280"`, `0`, `null`, or `NaN` fails. Read the size from
 your CMS or at upload; see
 [Get the image size at upload](https://nuxt-photo.lupinum.com/docs/guides/use-your-photos#get-the-image-size-at-upload).
 
-#### `duplicate photo id "canyon" used at indexes 2, 7`
+#### `PhotoAlbum: duplicate photo id "canyon" used at indexes 2, 7; IDs must be unique in one collection`
 
 Two photos in one collection share an `id`. Make IDs unique, or remove the
 duplicate record.
 
-#### `field "caption" must be a string` or `field "meta" must be an object`
+#### `PhotoAlbum: photo "canyon" field "caption" must be a string` or `PhotoAlbum: photo "canyon" field "meta" must be an object`
 
 An optional field has the wrong type, often `null` from an API. Map `null` to
 `undefined`: `alt: asset.alt ?? undefined`.
 
-#### `PhotoGroup descendant photo "canyon" is missing from the canonical photos collection`
+#### `[nuxt-photo] PhotoGroup descendant photo "canyon" is missing from the canonical photos collection. Add it to the photos of the surrounding <PhotoGroup>, or render it outside the group. See https://nuxt-photo.lupinum.com/docs/reference/photo-group`
 
 A `Photo` or `PhotoAlbum` inside a `PhotoGroup` shows a photo that is not in the
 group's `photos`. Add it to the group's array, which also sets its place in the
@@ -50,20 +50,20 @@ lightbox order:
 </PhotoGroup>
 ```
 
-#### `` `PhotoTrigger` requires an active lightbox context ``
+#### ``[nuxt-photo] `PhotoTrigger` requires an active lightbox context. Render it inside <LightboxProvider>, or inside a lightbox component passed to a ready-made component. See https://nuxt-photo.lupinum.com/docs/reference/primitives``
 
 The same error names `LightboxRoot`, `LightboxViewport`, `Lightbox`, or another
 lower-level component. It renders outside a provider. Put it inside
 `LightboxProvider`, or use it in a lightbox component that you pass to a
 ready-made component's `lightbox` prop.
 
-#### `No photo found at index 5` or `No photo found for id "canyon"`
+#### `[nuxt-photo] No photo found at index 5` or `[nuxt-photo] No photo found for id "canyon"`
 
 `open()` or `openById()` got an index or ID that is not in the collection. The
 promise rejects with a `RangeError`; catch it when the value comes from a URL
 or user input. See [Link to a photo](https://nuxt-photo.lupinum.com/docs/guides/control-the-lightbox#link-to-a-photo).
 
-#### `"lightbox" is a setup-time option; remount the component with a new key to change it`
+#### `[nuxt-photo] PhotoAlbum: "lightbox" is a setup-time option; remount the component with a new key to change it`
 
 This development warning means you changed `lightbox` after the component
 mounted. Change the `key` together with it:
@@ -72,27 +72,28 @@ mounted. Change the `key` together with it:
 <PhotoAlbum :key="String(showLightbox)" :photos="photos" :lightbox="showLightbox" />
 ```
 
-#### `` `nuxtPhoto.image.provider = "nuxt-image"` requires `@nuxt/image` ``
+#### `[nuxt-photo] nuxtPhoto.provider requires @nuxt/image; install the module or omit the provider name.`
 
-Install `@nuxt/image` and add it to `modules`, or use `provider: 'auto'`, which
-falls back to native images when Nuxt Image is missing.
+Install `@nuxt/image` and add it to `modules`, or remove `nuxtPhoto.provider`.
+Without Nuxt Image, every image uses the photo's own `src`, `thumbSrc` and
+`srcset`.
 
-#### ``Unknown `nuxtPhoto.…` option``
+#### ``[nuxt-photo] Unknown `nuxtPhoto.quality` option.``
 
-The module options contain a name that does not exist, often a typo or an
-option from 0.2. Compare with
-[Configuration and labels](https://nuxt-photo.lupinum.com/docs/reference/configuration-and-labels).
+`nuxtPhoto` does not know this name, often because of a typo. Compare with
+[Configuration and labels](https://nuxt-photo.lupinum.com/docs/reference/configuration-and-labels). Image
+quality, format and widths belong in your Nuxt Image `image` config; see
+[Deliver images](https://nuxt-photo.lupinum.com/docs/guides/deliver-images).
 
-#### `responsive() requires at least one breakpoint`
+#### `[nuxt-photo] responsive() requires at least one breakpoint`
 
 `responsive({})` has no values. Give at least one width, such as
 `responsive({ 0: 2, 768: 3 })`. Keys must be finite numbers of 0 or more.
 
-#### `PhotoCarousel autoplay.delayMs must be a positive finite number`
+#### `[nuxt-photo] PhotoCarousel autoplay.delayMs must be a positive finite number`
 
 `autoplay.delayMs` is `0`, negative, or not a number. The carousel also rejects
-a `loop` or `dragFree` that is not a boolean, and a `direction` other than
-`'ltr'` or `'rtl'`.
+a `loop` or `dragFree` that is not a boolean.
 
 #### Hydration mismatch in an album or image
 
@@ -150,25 +151,48 @@ export default defineNuxtConfig({
 })
 ```
 
-Also confirm that `@nuxt/image` is installed and registered when you explicitly
-select `provider: 'nuxt-image'`. The default `auto` mode uses the native adapter
-when Nuxt Image is absent.
+On Vercel, images whose width or height is above 8192 px are not optimized.
 
 #### A placeholder remains visible
 
 This is expected after the requested image fails. The placeholder stays behind
 the broken request instead of leaving an empty frame. It disappears after a
-successful load and resets when the adapter-resolved `src`, `srcset`, or `sizes`
-changes.
+successful load and shows again when the image request changes.
 
 Check the final image URL in the browser network panel. A successful request is
 required to remove the placeholder.
 
 #### A custom thumbnail ignores image configuration
 
-A raw `<img>` bypasses the Nuxt Photo image adapter. Render `PhotoImage` in the
-slot when the custom thumbnail should retain native, Nuxt Image, or custom
-adapter behavior.
+A raw `<img>` bypasses Nuxt Photo's image provider, `srcset` and placeholder.
+Render `PhotoImage` in the slot, and pass it the `sizes` and `priority` that
+the `thumbnail` slot gives you.
+
+#### Thumbnails download files that are too large
+
+Open the network panel and compare a thumbnail's file width with its width on
+screen times the pixel density:
+
+- On Vercel, the smallest file is the smallest width in `image.screens`. Add
+  small screens; see [Deploy on Vercel](https://nuxt-photo.lupinum.com/docs/guides/deliver-images#deploy-on-vercel).
+- A `sizes` prop on `PhotoAlbum` replaces the layout's own value. Remove it.
+- A `<NuxtImg>` in a custom thumbnail slot with `sizes="100vw"` asks for
+  screen-wide files. Use `PhotoImage` instead.
+
+#### Images appear late while scrolling
+
+The first request for each image width waits until the image service has
+transformed it. Check the response headers: on Vercel, `x-vercel-cache: MISS`
+means a transform, `HIT` a cached file. Open image-heavy pages once after you
+add many images. For remote images on Vercel, raise `minimumCacheTTL`; see
+[Deploy on Vercel](https://nuxt-photo.lupinum.com/docs/guides/deliver-images#deploy-on-vercel). With IPX on
+your own server, keep `format` at `webp`, because AVIF encoding is slow.
+
+#### Local images return 404 on Vercel
+
+IPX runs inside a Vercel function, which cannot read `public/`. Use the
+`vercel` provider, which Nuxt Image selects by itself on Vercel, or generate a
+static site with `nuxi generate`.
 
 #### A Nuxt import fails under pnpm
 
@@ -178,14 +202,17 @@ package to be installed as a direct dependency.
 
 #### RTL changes do not update a carousel
 
-Without a `direction` prop, `PhotoCarousel` reads inherited direction when it
-mounts. Bind the prop when the direction can change at runtime:
+Components read the computed CSS direction of their root. `PhotoCarousel`
+reads it at mount. Set `dir` on an ancestor and remount the carousel when the
+direction changes:
 
 ```vue
-<PhotoCarousel :photos="photos" :direction="localeDirection" />
+<div :dir="localeDirection">
+  <PhotoCarousel :key="localeDirection" :photos="photos" />
+</div>
 ```
 
-Use either `'ltr'` or `'rtl'`.
+Lightboxes read the direction again each time they open.
 
 #### A click closes the lightbox
 
@@ -202,7 +229,7 @@ yourself.
 
 #### The opening animation jumps
 
-Use the default `transition="auto"`. It fades when the thumbnail is not visible
+Keep the default `lightbox: { transition: 'auto' }`. It fades when the thumbnail is not visible
 enough for a reliable opening animation. Check that thumbnail IDs and dimensions
 match the active photo. Programmatic opening without a visible thumbnail also
 uses a fade.
@@ -217,18 +244,14 @@ _Source: https://nuxt-photo.lupinum.com/docs/help/troubleshooting_
 ### Known dimensions are required
 
 Every photo needs accurate intrinsic `width` and `height` values before it is
-rendered. Nuxt Photo does not measure images in the browser. Calculate missing
-dimensions during upload or server-side ingestion.
+rendered. Nuxt Photo does not measure images in the browser. Store them with
+the asset, or, in Nuxt, let `usePhotoFolder` or `localImages` read them from
+files in `public/` at build time.
 
 ### The photo model contains images only
 
 Video and mixed-media slides are outside the Nuxt Photo 1.0 model. Build those
 experiences separately instead of representing them as photos.
-
-### A single Photo is strict
-
-`Photo` throws when its item is invalid. `validation="drop"` exists only on
-collection components: `PhotoAlbum`, `PhotoGroup`, and `PhotoCarousel`.
 
 ### Lightbox capability is decided at setup
 
@@ -254,25 +277,27 @@ carousel, lightbox, focus, and transition CSS.
 
 ### Carousel options are intentionally limited
 
-The public behavior options are `loop`, `dragFree`, `direction`, and Nuxt
+The public behavior options are `loop`, `dragFree`, and Nuxt
 Photo's autoplay settings. Embla plugins, private methods, and arbitrary Embla
 options are not extension points.
 
 ### Runtime direction changes must be explicit
 
-`PhotoCarousel` reads inherited text direction when it mounts. Bind its
-`direction` prop when locale direction can change without a remount.
+Every component reads computed CSS direction from its root. `PhotoCarousel`
+reads it at mount. Set `dir`
+on an ancestor or CSS `direction` on the gallery root. Remount the inline track
+when direction changes. Lightboxes read the gallery root direction on each open.
 
 ### Reduced motion can change animation behavior
 
 Nuxt Photo follows `prefers-reduced-motion` and reacts when the media query
 changes. Opening and closing use a short fade instead of moving from the
-thumbnail, unless `transition` is `'none'`. With `navigation="slide"` the next photo appears without scrolling,
+thumbnail, unless `lightbox.transition` is `'none'`. With `navigation: 'slide'` the next photo appears without scrolling,
 and the fade modes change photos without a fade. Carousel autoplay does not run.
 
 ### The fade modes need the structure CSS
 
-`navigation="fade"` and `"crossfade"` stack the slides with rules from the
+`navigation: 'fade'` and `'crossfade'` stack the slides with rules from the
 structure CSS. A custom lightbox that replaces all structural CSS must stack
 `[data-np-slide]` elements itself.
 
@@ -286,9 +311,21 @@ to turn the glow off.
 
 ### A failed image keeps its placeholder
 
-`placeholderSrc` stays visible after the main image fails. It resets when the
-adapter produces a different image request and disappears after that request
-loads successfully.
+The placeholder stays visible after the main image fails. It shows again when
+the image request changes, and disappears after that request loads.
+
+### Vercel does not optimize very large or unusual images
+
+Vercel's image optimization accepts sources up to 8192 px wide or high and
+returns at most 10 MB. It optimizes JPEG, PNG, WebP and AVIF; other formats
+are served as they are. Resize larger originals before you upload them.
+See [Vercel's limits](https://vercel.com/docs/image-optimization/limits-and-pricing).
+
+### Not every browser measures lazy images for `sizes`
+
+Thumbnails use `sizes="auto, <width>px"`. Browsers that support `auto` use
+the measured width of lazy images. The others use the pixel width from the
+layout, which is exact for `PhotoAlbum` and an estimate for `<Photo>`.
 
 These constraints keep server rendering, navigation order, and modal ownership
 predictable. Use [Troubleshooting](https://nuxt-photo.lupinum.com/docs/help/troubleshooting) for symptom-based

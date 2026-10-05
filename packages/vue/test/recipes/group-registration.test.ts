@@ -7,6 +7,7 @@ import type { PhotoItem } from '../../src/core/index'
 import { useLightbox } from '../../src/composables'
 import Photo from '../../src/components/Photo.vue'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
+import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
 import PhotoGroup from '../../src/components/PhotoGroup.vue'
 import {
   PhotoGroupContextKey,
@@ -34,11 +35,53 @@ describe('PhotoGroup registration', () => {
     document.body.innerHTML = ''
   })
 
+  // Catch a child replacing the group viewer or disabling its trigger, and warning on every update.
+  it.each([
+    ['Photo', Photo, 'figure'],
+    ['PhotoAlbum', PhotoAlbum, '.np-album__item'],
+    ['PhotoCarousel', PhotoCarousel, '.np-carousel__slide'],
+  ] as const)(
+    'ignores %s lightbox options with one group-owner warning',
+    async (name, child, selector) => {
+      const warn = vi.spyOn(console, 'warn')
+      const childRender = vi.fn(() => null)
+      const childViewer = defineComponent({ render: childRender })
+      const photo = makePhoto({ id: 'owned' })
+      const childProps = reactive({
+        lightbox: { component: childViewer } as false | { component: typeof childViewer },
+      })
+      const mounted = await mountComponent(PhotoGroup, {
+        props: { photos: [photo], lightbox: { component: ProbeLightbox, transition: 'none' } },
+        slots: {
+          default: () =>
+            child === Photo
+              ? h(Photo, { ...childProps, photo })
+              : child === PhotoAlbum
+                ? h(PhotoAlbum, { ...childProps, photos: [photo] })
+                : h(PhotoCarousel, { ...childProps, photos: [photo] }),
+        },
+      })
+      expect(childRender).not.toHaveBeenCalled()
+      expect(mounted.container.querySelector('[data-testid="group-photos"]')?.textContent).toBe(
+        'owned',
+      )
+      childProps.lightbox = false
+      await flushUi()
+      expect(mounted.container.querySelector(selector)?.getAttribute('role')).toBe('button')
+      expect(
+        warn.mock.calls.filter(([message]) =>
+          String(message).includes(`${name} ignores its lightbox option because PhotoGroup owns`),
+        ),
+      ).toHaveLength(1)
+      mounted.unmount()
+    },
+  )
+
   it('uses the explicit canonical collection regardless of descendant order', async () => {
     const first = makePhoto({ id: 'first' })
     const album = [makePhoto({ id: 'second' }), makePhoto({ id: 'third' })]
     const mounted = await mountComponent(PhotoGroup, {
-      props: { photos: [first, ...album], lightbox: ProbeLightbox },
+      props: { photos: [first, ...album], lightbox: { component: ProbeLightbox } },
       slots: {
         default: () => [h(PhotoAlbum, { photos: album }), h(Photo, { photo: first })],
       },
@@ -55,7 +98,7 @@ describe('PhotoGroup registration', () => {
     const second = makePhoto({ id: 'second' })
     const props = reactive({
       photos: [first, second] as readonly PhotoItem[],
-      lightbox: ProbeLightbox,
+      lightbox: { component: ProbeLightbox },
     })
     const mounted = await mountComponent(PhotoGroup, {
       props,
@@ -95,7 +138,7 @@ describe('PhotoGroup registration', () => {
       mountComponent(PhotoGroup, {
         props: {
           photos: [duplicate, { ...duplicate }],
-          lightbox: ProbeLightbox,
+          lightbox: { component: ProbeLightbox },
         },
         slots: {
           default: () => [h(Photo, { photo: duplicate }), h(PhotoAlbum, { photos: [duplicate] })],
@@ -111,7 +154,7 @@ describe('PhotoGroup registration', () => {
       const missing = makePhoto({ id: 'missing' })
       await expect(
         mountComponent(PhotoGroup, {
-          props: { photos: [canonical], lightbox: ProbeLightbox },
+          props: { photos: [canonical], lightbox: { component: ProbeLightbox } },
           slots: {
             default: () =>
               recipe === 'photo'
@@ -134,7 +177,7 @@ describe('PhotoGroup registration', () => {
       return () => null
     })
     const mounted = await mountComponent(PhotoGroup, {
-      props: { photos: [a, b], lightbox: ProbeLightbox },
+      props: { photos: [a, b], lightbox: { component: ProbeLightbox } },
       slots: { default: () => h(Capture) },
     })
     const first = Symbol('first')
@@ -182,6 +225,8 @@ describe('PhotoGroup registration', () => {
       async close() {},
       async activateById() {},
       isOpen: computed(() => false),
+      activeId: computed(() => null),
+      activePhoto: computed(() => null),
     }
     const mounted = await mountComponent(Photo, {
       props: { photo: descendant },

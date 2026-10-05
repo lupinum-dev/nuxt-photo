@@ -31,6 +31,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
   }, panzoom.toggleZoom)
   const keyboardWheel = createKeyboardWheelHandlers({
     isOpen: state.isOpen,
+    direction: state.direction,
     animating: state.animating,
     isZoomedIn: state.isZoomedIn,
     transitionInProgress: state.transitionInProgress,

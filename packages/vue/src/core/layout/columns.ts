@@ -1,24 +1,13 @@
-import type { ColumnsLayoutOptions, LayoutEntry, LayoutGroup, PhotoItem } from '../types'
+import type {
+  ColumnsLayoutOptions,
+  LayoutEntry,
+  LayoutGroup,
+  ResolvedPhotoItem as PhotoItem,
+} from '../types'
 import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } from './types'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
-}
-
-function columnHeight<TMeta extends object>(
-  items: readonly PhotoItem<TMeta>[],
-  start: number,
-  end: number,
-  targetColumnWidth: number,
-  spacing: number,
-  padding: number,
-) {
-  let height = 0
-  for (let index = start; index < end; index++) {
-    height += targetColumnWidth / ratio(items[index]!) + 2 * padding
-    if (index > start) height += spacing
-  }
-  return height
 }
 
 function findColumnBreaks<TMeta extends object>(
@@ -35,25 +24,78 @@ function findColumnBreaks<TMeta extends object>(
       2 * padding * count) /
     columns
 
-  const costs: number[][] = Array.from({ length: columns + 1 }, () =>
-    Array.from({ length: count + 1 }, () => Infinity),
-  )
-  const previous: number[][] = Array.from({ length: columns + 1 }, () =>
-    Array.from({ length: count + 1 }, () => -1),
-  )
-  costs[0]![0] = 0
+  const itemHeights = items.map((item) => targetColumnWidth / ratio(item) + 2 * padding)
+  // Prefix sums choose a feasible partition, used only as a cost upper bound.
+  // They never decide the result: subtraction can change floating-point ties.
+  const prefixes = new Float64Array(count + 1)
+  const increasing = itemHeights.every((height) => Number.isFinite(height) && height >= 0)
+  for (let index = 0; index < count; index++) {
+    prefixes[index + 1] = prefixes[index]! + itemHeights[index]! + spacing
+  }
+  let upperBound = Infinity
+  if (increasing && Number.isFinite(prefixes[count])) {
+    let start = 0
+    let bound = 0
+    for (let column = 1; column <= columns; column++) {
+      let end = count
+      if (column < columns) {
+        const target = (prefixes[count]! * column) / columns
+        let low = start + 1
+        let high = count - (columns - column)
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2)
+          if (prefixes[middle]! < target) low = middle + 1
+          else high = middle
+        }
+        end = low
+        if (
+          end > start + 1 &&
+          Math.abs(prefixes[end - 1]! - target) < Math.abs(prefixes[end]! - target)
+        )
+          end--
+      }
+      let height = 0
+      for (let index = start; index < end; index++) {
+        height += itemHeights[index]!
+        if (index > start) height += spacing
+      }
+      bound += (targetColumnHeight - height) ** 2
+      start = end
+    }
+    upperBound = bound
+  }
+
+  let costs = new Float64Array(count + 1).fill(Infinity)
+  costs[0] = 0
+  const previous = Array.from({ length: columns + 1 }, () => new Int32Array(count + 1).fill(-1))
 
   for (let column = 1; column <= columns; column++) {
-    for (let end = column; end <= count; end++) {
-      for (let start = column - 1; start < end; start++) {
-        const height = columnHeight(items, start, end, targetColumnWidth, spacing, padding)
-        const nextCost = costs[column - 1]![start]! + (targetColumnHeight - height) ** 2
-        if (nextCost < costs[column]![end]!) {
-          costs[column]![end] = nextCost
+    const nextCosts = new Float64Array(count + 1).fill(Infinity)
+    // Visit starts in order so equal costs keep the first start.
+    // Extend each segment in O(1), adding heights in photo order so rounding is
+    // stable. A partial cost above a feasible complete cost cannot win: all
+    // remaining costs are nonnegative. Equal costs are kept, not pruned.
+    // The worst case remains O(columns * count²), without a heuristic window.
+    for (let start = column - 1; start < count; start++) {
+      const priorCost = costs[start]!
+      if (priorCost === Infinity || priorCost > upperBound) continue
+      let height = 0
+      for (let end = start + 1; end <= count; end++) {
+        height += itemHeights[end - 1]!
+        if (end > start + 1) height += spacing
+        const nextCost = priorCost + (targetColumnHeight - height) ** 2
+        // Once above the target, increasing heights can only raise this cost.
+        if (nextCost > upperBound) {
+          if (increasing && height >= targetColumnHeight) break
+          continue
+        }
+        if (nextCost < nextCosts[end]!) {
+          nextCosts[end] = nextCost
           previous[column]![end] = start
         }
       }
     }
+    costs = nextCosts
   }
 
   const path = [count]

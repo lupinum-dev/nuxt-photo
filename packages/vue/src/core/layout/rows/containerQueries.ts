@@ -1,8 +1,13 @@
 import { computeRowsLayout } from './index'
 import { computeGaps, computeWidthDivisor } from '../constants'
-import { resolveResponsiveParameter } from '../../types'
+import { resolveResponsiveValue } from '../../types'
 import { devWarn } from '../../env'
-import type { LayoutGroup, PhotoItem, ResponsiveParameter } from '../../types'
+import type {
+  RowsLayoutOptions,
+  LayoutGroup,
+  ResolvedPhotoItem as PhotoItem,
+  ResponsiveParameter,
+} from '../../types'
 
 export interface BreakpointStylesOptions<TMeta extends object = Readonly<Record<string, unknown>>> {
   photos: readonly PhotoItem<TMeta>[]
@@ -50,6 +55,7 @@ function rowSignature<TMeta extends object>(
  */
 export function computeBreakpointStyles<TMeta extends object>(
   opts: BreakpointStylesOptions<TMeta>,
+  rows: (options: RowsLayoutOptions<TMeta>) => LayoutGroup<TMeta>[] = computeRowsLayout,
 ): string {
   const { photos, containerName } = opts
   if (photos.length === 0 || opts.breakpoints.length === 0) return ''
@@ -61,10 +67,10 @@ export function computeBreakpointStyles<TMeta extends object>(
   type BpEntry = { bp: number; sig: string; groups: LayoutGroup<TMeta>[] }
   const bpEntries: BpEntry[] = []
   for (const bp of sorted) {
-    const spacing = resolveResponsiveParameter(opts.spacing, bp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, bp, 0)
-    const targetRowHeight = resolveResponsiveParameter(opts.targetRowHeight, bp, 300)
-    const groups = computeRowsLayout({
+    const spacing = resolveResponsiveValue(opts.spacing, bp, 8)
+    const padding = resolveResponsiveValue(opts.padding, bp, 0)
+    const targetRowHeight = resolveResponsiveValue(opts.targetRowHeight, bp, 300)
+    const groups = rows({
       photos,
       containerWidth: bp,
       spacing,
@@ -118,8 +124,8 @@ export function computeBreakpointStyles<TMeta extends object>(
     const isLast = s === spans.length - 1
     const sampleBp = span.sampleBp
 
-    const spacing = resolveResponsiveParameter(opts.spacing, sampleBp, 8)
-    const padding = resolveResponsiveParameter(opts.padding, sampleBp, 0)
+    const spacing = resolveResponsiveValue(opts.spacing, sampleBp, 8)
+    const padding = resolveResponsiveValue(opts.padding, sampleBp, 0)
 
     // Build the @container condition
     let condition: string

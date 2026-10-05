@@ -1,49 +1,50 @@
 import {
   computed,
   getCurrentInstance,
-  inject,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
-  unref,
   toValue,
   watch,
-  type MaybeRef,
   type MaybeRefOrGetter,
 } from 'vue'
 import {
-  createNativeImageAdapter,
   DEFAULT_TRANSITION_CONFIG,
   type AreaMetrics,
-  type ImageAdapter,
   type LightboxNavigationMode,
   type LightboxTransitionOption,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
 } from '../core/index'
 import { usePanzoom } from './panzoom'
 import { useCarousel } from './carousel'
 import { useLightboxMotion } from './transitions/runtime'
 import { useLightboxInputHandlers } from './input/pointer'
-import {
-  createGeometrySync,
-  createKeydownBinding,
-  useLightboxWindowLifecycle,
-  watchPhotoCollection,
-} from './watchers'
-import { ImageAdapterKey, PhotoDefaultsKey } from '../provide/keys'
+import { createGeometrySync, createKeydownBinding, useLightboxWindowLifecycle } from './watchers'
+import { useGalleryRuntime } from '../gallery/runtime'
+import { usePhotoConfig } from '../config'
+import { resolvePhotoImage } from '../providers/resolve'
 import type { LightboxLifecycleStatus } from '../provide/keys'
 import { devWarn } from '../core/env'
 import { isAbortError } from './transitions/animation'
 import { useAsyncErrorReporter } from '../internal/asyncErrors'
-import { acquireLightboxOwnership, releaseLightboxOwnership } from '../internal/lightboxOwnership'
+import {
+  acquireLightboxOwnership,
+  releaseLightboxOwnership,
+  ownsLightboxScreen,
+} from '../internal/lightboxOwnership'
+import { createLightboxHistory, initialPhotoId } from './history'
 
 export function getMountedSlideIndices(
   active: number,
   count: number,
   leaving: Iterable<number> = [],
+  neighboursReady = true,
 ) {
   if (count <= 0) return new Set<number>()
-  const mounted = new Set([(active - 1 + count) % count, active % count, (active + 1) % count])
+  const mounted = new Set<number>()
+  for (let offset = neighboursReady ? -1 : 0; offset <= (neighboursReady ? 1 : 0); offset++)
+    mounted.add((((active + offset) % count) + count) % count)
   // A photo that is still fading out keeps its image until the fade ends.
   for (const index of leaving) if (index < count) mounted.add(index)
   return mounted
@@ -67,17 +68,16 @@ export function resolveTransitionConfig(
 /**
  * Internal Vue lightbox state.
  *
- * Public customisation should go through `provideLightbox`; this function
+ * Custom lightboxes use `LightboxProvider` and `useLightbox`; this function
  * wires the Vue-side composables together: reactive photo state, DOM refs,
  * Embla paging, pan/zoom, gestures, and DOM-owned transitions.
- * Lifecycle intent is reconciled by one abortable runner. Status is the sole
- * writable representation of actual lifecycle state; DOM mount is derived.
+ * Lifecycle intent is reconciled by one abortable runner. The gallery owns identity and visibility;
+ * lifecycle status only coordinates animations and DOM mounting.
  */
 export function useLightboxRuntimeState(
   photosInput: MaybeRefOrGetter<PhotoItem | readonly PhotoItem[]>,
   transitionOption?: MaybeRefOrGetter<LightboxTransitionOption | undefined>,
   minZoom?: number,
-  imageAdapter?: MaybeRef<ImageAdapter | undefined>,
   navigationOption?: MaybeRefOrGetter<LightboxNavigationMode | undefined>,
 ) {
   if (import.meta.env.DEV && !getCurrentInstance()) {
@@ -89,12 +89,17 @@ export function useLightboxRuntimeState(
     return Array.isArray(value) ? value : [value]
   })
 
-  const globalDefaults = inject(PhotoDefaultsKey, undefined)
-  const injectedImageAdapter = inject(ImageAdapterKey, null)
-  const resolvedMinZoom = minZoom ?? globalDefaults?.minZoom
-  const resolvedImageAdapter = computed(
-    () => unref(imageAdapter) ?? injectedImageAdapter ?? createNativeImageAdapter(),
+  const gallery = useGalleryRuntime(photos)
+  const config = usePhotoConfig()
+  const initialId = initialPhotoId(
+    typeof window === 'undefined' ? config.value.initialUrl : window.location.href,
+    config.value.lightbox.deepLink,
   )
+  const initialIndex = photos.value.findIndex((photo) => photo.id === initialId)
+  const initialOpening = ref(initialIndex >= 0)
+  if (initialOpening.value) gallery.requestIndex(initialIndex)
+  const rootRef = ref<HTMLElement | null>(null)
+  const resolvedMinZoom = minZoom ?? config.value.lightbox.minZoom
 
   const reportAsyncError = useAsyncErrorReporter()
   const ownershipId = Symbol('nuxt-photo:lightbox-owner')
@@ -110,21 +115,29 @@ export function useLightboxRuntimeState(
   motionQuery?.addEventListener('change', syncReducedMotion)
 
   const transitionConfig = computed(() => {
-    return resolveTransitionConfig(toValue(transitionOption), reducedMotion.value)
+    if (initialOpening.value) return { ...DEFAULT_TRANSITION_CONFIG, mode: 'none' as const }
+    return resolveTransitionConfig(
+      toValue(transitionOption) ?? config.value.lightbox.transition,
+      reducedMotion.value,
+    )
   })
   const navigationMode = computed(
-    (): LightboxNavigationMode => toValue(navigationOption) ?? 'slide',
+    (): LightboxNavigationMode =>
+      toValue(navigationOption) ?? config.value.lightbox.navigation ?? 'slide',
   )
 
   const mediaAreaRef = ref<HTMLElement | null>(null)
   const areaMetrics = ref<AreaMetrics | null>(null)
   const frameAreaMetrics = ref<AreaMetrics | null>(null)
-  const lifecycleStatus = ref<LightboxLifecycleStatus>('closed')
+  const lifecycleStatus = ref<LightboxLifecycleStatus>(initialOpening.value ? 'opening' : 'closed')
+  const loadedSlides = ref(new Set<PhotoItem>())
+  const prefetchedAround = ref(-1)
+  const prefetched = new Set<string>()
   const activeImageLoadFailed = ref(false)
   let isZoomedIn = () => false
   let isInteractionLocked = () => false
 
-  const carousel = useCarousel(photos, areaMetrics, frameAreaMetrics, {
+  const carousel = useCarousel(gallery, areaMetrics, frameAreaMetrics, {
     isZoomedIn: () => isZoomedIn(),
     isInteractionLocked: () => isInteractionLocked(),
     navigationMode: () => navigationMode.value,
@@ -145,21 +158,72 @@ export function useLightboxRuntimeState(
     () => reducedMotion.value,
     () => navigationMode.value,
   )
+  watch(
+    [
+      lifecycleStatus,
+      carousel.activeIndex,
+      () => {
+        const photo = photos.value[carousel.activeIndex.value]
+        return !!photo && loadedSlides.value.has(photo)
+      },
+      motion.transitionInProgress,
+    ],
+    ([status, active, loaded, moving]) => {
+      if (status === 'closed') {
+        prefetched.clear()
+        loadedSlides.value.clear()
+        prefetchedAround.value = -1
+        return
+      }
+      if (status !== 'open' || moving || !loaded || typeof Image === 'undefined') return
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection
+      if (connection?.saveData) return
+      const count = photos.value.length
+      for (const offset of [-1, 1]) {
+        const index = (active + offset + count) % count
+        if (index === active) continue
+        const photo = photos.value[index]!
+        const resolved = resolvePhotoImage(photo, 'slide', config.value)
+        const key = resolved.srcset ?? resolved.src
+        if (prefetched.has(key)) continue
+        prefetched.add(key)
+        const image = new Image()
+        image.fetchPriority = 'low'
+        image.decoding = 'async'
+        // Match LightboxSlide's fitted width and set it before source selection.
+        const width = Number.parseInt(String(carousel.getSlideFrameStyle(photo).width)) || 0
+        image.sizes = width > 0 ? `${width}px` : '100vw'
+        if (resolved.srcset) image.srcset = resolved.srcset
+        image.src = resolved.src
+      }
+      prefetchedAround.value = active
+    },
+    { flush: 'post' },
+  )
+  if (initialOpening.value) motion.stageMounted.value = true
   isZoomedIn = () => panzoom.isZoomedIn.value
   isInteractionLocked = () => motion.animating.value
 
   const syncGeometry = createGeometrySync(mediaAreaRef, areaMetrics, frameAreaMetrics)
 
-  type LightboxIntent =
-    | { readonly kind: 'closed' }
-    | { readonly kind: 'open'; readonly index: number }
+  type LightboxIntent = { readonly kind: 'closed' } | { readonly kind: 'open'; readonly id: string }
   type ActiveRun = {
     readonly controller: AbortController
     readonly done: Promise<unknown>
   }
 
-  const isOpen = computed(() => lifecycleStatus.value !== 'closed')
+  watch(lifecycleStatus, (status) => gallery.requestVisibility(status !== 'closed'), {
+    flush: 'sync',
+    immediate: true,
+  })
+  const isOpen = gallery.isOpen
   let desired: LightboxIntent = { kind: 'closed' }
+
+  function releaseClosedOwnership() {
+    if (lifecycleStatus.value === 'closed' && desired.kind === 'closed')
+      releaseLightboxOwnership(ownershipId)
+  }
   let activeRun: ActiveRun | null = null
   let reconcilePromise: Promise<void> | null = null
 
@@ -183,6 +247,12 @@ export function useLightboxRuntimeState(
   async function reconcile() {
     while (true) {
       const target = desired
+      const targetIndex =
+        target.kind === 'open' ? photos.value.findIndex((photo) => photo.id === target.id) : -1
+      if (target.kind === 'open' && targetIndex < 0) {
+        desired = { kind: 'closed' }
+        continue
+      }
 
       try {
         if (target.kind === 'closed') {
@@ -194,18 +264,18 @@ export function useLightboxRuntimeState(
           keydown.detach()
           lifecycleStatus.value = 'closed'
         } else if (lifecycleStatus.value === 'open') {
-          if (carousel.activeIndex.value !== target.index) {
-            carousel.goTo(target.index, true)
+          if (carousel.activeIndex.value !== targetIndex) {
+            carousel.goTo(targetIndex, true)
             activeImageLoadFailed.value = false
             await prepareActiveSlide(true)
           }
         } else {
+          carousel.goTo(targetIndex, true)
           lifecycleStatus.value = 'opening'
-          carousel.goTo(target.index, true)
           keydown.attach()
 
           const opened = await startRun((signal) =>
-            motion.open(target.index, transitionCallbacks, signal),
+            motion.open(targetIndex, transitionCallbacks, signal),
           )
           if (!opened) {
             motion.resetClosedVisualState()
@@ -229,7 +299,7 @@ export function useLightboxRuntimeState(
         ((target.kind === 'closed' && lifecycleStatus.value === 'closed') ||
           (target.kind === 'open' &&
             lifecycleStatus.value === 'open' &&
-            carousel.activeIndex.value === target.index))
+            carousel.activeIndex.value === targetIndex))
       if (realized) return
     }
   }
@@ -243,15 +313,16 @@ export function useLightboxRuntimeState(
     return reconcilePromise
   }
 
-  async function open(index = 0) {
+  async function open(index = 0, fromInitialLink = false) {
     const currentPhotos = photos.value
     if (index < 0 || index >= currentPhotos.length) {
       throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
     }
 
     const photo = currentPhotos[index]!
-    motion.captureOpen(index, resolvedImageAdapter.value(photo, 'thumb').src)
-    const target: LightboxIntent = { kind: 'open', index }
+    motion.captureOpen(index, resolvePhotoImage(photo, 'thumb', config.value).src)
+    if (!isOpen.value) gallery.resolveDirection(motion.getThumbElement(index))
+    const target: LightboxIntent = { kind: 'open', id: photo.id }
     desired = target
     activeRun?.controller.abort()
     await acquireLightboxOwnership({ id: ownershipId, close })
@@ -260,23 +331,22 @@ export function useLightboxRuntimeState(
         await ensureReconciled()
         return
       }
+      await locationHistory.enter(photo.id, fromInitialLink)
+      if (desired !== target) return
       await ensureReconciled()
     } finally {
-      if (lifecycleStatus.value === 'closed') {
-        releaseLightboxOwnership(ownershipId)
-      }
+      releaseClosedOwnership()
     }
   }
 
-  async function close() {
+  async function close(fromPop = false) {
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
+    const historyClosed = fromPop ? Promise.resolve() : locationHistory.leave()
     try {
-      await ensureReconciled()
+      await Promise.all([ensureReconciled(), historyClosed])
     } finally {
-      if (lifecycleStatus.value === 'closed') {
-        releaseLightboxOwnership(ownershipId)
-      }
+      releaseClosedOwnership()
     }
   }
 
@@ -309,6 +379,7 @@ export function useLightboxRuntimeState(
   const gestures = useLightboxInputHandlers({
     state: {
       isOpen,
+      direction: gallery.direction,
       animating: motion.animating,
       isZoomedIn: panzoom.isZoomedIn,
       zoomAllowed: panzoom.zoomAllowed,
@@ -347,7 +418,7 @@ export function useLightboxRuntimeState(
         const count = photos.value.length
         if (!motion.releaseNavigation(count > 1 ? deltaX : 0, count > 1 ? velocityX : 0)) return
         // Dragging toward the start edge reveals the next photo, mirrored for RTL.
-        const rtl = document.documentElement.dir.toLowerCase() === 'rtl'
+        const rtl = gallery.direction.value === 'rtl'
         if (rtl ? deltaX > 0 : deltaX < 0) carousel.goToNext()
         else carousel.goToPrev()
       },
@@ -367,7 +438,7 @@ export function useLightboxRuntimeState(
     prepareActiveSlide,
     resetGestureState: () => gestures.resetGestureState(),
     cancelTapTimer: () => gestures.cancelTapTimer(),
-    getThumbSrc: (photo: PhotoItem) => resolvedImageAdapter.value(photo, 'thumb').src,
+    getThumbSrc: (photo: PhotoItem) => resolvePhotoImage(photo, 'thumb', config.value).src,
     setImageLoadFailed: (failed: boolean, error?: unknown) => {
       activeImageLoadFailed.value = failed
       if (failed) devWarn('Active slide image failed to decode', error)
@@ -379,16 +450,27 @@ export function useLightboxRuntimeState(
 
   const closeCallbacks = transitionCallbacks
 
-  watchPhotoCollection(photos, {
-    activeIndex: carousel.activeIndex,
-    isMounted: isOpen,
-    goTo: carousel.goTo,
-    close,
-    reportAsyncError,
+  watch(photos, () => {
+    if (isOpen.value && !gallery.activePhoto.value) reportAsyncError('collection-close', close())
   })
   watch(carousel.activeIndex, () => {
     if (lifecycleStatus.value !== 'open') return
     reportAsyncError('prepare-active-slide', prepareActiveSlide(true))
+    if (gallery.activeId.value) locationHistory.navigate(gallery.activeId.value)
+  })
+  const locationHistory = createLightboxHistory({
+    config: () => config.value.lightbox,
+    ownsScreen: () => ownsLightboxScreen(ownershipId),
+    requestClose: () => reportAsyncError('history-close', close(true)),
+  })
+  onMounted(() => {
+    if (initialOpening.value)
+      reportAsyncError(
+        'initial-deep-link',
+        open(initialIndex, true).finally(() => {
+          initialOpening.value = false
+        }),
+      )
   })
   useLightboxWindowLifecycle({
     isMounted: isOpen,
@@ -399,6 +481,7 @@ export function useLightboxRuntimeState(
   })
 
   onBeforeUnmount(() => {
+    locationHistory.dispose()
     motionQuery?.removeEventListener('change', syncReducedMotion)
     desired = { kind: 'closed' }
     activeRun?.controller.abort()
@@ -416,10 +499,14 @@ export function useLightboxRuntimeState(
     transitionConfig,
     navigationMode,
     reducedMotion,
+    activeId: gallery.activeId,
+    direction: gallery.direction,
     activeIndex: carousel.activeIndex,
     activePhoto: carousel.currentPhoto,
     isOpen,
-    imageAdapter: resolvedImageAdapter,
+    photoConfig: config,
+    initialOpening,
+    rootRef,
 
     zoomState: panzoom.zoomState,
     panState: panzoom.panState,
@@ -445,6 +532,14 @@ export function useLightboxRuntimeState(
     setSlideZoomRef: panzoom.setSlideZoomRef,
     setSlideFrameRef: motion.setSlideFrameRef,
     setSlideImageRef: motion.setSlideImageRef,
+    onSlideImageLoad: (index: number) => {
+      const photo = photos.value[index]
+      if (photo) {
+        loadedSlides.value.add(photo)
+        const image = resolvePhotoImage(photo, 'slide', config.value)
+        prefetched.add(image.srcset ?? image.src)
+      }
+    },
     setOverlayRef: motion.setOverlayRef,
     setViewportRef: motion.setViewportRef,
     setControlsRef: motion.setControlsRef,
@@ -460,7 +555,7 @@ export function useLightboxRuntimeState(
     onWheel: gestures.onWheel,
 
     open,
-    close,
+    close: () => close(),
     next,
     prev,
     toggleZoom: panzoom.toggleZoom,
@@ -474,6 +569,7 @@ export function useLightboxRuntimeState(
         carousel.activeIndex.value,
         count,
         motion.leavingSlides.value,
+        prefetchedAround.value === carousel.activeIndex.value,
       ).has(index)
     },
   }

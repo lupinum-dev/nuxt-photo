@@ -8,7 +8,7 @@ defineProps<{ photos: PhotoItem[] }>()
 <template>
   <PhotoAlbum
     :photos="photos"
-    :lightbox="CaptionLightbox"
+    :lightbox="{ component: CaptionLightbox }"
     :layout="{ type: 'rows', targetRowHeight: 150 }"
     :spacing="6"
   />

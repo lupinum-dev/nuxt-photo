@@ -17,7 +17,7 @@ import {
   type AreaMetrics,
   type PanBounds,
   type PanState,
-  type PhotoItem,
+  type ResolvedPhotoItem as PhotoItem,
   type RectLike,
   type ZoomState,
 } from '../core/index'

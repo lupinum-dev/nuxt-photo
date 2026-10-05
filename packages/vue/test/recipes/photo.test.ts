@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createApp, defineComponent, h, reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import Photo from '../../src/components/Photo.vue'
-import type { ImageContext, PhotoItem } from '../../src/core/types'
+import type { PhotoItem } from '../../src/core/types'
 import { flushUi, installBrowserStubs, mountComponent } from '../support/runtime'
 
 describe('Photo', () => {
@@ -25,13 +25,57 @@ describe('Photo', () => {
     mounted.unmount()
   })
 
+  it.each([
+    [true, 'eager', 'high'],
+    [false, 'lazy', null],
+  ] as const)('applies priority %s', async (priority, expectedLoading, expectedPriority) => {
+    const mounted = await mountComponent(Photo, {
+      props: { photo: makePhoto(), priority },
+    })
+    const image = mounted.container.querySelector('img')!
+    expect(image.getAttribute('loading')).toBe(expectedLoading)
+    expect(image.getAttribute('fetchpriority')).toBe(expectedPriority)
+    mounted.unmount()
+  })
+
+  it.each([
+    [true, undefined, '100vw'],
+    [false, undefined, 'auto, 480px'],
+    [true, '(min-width: 768px) 720px, 100vw', '(min-width: 768px) 720px, 100vw'],
+  ] as const)(
+    'keeps priority %s sizes %s stable after measuring the width',
+    async (priority, sizes, expected) => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
+        DOMRect.fromRect({ width: 480, height: 320 }),
+      )
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(private readonly callback: ResizeObserverCallback) {}
+          observe() {
+            this.callback(
+              [{ contentRect: { width: 480 } } as ResizeObserverEntry],
+              this as unknown as ResizeObserver,
+            )
+          }
+          disconnect() {}
+        },
+      )
+      const mounted = await mountComponent(Photo, {
+        props: { photo: makePhoto(), priority, sizes },
+      })
+      await flushUi()
+      expect(mounted.container.querySelector('img')!.getAttribute('sizes')).toBe(expected)
+      mounted.unmount()
+    },
+  )
+
   it('merges consumer attrs and listeners with interactive trigger behavior', async () => {
     const onClick = vi.fn()
     const mounted = await mountComponent(Photo, {
       props: {
         photo: makePhoto({ id: 'interactive' }),
-        lightbox: true,
-        transition: 'none',
+        lightbox: { transition: 'none' as const },
         id: 'reviewed-photo',
         class: 'consumer-photo',
         'data-test-id': 'photo-root',
@@ -115,11 +159,13 @@ describe('Photo', () => {
         () => () =>
           h(Photo, {
             photo,
-            lightbox: true,
-            transition: 'none',
-            imageAdapter: (_photo: PhotoItem<object>, context: ImageContext) => {
-              if (context === 'slide') throw new Error('slide adapter failed')
-              return { src: photo.src }
+            lightbox: { transition: 'none' as const },
+            provider: {
+              url: (src: string) => src,
+              srcset: (_photo: PhotoItem, context: 'thumb' | 'slide') => {
+                if (context === 'slide') throw new Error('slide provider failed')
+                return undefined
+              },
             },
           }),
       ),
@@ -131,7 +177,7 @@ describe('Photo', () => {
     await flushUi()
 
     expect(errorHandler).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'slide adapter failed' }),
+      expect.objectContaining({ message: 'slide provider failed' }),
       expect.anything(),
       expect.stringContaining('render function'),
     )

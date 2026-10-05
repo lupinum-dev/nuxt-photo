@@ -3,7 +3,7 @@ import {
   getResponsiveBreakpoints,
   mergeResponsiveBreakpoints,
   responsive,
-  resolveResponsiveParameter,
+  resolveResponsiveValue,
 } from '../../src/core/types'
 
 describe('responsive()', () => {
@@ -45,10 +45,10 @@ describe('responsive()', () => {
     expect(() => fn(Number.POSITIVE_INFINITY)).toThrow(/width must be finite/)
   })
 
-  it('integrates with resolveResponsiveParameter', () => {
+  it('integrates with resolveResponsiveValue', () => {
     const fn = responsive({ 0: 4, 600: 8 })
-    expect(resolveResponsiveParameter(fn, 300, 0)).toBe(4)
-    expect(resolveResponsiveParameter(fn, 700, 0)).toBe(8)
+    expect(resolveResponsiveValue(fn, 300, 0)).toBe(4)
+    expect(resolveResponsiveValue(fn, 700, 0)).toBe(8)
   })
 
   it('exposes breakpoint metadata for responsive() resolvers', () => {

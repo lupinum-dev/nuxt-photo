@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoCarousel from '../src/components/PhotoCarousel.vue'
-import { PhotoDefaultsKey } from '../src/provide/keys'
-import { DEFAULT_PHOTO_LABELS, resolvePhotoLabels } from '../src/provide/labels'
+import { createPhoto, usePhotoLabels, type PhotoLabels } from '../src'
+import { createSSRApp } from 'vue'
+import { renderToString } from '@vue/server-renderer'
+import { resolvePhotoLabels } from '../src/provide/labels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('photo labels', () => {
@@ -15,36 +17,46 @@ describe('photo labels', () => {
     document.body.innerHTML = ''
   })
 
-  it('freezes English defaults and fills partial label sets', () => {
-    expect(Object.isFrozen(DEFAULT_PHOTO_LABELS)).toBe(true)
-    const labels = resolvePhotoLabels({ close: 'Schließen', viewPhoto: (i) => `Foto ${i}` })
+  it('freezes English defaults and fills partial label sets', async () => {
+    const labelsFor = async (partial: Partial<PhotoLabels>) => {
+      const captured: PhotoLabels[] = []
+      const app = createSSRApp({
+        setup() {
+          captured.push(usePhotoLabels())
+          return () => null
+        },
+      })
+      app.use(createPhoto({ labels: partial }))
+      await renderToString(app)
+      expect(captured).toHaveLength(1)
+      return captured[0]!
+    }
+    expect(Object.isFrozen(resolvePhotoLabels('en'))).toBe(true)
+    const labels = await labelsFor({ close: 'Schließen', viewPhoto: (i) => `Foto ${i}` })
     expect(labels.close).toBe('Schließen')
     expect(labels.viewPhoto(2)).toBe('Foto 2')
-    expect(labels.previous).toBe(DEFAULT_PHOTO_LABELS.previous)
+    expect(labels.previous).toBe(resolvePhotoLabels('en').previous)
 
-    const fallback = resolvePhotoLabels({ close: undefined })
-    expect(fallback.close).toBe(DEFAULT_PHOTO_LABELS.close)
+    const fallback = await labelsFor({ close: undefined })
+    expect(fallback.close).toBe(resolvePhotoLabels('en').close)
   })
 
   it('renders localized lightbox labels and announcements', async () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: {
         photos: [makePhoto({ id: 'l-1' }), makePhoto({ id: 'l-2' })],
-        transition: 'none',
+        lightbox: { transition: 'none' },
       },
-      provideValues: [
-        [
-          PhotoDefaultsKey,
-          {
-            labels: {
-              photoViewer: 'Bildbetrachter',
-              previous: 'Zurück',
-              next: 'Weiter',
-              close: 'Schließen',
-              slideStatus: (index: number, count: number) => `Bild ${index} von ${count}`,
-            },
+      plugins: [
+        createPhoto({
+          labels: {
+            photoViewer: 'Bildbetrachter',
+            previous: 'Zurück',
+            next: 'Weiter',
+            close: 'Schließen',
+            slideStatus: (index: number, count: number) => `Bild ${index} von ${count}`,
           },
-        ],
+        }),
       ],
     })
 
@@ -64,7 +76,7 @@ describe('photo labels', () => {
   it('localizes the trigger fallback when alt text is absent', async () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: { photos: [makePhoto({ id: 'l-alt', alt: undefined })], lightbox: true },
-      provideValues: [[PhotoDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
+      plugins: [createPhoto({ labels: { viewPhoto: (i: number) => `Foto ${i}` } })],
     })
 
     expect(mounted.container.querySelector('[role="button"]')?.getAttribute('aria-label')).toBe(
@@ -79,7 +91,7 @@ describe('photo labels', () => {
         photos: [makePhoto({ id: 'carousel-label', alt: undefined })],
         lightbox: true,
       },
-      provideValues: [[PhotoDefaultsKey, { labels: { viewPhoto: (i: number) => `Foto ${i}` } }]],
+      plugins: [createPhoto({ labels: { viewPhoto: (i: number) => `Foto ${i}` } })],
     })
 
     expect(mounted.container.querySelector('.np-carousel__slide')?.getAttribute('aria-label')).toBe(

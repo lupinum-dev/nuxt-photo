@@ -3,7 +3,7 @@
     ref="containerRef"
     v-bind="$attrs"
     class="np-album"
-    :class="[scopeClass, `np-album--${layoutType}`]"
+    :class="[ui?.root, scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
     <template v-if="renderBranch.kind === 'rows'">
@@ -18,7 +18,7 @@
           class="np-album__item"
           :class="[
             renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
-            itemClass,
+            ui?.item,
           ]"
           :style="item.style"
           v-bind="itemBindings(item.photo, item.index)"
@@ -29,9 +29,9 @@
             :width="item.width"
             :height="item.height"
             :hidden="isHidden(item.photo)"
-            :image-adapter="imageAdapter"
-            :img-class="imgClass"
+            :image-class="ui?.img"
             :sizes="item.computedSizes"
+            :priority="item.index < priority"
           >
             <template v-if="$slots.thumbnail" #thumbnail="slotProps">
               <slot name="thumbnail" v-bind="slotProps" />
@@ -46,7 +46,7 @@
       </div>
     </template>
 
-    <template v-else-if="renderBranch.kind === 'measured'">
+    <template v-else>
       <template v-if="renderBranch.groups.length === 0 && normalizedPhotos.length > 0">
         <div class="np-album__skeleton" />
       </template>
@@ -62,7 +62,7 @@
             v-for="entry in group.entries"
             :key="entry.photo.id"
             class="np-album__item"
-            :class="itemClass"
+            :class="ui?.item"
             :style="itemStyle(entry, group)"
             v-bind="itemBindings(entry.photo, entry.index)"
           >
@@ -72,9 +72,9 @@
               :width="entry.width"
               :height="entry.height"
               :hidden="isHidden(entry.photo)"
-              :image-adapter="imageAdapter"
-              :img-class="imgClass"
-              :sizes="nativeSizes"
+              :image-class="ui?.img"
+              :sizes="thumbnailSizes(entry)"
+              :priority="entry.index < priority"
             >
               <template v-if="$slots.thumbnail" #thumbnail="slotProps">
                 <slot name="thumbnail" v-bind="slotProps" />
@@ -85,38 +85,18 @@
       </template>
     </template>
 
-    <div v-else :style="renderBranch.wrapperStyle">
-      <div
-        v-for="(photo, index) in renderBranch.photos"
-        :key="photo.id"
-        class="np-album__item"
-        :class="itemClass"
-        :style="ssrItemStyle(photo)"
-        v-bind="itemBindings(photo, index)"
-      >
-        <AlbumThumbnail
-          :photo="photo"
-          :index="index"
-          :width="photo.width"
-          :height="photo.height"
-          :hidden="false"
-          :image-adapter="imageAdapter"
-          :img-class="imgClass"
-          :sizes="nativeSizes"
-        >
-          <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-            <slot name="thumbnail" v-bind="slotProps" />
-          </template>
-        </AlbumThumbnail>
-      </div>
-    </div>
+    <span ref="endRef" class="np-album__end" aria-hidden="true" />
   </div>
 
   <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, defineComponent, h, type Component } from 'vue'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
+import { computed, defineComponent, h } from 'vue'
+import type { PhotoUi } from '../types/ui'
+import { useRecipeLightbox } from './shared/useRecipeLightbox'
+
 import {
   mergeResponsiveBreakpoints,
   DEFAULT_COLUMNS,
@@ -124,9 +104,6 @@ import {
   DEFAULT_SPACING,
   DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
-  type ImageAdapter,
-  type LightboxNavigationMode,
-  type LightboxTransitionOption,
   type PhotoItem,
   type ResponsiveParameter,
   type ResponsivePhotoSizes,
@@ -137,7 +114,9 @@ import {
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
 import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
 import { devWarn } from '../core/env'
-import { useAlbumLightbox } from './photo-album/lightbox'
+import { useCollectionLightbox } from './shared/useCollectionLightbox'
+import { useGalleryModel } from '../gallery/model'
+import { useAlbumEndReached } from './photo-album/endReached'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 
 // Generated layout CSS is trusted internal output. innerHTML preserves `<` and
@@ -156,6 +135,8 @@ defineSlots<{
     width: number
     height: number
     hidden: boolean
+    sizes?: string
+    priority?: boolean
   }) => unknown
 }>()
 
@@ -166,6 +147,9 @@ const props = withDefaults(
      * `width` and `height` of the image file.
      */
     photos: readonly PhotoItem<TMeta>[]
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
+    ui?: PhotoUi<'PhotoAlbum'>
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
@@ -201,47 +185,40 @@ const props = withDefaults(
      */
     breakpoints?: readonly number[]
     /**
-     * Image `sizes`: an HTML `sizes` string, or a `ResponsivePhotoSizes` object that the rows
+     * Image `sizes`: an HTML `sizes` string, or a `ResponsivePhotoSizes` object that each
      * layout turns into a value per photo.
      */
     sizes?: string | ResponsivePhotoSizes
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    /** Number of leading photos to load eagerly with high fetch priority. @default 0 */
+    priority?: number
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
-     * `true` opens the built-in lightbox, `false` turns it off, a component replaces it. Read once
+     * `true` opens the built-in lightbox; `false` turns it off. Use `lightbox.component` to replace the viewer. Read once
      * at mount; change the component `key` to remount.
      * @default true
      */
-    lightbox?: boolean | Component
-    /**
-     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
-     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
-     * change while mounted.
-     * @default 'auto'
-     */
-    transition?: LightboxTransitionOption
-    /**
-     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
-     * mounted.
-     * @default 'slide'
-     */
-    navigation?: LightboxNavigationMode
-    /** Classes for each photo wrapper. */
-    itemClass?: string
-    /** Classes for each `<img>`. */
-    imgClass?: string
+    lightbox?: boolean | LightboxOptions
   }>(),
   {
+    lightbox: undefined,
     layout: 'rows',
+    priority: 0,
     spacing: DEFAULT_SPACING,
     padding: DEFAULT_PADDING,
-    lightbox: true,
   },
 )
 
 const emit = defineEmits<{
+  'end-reached': []
+  'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
+
+const endRef = useAlbumEndReached(
+  () => props.photos.length,
+  () => emit('end-reached'),
+)
 
 const normalizedLayout = computed<AlbumLayout>(() => {
   const raw = props.layout
@@ -264,6 +241,14 @@ if (props.defaultContainerWidth === 0) {
   devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
 }
 
+const { options: recipeLightboxOptions } = useRecipeLightbox('PhotoAlbum', () => props.lightbox)
+
+providePhotoConfig(() => ({
+  provider: props.provider,
+  lightbox: recipeLightboxOptions(),
+  validation: props.validation,
+}))
+
 const normalizedPhotos = useRecipePhotos<TMeta>(
   () => props.photos,
   'PhotoAlbum',
@@ -281,9 +266,19 @@ const {
   openById,
   close,
   isOpen,
-} = useAlbumLightbox(normalizedPhotos, props)
+  activeId: ownerActiveId,
+  activePhoto: ownerActivePhoto,
+} = useCollectionLightbox(normalizedPhotos, props, (): HTMLElement | null => containerRef.value)
 
-defineExpose({ open, openById, close, isOpen })
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoAlbum',
+  () => props.active,
+  () => normalizedPhotos.value,
+  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
+  (id) => emit('update:active', id),
+)
+
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 
 const layoutType = computed(() => normalizedLayout.value.type)
 const layoutColumns = computed(() => {
@@ -310,22 +305,19 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
     layoutTargetRowHeight.value,
   ])
 })
-const nativeSizes = computed(() => (typeof props.sizes === 'string' ? props.sizes : undefined))
 
 const {
   containerRef,
-  isMounted,
   scopeClass,
   containerStyle,
   containerQueryCSS,
   containerQueriesRender,
   groups,
   rowItems,
+  thumbnailSizes,
   ssrWrapperStyle,
-  ssrItemStyle,
   groupStyle,
   itemStyle,
-  maybeWarnApproximate,
 } = usePhotoAlbumLayoutState({
   photos: normalizedPhotos,
   layout: layoutType,
@@ -339,8 +331,6 @@ const {
   interactive: hasLightbox,
 })
 
-maybeWarnApproximate()
-
 const renderBranch = computed(() => {
   if (layoutType.value === 'rows') {
     return {
@@ -352,17 +342,9 @@ const renderBranch = computed(() => {
     }
   }
 
-  if (isMounted.value || groups.value.length > 0) {
-    return {
-      kind: 'measured' as const,
-      groups: groups.value,
-    }
-  }
-
   return {
-    kind: 'fallback-grid' as const,
-    wrapperStyle: ssrWrapperStyle.value,
-    photos: normalizedPhotos.value,
+    kind: 'measured' as const,
+    groups: groups.value,
   }
 })
 </script>

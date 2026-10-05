@@ -8,7 +8,7 @@ defineProps<{ photos: PhotoItem[] }>()
   <div class="product">
     <PhotoCarousel
       :photos="photos"
-      :show-counter="false"
+      :controls="['arrows', 'thumbnails']"
       :lightbox="true"
       class="product__gallery"
     />

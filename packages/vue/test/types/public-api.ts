@@ -3,9 +3,9 @@ import {
   PhotoAlbum,
   PhotoCarousel,
   PhotoGroup,
-  provideLightbox,
+  useLightbox,
   type CarouselSlideSlotProps,
-  type ImageAdapter,
+  definePhotoProvider,
   type PhotoItem,
 } from '../../src/index'
 
@@ -34,10 +34,8 @@ const readonlyPhotos = [
   { id: 'one', src: '/one.jpg', width: 1200, height: 800 },
 ] as const satisfies readonly PhotoItem[]
 
-const controller = provideLightbox(readonlyPhotos)
+const controller = useLightbox()
 void controller.openById('one')
-const getterController = provideLightbox(() => readonlyPhotos)
-void getterController.openById('one')
 
 // @ts-expect-error Controller read models are readonly.
 controller.activeIndex.value = 1
@@ -57,12 +55,12 @@ const photoWithInterfaceMeta: PhotoItem<ConsumerMeta> = {
 }
 void photoWithInterfaceMeta
 
-const metadataAdapter: ImageAdapter<ConsumerMeta> = (photo) => ({
-  src: `/photographers/${photo.meta?.photographer ?? 'unknown'}/${photo.src}`,
+const provider = definePhotoProvider({
+  url: (src: string, options: { width: number }) => `${src}?w=${options.width}`,
 })
-void metadataAdapter
+void provider.url('/one.jpg', { width: 640 })
 
-const metadataController = provideLightbox([photoWithInterfaceMeta])
+const metadataController = useLightbox<ConsumerMeta>()
 const activePhotographer: string | undefined =
   metadataController.activePhoto.value?.meta?.photographer
 void activePhotographer
@@ -89,7 +87,6 @@ const carouselProps: CarouselProps = {
   photos: readonlyPhotos,
   loop: true,
   dragFree: true,
-  direction: 'rtl',
   autoplay: { delayMs: 4000, stopOnMouseEnter: true },
 }
 void carouselProps
@@ -104,14 +101,55 @@ void groupInstance.openById('one')
 void groupInstance.openById('one', document.body)
 
 declare const photoInstance: GenericComponentExposed<typeof Photo>
-// @ts-expect-error Single photos do not expose collection controls.
 void photoInstance.open(0)
 
 declare const carouselInstance: GenericComponentExposed<typeof PhotoCarousel>
-// @ts-expect-error Carousels do not expose collection lightbox controls.
 void carouselInstance.open(0)
 
 type GroupDefaultSlot = NonNullable<GenericComponentSlots<typeof PhotoGroup>['default']>
 declare const groupSlot: Parameters<GroupDefaultSlot>[0]
 // @ts-expect-error Group slot collections are readonly.
 groupSlot.photos.push(readonlyPhotos[0])
+
+const albumActive: AlbumProps['active'] = 'one'
+const photoActive: GenericComponentProps<typeof Photo>['active'] = null
+void albumActive
+void photoActive
+void carouselInstance.scrollTo(1)
+void carouselInstance.next()
+void carouselInstance.prev()
+
+const unresolvedPhoto: PhotoItem = { id: 'local', src: '/local.jpg' }
+void unresolvedPhoto
+const nestedAlbumOptions: AlbumProps = {
+  photos: readonlyPhotos,
+  lightbox: { transition: 'none', navigation: 'fade' },
+  ui: { root: 'root', item: 'item', img: 'image' },
+}
+void nestedAlbumOptions
+// @ts-expect-error Components belong under lightbox.component.
+const bareComponent: AlbumProps['lightbox'] = Photo
+void bareComponent
+// @ts-expect-error Album ui only accepts root, item and img.
+const wrongUi: AlbumProps['ui'] = { caption: 'caption' }
+void wrongUi
+// @ts-expect-error Carousel control names are a closed set.
+const wrongControl: CarouselProps['controls'] = ['pause']
+void wrongControl
+
+// @ts-expect-error Internal controller types are not root exports.
+import type { LightboxProviderController } from '../../src'
+// @ts-expect-error Internal renderer types are not root exports.
+import type { LightboxSlideRenderer } from '../../src'
+// @ts-expect-error TransitionMode is internal; consumers use LightboxTransitionOption.
+import type { TransitionMode } from '../../src'
+// @ts-expect-error ResponsiveResolver is internal; consumers use ResponsiveParameter.
+import type { ResponsiveResolver } from '../../src'
+
+declare const removedTypes: [
+  LightboxProviderController,
+  LightboxSlideRenderer,
+  TransitionMode,
+  ResponsiveResolver,
+]
+void removedTypes

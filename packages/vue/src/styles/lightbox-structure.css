@@ -107,6 +107,11 @@
   stroke-linejoin: round;
 }
 
+[dir='rtl'] .np-lightbox__btn--prev svg,
+[dir='rtl'] .np-lightbox__btn--next svg {
+  transform: scaleX(-1);
+}
+
 .np-lightbox__btn:active:not(:disabled) {
   scale: 0.94;
 }
@@ -183,11 +188,19 @@
   touch-action: none;
 }
 
-.np-lightbox__slide {
+.np-lightbox__slide,
+.np-lightbox__slide-spacer {
   flex: 0 0 100%;
   min-width: 0;
   display: grid;
   place-items: center;
+}
+
+/* Nuxt renders an initial deep link in its SSR teleport host before hydration. */
+.np-lightbox[data-np-initial] .np-lightbox__backdrop,
+.np-lightbox[data-np-initial] [data-np-motion='controls'],
+.np-lightbox[data-np-initial] [data-np-motion='viewport'] {
+  opacity: 1;
 }
 
 /* The fade modes stack every photo in one place; only the active one is shown at rest. */

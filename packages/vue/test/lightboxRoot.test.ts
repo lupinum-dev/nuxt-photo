@@ -10,6 +10,7 @@ import { flushUi, installBrowserStubs } from './support/runtime'
 describe('LightboxRoot modal ownership', () => {
   beforeEach(installBrowserStubs)
   afterEach(() => {
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
     document.body.innerHTML = ''
     document.body.style.overflow = ''
@@ -52,6 +53,12 @@ describe('LightboxRoot modal ownership', () => {
     expect(host.getAttribute('aria-hidden')).toBe('true')
     expect(document.activeElement?.getAttribute('data-testid')).toBe('lightbox-root')
     const root = document.querySelector('[data-testid="lightbox-root"]') as HTMLElement
+    // jsdom has no layout: provide a rendered rect for the visible button.
+    // Real hidden/unrendered candidates are checked in the browser regression.
+    const rect = new DOMRect(0, 0, 100, 30)
+    vi.spyOn(document.getElementById('inside')!, 'getClientRects').mockReturnValue(
+      Object.assign([rect], { item: (index: number) => (index === 0 ? rect : null) }),
+    )
     root.dispatchEvent(
       new KeyboardEvent('keydown', {
         key: 'Tab',

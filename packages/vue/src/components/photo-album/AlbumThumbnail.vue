@@ -11,15 +11,16 @@
       :width="width"
       :height="height"
       :hidden="hidden"
+      :sizes="sizes"
+      :priority="priority"
     />
     <PhotoImage
       v-else
       :photo="photo"
       context="thumb"
-      :image-adapter="imageAdapter"
-      loading="lazy"
+      :priority="priority"
       class="np-album__img"
-      :class="imgClass"
+      :class="imageClass"
       :style="{
         display: 'block',
         width: '100%',
@@ -33,7 +34,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { PhotoImage } from '../../primitives/index'
-import type { ImageAdapter, PhotoItem } from '../../core/index'
+import type { PhotoItem } from '../../core/index'
 
 defineProps<{
   photo: PhotoItem<TMeta>
@@ -41,9 +42,10 @@ defineProps<{
   width: number
   height: number
   hidden: boolean
-  imageAdapter?: ImageAdapter<TMeta>
-  imgClass?: string
+
+  imageClass?: string
   sizes?: string
+  priority?: boolean
 }>()
 
 defineSlots<{
@@ -53,6 +55,8 @@ defineSlots<{
     width: number
     height: number
     hidden: boolean
+    sizes?: string
+    priority?: boolean
   }) => unknown
 }>()
 </script>

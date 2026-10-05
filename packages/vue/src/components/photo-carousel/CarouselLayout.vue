@@ -2,11 +2,12 @@
   <div
     v-if="photos.length === 0"
     class="np-carousel np-carousel--empty"
-    :dir="direction"
+    :class="ui?.root"
+    ref="root"
     v-bind="$attrs"
   />
 
-  <div v-else class="np-carousel" :dir="direction" :style="cssVarStyle" v-bind="$attrs">
+  <div v-else :class="ui?.root" class="np-carousel" ref="root" :style="cssVarStyle" v-bind="$attrs">
     <!-- First in the tab order, so keyboard users can stop the motion before anything else. -->
     <button
       v-if="autoplayAvailable"
@@ -26,7 +27,7 @@
           v-for="(photo, index) in photos"
           :key="photo.id"
           class="np-carousel__slide"
-          :class="slideClass"
+          :class="ui?.slide"
           v-bind="interactiveAttrs(photo, index)"
         >
           <div
@@ -43,10 +44,10 @@
               <PhotoImage
                 :photo="photo"
                 context="slide"
-                :image-adapter="imageAdapter"
-                :loading="index === 0 ? 'eager' : 'lazy'"
+                :sizes="index === 0 ? firstSlideSizes : slideSizes"
+                :priority="index === 0"
                 class="np-carousel__media"
-                :class="imgClass"
+                :class="ui?.img"
               />
             </slot>
           </div>
@@ -54,11 +55,11 @@
       </div>
 
       <div
-        v-if="showMultiControls && (showArrows || showCounter)"
+        v-if="showMultiControls && (hasControl('arrows') || hasControl('counter'))"
         class="np-carousel__controls"
-        :class="controlsClass"
+        :class="ui?.controls"
       >
-        <template v-if="showArrows">
+        <template v-if="hasControl('arrows')">
           <slot
             name="controls"
             :go-to-prev="goToPrev"
@@ -95,7 +96,7 @@
         </template>
       </div>
 
-      <div v-if="showMultiControls && showCounter" class="np-carousel__counter">
+      <div v-if="showMultiControls && hasControl('counter')" class="np-carousel__counter">
         <span aria-hidden="true">{{ selectedIndex + 1 }} / {{ photos.length }}</span>
         <!-- Announcing every automatic slide change would interrupt screen reader users. -->
         <span data-np-sr-only :aria-live="autoplayPlaying ? 'off' : 'polite'" aria-atomic="true">
@@ -104,7 +105,7 @@
       </div>
     </div>
 
-    <div v-if="hasCaption" class="np-carousel__caption" :class="captionClass">
+    <div v-if="hasCaption" class="np-carousel__caption" :class="ui?.caption">
       <slot
         name="caption"
         :photo="photos[selectedIndex]"
@@ -115,7 +116,7 @@
       </slot>
     </div>
 
-    <div v-if="showMultiControls && showDots" class="np-carousel__dots">
+    <div v-if="showMultiControls && hasControl('dots')" class="np-carousel__dots">
       <slot name="dots" :snaps="snaps" :selected-index="selectedSnapIndex" :go-to="goTo">
         <button
           v-for="(slideIndex, i) in snaps"
@@ -130,7 +131,7 @@
       </slot>
     </div>
 
-    <div v-if="showMultiControls && showThumbnails" class="np-carousel__thumbs">
+    <div v-if="showMultiControls && hasControl('thumbnails')" class="np-carousel__thumbs">
       <div ref="thumbsRef" class="np-carousel__thumbs-viewport">
         <div class="np-carousel__thumbs-container">
           <button
@@ -138,7 +139,7 @@
             :key="photo.id"
             type="button"
             class="np-carousel__thumb"
-            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, thumbClass]"
+            :class="[{ 'np-carousel__thumb--selected': selectedSlideSet.has(index) }, ui?.thumb]"
             :aria-label="photo.alt || labels.goToSlide(index + 1)"
             :aria-current="selectedSlideSet.has(index) ? 'true' : undefined"
             @click="goTo(index)"
@@ -153,8 +154,7 @@
               <PhotoImage
                 :photo="photo"
                 context="thumb"
-                :image-adapter="imageAdapter"
-                loading="lazy"
+                :sizes="thumbnailSizes(photo)"
                 class="np-carousel__thumb-img"
               />
             </slot>
@@ -166,7 +166,8 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, toRef, useSlots, type ComponentPublicInstance } from 'vue'
+import { computed, ref, toRef, useSlots, type ComponentPublicInstance } from 'vue'
+import type { PhotoUi, CarouselControl } from '../../types/ui'
 import { PhotoImage } from '../../primitives/index'
 import type {
   CarouselCaptionSlotProps,
@@ -175,9 +176,11 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../../types/index'
-import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
+import type { PhotoCarouselAutoplayOptions, ResolvedPhotoItem as PhotoItem } from '../../core/index'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
+import { useElementWidth } from '../../composables/useElementWidth'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
+import type { GalleryRuntime } from '../../gallery/runtime'
 import { usePhotoLabels } from '../../composables/usePhotoLabels'
 
 defineOptions({ inheritAttrs: false })
@@ -196,33 +199,26 @@ defineSlots<{
 
 const props = defineProps<{
   photos: readonly PhotoItem<TMeta>[]
-  imageAdapter?: ImageAdapter<TMeta>
+
   loop?: boolean
   dragFree?: boolean
-  direction?: 'ltr' | 'rtl'
+  gallery: GalleryRuntime
   autoplay: boolean | PhotoCarouselAutoplayOptions
-
-  showArrows: boolean
-  showThumbnails: boolean
-  showCounter: boolean
-  showDots: boolean
+  controls: CarouselControl[]
+  ui?: PhotoUi<'PhotoCarousel'>
 
   slideSize?: string
   slideAspect?: string
   gap?: string
   thumbSize?: string
 
-  slideClass?: string
-  imgClass?: string
-  thumbClass?: string
-  captionClass?: string
-  controlsClass?: string
-
   // Optional lightbox activation and transition-source integration.
   onSlideActivate?: (index: number) => void | Promise<void>
   setSlideRef?: (index: number) => (el: Element | ComponentPublicInstance | null) => void
 }>()
 
+const hasControl = (control: CarouselControl) => props.controls.includes(control)
+const root = ref<HTMLElement | null>(null)
 const slots = useSlots()
 const {
   emblaRef,
@@ -248,10 +244,27 @@ const {
   photos: toRef(props, 'photos'),
   loop: toRef(props, 'loop'),
   dragFree: toRef(props, 'dragFree'),
-  direction: toRef(props, 'direction'),
+  gallery: props.gallery,
   autoplay: toRef(props, 'autoplay'),
-  showThumbnails: toRef(props, 'showThumbnails'),
+  hasThumbnails: computed(() => hasControl('thumbnails')),
 })
+
+const { containerWidth } = useElementWidth(emblaRef)
+// HTML sizes forbids percentages, including those nested in calc()/clamp().
+function resolveSlideSizes(width: number) {
+  return (props.slideSize ?? '100%').replace(/(\d+(?:\.\d+)?)%/g, (_match, percent: string) =>
+    width > 0 ? `${Math.ceil((width * Number(percent)) / 100)}px` : `${percent}vw`,
+  )
+}
+const slideSizes = computed(() => resolveSlideSizes(containerWidth.value))
+// The first slide is preloaded during SSR. It keeps the server value, so the preload and
+// the image request the same file instead of downloading a second size after hydration.
+const firstSlideSizes = computed(() => resolveSlideSizes(0))
+
+function thumbnailSizes(photo: PhotoItem) {
+  // thumbSize controls height; the intrinsic aspect ratio determines rendered width.
+  return `calc(${props.thumbSize ?? '5.5rem'} * ${photo.width / photo.height})`
+}
 
 const showMultiControls = computed(() => props.photos.length > 1)
 
@@ -290,6 +303,7 @@ function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
 }
 
 defineExpose({
+  root,
   emblaApi,
   thumbsApi,
   selectedIndex,

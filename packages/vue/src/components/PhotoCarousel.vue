@@ -1,8 +1,9 @@
 <template>
   <CarouselLayout
+    ref="layoutRef"
     v-bind="{ ...$attrs, ...layoutProps }"
-    :on-slide-activate="provider ? openSlide : undefined"
-    :set-slide-ref="provider?.setThumbnailRef"
+    :on-slide-activate="hasLightbox ? openSlide : undefined"
+    :set-slide-ref="hasLightbox ? setItemRef : undefined"
   >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
@@ -27,8 +28,8 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, inject, type Component } from 'vue'
-import type { ImageAdapter, PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
+import { computed, ref } from 'vue'
+import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../core/index'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -36,19 +37,16 @@ import type {
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
 } from '../types/index'
-import type {
-  InvalidPhotoPolicy,
-  InvalidPhotosEvent,
-  LightboxNavigationMode,
-  LightboxTransitionOption,
-} from '../core/index'
-import { provideLightbox } from '../composables/index'
-import { LightboxComponentKey } from '../provide/keys'
+import type { InvalidPhotoPolicy, InvalidPhotosEvent } from '../core/index'
+import { useGalleryRuntime } from '../gallery/runtime'
+import { useGalleryModel } from '../gallery/model'
+import { useCollectionLightbox } from './shared/useCollectionLightbox'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
-import Lightbox from './Lightbox.vue'
-import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
-import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
 import { useRecipePhotos } from './shared/useRecipePhotos'
+
+import type { PhotoUi, CarouselControl } from '../types/ui'
+import { useRecipeLightbox } from './shared/useRecipeLightbox'
 
 defineOptions({ inheritAttrs: false })
 
@@ -68,49 +66,28 @@ const props = withDefaults(
      * Slides in order. Each needs a stable `id`, a `src`, and the real pixel `width` and `height`.
      */
     photos: readonly PhotoItem<TMeta>[]
+    /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
+    active?: string | null
+    ui?: PhotoUi<'PhotoCarousel'>
     /**
      * What to do with invalid photos: `'throw'` stops with an error, `'drop'` skips them and emits
      * `invalidPhotos`.
      * @default 'throw'
      */
     validation?: InvalidPhotoPolicy
-    /** Image adapter for this component. Wins over `ImageAdapterKey` and the module default. */
-    imageAdapter?: ImageAdapter<TMeta>
+    /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
+    provider?: PhotoProvider | string
     /**
      * Continue from the last slide to the first.
      * @default false
      */
+    controls?: CarouselControl[]
     loop?: boolean
     /**
      * Let the track stop between slides after a drag.
      * @default false
      */
     dragFree?: boolean
-    /**
-     * `'ltr'` or `'rtl'`. When omitted, read from the document once at mount; bind it when the
-     * direction can change.
-     */
-    direction?: 'ltr' | 'rtl'
-    /**
-     * Show the previous and next buttons.
-     * @default true
-     */
-    showArrows?: boolean
-    /**
-     * Show the thumbnail rail.
-     * @default true
-     */
-    showThumbnails?: boolean
-    /**
-     * Show the slide counter.
-     * @default true
-     */
-    showCounter?: boolean
-    /**
-     * Show one dot per slide.
-     * @default false
-     */
-    showDots?: boolean
     /**
      * `true`, or `{ delayMs, stopOnInteraction, stopOnMouseEnter }`. Defaults: 4000 ms, stop after
      * interaction, keep playing on mouse enter. Shows a pause button, and does not run while the
@@ -130,48 +107,31 @@ const props = withDefaults(
     /** Thumbnail height as a CSS length. The width follows each photo's aspect ratio. */
     thumbSize?: string
     /**
-     * `true` opens the built-in lightbox when a slide is selected, a component replaces it. Off by
+     * `true` opens the built-in lightbox when a slide is selected; `lightbox.component` replaces it. Off by
      * default. Read once at mount; change the component `key` to remount.
      * @default false
      */
-    lightbox?: boolean | Component
-    /**
-     * How the lightbox opens and closes. `'auto'` animates from the thumbnail when enough of it is
-     * visible and fades otherwise. Also `'flip'`, `'fade'`, `'none'`, or an options object. Can
-     * change while mounted.
-     * @default 'auto'
-     */
-    transition?: LightboxTransitionOption
-    /**
-     * How the lightbox changes photos: `'slide'`, `'fade'`, or `'crossfade'`. Can change while
-     * mounted.
-     * @default 'slide'
-     */
-    navigation?: LightboxNavigationMode
-    /** Classes for each slide. */
-    slideClass?: string
-    /** Classes for each `<img>`. */
-    imgClass?: string
-    /** Classes for each thumbnail. */
-    thumbClass?: string
-    /** Classes for the caption. */
-    captionClass?: string
-    /** Classes for the controls wrapper. */
-    controlsClass?: string
+    lightbox?: boolean | LightboxOptions
   }>(),
   {
-    showArrows: true,
-    showThumbnails: true,
-    showCounter: true,
-    showDots: false,
+    lightbox: undefined,
     autoplay: false,
-    lightbox: false,
+    controls: () => ['arrows', 'thumbnails', 'counter'],
   },
 )
 
 const emit = defineEmits<{
+  'update:active': [id: string | null]
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
+
+const { options: recipeLightboxOptions } = useRecipeLightbox('PhotoCarousel', () => props.lightbox)
+
+providePhotoConfig(() => ({
+  provider: props.provider,
+  lightbox: recipeLightboxOptions(),
+  validation: props.validation,
+}))
 
 const resolvedPhotos = useRecipePhotos<TMeta>(
   () => props.photos,
@@ -180,48 +140,61 @@ const resolvedPhotos = useRecipePhotos<TMeta>(
   (event) => emit('invalidPhotos', event),
 )
 
-const injectedLightbox = inject(LightboxComponentKey, null)
-const lightboxComponent = resolveLightboxComponent(
-  props.lightbox,
-  injectedLightbox,
-  Lightbox,
+const layoutRef = ref<{
+  root: HTMLElement | null
+  goTo(index: number): void
+  goToNext(): void
+  goToPrev(): void
+} | null>(null)
+const gallery = useGalleryRuntime(resolvedPhotos, () => layoutRef.value?.root ?? null)
+
+const {
+  hasLightbox,
+  LightboxComponent: lightboxComponent,
+  setItemRef,
+  open,
+  openById,
+  close,
+  isOpen,
+  activeId: ownerActiveId,
+  activePhoto: ownerActivePhoto,
+} = useCollectionLightbox(
+  resolvedPhotos,
+  props,
+  () => layoutRef.value?.root ?? null,
+  'PhotoCarousel',
   false,
 )
-const hasLightbox = lightboxComponent !== null
-warnOnSetupOptionChanges('PhotoCarousel', {
-  lightbox: () => props.lightbox,
-})
-const provider = hasLightbox
-  ? provideLightbox(resolvedPhotos, {
-      transition: () => props.transition,
-      navigation: () => props.navigation,
-      imageAdapter: computed(() => props.imageAdapter),
-    })
-  : null
-
-async function openSlide(index: number) {
-  await provider?.open(index)
+const openSlide = open
+const { activeId, activePhoto } = useGalleryModel(
+  'PhotoCarousel',
+  () => props.active,
+  () => resolvedPhotos.value,
+  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
+  (id) => emit('update:active', id),
+)
+function scrollTo(index: number) {
+  layoutRef.value?.goTo(index)
 }
+function next() {
+  layoutRef.value?.goToNext()
+}
+function prev() {
+  layoutRef.value?.goToPrev()
+}
+defineExpose({ open, openById, close, isOpen, activeId, activePhoto, scrollTo, next, prev })
 
 const layoutProps = computed(() => ({
   photos: resolvedPhotos.value,
-  imageAdapter: props.imageAdapter,
+  gallery,
+  controls: props.controls,
+  ui: props.ui,
   loop: props.loop,
   dragFree: props.dragFree,
-  direction: props.direction,
   autoplay: props.autoplay,
-  showArrows: props.showArrows,
-  showThumbnails: props.showThumbnails,
-  showCounter: props.showCounter,
-  showDots: props.showDots,
   slideSize: props.slideSize,
   slideAspect: props.slideAspect,
   gap: props.gap,
   thumbSize: props.thumbSize,
-  slideClass: props.slideClass,
-  imgClass: props.imgClass,
-  thumbClass: props.thumbClass,
-  captionClass: props.captionClass,
-  controlsClass: props.controlsClass,
 }))
 </script>

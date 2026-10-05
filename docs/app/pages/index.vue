@@ -121,7 +121,7 @@ useSeoMeta({
           <div class="landing-stage rounded-xl border border-border bg-card p-3 shadow-sm sm:p-4">
             <PhotoAlbum
               :photos="heroPhotos"
-              :navigation="navigation"
+              :lightbox="{ navigation }"
               :layout="{ type: 'rows', targetRowHeight: 150 }"
               :spacing="6"
               :default-container-width="560"

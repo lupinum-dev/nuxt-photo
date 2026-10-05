@@ -45,10 +45,7 @@
       <PhotoCarousel
         :key="`default-carousel-lightbox-${lightbox}`"
         :photos="photos"
-        :show-arrows="showArrows"
-        :show-thumbnails="showThumbnails"
-        :show-counter="showCounter"
-        :show-dots="showDots"
+        :controls="carouselControls"
         :autoplay="autoplay ? { delayMs: 3500 } : false"
         :lightbox="lightbox"
         :loop="loop"
@@ -57,7 +54,7 @@
 
     <section class="demo">
       <h2 class="demo__title">With custom slide slot</h2>
-      <PhotoCarousel :photos="photos.slice(0, 4)" :show-thumbnails="false" :show-counter="false">
+      <PhotoCarousel :photos="photos.slice(0, 4)" :controls="['arrows']">
         <template #slide="{ photo, selected }">
           <div class="custom-slide">
             <img :src="photo.src" :alt="photo.alt" class="custom-slide__img" />
@@ -77,7 +74,7 @@
       <h2 class="demo__title">Multi-slide view</h2>
       <PhotoCarousel
         :photos="photos"
-        :show-thumbnails="false"
+        :controls="['arrows', 'counter']"
         slide-size="40%"
         slide-aspect="1 / 1"
         gap="1rem"
@@ -93,6 +90,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { CarouselControl } from '@lupinum/nuxt-photo/app'
 import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'Carousel — nuxt-photo' })
@@ -105,13 +103,19 @@ const autoplay = ref(false)
 const lightbox = ref(false)
 const loop = ref(false)
 
+const carouselControls = computed(() => {
+  const controls: CarouselControl[] = []
+  if (showArrows.value) controls.push('arrows')
+  if (showThumbnails.value) controls.push('thumbnails')
+  if (showCounter.value) controls.push('counter')
+  if (showDots.value) controls.push('dots')
+  return controls
+})
+
 const templateCode = computed(
   () => `<PhotoCarousel
   :photos="photos"
-  :show-arrows="${showArrows.value}"
-  :show-thumbnails="${showThumbnails.value}"
-  :show-counter="${showCounter.value}"
-  :show-dots="${showDots.value}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  loop' : ''}
+  :controls="${JSON.stringify(carouselControls.value).replaceAll('"', "'")}"${autoplay.value ? '\n  :autoplay="{ delayMs: 3500 }"' : ''}${lightbox.value ? '\n  :lightbox="true"' : ''}${loop.value ? '\n  loop' : ''}
 />`,
 )
 </script>
