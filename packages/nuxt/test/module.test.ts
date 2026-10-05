@@ -17,6 +17,7 @@ const addVitePlugin = vi.fn()
 const addTypeTemplate = vi.fn()
 const loggerWarn = vi.fn()
 const resolvePath = vi.fn(async (path: string) => `/resolved/${path}/dist/index.mjs`)
+const resolveAppPath = vi.fn<(path: string) => Promise<string>>()
 const createResolver = vi.fn(() => ({
   resolve: (path: string) => `/resolved/${path}`,
   resolvePath,
@@ -42,6 +43,7 @@ vi.mock('@nuxt/kit', () => ({
   addVitePlugin,
   addTypeTemplate,
   createResolver,
+  resolvePath: resolveAppPath,
   defineNuxtModule: (definition: unknown) => definition,
   hasNuxtModule,
   useLogger: () => ({ warn: loggerWarn }),
@@ -118,7 +120,49 @@ describe('nuxt-photo module', () => {
     loggerWarn.mockReset()
     createResolver.mockClear()
     resolvePath.mockClear()
+    resolveAppPath.mockReset()
     hasNuxtModule.mockReset()
+  })
+
+  // Catches serializing the path instead of importing the component, or deferring bad paths to build.
+  it('imports the app lightbox component and rejects unresolved paths during setup', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'nuxt-photo-lightbox-'))
+    const componentPath = join(directory, 'CaptionLightbox.vue')
+    await writeFile(componentPath, '<template><p>Custom lightbox</p></template>')
+    const lightbox = { component: '~/components/CaptionLightbox.vue', minZoom: 2 }
+    try {
+      resolveAppPath.mockResolvedValue(componentPath)
+      await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, lightbox }, createNuxt())
+      expect(resolveAppPath).toHaveBeenCalledWith(lightbox.component)
+      const template = addTemplate.mock.calls.find(
+        ([t]) => t.filename === 'nuxt-photo-options.mjs',
+      )![0]
+      expect(template.getContents()).toBe(
+        `import LightboxComponent from ${JSON.stringify(componentPath)}\nconst options = {"lightbox":{"minZoom":2}}\noptions.lightbox.component = LightboxComponent\nexport default options`,
+      )
+      expect(lightbox.component).toBe('~/components/CaptionLightbox.vue')
+
+      addTemplate.mockClear()
+      resolveAppPath.mockResolvedValue(join(directory, 'Missing.vue'))
+      const setup = nuxtPhotoModule.setup(
+        { ...nuxtPhotoModule.defaults, lightbox: { component: '~/components/Missing.vue' } },
+        createNuxt(),
+      )
+      await expect(setup).rejects.toThrow(TypeError)
+      await expect(setup).rejects.toThrow(
+        '`nuxtPhoto.lightbox.component` could not resolve "~/components/Missing.vue"',
+      )
+      expect(addTemplate).not.toHaveBeenCalled()
+
+      await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, createNuxt())
+      expect(
+        addTemplate.mock.calls
+          .find(([t]) => t.filename === 'nuxt-photo-options.mjs')![0]
+          .getContents(),
+      ).toBe('export default {}')
+    } finally {
+      await rm(directory, { recursive: true, force: true })
+    }
   })
 
   // Catches an English-only i18n catalog or shipping unused translations to every app.

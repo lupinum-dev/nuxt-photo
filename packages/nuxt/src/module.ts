@@ -1,4 +1,5 @@
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { stat } from 'node:fs/promises'
 import {
   addComponent,
   addTemplate,
@@ -9,6 +10,7 @@ import {
   addPlugin,
   addVitePlugin,
   createResolver,
+  resolvePath,
   defineNuxtModule,
   hasNuxtModule,
   useLogger,
@@ -79,6 +81,20 @@ export default defineNuxtModule<NuxtPhotoOptions>({
   async setup(options, nuxt) {
     validateNuxtPhotoOptions(options)
 
+    let lightboxComponent: string | undefined
+    if (options.lightbox?.component !== undefined) {
+      try {
+        lightboxComponent = await resolvePath(options.lightbox.component)
+        // resolvePath returns normalized input when no file exists.
+        if (!(await stat(lightboxComponent)).isFile()) throw new Error('Not a file')
+      } catch (cause) {
+        throw new TypeError(
+          `[nuxt-photo] \`nuxtPhoto.lightbox.component\` could not resolve ${JSON.stringify(options.lightbox.component)}; use an existing component path or alias.`,
+          { cause },
+        )
+      }
+    }
+
     const logger = useLogger('nuxt-photo')
     const resolver = createResolver(import.meta.url)
     const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
@@ -90,8 +106,17 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     })
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
-      getContents: () =>
-        `export default ${JSON.stringify({ labels: options.labels, lightbox: options.lightbox, validation: options.validation, provider: options.provider })}`,
+      getContents: () => {
+        const config = JSON.stringify({
+          labels: options.labels,
+          lightbox: options.lightbox ? { ...options.lightbox, component: undefined } : undefined,
+          validation: options.validation,
+          provider: options.provider,
+        })
+        return lightboxComponent
+          ? `import LightboxComponent from ${JSON.stringify(lightboxComponent)}\nconst options = ${config}\noptions.lightbox.component = LightboxComponent\nexport default options`
+          : `export default ${config}`
+      },
     })
 
     // Folder data stays in Nitro; only localImages opts into a client-wide lookup.

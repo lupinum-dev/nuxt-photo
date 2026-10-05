@@ -15,7 +15,9 @@ declare module '#build/nuxt-photo-internals.mjs' {
   ): void
 }
 declare module '#build/nuxt-photo-options.mjs' {
-  const options: import('../options').NuxtPhotoOptions
+  const options: Omit<import('../options').NuxtPhotoOptions, 'lightbox'> & {
+    lightbox?: import('@lupinum/vue-photo').LightboxOptions
+  }
   export default options
 }
 declare module '#build/nuxt-photo-config.mjs' {

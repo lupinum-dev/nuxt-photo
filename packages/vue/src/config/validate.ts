@@ -27,7 +27,17 @@ function enumeration(value: unknown, allowed: readonly string[], path: string) {
     error(path, allowed.map((v) => `"${v}"`).join(', '))
 }
 /** The same boundary validation is used by Vue installation and Nuxt setup. */
-export function validatePhotoConfig(value: unknown, path = 'photo'): asserts value is PhotoConfig {
+export function validatePhotoConfig(
+  value: unknown,
+  path?: string,
+  componentForm?: 'component',
+): asserts value is PhotoConfig
+export function validatePhotoConfig(value: unknown, path: string, componentForm: 'path'): void
+export function validatePhotoConfig(
+  value: unknown,
+  path = 'photo',
+  componentForm: 'component' | 'path' = 'component',
+) {
   record(value, path)
   keys(value, ['provider', 'labels', 'lightbox', 'validation', 'dimensions'], path)
   enumeration(value.validation, ['throw', 'drop'], `${path}.validation`)
@@ -63,11 +73,13 @@ export function validatePhotoConfig(value: unknown, path = 'photo'): asserts val
       ['component', 'transition', 'navigation', 'minZoom', 'history', 'deepLink', 'tools'],
       `${path}.lightbox`,
     )
-    if (
-      box.component !== undefined &&
-      (box.component === null || !['object', 'function'].includes(typeof box.component))
-    )
-      error(`${path}.lightbox.component`, 'a Vue component')
+    if (box.component !== undefined) {
+      if (componentForm === 'path') {
+        if (typeof box.component !== 'string' || !box.component.trim())
+          error(`${path}.lightbox.component`, 'a non-empty component path or alias string')
+      } else if (box.component === null || !['object', 'function'].includes(typeof box.component))
+        error(`${path}.lightbox.component`, 'a Vue component object or function')
+    }
     if (box.transition !== undefined) {
       if (typeof box.transition === 'string')
         enumeration(box.transition, ['auto', 'flip', 'fade', 'none'], `${path}.lightbox.transition`)
