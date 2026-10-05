@@ -4,7 +4,7 @@
 
 <h1 align="center">@lupinum/vue-photo</h1>
 
-<p align="center">Build custom Vue photo experiences with shared lightbox state, components, composables, and utilities.</p>
+<p align="center">Photo albums, carousels and a lightbox for Vue 3, with images sized to the layout.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@lupinum/vue-photo"><img src="https://img.shields.io/npm/v/@lupinum/vue-photo?color=42B883" alt="npm version"></a>
@@ -13,18 +13,19 @@
 </p>
 
 > [!WARNING]
-> Vue Photo 1.0 is in beta. Install it from the `next` npm tag and review the
-> [0.2 to 1.0 upgrade guide](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
+> Vue Photo 1.0 is in beta. Install it from the `next` npm tag.
 
 ## Purpose
 
-Use this package in plain Vue applications or when a Nuxt interface needs lower-level control. It provides the state and primitives behind the Nuxt Photo recipe components.
+Use this package in plain Vue applications. Nuxt applications install
+[`@lupinum/nuxt-photo`](https://www.npmjs.com/package/@lupinum/nuxt-photo)
+instead, which registers the same components.
 
 ## Requirements
 
 - Node.js 22.18 or 24.11 and later maintenance releases
 - Vue 3.5 or later
-- Known width and height values for each photo
+- The pixel width and height of each photo
 
 ## Installation
 
@@ -34,27 +35,35 @@ pnpm add @lupinum/vue-photo@next
 
 ## Quick start
 
-```ts
-import { provideLightbox, type PhotoItem } from '@lupinum/vue-photo'
+```vue
+<script setup lang="ts">
+import { PhotoAlbum, type PhotoItem } from '@lupinum/vue-photo'
+import '@lupinum/vue-photo/styles.css'
 
 const photos: PhotoItem[] = [
   { id: 'one', src: '/one.jpg', width: 1200, height: 800, alt: 'First photo' },
 ]
+</script>
 
-const lightbox = provideLightbox(photos, {
-  transition: 'auto',
-})
+<template>
+  <PhotoAlbum :photos="photos" layout="rows" />
+</template>
 ```
 
-The provider creates the shared state that the Vue lightbox primitives consume.
+Selecting a photo opens the lightbox. Set labels, lightbox options and an image
+provider for the whole app once with `app.use(createPhoto({ ... }))`.
 
 ## Exports
 
-- Composables include `useLightbox`, `provideLightbox`, `usePhotoLabels`, `useContainerWidth`, and `responsive`.
-- Components include `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxViewport`, `PhotoTrigger`, and `PhotoImage`.
-- The package also exports public photo types, injection keys, and CSS.
+- Components: `Photo`, `PhotoAlbum`, `PhotoGroup`, `PhotoCarousel`, `Lightbox`,
+  and the lightbox building blocks such as `LightboxProvider`, `LightboxRoot`,
+  `PhotoTrigger` and `PhotoImage`.
+- Functions: `createPhoto`, `definePhotoProvider`, `validatePhotos`,
+  `responsive`, `useLightbox` and `usePhotoLabels`.
+- Types such as `PhotoItem`, `GalleryHandle` and `PhotoProvider`, and the
+  stylesheet `@lupinum/vue-photo/styles.css`.
 
-Use documented entry points only. Generated files and undocumented deep imports are internal.
+Import from the package root only. Generated files and deep imports are internal.
 
 ## Documentation
 
