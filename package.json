@@ -45,32 +45,32 @@
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.7.0",
-    "@changesets/cli": "2.31.0",
-    "@nuxt/test-utils": "^4.0.3",
-    "@playwright/test": "1.60.0",
-    "@types/node": "22.18.0",
-    "@vitejs/plugin-vue": "6.0.7",
-    "@vue/runtime-core": "3.5.42",
-    "@vue/server-renderer": "3.5.42",
-    "esbuild": "0.28.1",
-    "eslint": "^10.7.0",
+    "@changesets/cli": "2.31.1",
+    "@nuxt/test-utils": "^4.3.3",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.5",
+    "@vitejs/plugin-vue": "6.0.9",
+    "@vue/runtime-core": "3.5.43",
+    "@vue/server-renderer": "3.5.43",
+    "esbuild": "0.28.2",
+    "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vue": "^10.9.2",
-    "globals": "^17.7.0",
+    "eslint-plugin-vue": "^10.11.1",
+    "globals": "^17.13.0",
     "jsdom": "29.1.1",
-    "pkg-pr-new": "0.0.87",
-    "publint": "0.3.21",
+    "pkg-pr-new": "0.0.88",
+    "publint": "0.3.25",
     "rolldown": "catalog:",
-    "rollup-plugin-visualizer": "^7.0.1",
+    "rollup-plugin-visualizer": "^7.1.1",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.64.0",
+    "typescript-eslint": "^8.71.0",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
     "vue-declaration-types": "npm:@vue/runtime-dom@3.5.0",
     "vue-eslint-parser": "^10.4.1",
-    "yaml": "2.9.0"
+    "yaml": "2.9.1"
   },
   "browserslist": [
     "last 2 versions",
@@ -80,5 +80,5 @@
   "engines": {
     "node": "^22.18.0 || ^24.11.0"
   },
-  "packageManager": "pnpm@11.13.1"
+  "packageManager": "pnpm@11.28.4"
 }

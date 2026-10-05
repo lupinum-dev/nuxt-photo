@@ -7,22 +7,22 @@ import { flushUi, installBrowserStubs } from './support/runtime'
 
 beforeEach(() => {
   installBrowserStubs()
-  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(
-    function (this: HTMLElement) {
-      return this.classList.contains('np-carousel__slide') ? 300 : 600
-    },
-  )
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.classList.contains('np-carousel__slide') ? 300 : 600
+  })
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400)
-  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(
-    function (this: HTMLElement) {
-      const index = Array.from(this.parentElement?.children ?? []).indexOf(this)
-      return this.classList.contains('np-carousel__slide')
-        ? Math.max(0, index) * 300
-        : this.classList.contains('np-lightbox__slide')
-          ? Math.max(0, index) * 600
-          : 0
-    },
-  )
+  vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const index = Array.from(this.parentElement?.children ?? []).indexOf(this)
+    return this.classList.contains('np-carousel__slide')
+      ? Math.max(0, index) * 300
+      : this.classList.contains('np-lightbox__slide')
+        ? Math.max(0, index) * 600
+        : 0
+  })
 })
 afterEach(() => {
   vi.unstubAllGlobals()

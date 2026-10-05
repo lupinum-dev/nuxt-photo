@@ -158,13 +158,13 @@ describe('collection lightbox handles', () => {
   it('keeps Embla navigation aligned after opening a nested album photo by id', async () => {
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(600)
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400)
-    vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(
-      function (this: HTMLElement) {
-        return this.classList.contains('np-lightbox__slide')
-          ? Array.from(this.parentElement?.children ?? []).indexOf(this) * 600
-          : 0
-      },
-    )
+    vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.classList.contains('np-lightbox__slide')
+        ? Array.from(this.parentElement?.children ?? []).indexOf(this) * 600
+        : 0
+    })
     const photos = Array.from({ length: 8 }, (_, index) => makePhoto({ id: `group-${index + 1}` }))
     const group = ref<GalleryHandle | null>(null)
     const App = defineComponent({
