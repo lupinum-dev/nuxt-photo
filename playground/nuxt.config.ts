@@ -17,7 +17,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/lab/**': {
-      headers: { 'cache-control': 'public, max-age=86400, stale-while-revalidate=604800' },
+      headers: { 'cache-control': 'public, max-age=2592000, stale-while-revalidate=604800' },
     },
   },
 
