@@ -17,7 +17,7 @@ const photos = [
 ]
 
 describe('SSR', () => {
-  it('renders a complete responsive rows fallback without a fixed width', async () => {
+  it('renders complete fluid SSR rows without an explicit width', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
     })
@@ -30,7 +30,9 @@ describe('SSR', () => {
     expect(html).toContain('flex-wrap')
     expect(html).toContain('aspect-ratio')
     expect(html).toContain('flex-grow')
-    expect(html).not.toContain('flex:0 0 auto')
+    expect(html).toContain('flex:0 0 auto')
+    expect(html).toContain('width:calc(')
+    expect(html).not.toContain('flex-grow:1.777')
     expect(html).not.toContain('np-album__row')
     expect(html).toContain('flex-grow:9999')
     expect(html).not.toContain('np-album__skeleton')

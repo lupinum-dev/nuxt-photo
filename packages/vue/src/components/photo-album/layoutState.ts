@@ -1,4 +1,13 @@
-import { ref, computed, useId, type CSSProperties, type ComputedRef, type Ref } from 'vue'
+import {
+  ref,
+  computed,
+  useId,
+  onMounted,
+  watch,
+  type CSSProperties,
+  type ComputedRef,
+  type Ref,
+} from 'vue'
 import { useElementWidth } from '../../composables/useElementWidth'
 import {
   computeRowsLayout,
@@ -16,6 +25,7 @@ import {
   type ResolvedPhotoItem as PhotoItem,
   type LayoutEntry,
   type LayoutGroup,
+  type RowsLayoutOptions,
   type ResponsiveParameter,
   type ResponsivePhotoSizes,
 } from '../../core/index'
@@ -74,15 +84,18 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   )
 
   const containerQueryCSS = computed(() => {
-    if (!containerQueriesRender.value || layout.value !== 'rows') return ''
-    return computeBreakpointStyles({
-      photos: photos.value,
-      breakpoints: breakpoints.value!,
-      spacing: spacing.value,
-      padding: padding.value,
-      targetRowHeight: targetRowHeight.value,
-      containerName: containerName.value,
-    })
+    if (!containerQueriesRender.value || layout.value !== 'rows' || rowWidth.value <= 0) return ''
+    return computeBreakpointStyles(
+      {
+        photos: photos.value,
+        breakpoints: breakpoints.value!,
+        spacing: spacing.value,
+        padding: padding.value,
+        targetRowHeight: targetRowHeight.value,
+        containerName: containerName.value,
+      },
+      computeStableRows,
+    )
   })
 
   const { containerWidth } = useElementWidth(containerRef, {
@@ -99,25 +112,82 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
         1200),
   )
 
+  // Ignore the first measurement: affine CSS already fits the actual width.
+  // Only a subsequent resize may choose new row breaks.
+  const rowWidth = ref(estimatedWidth.value)
+  let measured = false
+  onMounted(() => {
+    measured = true
+  })
+  watch(
+    containerWidth,
+    (width) => {
+      if (measured && width > 0) {
+        rowCache.clear()
+        rowWidth.value = width
+      }
+    },
+    { flush: 'sync' },
+  )
+
+  const rowCache = new Map<
+    number,
+    {
+      settings: string
+      signatures: string[]
+      groups: LayoutGroup<TMeta>[]
+    }
+  >()
+  function computeStableRows(input: RowsLayoutOptions<TMeta>): LayoutGroup<TMeta>[] {
+    const { photos: collection, containerWidth: width } = input
+    const settings = `${input.spacing}/${input.padding}/${input.targetRowHeight}`
+    const signatures = collection.map((photo) => `${photo.id}/${photo.width}/${photo.height}`)
+    const previous = rowCache.get(width)
+    const append =
+      previous?.settings === settings &&
+      previous.signatures.length <= signatures.length &&
+      previous.signatures.every((signature, index) => signature === signatures[index])
+    const offset = append ? previous.signatures.length : 0
+    const retained = append
+      ? previous.groups.map((group) => ({
+          ...group,
+          entries: group.entries.map((entry) => ({ ...entry, photo: collection[entry.index]! })),
+        }))
+      : []
+    const added = computeRowsLayout({ ...input, photos: collection.slice(offset) }).map(
+      (group) => ({
+        ...group,
+        index: group.index + retained.length,
+        entries: group.entries.map((entry) => ({ ...entry, index: entry.index + offset })),
+      }),
+    )
+    const result = [...retained, ...added]
+    rowCache.set(width, { settings, signatures, groups: result })
+    return result
+  }
+
   const layoutWidth = computed(() =>
     containerWidth.value > 0 ? containerWidth.value : estimatedWidth.value,
+  )
+  const parameterWidth = computed(() =>
+    layout.value === 'rows' ? rowWidth.value : layoutWidth.value,
   )
   // Keep scalar controls separate from measured width: an unchanged setting does
   // not invalidate the (potentially expensive) column assignment.
   const resolvedSpacing = computed(() =>
-    resolveResponsiveValue(spacing.value, layoutWidth.value, DEFAULT_SPACING),
+    resolveResponsiveValue(spacing.value, parameterWidth.value, DEFAULT_SPACING),
   )
   const resolvedPadding = computed(() =>
-    resolveResponsiveValue(padding.value, layoutWidth.value, DEFAULT_PADDING),
+    resolveResponsiveValue(padding.value, parameterWidth.value, DEFAULT_PADDING),
   )
   const resolvedColumns = computed(() =>
     resolveResponsiveValue(columns.value, layoutWidth.value, DEFAULT_COLUMNS),
   )
   const resolvedTargetRowHeight = computed(() =>
-    resolveResponsiveValue(targetRowHeight.value, layoutWidth.value, DEFAULT_TARGET_ROW_HEIGHT),
+    resolveResponsiveValue(targetRowHeight.value, parameterWidth.value, DEFAULT_TARGET_ROW_HEIGHT),
   )
   const resolvedParameters = computed(() => ({
-    width: layoutWidth.value,
+    width: parameterWidth.value,
     spacing: resolvedSpacing.value,
     padding: resolvedPadding.value,
     columns: resolvedColumns.value,
@@ -127,14 +197,14 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   const assignedGroups = computed<LayoutGroup<TMeta>[]>(() => {
     const input = {
       photos: photos.value,
-      containerWidth: layout.value === 'rows' ? layoutWidth.value : estimatedWidth.value,
+      containerWidth: layout.value === 'rows' ? rowWidth.value : estimatedWidth.value,
       spacing: resolvedSpacing.value,
       padding: resolvedPadding.value,
     }
 
     switch (layout.value) {
       case 'rows': {
-        const result = computeRowsLayout({
+        const result = computeStableRows({
           ...input,
           targetRowHeight: resolvedTargetRowHeight.value,
         })
@@ -153,7 +223,19 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   })
 
   const groups = computed(() => {
-    if (layout.value === 'rows') return assignedGroups.value
+    if (layout.value === 'rows')
+      return assignedGroups.value.map((group) => {
+        const gaps = computeGaps(resolvedSpacing.value, resolvedPadding.value, group.entries.length)
+        const scale = (layoutWidth.value - gaps) / (rowWidth.value - gaps)
+        return {
+          ...group,
+          entries: group.entries.map((entry) => ({
+            ...entry,
+            width: entry.width * scale,
+            height: entry.height * scale,
+          })),
+        }
+      })
     const ctx = liveCtx()
     return assignedGroups.value.map((group) => {
       const width = albumColumnWidth(group, ctx)
@@ -171,7 +253,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
   const estimatedRowEntries = computed(
     () =>
       new Map(
-        computeRowsLayout({
+        computeStableRows({
           photos: photos.value,
           containerWidth: estimatedWidth.value,
           spacing: resolveResponsiveValue(spacing.value, estimatedWidth.value, DEFAULT_SPACING),
@@ -207,7 +289,7 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
     return (
       computePhotoSizes(
         entry.width,
-        resolved.width,
+        layout.value === 'rows' ? layoutWidth.value : resolved.width,
         layout.value === 'rows' ? entry.itemsCount : groups.value.length,
         resolved.spacing,
         resolved.padding,
@@ -231,27 +313,12 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
       }))
     }
 
-    if (containerWidth.value <= 0 || groups.value.length === 0) {
-      return photos.value.map((photo, index) => {
-        const ar = photo.width / photo.height
-        return {
-          photo,
-          index,
-          width: photo.width,
-          height: photo.height,
-          computedSizes: estimatedSizes(photo, index),
-          style: {
-            ...cursor,
-            flexGrow: ar,
-            flexBasis: `${resolved.targetRowHeight * ar}px`,
-            overflow: 'hidden',
-          } as CSSProperties,
-        }
-      })
-    }
-
-    return groups.value.flatMap((row) =>
-      row.entries.map((entry) => {
+    return groups.value.flatMap((row) => {
+      const totalRatio = row.entries.reduce(
+        (sum, entry) => sum + entry.photo.width / entry.photo.height,
+        0,
+      )
+      return row.entries.map((entry) => {
         const gaps = computeGaps(resolved.spacing, resolved.padding, entry.itemsCount)
         return {
           photo: entry.photo,
@@ -265,11 +332,11 @@ export function usePhotoAlbumLayoutState<TMeta extends object>(
             boxSizing: 'content-box' as const,
             padding: `${resolved.padding}px`,
             overflow: 'hidden',
-            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(resolved.width, gaps, entry.width)})`,
+            width: `calc((100% - ${gaps}px) / ${computeWidthDivisor(1, 0, entry.photo.width / entry.photo.height / totalRatio)})`,
           } as CSSProperties,
         }
-      }),
-    )
+      })
+    })
   })
 
   const ssrWrapperStyle = computed<CSSProperties>(() => {

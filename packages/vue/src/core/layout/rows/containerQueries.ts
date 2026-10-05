@@ -2,7 +2,12 @@ import { computeRowsLayout } from './index'
 import { computeGaps, computeWidthDivisor } from '../constants'
 import { resolveResponsiveValue } from '../../types'
 import { devWarn } from '../../env'
-import type { LayoutGroup, ResolvedPhotoItem as PhotoItem, ResponsiveParameter } from '../../types'
+import type {
+  RowsLayoutOptions,
+  LayoutGroup,
+  ResolvedPhotoItem as PhotoItem,
+  ResponsiveParameter,
+} from '../../types'
 
 export interface BreakpointStylesOptions<TMeta extends object = Readonly<Record<string, unknown>>> {
   photos: readonly PhotoItem<TMeta>[]
@@ -50,6 +55,7 @@ function rowSignature<TMeta extends object>(
  */
 export function computeBreakpointStyles<TMeta extends object>(
   opts: BreakpointStylesOptions<TMeta>,
+  rows: (options: RowsLayoutOptions<TMeta>) => LayoutGroup<TMeta>[] = computeRowsLayout,
 ): string {
   const { photos, containerName } = opts
   if (photos.length === 0 || opts.breakpoints.length === 0) return ''
@@ -64,7 +70,7 @@ export function computeBreakpointStyles<TMeta extends object>(
     const spacing = resolveResponsiveValue(opts.spacing, bp, 8)
     const padding = resolveResponsiveValue(opts.padding, bp, 0)
     const targetRowHeight = resolveResponsiveValue(opts.targetRowHeight, bp, 300)
-    const groups = computeRowsLayout({
+    const groups = rows({
       photos,
       containerWidth: bp,
       spacing,

@@ -153,12 +153,56 @@ for (const viewport of viewports) {
   }
 }
 
+// Catches double compensation when the browser already clamps a shrinking horizontal bar.
+test('image budget lab keeps scrolled diagnostics visible on lightbox open', async ({
+  browser,
+}, testInfo) => {
+  const context = await browser.newContext({
+    baseURL: testInfo.project.use.baseURL,
+    viewport: { width: 375, height: 812 },
+    deviceScaleFactor: 3,
+  })
+  const page = await context.newPage()
+  try {
+    await page.goto('/lab/lightbox')
+    await page.waitForFunction(
+      () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
+    )
+    await page.getByRole('button', { name: 'Show overlay', exact: true }).click()
+    const toggle = page.locator('.lab-summary button')
+    await expect(toggle).toHaveText('Hide overlay')
+    await page.evaluate(() => document.fonts.ready)
+    await page.locator('.lab-summary').evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+    })
+    const before = await toggle.boundingBox()
+    await page.locator('.np-album__item').nth(1).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.locator('[data-np-transition-frame]')).toBeHidden()
+    await page.waitForFunction(
+      () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
+    )
+    await page.waitForTimeout(500)
+    const after = await toggle.boundingBox()
+    await writeFile(testInfo.outputPath('bar-position.json'), JSON.stringify({ before, after }))
+    await expect(toggle).toBeInViewport({ ratio: 1 })
+    const summary = await page.evaluate(() => window.__lab!.summary())
+    if (summary.cls !== null) expect(summary.cls).toBe(0)
+  } finally {
+    await context.close()
+  }
+})
+
 test('image budget lab archive appends 200 after reaching the end', async ({ page }) => {
   await page.goto('/lab/archive?n=1000')
   await page.waitForFunction(() => !!window.__lab)
   await expect(page.locator('.np-album__item')).toHaveCount(1000)
   await page.locator('.np-album__end').scrollIntoViewIfNeeded()
   await expect.poll(() => page.locator('.np-album__item').count()).toBeGreaterThanOrEqual(1200)
+  await page.waitForTimeout(500)
+  const summary = await page.evaluate(() => window.__lab!.summary())
+  if (summary.cls !== null) expect(summary.cls).toBe(0)
+  expect(summary.blankTotalMs).toBe(0)
 })
 
 test('image budget lab index and album controls use the specified contract', async ({ page }) => {

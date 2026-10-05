@@ -38,21 +38,22 @@ const { summary, readings, slideRequests } = useLabMeasurement(
   bar,
 )
 let resizeFrame = 0
-let previousSummaryWidth: number | undefined
+let previousToggleRight: number | undefined
+onBeforeUpdate(() => {
+  const element = bar.value
+  if (previousToggleRight === undefined && element && element.scrollLeft > 0)
+    previousToggleRight = element.querySelector('button')?.getBoundingClientRect().right
+})
 function sizeBar() {
   cancelAnimationFrame(resizeFrame)
   resizeFrame = requestAnimationFrame(() => {
     const element = bar.value
-    const width = element?.firstElementChild?.getBoundingClientRect().width
-    // Keep the viewed diagnostics anchored when values grow to the left of a scrolled bar.
-    if (
-      element &&
-      width !== undefined &&
-      previousSummaryWidth !== undefined &&
-      element.scrollLeft > 0
-    )
-      element.scrollLeft += width - previousSummaryWidth
-    previousSummaryWidth = width
+    // The browser may already clamp scrollLeft when content shrinks. Correct the
+    // actual position once, rather than applying the content-width delta twice.
+    const right = element?.querySelector('button')?.getBoundingClientRect().right
+    if (element && right !== undefined && previousToggleRight !== undefined)
+      element.scrollLeft += right - previousToggleRight
+    previousToggleRight = undefined
     const height = element?.offsetHeight ?? 0
     if (barHeight.value === height) return
     barHeight.value = height
@@ -142,6 +143,8 @@ const color = (reading: (typeof readings.value)[number]) =>
   background: #1a1816;
   font-size: 13px;
   line-height: 1.6;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 .lab-summary {
   position: fixed;
