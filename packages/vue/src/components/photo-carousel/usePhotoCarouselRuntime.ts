@@ -6,6 +6,9 @@ import type { GalleryRuntime } from '../../gallery/runtime'
 import { createGalleryEmblaBridge } from '../../gallery/embla'
 import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 
+// Native controls only: a slide with an open-lightbox role must stay draggable.
+const CONTROL_SELECTOR = '.np-carousel__controls, button, a, input, select, textarea'
+
 export function validatePhotoCarouselBehavior(options: { loop?: boolean; dragFree?: boolean }) {
   if (options.loop !== undefined && typeof options.loop !== 'boolean') {
     throw new TypeError('[nuxt-photo] PhotoCarousel loop must be boolean')
@@ -48,6 +51,10 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   const gallery = config.gallery
   const bridge = createGalleryEmblaBridge(gallery)
   const effectiveDirection = gallery.direction
+  // Controls sit inside the drag root. A press on them must not start a drag: on release
+  // Embla snaps the unfinished drag back and undoes the click that is moving the track.
+  const startsOnTrack = (_api: EmblaCarouselType, event: MouseEvent | TouchEvent) =>
+    !(event.target instanceof Element && event.target.closest(CONTROL_SELECTOR))
   const optionsRef = computed<EmblaOptionsType>(() => {
     validatePhotoCarouselBehavior({
       loop: config.loop.value,
@@ -59,6 +66,7 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
       direction: effectiveDirection.value,
       watchSlides: bridge.beforeReinit,
       watchResize: bridge.beforeReinit,
+      watchDrag: startsOnTrack,
       slidesToScroll: 1,
       align: 'start',
       containScroll: 'keepSnaps',
