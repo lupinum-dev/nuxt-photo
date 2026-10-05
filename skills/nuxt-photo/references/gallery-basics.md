@@ -127,9 +127,7 @@ _Source: https://nuxt-photo.lupinum.com/docs/start/introduction_
 In five minutes you have a styled album with a working lightbox.
 
 ::warning
-These docs describe the Nuxt Photo 1.0 beta. Install the `next` tag; npm
-`latest` still points to 0.2. To upgrade an existing app, follow
-[Upgrade from 0.2 to 1.0](https://nuxt-photo.lupinum.com/docs/help/upgrade-from-0-2-to-1-0).
+These docs describe the Nuxt Photo 1.0 beta. Install the `next` tag.
 ::
 
 You need Nuxt **4.4.8** or later in Nuxt 4, and Node **22.18+** or **24.11+**.

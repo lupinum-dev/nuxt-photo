@@ -213,6 +213,38 @@ export default defineNuxtConfig({
 Use the `vercel` provider for server-rendered sites on Vercel. IPX inside a
 Vercel function cannot read `public/`, so local images return 404.
 
+### Let browsers keep images
+
+Without a cache header, browsers ask the server again for every image on every
+visit. That costs a round trip per image while scrolling, even when the CDN
+answers from its cache. Two defaults cause it:
+
+| Where                      | Default                      | Effect                                                     |
+| -------------------------- | ---------------------------- | ---------------------------------------------------------- |
+| Vercel, files in `public/` | `max-age=0, must-revalidate` | The optimized image inherits it.                           |
+| IPX                        | `image.ipx.maxAge: 60`       | Browsers and CDNs keep a transformed image for one minute. |
+
+Give image folders a long cache time:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  routeRules: {
+    '/photos/**': {
+      headers: { 'cache-control': 'public, max-age=2592000, stale-while-revalidate=604800' },
+    },
+  },
+  image: {
+    ipx: { maxAge: 2592000 },
+  },
+})
+```
+
+Vercel passes the source file's `max-age` on to the optimized image. Use 30
+days: Vercel keeps an optimized image up to 31 days, and a shorter `max-age`
+makes browsers ask again once the cached copy is older than that. When you
+replace an image, give it a new file name, so browsers do not keep the old
+one.
+
 ### Generate a static site
 
 With `nuxi generate`, Nuxt Image uses `ipxStatic`: every width in every
