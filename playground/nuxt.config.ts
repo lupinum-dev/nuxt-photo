@@ -15,6 +15,12 @@ export default defineNuxtConfig({
     css: 'all',
   },
 
+  routeRules: {
+    '/lab/**': {
+      headers: { 'cache-control': 'public, max-age=86400, stale-while-revalidate=604800' },
+    },
+  },
+
   image: {
     // Retain Tailwind screens; cover small thumbnails and 2× laptops on Vercel too.
     screens: {
@@ -28,7 +34,10 @@ export default defineNuxtConfig({
     },
     quality: 80,
     provider: process.env.NUXT_PHOTO_LAB_PROVIDER === 'vercel' ? 'vercel' : 'ipx',
-    ...(ipxOnVercel && { ipx: { fs: { dir: './public' } } }),
+    ipx: {
+      maxAge: 2592000,
+      ...(ipxOnVercel && { fs: { dir: './public' } }),
+    },
   },
 
   // Vercel serves static files from its CDN, outside the IPX function filesystem.
