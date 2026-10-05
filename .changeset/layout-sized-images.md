@@ -1,9 +1,9 @@
 ---
-'@lupinum/vue-photo': major
-'@lupinum/nuxt-photo': major
+'@lupinum/vue-photo': minor
+'@lupinum/nuxt-photo': minor
 ---
 
-Download every image at the size it is shown, and show it without waiting.
+Change image delivery so every image downloads at the size it is shown, without waiting while scrolling.
 
 - `definePhotoProvider({ url })` connects any image service. In Nuxt, `nuxtPhoto.provider` or a component's `provider` prop names a Nuxt Image provider; without Nuxt Image, images use the photo's own `src`.
 - Nuxt Image's `image` config owns quality, format, `screens` and `densities`. The library builds `srcset` from them (on Vercel from `screens` only, so every width is accepted), never wider than the source file, from 128 px up.
