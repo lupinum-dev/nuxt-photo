@@ -104,7 +104,7 @@ for (const { width, height, columns, count } of [
           upstream.end()
         }
       })
-      const port = Number(process.env.PLAYWRIGHT_PORT ?? 47079) + 1 + testInfo.parallelIndex
+      const port = 47080 + testInfo.parallelIndex
       await new Promise<void>((resolve, reject) => {
         server.once('error', reject)
         server.listen(port, '127.0.0.1', resolve)
