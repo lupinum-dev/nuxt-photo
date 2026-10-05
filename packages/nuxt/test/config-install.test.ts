@@ -38,6 +38,12 @@ it('follows the active i18n composer locale and keeps per-key overrides', async 
     locale.value = 'fr'
     await nextTick()
     expect(container.textContent).toBe('Custom close / Suivant / Diapositive 2 sur 7')
+    locale.value = 'pt-PT'
+    await nextTick()
+    expect(container.textContent).toBe('Custom close / Seguinte / Diapositivo 2 de 7')
+    locale.value = 'pt-BR'
+    await nextTick()
+    expect(container.textContent).toBe('Custom close / Próximo / Slide 2 de 7')
     locale.value = 'unknown'
     await nextTick()
     expect(container.textContent).toBe('Custom close / Next / Slide 2 of 7')

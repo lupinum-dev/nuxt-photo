@@ -1,16 +1,16 @@
 import templates, { type PhotoLabelTemplates } from './photoLocaleTemplates'
 import {
-  PHOTO_LOCALES,
+  findPhotoLocale,
   PHOTO_LABEL_KEYS,
   PHOTO_LABEL_FUNCTION_KEYS,
   type PhotoLabels,
-  type PhotoLocale,
+  type PHOTO_LOCALES,
 } from './labelTypes'
 export { PHOTO_LOCALES, type PhotoLabels, type PhotoLocale } from './labelTypes'
 
 /** Resolve synchronously on use; unused locales need no label objects or template closures. */
 export function resolvePhotoLabels(language?: string): Readonly<PhotoLabels> {
-  const catalog: Readonly<Partial<Record<PhotoLocale, PhotoLabelTemplates>>> & {
+  const catalog: Readonly<Partial<Record<(typeof PHOTO_LOCALES)[number], PhotoLabelTemplates>>> & {
     en: PhotoLabelTemplates
   } = templates
   const values = catalog[detectPhotoLocale(language)] ?? catalog.en
@@ -32,11 +32,10 @@ export function resolvePhotoLabels(language?: string): Readonly<PhotoLabels> {
   )
 }
 
-export function detectPhotoLocale(language?: string): PhotoLocale {
-  const code = (
-    language ?? (typeof document === 'undefined' ? 'en' : document.documentElement.lang)
+export function detectPhotoLocale(language?: string) {
+  return (
+    findPhotoLocale(
+      language ?? (typeof document === 'undefined' ? 'en' : document.documentElement.lang),
+    ) ?? 'en'
   )
-    .toLowerCase()
-    .split('-')[0]
-  return PHOTO_LOCALES.find((locale) => locale === code) ?? 'en'
 }

@@ -46,7 +46,7 @@ it.each([
   ['fr', undefined, 'Voir la photo 2'],
   ['xx', undefined, 'View photo 2'],
   ['', undefined, 'View photo 2'],
-  ['de', 'es' as const, 'Ver foto 2'],
+  ['de', 'es' as const, 'Ver la foto 2'],
 ])(
   'detects HTML language %s, with explicit locale %s taking precedence',
   async (lang, labels, expected) => {
@@ -62,6 +62,32 @@ it.each([
   },
 )
 
+// Catches regional Portuguese being collapsed, or explicit tags rejected at setup.
+it.each([
+  ['pt-PT', 'Seguinte', 'Descarregar'],
+  ['pt-pt', 'Seguinte', 'Descarregar'],
+  ['pt-BR', 'Próximo', 'Baixar'],
+  ['pt', 'Próximo', 'Baixar'],
+  ['pt-AO', 'Próximo', 'Baixar'],
+  ['fr-CA', 'Suivant', 'Télécharger'],
+] as const)(
+  'resolves %s through HTML language and explicit labels',
+  async (locale, next, download) => {
+    const Consumer = defineComponent({
+      setup() {
+        const labels = usePhotoLabels()
+        return () => h('p', `${labels.next} / ${labels.download}`)
+      },
+    })
+    document.documentElement.lang = locale
+    for (const labels of [undefined, locale]) {
+      const mounted = await mountComponent(Consumer, { plugins: [createPhoto({ labels })] })
+      expect(mounted.container.textContent).toBe(`${next} / ${download}`)
+      mounted.unmount()
+    }
+  },
+)
+
 it('each bundled locale supplies all eighteen labels and indexed text', () => {
   for (const locale of PHOTO_LOCALES) {
     const labels = resolvePhotoLabels(locale)
@@ -69,6 +95,13 @@ it('each bundled locale supplies all eighteen labels and indexed text', () => {
     expect(Object.keys(labels)).toHaveLength(18)
     for (const value of Object.values(labels))
       expect(typeof value === 'string' ? value.length : value(2, 7).length).toBeGreaterThan(0)
+    expect(templates[locale]).toHaveLength(18)
+    expect(Object.keys(labels)).toEqual(Object.keys(resolvePhotoLabels('en')))
+    for (const [index, template] of templates[locale].entries()) {
+      expect(template.match(/\{[^}]+\}/g) ?? []).toEqual(
+        index < 15 ? [] : index < 17 ? ['{index}'] : ['{index}', '{count}'],
+      )
+    }
     expect(labels.goToSlide(2)).toContain('2')
     expect(labels.viewPhoto(2)).toContain('2')
     expect(labels.slideStatus(2, 7)).toContain('7')

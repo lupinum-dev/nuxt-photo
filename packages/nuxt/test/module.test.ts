@@ -169,6 +169,11 @@ describe('nuxt-photo module', () => {
   it.each([
     { i18n: false, locales: [], labels: undefined, expected: ['en'] },
     { i18n: true, locales: ['de', 'fr'], labels: undefined, expected: ['en', 'de', 'fr'] },
+    { i18n: true, locales: ['de', 'pt-PT'], labels: undefined, expected: ['en', 'de', 'pt-PT'] },
+    { i18n: true, locales: ['pt-pt'], labels: undefined, expected: ['en', 'pt-PT'] },
+    { i18n: true, locales: ['pt', 'pt-BR', 'pt-AO'], labels: undefined, expected: ['en', 'pt'] },
+    { i18n: false, locales: [], labels: 'pt-pt', expected: ['en', 'pt-PT'] },
+    { i18n: false, locales: [], labels: 'pt-BR', expected: ['en', 'pt'] },
     {
       i18n: true,
       locales: [{ code: 'de-AT' }, { code: 'fr' }, 'unknown', 'de'],

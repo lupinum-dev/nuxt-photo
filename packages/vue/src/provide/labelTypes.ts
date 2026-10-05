@@ -20,8 +20,31 @@ export interface PhotoLabels {
   slideStatus: (index: number, count: number) => string
 }
 
-export const PHOTO_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'nl', 'pt', 'ar', 'he'] as const
-export type PhotoLocale = (typeof PHOTO_LOCALES)[number]
+export const PHOTO_LOCALES = [
+  'en',
+  'de',
+  'fr',
+  'es',
+  'it',
+  'nl',
+  'pt',
+  'pt-PT',
+  'ar',
+  'he',
+] as const
+/** Bundled locale codes and regional tags that fall back to a bundled language. */
+export type PhotoLocale =
+  | (typeof PHOTO_LOCALES)[number]
+  | `${Lowercase<(typeof PHOTO_LOCALES)[number]>}-${string}`
+
+/** Exact tags take precedence over primary-language fallback in every entry point. */
+export function findPhotoLocale(language: string): (typeof PHOTO_LOCALES)[number] | undefined {
+  const code = language.toLowerCase()
+  return (
+    PHOTO_LOCALES.find((locale) => locale.toLowerCase() === code) ??
+    PHOTO_LOCALES.find((locale) => locale === code.split('-')[0])
+  )
+}
 
 /** Label order also maps each locale's template tuple; no translated strings live here. */
 export const PHOTO_LABEL_KEYS = [
