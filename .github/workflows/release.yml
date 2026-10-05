@@ -47,6 +47,8 @@ jobs:
         run: |
           if [[ -n "$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md)" ]]; then
             pnpm exec changeset version
+            # Changesets emits Markdown that must pass the same formatter as CI.
+            pnpm exec vp fmt 'packages/*/CHANGELOG.md' --write
           fi
           mkdir -p "$OUT"
           git add --all
