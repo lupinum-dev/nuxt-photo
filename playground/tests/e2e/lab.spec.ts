@@ -354,7 +354,50 @@ test('image budget lab reports blank time without a painted placeholder', async 
   )
   expect(reading.waitMs).toBeGreaterThan(800)
   expect(reading.blankMs).toBeGreaterThan(800)
+  expect(reading.blankMs / 16.7).toBeCloseTo(Math.round(reading.blankMs / 16.7), 10)
   expect(await page.locator('.lab-summary').textContent()).toContain('Blank:')
+})
+
+test('image budget lab counts complete blank frames per interval', async ({ page }) => {
+  await page.goto('/lab/photo')
+  await page.waitForFunction(() => !!window.__lab)
+  await page.evaluate(() => {
+    const image = document.createElement('img')
+    image.id = 'blank-frames'
+    image.style.cssText =
+      'position:fixed;top:400px;left:100px;width:200px;height:200px;background-color:red'
+    document.querySelector('.lab-content')!.append(image)
+  })
+  await page.waitForFunction(() =>
+    window.__lab!.summary().imageTimings.some((image) => image.url === ''),
+  )
+  const blanks = await page.evaluate(async () => {
+    const image = document.getElementById('blank-frames')!
+    const originalNow = performance.now.bind(performance)
+    let time = 1000
+    performance.now = () => time
+    const samples: number[] = []
+    // Use real visibility and mutation observers, controlling only the clock.
+    const mutations = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+    try {
+      for (const duration of [0.3, 16.6, 16.7, 33.5]) {
+        image.style.backgroundColor = 'transparent'
+        await mutations()
+        time += duration
+        image.style.backgroundColor = 'red'
+        await mutations()
+        samples.push(window.__lab!.summary().imageTimings.find((item) => item.url === '')!.blankMs)
+        time += 100
+      }
+      return samples
+    } finally {
+      performance.now = originalNow
+      image.remove()
+    }
+  })
+  expect(blanks.slice(0, 2)).toEqual([0, 0])
+  expect(blanks[2]).toBeCloseTo(16.7, 10)
+  expect(blanks[3]).toBeCloseTo(50.1, 10)
 })
 
 test('image budget lab does not backdate blank time from a delayed intersection', async ({

@@ -3,6 +3,7 @@ export interface ImageTiming {
   firstVisibleMs: number
   loadedMs: number | null
   waitMs: number
+  /** Sum of complete 16.7 ms animation frames in each visible blank interval. */
   blankMs: number
   pending: boolean
 }
@@ -50,6 +51,8 @@ export function startLabTiming() {
     blank: number
   }
   const states = new Map<HTMLImageElement, State>()
+  // Count visible blank time in complete frames, per interval, before summing.
+  const blankFramesMs = (duration: number) => Math.floor(Math.max(0, duration) / 16.7) * 16.7
   let cls: number | null = null
   let session = 0,
     sessionStart = 0,
@@ -99,7 +102,7 @@ export function startLabTiming() {
     const blank = shown && !state.painted && !state.placeholder && !state.colour
     if (blank && state.blankStart === null) state.blankStart = time
     if (!blank && state.blankStart !== null) {
-      state.blank += Math.max(0, time - state.blankStart)
+      state.blank += blankFramesMs(time - state.blankStart)
       state.blankStart = null
     }
   }
@@ -226,7 +229,7 @@ export function startLabTiming() {
           loadedMs: state.loaded,
           waitMs: Math.max(0, (state.loaded ?? now) - state.first),
           blankMs:
-            state.blank + (state.blankStart === null ? 0 : Math.max(0, now - state.blankStart)),
+            state.blank + (state.blankStart === null ? 0 : blankFramesMs(now - state.blankStart)),
           pending: state.loaded === null,
         })
       }
