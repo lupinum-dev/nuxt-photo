@@ -43,6 +43,8 @@ export default defineConfig({
     // Keep the shared OSS release helpers identical to the starter.
     ignorePatterns: [
       ...ignoredGeneratedPaths,
+      // Changesets writes the changelogs in the release job, which runs no formatter.
+      '**/CHANGELOG.md',
       'pnpm-lock.yaml',
       'scripts/check-dependency-policy.mjs',
       'scripts/release.mjs',
