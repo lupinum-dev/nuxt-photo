@@ -40,22 +40,9 @@ function assertSourceManifestsUnchanged() {
   }
 }
 
-function buildAndPack(directory) {
+// Packs the output of `pnpm build`, which also writes the agent docs into each package.
+function pack(directory) {
   mkdirSync(directory, { recursive: true })
-
-  for (const pkg of packageSet.packages) {
-    rmSync(join(pkg.absoluteDirectory, 'dist'), {
-      force: true,
-      recursive: true,
-    })
-  }
-
-  for (const pkg of packageSet.packages) {
-    run('pnpm', ['--dir', pkg.absoluteDirectory, 'run', 'build'], {
-      stdio: 'inherit',
-    })
-    assertSourceManifestsUnchanged()
-  }
 
   const tarballs = new Map()
   for (const pkg of packageSet.packages) {
@@ -198,7 +185,7 @@ function inspectPackage(pkg, tarballPath) {
 }
 
 // `--tarballs <dir>` tests tarballs that were already packed, such as the exact files
-// the release workflow publishes, instead of building and packing here.
+// the release workflow publishes, instead of packing the current build here.
 function findPackedTarballs(directory) {
   const files = readdirSync(directory)
   return new Map(
@@ -216,7 +203,7 @@ mkdirSync(releaseDir, { recursive: true })
 
 const tarballs =
   tarballsFlag === -1
-    ? buildAndPack(releaseDir)
+    ? pack(releaseDir)
     : findPackedTarballs(resolve(rootDir, process.argv[tarballsFlag + 1] ?? ''))
 const packed = packageSet.packages.map((pkg) => {
   const tarballPath = tarballs.get(pkg.name)

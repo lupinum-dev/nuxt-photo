@@ -46,20 +46,16 @@ export default defineConfig({
       // Changesets writes the changelogs in the release job, which runs no formatter.
       '**/CHANGELOG.md',
       'pnpm-lock.yaml',
-      'scripts/check-dependency-policy.mjs',
       'scripts/release.mjs',
       'scripts/lint-changesets.mjs',
+      'scripts/agent-docs.mjs',
     ],
     semi: false,
     singleQuote: true,
     trailingComma: 'all',
   },
   lint: {
-    ignorePatterns: [
-      ...ignoredGeneratedPaths,
-      'docs/server/routes/raw/**',
-      'skills/nuxt-photo/references/**',
-    ],
+    ignorePatterns: [...ignoredGeneratedPaths, 'docs/server/routes/raw/**'],
     options: {
       typeAware: true,
       // TypeScript-Go does not understand Vue SFC modules or Nuxt-generated

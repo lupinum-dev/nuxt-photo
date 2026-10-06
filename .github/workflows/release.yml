@@ -50,7 +50,7 @@ jobs:
           fi
           mkdir -p "$OUT"
           git add --all
-          git diff --cached --name-only -- package.json layer/package.json 'packages/*/package.json' | while read -r file; do
+          git diff --cached --name-only -- package.json 'packages/*/package.json' | while read -r file; do
             jq -c --arg old "$(git show "HEAD:$file" | jq -r .version)" \
               'select(.private != true and .version != $old) | {name, version}' "$file"
           done | jq -s . > "$OUT/versions.json"
@@ -113,11 +113,11 @@ jobs:
       # script, a dependency, `files`, .changeset/config.json, a symlink, an executable) fails.
       - run: |
           git apply --index "$RUNNER_TEMP/version/version.patch"
-          manifests='^((packages/[^/]+|layer)/)?package\.json$'
+          manifests='^(packages/[^/]+/)?package\.json$'
           paths="$(git diff --cached --name-only --no-renames |
-            grep -Ev '^(((packages/[^/]+|layer)/)?(package\.json|CHANGELOG\.md)|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
+            grep -Ev '^((packages/[^/]+/)?(package\.json|CHANGELOG\.md)|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
           modes="$(git diff --cached --summary --no-renames |
-            grep -Ev '^ (create|delete) mode 100644 (((packages/[^/]+|layer)/)?CHANGELOG\.md|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
+            grep -Ev '^ (create|delete) mode 100644 ((packages/[^/]+/)?CHANGELOG\.md|\.changeset/((pre/)?[^/]+\.md|pre\.json))$' || true)"
           own="$(git ls-tree -r --name-only HEAD | grep -E "$manifests" |
             while read -r file; do git show "HEAD:$file"; done | jq -s '[.[].name | strings]')"
           # shellcheck disable=SC2016 # a jq program: $own and $name are jq variables

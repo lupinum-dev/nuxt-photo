@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
 
@@ -28,44 +27,16 @@ function routeFor(file) {
 const files = await markdownFiles(contentRoot)
 const routes = new Set(files.map(routeFor))
 const failures = []
-const trackedFiles = new Set(
-  execFileSync('git', ['ls-files'], {
-    cwd: root,
-    encoding: 'utf8',
-  })
-    .trim()
-    .split('\n'),
-)
 if (files.includes(resolve(contentRoot, 'index.md'))) {
   failures.push(
     'docs/content/docs/index.md must not exist because it creates a self-redirect at /docs.',
   )
 }
-for (const path of [
-  '.github/ISSUE_TEMPLATE/bug.md',
-  '.github/ISSUE_TEMPLATE/config.yml',
-  '.github/ISSUE_TEMPLATE/documentation.md',
-  '.github/ISSUE_TEMPLATE/proposal.md',
-  '.github/pull_request_template.md',
-]) {
-  if (!trackedFiles.has(path)) failures.push(`${path} must be tracked.`)
-}
-const pullRequestTemplate = await readFile(
-  resolve(root, '.github/pull_request_template.md'),
-  'utf8',
-)
-for (const marker of [
-  '- [ ] I ran `pnpm verify`, or I explained why it does not apply.',
-  '- [ ] I updated versions, migration guidance, and compatibility notes when the public contract changed.',
-]) {
-  if (!pullRequestTemplate.includes(marker))
-    failures.push(`Pull request template is missing: ${marker}`)
-}
 const docsAppConfig = await readFile(resolve(root, 'docs/app/app.config.ts'), 'utf8')
 for (const marker of [
   "plausible: { scriptId: 'AdOTbq5X_7FOIbPeaHoma' }",
   'feedback: { enabled: true }',
-  'https://discord.gg/RPH6SeA36N',
+  'https://discord.lupinum.com',
   'https://lupinum.com/impressum',
   'https://lupinum.com/datenschutz',
 ]) {
@@ -83,7 +54,6 @@ const installationSurfaces = [
   ['docs/content/docs/1.start/2.get-started.md', '@lupinum/nuxt-photo'],
   ['docs/content/docs/1.start/5.plain-vue.md', '@lupinum/vue-photo'],
   ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
-  ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],
 ]
 
 if (String(nuxtPackage.version) !== String(vuePackage.version)) {
@@ -131,6 +101,7 @@ const readmeContracts = new Map([
       'Installation',
       'Quick start',
       'Exports',
+      'Agent setup',
       'Documentation',
       'Support and security',
       'License',
@@ -189,7 +160,7 @@ for (const file of [...files, ...publicReadmes]) {
     for (const link of [
       'https://github.com/lupinum-dev/nuxt-photo',
       'https://nuxt-photo.lupinum.com',
-      'https://discord.gg/RPH6SeA36N',
+      'https://discord.lupinum.com',
       ...(label === 'README.md' ? ['https://deepwiki.com/lupinum-dev/nuxt-photo'] : []),
     ]) {
       if (!source.includes(link)) failures.push(`${label} is missing canonical link ${link}`)

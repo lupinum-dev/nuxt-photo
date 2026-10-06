@@ -33,7 +33,8 @@
     "./app": {
       "types": "./dist/runtime/app.d.ts",
       "import": "./dist/runtime/app.js"
-    }
+    },
+    "./agent-docs": "./dist/agent/AGENTS.md"
   },
   "publishConfig": {
     "access": "public"

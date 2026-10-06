@@ -15,8 +15,6 @@
 - **D3 (2026-09-28): Keep the existing toolchain and native dependency policy.**
   Vite+, Vue template ESLint, vue-tsc, Nuxt Module Builder and unbuild remain.
   pnpm and Renovate retain the 24-hour quarantine without package exemptions.
-  Script volume above the handbook warning threshold is mainly the existing
-  public documentation checks, bundle-size fixtures and clean consumer tests.
 - **D5 (2026-09-28): Publish only the current approved main artifact.** The
   canonical publish job serializes publication and checks current main after
   approval, immediately before npm. A stale approved run fails and must be
@@ -46,3 +44,16 @@
   part of a version is already on npm, a fresh run continues only if the package
   source is unchanged since the version commit; otherwise re-run all jobs of the
   original run.
+- **D7 (2026-10-06): Adopt Lupinum OSS v3.** Both packages ship the built docs
+  pages as `./agent-docs`, and each package README has the Agent setup; the
+  separate skill and its reference generator are removed. Checks the handbook
+  lists as not worth adding are removed: the action-SHA verifier, the
+  dependency-policy checker (pnpm enforces the quarantine itself), and the
+  metadata, Vercel and docs-theme shape checks. `pnpm build` also builds the
+  docs, because the packed packages contain them; `pnpm build:packages` builds
+  only the packages. The 1.0 prereleases keep the name `beta`; prereleases after
+  1.0 are named `next`. Both publish under the `next` dist-tag.
+- **D8 (2026-10-06): Keep the packed consumer tests, the bundle-size budget and the docs contract checks (FILE-08).**
+  They are most of the 2,000 lines in `scripts/`. Packed tests install the real
+  tarballs at the framework floors, the size budget guards what users download,
+  and the docs checks keep examples and references true to the code.
