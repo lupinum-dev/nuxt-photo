@@ -1,5 +1,70 @@
 # @lupinum/vue-photo
 
+## 1.0.0-beta.7
+
+### Minor Changes
+
+- [#104](https://github.com/lupinum-dev/nuxt-photo/pull/104) [`d2734fb`](https://github.com/lupinum-dev/nuxt-photo/commit/d2734fb6317d0bb74f4388dc462796236509587f) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add grid, bento, mosaic and accordion layouts to `PhotoAlbum`.
+  
+  CSS places every tile, so the server HTML is final at every container width and nothing moves after hydration. `grid` shows same-size tiles. `bento` mixes big and small tiles without gaps and takes a typed `featured` option. In `mosaic`, a few photos fill one frame and the last tile shows how many more there are. `accordion` slices open on hover or keyboard focus. All four crop photos to fill their tiles, and each tile downloads the size it is shown at. Bento and mosaic may move a photo a few places to crop less. The page, the Tab key and the lightbox follow the order on screen; `open(index)` still uses the position in `photos`.
+
+- [#110](https://github.com/lupinum-dev/nuxt-photo/pull/110) [`230e2fc`](https://github.com/lupinum-dev/nuxt-photo/commit/230e2fc37127ce02178bb2507b4808e9c6ec5bf7) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change image delivery so every image downloads at the size it is shown, without waiting while scrolling.
+  
+  - `definePhotoProvider({ url })` connects any image service. In Nuxt, `nuxtPhoto.provider` or a component's `provider` prop names a Nuxt Image provider; without Nuxt Image, images use the photo's own `src`.
+  - Nuxt Image's `image` config owns quality, format, `screens` and `densities`. The library builds `srcset` from them (on Vercel from `screens` only, so every width is accepted), never wider than the source file, from 128 px up.
+  - The layout writes `sizes` from the real thumbnail width, already exact in the server HTML. `Photo` takes a `sizes` prop for photos that are not full width.
+  - `priority` loads the first images first and preloads them during server rendering, at most six per page.
+  - Images start loading 1.5 screens before they scroll into view, in every browser, and frames show a placeholder colour until the image arrives.
+  - IPX serves WebP by default and a small blurred preview while each photo loads. GIFs keep their animation, SVGs are served unchanged, and URL-encoded local paths work.
+  
+  Local files in Nuxt:
+  
+  - `localImages: true` reads `width` and `height` of files in `public/` at build time and during `nuxt dev`, so photos from there need no dimensions. It is off by default because the table ships to the browser.
+  - `usePhotoFolder(folder)` lists one folder of `public/` and sends only that folder in the page payload.
+  - With the optional `sharp` peer, local photos get build-time blurred previews and an average colour.
+
+- [#110](https://github.com/lupinum-dev/nuxt-photo/pull/110) [`230e2fc`](https://github.com/lupinum-dev/nuxt-photo/commit/230e2fc37127ce02178bb2507b4808e9c6ec5bf7) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add lightbox history, deep links and download, share and full-screen tools.
+  
+  Back closes the lightbox. Opening adds a browser history entry; set `lightbox: { history: false }` to turn it off.
+  
+  - `lightbox.deepLink` puts the open photo in the URL (`?photo=<id>` by default), so a link opens that photo.
+  - `lightbox.tools` adds `download`, `share` and `fullscreen` buttons, and the `#tools` slot adds your own.
+  - Only the open slide and one on each side are mounted. The previous and next images load in the background once the open image is shown, except when the visitor saves data.
+  - Nuxt apps set one custom lightbox for the whole app with a file path: `nuxtPhoto.lightbox.component: '~/components/MyLightbox.vue'`.
+
+- [#110](https://github.com/lupinum-dev/nuxt-photo/pull/110) [`230e2fc`](https://github.com/lupinum-dev/nuxt-photo/commit/230e2fc37127ce02178bb2507b4808e9c6ec5bf7) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change configuration to one place and labels to follow the page language.
+  
+  Nuxt apps set `nuxtPhoto` in `nuxt.config.ts`; plain Vue apps install settings with `app.use(createPhoto(config))`. An unknown or invalid option stops setup with a `TypeError` that names it.
+  
+  Labels follow the page language. Ten languages are bundled: `en de fr es it nl pt pt-PT ar he`, where `pt` is Brazilian Portuguese. Nuxt uses the active `@nuxtjs/i18n` locale and bundles only the languages the app needs; plain Vue reads the `lang` of the page. `labels: 'de'` picks a language, and an object overrides single labels.
+  
+  `validatePhotos()` checks photo data and returns the valid photos and every problem without throwing.
+
+- [#110](https://github.com/lupinum-dev/nuxt-photo/pull/110) [`230e2fc`](https://github.com/lupinum-dev/nuxt-photo/commit/230e2fc37127ce02178bb2507b4808e9c6ec5bf7) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change every gallery component to the same API with `v-model:active` and `GalleryHandle`.
+  
+  `Photo`, `PhotoAlbum`, `PhotoGroup` and `PhotoCarousel` support `v-model:active` with a photo ID and expose the same `GalleryHandle` (`open`, `openById`, `close`, `isOpen`, `activeId`, `activePhoto`). The active photo follows its ID when the collection changes, so removing an earlier photo keeps the same photo open.
+  
+  - `lightbox` takes `true`, `false` or an options object: `{ component, transition, navigation, history, deepLink, tools }`.
+  - One `ui` object sets classes on each part of a component.
+  - `priority` loads the first images first.
+  - `PhotoCarousel` shows the `controls` you list (`['arrows', 'thumbnails', 'counter']` by default, plus `'dots'`) and takes `loop` and `drag-free`.
+  - Every component reads its direction from `dir` or CSS on the page.
+  - `Photo` supports `validation="drop"`.
+  - `PhotoAlbum` emits `end-reached` when its end comes within one screen, for "load more".
+  
+  The root entry exports the public contract only. Build custom lightboxes with `LightboxProvider` and `useLightbox`.
+
+### Patch Changes
+
+- [#110](https://github.com/lupinum-dev/nuxt-photo/pull/110) [`230e2fc`](https://github.com/lupinum-dev/nuxt-photo/commit/230e2fc37127ce02178bb2507b4808e9c6ec5bf7) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix album layout shifts, slow large albums and several lightbox and carousel issues.
+  
+  - Columns, masonry and rows render the same geometry on the server as in the browser, so nothing shifts while the page streams in or hydrates.
+  - Columns albums with thousands of photos lay out in milliseconds instead of freezing the page; large rows albums are faster too.
+  - Fast clicks on carousel arrows are no longer undone by a drag.
+  - The lightbox keeps focus inside when the browser skips buttons in its tab order, mirrors its arrows in right-to-left pages, and no longer triggers ResizeObserver loop errors.
+  - Photo validation errors keep their message and troubleshooting link in every component.
+  - Carousel autoplay no longer leaks event listeners when its options change.
+
 ## 1.0.0-beta.6
 
 ### Major Changes
