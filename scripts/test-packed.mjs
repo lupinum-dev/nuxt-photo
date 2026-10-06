@@ -184,27 +184,10 @@ function inspectPackage(pkg, tarballPath) {
   return packageJson
 }
 
-// `--tarballs <dir>` tests tarballs that were already packed, such as the exact files
-// the release workflow publishes, instead of packing the current build here.
-function findPackedTarballs(directory) {
-  const files = readdirSync(directory)
-  return new Map(
-    packageSet.packages.map((pkg) => {
-      const file = `${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.tgz`
-      assert(files.includes(file), `Expected ${file} in ${directory}.`)
-      return [pkg.name, join(directory, file)]
-    }),
-  )
-}
-
-const tarballsFlag = process.argv.indexOf('--tarballs')
 rmSync(releaseDir, { force: true, recursive: true })
 mkdirSync(releaseDir, { recursive: true })
 
-const tarballs =
-  tarballsFlag === -1
-    ? pack(releaseDir)
-    : findPackedTarballs(resolve(rootDir, process.argv[tarballsFlag + 1] ?? ''))
+const tarballs = pack(releaseDir)
 const packed = packageSet.packages.map((pkg) => {
   const tarballPath = tarballs.get(pkg.name)
   return { packageJson: inspectPackage(pkg, tarballPath), tarballPath }

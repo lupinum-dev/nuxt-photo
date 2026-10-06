@@ -14,5 +14,6 @@
   "updateInternalDependencies": "patch",
   "bumpVersionsWithWorkspaceProtocolOnly": true,
   "format": false,
-  "ignore": []
+  "ignore": [],
+  "privatePackages": { "version": false, "tag": false }
 }

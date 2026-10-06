@@ -49,6 +49,7 @@ export default defineConfig({
       'scripts/release.mjs',
       'scripts/lint-changesets.mjs',
       'scripts/agent-docs.mjs',
+      'scripts/audit-deps.mjs',
     ],
     semi: false,
     singleQuote: true,

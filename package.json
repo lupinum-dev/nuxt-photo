@@ -24,14 +24,14 @@
     "typecheck": "pnpm build:packages && pnpm prepare:apps && pnpm typecheck:packages && pnpm typecheck:apps",
     "typecheck:packages": "vp run --filter '@lupinum/*photo' --fail-if-no-match typecheck",
     "typecheck:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-docs --fail-if-no-match typecheck",
-    "test": "vp test && node --test scripts/*.test.mjs",
+    "test": "vp test",
     "test:browser": "pnpm build:playground && playwright test -c playground",
     "test:packed": "node scripts/test-packed.mjs",
     "test:compat": "pnpm build:packages && pnpm typecheck:packages && vp test",
     "docs:build": "pnpm docs:check && pnpm build:packages && vp run --filter nuxt-photo-docs --fail-if-no-match build",
     "docs:check": "node scripts/docs/validate.mjs && node scripts/docs/check-contract.mjs",
     "size": "node scripts/size/run.mjs",
-    "verify": "pnpm audit && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test -c playground"
+    "verify": "node scripts/audit-deps.mjs && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test -c playground"
   },
   "devDependencies": {
     "@changesets/changelog-github": "1.0.1",
@@ -59,8 +59,7 @@
     "vitest": "catalog:",
     "vue": "catalog:",
     "vue-declaration-types": "npm:@vue/runtime-dom@3.5.0",
-    "vue-eslint-parser": "^10.4.1",
-    "yaml": "2.9.1"
+    "vue-eslint-parser": "^10.4.1"
   },
   "browserslist": [
     "last 2 versions",
