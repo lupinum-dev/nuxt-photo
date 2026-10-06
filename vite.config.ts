@@ -13,8 +13,8 @@ const ignoredGeneratedPaths = [
   '**/dist/**',
   '**/node_modules/**',
   'coverage/**',
-  'playwright-report/**',
-  'test-results/**',
+  '**/playwright-report/**',
+  '**/test-results/**',
 ]
 
 export default defineConfig({

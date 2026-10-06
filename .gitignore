@@ -14,7 +14,8 @@ dist
 .cursor
 .cursorrules
 .cursorignore
-.claude/
+.claude/*
+!.claude/CLAUDE.md
 playwright-report
 test-results
 release

@@ -196,6 +196,30 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # release.mjs finds the version commit and the release tags
+      # Shown on the run page where the maintainer approves the publish: what changed in the release
+      # machinery since the last release. Without a second reviewer this is the check before approval.
+      - name: Release files changed since the last release
+        run: |
+          last="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [[ -z "$last" ]]; then
+            echo "## Release files: first release, nothing to compare" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          changed="$(git diff --name-only "$last" HEAD -- .github/workflows .github/actions scripts/release.mjs .changeset/config.json)"
+          if [[ -z "$changed" ]]; then
+            echo "## Release files unchanged since $last" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "::warning title=Release files changed since $last::Review them before you approve the npm deployment."
+          {
+            echo "## Release files changed since $last"
+            echo
+            echo "Review these changes before you approve the npm deployment:"
+            echo
+            sed 's/^/- `/; s/$/`/' <<< "$changed"
+            echo
+            echo "[Compare $last with this commit]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$last...$GITHUB_SHA)"
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24

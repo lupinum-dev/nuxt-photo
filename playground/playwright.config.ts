@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test'
 const port = process.env.PLAYWRIGHT_PORT ?? '45173'
 
 export default defineConfig({
-  testDir: './playground/tests/e2e',
+  testDir: './tests/e2e',
   forbidOnly: !!process.env.CI,
   fullyParallel: true,
   workers: 4,
@@ -46,7 +46,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `cd playground && PORT=${port} HOST=127.0.0.1 node .output/server/index.mjs`,
+    command: `PORT=${port} HOST=127.0.0.1 node .output/server/index.mjs`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: false,
     stdout: 'pipe',

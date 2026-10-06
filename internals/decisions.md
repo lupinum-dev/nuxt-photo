@@ -57,3 +57,17 @@
   They are most of the 2,000 lines in `scripts/`. Packed tests install the real
   tarballs at the framework floors, the size budget guards what users download,
   and the docs checks keep examples and references true to the code.
+- **D9 (2026-10-06): One maintainer, with the release summary as the check.**
+  Matthias maintains Nuxt Photo alone with agents, with one GitHub account and
+  the current app permissions. There is no second reviewer, so the pack job
+  lists every change to the release workflows, `scripts/release.mjs` and
+  `.changeset/config.json` since the last release tag. Read it before approving
+  the npm deployment. The handbook's "A second maintainer" section says what to
+  add when that changes.
+- **D10 (2026-10-06): Shared repository layout.** The root keeps only
+  `README.md`, `LICENSE`, `AGENTS.md`, the workspace manifests and configuration
+  that tools read from the root. Community files and `renovate.json` live in
+  `.github/`, `CLAUDE.md` in `.claude/`, maintainer notes in `internals/`. The
+  Playwright config lives with its tests in `playground/`, the shared TypeScript
+  base with the packages, and pnpm settings in `pnpm-workspace.yaml`. The
+  root changelog index is gone: each package has its own changelog.

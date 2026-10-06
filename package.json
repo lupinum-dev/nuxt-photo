@@ -25,13 +25,13 @@
     "typecheck:packages": "vp run --filter '@lupinum/*photo' --fail-if-no-match typecheck",
     "typecheck:apps": "vp run --filter nuxt-photo-playground --filter nuxt-photo-docs --fail-if-no-match typecheck",
     "test": "vp test && node --test scripts/*.test.mjs",
-    "test:browser": "pnpm build:playground && playwright test",
+    "test:browser": "pnpm build:playground && playwright test -c playground",
     "test:packed": "node scripts/test-packed.mjs",
     "test:compat": "pnpm build:packages && pnpm typecheck:packages && vp test",
     "docs:build": "pnpm docs:check && pnpm build:packages && vp run --filter nuxt-photo-docs --fail-if-no-match build",
     "docs:check": "node scripts/docs/validate.mjs && node scripts/docs/check-contract.mjs",
     "size": "node scripts/size/run.mjs",
-    "verify": "pnpm audit && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test"
+    "verify": "pnpm audit && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test -c playground"
   },
   "devDependencies": {
     "@changesets/changelog-github": "1.0.1",
