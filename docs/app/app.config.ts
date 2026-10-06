@@ -20,7 +20,7 @@ export default {
     nav: { links: 'auto', socialIcons: true },
     social: {
       github: 'https://github.com/lupinum-dev/nuxt-photo',
-      discord: 'https://discord.gg/RPH6SeA36N',
+      discord: 'https://discord.lupinum.com',
     },
     feedback: { enabled: true },
     analytics: { plausible: { scriptId: 'AdOTbq5X_7FOIbPeaHoma' } },

@@ -20,7 +20,7 @@
   <a href="https://www.npmjs.com/package/@lupinum/nuxt-photo"><img src="https://img.shields.io/npm/v/@lupinum/nuxt-photo?color=00DC82" alt="npm version"></a>
   <a href="https://github.com/lupinum-dev/nuxt-photo/actions/workflows/ci.yml"><img src="https://github.com/lupinum-dev/nuxt-photo/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-00DC82" alt="MIT license"></a>
-  <a href="https://discord.gg/RPH6SeA36N"><img src="https://img.shields.io/badge/Discord-18181B?logo=discord" alt="Discord"></a>
+  <a href="https://discord.lupinum.com"><img src="https://img.shields.io/badge/Discord-18181B?logo=discord" alt="Discord"></a>
   <a href="https://deepwiki.com/lupinum-dev/nuxt-photo"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
@@ -104,7 +104,7 @@ Join the Lupinum OSS community to discuss Nuxt Photo, ask questions, and share
 what you build.
 
 <p align="center">
-  <a href="https://discord.gg/RPH6SeA36N">
+  <a href="https://discord.lupinum.com">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/public/discord-dark.svg">
       <source media="(prefers-color-scheme: light)" srcset="docs/public/discord-light.svg">
@@ -148,7 +148,7 @@ pnpm verify
 
 ## Support and security
 
-Open a [GitHub issue](https://github.com/lupinum-dev/nuxt-photo/issues) for bugs and focused feature requests. Join the [Lupinum OSS Discord](https://discord.gg/RPH6SeA36N) for community support.
+Open a [GitHub issue](https://github.com/lupinum-dev/nuxt-photo/issues) for bugs and focused feature requests. Join the [Lupinum OSS Discord](https://discord.lupinum.com) for community support.
 
 Do not report vulnerabilities in public issues. Follow [SECURITY.md](./SECURITY.md) to send a private report.
 
