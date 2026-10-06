@@ -1,5 +1,18 @@
 # @lupinum/nuxt-photo
 
+## 1.0.0-beta.8
+
+### Minor Changes
+
+- [#116](https://github.com/lupinum-dev/nuxt-photo/pull/116) [`44642f6`](https://github.com/lupinum-dev/nuxt-photo/commit/44642f61f67a9bd45b4e64e325d27623257789a6) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add the `agent-docs` export: the documentation for the installed version, for coding agents.
+  
+  Follow **Agent setup** in the package README to point your project's `AGENTS.md` at it.
+
+### Patch Changes
+
+- Updated dependencies [[`44642f6`](https://github.com/lupinum-dev/nuxt-photo/commit/44642f61f67a9bd45b4e64e325d27623257789a6)]:
+  - @lupinum/vue-photo@1.0.0-beta.8
+
 ## 1.0.0-beta.7
 
 ### Minor Changes
