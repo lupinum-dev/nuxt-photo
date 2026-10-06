@@ -23,7 +23,9 @@ describe('Nuxt Photo 1.0 public contract', () => {
       exports: Record<string, unknown>
     }
 
-    expect(Object.keys(vueManifest.exports).sort()).toEqual(['.', './agent-docs', './styles.css'].sort())
+    expect(Object.keys(vueManifest.exports).sort()).toEqual(
+      ['.', './agent-docs', './styles.css'].sort(),
+    )
     expect(Object.keys(nuxtManifest.exports).sort()).toEqual(['.', './agent-docs', './app'].sort())
     expect([...Object.keys(vueManifest.exports), ...Object.keys(nuxtManifest.exports)]).not.toEqual(
       expect.arrayContaining([expect.stringContaining('*')]),

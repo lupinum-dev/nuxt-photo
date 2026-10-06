@@ -53,3 +53,7 @@
   docs, because the packed packages contain them; `pnpm build:packages` builds
   only the packages. The 1.0 prereleases keep the name `beta`; prereleases after
   1.0 are named `next`. Both publish under the `next` dist-tag.
+- **D8 (2026-10-06): Keep the packed consumer tests, the bundle-size budget and the docs contract checks (FILE-08).**
+  They are most of the 2,000 lines in `scripts/`. Packed tests install the real
+  tarballs at the framework floors, the size budget guards what users download,
+  and the docs checks keep examples and references true to the code.
