@@ -4,6 +4,10 @@ packages:
   - 'docs'
   - 'demo'
 
+# Refuse to install on an unsupported Node.js, and save exact versions.
+engineStrict: true
+saveExact: true
+
 catalog:
   nuxt: 4.5.2
   rolldown: 1.2.12

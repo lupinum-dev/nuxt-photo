@@ -134,11 +134,11 @@ Read the [Nuxt Photo documentation](https://nuxt-photo.lupinum.com). Start with 
 
 Working with a coding agent? The package ships its docs for the installed version; follow **Agent setup** in the [package README](./packages/nuxt/README.md#agent-setup). [AI coding agents](https://nuxt-photo.lupinum.com/docs/start/ai-agents) lists every option.
 
-The [changelog](./CHANGELOG.md) records release changes.
+The changelogs of [`@lupinum/nuxt-photo`](./packages/nuxt/CHANGELOG.md) and [`@lupinum/vue-photo`](./packages/vue/CHANGELOG.md) record release changes.
 
 ## Contributing and development
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before you open a pull request. The [OSS handbook](https://oss.lupinum.com) covers dependency updates, releases, rollback, and incident response.
+Read [CONTRIBUTING.md](.github/CONTRIBUTING.md) before you open a pull request. The [OSS handbook](https://oss.lupinum.com) covers dependency updates, releases, rollback, and incident response.
 
 Run the normal handoff gate before you request review:
 
@@ -150,7 +150,7 @@ pnpm verify
 
 Open a [GitHub issue](https://github.com/lupinum-dev/nuxt-photo/issues) for bugs and focused feature requests. Join the [Lupinum OSS Discord](https://discord.lupinum.com) for community support.
 
-Do not report vulnerabilities in public issues. Follow [SECURITY.md](./SECURITY.md) to send a private report.
+Do not report vulnerabilities in public issues. Follow [SECURITY.md](.github/SECURITY.md) to send a private report.
 
 ## License
 
