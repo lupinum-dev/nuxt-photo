@@ -1,8 +1,8 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Security report
     url: https://github.com/lupinum-dev/nuxt-photo/security/advisories/new
-    about: Report a vulnerability privately. Never in a public issue.
+    about: Report a vulnerability privately, not in a public issue.
   - name: Question
     url: https://discord.gg/RPH6SeA36N
     about: Ask a usage question in the Lupinum OSS Discord.
