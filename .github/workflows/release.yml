@@ -75,8 +75,10 @@ jobs:
       # open Version packages PR. A manual run follows the same rule; it can re-offer a rejected
       # or failed publish of an already-versioned release, but never packs main while changesets
       # are pending.
+      # A skipped `pr` step leaves `open` empty, and '' == '0' is true in expressions,
+      # so the pending check must come first.
       - id: check
-        if: steps.pr.outputs.open == '0'
+        if: steps.version.outputs.pending == 'false' && steps.pr.outputs.open == '0'
         run: node scripts/release.mjs check
 
   # Turns version.patch into the Version packages PR. Checks out main but installs and runs
