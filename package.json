@@ -31,7 +31,7 @@
     "docs:build": "pnpm docs:check && pnpm build:packages && vp run --filter nuxt-photo-docs --fail-if-no-match build",
     "docs:check": "node scripts/docs/validate.mjs && node scripts/docs/check-contract.mjs",
     "size": "node scripts/size/run.mjs",
-    "verify": "pnpm audit && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test -c playground"
+    "verify": "node scripts/audit-deps.mjs && pnpm docs:check && pnpm build && pnpm prepare:apps && pnpm lint && pnpm typecheck:packages && pnpm typecheck:apps && pnpm test && pnpm test:packed && pnpm size --skip-build && vp run --filter nuxt-photo-playground --fail-if-no-match build && playwright test -c playground"
   },
   "devDependencies": {
     "@changesets/changelog-github": "1.0.1",
