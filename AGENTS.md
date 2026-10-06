@@ -7,7 +7,7 @@ Read [docs/WRITING.md](docs/WRITING.md) before changing public prose.
 ## Commands
 
 `pnpm install --frozen-lockfile` installs the declared toolchain. `pnpm dev`
-starts the playground; `pnpm dev:docs` starts the documentation app. `pnpm verify` is the complete local and CI gate. Use `pnpm test`,
+starts the playground; `pnpm docs:dev` starts the documentation app. `pnpm verify` is the complete local and CI gate. Use `pnpm test`,
 `pnpm typecheck`, `pnpm test:packed` or `pnpm test:browser` for focused checks.
 
 ## Contracts

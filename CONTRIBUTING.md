@@ -14,7 +14,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Use `pnpm dev:docs` for the public examples, including the Tailwind lightbox in
+Use `pnpm docs:dev` for the public examples, including the Tailwind lightbox in
 `docs/app/examples`. Stop only processes you started.
 
 ## Verification
@@ -56,8 +56,9 @@ changelog headings by hand.
 ## Documentation and release
 
 Edit public pages in `docs/content/docs`, follow [docs/WRITING.md](docs/WRITING.md),
-and regenerate agent references with `pnpm docs:agent`. `pnpm docs:build` checks
-routes, API examples and references before building. Inspect changed interactive
+and run `pnpm docs:build`: it checks routes, API examples and references before
+building. `pnpm build` also copies the built pages into each package as its agent
+docs (`./agent-docs`). Inspect changed interactive
 examples at desktop and narrow widths.
 
 The [OSS handbook](https://oss.lupinum.com/docs/releasing) owns the release

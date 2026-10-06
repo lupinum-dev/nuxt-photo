@@ -13,8 +13,9 @@ Most readers do not read a page from top to bottom. Plan every page for these
 readers, in this order:
 
 1. **A coding agent in the user's app.** It writes most of the code. It reads
-   the installed types first, then the skill, then one or two pages through
-   `llms.txt` or `/raw/...md`. A page must let it finish the task alone.
+   the installed types first, then the pages packaged with the version it
+   installed (`dist/agent/`), or one or two pages through `llms.txt` or
+   `/raw/...md`. A page must let it finish the task alone.
 2. **A developer who skims.** They decide, copy an example, and check what the
    agent built. They read the lead, the example, and the headings.
 3. **A developer with a problem.** They search for an error message or a
@@ -184,10 +185,8 @@ and public export tests. Keep these facts aligned:
 - public root and subpath exports;
 - component props, slots, events, and setup-time options;
 - CSS variables and supported stylesheet entry points;
-- image adapter and SSR behavior;
-- generated agent references.
+- image adapter and SSR behavior.
 
-Run `pnpm docs:validate`, regenerate references with `pnpm docs:agent`, and
-run `pnpm docs:build` before handoff. Read at least one changed page as an
+Run `pnpm docs:build` before handoff. Read at least one changed page as an
 agent sees it, under `/raw/docs/...md`. Use the in-app browser to test every
 live example at desktop and phone widths.

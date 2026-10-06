@@ -36,7 +36,8 @@
     },
     "./styles.css": {
       "default": "./dist/styles.css"
-    }
+    },
+    "./agent-docs": "./dist/agent/AGENTS.md"
   },
   "publishConfig": {
     "access": "public"

@@ -83,7 +83,6 @@ const installationSurfaces = [
   ['docs/content/docs/1.start/2.get-started.md', '@lupinum/nuxt-photo'],
   ['docs/content/docs/1.start/5.plain-vue.md', '@lupinum/vue-photo'],
   ['docs/app/app.config.ts', '@lupinum/nuxt-photo'],
-  ['skills/nuxt-photo/references/gallery-basics.md', '@lupinum/nuxt-photo'],
 ]
 
 if (String(nuxtPackage.version) !== String(vuePackage.version)) {
@@ -131,6 +130,7 @@ const readmeContracts = new Map([
       'Installation',
       'Quick start',
       'Exports',
+      'Agent setup',
       'Documentation',
       'Support and security',
       'License',
