@@ -20,6 +20,9 @@ overrides:
   # Security floors for transitive build and documentation dependencies.
   # Remove an override after every parent resolves a patched version. Review after 2026-11-01.
   '@hono/node-server': 1.19.17
+  seroval: 1.6.8
+  source-map-js: 1.2.2
+  postcss-selector-parser: 7.1.6
   # Keep vite-plus's bundled Vitest browser packages on the same release as vitest.
   '@vitest/browser': 5.0.3
   '@vitest/browser-preview': 5.0.3
@@ -80,3 +83,9 @@ auditConfig:
   ignoreGhsas:
     - GHSA-vfj7-8cjw-p6xm # braces <=3.0.3, no 3.0.4 on npm yet
     - GHSA-86w9-cpqp-85rv # node-forge <=1.4.0, no 1.4.1 on npm yet
+    # simple-git: no fixed 3.x, and Nuxt DevTools fails to load 4.x. DevTools runs only in `nuxt dev`
+    # on a developer machine with the repository's own arguments. Recheck 2026-11-06.
+    - GHSA-v5rq-49vh-5v5c
+    - GHSA-x6jw-m9v5-85vh
+    - GHSA-g4wm-2vf7-vfgr
+    - GHSA-858h-whjf-mvg5
