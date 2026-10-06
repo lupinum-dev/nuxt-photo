@@ -1,32 +1,4 @@
 {
   "mode": "pre",
-  "tag": "beta",
-  "initialVersions": {
-    "@lupinum/nuxt-photo": "0.2.1",
-    "@lupinum/vue-photo": "0.2.1"
-  },
-  "changesets": [
-    "accessibility-and-direction",
-    "blur-cross-origin-glow",
-    "carousel-autoplay-motion",
-    "carousel-stable-embla",
-    "clear-beta-guidance",
-    "complete-guides-reference",
-    "container-query-rendering-correctness",
-    "expected-lightbox-clicks",
-    "explain-props-and-errors",
-    "finalize-lightbox-api",
-    "fix-beta3-browser-findings",
-    "framed-lightbox",
-    "image-previews-and-sizes",
-    "interactive-doc-showcases",
-    "lightbox-navigation-modes",
-    "live-docs-examples",
-    "nuxt-config-and-labels",
-    "one-import-path",
-    "preserve-vue-minimum-types",
-    "simplify-newcomer-journey",
-    "smooth-lightbox-flights",
-    "steady-photo-contracts"
-  ]
+  "tag": "beta"
 }
