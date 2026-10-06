@@ -20,6 +20,11 @@ overrides:
   # Security floors for transitive build and documentation dependencies.
   # Remove an override after every parent resolves a patched version. Review after 2026-11-01.
   '@hono/node-server': 1.19.17
+  seroval: 1.6.8
+  source-map-js: 1.2.2
+  postcss-selector-parser: 7.1.6
+  # Nuxt DevTools still asks for simple-git 3; every 3.x is vulnerable and DevTools runs only in `nuxt dev`.
+  simple-git: 4.0.2
   # Keep vite-plus's bundled Vitest browser packages on the same release as vitest.
   '@vitest/browser': 5.0.3
   '@vitest/browser-preview': 5.0.3
