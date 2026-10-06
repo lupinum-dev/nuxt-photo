@@ -9,8 +9,8 @@
 - **D2 (2026-09-28): Keep one fixed two-package release.** Packed consumer tests
   cover exact sibling versions, framework peer floors, declarations, exports and
   package contents. Repeated byte-identical builds and release eligibility
-  manifests are removed; they are not product behavior. The Vue-before-Nuxt
-  publish order was dropped in D11.
+  manifests are removed; they are not product behavior." The starter publishes
+  Vue before Nuxt (dependency order, D11).
 - **D3 (2026-09-28): Keep the existing toolchain and native dependency policy.**
   Vite+, Vue template ESLint, vue-tsc, Nuxt Module Builder and unbuild remain.
   pnpm and Renovate retain the 24-hour quarantine without package exemptions.
@@ -56,7 +56,7 @@
   Playwright config lives with its tests in `playground/`, the shared TypeScript
   base with the packages, and pnpm settings in `pnpm-workspace.yaml`. The
   root changelog index is gone: each package has its own changelog.
-- **D11 (2026-10-06): Adopt Lupinum OSS 071a464; the release machinery is the starter's.**
+- **D11 (2026-10-06): Adopt Lupinum OSS 834961b; the release machinery is the starter's.**
   `release.yml` and `scripts/release.mjs` match the starter apart from action
   pins, because the handbook allows no exception for `release.yml` and nothing
   below needs one for `release.mjs`. The starter's guards replace D5: publish
@@ -69,8 +69,8 @@
   - Packed tests on the release tarballs: dropped. `pnpm verify` in `ci` runs
     them on the output of `pnpm build` of the same commit, and publish needs
     that green `ci`.
-  - Vue before Nuxt: dropped. npm does not resolve dependencies at publish, and
-    a partial publish is finished with "Re-run failed jobs".
+  - Vue before Nuxt: kept by the starter, which now publishes in dependency
+    order. A partial publish is finished with "Re-run failed jobs".
   - Failing on a version on npm without provenance, re-offering a release with
     a missing tag, the partial-publish source check and the stricter own-range
     check of the version patch: dropped here, proposed for the starter.
