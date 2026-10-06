@@ -22,8 +22,8 @@ starts the playground; `pnpm docs:dev` starts the documentation app. `pnpm verif
   the general checker cannot. Read installed `node_modules/vite-plus/docs`
   before changing Vite+ commands.
 - The public packages use one Changesets fixed group. Nuxt's packed dependency
-  equals the Vue candidate version; publish Vue first. Public package changes
-  need a Changeset. Maintenance changes do not need a version bump.
+  equals the Vue version of the same release. Public package changes need a
+  Changeset. Maintenance changes do not need a version bump.
 - Packed tests install outside the workspace, cover the declared framework
   floors and current versions, and check conflicting sibling resolution.
   Fixture setup and missing output are failures, never silent skips.

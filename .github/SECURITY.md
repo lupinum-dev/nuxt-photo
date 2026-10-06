@@ -50,8 +50,7 @@ available.
 - One protected GitHub deployment approval is required before publication.
 - npm provenance must be visible for every version published by the protected
   workflow. The `0.2.0` bootstrap exception is recorded in its GitHub release.
-- The isolated job publishes the packed Vue tarball before the dependent
-  Nuxt tarball.
+- Publication requires a green `ci` check on the released commit.
 - Prereleases use `next`. Stable releases use `latest`.
 - GitHub release finalization has no npm OIDC authority.
 
