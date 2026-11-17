@@ -1,5 +1,5 @@
 <template>
-  <div :ref="ctx.setControlsRef" data-np-motion="controls" v-bind="$attrs">
+  <div data-np-motion="controls" v-bind="$attrs">
     <div data-np-sr-only aria-live="polite" aria-atomic="true">
       {{ labels.slideStatus(ctx.activeIndex.value + 1, ctx.count.value) }}
     </div>

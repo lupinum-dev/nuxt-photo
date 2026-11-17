@@ -1,11 +1,11 @@
 import type { NuxtApp } from '#app'
 import type { PhotoProvider } from '@lupinum/vue-photo'
-import type { ProviderRuntime } from './provider'
 import {
   installImagePreload,
   installPhotoConfig,
   nativeProvider,
-} from '#build/nuxt-photo-internals.mjs'
+  type ProviderRuntime,
+} from '@lupinum/vue-photo/internal'
 import { useHead } from '#imports'
 import options from '#build/nuxt-photo-options.mjs'
 import { dimensions, hasI18n, decorateProvider } from '#build/nuxt-photo-config.mjs'

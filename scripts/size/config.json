@@ -2,38 +2,45 @@
   "vue": {
     "use-lightbox": {
       "label": "useLightbox named import",
-      "brotliLimit": 19456
+      "_comment": "The composable only: it reads the controller a group or provider supplies. Measured 533 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliLimit": 560
     },
     "photo-image": {
       "label": "PhotoImage component import",
-      "_comment": "Image rendering, provider resolution, photo-data validation, shared load-ahead observation and decoded placeholder-colour handoff.",
-      "brotliLimit": 3230
+      "_comment": "Image rendering, provider resolution, photo-data validation, shared load-ahead observation and decoded placeholder-colour handoff. Measured 3,102 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliLimit": 3260
     },
     "all": {
       "label": "full package import",
-      "brotliLimit": 49600,
-      "_comment": "History/deep links, browser tools, their translated labels and the CSS-only album layouts add contract cost to the full Vue import; retain all other budgets."
+      "_comment": "Every runtime export: the eager entry plus the lazy viewer chunk, compressed separately and summed. Measured 52,342 B (2026-11-17, after the lightbox motion work; 49,700 B before it); limit = measured + 5%, rounded up to 10 B.",
+      "brotliLimit": 54960
     },
     "responsive": {
       "label": "responsive named import",
-      "brotliLimit": 700
+      "_comment": "The responsive() helper alone. Measured 657 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliLimit": 690
     }
   },
   "nuxt": {
     "module": {
       "label": "module enabled, no usage",
-      "brotliDeltaLimit": 3200,
-      "_comment": "Structure CSS (including the CSS-only album layouts), config injection, native provider defaults and Nuxt label-template helpers."
+      "_comment": "Structure CSS without the lightbox (it loads with the viewer), config injection, native provider defaults and Nuxt label templates. Measured 1,927 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliDeltaLimit": 2030
     },
     "usage": {
       "label": "module enabled with PhotoImage usage",
-      "brotliDeltaLimit": 3400,
-      "_comment": "Structure CSS, shared config, provider-based PhotoImage rendering and photo-data validation."
+      "_comment": "As above plus provider-based PhotoImage rendering and photo-data validation. Measured 1,977 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliDeltaLimit": 2080
     },
     "album": {
       "label": "module enabled with PhotoAlbum usage",
-      "brotliDeltaLimit": 44200,
-      "_comment": "Structure CSS, album layouts including grid, bento, mosaic and accordion, gallery/lightbox state, provider images and app-selected labels."
+      "_comment": "All chunks of an album page: the eager part, the lazy viewer chunk and its lightbox CSS. Measured 40,362 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliDeltaLimit": 42390
+    },
+    "album-eager": {
+      "label": "album, before interaction",
+      "_comment": "What an album page loads before the viewer chunk: the client entry, its static imports and CSS. Mostly the seven album layouts, photo validation, PhotoImage and the album labels. Measured 19,477 B (2026-11-15); limit = measured + 5%, rounded up to 10 B.",
+      "brotliDeltaLimit": 20460
     }
   }
 }

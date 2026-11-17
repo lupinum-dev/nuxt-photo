@@ -116,20 +116,19 @@ for (const saveData of [false, true]) {
       expect(requests).toHaveLength(3)
       expect(requests.some((url) => url.includes('normal-01.jpg'))).toBe(true)
       expect(requests.some((url) => url.includes('normal-03.jpg'))).toBe(true)
-      const neighbours = await page
-        .locator('[data-np-slide]:not([data-np-active]) img')
-        .evaluateAll((images) =>
-          images.map((image) => ({
-            srcset: image.getAttribute('srcset'),
-            sizes: image.getAttribute('sizes'),
-            currentSrc: (image as HTMLImageElement).currentSrc,
-          })),
-        )
-      for (const image of neighbours) {
+      const neighbours = page.locator('[data-np-slide]:not([data-np-active]) img')
+      for (const image of await neighbours.all()) {
         expect(proof).toContainEqual(
-          expect.objectContaining({ srcset: image.srcset, sizes: image.sizes }),
+          expect.objectContaining({
+            srcset: await image.getAttribute('srcset'),
+            sizes: await image.getAttribute('sizes'),
+          }),
         )
-        expect(requests).toContain(image.currentSrc)
+        // A neighbour picks its source after layout, so wait for it instead of reading once.
+        const currentSrc = () =>
+          image.evaluate((element) => (element as HTMLImageElement).currentSrc)
+        await expect.poll(currentSrc).not.toBe('')
+        expect(requests).toContain(await currentSrc())
       }
       const prefetchedNext = requests.find((url) => url.includes('normal-03.jpg'))!
       await page.getByRole('button', { name: 'Next', exact: true }).click()

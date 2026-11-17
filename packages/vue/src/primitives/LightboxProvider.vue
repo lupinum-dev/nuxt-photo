@@ -3,12 +3,13 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed } from 'vue'
+import { computed, provide } from 'vue'
 import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/index'
 import type { LightboxOptions } from '../config'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import { provideLightbox } from '../composables/provideLightbox'
 import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
+import { LightboxThumbnailRegistryKey } from '../provide/keys'
 
 defineOptions({ inheritAttrs: false })
 
@@ -45,6 +46,10 @@ warnOnSetupOptionChanges('LightboxProvider', {
   minZoom: () => props.minZoom,
 })
 
+// PhotoTrigger fills this map; the lightbox reads it only when it needs a thumbnail.
+const thumbnails = new Map<string, HTMLElement>()
+provide(LightboxThumbnailRegistryKey, thumbnails)
+
 provideLightbox(
   computed(() => props.photos),
   () => ({
@@ -57,5 +62,6 @@ provideLightbox(
     deepLink: props.deepLink,
     tools: props.tools,
   }),
+  { thumbnailFor: (id) => (thumbnails.get(id)?.isConnected ? thumbnails.get(id)! : null) },
 )
 </script>

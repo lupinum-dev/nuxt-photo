@@ -1,9 +1,5 @@
 import type { PhotoProvider } from '@lupinum/vue-photo'
-export interface ProviderRuntime {
-  resolve(name: string): PhotoProvider
-  widths(provider: PhotoProvider): readonly number[]
-  allowSourceWidth(provider: PhotoProvider): boolean
-}
+import type { ProviderRuntime } from '@lupinum/vue-photo/internal'
 
 export type NuxtImageFunction = (
   src: string,

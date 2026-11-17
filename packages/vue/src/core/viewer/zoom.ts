@@ -1,7 +1,6 @@
 import type { PanBounds, PanState, ZoomState } from '../types'
 import { rubberband } from '../geometry/rect'
-
-export const DEFAULT_MIN_ZOOM = 1.5
+import { DEFAULT_MIN_ZOOM } from './defaults'
 
 /**
  * Compute zoom levels for a photo drawn at `frameWidth` × `frameHeight` when fitted.

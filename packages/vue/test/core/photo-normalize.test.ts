@@ -11,18 +11,64 @@ describe('photo normalization', () => {
     expect(result.photos).toEqual([{ id: 'a', src: '/a.jpg', width: 1200, height: 800 }])
   })
 
-  it('throws for missing ids, empty src, invalid dimensions, and duplicate ids by default', () => {
+  it('throws for empty src, invalid dimensions and duplicate ids by default', () => {
     expect(() =>
       normalizePhotos(
         [
-          { id: '', src: '', width: 0, height: Number.NaN },
+          { id: 'empty', src: '', width: 0, height: Number.NaN },
           { id: 'dup', src: '/a.jpg', width: 100, height: 100 },
           { id: 'dup', src: '/b.jpg', width: 100, height: 100 },
         ],
         { owner: 'PhotoGroup' },
       ),
     ).toThrow(
-      /missing a non-empty string id[\s\S]*missing a non-empty src[\s\S]*invalid width[\s\S]*invalid height[\s\S]*duplicate photo id "dup"/,
+      /missing a non-empty src[\s\S]*invalid width[\s\S]*invalid height[\s\S]*share the id "dup"/,
+    )
+  })
+
+  const size = { width: 10, height: 10 }
+  it.each([
+    {
+      name: 'no id: the src is the id',
+      photos: [{ src: '/a.jpg' }, { src: '/b.jpg' }],
+      ids: ['/a.jpg', '/b.jpg'],
+      issues: [],
+    },
+    {
+      name: 'an explicit id wins',
+      photos: [{ id: 'a', src: '/a.jpg' }, { src: '/b.jpg' }],
+      ids: ['a', '/b.jpg'],
+      issues: [],
+    },
+    {
+      name: 'the same src twice without an id',
+      photos: [{ src: '/a.jpg' }, { id: 'b', src: '/b.jpg' }, { src: '/a.jpg' }],
+      ids: ['/a.jpg', 'b', '/a.jpg'],
+      issues: [
+        'PhotoAlbum: photos "/a.jpg" and "/a.jpg" share the id "/a.jpg"; give each of them its own `id`',
+        'PhotoAlbum: photos "/a.jpg" and "/a.jpg" share the id "/a.jpg"; give each of them its own `id`',
+      ],
+    },
+    {
+      name: 'the same explicit id twice',
+      photos: [
+        { id: 'x', src: '/a.jpg' },
+        { id: 'x', src: '/b.jpg' },
+      ],
+      ids: ['x', 'x'],
+      issues: [
+        'PhotoAlbum: photos "/a.jpg" and "/b.jpg" share the id "x"; give each of them its own `id`',
+        'PhotoAlbum: photos "/a.jpg" and "/b.jpg" share the id "x"; give each of them its own `id`',
+      ],
+    },
+  ])('resolves ids: $name', ({ photos, ids, issues }) => {
+    const result = normalizePhotos(
+      photos.map((photo) => ({ ...photo, ...size })),
+      { owner: 'PhotoAlbum', onInvalid: 'return' },
+    )
+    expect(result.photos.map((photo) => photo.id)).toEqual(ids)
+    expect(result.issues.map((issue) => [issue.code, issue.message])).toEqual(
+      issues.map((message) => ['duplicate-id', message]),
     )
   })
 

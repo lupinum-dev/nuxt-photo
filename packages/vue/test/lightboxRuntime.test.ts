@@ -6,7 +6,14 @@ import { makePhoto } from '@test-fixtures/photos'
 import { useLightbox, provideLightbox } from '../src/composables'
 import { getMountedSlideIndices, useLightboxRuntimeState } from '../src/lightbox/runtime'
 import { createPhoto } from '../src/config/plugin'
+import { providePhotoConfig } from '../src/config'
 import { createKeydownBinding, useLightboxWindowLifecycle } from '../src/lightbox/watchers'
+
+/** Runtime state with config set the way production sets it. */
+function runtimeState(photos: Parameters<typeof useLightboxRuntimeState>[0]) {
+  providePhotoConfig(() => ({ lightbox: { transition: 'none' } }))
+  return useLightboxRuntimeState(photos)
+}
 
 async function flushWatchers() {
   await nextTick()
@@ -150,7 +157,8 @@ describe('lightbox lifecycle invariants', () => {
 
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState([makePhoto()], transition)
+        providePhotoConfig(() => ({ lightbox: { transition: transition.value } }))
+        api = useLightboxRuntimeState([makePhoto()])
         return () => null
       },
     })
@@ -188,7 +196,7 @@ describe('lightbox lifecycle invariants', () => {
 
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(photos, 'none')
+        api = runtimeState(photos)
         return () => null
       },
     })
@@ -220,7 +228,7 @@ describe('lightbox lifecycle invariants', () => {
 
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(photos, 'none')
+        api = runtimeState(photos)
         return () => null
       },
     })
@@ -254,7 +262,7 @@ describe('lightbox lifecycle invariants', () => {
 
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(photos, 'none')
+        api = runtimeState(photos)
         return () => null
       },
     })
@@ -296,7 +304,7 @@ describe('lightbox lifecycle invariants', () => {
     const app = createApp(
       defineComponent({
         setup() {
-          api = useLightboxRuntimeState(photos, 'none')
+          api = runtimeState(photos)
           return () => null
         },
       }),
@@ -336,8 +344,8 @@ describe('lightbox lifecycle invariants', () => {
     const app = createApp(
       defineComponent({
         setup() {
-          first = useLightboxRuntimeState([photo], 'none')
-          second = useLightboxRuntimeState([photo], 'none')
+          first = runtimeState([photo])
+          second = runtimeState([photo])
           return () => null
         },
       }),
@@ -349,30 +357,6 @@ describe('lightbox lifecycle invariants', () => {
 
     expect(first!.lifecycleStatus.value).toBe('closed')
     expect(second!.lifecycleStatus.value).toBe('open')
-    app.unmount()
-    host.remove()
-  })
-
-  it('closes autonomously through Escape', async () => {
-    let api: ReturnType<typeof useLightboxRuntimeState> | null = null
-    const photo = makePhoto({ id: 'escape-error' })
-    const host = document.createElement('div')
-    document.body.appendChild(host)
-    const app = createApp(
-      defineComponent({
-        setup() {
-          api = useLightboxRuntimeState([photo], 'none')
-          return () => null
-        },
-      }),
-    )
-    app.mount(host)
-
-    await api!.open(0)
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    await flushUntil(() => api!.lifecycleStatus.value === 'closed')
-
-    expect(api!.lifecycleStatus.value).toBe('closed')
     app.unmount()
     host.remove()
   })
@@ -408,7 +392,7 @@ describe('lightbox lifecycle invariants', () => {
 
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState(photos, 'none')
+        api = runtimeState(photos)
         return () => null
       },
     })
@@ -420,11 +404,11 @@ describe('lightbox lifecycle invariants', () => {
 
     await api!.open(0)
     expect(api!.lifecycleStatus.value).toBe('open')
-    api!.hiddenThumbIndex.value = 0
+    api!.hiddenThumbnailId.value = 'cleanup-thumb'
     await api!.close()
     await flushWatchers()
 
-    expect(api!.hiddenThumbIndex.value).toBeNull()
+    expect(api!.hiddenThumbnailId.value).toBeNull()
     expect(api!.isOpen.value).toBe(false)
     expect(api!.lifecycleStatus.value).toBe('closed')
 
@@ -479,7 +463,7 @@ describe('lightbox lifecycle invariants', () => {
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState([makePhoto({ id: 'provider-open' })], 'none')
+        api = runtimeState([makePhoto({ id: 'provider-open' })])
         return () => null
       },
     })
@@ -509,7 +493,7 @@ describe('lightbox lifecycle invariants', () => {
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState([makePhoto({ id: 'provider-close' })], 'none')
+        api = runtimeState([makePhoto({ id: 'provider-close' })])
         return () => null
       },
     })
@@ -554,7 +538,7 @@ describe('lightbox lifecycle invariants', () => {
     let api: ReturnType<typeof useLightboxRuntimeState> | null = null
     const App = defineComponent({
       setup() {
-        api = useLightboxRuntimeState([makePhoto({ id: 'unmount-pending' })], 'none')
+        api = runtimeState([makePhoto({ id: 'unmount-pending' })])
         return () => null
       },
     })

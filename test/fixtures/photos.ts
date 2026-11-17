@@ -1,9 +1,6 @@
-import type { PhotoItem } from '@lupinum/vue-photo'
+import type { ResolvedPhotoItem } from '@lupinum/vue-photo'
 
-interface FixturePhoto extends PhotoItem {
-  readonly width: number
-  readonly height: number
-}
+type FixturePhoto = ResolvedPhotoItem
 
 export function makePhoto(overrides: Partial<FixturePhoto> = {}): FixturePhoto {
   const id = overrides.id ?? `photo-${Math.random().toString(36).slice(2, 8)}`

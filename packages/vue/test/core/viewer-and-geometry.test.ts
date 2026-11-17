@@ -20,9 +20,9 @@ describe('geometry and viewer utilities', () => {
     const pose = coverPose(frame, thumb, 4)
 
     // One scale for both axes: the thumbnail's width decides (cover), so the photo keeps its shape.
-    expect(pose.transform).toBe('translate(-350px, 100px) scale(0.5)')
+    expect(pose.pose).toEqual({ x: -350, y: 100, scale: 0.5 })
     // The visible part after the clip is exactly the thumbnail: 200 × 100 at scale 0.5.
-    expect(pose.clipPath).toBe('inset(200px 0px round 8px)')
+    expect(pose.clip).toEqual({ top: 200, right: 0, bottom: 200, left: 0, radius: 8 })
   })
 
   it('fits rectangles predictably', () => {

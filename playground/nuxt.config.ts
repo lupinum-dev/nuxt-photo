@@ -1,8 +1,20 @@
+import { execSync } from 'node:child_process'
 import { cp } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import NuxtImage from '@nuxt/image'
 import NuxtPhoto from '@lupinum/nuxt-photo'
+
+/** The commit and the build time, shown in the header so a recording names its build. */
+function buildStamp() {
+  let commit = 'no-git'
+  try {
+    commit = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    // A build outside a checkout still gets its time.
+  }
+  return `${commit} ${new Date().toTimeString().slice(0, 5)}`
+}
 
 const ipxOnVercel =
   process.env.NITRO_PRESET === 'vercel' && process.env.NUXT_PHOTO_LAB_PROVIDER !== 'vercel'
@@ -71,5 +83,7 @@ export default defineNuxtConfig({
   vite: { ssr: { noExternal: ['@nuxt/image'] } },
 
   devtools: { enabled: true },
+  runtimeConfig: { public: { build: buildStamp() } },
+
   compatibilityDate: '2025-03-25',
 })

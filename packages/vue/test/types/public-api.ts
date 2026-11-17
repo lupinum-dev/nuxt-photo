@@ -48,6 +48,14 @@ controller.openPhoto(readonlyPhotos[0])
 const numericId: PhotoItem = { id: 1, src: '/one.jpg', width: 1, height: 1 }
 void numericId
 
+// A photo without an id is known by its src; every photo handed back has its id.
+const srcOnly: PhotoItem = { src: '/one.jpg', width: 1, height: 1 }
+void srcOnly
+const activeId: string | undefined = controller.activePhoto.value?.id
+void activeId
+const listedId: string = controller.photos.value[0]!.id
+void listedId
+
 interface ConsumerMeta {
   photographer: string
 }
@@ -147,14 +155,20 @@ import type { LightboxSlideRenderer } from '../../src'
 import type { TransitionMode } from '../../src'
 // @ts-expect-error ResponsiveResolver is internal; consumers use ResponsiveParameter.
 import type { ResponsiveResolver } from '../../src'
+// @ts-expect-error Lightbox primitive types live in the primitives entry.
+import type { LightboxSlideSlotProps } from '../../src'
+import type { LightboxCaptionSlotProps } from '../../src/primitives'
 
 declare const removedTypes: [
   LightboxProviderController,
   LightboxSlideRenderer,
   TransitionMode,
   ResponsiveResolver,
+  LightboxSlideSlotProps,
 ]
 void removedTypes
+const captionId: string | undefined = ({} as LightboxCaptionSlotProps).photo?.id
+void captionId
 
 const bentoLayout: BentoAlbumLayout<{ cover?: boolean }> = {
   type: 'bento',

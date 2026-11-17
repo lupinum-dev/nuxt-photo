@@ -38,6 +38,11 @@ export function fitRect(container: RectLike, aspect: number): RectLike {
   }
 }
 
+/** A uniform scale about the top left corner, then a move, in px. */
+export type Pose = { x: number; y: number; scale: number }
+/** An `inset()` crop with round corners, in px of the element it crops. */
+export type Inset = { top: number; right: number; bottom: number; left: number; radius: number }
+
 /**
  * Pose a photo-shaped frame so it looks exactly like a cropped thumbnail.
  *
@@ -49,21 +54,22 @@ export function coverPose(
   frame: RectLike,
   thumb: RectLike,
   thumbRadius = 0,
-): { transform: string; clipPath: string } {
+): { pose: Pose; clip: Inset } {
   const scale = Math.max(thumb.width / frame.width, thumb.height / frame.height)
   const x = thumb.left + thumb.width / 2 - frame.left - (frame.width * scale) / 2
   const y = thumb.top + thumb.height / 2 - frame.top - (frame.height * scale) / 2
   const insetX = Math.max(0, (frame.width - thumb.width / scale) / 2)
   const insetY = Math.max(0, (frame.height - thumb.height / scale) / 2)
+  const radius = thumbRadius / scale
   return {
-    transform: `translate(${x}px, ${y}px) scale(${scale})`,
-    clipPath: `inset(${insetY}px ${insetX}px round ${thumbRadius / scale}px)`,
+    pose: { x, y, scale },
+    clip: { top: insetY, right: insetX, bottom: insetY, left: insetX, radius },
   }
 }
 
-/** The unclipped resting pose that pairs with `coverPose` for clip-path interpolation. */
-export function restingClip(radius = 0) {
-  return `inset(0px 0px round ${radius}px)`
+/** The uncropped crop that pairs with `coverPose`'s for a flight between the two. */
+export function restingClip(radius = 0): Inset {
+  return { top: 0, right: 0, bottom: 0, left: 0, radius }
 }
 
 /** Apply a simple rubberband effect when a value moves beyond its allowed range. */

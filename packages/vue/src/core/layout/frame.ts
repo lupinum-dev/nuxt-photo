@@ -8,26 +8,18 @@ import { computeBentoLayout } from './bento'
 import { computeMosaicLayout } from './mosaic'
 import { computeAccordionGrow } from './accordion'
 import { normalizeColumnCount } from './types'
+import {
+  DEFAULT_BENTO_COLUMNS,
+  DEFAULT_BREAKPOINTS,
+  DEFAULT_COLUMNS,
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+} from './constants'
+import { containerQueryCss, planWidths, type AlbumPlan, type AlbumPlanItem } from './plan'
 
 export type FrameLayoutType = 'grid' | 'bento' | 'mosaic' | 'accordion'
-export type FrameItem = {
-  index: number
-  style: Record<string, string>
-  className?: string
-  more?: number
-}
-/** Share of the frame width each item covers, from container width `start` up. */
-export type FrameWidthShares = { start: number; shares: number[] }
-export type FrameLayout = {
-  css: string
-  frameStyle: Record<string, string>
-  items: FrameItem[]
-  order: number[]
-  /** One entry per container width range; `shares[i]` belongs to `items[i]`. */
-  widths: FrameWidthShares[]
-}
 
-export function computeFrameLayout<TMeta extends object>(options: {
+export function computeFramePlan<TMeta extends object>(options: {
   type: FrameLayoutType
   photos: readonly PhotoItem<TMeta>[]
   containerName: string
@@ -38,7 +30,7 @@ export function computeFrameLayout<TMeta extends object>(options: {
   aspectRatio?: number
   featured?: (photo: PhotoItem<TMeta>, index: number) => boolean
   max?: number
-}): FrameLayout {
+}): AlbumPlan {
   const { type, photos, containerName } = options
   const fallback = type === 'grid' ? 1 : type === 'mosaic' || type === 'bento' ? 4 / 3 : 2
   const ratio =
@@ -48,16 +40,17 @@ export function computeFrameLayout<TMeta extends object>(options: {
   const frameStyle = { '--np-aspect-ratio': String(round(ratio, 5)) }
   if (!photos.length) return { css: '', frameStyle, items: [], order: [], widths: [] }
 
-  const starts = [
-    0,
-    ...new Set((options.breakpoints ?? []).filter((w) => Number.isFinite(w) && w > 0)),
-  ].sort((a, b) => a - b)
+  const starts = [0, ...planWidths(options.breakpoints, DEFAULT_BREAKPOINTS)]
   const spans: { start: number; body: string; columns: number }[] = []
   for (const width of starts) {
-    const spacing = round(resolveResponsiveValue(options.spacing, width, 8), 3)
-    const padding = round(resolveResponsiveValue(options.padding, width, 0), 3)
+    const spacing = round(resolveResponsiveValue(options.spacing, width, DEFAULT_SPACING), 3)
+    const padding = round(resolveResponsiveValue(options.padding, width, DEFAULT_PADDING), 3)
     const columns = normalizeColumnCount(
-      resolveResponsiveValue(options.columns, width, type === 'bento' ? 4 : 3),
+      resolveResponsiveValue(
+        options.columns,
+        width,
+        type === 'bento' ? DEFAULT_BENTO_COLUMNS : DEFAULT_COLUMNS,
+      ),
     )
     const body =
       `--np-gap:${spacing}px;--np-padding:${padding}px` +
@@ -107,22 +100,15 @@ export function computeFrameLayout<TMeta extends object>(options: {
       )
     }
   }
-  const css = spans
-    .map((span, index) => {
-      const end = spans[index + 1]?.start
-      const condition =
-        spans.length === 1
-          ? ''
-          : index === 0
-            ? ` (width < ${end}px)`
-            : end === undefined
-              ? ` (width >= ${span.start}px)`
-              : ` (width >= ${span.start}px) and (width < ${end}px)`
-      return `@container ${containerName}${condition}{.np-album__frame{${span.body}}${bentoRules.get(span.columns) ?? ''}}`
-    })
-    .join('\n')
+  const css = containerQueryCss(
+    containerName,
+    spans.map((span) => ({
+      start: span.start,
+      rules: `.np-album__frame{${span.body}}${bentoRules.get(span.columns) ?? ''}`,
+    })),
+  )
 
-  let items: FrameItem[]
+  let items: AlbumPlanItem[]
   let mosaicShares: number[] = []
   if (type === 'bento') {
     items = bentoOrder.map((index, position) => ({
@@ -148,7 +134,7 @@ export function computeFrameLayout<TMeta extends object>(options: {
       ...(hidden > 0 && position === tiles.length - 1 ? { more: hidden } : {}),
     }))
   } else {
-    items = photos.map((photo, index): FrameItem => ({
+    items = photos.map((photo, index): AlbumPlanItem => ({
       index,
       style:
         type === 'grid'

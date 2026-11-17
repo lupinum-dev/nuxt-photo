@@ -24,7 +24,7 @@ export default defineConfig({
     },
     {
       name: 'mobile-chromium',
-      grep: /touch gestures|recipe gallery opens/,
+      grep: /touch gestures|recipe gallery opens|viewer on intent/,
       use: {
         ...devices['Pixel 7'],
         browserName: 'chromium',
@@ -39,7 +39,7 @@ export default defineConfig({
     },
     {
       name: 'webkit-smoke',
-      grep: /image budget|nuxt image|recipe gallery opens|@focus-trap|navigation|direction: rtl|thumbnail click|toggling lightbox|headless|renders carousel|hiding arrows/,
+      grep: /image budget|nuxt image|recipe gallery opens|@focus-trap|navigation|direction: rtl|thumbnail click|toggling lightbox|headless|renders carousel|hiding arrows|viewer on intent/,
       use: {
         browserName: 'webkit',
       },

@@ -13,10 +13,9 @@ const updateTemplates = vi.fn()
 const addComponent = vi.fn()
 const addImports = vi.fn()
 const addPlugin = vi.fn()
-const addVitePlugin = vi.fn()
 const addTypeTemplate = vi.fn()
 const loggerWarn = vi.fn()
-const resolvePath = vi.fn(async (path: string) => `/resolved/${path}/dist/index.mjs`)
+const resolvePath = vi.fn(async (path: string) => `/resolved/${path}`)
 const resolveAppPath = vi.fn<(path: string) => Promise<string>>()
 const createResolver = vi.fn(() => ({
   resolve: (path: string) => `/resolved/${path}`,
@@ -40,7 +39,6 @@ vi.mock('@nuxt/kit', () => ({
   updateTemplates,
   addImports,
   addPlugin,
-  addVitePlugin,
   addTypeTemplate,
   createResolver,
   resolvePath: resolveAppPath,
@@ -76,6 +74,7 @@ function createNuxt() {
       watch: [] as string[],
       appConfig: {} as Record<string, unknown> & { nuxtPhoto: Record<string, unknown> },
       css: [] as string[],
+      alias: {} as Record<string, string>,
       i18n: { locales: [] as unknown[] },
       vite: {
         optimizeDeps: {
@@ -115,7 +114,6 @@ describe('nuxt-photo module', () => {
     addComponent.mockReset()
     addImports.mockReset()
     addPlugin.mockReset()
-    addVitePlugin.mockReset()
     addTypeTemplate.mockReset()
     loggerWarn.mockReset()
     createResolver.mockClear()
@@ -187,30 +185,26 @@ describe('nuxt-photo module', () => {
     hasNuxtModule.mockImplementation((name) => name === '@nuxtjs/i18n' && i18n)
     await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, labels }, nuxt)
     nuxt.callHook('modules:done')
-    const template = addTemplate.mock.calls.find(
-      ([t]) => t.filename === 'nuxt-photo-locales.mjs',
-    )![0]
-    const catalog = JSON.parse(template.getContents().slice('export default '.length))
-    expect(Object.keys(catalog)).toEqual(expected)
-    for (const values of Object.values(catalog)) expect(values).toHaveLength(18)
-    expect(catalog.en[0]).toBe('Photo viewer')
-    const plugin = addVitePlugin.mock.calls[0]![0]
-    expect(
-      plugin.resolveId(
-        './photoLocaleTemplates.mjs',
-        '/resolved/@lupinum/vue-photo/dist/provide/labels.mjs',
-      ),
-    ).toBe('/fixture/.nuxt/nuxt-photo-locales.mjs')
-    expect(
-      plugin.resolveId('./other.mjs', '/resolved/@lupinum/vue-photo/dist/provide/labels.mjs'),
-    ).toBeUndefined()
-    expect(
-      addTemplate.mock.calls
-        .find(([t]) => t.filename === 'nuxt-photo-internals.mjs')![0]
-        .getContents(),
-    ).toBe(
-      'export { installPhotoConfig } from "/resolved/@lupinum/vue-photo/dist/config/install.mjs"\nexport { installImagePreload } from "/resolved/@lupinum/vue-photo/dist/internal/imagePreload.mjs"\nexport { nativeProvider } from "/resolved/@lupinum/vue-photo/dist/providers/native.mjs"\nexport { DEFAULT_WIDTHS } from "/resolved/@lupinum/vue-photo/dist/providers/runtime.mjs"',
-    )
+    const catalog = (filename: string) =>
+      JSON.parse(
+        addTemplate.mock.calls
+          .find(([t]) => t.filename === filename)![0]
+          .getContents()
+          .slice('export default '.length),
+      ) as Record<string, string[]>
+    for (const [filename, length, first] of [
+      ['nuxt-photo-locales.mjs', 7, 'Previous slide'],
+      ['nuxt-photo-viewer-locales.mjs', 11, 'Photo viewer'],
+    ] as const) {
+      const values = catalog(filename)
+      expect(Object.keys(values)).toEqual(expected)
+      for (const tuple of Object.values(values)) expect(tuple).toHaveLength(length)
+      expect(values.en![0]).toBe(first)
+    }
+    expect(nuxt.options.alias).toMatchObject({
+      '@lupinum/vue-photo/locales/photo': '/fixture/.nuxt/nuxt-photo-locales.mjs',
+      '@lupinum/vue-photo/locales/viewer': '/fixture/.nuxt/nuxt-photo-viewer-locales.mjs',
+    })
   })
 
   it('refreshes the server and client lookups on public asset changes', async () => {
@@ -413,10 +407,9 @@ describe('nuxt-photo module', () => {
     await nuxtPhotoModule.setup(nuxtPhotoModule.defaults, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-structure.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/album.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/photo-structure.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/carousel-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/album.css',
+      '/resolved/@lupinum/vue-photo/styles/photo-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/carousel-structure.css',
     ])
   })
 
@@ -426,13 +419,41 @@ describe('nuxt-photo module', () => {
     await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css: 'all' }, nuxt)
 
     expect(nuxt.options.css).toEqual([
-      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-structure.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/album.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/photo-structure.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/carousel-structure.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/lightbox-theme.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/photo.css',
-      '/resolved/@lupinum/vue-photo/dist/styles/carousel-theme.css',
+      '/resolved/@lupinum/vue-photo/styles/album.css',
+      '/resolved/@lupinum/vue-photo/styles/photo-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/carousel-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/photo.css',
+      '/resolved/@lupinum/vue-photo/styles/carousel-theme.css',
+    ])
+  })
+
+  // A wrong host loads the theme in 'structure' mode, or no lightbox CSS at all.
+  it.each([
+    ['none', undefined],
+    ['structure', '/resolved/@lupinum/vue-photo/viewer-structure'],
+    ['all', '/resolved/@lupinum/vue-photo/viewer-themed'],
+  ] as const)('loads the viewer through the %s CSS host', async (css, host) => {
+    const nuxt = createNuxt()
+    await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css }, nuxt)
+    expect(nuxt.options.alias['@lupinum/vue-photo/viewer']).toBe(host)
+  })
+
+  it('keeps the lightbox CSS global when primitives are registered', async () => {
+    const nuxt = createNuxt()
+
+    await nuxtPhotoModule.setup(
+      { ...nuxtPhotoModule.defaults, css: 'all', components: { primitives: true } },
+      nuxt,
+    )
+
+    expect(nuxt.options.css).toEqual([
+      '/resolved/@lupinum/vue-photo/styles/lightbox-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/album.css',
+      '/resolved/@lupinum/vue-photo/styles/photo-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/carousel-structure.css',
+      '/resolved/@lupinum/vue-photo/styles/lightbox-theme.css',
+      '/resolved/@lupinum/vue-photo/styles/photo.css',
+      '/resolved/@lupinum/vue-photo/styles/carousel-theme.css',
     ])
   })
 
@@ -469,13 +490,15 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Photo',
-        filePath: '/resolved/@lupinum/vue-photo/dist/components/Photo.vue',
+        export: 'Photo',
+        filePath: '/resolved/@lupinum/vue-photo',
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoAlbum',
-        filePath: '/resolved/@lupinum/vue-photo/dist/components/PhotoAlbum.vue',
+        export: 'PhotoAlbum',
+        filePath: '/resolved/@lupinum/vue-photo',
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(
@@ -505,13 +528,15 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'LightboxRoot',
-        filePath: '/resolved/@lupinum/vue-photo/dist/primitives/LightboxRoot.vue',
+        export: 'LightboxRoot',
+        filePath: '/resolved/@lupinum/vue-photo/primitives',
       }),
     )
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'PhotoImage',
-        filePath: '/resolved/@lupinum/vue-photo/dist/primitives/PhotoImage.vue',
+        export: 'PhotoImage',
+        filePath: '/resolved/@lupinum/vue-photo/primitives',
       }),
     )
   })
@@ -530,7 +555,8 @@ describe('nuxt-photo module', () => {
     expect(addComponent).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'NpPhoto',
-        filePath: '/resolved/@lupinum/vue-photo/dist/components/Photo.vue',
+        export: 'Photo',
+        filePath: '/resolved/@lupinum/vue-photo',
       }),
     )
     expect(addComponent).not.toHaveBeenCalledWith(

@@ -46,7 +46,7 @@ export function findPhotoLocale(language: string): (typeof PHOTO_LOCALES)[number
   )
 }
 
-/** Label order also maps each locale's template tuple; no translated strings live here. */
+/** The public label order; no translated strings live here. */
 export const PHOTO_LABEL_KEYS = [
   'photoViewer',
   'previous',
@@ -68,5 +68,20 @@ export const PHOTO_LABEL_KEYS = [
   'slideStatus',
 ] as const satisfies readonly (keyof PhotoLabels)[]
 
-// The final three labels use index/count templates in every locale tuple.
-export const PHOTO_LABEL_FUNCTION_KEYS: readonly (keyof PhotoLabels)[] = PHOTO_LABEL_KEYS.slice(-3)
+// These labels are functions of an index and a count in every locale.
+export const PHOTO_LABEL_FUNCTION_KEYS: readonly (keyof PhotoLabels)[] = [
+  'goToSlide',
+  'viewPhoto',
+  'slideStatus',
+]
+
+/** Labels a closed album or carousel shows; the order maps `photoLocaleTemplates`. */
+export const EAGER_LABEL_KEYS = [
+  'previousSlide',
+  'nextSlide',
+  'pauseAutoplay',
+  'playAutoplay',
+  'goToSlide',
+  'viewPhoto',
+  'slideStatus',
+] as const satisfies readonly (keyof PhotoLabels)[]

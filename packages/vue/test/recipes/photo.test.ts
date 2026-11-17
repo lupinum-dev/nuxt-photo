@@ -95,7 +95,7 @@ describe('Photo', () => {
     await flushUi()
 
     expect(onClick).toHaveBeenCalledOnce()
-    expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
+    expect(document.body.querySelector('dialog')).not.toBeNull()
     mounted.unmount()
   })
 
@@ -124,7 +124,7 @@ describe('Photo', () => {
           photo: { id: 1, src: '/bad.jpg', width: 10, height: 10 },
         },
       }),
-    ).rejects.toThrow(/non-empty string id/)
+    ).rejects.toThrow(/field "id" must be a non-empty string/)
   })
 
   it('revalidates in-place mutations through the canonical normalizer', async () => {

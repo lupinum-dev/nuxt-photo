@@ -19,36 +19,32 @@
       {{ resolvedPhoto.caption }}
     </figcaption>
   </figure>
-  <component :is="soloLightboxComponent" v-if="isSolo && soloCtx && resolvedPhoto" />
+  <component :is="lightboxComponent" v-if="lightboxComponent && resolvedPhoto" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { ref, computed, onMounted, onBeforeUnmount, watch, mergeProps, type VNodeChild } from 'vue'
+import { ref, computed, onBeforeUnmount, watch, mergeProps, type VNodeChild } from 'vue'
 
 import { useElementWidth } from '../composables/useElementWidth'
-import { useGalleryRuntime } from '../gallery/runtime'
 import { useGalleryModel } from '../gallery/model'
-import { provideLightbox } from '../composables/index'
-import { PhotoImage } from '../primitives/index'
-import type { PhotoItem } from '../core/index'
+import PhotoImage from '../primitives/PhotoImage.vue'
+import type { PhotoItem, ResolvedPhotoItem } from '../core/index'
+import { photoAt, photoIndexOf } from '../core/photo/lookup'
 import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
-import Lightbox from './Lightbox.vue'
 import type { InvalidPhotoPolicy, InvalidPhotosEvent } from '../core/photo/normalize'
 import { useRecipePhotos } from './shared/useRecipePhotos'
-import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
 import { createPhotoTriggerBindings } from './shared/photoTriggerBindings'
-import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
-import { usePhotoLabels } from '../composables/usePhotoLabels'
-
+import { useEagerLabels } from '../provide/labels'
 import type { PhotoUi } from '../types/ui'
 import { useRecipeLightbox } from './shared/useRecipeLightbox'
+import { useRecipeGroup } from './photo-group/usePhotoGroup'
 
 defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
     /**
-     * The photo to render. Needs a stable `id`, a `src`, and the real pixel `width` and `height`.
+     * The photo to render. Needs a `src` and the real pixel `width` and `height`; `id` defaults to `src`.
      * Invalid data throws.
      */
     photo: PhotoItem<TMeta>
@@ -84,12 +80,15 @@ const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 const slots = defineSlots<{
-  slide?: (props: { photo: PhotoItem<TMeta>; index: number }) => VNodeChild
+  slide?: (props: { photo: ResolvedPhotoItem<TMeta>; index: number }) => VNodeChild
 }>()
 
-const { group, options: recipeLightboxOptions } = useRecipeLightbox('Photo', () => props.lightbox)
+const { group: parentGroup, options: recipeLightboxOptions } = useRecipeLightbox(
+  'Photo',
+  () => props.lightbox,
+)
 
-const photoConfig = providePhotoConfig(() => ({
+providePhotoConfig(() => ({
   provider: props.provider,
   validation: props.validation,
   lightbox: recipeLightboxOptions(),
@@ -103,38 +102,15 @@ const normalizedPhotos = useRecipePhotos<TMeta>(
 )
 const resolvedPhoto = computed(() => normalizedPhotos.value[0] ?? null)
 
-// Inject parent group context (null if none)
-if (!group) useGalleryRuntime(normalizedPhotos, () => thumbRef.value)
-
-// Global lightbox override
-const injectedLightbox = photoConfig.value.lightbox.component ?? null
-
-const soloLightboxComponent = !group
-  ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, false)
-  : null
-// Standalone mode: lightbox capability set and no parent group.
-const hasSoloProvider = soloLightboxComponent !== null
-const isSolo = computed(() => hasSoloProvider)
-if (!group)
-  warnOnSetupOptionChanges('Photo', {
-    lightbox: () =>
-      typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
-  })
-
-// Solo lightbox context — only created when solo (outside group)
-const soloCtx = isSolo.value
-  ? provideLightbox(normalizedPhotos, undefined, (photo) => {
-      if (
-        (photo !== props.photo && String(photo.id) !== String(resolvedPhoto.value?.id)) ||
-        !slots.slide
-      )
-        return null
-      return (slotProps) => slots.slide?.(slotProps) ?? null
-    })
-  : null
-
-// Ref for the thumb element
 const thumbRef = ref<HTMLElement | null>(null)
+const { group, lightboxComponent } = useRecipeGroup<TMeta>({
+  owner: 'Photo',
+  photos: normalizedPhotos,
+  root: () => thumbRef.value,
+  lightbox: () => props.lightbox,
+  defaultEnabled: false,
+})
+
 const { containerWidth } = useElementWidth(thumbRef)
 // A priority image keeps its server-rendered sizes, so its preload and the image request
 // the same file. Lazy images have not loaded yet and may use the measured width.
@@ -144,116 +120,72 @@ const imageSizes = computed(
     (!props.priority && containerWidth.value > 0 ? `${containerWidth.value}px` : '100vw'),
 )
 
-// Is this photo's thumb hidden during a transition?
-const isHidden = computed(() => group?.hiddenPhoto.value?.id === resolvedPhoto.value?.id)
-
-// Group mode: the parent owns the canonical collection; this photo is a trigger.
-const isGrouped = computed(() => {
+// `lightboxIgnore` is documented for photos inside a PhotoGroup only.
+const ignored = computed(() => !!props.lightboxIgnore && !!parentGroup)
+const isInteractive = computed(() => {
   const photo = resolvedPhoto.value
-  return !!photo && !!group && group.enabled && group.hasPhoto(photo.id) && !props.lightboxIgnore
+  return !!photo && group.enabled && group.hasPhoto(photo.id) && !ignored.value
 })
-const isInteractive = computed(() => !!resolvedPhoto.value && (isSolo.value || isGrouped.value))
+const isHidden = computed(() => group.hiddenId.value === resolvedPhoto.value?.id)
 
-const figureStyle = computed(() => {
-  if (isSolo.value) {
-    return {
-      margin: 0,
-      opacity: soloCtx && soloCtx.hiddenThumbnailIndex.value === 0 ? 0 : 1,
-      cursor: 'pointer',
-    }
-  }
-  if (isGrouped.value) {
-    return { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
-  }
-  return { margin: 0 }
-})
+const figureStyle = computed(() =>
+  isInteractive.value
+    ? { margin: 0, opacity: isHidden.value ? 0 : 1, cursor: 'pointer' }
+    : { margin: 0 },
+)
 
-function handleClick() {
-  return open()
+function activate(source: HTMLElement | null) {
+  return group.activate(resolvedPhoto.value!.id, source)
 }
 
-const labels = usePhotoLabels()
+const labels = useEagerLabels()
 
 const interactiveAttrs = computed(() => {
   if (!isInteractive.value || !resolvedPhoto.value) return {}
   return createPhotoTriggerBindings(
     resolvedPhoto.value,
     0,
-    handleClick,
+    activate,
     resolvedPhoto.value.alt || labels.viewPhoto(1),
   )
 })
 
-// Capability registration with the parent group.
-const id = Symbol()
-const registered = ref(false)
-
-function shouldRegisterWithGroup() {
-  return resolvedPhoto.value && group && group.enabled && !props.lightboxIgnore && !isSolo.value
-}
-
-function unregisterFromGroup() {
-  if (!group || !registered.value) return
-  group.removeCapabilities(id)
-  registered.value = false
-}
+// The group renders this photo's slide slot through its capability index.
+const capabilityOwner = Symbol('Photo')
 
 function registerWithGroup() {
   const photo = resolvedPhoto.value
-  if (!shouldRegisterWithGroup() || !photo) return
-  group!.replaceCapabilities(id, [
+  group.removeCapabilities(capabilityOwner)
+  if (!photo || ignored.value) return
+  group.replaceCapabilities(capabilityOwner, [
     {
       id: photo.id,
-      getThumbnailElement: () => thumbRef.value,
       renderSlide: slots.slide
         ? (slotProps) =>
-            slots.slide?.({ ...slotProps, photo: slotProps.photo as PhotoItem<TMeta> }) ?? null
+            slots.slide?.({ ...slotProps, photo: slotProps.photo as ResolvedPhotoItem<TMeta> }) ??
+            null
         : null,
     },
   ])
-  registered.value = true
 }
-
-onMounted(() => {
-  if (soloCtx) {
-    soloCtx.setThumbnailRef(0)(thumbRef.value)
-  }
-})
 
 registerWithGroup()
-
-watch(
-  () => [resolvedPhoto.value?.id, props.lightboxIgnore],
-  () => {
-    unregisterFromGroup()
-    registerWithGroup()
-  },
-)
-
-onBeforeUnmount(unregisterFromGroup)
+watch(() => [resolvedPhoto.value?.id, props.lightboxIgnore], registerWithGroup)
+onBeforeUnmount(() => group.removeCapabilities(capabilityOwner))
 
 async function open(index = 0) {
-  const photo = resolvedPhoto.value
-  if (index !== 0 || !photo)
-    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
-  if (isGrouped.value) return group!.activateById(photo.id, thumbRef.value)
-  if (!soloCtx) return
-  soloCtx.setThumbnailRef(0)(thumbRef.value)
-  await soloCtx.open(0)
+  const photo = photoAt(normalizedPhotos.value, index)
+  if (isInteractive.value) await group.activate(photo.id, thumbRef.value)
 }
 async function openById(id: string) {
-  if (id !== resolvedPhoto.value?.id)
-    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
-  await open()
+  await open(photoIndexOf(normalizedPhotos.value, id))
 }
 async function close() {
-  if (isGrouped.value) await group!.close()
-  else await soloCtx?.close()
+  if (isInteractive.value) await group.close()
 }
-const isOpen = computed(() =>
-  isGrouped.value
-    ? !!group?.isOpen.value && group.activeId.value === resolvedPhoto.value?.id
-    : (soloCtx?.isOpen.value ?? false),
+const isOpen = computed(
+  () =>
+    isInteractive.value && group.isOpen.value && group.activeId.value === resolvedPhoto.value?.id,
 )
 const { activeId, activePhoto } = useGalleryModel(
   'Photo',

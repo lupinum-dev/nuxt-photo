@@ -1,7 +1,11 @@
 <template>
   <div class="app">
     <nav class="nav">
-      <NuxtLink to="/" class="nav__brand">nuxt-photo</NuxtLink>
+      <NuxtLink to="/" class="nav__brand">
+        nuxt-photo
+        <!-- Which build this is: a screen recording then shows what it recorded. -->
+        <small class="nav__build">{{ build }}</small>
+      </NuxtLink>
       <div class="nav__links">
         <NuxtLink to="/" class="nav__link">Gallery</NuxtLink>
         <NuxtLink to="/layouts" class="nav__link">Layouts</NuxtLink>
@@ -14,6 +18,10 @@
     <NuxtPage />
   </div>
 </template>
+
+<script setup lang="ts">
+const build = useRuntimeConfig().public.build
+</script>
 
 <style>
 *,
@@ -81,6 +89,15 @@ a {
   font-weight: 600;
   letter-spacing: -0.01em;
   color: #ede8e3;
+}
+
+.nav__build {
+  margin-left: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #8a827a;
 }
 
 .nav__links {

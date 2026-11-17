@@ -40,7 +40,7 @@
     {
       "description": "The Embla packages are an exact prerelease tuple.",
       "groupName": "Embla carousel",
-      "matchPackageNames": ["embla-carousel", "embla-carousel-autoplay", "embla-carousel-vue"],
+      "matchPackageNames": ["embla-carousel", "embla-carousel-autoplay"],
       "rangeStrategy": "pin"
     }
   ]

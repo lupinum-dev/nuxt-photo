@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 import limits from './config.json' with { type: 'json' }
-import { collectAssets } from './assets.mjs'
+import { collectAssets, collectEagerAssets } from './assets.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..', '..')
@@ -34,6 +34,8 @@ const nuxtScenarios = [
   { id: 'module', name: 'nuxt:module' },
   { id: 'usage', name: 'nuxt:usage' },
   { id: 'album', name: 'nuxt:album' },
+  // The album build again, counting only what loads before the viewer chunk.
+  { id: 'album-eager', name: 'nuxt:album-eager', fixture: 'album', eager: true },
 ]
 
 void main()
@@ -67,14 +69,20 @@ async function main() {
   if (target === 'all' || target === 'nuxt') {
     const measured = new Map()
     for (const scenario of nuxtScenarios) {
-      measured.set(scenario.id, runNuxtFixture(scenario.id))
+      measured.set(
+        scenario.id,
+        scenario.eager
+          ? await collectEagerAssets(resolve(resultsRoot, `nuxt-${scenario.fixture}`))
+          : runNuxtFixture(scenario.id),
+      )
     }
     const baseline = measured.get('baseline')
+    const eagerBaseline = await collectEagerAssets(resolve(resultsRoot, 'nuxt-baseline'))
     const measuredScenarios = nuxtScenarios
       .filter((scenario) => scenario.id !== 'baseline')
       .map((scenario) => {
         const result = measured.get(scenario.id)
-        const delta = diffSizes(result, baseline)
+        const delta = diffSizes(result, scenario.eager ? eagerBaseline : baseline)
         const passed = delta.brotli <= limits.nuxt[scenario.id].brotliDeltaLimit
         if (!passed) failures.push(scenario.name)
         return { ...scenario, result, delta, passed }
@@ -153,9 +161,13 @@ async function measureViteFixture(fixtureId) {
         : null,
     ].filter(Boolean),
     resolve: {
-      alias: {
-        '@lupinum/vue-photo': resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
-      },
+      // Only the root entry: the package resolves its own subpath entries by name.
+      alias: [
+        {
+          find: /^@lupinum\/vue-photo$/,
+          replacement: resolve(root, 'packages', 'vue', 'dist', 'index.mjs'),
+        },
+      ],
       preserveSymlinks: false,
     },
     build: {

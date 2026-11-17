@@ -1,4 +1,4 @@
-import type { PhotoItem } from '../core/index'
+import type { ResolvedPhotoItem } from '../core/index'
 import type { Ref } from 'vue'
 
 // ─── Lightbox primitive slot props ─────────────────────────────────────────
@@ -7,8 +7,8 @@ export interface LightboxControlsSlotProps<
   TMeta extends object = Readonly<Record<string, unknown>>,
 > {
   activeIndex: number
-  activePhoto: PhotoItem<TMeta> | null
-  photos: readonly PhotoItem<TMeta>[]
+  activePhoto: ResolvedPhotoItem<TMeta> | null
+  photos: readonly ResolvedPhotoItem<TMeta>[]
   count: number
   isZoomedIn: boolean
   zoomAllowed: boolean
@@ -22,12 +22,12 @@ export interface LightboxControlsSlotProps<
 export interface LightboxCaptionSlotProps<
   TMeta extends object = Readonly<Record<string, unknown>>,
 > {
-  photo: PhotoItem<TMeta> | null
+  photo: ResolvedPhotoItem<TMeta> | null
   activeIndex: number
 }
 
 export interface LightboxSlideSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   index: number
   width: number
   height: number
@@ -36,7 +36,7 @@ export interface LightboxSlideSlotProps<TMeta extends object = Readonly<Record<s
 export interface LightboxViewportSlotProps<
   TMeta extends object = Readonly<Record<string, unknown>>,
 > {
-  photos: readonly PhotoItem<TMeta>[]
+  photos: readonly ResolvedPhotoItem<TMeta>[]
   viewportRef: Ref<HTMLElement | null | undefined>
   imageLoadFailed: boolean
   isSlideMounted: (index: number) => boolean
@@ -45,14 +45,14 @@ export interface LightboxViewportSlotProps<
 // ─── PhotoCarousel slot props ──────────────────────────────────────────────
 
 export interface CarouselSlideSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   index: number
   selected: boolean
   open: () => void | Promise<void>
 }
 
 export interface CarouselThumbSlotProps<TMeta extends object = Readonly<Record<string, unknown>>> {
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   index: number
   selected: boolean
   goTo: (i: number) => void
@@ -61,7 +61,7 @@ export interface CarouselThumbSlotProps<TMeta extends object = Readonly<Record<s
 export interface CarouselCaptionSlotProps<
   TMeta extends object = Readonly<Record<string, unknown>>,
 > {
-  photo: PhotoItem<TMeta>
+  photo: ResolvedPhotoItem<TMeta>
   index: number
   count: number
 }

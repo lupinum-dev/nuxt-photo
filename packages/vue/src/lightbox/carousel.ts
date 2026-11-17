@@ -1,7 +1,5 @@
-import { onBeforeUnmount, ref, shallowRef, watch, type CSSProperties, type Ref } from 'vue'
+import { shallowRef, type CSSProperties, type Ref } from 'vue'
 import type { GalleryRuntime } from '../gallery/runtime'
-import { createGalleryEmblaBridge } from '../gallery/embla'
-import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel'
 import {
   fitRect,
   type AreaMetrics,
@@ -10,18 +8,18 @@ import {
 } from '../core/index'
 
 type CarouselOptions = {
-  isZoomedIn: () => boolean
-  isInteractionLocked: () => boolean
   navigationMode: () => LightboxNavigationMode
   isReducedMotion: () => boolean
   /** Called when the active photo changes by navigation in a fade mode. */
   onNavigate: (from: number, to: number) => void
+  /** The `slide` mode track: moves to the photo `step` away, or shows the active one at rest. */
+  track: () => { go: (step: number, velocity?: number, target?: number) => void; stop: () => void }
 }
 
 /**
  * Bind slide navigation to the active lightbox photo collection.
  *
- * In `slide` mode Embla owns a full-screen swipe track. The fade modes keep the
+ * In `slide` mode the track moves the photos side by side. The fade modes keep the
  * photos stacked and leave the change to the motion controller. Either way each
  * photo is fitted inside the measured frame area, the mat that themes size through CSS.
  */
@@ -33,34 +31,9 @@ export function useCarousel(
 ) {
   const photos = gallery.photos
   const activeIndex = gallery.activeIndex
-  const bridge = createGalleryEmblaBridge(gallery)
-  const emblaOptions = ref({ loop: true, duration: 25, startIndex: 0 })
-
-  const emblaRef = shallowRef<HTMLElement>()
-  const emblaApi = shallowRef<EmblaCarouselType>()
-
+  /** The element that clips the slide track; custom lightboxes bind it through `viewportRef`. */
+  const trackRef = shallowRef<HTMLElement>()
   const currentPhoto = gallery.activePhoto
-
-  watch([emblaRef, options.navigationMode, gallery.direction], ([node, mode]) => {
-    emblaApi.value?.destroy()
-    emblaApi.value = undefined
-    if (!node || mode !== 'slide') return
-
-    const api = EmblaCarousel(node, {
-      ...emblaOptions.value,
-      startIndex: activeIndex.value,
-      direction: gallery.direction.value,
-      watchSlides: bridge.beforeReinit,
-      watchResize: bridge.beforeReinit,
-    })
-    api.on('select', bridge.select)
-    api.on('reInit', (api) => bridge.sync(api, true, true))
-    bridge.sync(api, true, true)
-    api.on('pointerDown', () => {
-      if (options.isZoomedIn() || options.isInteractionLocked()) return false
-    })
-    emblaApi.value = api
-  })
 
   /** The fitted photo rect relative to the media area's top-left corner. */
   function getRelativeFrameRect(photo: PhotoItem) {
@@ -96,45 +69,46 @@ export function useCarousel(
       width: `${frame.width}px`,
       height: `${frame.height}px`,
       translate: offsetX || offsetY ? `${offsetX}px ${offsetY}px` : undefined,
+      // Where this frame sits in its slide: its caption keeps inside the slide with them.
+      '--np-slide-frame-left': `${frame.left}px`,
+      '--np-slide-width': `${area.width}px`,
     }
   }
 
   function goToNext() {
-    goTo(activeIndex.value + 1)
+    goTo(activeIndex.value + 1, false, 1)
   }
   function goToPrev() {
-    goTo(activeIndex.value - 1)
+    goTo(activeIndex.value - 1, false, -1)
   }
 
-  /** Show the photo at `index`. `instant` skips motion, for opening and collection changes. */
-  function goTo(index: number, instant = false) {
+  /**
+   * Show the photo at `index`. `instant` skips motion, for opening and collection changes.
+   * `step` says which way the track moves; by default the shorter way round.
+   */
+  function goTo(index: number, instant = false, step?: number) {
     const count = photos.value.length
     if (count === 0) return
     const target = ((index % count) + count) % count
     const from = activeIndex.value
-    gallery.requestIndex(target)
-    const api = emblaApi.value
-    if (api) bridge.sync(api, instant || options.isReducedMotion())
-    else emblaOptions.value = { ...emblaOptions.value, startIndex: target }
-    if (options.navigationMode() !== 'slide' && !instant && from !== target) {
-      options.onNavigate(from, target)
+    const slide = options.navigationMode() === 'slide'
+    if (instant || !slide || options.isReducedMotion()) {
+      if (slide) options.track().stop()
+      gallery.requestIndex(target)
+      if (!slide && !instant && from !== target) options.onNavigate(from, target)
+      return
     }
+    const forward = (target - from + count) % count
+    const shorter = forward === 1 ? 1 : forward === count - 1 ? -1 : Math.sign(target - from)
+    options.track().go(step ?? shorter, 0, target)
   }
 
   function selectedSnap(): number {
     return activeIndex.value
   }
-  watch(activeIndex, () => {
-    if (emblaApi.value) bridge.sync(emblaApi.value, options.isReducedMotion())
-  })
-
-  onBeforeUnmount(() => {
-    emblaApi.value?.destroy()
-  })
 
   return {
-    emblaRef,
-    emblaApi,
+    trackRef,
     activeIndex,
     currentPhoto,
 

@@ -124,7 +124,6 @@ useSeoMeta({
               :lightbox="{ navigation }"
               :layout="{ type: 'rows', targetRowHeight: 150 }"
               :spacing="6"
-              :default-container-width="560"
               sizes="(min-width: 1024px) 560px, 100vw"
             />
           </div>
@@ -174,13 +173,7 @@ useSeoMeta({
           </NuxtLink>
         </div>
         <div class="landing-stage min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4">
-          <PhotoAlbum
-            :photos="layoutPhotos"
-            :layout="albumLayout"
-            :spacing="6"
-            :default-container-width="600"
-            :lightbox="false"
-          />
+          <PhotoAlbum :photos="layoutPhotos" :layout="albumLayout" :spacing="6" :lightbox="false" />
         </div>
       </div>
     </section>

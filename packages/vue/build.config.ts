@@ -23,7 +23,7 @@ export default defineBuildConfig({
     },
   ],
   clean: true,
-  externals: ['vue', 'embla-carousel-vue', 'embla-carousel', 'embla-carousel-autoplay'],
+  externals: ['vue', 'embla-carousel', 'embla-carousel-autoplay'],
   failOnWarn: false,
   hooks: {
     // scripts/agent-docs.mjs writes the `./agent-docs` target after the docs build.

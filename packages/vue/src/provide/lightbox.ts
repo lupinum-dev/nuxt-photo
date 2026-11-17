@@ -1,5 +1,5 @@
 import { provide } from 'vue'
-import type { PhotoItem } from '../core/index'
+import type { ResolvedPhotoItem } from '../core/index'
 import {
   type InternalLightboxContext,
   LightboxContextKey,
@@ -11,7 +11,7 @@ import {
 export function provideLightboxContexts(
   ctx: InternalLightboxContext,
   options?: {
-    resolveSlide?: (photo: PhotoItem) => LightboxSlideRenderer | null
+    resolveSlide?: (photo: ResolvedPhotoItem) => LightboxSlideRenderer | null
   },
 ) {
   provide(LightboxContextKey, ctx)

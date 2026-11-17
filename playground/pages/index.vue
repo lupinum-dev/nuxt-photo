@@ -55,6 +55,17 @@ const navigation = ref<LightboxNavigationMode>(
 
 useHead({ title: 'Gallery — nuxt-photo' })
 
+// `?covered=1`: scroll the first photo partly under the sticky nav. A lab case: a thumbnail the
+// page's chrome covers opens with a fade, so no photo flies over the nav.
+onMounted(() => {
+  if (route.query.covered == null) return
+  const item = document.querySelector('.np-album__item')
+  const nav = document.querySelector('.nav')
+  if (!item || !nav) return
+  const box = item.getBoundingClientRect()
+  window.scrollBy(0, box.top - (nav.getBoundingClientRect().bottom - box.height * 0.3))
+})
+
 const galleryCode = `<!-- Layer 1: album with lightbox baked in -->
 <PhotoAlbum
   :photos="photos"

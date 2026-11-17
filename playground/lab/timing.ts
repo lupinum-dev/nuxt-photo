@@ -167,7 +167,7 @@ export function startLabTiming() {
         ? [root]
         : [...root.querySelectorAll<HTMLImageElement>('img')]
     for (const image of images) {
-      if (!image.closest('.lab-content, [role="dialog"]')) continue
+      if (!image.closest('.lab-content, dialog')) continue
       let state = states.get(image)
       if (!state) {
         state = {
@@ -203,10 +203,7 @@ export function startLabTiming() {
   new MutationObserver((records) => {
     for (const record of records) {
       if (record.type === 'attributes') {
-        if (
-          record.target instanceof Element &&
-          record.target.closest('.lab-content, [role="dialog"]')
-        )
+        if (record.target instanceof Element && record.target.closest('.lab-content, dialog'))
           scan(record.target)
       } else for (const node of record.addedNodes) if (node instanceof Element) scan(node)
     }

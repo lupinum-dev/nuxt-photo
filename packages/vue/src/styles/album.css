@@ -5,41 +5,7 @@
   position: relative;
 }
 
-/* Container direction for row/column/masonry layouts */
-.np-album--rows,
-.np-album--columns,
-.np-album--masonry {
-  display: flex;
-}
-
-.np-album--rows {
-  flex-direction: column;
-}
-
-/* Column widths and left margins place every column; free-space distribution would
-   move earlier columns while a streamed page is still parsing later ones. */
-.np-album--columns,
-.np-album--masonry {
-  justify-content: flex-start;
-}
-
-/* Row group */
-.np-album__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-/* Column group */
-.np-album__column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  /* Fixed item spacing must survive partial columns while SSR HTML parses. */
-  justify-content: flex-start;
-}
-
-/* Item — no extra static styles needed; dimensions come from inline styles */
+/* Item — each layout below sets its size and place */
 .np-album__item {
   position: relative;
   overflow: hidden;
@@ -48,12 +14,6 @@
 /* Image fills its item */
 .np-album__img {
   display: block;
-}
-
-/* Skeleton placeholder shown before ResizeObserver measures width */
-.np-album__skeleton {
-  width: 100%;
-  min-height: 200px;
 }
 
 /* Absolute positioning keeps the sentinel out of row and column layout math. */
@@ -66,6 +26,33 @@
 }
 
 /* CSS-only layouts: position and size come from CSS, never from a measured width */
+
+/* Rows: each photo grows from zero by its aspect ratio (inline flex-grow), so a row
+   fills the width at one height at any width. Generated CSS shows the break after
+   each row's last photo. */
+.np-album--rows .np-album__frame {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: var(--np-gap, 8px);
+  /* Every break is a line of its own with a gap on each side. */
+  row-gap: calc(var(--np-gap, 8px) / 2);
+}
+
+.np-album--rows .np-album__item {
+  flex: 0 1 0px;
+  min-width: 0;
+  box-sizing: content-box;
+  padding: var(--np-padding, 0px);
+}
+
+/* Wider than the line, so it always starts a line and pushes the next photo on. */
+.np-album__break {
+  display: none;
+  flex: 0 1 calc(100% + 1px);
+  height: 0;
+}
+
 .np-album--grid .np-album__frame,
 .np-album--mosaic .np-album__frame,
 .np-album--accordion .np-album__frame {

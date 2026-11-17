@@ -1,18 +1,10 @@
 import type { LightboxOptions } from '../config'
 import { listenLightboxHistory } from './historyEvents'
+import { photoParam } from '../gallery/deepLink'
 
 const MARKER = '__nuxtPhoto'
 let sequence = 0
 let traversal: Promise<void> = Promise.resolve()
-
-export function photoParam(option: LightboxOptions['deepLink']) {
-  return option === true ? 'photo' : typeof option === 'string' ? option : null
-}
-
-export function initialPhotoId(url: string | undefined, option: LightboxOptions['deepLink']) {
-  const param = photoParam(option)
-  return url && param ? new URL(url, 'http://nuxt-photo.local').searchParams.get(param) : null
-}
 
 export function photoURL(url: string, param: string, id: string | null) {
   const target = new URL(url)
@@ -35,6 +27,9 @@ export function createLightboxHistory(options: {
   let pendingBack: (() => void) | null = null
   let stopListening: (() => void) | null = null
   let disposing = false
+
+  /** No window to act on, or another lightbox owns the screen. */
+  const inactive = () => typeof window === 'undefined' || !options.ownsScreen()
 
   function onPop(event: PopStateEvent) {
     if (!token || (!options.ownsScreen() && !pendingBack)) return
@@ -66,7 +61,7 @@ export function createLightboxHistory(options: {
 
   async function enter(id: string, fromInitialLink: boolean) {
     await traversal
-    if (typeof window === 'undefined' || !options.ownsScreen()) return
+    if (inactive()) return
     attach()
     if (!fromInitialLink && options.config().history !== false && !token) {
       token = `${Date.now()}-${++sequence}`
@@ -78,8 +73,8 @@ export function createLightboxHistory(options: {
     navigate(id)
   }
 
-  function navigate(id: string) {
-    if (typeof window === 'undefined' || !options.ownsScreen()) return
+  /** Put the photo `id` in the entry's address, or take it out with null. */
+  function rewrite(id: string | null) {
     const param = photoParam(options.config().deepLink)
     if (param)
       window.history.replaceState(
@@ -87,11 +82,17 @@ export function createLightboxHistory(options: {
         '',
         photoURL(window.location.href, param, id),
       )
+    return param
+  }
+
+  function navigate(id: string) {
+    if (inactive()) return
+    rewrite(id)
     entryURL = window.location.href
   }
 
   function leave(): Promise<void> {
-    if (typeof window === 'undefined' || !options.ownsScreen()) return Promise.resolve()
+    if (inactive()) return Promise.resolve()
     if (pendingBack)
       return new Promise((resolve) => {
         const previous = pendingBack!
@@ -114,13 +115,7 @@ export function createLightboxHistory(options: {
     }
     const hadEntry = token !== null
     token = null
-    const param = photoParam(options.config().deepLink)
-    if (!hadEntry && param && window.location.href === entryURL)
-      window.history.replaceState(
-        window.history.state,
-        '',
-        photoURL(window.location.href, param, null),
-      )
+    if (!hadEntry && window.location.href === entryURL) rewrite(null)
     return Promise.resolve()
   }
 

@@ -7,15 +7,17 @@ import {
   PhotoAlbum,
   PhotoImage,
   PhotoGroup,
-  LightboxProvider,
   usePhotoLabels,
   validatePhotos,
   PhotoValidationError,
 } from '../src'
+import { LightboxProvider } from '../src/primitives'
 import { makePhoto } from '@test-fixtures/photos'
-import { resolvePhotoLabels, PHOTO_LOCALES } from '../src/provide/labels'
+import { PHOTO_LOCALES } from '../src/provide/labels'
+import { resolvePhotoLabels } from '../src/provide/viewerLabels'
 import templates from '../src/provide/photoLocaleTemplates'
-import { installBrowserStubs, mountComponent } from './support/runtime'
+import viewerTemplates from '../src/provide/viewerLocaleTemplates'
+import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 beforeEach(installBrowserStubs)
 afterEach(() => {
@@ -91,17 +93,18 @@ it.each([
 it('each bundled locale supplies all eighteen labels and indexed text', () => {
   for (const locale of PHOTO_LOCALES) {
     const labels = resolvePhotoLabels(locale)
-    if (!templates[locale]) throw new Error(`Missing plain Vue locale: ${locale}`)
     expect(Object.keys(labels)).toHaveLength(18)
     for (const value of Object.values(labels))
       expect(typeof value === 'string' ? value.length : value(2, 7).length).toBeGreaterThan(0)
-    expect(templates[locale]).toHaveLength(18)
+    expect(templates[locale]).toHaveLength(7)
+    expect(viewerTemplates[locale]).toHaveLength(11)
     expect(Object.keys(labels)).toEqual(Object.keys(resolvePhotoLabels('en')))
     for (const [index, template] of templates[locale].entries()) {
       expect(template.match(/\{[^}]+\}/g) ?? []).toEqual(
-        index < 15 ? [] : index < 17 ? ['{index}'] : ['{index}', '{count}'],
+        index < 4 ? [] : index < 6 ? ['{index}'] : ['{index}', '{count}'],
       )
     }
+    for (const template of viewerTemplates[locale]) expect(template).not.toMatch(/\{/)
     expect(labels.goToSlide(2)).toContain('2')
     expect(labels.viewPhoto(2)).toContain('2')
     expect(labels.slideStatus(2, 7)).toContain('7')
@@ -142,6 +145,8 @@ it('nested provider and recipe lightbox options retain inherited labels and the 
       }),
     ],
   })
+  mounted.container.querySelector<HTMLElement>('.np-album__item')!.click()
+  await flushUi()
   expect(mounted.container.querySelector('#viewer')?.textContent).toBe('Global close / Next')
   expect(mounted.container.textContent).not.toContain('Wrong viewer')
   mounted.unmount()

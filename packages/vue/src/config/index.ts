@@ -10,7 +10,7 @@ import {
 import { nativeProvider } from '../providers/native'
 import { defaultProviderRuntime, type ProviderRuntime } from '../providers/runtime'
 import type { LightboxNavigationMode, LightboxTransitionOption, PhotoItem } from '../core/types'
-import { DEFAULT_MIN_ZOOM } from '../core/viewer/zoom'
+import { DEFAULT_MIN_ZOOM } from '../core/viewer/defaults'
 import type { InvalidPhotoPolicy } from '../core/photo/normalize'
 import type { PhotoLabels, PhotoLocale } from '../provide/labels'
 
@@ -21,6 +21,10 @@ export interface PhotoProvider {
 }
 export type LightboxTool = 'download' | 'share' | 'fullscreen'
 export interface LightboxOptions {
+  /**
+   * Replaces the built-in `Lightbox`. It loads with the viewer and mounts when a photo first
+   * opens, not when the page mounts.
+   */
   component?: Component
   transition?: LightboxTransitionOption
   navigation?: LightboxNavigationMode

@@ -53,7 +53,7 @@ describe('local public image dimensions', async () => {
     expect(await $fetch('/gallery/__nuxt_photo/folder?folder=missing')).toEqual([])
     expect(await $fetch('/gallery/__nuxt_photo/folder?folder=../')).toEqual([])
   })
-  it('exposes exactly the Nuxt app API under the real Nuxt runtime', async () => {
+  it('exposes exactly the Nuxt app and primitives API under the real Nuxt runtime', async () => {
     const html = await $fetch<string>('/gallery/exports')
     const contract = JSON.parse(
       html.match(/<pre id="exports">([\s\S]*?)<\/pre>/)![1]!.replaceAll('&quot;', '"'),
@@ -61,20 +61,11 @@ describe('local public image dimensions', async () => {
     expect(contract.responsive).toBe(1)
     expect(contract.exports).toEqual({
       Lightbox: 'object',
-      LightboxAmbient: 'object',
-      LightboxCaption: 'object',
-      LightboxControls: 'object',
-      LightboxOverlay: 'object',
-      LightboxProvider: 'object',
-      LightboxRoot: 'object',
-      LightboxSlide: 'object',
-      LightboxViewport: 'object',
       Photo: 'object',
       PhotoAlbum: 'object',
       PhotoCarousel: 'object',
       PhotoGroup: 'object',
       PhotoImage: 'object',
-      PhotoTrigger: 'object',
       PhotoValidationError: 'function',
       createPhoto: 'function',
       definePhotoProvider: 'function',
@@ -83,6 +74,17 @@ describe('local public image dimensions', async () => {
       useLightbox: 'function',
       usePhotoLabels: 'function',
       usePhotoFolder: 'function',
+    })
+    expect(contract.primitives).toEqual({
+      LightboxAmbient: 'object',
+      LightboxCaption: 'object',
+      LightboxControls: 'object',
+      LightboxOverlay: 'object',
+      LightboxProvider: 'object',
+      LightboxRoot: 'object',
+      LightboxSlide: 'object',
+      LightboxViewport: 'object',
+      PhotoTrigger: 'object',
     })
   })
 })

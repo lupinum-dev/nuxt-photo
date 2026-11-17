@@ -9,6 +9,10 @@ import {
 } from 'vue'
 import { vi } from 'vite-plus/test'
 
+// Photo groups load the viewer chunk on intent. Loading it once here lets a test's flush
+// cover an open, as a warm page would.
+await import('@lupinum/vue-photo/viewer')
+
 export function installBrowserStubs() {
   class Observer {
     observe() {}

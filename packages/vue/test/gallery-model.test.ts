@@ -194,7 +194,7 @@ it('honors a parent close while its open request is still pending', async () => 
     await settleImages()
     expect(handle.value!.isOpen).toBe(false)
     expect(handle.value!.activeId).toBeNull()
-    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.body.querySelector('dialog')).toBeNull()
   } finally {
     app.unmount()
     host.remove()

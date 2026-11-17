@@ -27,8 +27,8 @@ declare global {
   }
 }
 
-// Catch free-space redistribution of columns that have already painted while
-// the HTML parser waits for later siblings. A fulfilled route cannot stream.
+// Catch photos that move once later photos arrive while the HTML parser waits
+// for them. A fulfilled route cannot stream.
 for (const { width, height, columns, count } of [
   { width: 1440, height: 900, columns: 4, count: 200 },
   { width: 375, height: 812, columns: 6, count: 40 },
@@ -61,16 +61,12 @@ for (const { width, height, columns, count } of [
       const response = await request.get(path)
       expect(response.ok()).toBe(true)
       const html = await response.text()
-      const starts = [...html.matchAll(/<div[^>]*class="np-album__column"/g)].map(
+      const starts = [...html.matchAll(/<div[^>]*class="np-album__item[ "]/g)].map(
         (match) => match.index,
       )
-      expect(starts).toHaveLength(columns)
-      // Also pause inside the second column: items of a partly parsed column
-      // must not move when the rest of the column arrives.
-      const partial = [...html.matchAll(/<div[^>]*class="np-album__item"/g)].filter(
-        (match) => match.index > starts[1]! && match.index < starts[2]!,
-      )[2]!.index
-      const ends = [starts[1]!, partial, ...starts.slice(2), html.length]
+      expect(starts).toHaveLength(count)
+      // Pause before a quarter, half and three quarters of the photos.
+      const ends = [1, 2, 3].map((part) => starts[(count * part) / 4]!).concat(html.length)
       const releases: (() => void)[] = []
       const gates = ends.map(() => new Promise<void>((resolve) => releases.push(resolve)))
       const base = new URL(testInfo.project.use.baseURL!)
@@ -109,7 +105,7 @@ for (const { width, height, columns, count } of [
         server.once('error', reject)
         server.listen(port, '127.0.0.1', resolve)
       })
-      const positions: number[][] = []
+      const positions: string[][] = []
       try {
         // Absolute and protocol-relative request targets must never leave the local app.
         for (const target of ['http://example.invalid/asset', '//example.invalid/asset']) {
@@ -130,19 +126,23 @@ for (const { width, height, columns, count } of [
           ),
         ).toBe(true)
         for (const [stage, end] of ends.entries()) {
-          await expect(page.locator('.np-album__column')).toHaveCount(
+          await expect(page.locator('.np-album__item')).toHaveCount(
             starts.filter((start) => start < end).length,
           )
           await page.waitForFunction(
-            () => getComputedStyle(document.querySelector('.np-album')!).display === 'flex',
+            () =>
+              getComputedStyle(document.querySelector('.np-album__frame')!).position === 'relative',
           )
           await page.evaluate(() => Promise.all([...document.fonts].map((font) => font.load())))
-          // Keep each incomplete document painted before delivering the next column.
+          // Keep each incomplete document painted before delivering the next photos.
           await page.waitForTimeout(200)
           positions.push(
-            await page
-              .locator('.np-album__column')
-              .evaluateAll((columns) => columns.map((column) => column.getBoundingClientRect().x)),
+            await page.locator('.np-album__item').evaluateAll((items) =>
+              items.map((item) => {
+                const { x, y } = item.getBoundingClientRect()
+                return `${x}:${y}`
+              }),
+            ),
           )
           releases[stage]!()
         }
@@ -155,15 +155,9 @@ for (const { width, height, columns, count } of [
           JSON.stringify({ layout, positions, shifts, cls }, null, 2),
         )
         expect.soft(cls, `${layout} streamed CLS`).toBe(0)
-        expect
-          .soft(
-            positions.map((stage) => stage[0]),
-            `${layout} first column x`,
-          )
-          .toEqual(Array(ends.length).fill(positions[0]![0]))
         for (const [index, stage] of positions.entries())
           expect
-            .soft(stage, `${layout} existing columns at stage ${index + 1}`)
+            .soft(stage, `${layout} existing photos at stage ${index + 1}`)
             .toEqual(positions.at(-1)!.slice(0, stage.length))
       } finally {
         releases.forEach((release) => release())
@@ -275,7 +269,8 @@ for (const layout of ['columns', 'masonry']) {
           ].map(([tag]) => tag.match(/sizes="([^"]*)"/)?.[1])
           await expect(page.locator('.np-album img')).toHaveCount(40)
           await page.waitForFunction(
-            () => getComputedStyle(document.querySelector('.np-album')!).display === 'flex',
+            () =>
+              getComputedStyle(document.querySelector('.np-album__frame')!).position === 'relative',
           )
           await page.evaluate(() => Promise.all([...document.fonts].map((font) => font.load())))
           const boxes = () =>
@@ -342,3 +337,180 @@ for (const layout of ['columns', 'masonry']) {
     }
   }
 }
+
+// Rows are positioned by generated CSS alone, so the server HTML without
+// JavaScript and the hydrated album must place every photo identically.
+for (const width of [375, 820, 1440])
+  test(`rows album renders the same with and without JavaScript at ${width}`, async ({
+    browser,
+  }, testInfo) => {
+    const rects = async (javaScriptEnabled: boolean) => {
+      const context = await browser.newContext({
+        baseURL: testInfo.project.use.baseURL,
+        viewport: { width, height: 900 },
+        javaScriptEnabled,
+      })
+      try {
+        const page = await context.newPage()
+        await page.goto('/lab/album?layout=rows&n=40')
+        if (javaScriptEnabled)
+          await page.waitForFunction(
+            () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
+          )
+        await page.waitForLoadState('networkidle')
+        await expect(page.locator('.np-album__item')).toHaveCount(40)
+        return await page.locator('.np-album__frame').evaluate((frame) => ({
+          frame: frame.getBoundingClientRect().toJSON() as DOMRect,
+          gap: parseFloat(getComputedStyle(frame).columnGap),
+          items: [...frame.querySelectorAll('.np-album__item')].map(
+            (item) => item.getBoundingClientRect().toJSON() as DOMRect,
+          ),
+        }))
+      } finally {
+        await context.close()
+      }
+    }
+    const server = await rects(false)
+    const hydrated = await rects(true)
+    await writeFile(
+      testInfo.outputPath('rows.json'),
+      JSON.stringify({ width, server, hydrated }, null, 2),
+    )
+
+    for (const [index, item] of server.items.entries())
+      for (const key of ['x', 'y', 'width', 'height'] as const)
+        expect
+          .soft(Math.abs(item[key] - hydrated.items[index]![key]), `item ${index} ${key}`)
+          .toBeLessThanOrEqual(0.5)
+
+    // Every row fills the width exactly and keeps one height.
+    const rows = new Map<number, DOMRect[]>()
+    for (const item of hydrated.items) {
+      const top = Math.round(item.y)
+      rows.set(top, [...(rows.get(top) ?? []), item])
+    }
+    expect(rows.size).toBeGreaterThan(1)
+    for (const [top, row] of rows) {
+      const filled =
+        row.reduce((sum, item) => sum + item.width, 0) + hydrated.gap * (row.length - 1)
+      expect
+        .soft(Math.abs(filled - hydrated.frame.width), `row at ${top} width`)
+        .toBeLessThanOrEqual(1)
+      const heights = row.map((item) => item.height)
+      expect
+        .soft(Math.max(...heights) - Math.min(...heights), `row at ${top} heights`)
+        .toBeLessThanOrEqual(1)
+    }
+  })
+
+// Columns and masonry are positioned by generated CSS alone: the server HTML
+// without JavaScript and the hydrated album place every photo identically, and
+// the geometry holds at widths inside a span too.
+for (const layout of ['columns', 'masonry'] as const)
+  test(`${layout} album renders from CSS alone at every width`, async ({ browser }, testInfo) => {
+    test.setTimeout(120_000)
+    const measure = async (width: number, javaScriptEnabled: boolean) => {
+      const context = await browser.newContext({
+        baseURL: testInfo.project.use.baseURL,
+        viewport: { width, height: 900 },
+        javaScriptEnabled,
+      })
+      try {
+        const page = await context.newPage()
+        await page.goto(`/lab/album?layout=${layout}&columns=3&n=40`)
+        if (javaScriptEnabled)
+          await page.waitForFunction(
+            () => window.__lab?.summary().images && window.__lab.summary().pending === 0,
+          )
+        await page.waitForLoadState('networkidle')
+        await expect(page.locator('.np-album__item')).toHaveCount(40)
+        return await page.locator('.np-album__frame').evaluate((frame) => {
+          const box = (element: Element) => {
+            const { x, y, left, top, right, bottom, width, height } =
+              element.getBoundingClientRect()
+            return { x, y, left, top, right, bottom, width, height }
+          }
+          return {
+            frame: box(frame),
+            gap: parseFloat(getComputedStyle(frame).getPropertyValue('--np-gap')),
+            items: [...frame.querySelectorAll<HTMLElement>('.np-album__item')].map((item) => {
+              const image = item.querySelector('img')!
+              return {
+                ...box(item),
+                content: box(image),
+                ratio: Number(image.getAttribute('width')) / Number(image.getAttribute('height')),
+              }
+            }),
+          }
+        })
+      } finally {
+        await context.close()
+      }
+    }
+    for (const width of [375, 500, 820, 1100, 1440]) {
+      const hydrated = await measure(width, true)
+      const label = `${layout} at ${width}`
+      if ([375, 820, 1440].includes(width)) {
+        const server = await measure(width, false)
+        for (const [index, item] of server.items.entries())
+          for (const key of ['x', 'y', 'width', 'height'] as const)
+            expect
+              .soft(
+                Math.abs(item[key] - hydrated.items[index]![key]),
+                `${label} item ${index} ${key}`,
+              )
+              .toBeLessThanOrEqual(0.5)
+      }
+      await writeFile(testInfo.outputPath(`${width}.json`), JSON.stringify(hydrated, null, 2))
+      const { items, frame, gap } = hydrated
+      for (const [index, item] of items.entries()) {
+        expect
+          .soft(
+            Math.abs(item.content.width / item.content.height / item.ratio - 1),
+            `${label} item ${index} ratio`,
+          )
+          .toBeLessThanOrEqual(0.01)
+        for (const other of items.slice(index + 1)) {
+          const overlap =
+            Math.min(item.right, other.right) - Math.max(item.left, other.left) > 0.5 &&
+            Math.min(item.bottom, other.bottom) - Math.max(item.top, other.top) > 0.5
+          expect.soft(overlap, `${label} item ${index} overlaps`).toBe(false)
+        }
+      }
+      // Columns: items that share a left edge, top to bottom.
+      const columns = new Map<number, typeof items>()
+      for (const item of items) {
+        const left = Math.round(item.left)
+        columns.set(left, [...(columns.get(left) ?? []), item])
+      }
+      expect.soft(columns.size, label).toBe(3)
+      const ordered = [...columns.values()].sort((a, b) => a[0]!.left - b[0]!.left)
+      for (const [index, column] of ordered.entries()) {
+        column.sort((a, b) => a.top - b.top)
+        for (const [position, item] of column.slice(1).entries())
+          expect
+            .soft(Math.abs(item.top - column[position]!.bottom - gap), `${label} vertical gap`)
+            .toBeLessThanOrEqual(1)
+        const next = ordered[index + 1]
+        if (next)
+          expect
+            .soft(Math.abs(next[0]!.left - column[0]!.right - gap), `${label} horizontal gap`)
+            .toBeLessThanOrEqual(1)
+      }
+      if (layout === 'masonry') {
+        const widths = ordered.map((column) => column[0]!.width)
+        expect
+          .soft(Math.max(...widths) - Math.min(...widths), `${label} widths`)
+          .toBeLessThanOrEqual(1)
+      }
+      expect
+        .soft(
+          Math.abs(Math.max(...items.map((item) => item.bottom)) - frame.bottom),
+          `${label} frame height`,
+        )
+        .toBeLessThanOrEqual(1)
+      expect
+        .soft(Math.abs(ordered.at(-1)![0]!.right - frame.right), `${label} fills width`)
+        .toBeLessThanOrEqual(1)
+    }
+  })
