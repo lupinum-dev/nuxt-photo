@@ -48,7 +48,7 @@ describe('reactive image options', () => {
     const props = reactive({
       photos: [photo],
       lightbox: false,
-      defaultContainerWidth: 600,
+      breakpoints: [600],
       sizes: { size: '100vw' },
     })
     const container = document.createElement('div')

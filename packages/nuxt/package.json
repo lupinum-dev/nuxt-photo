@@ -34,6 +34,13 @@
       "types": "./dist/runtime/app.d.ts",
       "import": "./dist/runtime/app.js"
     },
+    "./primitives": {
+      "types": "./dist/runtime/primitives.d.ts",
+      "import": "./dist/runtime/primitives.js"
+    },
+    "./lightbox.css": {
+      "default": "./dist/runtime/lightbox.css"
+    },
     "./agent-docs": "./dist/agent/AGENTS.md"
   },
   "publishConfig": {

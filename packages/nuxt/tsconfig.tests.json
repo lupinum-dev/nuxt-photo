@@ -5,10 +5,15 @@
     "rootDir": "../..",
     "baseUrl": "../..",
     "paths": {
+      "@lupinum/vue-photo/internal": ["packages/vue/src/internal/index.ts"],
+      "@lupinum/vue-photo/locales/photo": ["packages/vue/src/provide/photoLocaleTemplates.ts"],
+      "@lupinum/vue-photo/locales/viewer": ["packages/vue/src/provide/viewerLocaleTemplates.ts"],
+      "@lupinum/vue-photo/viewer": ["packages/vue/src/lightbox/viewer.ts"],
       "@lupinum/vue-photo": ["packages/vue/src/index.ts"],
       "@lupinum/vue-photo/*": ["packages/vue/src/*"],
       "@lupinum/nuxt-photo": ["packages/nuxt/src/module.ts"],
-      "@lupinum/nuxt-photo/app": ["packages/nuxt/src/runtime/app.ts"]
+      "@lupinum/nuxt-photo/app": ["packages/nuxt/src/runtime/app.ts"],
+      "@lupinum/nuxt-photo/primitives": ["packages/nuxt/src/runtime/primitives.ts"]
     },
     "types": ["node", "vite/client", "vitest/globals"]
   },

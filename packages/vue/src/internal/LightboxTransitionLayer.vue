@@ -1,9 +1,9 @@
 <template>
   <div data-np-transition-layer aria-hidden="true">
-    <div :ref="ctx.setTransitionFrameRef" data-np-transition-frame>
-      <div :ref="ctx.setTransitionShadowRef" data-np-transition-shadow />
+    <div data-np-transition-frame>
+      <div data-np-transition-shadow />
       <img
-        :ref="setImage"
+        ref="image"
         data-np-transition-image
         alt=""
         draggable="false"
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, type ComponentPublicInstance } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useImagePaint } from '../primitives/imagePaint'
 import { useLightboxInject } from '../lightbox/inject'
 
@@ -32,9 +32,5 @@ const colour = computed(() => {
     'var(--np-placeholder-bg, #e5e7eb)'
   )
 })
-function setImage(element: Element | ComponentPublicInstance | null) {
-  ctx.setTransitionImageRef(element)
-  image.value = element instanceof HTMLImageElement ? element : null
-}
 watch([ctx.activePhoto, ctx.transitionInProgress], resetRequestState, { flush: 'post' })
 </script>

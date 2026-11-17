@@ -1,195 +1,83 @@
-import {
-  computed,
-  inject,
-  onBeforeUnmount,
-  onMounted,
-  watch,
-  type Component,
-  type ComponentPublicInstance,
-  type ComputedRef,
-} from 'vue'
-import { useGalleryRuntime } from '../../gallery/runtime'
-import { provideLightbox } from '../../composables/index'
-import { PhotoGroupContextKey } from '../photo-group/context'
+import { computed, onBeforeUnmount, watch, type ComputedRef } from 'vue'
 import type { ResolvedPhotoItem as PhotoItem } from '../../core/index'
-import { usePhotoConfig, type LightboxOptions } from '../../config'
-import Lightbox from '../Lightbox.vue'
-import { warnOnSetupOptionChanges } from '../../internal/staticOptionWarnings'
+import { photoAt, photoIndexOf } from '../../core/photo/lookup'
+import type { LightboxOptions } from '../../config'
+import { useGalleryModel } from '../../gallery/model'
 import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
-import { resolveLightboxComponent } from '../shared/resolveLightboxComponent'
-import { usePhotoLabels } from '../../composables/usePhotoLabels'
+import { useEagerLabels } from '../../provide/labels'
+import { useRecipeGroup } from '../photo-group/usePhotoGroup'
 
-type CollectionLightboxProps = {
-  lightbox?: boolean | LightboxOptions
+type CollectionLightboxOptions<TMeta extends object> = {
+  owner: string
+  /** Navigation order for a group of its own; bento and mosaic pass the display order. */
+  photos: ComputedRef<readonly PhotoItem<TMeta>[]>
+  /** The `photos` prop order that the public `open(index)` addresses. */
+  publicPhotos: ComputedRef<readonly PhotoItem<TMeta>[]>
+  root: () => HTMLElement | null
+  lightbox: () => boolean | LightboxOptions | undefined
+  defaultEnabled: boolean
+  active: () => string | null | undefined
+  emitActive: (id: string | null) => void
 }
 
+/** Trigger bindings, hidden state and the gallery handle of an album or carousel. */
 export function useCollectionLightbox<TMeta extends object>(
-  photos: ComputedRef<readonly PhotoItem<TMeta>[]>,
-  props: CollectionLightboxProps,
-  root: () => HTMLElement | null,
-  owner = 'PhotoAlbum',
-  defaultEnabled = true,
+  options: CollectionLightboxOptions<TMeta>,
 ) {
-  const parentGroup = inject(PhotoGroupContextKey, null)
-  if (!parentGroup) useGalleryRuntime(photos, root)
-  if (!parentGroup)
-    warnOnSetupOptionChanges(owner, {
-      lightbox: () =>
-        typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
-    })
-  const delegatedGroup = parentGroup?.enabled ? parentGroup : null
-  const injectedLightbox = usePhotoConfig().value.lightbox.component ?? null
+  const { photos } = options
+  const { group, lightboxComponent } = useRecipeGroup(options)
+  const labels = useEagerLabels()
 
-  const resolvedLightboxComponent = !parentGroup
-    ? resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, defaultEnabled)
-    : null
-  const hasOwnLightbox = resolvedLightboxComponent !== null
-  const hasLightbox = computed(() => !!delegatedGroup || hasOwnLightbox)
-  const LightboxComponent: Component | null = resolvedLightboxComponent
-
-  const ownCtx = hasOwnLightbox ? provideLightbox(photos) : null
-
-  const thumbElsMap: Record<number, HTMLElement | null> = {}
-
-  function setItemRef(index: number) {
-    return (el: Element | ComponentPublicInstance | null) => {
-      thumbElsMap[index] = el as HTMLElement | null
-    }
+  /** Open a photo; `source` is the element the visitor activated, if any. */
+  function activate(index: number, source: HTMLElement | null = null) {
+    return group.activate(photoAt(photos.value, index).id, source)
   }
-
-  function syncOwnThumbRefs() {
-    if (!ownCtx) return
-    for (const [index, element] of Object.entries(thumbElsMap)) {
-      ownCtx.setThumbnailRef(Number(index))(element)
-    }
-  }
-
-  onMounted(syncOwnThumbRefs)
-
-  function activatePhoto(photo: PhotoItem<TMeta>, index: number) {
-    if (delegatedGroup) {
-      return delegatedGroup.activateById(photo.id, thumbElsMap[index])
-    }
-
-    if (!ownCtx) return
-    syncOwnThumbRefs()
-    return ownCtx.open(index)
-  }
-
-  const labels = usePhotoLabels()
 
   function itemBindings(photo: PhotoItem<TMeta>, index: number) {
-    const base = { ref: setItemRef(index) }
-    if (!hasLightbox.value || (delegatedGroup && !delegatedGroup.hasPhoto(photo.id))) return base
-
-    return {
-      ...base,
-      ...createPhotoTriggerBindings(
-        photo,
-        index,
-        () => activatePhoto(photo, index),
-        photo.alt || labels.viewPhoto(index + 1),
-      ),
-    }
-  }
-
-  function isHidden(photo: PhotoItem<TMeta>): boolean {
-    if (delegatedGroup) {
-      return delegatedGroup.hiddenPhoto.value?.id === photo.id
-    }
-    if (ownCtx) {
-      const index = ownCtx.hiddenThumbnailIndex.value
-      if (index === null) return false
-      return photos.value[index] === photo
-    }
-    return false
-  }
-
-  async function open(index = 0) {
-    const photo = photos.value[index]
-    if (!photo) {
-      throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
-    }
-    if (delegatedGroup) {
-      return delegatedGroup.activateById(photo.id, thumbElsMap[index])
-    }
-    if (!ownCtx) return
-    syncOwnThumbRefs()
-    await ownCtx.open(index)
-  }
-
-  async function openById(id: string) {
-    const index = photos.value.findIndex((photo) => photo.id === id)
-    if (index < 0) {
-      throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
-    }
-    if (delegatedGroup) {
-      return delegatedGroup.activateById(id, thumbElsMap[index])
-    }
-    if (!ownCtx) return
-    syncOwnThumbRefs()
-    await ownCtx.open(index)
-  }
-
-  async function close() {
-    if (delegatedGroup) return delegatedGroup.close()
-    await ownCtx?.close()
-  }
-
-  const isOpen = computed(() => delegatedGroup?.isOpen.value ?? ownCtx?.isOpen.value ?? false)
-
-  const activeId = computed(() => delegatedGroup?.activeId.value ?? ownCtx?.activeId.value ?? null)
-  const activePhoto = computed(
-    () => delegatedGroup?.activePhoto.value ?? ownCtx?.activePhoto.value ?? null,
-  )
-
-  const capabilityOwner = Symbol('PhotoAlbum')
-
-  function removeCapabilities() {
-    parentGroup?.removeCapabilities(capabilityOwner)
-  }
-
-  function syncCapabilities(nextPhotos: readonly PhotoItem<TMeta>[]) {
-    const group = delegatedGroup
-    if (!group) {
-      removeCapabilities()
-      return
-    }
-
-    group.replaceCapabilities(
-      capabilityOwner,
-      nextPhotos.map((photo, index) => ({
-        id: photo.id,
-        getThumbnailElement: () => thumbElsMap[index] ?? null,
-        renderSlide: null,
-      })),
+    if (!group.enabled || !group.hasPhoto(photo.id)) return {}
+    return createPhotoTriggerBindings(
+      photo,
+      index,
+      (source) => activate(index, source),
+      photo.alt || labels.viewPhoto(index + 1),
     )
   }
 
-  watch(
-    photos,
-    (nextPhotos) => {
-      syncCapabilities(nextPhotos)
-    },
-    { flush: 'post' },
+  // Registration makes a surrounding PhotoGroup reject photos missing from its collection.
+  const capabilityOwner = Symbol(options.owner)
+  const register = (next: readonly PhotoItem<TMeta>[]) =>
+    group.replaceCapabilities(
+      capabilityOwner,
+      next.map((photo) => ({ id: photo.id, renderSlide: null })),
+    )
+  register(photos.value)
+  watch(photos, register, { flush: 'post' })
+  onBeforeUnmount(() => group.removeCapabilities(capabilityOwner))
+
+  // Both handle methods accept only photos this collection shows, even inside a larger group.
+  async function openById(id: string) {
+    photoIndexOf(photos.value, id)
+    await group.openById(id)
+  }
+
+  async function open(index = 0) {
+    await openById(photoAt(options.publicPhotos.value, index).id)
+  }
+
+  const { activeId, activePhoto } = useGalleryModel(
+    options.owner,
+    options.active,
+    () => options.publicPhotos.value,
+    { ...group, openById },
+    options.emitActive,
   )
 
-  syncCapabilities(photos.value)
-
-  onBeforeUnmount(removeCapabilities)
-
   return {
-    hasLightbox,
-    hasOwnLightbox,
-    LightboxComponent,
+    lightboxComponent,
+    hasLightbox: computed(() => group.enabled),
     itemBindings,
-    setItemRef,
-    isHidden,
-    open,
-    openById,
-    close,
-    isOpen,
-    activeId,
-    activePhoto,
+    isHidden: (photo: PhotoItem<TMeta>) => group.hiddenId.value === photo.id,
+    activate,
+    handle: { open, openById, close: group.close, isOpen: group.isOpen, activeId, activePhoto },
   }
 }

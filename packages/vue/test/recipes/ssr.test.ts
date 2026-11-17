@@ -4,8 +4,7 @@ import { createSSRApp, h } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { describe, expect, it } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
-import { computeFrameLayout, responsive } from '../../src/core/index'
-import { computeBreakpointStyles } from '../../src/core/index'
+import { computeFramePlan, responsive } from '../../src/core/index'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
 import Photo from '../../src/components/Photo.vue'
 import PhotoGroup from '../../src/components/PhotoGroup.vue'
@@ -17,7 +16,7 @@ const photos = [
 ]
 
 describe('SSR', () => {
-  it('renders complete fluid SSR rows without an explicit width', async () => {
+  it('renders complete rows positioned by CSS without a width', async () => {
     const app = createSSRApp({
       render: () => h(PhotoAlbum, { photos, layout: 'rows', lightbox: false }),
     })
@@ -27,42 +26,19 @@ describe('SSR', () => {
     expect(html).toContain('ssr-1')
     expect(html).toContain('ssr-2')
     expect(html).toContain('ssr-3')
-    expect(html).toContain('flex-wrap')
+    expect(html).toContain('container-type:inline-size')
+    expect(html).toMatch(/<style>@container np-\w+ \(width < \d+px\)/)
     expect(html).toContain('aspect-ratio')
-    expect(html).toContain('flex-grow')
-    expect(html).toContain('flex:0 0 auto')
-    expect(html).toContain('width:calc(')
-    expect(html).not.toContain('flex-grow:1.777')
+    // Grow factors are aspect ratios, scaled so the narrowest photo grows by 1.
+    expect(html).toContain('style="flex-grow:2.22222;"')
+    expect(html.match(/<span class="np-br-\d np-album__break"/g)).toHaveLength(2)
+    expect(html).not.toContain('width:calc(')
     expect(html).not.toContain('np-album__row')
-    expect(html).toContain('flex-grow:9999')
-    expect(html).not.toContain('np-album__skeleton')
-  })
-
-  it('PhotoAlbum with defaultContainerWidth uses JS layout on server (no flex-grow)', async () => {
-    const app = createSSRApp({
-      render: () =>
-        h(PhotoAlbum, {
-          photos,
-          layout: 'rows',
-          lightbox: false,
-          defaultContainerWidth: 800,
-        }),
-    })
-
-    const html = await renderToString(app)
-
-    expect(html).toContain('ssr-1')
-    expect(html).toContain('ssr-2')
-    expect(html).toContain('ssr-3')
-    expect(html).toContain('calc(')
-    expect(html).not.toContain('flex-grow:1.777')
-    expect(html).not.toContain('flex-grow:0.8')
-    expect(html).toContain('flex-grow:9999')
-    expect(html).not.toContain('np-album__skeleton')
+    expect(html).not.toContain('flex-grow:9999')
   })
 
   describe('with breakpoints (container query mode)', () => {
-    it('emits @container style block with np-item-N rules', async () => {
+    it('emits @container rules that show the breaks at row ends', async () => {
       const app = createSSRApp({
         render: () =>
           h(PhotoAlbum, {
@@ -73,11 +49,11 @@ describe('SSR', () => {
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('@container')
-      expect(html).toContain('np-item-0')
-      expect(html).toContain('np-item-1')
-      expect(html).toContain('np-item-2')
-      expect(html).toContain('calc(')
+      expect(html).toMatch(
+        /@container np-\w+[^{]*\{\.np-album__frame\{--np-gap:8px;--np-padding:0px\}/,
+      )
+      expect(html).toMatch(/\.np-br-\d[^{]*\{display:block\}/)
+      expect(html).not.toContain('(width >= 320px)')
     })
 
     it('sets container-type: inline-size on the album wrapper', async () => {
@@ -110,143 +86,38 @@ describe('SSR', () => {
       expect(html).not.toContain('style="flex:0 0 auto')
       expect(html).toContain('ssr-1')
     })
-
-    it('with both breakpoints and defaultContainerWidth renders inline calc() without dead container query CSS', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: 'rows',
-            lightbox: false,
-            breakpoints: [600, 900],
-            defaultContainerWidth: 800,
-          }),
-      })
-      const html = await renderToString(app)
-      // Inline widths are authoritative when dcw is set; @container rules
-      // would never apply underneath them.
-      expect(html).toContain('calc(')
-      expect(html).not.toContain('@container')
-    })
-
-    it('columns breakpoints do not emit hidden SSR variant branches', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'columns', columns: 3 },
-            lightbox: false,
-            breakpoints: [600],
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).not.toContain('@container')
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).not.toContain('data-bp')
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('grid-template-columns')
-      expect(html).not.toContain('100vw')
-    })
   })
 
   describe('columns/masonry SSR', () => {
-    it('columns with defaultContainerWidth renders deterministic column groups', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'columns', columns: 3 },
-            lightbox: false,
-            defaultContainerWidth: 900,
+    const photo = /<div class="np-album__item[ "][^>]*>[\s\S]*?ssr-(\d)/g
+    it.each([
+      ['columns', { type: 'columns', columns: 3 }, {}],
+      ['columns with breakpoints', { type: 'columns', columns: 3 }, { breakpoints: [600] }],
+      [
+        'responsive columns and spacing',
+        { type: 'columns', columns: responsive({ 0: 1, 800: 3 }) },
+        { breakpoints: [320, 800, 1200], spacing: responsive({ 0: 4, 640: 8, 1200: 16 }) },
+      ],
+      ['masonry', { type: 'masonry', columns: 3 }, {}],
+      [
+        'masonry with responsive spacing',
+        { type: 'masonry', columns: 3 },
+        { spacing: responsive({ 0: 4, 640: 12, 1200: 20 }) },
+      ],
+    ] as const)(
+      '%s renders each photo once, in photo order, placed by container CSS',
+      async (_, layout, extra) => {
+        const html = await renderToString(
+          createSSRApp({
+            render: () => h(PhotoAlbum, { photos, layout, lightbox: false, ...extra }),
           }),
-      })
-      const html = await renderToString(app)
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).not.toContain('data-bp')
-      expect(html).not.toContain('@container')
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
-      expect(html).toContain('ssr-1')
-    })
-
-    it('masonry with defaultContainerWidth renders deterministic column groups', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'masonry', columns: 3 },
-            lightbox: false,
-            defaultContainerWidth: 900,
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).not.toContain('data-bp')
-      expect(html).not.toContain('@container')
-      expect(html).not.toMatch(/grid-template-columns\s*:\s*repeat\(3\s*,\s*1fr\)/)
-      expect(html).toContain('ssr-1')
-    })
-
-    it('columns with explicit breakpoints uses the first estimate without duplicate markup', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: {
-              type: 'columns',
-              columns: responsive({ 0: 1, 800: 3 }),
-            },
-            lightbox: false,
-            breakpoints: [320, 800, 1200],
-            spacing: responsive({ 0: 4, 640: 8, 1200: 16 }),
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).not.toContain('@container')
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).not.toContain('data-bp')
-      expect(html.match(/class="np-album__column"/g) ?? []).toHaveLength(1)
-      expect(html).not.toContain('100vw')
-    })
-
-    it('responsive columns infer an SSR estimate without duplicate branches', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: {
-              type: 'columns',
-              columns: responsive({ 0: 1, 640: 2, 1120: 3 }),
-            },
-            lightbox: false,
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).not.toContain('@container')
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('grid-template-columns')
-      expect(html).not.toContain('100vw')
-    })
-
-    it('masonry responsive spacing does not create duplicate SSR branches', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'masonry', columns: 3 },
-            lightbox: false,
-            spacing: responsive({ 0: 4, 640: 12, 1200: 20 }),
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).not.toContain('@container')
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('grid-template-columns')
-      expect(html).not.toContain('100vw')
-    })
+        )
+        expect([...html.matchAll(photo)].map((match) => match[1])).toEqual(['1', '2', '3'])
+        expect(html).toMatch(/<style>@container np-\w+[^{]*\{\.np-album__frame\{/)
+        expect(html).not.toContain('np-album__column')
+        expect(html).not.toContain('100vw')
+      },
+    )
 
     it('deterministic server layout keeps button semantics when lightbox is enabled', async () => {
       const app = createSSRApp({
@@ -258,30 +129,11 @@ describe('SSR', () => {
               columns: responsive({ 0: 1, 800: 3 }),
             },
             lightbox: true,
-            defaultContainerWidth: 800,
           }),
       })
       const html = await renderToString(app)
-      expect(html).toContain('np-album__column')
       expect(html).toContain('role="button"')
       expect(html).toContain('tabindex="0"')
-    })
-
-    it('columns without an explicit width renders balanced columns at the default estimate', async () => {
-      const app = createSSRApp({
-        render: () =>
-          h(PhotoAlbum, {
-            photos,
-            layout: { type: 'columns', columns: 3 },
-            lightbox: false,
-          }),
-      })
-      const html = await renderToString(app)
-      expect(html).not.toContain('np-album__ssr-variant')
-      expect(html).toContain('np-album__column')
-      expect(html).not.toContain('grid-template-columns')
-      expect(html).not.toContain('100vw')
-      expect(html).toContain('ssr-1')
     })
   })
 
@@ -294,7 +146,7 @@ describe('SSR', () => {
 
     expect(html).toContain('role="button"')
     expect(html).not.toContain('teleport start')
-    expect(html).not.toContain('role="dialog"')
+    expect(html).not.toContain('<dialog')
   })
 
   it('PhotoGroup omits its closed shared-lightbox portal during SSR', async () => {
@@ -313,7 +165,7 @@ describe('SSR', () => {
 
     expect(html).toContain('ssr-1')
     expect(html).not.toContain('teleport start')
-    expect(html).not.toContain('role="dialog"')
+    expect(html).not.toContain('<dialog')
   })
 
   it('Photo omits its closed solo-lightbox portal during SSR', async () => {
@@ -325,7 +177,7 @@ describe('SSR', () => {
 
     expect(html).toContain('np-photo')
     expect(html).not.toContain('teleport start')
-    expect(html).not.toContain('role="dialog"')
+    expect(html).not.toContain('<dialog')
   })
 
   it('infers breakpoints from responsive() metadata when rows options are responsive', async () => {
@@ -344,91 +196,30 @@ describe('SSR', () => {
 
     const html = await renderToString(app)
 
-    expect(html).toContain('@container')
-    expect(html).toContain('np-item-0')
-    expect(html).toContain('class="np-album__item np-item-0" style="overflow:hidden;"')
-    expect(html).not.toContain('style="flex-grow:1.777')
-  })
-})
-
-describe('computeBreakpointStyles', () => {
-  const twoPhotos = [
-    makePhoto({ id: 'a', width: 1600, height: 900 }),
-    makePhoto({ id: 'b', width: 1200, height: 1500 }),
-  ]
-
-  it('returns no rules without both photos and breakpoints', () => {
-    expect(
-      computeBreakpointStyles({
-        photos: [],
-        breakpoints: [600],
-        containerName: 'test',
-      }),
-    ).toBe('')
-    expect(
-      computeBreakpointStyles({
-        photos: twoPhotos,
-        breakpoints: [],
-        containerName: 'test',
-      }),
-    ).toBe('')
-  })
-
-  it('deduplicates identical layouts across adjacent breakpoints', () => {
-    // Use breakpoints that are close together — likely produce identical row breaks
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [900, 1200],
-      containerName: 'test',
-    })
-    const ruleCount = (css.match(/@container/g) ?? []).length
-    // Both widths may produce identical row assignments → deduplicated to 1 rule
-    expect(ruleCount).toBeGreaterThan(0)
-    expect(ruleCount).toBeLessThanOrEqual(2)
-  })
-
-  it('scopes complete item and width rules to the container', () => {
-    const css = computeBreakpointStyles({
-      photos: twoPhotos,
-      breakpoints: [600, 900],
-      containerName: 'my-album',
-    })
-    expect(css).toContain('my-album')
-    expect(css).toContain('@container my-album')
-    expect(css).toContain('.np-item-0')
-    expect(css).toContain('.np-item-1')
-    expect(css).toContain('calc(')
-    expect(css).toContain('flex:0 0 auto')
+    // The responsive() keys replace the default ladder above the smallest key.
+    expect(html).toMatch(/\(width < \d+px\)\{\.np-album__frame\{--np-gap:4px/)
+    expect(html).toContain('(width >= 640px) and (width < 1120px){.np-album__frame{--np-gap:8px')
+    expect(html).toContain('(width >= 1120px)')
+    expect(html).not.toContain('320px')
   })
 })
 
 describe('CSS-only album SSR', () => {
   it.each(['grid', 'mosaic', 'accordion'] as const)(
-    'renders %s completely regardless of default width',
+    'renders %s completely from CSS',
     async (type) => {
       const framePhotos = Array.from({ length: 8 }, (_, index) =>
         makePhoto({ id: `frame-${index}`, width: 1200 + index * 100, height: 900 }),
       )
-      const render = (defaultContainerWidth?: number) =>
-        renderToString(
-          createSSRApp({
-            render: () =>
-              h(PhotoAlbum, {
-                photos: framePhotos,
-                layout: { type, max: 5 },
-                lightbox: false,
-                defaultContainerWidth,
-              }),
-          }),
-        )
-      // Only the sizes estimate may follow defaultContainerWidth; CSS owns the geometry.
-      const withoutSizes = (markup: string) => markup.replaceAll(/ sizes="[^"]*"/g, '')
-      const html = await render()
-      expect(withoutSizes(html)).toBe(withoutSizes(await render(900)))
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(PhotoAlbum, { photos: framePhotos, layout: { type, max: 5 }, lightbox: false }),
+        }),
+      )
       expect(html).toContain(`np-album--${type}`)
       expect(html).toContain('container-type:inline-size')
       expect(html).toMatch(/<style>@container/)
-      expect(html).not.toContain('np-album__skeleton')
       expect(html.match(/class="np-album__item"/g)).toHaveLength(type === 'mosaic' ? 5 : 8)
       expect(html.match(/object-fit:cover/g)).toHaveLength(type === 'mosaic' ? 5 : 8)
       if (type === 'mosaic') expect(html).toContain('+3')
@@ -446,7 +237,7 @@ it('renders responsive bento CSS with the primary reading order and item classes
       render: () => h(PhotoAlbum, { photos, layout: { type: 'bento', columns }, lightbox: false }),
     }),
   )
-  const frame = computeFrameLayout({
+  const frame = computeFramePlan({
     type: 'bento',
     photos,
     columns,

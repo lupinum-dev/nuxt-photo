@@ -1,46 +1,30 @@
-type VelocitySample = { x: number; y: number; time: number }
+const MAX_SAMPLES = 32
 
-/** Fixed-size velocity estimator for pointer gesture completion. */
-export class VelocityTracker {
-  private readonly buffer = Array.from({ length: 32 }, (): VelocitySample | undefined => undefined)
-  private head = 0
-  private count = 0
+/** Velocity estimator for pointer gesture completion, over the newest 32 samples. */
+export function createVelocityTracker(windowMs: number) {
+  let samples: { x: number; y: number; time: number }[] = []
+  const rest = { vx: 0, vy: 0 }
 
-  constructor(private readonly windowMs = 120) {}
-
-  reset() {
-    this.head = 0
-    this.count = 0
-  }
-
-  addSample(x: number, y: number, time: number) {
-    this.buffer[this.head] = { time, x, y }
-    this.head = (this.head + 1) % this.buffer.length
-    if (this.count < this.buffer.length) this.count++
-  }
-
-  getVelocity(): { vx: number; vy: number } {
-    if (this.count < 2) return { vx: 0, vy: 0 }
-
-    const newestSlot = (this.head - 1 + this.buffer.length) % this.buffer.length
-    const newest = this.buffer[newestSlot]!
-    const cutoff = newest.time - this.windowMs
-    const startSlot = (this.head - this.count + this.buffer.length) % this.buffer.length
-    let oldest = newest
-
-    for (let index = 0; index < this.count; index++) {
-      const sample = this.buffer[(startSlot + index) % this.buffer.length]!
-      if (sample.time >= cutoff) {
-        oldest = sample
-        break
+  return {
+    reset() {
+      samples = []
+    },
+    addSample(x: number, y: number, time: number) {
+      samples.push({ time, x, y })
+      if (samples.length > MAX_SAMPLES) samples.shift()
+    },
+    /** Speed in px/ms over the window; zero when the pointer has rested since `now - windowMs`. */
+    getVelocity(now?: number) {
+      const newest = samples.at(-1)
+      if (!newest || samples.length < 2) return rest
+      if (now !== undefined && now - newest.time > windowMs) return rest
+      const oldest = samples.find((sample) => sample.time >= newest.time - windowMs) ?? newest
+      const elapsed = newest.time - oldest.time
+      if (elapsed < 1) return rest
+      return {
+        vx: (newest.x - oldest.x) / elapsed,
+        vy: (newest.y - oldest.y) / elapsed,
       }
-    }
-
-    const elapsed = newest.time - oldest.time
-    if (elapsed < 1) return { vx: 0, vy: 0 }
-    return {
-      vx: (newest.x - oldest.x) / elapsed,
-      vy: (newest.y - oldest.y) / elapsed,
-    }
+    },
   }
 }

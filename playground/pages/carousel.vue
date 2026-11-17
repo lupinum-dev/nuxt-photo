@@ -5,7 +5,7 @@
       <p class="header__desc">
         A swipeable inline carousel for blogs and docs. Thumbnails, arrows, counter, caption — all
         optional. Lightbox opt-in. Powered by
-        <code>embla-carousel-vue</code>.
+        <code>embla-carousel</code>.
       </p>
     </header>
 

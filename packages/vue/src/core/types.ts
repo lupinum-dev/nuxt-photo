@@ -5,8 +5,11 @@
  * @see https://nuxt-photo.lupinum.com/docs/reference/types
  */
 export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknown>>> {
-  /** Stable, unique identity. Use the ID from your CMS or database, not the array index. */
-  readonly id: string
+  /**
+   * Unique identity in one collection, for deep links, `v-model:active` and `openById`.
+   * Defaults to `src`; set it when two photos share a `src` or when the URL can change.
+   */
+  readonly id?: string
   /** Image URL. The lightbox uses it; thumbnails use it unless `thumbSrc` is set. */
   readonly src: string
   /** Smaller image URL for thumbnails, used by the native provider. */
@@ -31,10 +34,11 @@ export interface PhotoItem<TMeta extends object = Readonly<Record<string, unknow
   readonly meta?: Readonly<TMeta>
 }
 
-/** Internal photo shape after dimension validation. */
+/** A photo as components hand it back: `id` set (to `src` when you gave none) and its size known. */
 export interface ResolvedPhotoItem<
   TMeta extends object = Readonly<Record<string, unknown>>,
 > extends PhotoItem<TMeta> {
+  readonly id: string
   readonly width: number
   readonly height: number
 }

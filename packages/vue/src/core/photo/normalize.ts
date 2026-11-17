@@ -1,7 +1,6 @@
 import type { ResolvedPhotoItem as PhotoItem } from '../types'
 
 export type PhotoValidationIssueCode =
-  | 'missing-id'
   | 'missing-src'
   | 'invalid-width'
   | 'invalid-height'
@@ -107,15 +106,17 @@ function validatePhoto<TMeta extends object>(
     if (dimensions) photo = { ...photo, width: dimensions.width, height: dimensions.height }
   }
 
+  // A photo without an `id` is known by its `src`, as `photoId()` reads it.
+  if (photo.id === undefined && typeof photo.src === 'string') photo = { ...photo, id: photo.src }
   const id = photo.id
-  if (!isNonEmptyString(id)) {
+  if (id !== undefined && !isNonEmptyString(id)) {
     issues.push(
       createIssue(
-        'missing-id',
+        'invalid-optional-field',
         options.owner,
         index,
         id,
-        `photo at index ${index} is missing a non-empty string id; use a stable ID from your data, not the array index`,
+        `photo at index ${index} field "id" must be a non-empty string`,
       ),
     )
   }
@@ -205,10 +206,12 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
   const onInvalid = options.onInvalid ?? 'throw'
   const issues: PhotoValidationIssue[] = []
   const indexesById = new Map<string, number[]>()
+  const srcs: unknown[] = []
 
   const candidates = rawPhotos.map((rawPhoto, index) => {
     const issueCount = issues.length
     const photo = validatePhoto<TMeta>(rawPhoto, options, index, issues)
+    srcs[index] = photo?.src
     if (photo && isNonEmptyString(photo.id)) {
       const indexes = indexesById.get(photo.id) ?? []
       indexes.push(index)
@@ -219,6 +222,8 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
 
   for (const [id, indexes] of indexesById) {
     if (indexes.length < 2) continue
+    const named = indexes.map((index) => `"${String(srcs[index])}"`)
+    const photos = `${named.slice(0, -1).join(', ')} and ${named.at(-1)}`
     for (const index of indexes) {
       issues.push(
         createIssue(
@@ -226,7 +231,7 @@ export function normalizePhotos<TMeta extends object = Readonly<Record<string, u
           options.owner,
           index,
           id,
-          `duplicate photo id "${id}" used at indexes ${indexes.join(', ')}; IDs must be unique in one collection`,
+          `photos ${photos} share the id "${id}"; give each of them its own \`id\``,
         ),
       )
       if (onInvalid === 'drop') candidates[index] = null

@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { computed, createApp, defineComponent, h, nextTick, provide, ref } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
-import { computeFrameLayout } from '../src/core/index'
+import { computeFramePlan } from '../src/core/index'
 import PhotoAlbum from '../src/components/PhotoAlbum.vue'
 import PhotoGroup from '../src/components/PhotoGroup.vue'
 import type { GalleryHandle } from '../src/gallery/runtime'
@@ -26,7 +26,7 @@ describe('collection lightbox handles', () => {
         height: 1000,
       }),
     )
-    const frame = computeFrameLayout({ type: 'mosaic', photos, max: 5, containerName: 'test' })
+    const frame = computeFramePlan({ type: 'mosaic', photos, max: 5, containerName: 'test' })
     const album = ref<GalleryHandle | null>(null)
     const host = document.createElement('div')
     document.body.appendChild(host)
@@ -75,18 +75,17 @@ describe('collection lightbox handles', () => {
     ]
     const albumPhotos = canonical.slice(1, 3)
     const album = ref<GalleryHandle | null>(null)
-    const activateById = vi.fn(async () => {})
+    const openById = vi.fn(async () => {})
     const close = vi.fn(async () => {})
     const context: PhotoGroupContext = {
       enabled: true,
       hasPhoto: (id) => canonical.some((photo) => photo.id === id),
       replaceCapabilities: vi.fn(),
       removeCapabilities: vi.fn(),
-      open: vi.fn(async () => {}),
+      activate: vi.fn(async () => {}),
+      openById,
       close,
-      activateById,
-      photos: computed(() => canonical),
-      hiddenPhoto: computed(() => null),
+      hiddenId: computed(() => null),
       isOpen: computed(() => true),
       activeId: computed(() => canonical[0]?.id ?? null),
       activePhoto: computed(() => canonical[0] ?? null),
@@ -105,13 +104,13 @@ describe('collection lightbox handles', () => {
     await nextTick()
 
     await album.value!.open(1)
-    expect(activateById).toHaveBeenLastCalledWith('album-b', expect.anything())
+    expect(openById).toHaveBeenLastCalledWith('album-b')
     expect(album.value!.isOpen).toBe(true)
 
     await album.value!.close()
     await album.value!.openById('album-a')
     expect(close).toHaveBeenCalledOnce()
-    expect(activateById).toHaveBeenLastCalledWith('album-a', expect.anything())
+    expect(openById).toHaveBeenLastCalledWith('album-a')
 
     app.unmount()
     host.remove()
@@ -155,16 +154,9 @@ describe('collection lightbox handles', () => {
     host.remove()
   })
 
-  it('keeps Embla navigation aligned after opening a nested album photo by id', async () => {
+  it('keeps lightbox navigation aligned after opening a nested album photo by id', async () => {
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(600)
     vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400)
-    vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockImplementation(function (
-      this: HTMLElement,
-    ) {
-      return this.classList.contains('np-lightbox__slide')
-        ? Array.from(this.parentElement?.children ?? []).indexOf(this) * 600
-        : 0
-    })
     const photos = Array.from({ length: 8 }, (_, index) => makePhoto({ id: `group-${index + 1}` }))
     const group = ref<GalleryHandle | null>(null)
     const App = defineComponent({

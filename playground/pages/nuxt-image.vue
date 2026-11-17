@@ -52,7 +52,6 @@
           :photos="photos.slice(0, 6)"
           :layout="{ type: 'columns', columns: 3 }"
           :spacing="6"
-          :default-container-width="1100"
         >
           <template #thumbnail="{ photo, sizes, priority }">
             <div class="custom-thumb" :style="{ aspectRatio: `${photo.width} / ${photo.height}` }">
@@ -121,7 +120,6 @@ const slotCode = `<!-- Layer 2: custom thumbnail, automatic wiring -->
 <PhotoAlbum
   :photos="photos"
   :layout="{ type: 'columns', columns: 3 }"
-  :default-container-width="1100"
 >
   <template #thumbnail="{ photo, sizes, priority }">
     <div class="my-thumb">

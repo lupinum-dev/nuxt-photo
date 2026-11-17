@@ -20,12 +20,7 @@ onNuxtReady(() => {
     <button id="mount-album" @click="visible = true">Mount album</button>
     <NuxtLink id="folder-link" to="/folder-images">Folder images</NuxtLink>
     <output id="end-count">{{ ends }}</output>
-    <PhotoAlbum
-      v-if="visible"
-      :photos="photos"
-      :default-container-width="1200"
-      @end-reached="ends++"
-    />
+    <PhotoAlbum v-if="visible" :photos="photos" @end-reached="ends++" />
   </main>
 </template>
 <style scoped>

@@ -83,7 +83,7 @@ describe('transition planning', () => {
       chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
-        thumbRefExists: true,
+        thumbnailExists: true,
         config: { mode: 'none', autoThreshold: 0.55 },
       }),
     ).toMatchObject({ mode: 'instant' })
@@ -92,7 +92,7 @@ describe('transition planning', () => {
       chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
-        thumbRefExists: true,
+        thumbnailExists: true,
         config: { mode: 'fade', autoThreshold: 0.55 },
       }),
     ).toMatchObject({ mode: 'fade' })
@@ -101,7 +101,7 @@ describe('transition planning', () => {
       chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 20, height: 20 }) as DOMRect,
-        thumbRefExists: true,
+        thumbnailExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'fade' })
@@ -115,7 +115,7 @@ describe('transition planning', () => {
           width: 400,
           height: 400,
         }) as DOMRect,
-        thumbRefExists: true,
+        thumbnailExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'fade' })
@@ -124,7 +124,7 @@ describe('transition planning', () => {
       chooseCloseTransition({
         fromRect,
         toRect: rect({ left: 40, top: 40, width: 300, height: 220 }) as DOMRect,
-        thumbRefExists: true,
+        thumbnailExists: true,
         config: DEFAULT_TRANSITION_CONFIG,
       }),
     ).toMatchObject({ mode: 'flip' })

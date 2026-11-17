@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
-import { computeFrameLayout, responsive } from '../../src/core/index'
+import { computeFramePlan, responsive } from '../../src/core/index'
 import { computeBentoLayout } from '../../src/core/layout/bento'
 
 describe('CSS-only frame layouts', () => {
   it('merges identical samples into complete responsive grid ranges', () => {
-    const result = computeFrameLayout({
+    const result = computeFramePlan({
       type: 'grid',
       photos: [makePhoto()],
       containerName: 'album',
@@ -25,7 +25,7 @@ describe('CSS-only frame layouts', () => {
 
   it('positions mosaic fractions with the gap and puts overflow only on the last tile', () => {
     const photos = Array.from({ length: 8 }, (_, index) => makePhoto({ id: `tile-${index}` }))
-    const result = computeFrameLayout({ type: 'mosaic', photos, max: 1, containerName: 'album' })
+    const result = computeFramePlan({ type: 'mosaic', photos, max: 1, containerName: 'album' })
     expect(result.items).toEqual([
       {
         index: 0,
@@ -38,7 +38,7 @@ describe('CSS-only frame layouts', () => {
         },
       },
     ])
-    const multiple = computeFrameLayout({ type: 'mosaic', photos, max: 5, containerName: 'album' })
+    const multiple = computeFramePlan({ type: 'mosaic', photos, max: 5, containerName: 'album' })
     expect(multiple.items.map((item) => item.more)).toEqual([
       undefined,
       undefined,
@@ -54,7 +54,7 @@ describe('CSS-only frame layouts', () => {
     const photos = [0.5, 1, 2].map((ratio, index) =>
       makePhoto({ id: String(index), width: ratio * 1000, height: 1000 }),
     )
-    const result = computeFrameLayout({ type: 'accordion', photos, containerName: 'album' })
+    const result = computeFramePlan({ type: 'accordion', photos, containerName: 'album' })
     expect(result.items).toEqual([
       { index: 0, style: { '--np-open': '1' } },
       { index: 1, style: { '--np-open': '2' } },
@@ -71,7 +71,7 @@ describe('CSS-only frame layouts', () => {
     ['accordion', '2'],
   ] as const)('normalizes invalid %s aspect ratios and handles empty albums', (type, ratio) => {
     for (const aspectRatio of [undefined, NaN, Infinity, 0, -1]) {
-      const result = computeFrameLayout({ type, photos: [], containerName: 'album', aspectRatio })
+      const result = computeFramePlan({ type, photos: [], containerName: 'album', aspectRatio })
       expect(result).toEqual({
         css: '',
         frameStyle: { '--np-aspect-ratio': ratio },
@@ -85,7 +85,7 @@ describe('CSS-only frame layouts', () => {
   // Image sizes come from these shares; a wrong share downloads too large or blurry files.
   it('reports the width share of every tile per container range', () => {
     const photos = Array.from({ length: 6 }, (_, index) => makePhoto({ id: `share-${index}` }))
-    const grid = computeFrameLayout({
+    const grid = computeFramePlan({
       type: 'grid',
       photos,
       containerName: 'album',
@@ -97,16 +97,16 @@ describe('CSS-only frame layouts', () => {
       { start: 768, shares: Array(6).fill(1 / 4) },
     ])
 
-    const bento = computeFrameLayout({ type: 'bento', photos, containerName: 'album', columns: 4 })
+    const bento = computeFramePlan({ type: 'bento', photos, containerName: 'album', columns: 4 })
     const [featured, ...rest] = bento.widths[0]!.shares
     expect(rest.every((share) => featured! > share)).toBe(true)
     expect(bento.widths[0]!.shares.every((share) => Number.isInteger(share * 4))).toBe(true)
 
-    const mosaic = computeFrameLayout({ type: 'mosaic', photos, containerName: 'album', max: 3 })
+    const mosaic = computeFramePlan({ type: 'mosaic', photos, containerName: 'album', max: 3 })
     expect(mosaic.widths[0]!.shares).toHaveLength(3)
     expect(mosaic.widths[0]!.shares.every((share) => share > 0 && share <= 1)).toBe(true)
 
-    const accordion = computeFrameLayout({ type: 'accordion', photos, containerName: 'album' })
+    const accordion = computeFramePlan({ type: 'accordion', photos, containerName: 'album' })
     const open = accordion.widths[0]!.shares
     // The open slice is at least an equal share and at most 62 % of the strip.
     expect(open.every((share) => share >= 1 / 6 - 1e-4 && share <= 0.62 + 1e-4)).toBe(true)
@@ -119,7 +119,7 @@ describe('bento frames', () => {
   )
 
   it('uses the largest count for order and keeps all narrower tiles within their columns', () => {
-    const result = computeFrameLayout({
+    const result = computeFramePlan({
       type: 'bento',
       photos,
       containerName: 'album',
@@ -171,7 +171,7 @@ describe('bento frames', () => {
       expect(photo).toBe(photos[index])
       return index === 5
     }
-    const result = computeFrameLayout({
+    const result = computeFramePlan({
       type: 'bento',
       photos,
       containerName: 'album',
@@ -189,7 +189,7 @@ describe('bento frames', () => {
     expect(rule).not.toBeNull()
     expect(Number(rule![1])).toBeGreaterThanOrEqual(2)
     expect(Number(rule![2])).toBeGreaterThanOrEqual(2)
-    computeFrameLayout({
+    computeFramePlan({
       type: 'bento',
       photos,
       containerName: 'album',

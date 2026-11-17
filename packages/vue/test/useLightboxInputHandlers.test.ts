@@ -5,12 +5,7 @@ import { describe, expect, it, vi } from 'vite-plus/test'
 import { useLightboxInputHandlers } from '../src/lightbox/input/pointer'
 import { createPhotoSet } from '@test-fixtures/photos'
 
-function createGestureConfig(
-  zoomedIn = false,
-  zoomAllowed = true,
-  onPhoto = true,
-  usesTrack = true,
-) {
+function createGestureConfig(zoomedIn = false, zoomAllowed = true, onPhoto = true) {
   const isZoomedIn = ref(zoomedIn)
   let currentScale = zoomedIn ? 2 : 1
   const currentPan = ref({ x: 0, y: 0 })
@@ -37,7 +32,6 @@ function createGestureConfig(
     uiVisible: ref(true),
     panState: currentPan,
     zoomState: ref({ fit: 1, secondary: 2, max: 3, current: currentScale }),
-    closeDragY: ref(0),
     setCloseDragY: vi.fn(),
     transitionInProgress: computed(() => false),
 
@@ -59,7 +53,8 @@ function createGestureConfig(
     goToPrev: vi.fn(),
     goTo: vi.fn(),
     selectedSnap: vi.fn(() => 0),
-    usesTrack: () => usesTrack,
+    catchSlide: vi.fn(() => false),
+    beginSlide: vi.fn(),
     dragSlide: vi.fn(),
     releaseSlide: vi.fn(),
     goToFirst: vi.fn(),
@@ -104,7 +99,8 @@ function createGestureConfig(
       goToPrev: config.goToPrev,
       goTo: config.goTo,
       selectedSnap: config.selectedSnap,
-      usesTrack: config.usesTrack,
+      catchSlide: config.catchSlide,
+      beginSlide: config.beginSlide,
       dragSlide: config.dragSlide,
       releaseSlide: config.releaseSlide,
       goToFirst: config.goToFirst,
@@ -127,15 +123,6 @@ function createGestureConfig(
 }
 
 describe('useLightboxInputHandlers', () => {
-  it('closes on Escape when the lightbox is mounted and idle', () => {
-    const { config } = createGestureConfig(false)
-    const gestures = useLightboxInputHandlers(config)
-
-    gestures.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }))
-
-    expect(config.close).toHaveBeenCalledTimes(1)
-  })
-
   it('navigates with arrow keys when not zoomed in', () => {
     const { config } = createGestureConfig(false)
     const gestures = useLightboxInputHandlers(config)
@@ -219,16 +206,24 @@ describe('useLightboxInputHandlers', () => {
     { pointerType: 'touch', onPhoto: false, zoomed: false, expected: 'close' },
     { pointerType: 'touch', onPhoto: true, zoomed: false, expected: 'controls' },
     { pointerType: 'touch', onPhoto: false, zoomed: true, expected: 'controls' },
+    // A caption sits in the slide, beside the photo: reading or selecting it closes nothing.
+    { pointerType: 'mouse', onPhoto: false, zoomed: false, onCaption: true, expected: 'nothing' },
+    { pointerType: 'touch', onPhoto: false, zoomed: false, onCaption: true, expected: 'nothing' },
   ])(
     'routes a $pointerType click (on photo: $onPhoto, zoomed: $zoomed) to $expected',
-    async ({ pointerType, onPhoto, zoomed, expected }) => {
+    async ({ pointerType, onPhoto, zoomed, onCaption, expected }) => {
       vi.useFakeTimers()
       const { config } = createGestureConfig(zoomed, true, onPhoto)
       const gestures = useLightboxInputHandlers(config)
       const init = { pointerId: 7, pointerType, button: 0, clientX: 300, clientY: 200 }
+      const caption = document.createElement('div')
+      caption.dataset.npMotion = 'caption'
+      const text = caption.appendChild(document.createElement('h2'))
+      const up = new PointerEvent('pointerup', init)
+      if (onCaption) Object.defineProperty(up, 'target', { value: text })
 
       gestures.onMediaPointerDown(new PointerEvent('pointerdown', init))
-      await gestures.onMediaPointerUp(new PointerEvent('pointerup', init))
+      await gestures.onMediaPointerUp(up)
       vi.advanceTimersByTime(400)
       vi.useRealTimers()
 
@@ -298,8 +293,8 @@ describe('useLightboxInputHandlers', () => {
     expect(config.goToNext).not.toHaveBeenCalled()
   })
 
-  it('lets the photo follow a horizontal swipe when there is no swipe track', async () => {
-    const { config } = createGestureConfig(false, true, true, false)
+  it('draws a swipe from where it locked and decides on the whole movement', async () => {
+    const { config } = createGestureConfig(false)
     const gestures = useLightboxInputHandlers(config)
     const touch = { pointerId: 3, pointerType: 'touch', clientY: 200 }
 
@@ -308,8 +303,10 @@ describe('useLightboxInputHandlers', () => {
     gestures.onMediaPointerMove(new PointerEvent('pointermove', { ...touch, clientX: 250 }))
     await gestures.onMediaPointerUp(new PointerEvent('pointerup', { ...touch, clientX: 250 }))
 
-    expect(config.dragSlide).toHaveBeenLastCalledWith(-150)
-    expect(config.releaseSlide).toHaveBeenCalledWith(-150, expect.any(Number))
+    expect(config.beginSlide).toHaveBeenCalledTimes(1)
+    // The move to 340 locks the direction; the photo moves only by what follows it.
+    expect(config.dragSlide.mock.calls).toEqual([[0], [-90]])
+    expect(config.releaseSlide).toHaveBeenCalledWith(-150, expect.any(Number), 'touch', -60)
     expect(config.close).not.toHaveBeenCalled()
   })
 

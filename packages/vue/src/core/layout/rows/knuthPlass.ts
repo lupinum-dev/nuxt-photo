@@ -56,8 +56,8 @@ export function findRowBreaks<TMeta extends object>(
       // getCommonHeight's reduce, preserving rounding and the solver's ties.
       ratioSums[j] = ratioSums[j]! + aspectRatio
       const length = i - j
-      const rowWidth = containerWidth - (length - 1) * spacing - 2 * padding * length
-      const commonHeight = rowWidth / ratioSums[j]!
+      const freeWidth = containerWidth - (length - 1) * spacing - 2 * padding * length
+      const commonHeight = freeWidth / ratioSums[j]!
       if (commonHeight <= 0) continue
       const currentCost = (commonHeight - targetRowHeight) ** 2 * length
 

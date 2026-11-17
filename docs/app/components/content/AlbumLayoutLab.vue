@@ -81,7 +81,6 @@ function reset() {
         :photos="demoPhotos.slice(0, 9)"
         :layout="layoutValue"
         :spacing="spacing"
-        :default-container-width="width"
         :lightbox="lightbox"
       />
     </DemoViewport>

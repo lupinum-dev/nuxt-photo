@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PhotoImage, type PhotoItem } from '@lupinum/nuxt-photo/app'
 import {
   LightboxCaption,
   LightboxControls,
@@ -7,10 +8,9 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-  PhotoImage,
   PhotoTrigger,
-  type PhotoItem,
-} from '@lupinum/nuxt-photo/app'
+} from '@lupinum/nuxt-photo/primitives'
+import '@lupinum/nuxt-photo/lightbox.css'
 
 defineProps<{ photos: readonly PhotoItem[] }>()
 </script>
@@ -30,7 +30,7 @@ defineProps<{ photos: readonly PhotoItem[] }>()
       </PhotoTrigger>
     </div>
 
-    <LightboxRoot class="photo-viewer" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <LightboxRoot class="photo-viewer" aria-label="Photo viewer">
       <LightboxOverlay class="photo-viewer__backdrop" />
 
       <LightboxViewport

@@ -26,7 +26,7 @@ export type GestureInputConfig = {
     getCurrentScale: () => number
     getCurrentPan: () => PanState
     setCurrentPanImmediate: (pan: PanState, syncRefs?: boolean) => void
-    settleCurrentTransform: (options?: { tension?: number; friction?: number }) => void
+    settleCurrentTransform: () => void
     setPanzoomImmediate: (scale: number, pan: PanState, syncRefs?: boolean) => void
     startPanzoomSpring: (
       targetScale: number,
@@ -46,10 +46,16 @@ export type GestureInputConfig = {
     goToPrev: () => void
     goTo: (index: number, instant?: boolean) => void
     selectedSnap: () => number
-    /** True when a swipe track moves the photos; false in the fade modes. */
-    usesTrack: () => boolean
+    /** Stop a settling slide under a new pointer. True when there was one to catch. */
+    catchSlide: () => boolean
+    /** A horizontal drag starts changing photos. */
+    beginSlide: () => void
     dragSlide: (deltaX: number) => void
-    releaseSlide: (deltaX: number, velocityX: number) => void
+    /**
+     * `deltaX` is the distance from where the pointer went down, `leadX` the part of it before
+     * the lock that the drag did not draw.
+     */
+    releaseSlide: (deltaX: number, velocityX: number, pointerType: string, leadX: number) => void
     goToFirst: () => void
     goToLast: () => void
   }
@@ -75,10 +81,15 @@ export type TrackedPointer = {
 type PointerSession = {
   id: number
   pointerType: string
+  /** Where the pointer went down. Release decisions and taps measure from here. */
   startX: number
   startY: number
-  lastX: number
-  lastY: number
+  /**
+   * Where the gesture locked its direction. The photo moves by what the pointer moves after
+   * this point, so it never jumps to catch up with the slop that decided the direction.
+   */
+  lockX: number
+  lockY: number
   moved: boolean
   startPan: PanState
 }
@@ -88,7 +99,6 @@ export type GestureSession =
   | ({ kind: 'tap' | 'slide' | 'pan' | 'close' } & PointerSession)
   | {
       kind: 'pinch'
-      pointerIds: readonly [number, number]
       startDistance: number
       startCenter: { x: number; y: number }
       startScale: number

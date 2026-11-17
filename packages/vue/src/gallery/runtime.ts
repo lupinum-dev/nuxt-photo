@@ -7,7 +7,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import type { PhotoItem, ResolvedPhotoItem } from '../core/types'
+import type { ResolvedPhotoItem } from '../core/types'
 
 /** Template-ref contract shared by every gallery recipe. Closed handles report null. */
 export interface GalleryHandle<TMeta extends object = Readonly<Record<string, unknown>>> {
@@ -16,7 +16,7 @@ export interface GalleryHandle<TMeta extends object = Readonly<Record<string, un
   close(): Promise<void>
   readonly isOpen: boolean
   readonly activeId: string | null
-  readonly activePhoto: PhotoItem<TMeta> | null
+  readonly activePhoto: ResolvedPhotoItem<TMeta> | null
 }
 
 const runtimes = new WeakMap<object, GalleryRuntime>()

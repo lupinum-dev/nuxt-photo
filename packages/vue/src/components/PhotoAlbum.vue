@@ -6,12 +6,10 @@
     :class="[ui?.root, scopeClass, `np-album--${layoutType}`]"
     :style="containerStyle"
   >
-    <template v-if="renderBranch.kind === 'frame'">
-      <ContainerQueryStyle v-if="frame.css" :css="frame.css" />
-      <div class="np-album__frame" :style="frame.frameStyle">
+    <ContainerQueryStyle v-if="plan.css" :css="plan.css" />
+    <div class="np-album__frame" :style="plan.frameStyle">
+      <template v-for="(item, position) in plan.items" :key="normalizedPhotos[item.index]!.id">
         <div
-          v-for="(item, position) in frame.items"
-          :key="normalizedPhotos[item.index]!.id"
           class="np-album__item"
           :class="[item.className, ui?.item]"
           :style="{ ...item.style, ...(hasLightbox ? { cursor: 'pointer' } : {}) }"
@@ -24,9 +22,9 @@
             :height="normalizedPhotos[item.index]!.height"
             :hidden="isHidden(normalizedPhotos[item.index]!)"
             :image-class="ui?.img"
-            :sizes="frameSizes(position)"
+            :sizes="planSizes(position)"
             :priority="position < priority"
-            cover
+            :cover="layoutCropsPhotos(layoutType)"
           >
             <template v-if="$slots.thumbnail" #thumbnail="slotProps">
               <slot name="thumbnail" v-bind="slotProps" />
@@ -34,122 +32,55 @@
           </AlbumThumbnail>
           <span v-if="item.more" class="np-album__more" aria-hidden="true">+{{ item.more }}</span>
         </div>
-      </div>
-    </template>
-
-    <template v-else-if="renderBranch.kind === 'rows'">
-      <template v-if="renderBranch.containerQueryCss">
-        <ContainerQueryStyle :css="renderBranch.containerQueryCss" />
-      </template>
-
-      <div :style="renderBranch.wrapperStyle">
-        <div
-          v-for="item in renderBranch.items"
-          :key="item.photo.id"
-          class="np-album__item"
-          :class="[
-            renderBranch.containerQueriesRender ? `np-item-${item.index}` : undefined,
-            ui?.item,
-          ]"
-          :style="item.style"
-          v-bind="itemBindings(item.photo, item.index)"
-        >
-          <AlbumThumbnail
-            :photo="item.photo"
-            :index="item.index"
-            :width="item.width"
-            :height="item.height"
-            :hidden="isHidden(item.photo)"
-            :image-class="ui?.img"
-            :sizes="item.computedSizes"
-            :priority="item.index < priority"
-          >
-            <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-              <slot name="thumbnail" v-bind="slotProps" />
-            </template>
-          </AlbumThumbnail>
-        </div>
-
         <span
-          style="flex-grow: 9999; flex-basis: 0; height: 0; margin: 0; padding: 0"
+          v-if="item.breakClass"
+          class="np-album__break"
+          :class="item.breakClass"
           aria-hidden="true"
         />
-      </div>
-    </template>
-
-    <template v-else>
-      <template v-if="renderBranch.groups.length === 0 && normalizedPhotos.length > 0">
-        <div class="np-album__skeleton" />
       </template>
-
-      <template v-else>
-        <div
-          v-for="group in renderBranch.groups"
-          :key="`${group.type}-${group.index}`"
-          :class="group.type === 'row' ? 'np-album__row' : 'np-album__column'"
-          :style="groupStyle(group)"
-        >
-          <div
-            v-for="entry in group.entries"
-            :key="entry.photo.id"
-            class="np-album__item"
-            :class="ui?.item"
-            :style="itemStyle(entry, group)"
-            v-bind="itemBindings(entry.photo, entry.index)"
-          >
-            <AlbumThumbnail
-              :photo="entry.photo"
-              :index="entry.index"
-              :width="entry.width"
-              :height="entry.height"
-              :hidden="isHidden(entry.photo)"
-              :image-class="ui?.img"
-              :sizes="thumbnailSizes(entry)"
-              :priority="entry.index < priority"
-            >
-              <template v-if="$slots.thumbnail" #thumbnail="slotProps">
-                <slot name="thumbnail" v-bind="slotProps" />
-              </template>
-            </AlbumThumbnail>
-          </div>
-        </div>
-      </template>
-    </template>
+    </div>
 
     <span ref="endRef" class="np-album__end" aria-hidden="true" />
   </div>
 
-  <component :is="LightboxComponent" v-if="hasOwnLightbox && LightboxComponent" />
+  <component :is="lightboxComponent" v-if="lightboxComponent" />
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
-import { computed, defineComponent, h } from 'vue'
+import { computed, defineComponent, h, ref, useId } from 'vue'
 import type { PhotoUi } from '../types/ui'
 import { useRecipeLightbox } from './shared/useRecipeLightbox'
 
+// Direct imports, not the core barrel: the barrel would pull the viewer's core modules
+// (zoom, gestures, transitions) into the album's eager chunk.
 import {
   mergeResponsiveBreakpoints,
-  computeFrameLayout,
-  computePhotoSizes,
-  type FrameLayout,
-  DEFAULT_COLUMNS,
-  DEFAULT_PADDING,
-  DEFAULT_SPACING,
-  DEFAULT_TARGET_ROW_HEIGHT,
   type AlbumLayout,
   type PhotoItem,
+  type ResolvedPhotoItem,
   type ResponsiveParameter,
   type ResponsivePhotoSizes,
-  type InvalidPhotoPolicy,
-  type InvalidPhotosEvent,
-} from '../core/index'
+} from '../core/types'
+import type { InvalidPhotoPolicy, InvalidPhotosEvent } from '../core/photo/normalize'
+import type { AlbumPlan } from '../core/layout/plan'
+import { computeFramePlan } from '../core/layout/frame'
+import { computeRowsPlan, type RowBreakMemo } from '../core/layout/rows/plan'
+import { computePhotoSizes } from '../core/image/sizes'
+import { computeColumnsPlan } from '../core/layout/columns'
+import { computeMasonryPlan } from '../core/layout/masonry'
+import {
+  DEFAULT_PADDING,
+  DEFAULT_SPACING,
+  isLayoutType,
+  layoutCropsPhotos,
+} from '../core/layout/constants'
 
 import AlbumThumbnail from './photo-album/AlbumThumbnail.vue'
-import { usePhotoAlbumLayoutState } from './photo-album/layoutState'
+import { useElementWidth } from '../composables/useElementWidth'
 import { devWarn } from '../core/env'
 import { useCollectionLightbox } from './shared/useCollectionLightbox'
-import { useGalleryModel } from '../gallery/model'
 import { useAlbumEndReached } from './photo-album/endReached'
 import { useRecipePhotos } from './shared/useRecipePhotos'
 
@@ -164,7 +95,7 @@ defineOptions({ inheritAttrs: false })
 
 defineSlots<{
   thumbnail?: (props: {
-    photo: PhotoItem<TMeta>
+    photo: ResolvedPhotoItem<TMeta>
     index: number
     width: number
     height: number
@@ -177,8 +108,8 @@ defineSlots<{
 const props = withDefaults(
   defineProps<{
     /**
-     * Photos in display and navigation order. Each needs a stable `id`, a `src`, and the real pixel
-     * `width` and `height` of the image file.
+     * Photos in display and navigation order. Each needs a `src` and the real pixel `width` and
+     * `height` of the image file. `id` defaults to `src`; set it when two photos share a `src`.
      */
     photos: readonly PhotoItem<TMeta>[]
     /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
@@ -209,13 +140,9 @@ const props = withDefaults(
      */
     padding?: ResponsiveParameter<number>
     /**
-     * Container width in pixels for the server render, before the browser can measure. Set it close
-     * to the usual width to avoid a layout jump after hydration.
-     */
-    defaultContainerWidth?: number
-    /**
-     * Container widths in pixels that measurement snaps to. Taken from `responsive()` keys when
-     * omitted.
+     * Container widths in pixels where the layout may change. Taken from `responsive()` keys when
+     * omitted. Below the smallest one, and without any, rows and function values are planned at
+     * 320, 480, 640, 768, 1024, 1280, 1536, 1920 and 2560.
      */
     breakpoints?: readonly number[]
     /**
@@ -254,32 +181,13 @@ const endRef = useAlbumEndReached(
   () => emit('end-reached'),
 )
 
-const LAYOUT_TYPES: readonly AlbumLayout['type'][] = [
-  'rows',
-  'columns',
-  'masonry',
-  'grid',
-  'bento',
-  'mosaic',
-  'accordion',
-]
-
 const normalizedLayout = computed<AlbumLayout<TMeta>>(() => {
   const raw = props.layout
   if (typeof raw === 'object') return raw
-
-  switch (true) {
-    case LAYOUT_TYPES.includes(raw):
-      return { type: raw } as AlbumLayout<TMeta>
-    default:
-      devWarn(`Unknown layout type "${raw}", falling back to "rows"`)
-      return { type: 'rows' }
-  }
+  if (isLayoutType(raw)) return { type: raw } as AlbumLayout<TMeta>
+  devWarn(`Unknown layout type "${raw}", falling back to "rows"`)
+  return { type: 'rows' }
 })
-
-if (props.defaultContainerWidth === 0) {
-  devWarn('defaultContainerWidth=0 has no effect; omit it or use a positive value')
-}
 
 const { options: recipeLightboxOptions } = useRecipeLightbox('PhotoAlbum', () => props.lightbox)
 
@@ -297,157 +205,81 @@ const normalizedPhotos = useRecipePhotos<TMeta>(
 )
 
 const layoutType = computed(() => normalizedLayout.value.type)
-const layoutColumns = computed(() => {
-  const layout = normalizedLayout.value
-  if (layout.type === 'columns' || layout.type === 'masonry' || layout.type === 'grid') {
-    return layout.columns ?? DEFAULT_COLUMNS
-  }
-  if (layout.type === 'bento') return layout.columns ?? 4
-  return DEFAULT_COLUMNS
-})
-const layoutTargetRowHeight = computed(() => {
-  const layout = normalizedLayout.value
-  return layout.type === 'rows'
-    ? (layout.targetRowHeight ?? DEFAULT_TARGET_ROW_HEIGHT)
-    : DEFAULT_TARGET_ROW_HEIGHT
-})
-
 const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
   if (props.breakpoints?.length) return props.breakpoints
-
+  const layout = normalizedLayout.value
   return mergeResponsiveBreakpoints([
     props.spacing,
     props.padding,
-    layoutColumns.value,
-    layoutTargetRowHeight.value,
+    'columns' in layout ? layout.columns : undefined,
+    layout.type === 'rows' ? layout.targetRowHeight : undefined,
   ])
 })
 
-const {
-  containerRef,
-  layoutWidth,
-  containerName,
-  scopeClass,
-  containerStyle,
-  containerQueryCSS,
-  containerQueriesRender,
-  groups,
-  rowItems,
-  thumbnailSizes,
-  ssrWrapperStyle,
-  groupStyle,
-  itemStyle,
-} = usePhotoAlbumLayoutState({
-  photos: normalizedPhotos,
-  layout: layoutType,
-  columns: layoutColumns,
-  spacing: computed(() => props.spacing),
-  padding: computed(() => props.padding),
-  targetRowHeight: layoutTargetRowHeight,
-  defaultContainerWidth: props.defaultContainerWidth,
-  breakpoints: effectiveBreakpoints,
-  sizes: computed(() => props.sizes),
-  interactive: computed((): boolean => hasLightbox.value),
-})
+const containerRef = ref<HTMLElement | null>(null)
+// One container name per album keeps several albums' generated CSS apart.
+const containerName = `np-${useId().replace(/[^a-z0-9]/gi, '')}`
+const scopeClass = `np-scope-${containerName}`
+const containerStyle = { width: '100%', containerType: 'inline-size', containerName } as const
 
-const isFrame = computed(() => !['rows', 'columns', 'masonry'].includes(layoutType.value))
-let warnedFunction = false
-const frame = computed<FrameLayout>(() => {
+// The measured width only chooses image `sizes`; CSS alone positions photos.
+// Before the browser measures, assume the smallest breakpoint, else a common
+// desktop width.
+const { containerWidth } = useElementWidth(containerRef)
+const layoutWidth = computed(() =>
+  containerWidth.value > 0
+    ? containerWidth.value
+    : ([...(effectiveBreakpoints.value ?? [])].sort((a, b) => a - b)[0] ?? 1200),
+)
+
+// Row breaks of the last rows plan: appended photos (infinite scroll) keep the rows
+// already on screen. Plain state, not reactive: the plan only reads it.
+let rowBreaks: RowBreakMemo | undefined
+const plan = computed<AlbumPlan>(() => {
   const layout = normalizedLayout.value
-  if (
-    layout.type !== 'grid' &&
-    layout.type !== 'bento' &&
-    layout.type !== 'mosaic' &&
-    layout.type !== 'accordion'
-  ) {
-    return { css: '', frameStyle: {}, items: [], order: [], widths: [] }
-  }
-  if (
-    !effectiveBreakpoints.value?.length &&
-    !warnedFunction &&
-    [
-      props.spacing,
-      props.padding,
-      layout.type === 'grid' || layout.type === 'bento' ? layout.columns : undefined,
-    ].some((value) => typeof value === 'function')
-  ) {
-    warnedFunction = true
-    devWarn(
-      `${layout.type} layout renders with CSS only; a function value needs responsive() or the breakpoints prop. Using its value at width 0.`,
-    )
-  }
-  return computeFrameLayout({
-    ...layout,
+  const shared = {
     photos: normalizedPhotos.value,
-    containerName: containerName.value,
+    containerName,
     breakpoints: effectiveBreakpoints.value,
     spacing: props.spacing,
     padding: props.padding,
-  })
+  }
+  if (layout.type === 'rows') {
+    const rows = computeRowsPlan({ ...shared, targetRowHeight: layout.targetRowHeight }, rowBreaks)
+    rowBreaks = rows.memo
+    return rows
+  }
+  if (layout.type === 'columns') return computeColumnsPlan({ ...shared, columns: layout.columns })
+  if (layout.type === 'masonry') return computeMasonryPlan({ ...shared, columns: layout.columns })
+  return computeFramePlan({ ...layout, ...shared })
 })
 
 // Bento and mosaic reorder photos; the lightbox follows the order on screen.
 const orderedPhotos = computed(() =>
-  isFrame.value
-    ? frame.value.order.map((index) => normalizedPhotos.value[index]!)
-    : normalizedPhotos.value,
+  plan.value.order.map((index) => normalizedPhotos.value[index]!),
 )
 
-/** The tile's share of the measured (or, on the server, estimated) album width. */
-function frameSizes(position: number): string {
+/** The tile's width at the measured (or, on the server, estimated) album width. */
+function planSizes(position: number): string {
   const width = layoutWidth.value
-  const range = [...frame.value.widths].reverse().find((entry) => entry.start <= width)
-  const tile = Math.ceil((range?.shares[position] ?? 1) * width)
-  return computePhotoSizes(tile, width, 1, 0, 0, props.sizes) ?? `${tile}px`
+  const range = [...plan.value.widths].reverse().find((entry) => entry.start <= width)
+  const gaps = range?.gaps?.[position] ?? 0
+  const tile = Math.ceil((width - gaps) * (range?.shares[position] ?? 1))
+  return computePhotoSizes(tile, width, gaps, props.sizes) ?? `${tile}px`
 }
 
-const {
-  hasLightbox,
-  hasOwnLightbox,
-  LightboxComponent,
-  itemBindings,
-  isHidden,
-  open: openAt,
-  openById,
-  close,
-  isOpen,
-  activeId: ownerActiveId,
-  activePhoto: ownerActivePhoto,
-} = useCollectionLightbox(orderedPhotos, props, (): HTMLElement | null => containerRef.value)
-
-const { activeId, activePhoto } = useGalleryModel(
-  'PhotoAlbum',
-  () => props.active,
-  () => normalizedPhotos.value,
-  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
-  (id) => emit('update:active', id),
-)
-
-/** Opens by position in `photos`, which differs from the display order in bento and mosaic. */
-async function open(index = 0) {
-  if (!isFrame.value) return openAt(index)
-  const photo = normalizedPhotos.value[index]
-  if (!photo) throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
-  return openById(photo.id)
-}
+// Bento and mosaic navigate in display order; `open(index)` still addresses `photos`.
+const { lightboxComponent, hasLightbox, itemBindings, isHidden, handle } = useCollectionLightbox({
+  owner: 'PhotoAlbum',
+  photos: orderedPhotos,
+  publicPhotos: normalizedPhotos,
+  root: () => containerRef.value,
+  lightbox: () => props.lightbox,
+  defaultEnabled: true,
+  active: () => props.active,
+  emitActive: (id) => emit('update:active', id),
+})
+const { open, openById, close, isOpen, activeId, activePhoto } = handle
 
 defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
-
-const renderBranch = computed(() => {
-  if (isFrame.value) return { kind: 'frame' as const }
-  if (layoutType.value === 'rows') {
-    return {
-      kind: 'rows' as const,
-      containerQueryCss: containerQueryCSS.value,
-      wrapperStyle: ssrWrapperStyle.value,
-      items: rowItems.value,
-      containerQueriesRender: containerQueriesRender.value,
-    }
-  }
-
-  return {
-    kind: 'measured' as const,
-    groups: groups.value,
-  }
-})
 </script>

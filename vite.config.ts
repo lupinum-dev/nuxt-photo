@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite-plus'
+import vuePackage from './packages/vue/package.json' with { type: 'json' }
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 const ignoredGeneratedPaths = [
@@ -21,9 +22,25 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: [
+      // Every code entry of the Vue exports map, served from its source file.
+      ...Object.entries(vuePackage.exports).flatMap(([entry, target]) =>
+        typeof target === 'object' && 'import' in target
+          ? {
+              find: new RegExp(`^@lupinum/vue-photo${entry.slice(1)}$`),
+              replacement: fileURLToPath(
+                new URL(
+                  target.import.replace('./dist/', './packages/vue/src/').replace(/\.mjs$/, '.ts'),
+                  import.meta.url,
+                ),
+              ),
+            }
+          : [],
+      ),
       {
-        find: '@lupinum/vue-photo',
-        replacement: fileURLToPath(new URL('./packages/vue/src/index.ts', import.meta.url)),
+        find: '@lupinum/nuxt-photo/primitives',
+        replacement: fileURLToPath(
+          new URL('./packages/nuxt/src/runtime/primitives.ts', import.meta.url),
+        ),
       },
       {
         find: '@lupinum/nuxt-photo/app',
@@ -90,6 +107,14 @@ export default defineConfig({
         },
       },
       {
+        // Kept identical to the OSS starter. Its default sort orders [name, range]
+        // pairs by their string form on purpose, to compare two dependency lists.
+        files: ['scripts/lint-changesets.mjs'],
+        rules: {
+          'typescript/require-array-sort-compare': 'off',
+        },
+      },
+      {
         files: ['packages/vue/src/core/types.ts'],
         rules: {
           'typescript/no-redundant-type-constituents': 'off',
@@ -101,6 +126,7 @@ export default defineConfig({
     root: rootDir,
     include: ['packages/*/test/**/*.test.ts'],
     environment: 'node',
+    setupFiles: ['test/setup/dialog.ts'],
     clearMocks: true,
     restoreMocks: true,
     passWithNoTests: false,

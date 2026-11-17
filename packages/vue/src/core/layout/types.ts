@@ -1,4 +1,5 @@
 import type { ResolvedPhotoItem as PhotoItem } from '../types'
+import { DEFAULT_COLUMNS } from './constants'
 
 /** Guard against photos with invalid dimensions that would produce NaN layout values. */
 export function validatePhotoDimensions<TMeta extends object>(
@@ -24,7 +25,7 @@ export function validatePhotoDimensions<TMeta extends object>(
 }
 
 export function normalizeColumnCount(columns: number | undefined): number {
-  if (!Number.isFinite(columns) || columns == null) return 3
+  if (!Number.isFinite(columns) || columns == null) return DEFAULT_COLUMNS
   return Math.max(1, Math.floor(columns))
 }
 

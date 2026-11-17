@@ -1,6 +1,7 @@
 /* Theme styles for Lightbox recipe — visual appearance, colors, blur, typography */
-/* Override any --np-* variable on .np-lightbox to customize the theme */
-.np-lightbox {
+/* Override any --np-* variable on .np-lightbox to customize the theme. :where() keeps
+ * these defaults at zero specificity, so app CSS wins although this file loads later. */
+:where(.np-lightbox) {
   /* A dark room lit by a soft glow of the photo; set --np-ambient-opacity: 0 for a plain room. */
   --np-backdrop-bg: #0c0c0e;
   --np-backdrop-filter: none;

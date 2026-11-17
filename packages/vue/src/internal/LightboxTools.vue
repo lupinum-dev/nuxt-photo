@@ -51,7 +51,8 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useLightboxInject } from '../lightbox/inject'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
-import { photoParam, photoURL } from '../lightbox/history'
+import { photoURL } from '../lightbox/history'
+import { photoParam } from '../gallery/deepLink'
 import { useAsyncErrorReporter } from './asyncErrors'
 
 const ctx = useLightboxInject('LightboxTools')

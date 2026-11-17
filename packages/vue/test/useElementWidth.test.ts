@@ -44,9 +44,7 @@ function mountWidthProbe(width: number) {
     defineComponent({
       setup() {
         const el = ref<HTMLElement | null>(null)
-        const { containerWidth } = useElementWidth(el, {
-          breakpoints: [600, 900],
-        })
+        const { containerWidth } = useElementWidth(el)
 
         return () =>
           h('div', {
@@ -69,20 +67,12 @@ afterEach(() => {
 })
 
 describe('useElementWidth', () => {
-  it('keeps real widths below the smallest breakpoint', async () => {
-    const { app, container } = mountWidthProbe(500)
-    await nextTick()
-
-    expect(container.querySelector('[data-width]')?.getAttribute('data-width')).toBe('500')
-
-    app.unmount()
-  })
-
-  it('snaps widths down to the largest matching breakpoint', async () => {
+  // Catches a lost first measurement: image sizes would stay at the server estimate.
+  it('reports the measured width after mount', async () => {
     const { app, container } = mountWidthProbe(650)
     await nextTick()
 
-    expect(container.querySelector('[data-width]')?.getAttribute('data-width')).toBe('600')
+    expect(container.querySelector('[data-width]')?.getAttribute('data-width')).toBe('650')
 
     app.unmount()
   })

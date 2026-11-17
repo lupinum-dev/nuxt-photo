@@ -1,4 +1,4 @@
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { stat } from 'node:fs/promises'
 import {
   addComponent,
@@ -8,7 +8,6 @@ import {
   updateTemplates,
   addImports,
   addPlugin,
-  addVitePlugin,
   createResolver,
   resolvePath,
   defineNuxtModule,
@@ -19,7 +18,7 @@ import {
 import type { NuxtModule } from '@nuxt/schema'
 import { NUXT_PHOTO_DEFAULTS, validateNuxtPhotoOptions, type NuxtPhotoOptions } from './options'
 import { readLocalImages } from './local-images'
-import { generatePhotoLocales } from './locales'
+import { generatePhotoLocales, LABEL_CATALOGS } from './locales'
 export type { NuxtPhotoOptions } from './options'
 
 // Recipe components — registered as `{prefix}{name}` (e.g. `Photo`, `PhotoAlbum`, or `NpPhoto`, `NpPhotoAlbum`)
@@ -45,14 +44,6 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
 
 const AUTO_IMPORTS = ['useLightbox', 'usePhotoLabels', 'usePhotoFolder', 'responsive'] as const
 
-function resolveRecipeComponent(vueDistDir: string, name: string) {
-  return resolve(vueDistDir, 'components', `${name}.vue`)
-}
-
-function resolvePrimitiveComponent(vueDistDir: string, name: string) {
-  return resolve(vueDistDir, 'primitives', `${name}.vue`)
-}
-
 function capitalize(name: string) {
   return `${name.charAt(0).toUpperCase()}${name.slice(1)}`
 }
@@ -67,6 +58,10 @@ function resolveAutoImportAlias(name: string, prefix: string) {
   }
 
   return `${prefix.charAt(0).toLowerCase()}${prefix.slice(1)}${capitalize(name)}`
+}
+
+function registerPrimitives(options: NuxtPhotoOptions) {
+  return typeof options.components === 'object' && !!options.components.primitives
 }
 
 export default defineNuxtModule<NuxtPhotoOptions>({
@@ -97,13 +92,38 @@ export default defineNuxtModule<NuxtPhotoOptions>({
 
     const logger = useLogger('nuxt-photo')
     const resolver = createResolver(import.meta.url)
-    const vueDistDir = dirname(await resolver.resolvePath('@lupinum/vue-photo'))
+    // Entries of the Vue exports map, resolved from this module: an app installed with a strict
+    // package manager cannot import the Vue package by name itself.
+    const vueEntry = (entry: string) => resolver.resolvePath(`@lupinum/vue-photo${entry}`)
 
-    addTemplate({
-      filename: 'nuxt-photo-internals.mjs',
-      getContents: () =>
-        `export { installPhotoConfig } from ${JSON.stringify(resolve(vueDistDir, 'config/install.mjs'))}\nexport { installImagePreload } from ${JSON.stringify(resolve(vueDistDir, 'internal/imagePreload.mjs'))}\nexport { nativeProvider } from ${JSON.stringify(resolve(vueDistDir, 'providers/native.mjs'))}\nexport { DEFAULT_WIDTHS } from ${JSON.stringify(resolve(vueDistDir, 'providers/runtime.mjs'))}`,
-    })
+    // The Vue package imports its label catalogs and its viewer host through named entries of its
+    // exports map. Aliases point them at the catalogs of this app's languages and at the host that
+    // brings the lightbox CSS of the `css` mode, for client and server alike.
+    for (const [entry, filename, catalog] of LABEL_CATALOGS) {
+      nuxt.options.alias[`@lupinum/vue-photo/${entry}`] = addTemplate({
+        filename,
+        write: true,
+        getContents: () => {
+          const i18nLocales =
+            hasNuxtModule('@nuxtjs/i18n') &&
+            // @nuxtjs/i18n is optional; keep its config boundary independent of its type augmentation.
+            'i18n' in nuxt.options &&
+            nuxt.options.i18n &&
+            typeof nuxt.options.i18n === 'object' &&
+            'locales' in nuxt.options.i18n
+              ? nuxt.options.i18n.locales
+              : undefined
+          return generatePhotoLocales(catalog, options.labels, i18nLocales)
+        },
+      }).dst
+    }
+    // The lazy viewer brings the lightbox CSS of the `css` mode, so pages without a photo
+    // component load none and a server-rendered deep link inlines it. Registered primitives
+    // keep it global instead (see the CSS list below).
+    if (options.css !== 'none')
+      nuxt.options.alias['@lupinum/vue-photo/viewer'] = await vueEntry(
+        options.css === 'all' ? '/viewer-themed' : '/viewer-structure',
+      )
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
       getContents: () => {
@@ -171,28 +191,6 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     }
 
     nuxt.hook('modules:done', () => {
-      const i18n = hasNuxtModule('@nuxtjs/i18n')
-      // @nuxtjs/i18n is optional; keep its config boundary independent of its type augmentation.
-      const i18nConfig = 'i18n' in nuxt.options ? nuxt.options.i18n : undefined
-      const i18nLocales =
-        i18n && i18nConfig && typeof i18nConfig === 'object' && 'locales' in i18nConfig
-          ? i18nConfig.locales
-          : undefined
-      const localeTemplate = addTemplate({
-        filename: 'nuxt-photo-locales.mjs',
-        write: true,
-        getContents: () => generatePhotoLocales(options.labels, i18nLocales),
-      })
-      const catalogPath = resolve(vueDistDir, 'provide/photoLocaleTemplates.mjs')
-      // Apply the same synchronous catalog to client and SSR recipes without changing Vue exports.
-      addVitePlugin({
-        name: 'nuxt-photo-locales',
-        enforce: 'pre',
-        resolveId(source, importer) {
-          if (importer && resolve(dirname(importer.split('?')[0]!), source) === catalogPath)
-            return localeTemplate.dst
-        },
-      })
       addTemplate({
         filename: 'nuxt-photo-config.mjs',
         getContents:
@@ -218,21 +216,22 @@ export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
     if (options.components !== false) {
       const prefix = typeof options.components === 'object' ? (options.components.prefix ?? '') : ''
 
+      const recipes = await vueEntry('')
       for (const component of RECIPE_COMPONENTS) {
         addComponent({
           name: `${prefix}${component.name}`,
-          filePath: resolveRecipeComponent(vueDistDir, component.export),
+          export: component.export,
+          filePath: recipes,
         })
       }
 
-      const registerPrimitives =
-        typeof options.components === 'object' && options.components.primitives
-
-      if (registerPrimitives) {
+      if (registerPrimitives(options)) {
+        const primitives = await vueEntry('/primitives')
         for (const component of PRIMITIVE_COMPONENTS) {
           addComponent({
             name: `${prefix}${component.name}`,
-            filePath: resolvePrimitiveComponent(vueDistDir, component.export),
+            export: component.export,
+            filePath: primitives,
           })
         }
       }
@@ -251,17 +250,16 @@ export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
       )
     }
 
+    // The ready-made components' viewer brings the lightbox CSS with its lazy chunk. Registered
+    // primitives compose their own lightbox outside that chunk, so the lightbox CSS stays global.
+    const lightboxCSS = registerPrimitives(options)
     const structureCSS = [
-      resolve(vueDistDir, 'styles/lightbox-structure.css'),
-      resolve(vueDistDir, 'styles/album.css'),
-      resolve(vueDistDir, 'styles/photo-structure.css'),
-      resolve(vueDistDir, 'styles/carousel-structure.css'),
+      ...(lightboxCSS ? ['lightbox-structure'] : []),
+      'album',
+      'photo-structure',
+      'carousel-structure',
     ]
-    const themeCSS = [
-      resolve(vueDistDir, 'styles/lightbox-theme.css'),
-      resolve(vueDistDir, 'styles/photo.css'),
-      resolve(vueDistDir, 'styles/carousel-theme.css'),
-    ]
+    const themeCSS = [...(lightboxCSS ? ['lightbox-theme'] : []), 'photo', 'carousel-theme']
 
     const cssFiles =
       options.css === 'all'
@@ -270,7 +268,8 @@ export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
           ? structureCSS
           : []
 
-    for (const css of cssFiles) {
+    for (const name of cssFiles) {
+      const css = await vueEntry(`/styles/${name}.css`)
       if (!nuxt.options.css.includes(css)) {
         nuxt.options.css.push(css)
       }

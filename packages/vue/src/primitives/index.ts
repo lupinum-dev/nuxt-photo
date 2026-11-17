@@ -1,3 +1,5 @@
+// @lupinum/vue-photo/primitives: the parts of the lightbox, for your own viewer markup.
+// Advanced API: it may change in minor versions.
 export { default as LightboxProvider } from './LightboxProvider.vue'
 export { default as LightboxRoot } from './LightboxRoot.vue'
 export { default as LightboxOverlay } from './LightboxOverlay.vue'
@@ -7,4 +9,9 @@ export { default as LightboxSlide } from './LightboxSlide.vue'
 export { default as LightboxControls } from './LightboxControls.vue'
 export { default as LightboxCaption } from './LightboxCaption.vue'
 export { default as PhotoTrigger } from './PhotoTrigger.vue'
-export { default as PhotoImage } from './PhotoImage.vue'
+export type {
+  LightboxControlsSlotProps,
+  LightboxCaptionSlotProps,
+  LightboxSlideSlotProps,
+  LightboxViewportSlotProps,
+} from '../types'

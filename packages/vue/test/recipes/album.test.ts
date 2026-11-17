@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createApp, h, ref } from 'vue'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vite-plus/test'
 import { reactive } from 'vue'
 import { makePhoto } from '@test-fixtures/photos'
 import PhotoAlbum from '../../src/components/PhotoAlbum.vue'
@@ -14,8 +14,8 @@ describe('PhotoAlbum', () => {
     document.body.innerHTML = ''
   })
 
-  it.each(['grid', 'bento', 'mosaic', 'accordion'] as const)(
-    'samples %s function values at zero and warns once',
+  it.each(['rows', 'grid', 'bento', 'mosaic', 'accordion'] as const)(
+    'evaluates %s function values at each planned width without a warning',
     async (type) => {
       const warn = vi.spyOn(console, 'warn')
       const spacing = vi.fn((width: number) => (width < 640 ? 4 : 8))
@@ -24,15 +24,16 @@ describe('PhotoAlbum', () => {
           photos: [makePhoto({ id: 'function-value' })],
           layout: type,
           spacing,
-          defaultContainerWidth: 900,
           lightbox: false,
         },
       })
-      expect(spacing.mock.calls).toEqual([[0]])
-      expect(warn).toHaveBeenCalledExactlyOnceWith(
-        `[nuxt-photo] ${type} layout renders with CSS only; a function value needs responsive() or the breakpoints prop. Using its value at width 0.`,
+      expect(spacing.mock.calls.flat()).toEqual(
+        expect.arrayContaining([320, 480, 640, 768, 1024, 1280, 1536, 1920, 2560]),
       )
-      expect(mounted.container.querySelector('style')?.textContent).toContain('--np-gap:4px')
+      const css = mounted.container.querySelector('style')?.textContent ?? ''
+      expect(css).toMatch(/\(width < 640px\)\{\.np-album__frame\{--np-gap:4px/)
+      expect(css).toMatch(/\(width >= 640px\)\{\.np-album__frame\{--np-gap:8px/)
+      expect(warn).not.toHaveBeenCalled()
       mounted.unmount()
       warn.mockRestore()
     },
@@ -60,27 +61,6 @@ describe('PhotoAlbum', () => {
 
     root.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(onClick).toHaveBeenCalledOnce()
-    mounted.unmount()
-  })
-
-  it('skips container-query CSS when defaultContainerWidth owns rendering', async () => {
-    const mounted = await mountComponent(PhotoAlbum, {
-      props: {
-        photos: [makePhoto({ id: 'dcw-1' }), makePhoto({ id: 'dcw-2' })],
-        lightbox: false,
-        breakpoints: [400, 800],
-        defaultContainerWidth: 800,
-      },
-    })
-
-    // Inline widths are authoritative with dcw; emitting @container rules
-    // alongside them would ship a stylesheet that can never apply.
-    expect(mounted.container.querySelector('style')).toBeNull()
-
-    const item = mounted.container.querySelector('.np-album__item') as HTMLElement
-    expect(item.getAttribute('style')).toContain('calc(')
-    expect(item.className).not.toContain('np-item-')
-
     mounted.unmount()
   })
 
@@ -176,16 +156,85 @@ describe('bento lightbox order', () => {
     second.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await flushUi()
     expect(document.querySelector('.np-lightbox__counter')?.textContent).toContain('2 / 12')
-    expect(document.querySelector('.np-lightbox__caption')?.textContent).toContain(
+    expect(document.querySelector('[data-np-active] .np-lightbox__caption')?.textContent).toContain(
       photos.find((photo) => photo.src === src)!.caption,
     )
+    // Each mounted slide carries its own photo's caption; only the active one is read out.
+    const slides = [...document.querySelectorAll<HTMLElement>('[data-np-slide]')]
+    expect(slides.length).toBeGreaterThan(0)
+    for (const slide of slides) {
+      // Slides follow reading order, not `photos` order: find the photo by its image.
+      const image = slide.querySelector('[data-np-slide-img]')!.getAttribute('src')
+      const caption = slide.querySelector('.np-lightbox__caption')!
+      expect(caption.textContent).toContain(photos.find((photo) => photo.src === image)!.caption)
+      expect(caption.getAttribute('aria-hidden')).toBe(
+        slide.hasAttribute('data-np-active') ? null : 'true',
+      )
+    }
     await album.value!.close()
     await flushUi()
     void album.value!.open(1)
     await flushUi()
-    expect(document.querySelector('.np-lightbox__caption')?.textContent).toContain(
+    expect(document.querySelector('[data-np-active] .np-lightbox__caption')?.textContent).toContain(
       photos[1]!.caption,
     )
     app.unmount()
+  })
+
+  // Catch open(index) flying from, or hiding, the tile at that display position instead of
+  // the tile that shows photos[index].
+  it('flies from and hides the tile of photos[index] when opened programmatically', async () => {
+    const photos = Array.from({ length: 12 }, (_, index) =>
+      makePhoto({ id: `bento-${index}`, width: [1600, 900, 1200][index % 3], height: 1000 }),
+    )
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 1200,
+      height: 800,
+      right: 1200,
+      bottom: 800,
+      x: 0,
+      y: 0,
+    } as DOMRect)
+    // jsdom has no image decoding; the flight waits for the slide image to decode.
+    Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+      configurable: true,
+      value: () => Promise.resolve(),
+    })
+    onTestFinished(() => {
+      delete (HTMLImageElement.prototype as Partial<HTMLImageElement>).decode
+    })
+    const album = ref<{ open: (index: number) => Promise<void> }>()
+    const mounted = await mountComponent({
+      render: () => h(PhotoAlbum, { ref: album, photos, layout: 'bento', transition: 'flip' }),
+    })
+    const items = [...mounted.container.querySelectorAll<HTMLElement>('.np-album__item')]
+    const target = items.find((item) => item.dataset.npPhotoId === photos[1]!.id)!
+    expect(items.indexOf(target)).not.toBe(1)
+    const targetRect = vi.fn(
+      () =>
+        ({
+          left: 300,
+          top: 0,
+          width: 200,
+          height: 150,
+          right: 500,
+          bottom: 150,
+          x: 300,
+          y: 0,
+        }) as DOMRect,
+    )
+    target.getBoundingClientRect = targetRect
+
+    void album.value!.open(1)
+    await flushUi(12)
+
+    expect(targetRect).toHaveBeenCalled()
+    const hidden = items.filter(
+      (item) => (item.firstElementChild as HTMLElement).style.opacity === '0',
+    )
+    expect(hidden).toEqual([target])
+    mounted.unmount()
   })
 })

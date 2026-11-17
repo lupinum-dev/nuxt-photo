@@ -26,9 +26,12 @@ export async function usePhotoFolder(
   const { data } = await useAsyncData(
     key,
     async () => {
-      const records = await fetch<PhotoItem[]>(baseURL + '/__nuxt_photo/folder', {
-        query: { folder: normalized },
-      })
+      const records = await fetch<Array<PhotoItem & { id: string }>>(
+        baseURL + '/__nuxt_photo/folder',
+        {
+          query: { folder: normalized },
+        },
+      )
       const photos = records
         .map((photo) => {
           const name = photo.id.split('/').at(-1)!

@@ -6,8 +6,6 @@
   -->
   <LightboxRoot
     class="group fixed inset-0 z-50 text-stone-100 [--np-frame-inset-bottom:120px] [--np-frame-inset-inline:clamp(80px,7vw,120px)] [--np-frame-inset-top:72px] max-[699px]:[--np-frame-inset-bottom:108px] max-[699px]:[--np-frame-inset-inline:12px] max-[699px]:[--np-frame-inset-top:64px]"
-    role="dialog"
-    aria-modal="true"
     aria-label="Photo viewer"
   >
     <LightboxOverlay class="absolute inset-0 overflow-hidden bg-stone-950">
@@ -146,7 +144,7 @@ import {
   LightboxRoot,
   LightboxSlide,
   LightboxViewport,
-} from '@lupinum/nuxt-photo/app'
+} from '@lupinum/nuxt-photo/primitives'
 
 const iconClass =
   'size-5 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]'

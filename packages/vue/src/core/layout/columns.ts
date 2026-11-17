@@ -1,10 +1,22 @@
-import type {
-  ColumnsLayoutOptions,
-  LayoutEntry,
-  LayoutGroup,
-  ResolvedPhotoItem as PhotoItem,
+import {
+  resolveResponsiveValue,
+  type ColumnsLayoutOptions,
+  type LayoutEntry,
+  type LayoutGroup,
+  type ResolvedPhotoItem as PhotoItem,
+  type ResponsiveParameter,
 } from '../types'
+import { round } from '../utils/math'
 import { normalizeColumnCount, normalizeLayoutNumber, validatePhotoDimensions } from './types'
+import { DEFAULT_BREAKPOINTS, DEFAULT_COLUMNS, DEFAULT_PADDING, DEFAULT_SPACING } from './constants'
+import {
+  containerLength,
+  absoluteItemsCss,
+  containerQueryCss,
+  planWidths,
+  type AlbumPlan,
+  type AlbumPlanWidths,
+} from './plan'
 
 function ratio(item: PhotoItem) {
   return item.width / item.height
@@ -171,8 +183,8 @@ export function computeColumnsLayout<TMeta extends object>(
   options: ColumnsLayoutOptions<TMeta>,
 ): LayoutGroup<TMeta>[] {
   const containerWidth = normalizeLayoutNumber(options.containerWidth, 0)
-  const spacing = normalizeLayoutNumber(options.spacing, 8)
-  const padding = normalizeLayoutNumber(options.padding, 0)
+  const spacing = normalizeLayoutNumber(options.spacing, DEFAULT_SPACING)
+  const padding = normalizeLayoutNumber(options.padding, DEFAULT_PADDING)
   const photos = validatePhotoDimensions(options.photos)
   if (photos.length === 0 || containerWidth <= 0) return []
   const columns = Math.min(normalizeColumnCount(options.columns), photos.length)
@@ -235,4 +247,106 @@ export function computeColumnsLayout<TMeta extends object>(
   }
 
   return groups
+}
+
+/**
+ * Plan a columns album that CSS alone positions at every container width.
+ *
+ * At each planned width, {@link computeColumnsLayout} splits the photos into
+ * consecutive runs, one per column. The DOM keeps `photos` order, so one
+ * `nth-child` range per column sets its width and start, both linear in the
+ * album width (`100cqi`). A photo's top is its column width times the summed
+ * height/width ratios of the photos above it, plus their padding and spacing;
+ * each item carries its running ratio sum (`--np-p`) and index (`--np-i`), so
+ * these never change between widths.
+ */
+export function computeColumnsPlan<TMeta extends object>(options: {
+  photos: readonly PhotoItem<TMeta>[]
+  containerName: string
+  breakpoints?: readonly number[]
+  spacing?: ResponsiveParameter<number>
+  padding?: ResponsiveParameter<number>
+  columns?: ResponsiveParameter<number>
+}): AlbumPlan {
+  const { photos, containerName } = options
+  if (!photos.length) return { css: '', frameStyle: {}, items: [], order: [], widths: [] }
+  // Running sum of height / width before each photo, and in total.
+  const sums = [0]
+  for (const photo of photos) sums.push(sums.at(-1)! + 1 / ratio(photo))
+
+  const spans: (AlbumPlanWidths & { rules: string })[] = []
+  for (const width of planWidths(options.breakpoints, DEFAULT_BREAKPOINTS)) {
+    const spacing = round(resolveResponsiveValue(options.spacing, width, DEFAULT_SPACING), 3)
+    const padding = round(resolveResponsiveValue(options.padding, width, DEFAULT_PADDING), 3)
+    const columns = resolveResponsiveValue(options.columns, width, DEFAULT_COLUMNS)
+    const groups = computeColumnsLayout({
+      photos,
+      containerWidth: width,
+      spacing,
+      padding,
+      columns,
+    })
+    if (!groups.length) continue
+
+    const totalRatio = groups[0]!.columnsRatios!.reduce((sum, value) => sum + value, 0)
+    const shares: number[] = []
+    const gaps: number[] = []
+    const columnRules: string[] = []
+    const bottoms: string[] = []
+    let left = { a: 0, b: 0 }
+    for (const group of groups) {
+      const { columnsGaps, columnsRatios } = group
+      const own = columnsGaps![group.index]!
+      // The same width formula as computeColumnsLayout, split into share and gaps.
+      const share = columnsRatios![group.index]! / totalRatio
+      const gap =
+        (groups.length - 1) * spacing +
+        2 * groups.length * padding +
+        columnsRatios!.reduce((sum, value, index) => sum + (own - columnsGaps![index]!) * value, 0)
+      const first = group.entries[0]!.index
+      const end = group.entries.at(-1)!.index + 1
+      const count = end - first
+      for (let index = first; index < end; index++) {
+        shares.push(share)
+        gaps.push(gap)
+      }
+      const range =
+        (first > 0 ? `:nth-child(n+${first + 1})` : '') +
+        (end < photos.length ? `:nth-child(-n+${end})` : '')
+      columnRules.push(
+        `.np-album__item${range}{--np-w:${containerLength(share, -share * gap)};` +
+          `--np-x:${containerLength(left.a, left.b)};--np-p0:${round(sums[first]!, 6)};--np-i0:${first}}`,
+      )
+      const height = sums[end]! - sums[first]!
+      bottoms.push(
+        containerLength(
+          share * height,
+          -share * gap * height + count * 2 * padding + (count - 1) * spacing,
+        ),
+      )
+      left = { a: left.a + share, b: left.b - share * gap + 2 * padding + spacing }
+    }
+    const rules =
+      `.np-album__frame{--np-gap:${spacing}px;--np-padding:${padding}px;height:max(${bottoms.join(',')})}` +
+      columnRules.join('')
+    if (spans.at(-1)?.rules === rules) continue
+    spans.push({ start: spans.length ? width : 0, rules, shares, gaps })
+  }
+
+  return {
+    css:
+      containerQueryCss(containerName, spans) +
+      absoluteItemsCss(
+        containerName,
+        'inset-inline-start:var(--np-x);' +
+          'top:calc(var(--np-w)*(var(--np-p) - var(--np-p0)) + (var(--np-i) - var(--np-i0))*var(--np-step))',
+      ),
+    frameStyle: {},
+    items: photos.map((_, index) => ({
+      index,
+      style: { '--np-p': String(round(sums[index]!, 6)), '--np-i': String(index) },
+    })),
+    order: photos.map((_, index) => index),
+    widths: spans.map(({ start, shares, gaps }) => ({ start, shares, gaps })),
+  }
 }

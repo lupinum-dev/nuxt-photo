@@ -52,7 +52,6 @@
               :photos="landscapes"
               :layout="{ type: 'masonry', columns: 2 }"
               :spacing="6"
-              :default-container-width="520"
             />
           </div>
           <div class="two-albums__col">
@@ -61,7 +60,6 @@
               :photos="portraits"
               :layout="{ type: 'columns', columns: 2 }"
               :spacing="6"
-              :default-container-width="520"
             />
           </div>
         </div>
@@ -125,7 +123,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Lightbox, LightboxProvider, PhotoTrigger } from '@lupinum/nuxt-photo/app'
+import { Lightbox } from '@lupinum/nuxt-photo/app'
+import { LightboxProvider, PhotoTrigger } from '@lupinum/nuxt-photo/primitives'
+// A composed lightbox brings its own CSS; the ready-made components' viewer carries it.
+import '@lupinum/nuxt-photo/lightbox.css'
 import { demoPhotos as photos } from 'nuxt-photo-demo'
 
 useHead({ title: 'PhotoGroup — nuxt-photo' })
@@ -151,13 +152,13 @@ const scatteredCode = `<PhotoGroup :photos="lightboxPhotos">
 
 const twoAlbumsCode = `<!-- Two albums sharing one lightbox -->
 <PhotoGroup :photos="[...landscapes, ...portraits]">
-  <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
-  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />
+  <PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
+  <PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />
 </PhotoGroup>
 
 <!-- Two albums each with their own lightbox — just remove the wrapper -->
-<PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" :default-container-width="520" />
-<PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" :default-container-width="520" />`
+<PhotoAlbum :photos="landscapes" :layout="{ type: 'masonry', columns: 2 }" />
+<PhotoAlbum :photos="portraits" :layout="{ type: 'columns', columns: 2 }" />`
 
 const programmaticCode = `<PhotoGroup ref="gallery" :photos="photos">
   <PhotoAlbum :photos="photos" layout="rows" />

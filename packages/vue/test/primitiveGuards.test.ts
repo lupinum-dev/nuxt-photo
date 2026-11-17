@@ -12,7 +12,7 @@ import {
   LightboxSlide,
   LightboxViewport,
   PhotoTrigger,
-} from '@lupinum/vue-photo'
+} from '@lupinum/vue-photo/primitives'
 import { makePhoto } from '@test-fixtures/photos'
 
 function mountExpectingError(component: Component, props?: Record<string, unknown>) {

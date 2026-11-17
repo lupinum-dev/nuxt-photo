@@ -106,10 +106,10 @@ export function shouldUseFlip(rect: ViewportRect | null, config: TransitionModeC
 export function chooseCloseTransition(opts: {
   fromRect: RectLike | null
   toRect: DOMRect | null
-  thumbRefExists: boolean
+  thumbnailExists: boolean
   config: TransitionModeConfig
 }): CloseTransitionPlan {
-  const { fromRect, toRect, thumbRefExists, config } = opts
+  const { fromRect, toRect, thumbnailExists, config } = opts
 
   if (config.mode === 'none') {
     return { mode: 'instant', durationMs: 0 }
@@ -129,7 +129,7 @@ export function chooseCloseTransition(opts: {
     }
   }
 
-  if (!thumbRefExists) {
+  if (!thumbnailExists) {
     return {
       mode: 'fade',
       durationMs: CLOSE_FADE_DURATION_MS,

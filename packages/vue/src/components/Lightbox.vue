@@ -1,10 +1,5 @@
 <template>
-  <LightboxRoot
-    class="np-lightbox"
-    role="dialog"
-    aria-modal="true"
-    :aria-label="labels.photoViewer"
-  >
+  <LightboxRoot class="np-lightbox" :aria-label="labels.photoViewer">
     <LightboxOverlay class="np-lightbox__backdrop">
       <!-- A soft glow of the current photo's colors; the new glow crossfades over the old. -->
       <LightboxAmbient class="np-lightbox__ambient" />
@@ -112,9 +107,21 @@
                   :photo="photo"
                   :index="i"
                   class="np-lightbox__slide"
+                  caption-class="np-lightbox__caption"
                 >
                   <template v-if="$slots.slide" #default="slotProps">
                     <slot name="slide" v-bind="slotProps" />
+                  </template>
+                  <!-- The wall label: part of the slide, under its photo. -->
+                  <template #caption="captionProps">
+                    <div class="np-lightbox__label">
+                      <slot name="caption" :photo="captionProps.photo" :index="captionProps.index">
+                        <h2 v-if="captionProps.photo.caption">{{ captionProps.photo.caption }}</h2>
+                        <p v-if="captionProps.photo.description">
+                          {{ captionProps.photo.description }}
+                        </p>
+                      </slot>
+                    </div>
                   </template>
                 </LightboxSlide>
                 <div v-else class="np-lightbox__slide-spacer" aria-hidden="true" />
@@ -125,18 +132,6 @@
             {{ labels.loadFailed }}
           </div>
         </LightboxViewport>
-
-        <!-- The wall label: anchored under the photo through the --np-frame-* variables. -->
-        <LightboxCaption class="np-lightbox__caption" v-slot="{ photo, activeIndex }">
-          <Transition name="np-caption" mode="out-in">
-            <div :key="photo?.id ?? 'none'" class="np-lightbox__label">
-              <slot name="caption" :photo="photo" :index="activeIndex">
-                <h2 v-if="photo?.caption">{{ photo.caption }}</h2>
-                <p v-if="photo?.description">{{ photo.description }}</p>
-              </slot>
-            </div>
-          </Transition>
-        </LightboxCaption>
       </div>
     </div>
   </LightboxRoot>
@@ -145,7 +140,6 @@
 <script setup lang="ts">
 import {
   LightboxAmbient,
-  LightboxCaption,
   LightboxControls,
   LightboxOverlay,
   LightboxRoot,
@@ -154,11 +148,8 @@ import {
 } from '../primitives/index'
 import { usePhotoLabels } from '../composables/usePhotoLabels'
 import LightboxTools from '../internal/LightboxTools.vue'
-import type {
-  LightboxCaptionSlotProps,
-  LightboxControlsSlotProps,
-  LightboxSlideSlotProps,
-} from '../types/index'
+import type { ResolvedPhotoItem } from '../core/index'
+import type { LightboxControlsSlotProps, LightboxSlideSlotProps } from '../types/index'
 
 const labels = usePhotoLabels()
 
@@ -169,15 +160,21 @@ interface LightboxCounterSlotProps {
 
 interface LightboxActionsSlotProps extends Omit<LightboxControlsSlotProps, 'photos'> {}
 
+interface LightboxToolsSlotProps {
+  photo: ResolvedPhotoItem | null
+  index: number
+}
+
+/** Each photo's caption, rendered under that photo in its slide. */
 interface LightboxCaptionRecipeSlotProps {
-  photo: LightboxCaptionSlotProps['photo']
+  photo: ResolvedPhotoItem
   index: number
 }
 
 defineSlots<{
   counter?: (props: LightboxCounterSlotProps) => unknown
   actions?: (props: LightboxActionsSlotProps) => unknown
-  tools?: (props: LightboxCaptionRecipeSlotProps) => unknown
+  tools?: (props: LightboxToolsSlotProps) => unknown
   slide?: (props: LightboxSlideSlotProps) => unknown
   caption?: (props: LightboxCaptionRecipeSlotProps) => unknown
 }>()

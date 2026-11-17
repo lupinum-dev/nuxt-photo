@@ -188,16 +188,16 @@ export function useLabMeasurement(
   async function measure() {
     const version = ++revision
     timing.value = window.__labTiming?.snapshot() ?? timing.value
-    const dialog = document.querySelector('[role="dialog"]')
+    const dialog = document.querySelector('dialog')
     for (const image of document.querySelectorAll<HTMLImageElement>(
-      '.lab-content img, [role="dialog"] img',
+      '.lab-content img, dialog img',
     )) {
       if (image.complete && image.naturalWidth && !fileOwners.has(image.currentSrc))
         fileOwners.set(image.currentSrc, image)
     }
     const candidates = [
       ...document.querySelectorAll<HTMLImageElement>(
-        dialog ? '[role="dialog"] [data-np-active] img[data-np-slide-img]' : '.lab-content img',
+        dialog ? 'dialog [data-np-active] img[data-np-slide-img]' : '.lab-content img',
       ),
     ].filter(visible)
     const byAlt = new Map(photos().map((photo) => [photo.alt, photo]))
@@ -304,7 +304,7 @@ export function useLabMeasurement(
             (record.type === 'attributes' &&
               (!['style', 'class'].includes(record.attributeName ?? '') ||
                 (record.target instanceof Element &&
-                  record.target.closest('.lab-content, [role="dialog"]') &&
+                  record.target.closest('.lab-content, dialog') &&
                   (record.target.matches('img') || record.target.querySelector('img'))))) ||
             [...record.addedNodes, ...record.removedNodes].some(
               (node) =>

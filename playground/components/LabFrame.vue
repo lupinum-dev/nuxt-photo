@@ -2,7 +2,7 @@
 import type { PhotoItem } from '@lupinum/nuxt-photo/app'
 import { startLabTiming } from '../lab/timing'
 import { useLabMeasurement } from '../lab/measurement'
-import { DEFAULT_WIDTHS } from '#build/nuxt-photo-internals.mjs'
+import { DEFAULT_WIDTHS } from '@lupinum/vue-photo/internal'
 
 const props = defineProps<{
   title: string
@@ -16,7 +16,6 @@ useHead({
   ],
 })
 const image = useImage()
-// The generated .mjs bridge does not preserve the source declaration for app TypeScript.
 const defaultWidths: readonly number[] = DEFAULT_WIDTHS
 const provider = image.options.provider
 const screens = [...new Set(Object.values(image.options.screens))].sort((a, b) => a - b)

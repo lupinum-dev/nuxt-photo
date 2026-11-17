@@ -1,23 +1,9 @@
 // @lupinum/vue-photo — Vue components, composables, and photo utilities
 export { Lightbox, Photo, PhotoAlbum, PhotoCarousel, PhotoGroup } from './components'
 export { useLightbox, usePhotoLabels } from './composables'
-export {
-  LightboxProvider,
-  LightboxRoot,
-  LightboxOverlay,
-  LightboxAmbient,
-  LightboxViewport,
-  LightboxSlide,
-  LightboxControls,
-  LightboxCaption,
-  PhotoTrigger,
-  PhotoImage,
-} from './primitives'
+// The lightbox primitives have their own entry: @lupinum/vue-photo/primitives.
+export { default as PhotoImage } from './primitives/PhotoImage.vue'
 export type {
-  LightboxControlsSlotProps,
-  LightboxCaptionSlotProps,
-  LightboxSlideSlotProps,
-  LightboxViewportSlotProps,
   CarouselSlideSlotProps,
   CarouselThumbSlotProps,
   CarouselCaptionSlotProps,
@@ -28,6 +14,7 @@ export { type LightboxController, type PhotoLabels } from './provide'
 export { responsive } from './core/types'
 export type {
   PhotoItem,
+  ResolvedPhotoItem,
   AlbumLayout,
   RowsAlbumLayout,
   ColumnsAlbumLayout,

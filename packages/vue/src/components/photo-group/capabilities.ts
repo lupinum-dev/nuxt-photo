@@ -3,7 +3,6 @@ import type { PhotoGroupCapability } from './context'
 
 export type IndexedPhotoGroupCapability = {
   readonly renderSlide: LightboxSlideRenderer | null
-  readonly thumbnailCandidates: readonly (() => HTMLElement | null)[]
 }
 
 /** Build a read-only lookup from descendant registrations. */
@@ -16,7 +15,6 @@ export function buildPhotoGroupCapabilityIndex(
     {
       renderSlide: LightboxSlideRenderer | null
       rendererOwner: symbol | null
-      thumbnailCandidates: Array<() => HTMLElement | null>
     }
   >()
 
@@ -29,9 +27,7 @@ export function buildPhotoGroupCapabilityIndex(
       const entry = indexed.get(capability.id) ?? {
         renderSlide: null,
         rendererOwner: null,
-        thumbnailCandidates: [],
       }
-      entry.thumbnailCandidates.push(capability.getThumbnailElement)
 
       if (capability.renderSlide) {
         if (entry.rendererOwner && entry.rendererOwner !== owner) {
@@ -47,13 +43,5 @@ export function buildPhotoGroupCapabilityIndex(
     }
   }
 
-  return new Map(
-    [...indexed].map(([id, entry]) => [
-      id,
-      {
-        renderSlide: entry.renderSlide,
-        thumbnailCandidates: entry.thumbnailCandidates,
-      },
-    ]),
-  )
+  return new Map([...indexed].map(([id, entry]) => [id, { renderSlide: entry.renderSlide }]))
 }

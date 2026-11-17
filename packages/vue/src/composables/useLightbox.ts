@@ -1,11 +1,14 @@
-import { useLightboxInject } from '../lightbox/inject'
-import { createLightboxController } from '../lightbox/controller'
-import type { LightboxController } from '../provide/keys'
+import { LightboxControllerKey, type LightboxController } from '../provide/keys'
+import { requireInjection } from '../internal/requireInjection'
 
-/** Consume the nearest lightbox context as a simple controller/read-model API. */
+/** The controller of the nearest lightbox: a photo group's, or a `LightboxProvider`'s. */
 export function useLightbox<
   TMeta extends object = Readonly<Record<string, unknown>>,
 >(): LightboxController<TMeta> {
-  const context = useLightboxInject('useLightbox')
-  return createLightboxController<TMeta>(context)
+  // The key carries no photo metadata type; the caller names it, as with `inject<T>()`.
+  return requireInjection(
+    LightboxControllerKey,
+    'useLightbox',
+    'an active lightbox context',
+  ) as LightboxController<TMeta>
 }
