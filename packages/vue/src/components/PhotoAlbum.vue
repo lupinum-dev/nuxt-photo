@@ -3,10 +3,10 @@
     ref="containerRef"
     v-bind="$attrs"
     class="np-album"
-    :class="[ui?.root, scopeClass, `np-album--${layoutType}`]"
-    :style="containerStyle"
+    :class="[ui?.root, `np-scope-${containerName}`, `np-album--${layoutType}`]"
+    :style="{ width: '100%', containerType: 'inline-size', containerName }"
   >
-    <ContainerQueryStyle v-if="plan.css" :css="plan.css" />
+    <ContainerQueryStyle v-if="scopedCss" :css="scopedCss" />
     <div class="np-album__frame" :style="plan.frameStyle">
       <template v-for="(item, position) in plan.items" :key="normalizedPhotos[item.index]!.id">
         <div
@@ -49,7 +49,7 @@
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
 import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
-import { computed, defineComponent, h, ref, useId } from 'vue'
+import { computed, defineComponent, h, ref } from 'vue'
 import type { PhotoUi } from '../types/ui'
 import { useRecipeLightbox } from './shared/useRecipeLightbox'
 
@@ -68,6 +68,7 @@ import type { AlbumPlan } from '../core/layout/plan'
 import { computeFramePlan } from '../core/layout/frame'
 import { computeRowsPlan, type RowBreakMemo } from '../core/layout/rows/plan'
 import { computePhotoSizes } from '../core/image/sizes'
+import { hashString } from '../core/utils/hash'
 import { computeColumnsPlan } from '../core/layout/columns'
 import { computeMasonryPlan } from '../core/layout/masonry'
 import {
@@ -217,10 +218,8 @@ const effectiveBreakpoints = computed<readonly number[] | undefined>(() => {
 })
 
 const containerRef = ref<HTMLElement | null>(null)
-// One container name per album keeps several albums' generated CSS apart.
-const containerName = `np-${useId().replace(/[^a-z0-9]/gi, '')}`
-const scopeClass = `np-scope-${containerName}`
-const containerStyle = { width: '100%', containerType: 'inline-size', containerName } as const
+// Stands in for the album's container name while the plan writes its CSS.
+const SCOPE_PLACEHOLDER = '%album%'
 
 // The measured width only chooses image `sizes`; CSS alone positions photos.
 // Before the browser measures, assume the smallest breakpoint, else a common
@@ -239,7 +238,7 @@ const plan = computed<AlbumPlan>(() => {
   const layout = normalizedLayout.value
   const shared = {
     photos: normalizedPhotos.value,
-    containerName,
+    containerName: SCOPE_PLACEHOLDER,
     breakpoints: effectiveBreakpoints.value,
     spacing: props.spacing,
     padding: props.padding,
@@ -253,6 +252,14 @@ const plan = computed<AlbumPlan>(() => {
   if (layout.type === 'masonry') return computeMasonryPlan({ ...shared, columns: layout.columns })
   return computeFramePlan({ ...layout, ...shared })
 })
+
+// One container name per album keeps several albums' generated CSS apart. The name is a
+// hash of that CSS, so the server and the browser agree on it without sharing an ID:
+// `useId()` differs between them when the host app renders another component tree on
+// each side, and the album then loses its layout after hydration. Albums with the same
+// CSS share a name and the same rules.
+const containerName = computed(() => `np-${hashString(plan.value.css)}`)
+const scopedCss = computed(() => plan.value.css.replaceAll(SCOPE_PLACEHOLDER, containerName.value))
 
 // Bento and mosaic reorder photos; the lightbox follows the order on screen.
 const orderedPhotos = computed(() =>
