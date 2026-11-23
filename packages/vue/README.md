@@ -95,20 +95,19 @@ Set up @lupinum/vue-photo for coding agents as described under "Agent setup" in 
 
 ### Steps for the agent
 
-1. Find `node_modules/@lupinum/vue-photo/dist/agent/AGENTS.md`. Look in the
-   directory of the project that depends on `@lupinum/vue-photo` first, then
-   in its parent directories up to the repository root (workspaces can hoist
-   packages). Read it; it lists the documentation pages.
-2. Add the section below to the project's agent instructions: `AGENTS.md`, or
-   `CLAUDE.md` if the project has only that file. If it has neither, create
-   `AGENTS.md`. Write the path relative to the repository root, through
-   `node_modules/@lupinum/vue-photo` (for example
-   `apps/web/node_modules/@lupinum/vue-photo/...` in a workspace). Never write
-   a resolved path such as `node_modules/.pnpm/...`: it contains the version and
-   breaks after an upgrade. If a section for `@lupinum/vue-photo` already
-   exists, leave it as it is.
+1. Find the documentation index of the installed package:
 
-   Use the path you found in place of the sample path:
+   ```text
+   node_modules/@lupinum/vue-photo/dist/agent/AGENTS.md
+   ```
+
+   Look in the directory of the project that depends on `@lupinum/vue-photo` first,
+   then in its parent directories up to the repository root. Workspaces can
+   hoist packages. Read the file; it lists the documentation pages.
+
+2. Add this section to the project's `AGENTS.md`. Use `CLAUDE.md` if the
+   project has only that file. Create `AGENTS.md` if it has neither. If a
+   section for `@lupinum/vue-photo` already exists, leave it as it is.
 
    ```md
    ## @lupinum/vue-photo
@@ -119,7 +118,14 @@ Set up @lupinum/vue-photo for coding agents as described under "Agent setup" in 
    remember about this package and over the website.
    ```
 
-3. Do not copy the documentation into the project and do not install a skill.
+3. Replace the sample path in the section with the path you found:
+   - Write it relative to the repository root, through
+     `node_modules/@lupinum/vue-photo`. In a workspace this can be
+     `apps/web/node_modules/@lupinum/vue-photo/...`.
+   - Never write a resolved path such as `node_modules/.pnpm/...`. It
+     contains the version and breaks after an upgrade.
+
+4. Do not copy the documentation into the project and do not install a skill.
    The section points into the installed package, so it stays correct after
    every upgrade or downgrade.
 

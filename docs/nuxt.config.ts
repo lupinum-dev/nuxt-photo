@@ -66,14 +66,6 @@ export default defineNuxtConfig({
       version: 2,
       components: {
         ...components,
-        'pm-install': {
-          kind: 'block',
-          props: { name: { types: ['string'], required: true, allowedValues: null } },
-          slots: ['default'],
-          allowedParents: null,
-          allowedChildren: null,
-          media: null,
-        },
         example: {
           kind: 'block',
           props: {
@@ -92,7 +84,7 @@ export default defineNuxtConfig({
     markdown: {
       tags: {
         ...Object.fromEntries(
-          [...customComponents, 'pm-install'].map((name) => [
+          customComponents.map((name) => [
             name,
             name
               .split('-')

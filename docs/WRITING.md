@@ -150,6 +150,10 @@ Use canonical collection references for internal links:
 [use your own photos](/docs/guides/use-your-photos)
 ```
 
+Write link text as plain text, also when it names a component, a type or a
+file: `[PhotoAlbum](/docs/reference/photo-album)`, not a link around inline
+code. Every link then looks the same, and inline code in a box is never a link.
+
 Place a link in the sentence that creates the need for it. Do not append
 generic headings such as "What's next", "Next step", "Related", "See also",
 "Conclusion", or "Summary". End with the instruction, limitation, or check
