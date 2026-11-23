@@ -612,6 +612,24 @@ label.docs-control:not(.docs-control--stacked) span {
   scrollbar-width: thin;
 }
 
+/* Temporary with the rules above: code tabs get a neutral active label and the
+   package managers' own icon colours, as the owner asked on 2026-11-23. */
+.content-codegroup-tab:hover,
+.content-codegroup-tab:focus-visible,
+.content-codegroup-tab[aria-selected='true'] {
+  color: var(--foreground);
+}
+
+.content-codegroup-tab[aria-selected='true'] {
+  border-bottom-color: var(--foreground);
+  font-weight: 600;
+}
+
+.content-codegroup-tab-icon {
+  filter: none;
+  opacity: 1;
+}
+
 /* Plain text, such as an error message, wraps. Code keeps its lines and scrolls. */
 .content-codeblock pre:has(> code.language-text),
 .content-codeblock pre > code.language-text {

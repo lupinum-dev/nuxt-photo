@@ -20,6 +20,6 @@
 
 - Introduced: 2026-11-23.
 - Reason: the docs run on `@lupinum/ginko-docs` 0.4.0-rc.11. It styles scrollbars only with `::-webkit-scrollbar` and sets no `color-scheme` for `.dark`, so Firefox draws light scrollbars on the dark site. Current theme releases set both.
-- Dependent: the `color-scheme` and `scrollbar-color` rules at the end of `docs/app/assets/main.css`.
+- Dependent: the `color-scheme`, `scrollbar-color` and `.content-codegroup-tab` rules at the end of `docs/app/assets/main.css`. The tab rules give a neutral active label and coloured package-manager icons; the old theme shows a brand-coloured label and grey icons.
 - Remove when the docs use a `@lupinum/ginko-docs` release that sets `color-scheme` and `scrollbar-color` itself (0.17.1 does) and dark-mode screenshots in Firefox show dark scrollbars without the rules.
 - Tracking issue: none.
