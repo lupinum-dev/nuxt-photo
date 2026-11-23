@@ -37,6 +37,31 @@ describe('SSR', () => {
     expect(html).not.toContain('flex-grow:9999')
   })
 
+  it('names the album CSS scope without an instance ID', async () => {
+    // A host app can give a component another `useId()` on the server than in the browser
+    // (a Markdown renderer did). The album then lost its layout after hydration.
+    const render = (idPrefix: string, layout: 'columns' | 'masonry') => {
+      const app = createSSRApp({
+        render: () => h(PhotoAlbum, { photos, layout, lightbox: false }),
+      })
+      app.config.idPrefix = idPrefix
+      return renderToString(app)
+    }
+    const names = (html: string) => ({
+      scopeClass: html.match(/np-scope-(np-\w+)/)?.[1],
+      container: html.match(/container-name:(np-\w+)/)?.[1],
+      query: html.match(/@container (np-\w+)/)?.[1],
+    })
+    const server = names(await render('server', 'columns'))
+    const browser = names(await render('browser', 'columns'))
+    const otherAlbum = names(await render('server', 'masonry'))
+
+    expect(server.container).toMatch(/^np-\w+$/)
+    expect(new Set(Object.values(server)).size).toBe(1)
+    expect(browser).toEqual(server)
+    expect(otherAlbum.container).not.toBe(server.container)
+  })
+
   describe('with breakpoints (container query mode)', () => {
     it('emits @container rules that show the breaks at row ends', async () => {
       const app = createSSRApp({
