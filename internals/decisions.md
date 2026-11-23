@@ -303,7 +303,7 @@
 - **D38 (2026-11-23): The Vue package ships compiled components.** `.vue` files in `dist`
   needed a bundler setting in every app: Nuxt's dev server loaded them with Node (500,
   "Unknown file extension .vue") unless the module added the package to `build.transpile`,
-  and Vite's dev server pre-bundled the entries but loaded the `.vue` files and their imports
+  and plain Vite's dev server pre-bundled the entries but loaded the `.vue` files and their imports
   beside the pre-bundle, so module state existed twice and `createPhoto` options never
   reached the components. `build.config.ts` keeps `mkdist` for declarations and stylesheets
   and replaces its JavaScript with a Vite library build (`preserveModules`, one file per
@@ -313,5 +313,7 @@
   compiled package module loads on the client but is missing from the server HTML of a deep
   link, because Nuxt inlines and links server styles only for components it compiles. The
   Vue package's `/viewer-structure` and `/viewer-themed` hosts (never released) are gone.
-  Sizes did not change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
+  The module keeps `build.transpile`: Nuxt's aliases apply only to code Vite transforms, and
+  without it the dev server loads the package with Node, which renders the default viewer
+  host of a deep link without its lightbox CSS. Sizes did not change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
   package files beside the pre-bundle.
