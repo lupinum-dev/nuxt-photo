@@ -180,6 +180,8 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
       existsSync(join(consumerDir, 'dist', 'index.html')),
       'Vue-only packed consumer did not produce a Vite build.',
     )
+    // The build bundles the package once; only the dev server pre-bundles it beside app files.
+    run('node', [join(rootDir, 'scripts/lib/vite-dev-modules.mjs')], consumerDir)
   } finally {
     if (process.env.KEEP_PACKED_CONSUMERS === '1') {
       process.stdout.write(`Vue packed consumer retained at ${consumerDir}\n`)

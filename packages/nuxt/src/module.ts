@@ -94,9 +94,6 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     // Entries of the Vue exports map, resolved from this module: an app installed with a strict
     // package manager cannot import the Vue package by name itself.
     const vueEntry = (entry: string) => resolver.resolvePath(`@lupinum/vue-photo${entry}`)
-    // The Vue package ships `.vue` files. The dev server would load the installed package with
-    // Node, which cannot read them, so Nuxt has to transform it like app code.
-    nuxt.options.build.transpile.push('@lupinum/vue-photo')
 
     // The Vue package imports its label catalogs and its viewer host through named entries of its
     // exports map. Aliases point them at the catalogs of this app's languages and at the host that

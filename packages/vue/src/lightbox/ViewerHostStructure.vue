@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import '../styles/lightbox-structure.css'
 import ViewerHost from './ViewerHost.vue'
 import type { ViewerBridge } from '../gallery/viewer'
 
@@ -10,5 +11,3 @@ import type { ViewerBridge } from '../gallery/viewer'
 // rendering includes it when the page opens with a photo.
 defineProps<{ bridge: ViewerBridge }>()
 </script>
-
-<style src="../styles/lightbox-structure.css"></style>

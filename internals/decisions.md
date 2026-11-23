@@ -300,3 +300,15 @@
   photo change as one tagged state (`idle`, `lead`, `asked`, `jump`) instead of six
   variables and two timers. The open's caption handoff lost its last hand-made curve: it is
   linear like every other part of the open.
+- **D38 (2026-11-23): The Vue package ships compiled components.** `.vue` files in `dist`
+  needed a bundler setting in every app: Nuxt's dev server loaded them with Node (500,
+  "Unknown file extension .vue") unless the module added the package to `build.transpile`,
+  and Vite's dev server pre-bundled the entries but loaded the `.vue` files and their imports
+  beside the pre-bundle, so module state existed twice and `createPhoto` options never
+  reached the components. `build.config.ts` keeps `mkdist` for declarations and stylesheets
+  and replaces its JavaScript with a Vite library build (`preserveModules`, one file per
+  source module). Self-references (`@lupinum/vue-photo/viewer`, `/locales/*`) stay bare
+  imports, so Nuxt still aliases them and the viewer stays a lazy chunk; the viewer hosts
+  import their lightbox CSS from the script, which keeps it in that chunk. Sizes did not
+  change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
+  package files beside the pre-bundle.
