@@ -76,10 +76,14 @@ const props = withDefaults(
     /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
     provider?: PhotoProvider | string
     /**
+     * Built-in controls to render: `'arrows'`, `'dots'`, `'counter'`, `'thumbnails'`.
+     * @default ['arrows', 'thumbnails', 'counter']
+     */
+    controls?: CarouselControl[]
+    /**
      * Continue from the last slide to the first.
      * @default false
      */
-    controls?: CarouselControl[]
     loop?: boolean
     /**
      * Let the track stop between slides after a drag.

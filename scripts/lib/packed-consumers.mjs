@@ -377,6 +377,12 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       existsSync(join(consumerDir, '.output', 'server', 'index.mjs')),
       'Nuxt-only packed consumer did not produce a server build.',
     )
+    // The build bundles the Vue package; only the dev server loads it from node_modules.
+    run(
+      'node',
+      [join(rootDir, 'scripts/lib/dev-render.mjs'), '/', 'alt="Rocky coast"'],
+      consumerDir,
+    )
 
     const publicDeclarations = [
       'dist/index.d.ts',

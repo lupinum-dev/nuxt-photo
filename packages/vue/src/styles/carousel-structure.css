@@ -2,13 +2,16 @@
    Layout/sizing only — no colours, radii or shadows.
    See carousel-theme.css for the opt-in visual layer. */
 
-.np-carousel {
+/* Zero specificity: a value set on `.np-carousel` in app CSS wins wherever this file loads. */
+:where(.np-carousel) {
   --np-carousel-gap: 0.75rem;
   --np-carousel-slide-size: 100%;
   --np-carousel-slide-aspect: 16 / 10;
   --np-carousel-thumb-size: 5.5rem;
   --np-carousel-thumb-gap: 0.5rem;
+}
 
+.np-carousel {
   position: relative;
   width: 100%;
 }

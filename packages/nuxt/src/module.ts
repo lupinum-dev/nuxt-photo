@@ -39,7 +39,6 @@ const PRIMITIVE_COMPONENTS: Array<{ export: string; name: string }> = [
   { export: 'LightboxControls', name: 'LightboxControls' },
   { export: 'LightboxCaption', name: 'LightboxCaption' },
   { export: 'PhotoTrigger', name: 'PhotoTrigger' },
-  { export: 'PhotoImage', name: 'PhotoImage' },
 ]
 
 const AUTO_IMPORTS = ['useLightbox', 'usePhotoLabels', 'usePhotoFolder', 'responsive'] as const
@@ -95,6 +94,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     // Entries of the Vue exports map, resolved from this module: an app installed with a strict
     // package manager cannot import the Vue package by name itself.
     const vueEntry = (entry: string) => resolver.resolvePath(`@lupinum/vue-photo${entry}`)
+    // The Vue package ships `.vue` files. The dev server would load the installed package with
+    // Node, which cannot read them, so Nuxt has to transform it like app code.
+    nuxt.options.build.transpile.push('@lupinum/vue-photo')
 
     // The Vue package imports its label catalogs and its viewer host through named entries of its
     // exports map. Aliases point them at the catalogs of this app's languages and at the host that
@@ -234,6 +236,8 @@ export const hasI18n = ${hasNuxtModule('@nuxtjs/i18n')}`,
             filePath: primitives,
           })
         }
+        // A lower-level component too, but the Vue package exports it from its root entry.
+        addComponent({ name: `${prefix}PhotoImage`, export: 'PhotoImage', filePath: recipes })
       }
     }
 

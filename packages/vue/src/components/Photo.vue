@@ -68,8 +68,8 @@ const props = withDefaults(
     priority?: boolean
     /**
      * The photo's width on screen as an HTML `sizes` value, such as
-     * `(min-width: 768px) 720px, 100vw`. Set it when the photo is not full width.
-     * @default '100vw'
+     * `(min-width: 768px) 720px, 100vw`. Set it when the photo is not full width. Without it, a
+     * `priority` photo uses `100vw` and a lazy photo its measured width.
      */
     sizes?: string
   }>(),

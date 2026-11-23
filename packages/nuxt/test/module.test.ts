@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -74,6 +75,7 @@ function createNuxt() {
       watch: [] as string[],
       appConfig: {} as Record<string, unknown> & { nuxtPhoto: Record<string, unknown> },
       css: [] as string[],
+      build: { transpile: [] as string[] },
       alias: {} as Record<string, string>,
       i18n: { locales: [] as unknown[] },
       vite: {
@@ -536,9 +538,39 @@ describe('nuxt-photo module', () => {
       expect.objectContaining({
         name: 'PhotoImage',
         export: 'PhotoImage',
-        filePath: '/resolved/@lupinum/vue-photo/primitives',
+        filePath: '/resolved/@lupinum/vue-photo',
       }),
     )
+  })
+
+  // Catches a component registered from an entry that does not export it: the app then
+  // renders nothing for that tag and warns that the component could not be resolved.
+  it('registers every component from a Vue entry that exports it', async () => {
+    const nuxt = createNuxt()
+
+    await nuxtPhotoModule.setup(
+      { ...nuxtPhotoModule.defaults, components: { primitives: true } },
+      nuxt,
+    )
+
+    const entrySource = (filePath: string) =>
+      readFileSync(
+        new URL(
+          filePath === '/resolved/@lupinum/vue-photo/primitives'
+            ? '../../vue/src/primitives/index.ts'
+            : '../../vue/src/index.ts',
+          import.meta.url,
+        ),
+        'utf8',
+      )
+    const missing = addComponent.mock.calls
+      .map(([component]) => component as { export: string; filePath: string })
+      .filter(
+        ({ export: name, filePath }) =>
+          !new RegExp(`^export .*\\b${name}\\b`, 'm').test(entrySource(filePath)),
+      )
+      .map(({ export: name, filePath }) => `${name} from ${filePath}`)
+    expect(missing).toEqual([])
   })
 
   it('registers components with custom prefix', async () => {

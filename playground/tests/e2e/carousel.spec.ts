@@ -185,3 +185,21 @@ test('hiding arrows via control removes them from the DOM', async ({ page }) => 
   await page.getByLabel('Arrows').uncheck()
   await expect(carousel.locator('.np-carousel__arrow')).toHaveCount(0)
 })
+
+// Catches carousel defaults that beat a variable the app's stylesheet set before them.
+test('app CSS that loads before the carousel CSS keeps its variables', async ({ page }) => {
+  await stubImageRequests(page)
+  await gotoPlayground(page, '/carousel')
+  // Stands in for the app's own stylesheet: first in the head, so before the carousel CSS.
+  await page.evaluate(() => {
+    const style = document.createElement('style')
+    style.textContent = '.np-carousel { --np-carousel-thumb-gap: 33px; --np-carousel-radius: 7px; }'
+    document.head.prepend(style)
+  })
+
+  const carousel = page.locator('.np-carousel').first()
+  const variable = (name: string) =>
+    carousel.evaluate((element, name) => getComputedStyle(element).getPropertyValue(name), name)
+  expect(await variable('--np-carousel-thumb-gap')).toBe('33px')
+  expect(await variable('--np-carousel-radius')).toBe('7px')
+})
