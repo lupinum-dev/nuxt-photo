@@ -45,6 +45,23 @@ describe('transition image readiness', () => {
     ).rejects.toMatchObject({ name: 'AbortError' })
   })
 
+  // Catches a ghost that gives up its flight for a fade because `decode()` rejected on an
+  // image that is loaded and drawable (seen in WebKit on Linux).
+  it('takes a loaded image as ready when its decode is refused', async () => {
+    const image = document.createElement('img')
+    Object.defineProperty(image, 'complete', { configurable: true, value: true })
+    Object.defineProperty(image, 'naturalWidth', { configurable: true, value: 1600 })
+    image.decode = vi.fn().mockRejectedValue(new Error('Decoding error.'))
+
+    await expect(
+      waitForImageReady(image, new AbortController().signal, {
+        timeoutMs: 100,
+        waitForLoadWithoutDecode: false,
+        decodeLoaded: true,
+      }),
+    ).resolves.toEqual({ ok: true })
+  })
+
   it('keeps the close path compatible with images without decode support', async () => {
     const image = document.createElement('img')
     Object.defineProperty(image, 'decode', { configurable: true, value: undefined })

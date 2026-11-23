@@ -40,9 +40,12 @@ export function waitForImageReady(
     )
 
     if (decode) {
+      // A loaded image the browser refuses to decode ahead still draws, as it does in its slide.
       Promise.resolve()
         .then(decode)
-        .then(loaded, (error: unknown) => finish({ ok: false, error }))
+        .then(loaded, (error: unknown) =>
+          image.complete && image.naturalWidth > 0 ? loaded() : finish({ ok: false, error }),
+        )
     } else {
       image.addEventListener('load', loaded, { once: true })
       image.addEventListener('error', failed, { once: true })
