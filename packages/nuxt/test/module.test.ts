@@ -429,15 +429,38 @@ describe('nuxt-photo module', () => {
     ])
   })
 
-  // A wrong host loads the theme in 'structure' mode, or no lightbox CSS at all.
+  // A wrong host loads the theme in 'structure' mode, or no lightbox CSS at all. The host must be
+  // an app component with `<style>` blocks: Nuxt inlines server styles only for those.
   it.each([
-    ['none', undefined],
-    ['structure', '/resolved/@lupinum/vue-photo/viewer-structure'],
-    ['all', '/resolved/@lupinum/vue-photo/viewer-themed'],
-  ] as const)('loads the viewer through the %s CSS host', async (css, host) => {
+    ['none', []],
+    ['structure', ['lightbox-structure']],
+    ['all', ['lightbox-structure', 'lightbox-theme']],
+  ] as const)('loads the viewer through the %s CSS host', async (css, styles) => {
     const nuxt = createNuxt()
     await nuxtPhotoModule.setup({ ...nuxtPhotoModule.defaults, css }, nuxt)
-    expect(nuxt.options.alias['@lupinum/vue-photo/viewer']).toBe(host)
+    const template = addTemplate.mock.calls.find(
+      ([t]) => t.filename === 'nuxt-photo/viewer-host.vue',
+    )
+    if (styles.length === 0) {
+      expect(template).toBeUndefined()
+      expect(nuxt.options.alias['@lupinum/vue-photo/viewer']).toBeUndefined()
+      return
+    }
+    expect(nuxt.options.alias['@lupinum/vue-photo/viewer']).toBe(
+      '/fixture/.nuxt/nuxt-photo/viewer-host.vue',
+    )
+    expect(template![0].getContents()).toBe(
+      [
+        '<script setup>',
+        'import ViewerHost from "/resolved/@lupinum/vue-photo/viewer"',
+        '</script>',
+        '<template><ViewerHost /></template>',
+        ...styles.map(
+          (name) => `<style src="/resolved/@lupinum/vue-photo/styles/${name}.css"></style>`,
+        ),
+        '',
+      ].join('\n'),
+    )
   })
 
   it('keeps the lightbox CSS global when primitives are registered', async () => {

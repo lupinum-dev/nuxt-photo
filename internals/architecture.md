@@ -90,9 +90,10 @@ self-reference): `@lupinum/vue-photo/locales/photo`, `/locales/viewer` and
 `/viewer`. Plain Vue resolves them to the full catalogs and the plain host.
 The Nuxt module sets `nuxt.options.alias` for them: the catalogs become
 generated files with only the app's languages (`locales.ts`), and `/viewer`
-becomes `/viewer-structure` or `/viewer-themed` for `css: 'structure'` or
-`'all'`, so the lightbox CSS loads with the viewer chunk and a server-rendered
-deep link inlines it. The module resolves every Vue entry it registers
+becomes a generated `viewer-host.vue` whose `<style src>` blocks hold the
+lightbox CSS of `css: 'structure'` or `'all'`. The CSS loads with the viewer
+chunk, and a server-rendered deep link inlines it: Nuxt inlines server styles
+only for components it compiles, not for CSS that an installed package imports. The module resolves every Vue entry it registers
 (components, primitives, stylesheets, hosts) from its own location, because an
 app installed with a strict package manager cannot import `@lupinum/vue-photo`
 by name. Build-time code (`options.ts`, `locales.ts`) bundles the Vue config

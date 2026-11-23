@@ -36,8 +36,6 @@ describe('Nuxt Photo 1.0 public contract', () => {
         './locales/photo',
         './locales/viewer',
         './viewer',
-        './viewer-structure',
-        './viewer-themed',
       ].sort(),
     )
     expect(Object.keys(nuxtManifest.exports).sort()).toEqual(

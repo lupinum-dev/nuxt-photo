@@ -54,14 +54,6 @@
       "types": "./dist/lightbox/viewer.d.ts",
       "import": "./dist/lightbox/viewer.mjs"
     },
-    "./viewer-structure": {
-      "types": "./dist/lightbox/ViewerHostStructure.vue.d.ts",
-      "import": "./dist/lightbox/ViewerHostStructure.mjs"
-    },
-    "./viewer-themed": {
-      "types": "./dist/lightbox/ViewerHostThemed.vue.d.ts",
-      "import": "./dist/lightbox/ViewerHostThemed.mjs"
-    },
     "./styles.css": {
       "default": "./dist/styles.css"
     },

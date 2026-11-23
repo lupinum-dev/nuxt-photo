@@ -70,8 +70,6 @@ function staticImportGraph(entry: string) {
         packages.add(specifier)
         continue
       }
-      // Stylesheets import no code.
-      if (specifier.endsWith('.css')) continue
       const base = join(dirname(file), specifier)
       const resolved = [base, `${base}.ts`, join(base, 'index.ts')].find(
         (candidate) => /\.(ts|vue)$/.test(candidate) && existsSync(candidate),

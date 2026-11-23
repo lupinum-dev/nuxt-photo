@@ -308,7 +308,10 @@
   reached the components. `build.config.ts` keeps `mkdist` for declarations and stylesheets
   and replaces its JavaScript with a Vite library build (`preserveModules`, one file per
   source module). Self-references (`@lupinum/vue-photo/viewer`, `/locales/*`) stay bare
-  imports, so Nuxt still aliases them and the viewer stays a lazy chunk; the viewer hosts
-  import their lightbox CSS from the script, which keeps it in that chunk. Sizes did not
-  change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
+  imports, so Nuxt still aliases them and the viewer stays a lazy chunk. The Nuxt module
+  generates the viewer host as an app component with `<style src>` blocks: a CSS import in a
+  compiled package module loads on the client but is missing from the server HTML of a deep
+  link, because Nuxt inlines and links server styles only for components it compiles. The
+  Vue package's `/viewer-structure` and `/viewer-themed` hosts (never released) are gone.
+  Sizes did not change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
   package files beside the pre-bundle.
