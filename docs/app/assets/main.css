@@ -594,3 +594,28 @@ label.docs-control:not(.docs-control--stacked) span {
     scroll-behavior: auto;
   }
 }
+
+/* Temporary, see internals/migrations.md: the installed docs theme styles
+   scrollbars only for WebKit and does not tell the browser that `.dark` is
+   dark, so other browsers draw light scrollbars on the dark site. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+.fd-scroll-container,
+.content-table-scroll {
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+/* Plain text, such as an error message, wraps. Code keeps its lines and scrolls. */
+.content-codeblock pre:has(> code.language-text),
+.content-codeblock pre > code.language-text {
+  width: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

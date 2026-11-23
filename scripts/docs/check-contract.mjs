@@ -145,9 +145,16 @@ for (const statement of publicIndex.statements) {
 }
 
 // Compare the complete public inventory, not incidental mentions in examples.
-const documentedTypeBlock = typeDocs.match(/```text \[Public types\]\n([\s\S]*?)\n```/)?.[1]
-if (!documentedTypeBlock) failures.push('Types reference is missing its public types inventory.')
-const documentedTypes = new Set(documentedTypeBlock?.match(/[A-Za-z][A-Za-z0-9]*/g) ?? [])
+// The inventory is the table before the first section: its second column lists the types.
+const documentedTypes = new Set(
+  typeDocs
+    .split(/^## /m)[0]
+    .split('\n')
+    .filter((line) => line.startsWith('|'))
+    .flatMap((row) => [...(row.split('|')[2] ?? '').matchAll(/`([A-Za-z][A-Za-z0-9]*)`/g)])
+    .map((match) => match[1]),
+)
+if (!documentedTypes.size) failures.push('Types reference is missing its public types inventory.')
 for (const name of publicTypes) {
   if (!documentedTypes.has(name)) failures.push(`Types reference is missing documented ${name}.`)
 }
