@@ -1,6 +1,27 @@
 /* Structural / layout styles for Lightbox recipe — no colors, no visual theme */
 
 /*
+ * LightboxRoot is a modal <dialog>. Remove the browser's dialog look; the overlay and
+ * ambient layers stay the visible backdrop. :where() keeps a custom root's classes winning.
+ */
+:where([data-np-lightbox-root]) {
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: inherit;
+  background: transparent;
+}
+
+:where([data-np-lightbox-root])::backdrop {
+  background: transparent;
+}
+
+/*
  * The frame area: where a fitted photo may sit inside the full-screen swipe track.
  * The runtime measures [data-np-frame-area]. Set the mat with --np-frame-inset-top,
  * --np-frame-inset-bottom, and --np-frame-inset-inline on any lightbox root. The
@@ -20,7 +41,11 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  /* Room for the top bar above and the wall label below the photo. */
+}
+
+/* Room for the top bar above and the wall label below the photo. :where() keeps the
+ * defaults at zero specificity, so app CSS wins although this file loads with the viewer. */
+:where(.np-lightbox) {
   --np-caption-gap: 14px;
   --np-caption-reserve: 104px;
   --np-frame-inset-top: 72px;
@@ -253,27 +278,28 @@
   object-fit: contain;
 }
 
-/* The wall label: under the photo, aligned to its left edge, at least a readable width. */
-.np-lightbox__caption {
-  --np-caption-width: min(max(var(--np-frame-width, 100vw), 320px), calc(100vw - 24px));
+/*
+ * A photo's caption: inside its slide frame, under the photo, aligned to the photo's left
+ * edge and at least a readable width, but never past the slide's edges. It belongs to the
+ * slide, so it moves and fades with its photo and has no motion of its own.
+ */
+[data-np-slide-caption] {
+  --np-caption-width: min(max(100%, 320px), calc(var(--np-slide-width, 100vw) - 24px));
   position: absolute;
-  z-index: 54;
-  top: calc(var(--np-frame-y, 0px) + var(--np-frame-height, 0px) + var(--np-caption-gap));
-  left: clamp(12px, var(--np-frame-x, 12px), calc(100vw - 12px - var(--np-caption-width)));
+  top: calc(100% + var(--np-caption-gap, 14px));
+  left: clamp(
+    calc(12px - var(--np-slide-frame-left, 0px)),
+    0px,
+    calc(
+      var(--np-slide-width, 100vw) - 12px - var(--np-caption-width) -
+        var(--np-slide-frame-left, 0px)
+    )
+  );
   width: var(--np-caption-width);
-  max-height: var(--np-caption-reserve);
+  max-height: var(--np-caption-reserve, 104px);
   overflow: hidden;
   text-align: start;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    top 380ms cubic-bezier(0.16, 1, 0.3, 1),
-    left 380ms cubic-bezier(0.16, 1, 0.3, 1),
-    width 380ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.np-lightbox__caption > * {
-  pointer-events: auto;
+  cursor: auto;
 }
 
 .np-lightbox__label h2 {
@@ -288,27 +314,8 @@
   -webkit-line-clamp: 2;
 }
 
-/* Caption text swaps quickly out, then eases in with the new photo. */
-.np-caption-leave-active {
-  transition: opacity 90ms linear;
-}
-
-.np-caption-enter-active {
-  transition:
-    opacity 220ms ease-out,
-    translate 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.np-caption-enter-from {
-  opacity: 0;
-  translate: 0 4px;
-}
-
-.np-caption-leave-to {
-  opacity: 0;
-}
-
-/* While zoomed, the frame falls away and the label steps aside; the arrows stay usable. */
+/* While zoomed, the frame falls away and the captions step aside; the arrows stay usable. */
+[data-np-motion='viewport'][data-zoomed] [data-np-slide-caption],
 .np-lightbox:has([data-zoomed]) .np-lightbox__caption {
   visibility: hidden;
 }
@@ -371,7 +378,7 @@
       var(--np-frame-inset-bottom, 24px);
   }
 
-  .np-lightbox {
+  :where(.np-lightbox) {
     --np-caption-reserve: 96px;
     --np-frame-inset-top: 64px;
     --np-frame-inset-bottom: calc(var(--np-caption-reserve) + 12px);
@@ -398,9 +405,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .np-lightbox__caption,
-  .np-lightbox__btn,
-  .np-caption-enter-active {
+  .np-lightbox__btn {
     transition-duration: 1ms;
   }
 }

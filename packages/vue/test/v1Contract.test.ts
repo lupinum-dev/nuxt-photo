@@ -24,11 +24,30 @@ describe('Nuxt Photo 1.0 public contract', () => {
     }
 
     expect(Object.keys(vueManifest.exports).sort()).toEqual(
-      ['.', './agent-docs', './styles.css'].sort(),
+      [
+        '.',
+        './agent-docs',
+        './lightbox.css',
+        './primitives',
+        './styles.css',
+        './styles/*',
+        // Internal entries for `@lupinum/nuxt-photo` of the same version.
+        './internal',
+        './locales/photo',
+        './locales/viewer',
+        './viewer',
+        './viewer-structure',
+        './viewer-themed',
+      ].sort(),
     )
-    expect(Object.keys(nuxtManifest.exports).sort()).toEqual(['.', './agent-docs', './app'].sort())
-    expect([...Object.keys(vueManifest.exports), ...Object.keys(nuxtManifest.exports)]).not.toEqual(
-      expect.arrayContaining([expect.stringContaining('*')]),
+    expect(Object.keys(nuxtManifest.exports).sort()).toEqual(
+      ['.', './agent-docs', './app', './lightbox.css', './primitives'].sort(),
     )
+    // Only the stylesheets form a pattern; every code entry is named.
+    expect(
+      [...Object.keys(vueManifest.exports), ...Object.keys(nuxtManifest.exports)].filter((entry) =>
+        entry.includes('*'),
+      ),
+    ).toEqual(['./styles/*'])
   })
 })

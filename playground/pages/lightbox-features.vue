@@ -46,9 +46,9 @@ const photos = Array.from({ length: 500 }, (_, index) => ({
   id: `feature-${index}`,
   alt: `Feature photo ${index}`,
 }))
-const portraits = demoPhotos.slice(0, 3).map((photo, index) => ({
+// No ids: the second gallery's photos are known, and deep-linked, by their src.
+const portraits = demoPhotos.slice(0, 3).map(({ id: _id, ...photo }, index) => ({
   ...photo,
-  id: `portrait-${index}`,
   src: index === 1 ? 'https://example.com/portrait.jpg' : photo.src,
 }))
 </script>

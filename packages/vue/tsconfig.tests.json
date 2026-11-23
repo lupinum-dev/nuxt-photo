@@ -6,7 +6,11 @@
     "jsx": "preserve",
     "baseUrl": "../..",
     "paths": {
+      "@lupinum/vue-photo/locales/photo": ["packages/vue/src/provide/photoLocaleTemplates.ts"],
+      "@lupinum/vue-photo/locales/viewer": ["packages/vue/src/provide/viewerLocaleTemplates.ts"],
+      "@lupinum/vue-photo/viewer": ["packages/vue/src/lightbox/viewer.ts"],
       "@lupinum/vue-photo": ["packages/vue/src/index.ts"],
+      "@lupinum/vue-photo/primitives": ["packages/vue/src/primitives/index.ts"],
       "@test-fixtures/*": ["test/fixtures/*"]
     },
     "types": ["node", "vitest/globals"]

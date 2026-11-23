@@ -34,8 +34,42 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "import": "./dist/primitives/index.mjs"
+    },
+    "./internal": {
+      "types": "./dist/internal/index.d.ts",
+      "import": "./dist/internal/index.mjs"
+    },
+    "./locales/photo": {
+      "types": "./dist/provide/photoLocaleTemplates.d.ts",
+      "import": "./dist/provide/photoLocaleTemplates.mjs"
+    },
+    "./locales/viewer": {
+      "types": "./dist/provide/viewerLocaleTemplates.d.ts",
+      "import": "./dist/provide/viewerLocaleTemplates.mjs"
+    },
+    "./viewer": {
+      "types": "./dist/lightbox/viewer.d.ts",
+      "import": "./dist/lightbox/viewer.mjs"
+    },
+    "./viewer-structure": {
+      "types": "./dist/lightbox/ViewerHostStructure.vue.d.ts",
+      "import": "./dist/lightbox/ViewerHostStructure.vue"
+    },
+    "./viewer-themed": {
+      "types": "./dist/lightbox/ViewerHostThemed.vue.d.ts",
+      "import": "./dist/lightbox/ViewerHostThemed.vue"
+    },
     "./styles.css": {
       "default": "./dist/styles.css"
+    },
+    "./lightbox.css": {
+      "default": "./dist/styles/lightbox.css"
+    },
+    "./styles/*": {
+      "default": "./dist/styles/*"
     },
     "./agent-docs": "./dist/agent/AGENTS.md"
   },
@@ -49,8 +83,7 @@
   },
   "dependencies": {
     "embla-carousel": "8.6.0",
-    "embla-carousel-autoplay": "8.6.0",
-    "embla-carousel-vue": "8.6.0"
+    "embla-carousel-autoplay": "8.6.0"
   },
   "devDependencies": {
     "typescript": "catalog:",

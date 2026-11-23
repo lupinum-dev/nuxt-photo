@@ -1,5 +1,6 @@
 import { ref, type Ref } from 'vue'
 import type { LightboxNavigationMode } from '../../core/index'
+import { EASE_OUT } from './flight'
 import type { MotionVisualState } from './visual-state'
 
 const CROSSFADE_MS = 280
@@ -8,7 +9,6 @@ const FADE_IN_MS = 230
 const SETTLE_MS = 240
 /** Share of the finger's travel that a dragged photo follows in the fade modes. */
 const DRAG_TRAVEL = 0.35
-const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)'
 const EASE_IN = 'cubic-bezier(0.4, 0, 1, 1)'
 const EASE_IN_OUT = 'cubic-bezier(0.33, 0, 0.2, 1)'
 
@@ -40,8 +40,12 @@ export function createNavigationMotion(
   const leavingSlides = ref<number[]>([])
   const running = new Map<HTMLElement, Animation>()
   let dragBase = 1
-
-  const frameOf = (index: number) => visual.slideFrameRefs.get(index) ?? null
+  /** The slide a drag moves and the width it measures against, read on its first move. */
+  let dragged: { element: HTMLElement | null; width: number } | null = null
+  const readDrag = () => ({
+    element: visual.slideFrame(activeIndex.value),
+    width: visual.elements().viewport?.clientWidth || window.innerWidth || 1,
+  })
 
   /** Read what the slide shows now, then hand it back to the stylesheet. */
   function takePose(element: HTMLElement): Pose {
@@ -70,15 +74,18 @@ export function createNavigationMotion(
     leavingSlides.value = leavingSlides.value.filter((item) => item !== index)
   }
 
-  /** Carry the view from slide `from` to slide `to`; `activeIndex` already points at `to`. */
+  /**
+   * Carry the view from slide `from` to slide `to`; `activeIndex` already points at `to`.
+   * Returns the incoming photo's fade timing, or null when nothing fades.
+   */
   function play(from: number, to: number) {
-    const leaving = frameOf(from)
-    const entering = frameOf(to)
+    const leaving = visual.slideFrame(from)
+    const entering = visual.slideFrame(to)
     const leavingPose = leaving ? takePose(leaving) : null
     const enteringPose = entering ? takePose(entering) : null
     forgetLeaving(to)
     const mode = getMode()
-    if (mode === 'slide' || isReducedMotion()) return
+    if (mode === 'slide' || isReducedMotion()) return null
 
     // After a swipe the old photo keeps drifting the way it was thrown and the new
     // one arrives from the other side; a key or button change stays in place.
@@ -111,11 +118,16 @@ export function createNavigationMotion(
       })
     }
 
+    // Continue from what the slide shows now: at rest that is 0, but a quick return
+    // to the previous photo finds it still (partly) visible.
+    const start = enteringPose?.opacity ?? 0
+    const fadeGap = mode === 'fade' && leavingPose && leavingPose.opacity > 0
+    const timing = {
+      duration: mode === 'crossfade' ? CROSSFADE_MS : FADE_IN_MS,
+      delay: fadeGap ? Math.max(60, FADE_OUT_MS * leavingPose.opacity) : 0,
+      easing: mode === 'crossfade' ? EASE_IN_OUT : EASE_OUT,
+    }
     if (entering) {
-      // Continue from what the slide shows now: at rest that is 0, but a quick return
-      // to the previous photo finds it still (partly) visible.
-      const start = enteringPose?.opacity ?? 0
-      const fadeGap = mode === 'fade' && leavingPose && leavingPose.opacity > 0
       const arrive = drift ? `translateX(${-drift}px)` : 'none'
       void run(
         entering,
@@ -123,22 +135,18 @@ export function createNavigationMotion(
           { opacity: start, transform: arrive },
           { opacity: 1, transform: 'none' },
         ],
-        {
-          duration: mode === 'crossfade' ? CROSSFADE_MS : FADE_IN_MS,
-          delay: fadeGap ? Math.max(60, FADE_OUT_MS * leavingPose.opacity) : 0,
-          easing: mode === 'crossfade' ? EASE_IN_OUT : EASE_OUT,
-        },
+        timing,
       )
     }
+    return timing
   }
 
   /** Let the active photo follow a horizontal drag and fade with distance. */
   function drag(deltaX: number) {
-    const element = frameOf(activeIndex.value)
+    const { element, width } = (dragged ??= readDrag())
     if (!element) return
     // A drag that starts mid-fade continues from the opacity shown, not from full.
     if (running.has(element)) dragBase = takePose(element).opacity
-    const width = visual.viewportRef.value?.clientWidth || window.innerWidth || 1
     const progress = Math.min(1, Math.abs(deltaX) / (width * 0.5))
     element.style.transform = `translateX(${deltaX * DRAG_TRAVEL}px)`
     element.style.opacity = String(dragBase * (1 - progress * 0.6))
@@ -150,7 +158,8 @@ export function createNavigationMotion(
    */
   function release(deltaX: number, velocityX: number) {
     dragBase = 1
-    const width = visual.viewportRef.value?.clientWidth || window.innerWidth || 1
+    const { element, width } = dragged ?? readDrag()
+    dragged = null
     const far = Math.abs(deltaX) > Math.min(120, width * 0.18)
     const flick =
       Math.abs(velocityX) > 0.45 &&
@@ -158,7 +167,6 @@ export function createNavigationMotion(
       Math.sign(velocityX) === Math.sign(deltaX)
     if (far || flick) return true
 
-    const element = frameOf(activeIndex.value)
     if (element) {
       const pose = takePose(element)
       void run(element, [pose, { opacity: 1, transform: 'none' }], {
@@ -170,13 +178,14 @@ export function createNavigationMotion(
   }
 
   function reset() {
+    dragged = null
     for (const [element, animation] of running) {
       animation.cancel()
       element.style.opacity = ''
       element.style.transform = ''
     }
     running.clear()
-    for (const element of visual.slideFrameRefs.values()) {
+    for (const element of visual.slideFrames()) {
       element.style.opacity = ''
       element.style.transform = ''
     }

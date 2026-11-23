@@ -23,7 +23,7 @@ export function getCommonHeight<TMeta extends object>(
   spacing: number,
   padding: number,
 ) {
-  const rowWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
+  const freeWidth = containerWidth - (row.length - 1) * spacing - 2 * padding * row.length
   const totalAspectRatio = row.reduce((acc, item) => acc + ratio(item), 0)
-  return rowWidth / totalAspectRatio
+  return freeWidth / totalAspectRatio
 }

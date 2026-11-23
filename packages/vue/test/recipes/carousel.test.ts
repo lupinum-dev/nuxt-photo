@@ -10,14 +10,17 @@ import {
   type Component,
 } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import useEmblaCarousel from 'embla-carousel-vue'
+import EmblaCarousel from 'embla-carousel'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { makePhoto } from '@test-fixtures/photos'
 import type { PhotoItem } from '../../src/core/index'
 import PhotoCarousel from '../../src/components/PhotoCarousel.vue'
 
-// Observe the real composable's results without replacing Embla or autoplay.
-vi.mock('embla-carousel-vue', { spy: true })
+// The viewer chunk loads on intent; load it up front so a flush covers an open.
+await import('@lupinum/vue-photo/viewer')
+
+// Observe the real Embla instances without replacing Embla or autoplay.
+vi.mock('embla-carousel', { spy: true })
 
 const photos = [
   makePhoto({ id: 'c-1' }),
@@ -254,12 +257,12 @@ describe('PhotoCarousel — DOM', () => {
   })
 
   it('keeps one autoplay subscription and timer after repeated prop changes', async () => {
-    vi.mocked(useEmblaCarousel).mockClear()
+    vi.mocked(EmblaCarousel).mockClear()
     const props = reactive({ photos, autoplay: false })
     const m = mount(PhotoCarousel, props)
     try {
       await flushUi()
-      const api = vi.mocked(useEmblaCarousel).mock.results[0]!.value[1].value!
+      const api = vi.mocked(EmblaCarousel).mock.results[0]!.value
       const on = vi.spyOn(api, 'on')
       const off = vi.spyOn(api, 'off')
       const viewport = m.container.querySelector('.np-carousel__viewport')!
@@ -301,6 +304,35 @@ describe('PhotoCarousel — DOM', () => {
       m.unmount()
       vi.restoreAllMocks()
       vi.useRealTimers()
+    }
+  })
+
+  // An inline `:autoplay="{ ... }"` is a new object on every parent render; reinitializing
+  // Embla for it would restart autoplay each time.
+  it('reinitializes Embla only when a carousel option changes value', async () => {
+    vi.mocked(EmblaCarousel).mockClear()
+    const props = reactive({ photos, loop: false, autoplay: { delayMs: 3000 } })
+    const m = mount(PhotoCarousel, props)
+    try {
+      await flushUi()
+      const reInit = vi.spyOn(vi.mocked(EmblaCarousel).mock.results[0]!.value, 'reInit')
+      props.autoplay = { delayMs: 3000 }
+      await flushUi()
+      expect(reInit).not.toHaveBeenCalled()
+      props.autoplay = { delayMs: 5000 }
+      await flushUi()
+      props.loop = true
+      await flushUi()
+      expect(reInit).toHaveBeenCalledTimes(2)
+      expect(reInit).toHaveBeenNthCalledWith(1, expect.objectContaining({ loop: false }), [
+        expect.objectContaining({ name: 'autoplay' }),
+      ])
+      expect(reInit).toHaveBeenNthCalledWith(2, expect.objectContaining({ loop: true }), [
+        expect.objectContaining({ name: 'autoplay' }),
+      ])
+    } finally {
+      m.unmount()
+      vi.restoreAllMocks()
     }
   })
 
@@ -556,6 +588,6 @@ describe('PhotoCarousel — SSR', () => {
     const html = await renderToString(app)
     expect(html).toContain('np-carousel')
     expect(html).not.toContain('teleport start')
-    expect(html).not.toContain('role="dialog"')
+    expect(html).not.toContain('<dialog')
   })
 })

@@ -1,3 +1,6 @@
+// The module generates '#nuxt-photo-folders' at build time. App typechecks include this file
+// without the package tsconfig, so only this reference brings in its declaration.
+// oxlint-disable-next-line typescript/triple-slash-reference
 /// <reference path="./folder-data.d.ts" />
 import { defineEventHandler, getQuery } from 'h3'
 import { manifest, baseURL } from '#nuxt-photo-folders'

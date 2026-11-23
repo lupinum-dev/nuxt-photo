@@ -13,10 +13,12 @@ import { createMotionVisualState } from '../src/lightbox/transitions/visual-stat
 import type { LightboxNavigationMode } from '../src/core/index'
 
 function setup(mode: LightboxNavigationMode) {
-  const visual = createMotionVisualState()
+  const root = document.createElement('div')
+  const visual = createMotionVisualState(() => root)
   const viewport = document.createElement('div')
+  viewport.dataset.npMotion = 'viewport'
   Object.defineProperty(viewport, 'clientWidth', { value: 1000 })
-  visual.setViewportRef(viewport)
+  root.append(viewport)
   const finish: Array<() => void> = []
   const frames = [0, 1, 2].map((index) => {
     const frame = document.createElement('div')
@@ -26,7 +28,11 @@ function setup(mode: LightboxNavigationMode) {
       finish.push(() => done())
       return { finished, cancel: vi.fn() } as unknown as Animation
     })
-    visual.setSlideFrameRef(index)(frame)
+    const slide = document.createElement('div')
+    slide.dataset.npSlide = String(index)
+    frame.setAttribute('data-np-slide-frame', '')
+    slide.append(frame)
+    viewport.append(slide)
     return frame
   })
   const activeIndex = ref(0)

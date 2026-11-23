@@ -1,12 +1,12 @@
+import { abortable, abortError } from './animation'
+
 export type ImageReadyResult = { ok: true } | { ok: false; error: unknown }
 
 type ImageReadyOptions = {
   timeoutMs: number
   waitForLoadWithoutDecode: boolean
-}
-
-function abortReason(signal: AbortSignal) {
-  return signal.reason ?? new DOMException('Operation aborted', 'AbortError')
+  /** Decode a loaded image too: loaded is not yet decoded, and a ghost must not show blank. */
+  decodeLoaded?: boolean
 }
 
 /** Wait for image readiness while owning every listener, timer, and abort path. */
@@ -15,31 +15,22 @@ export function waitForImageReady(
   signal: AbortSignal,
   options: ImageReadyOptions,
 ): Promise<ImageReadyResult> {
-  if (signal.aborted) return Promise.reject(abortReason(signal))
-  if (image.complete && image.naturalWidth > 0) return Promise.resolve({ ok: true })
-
+  if (signal.aborted) return Promise.reject(abortError(signal))
   const decode = image.decode?.bind(image)
+  if (image.complete && image.naturalWidth > 0 && !(options.decodeLoaded && decode))
+    return Promise.resolve({ ok: true })
+
   if (!decode && !options.waitForLoadWithoutDecode) return Promise.resolve({ ok: true })
 
-  return new Promise((resolve, reject) => {
-    let settled = false
-    const cleanup = () => {
-      clearTimeout(timeout)
-      signal.removeEventListener('abort', abort)
-      image.removeEventListener('load', loaded)
-      image.removeEventListener('error', failed)
-    }
+  return abortable(signal, (resolve) => {
     const finish = (result: ImageReadyResult) => {
-      if (settled) return
-      settled = true
       cleanup()
       resolve(result)
     }
-    const abort = () => {
-      if (settled) return
-      settled = true
-      cleanup()
-      reject(abortReason(signal))
+    const cleanup = () => {
+      clearTimeout(timeout)
+      image.removeEventListener('load', loaded)
+      image.removeEventListener('error', failed)
     }
     const loaded = () => finish({ ok: true })
     const failed = () => finish({ ok: false, error: new Error('Image failed to load') })
@@ -48,16 +39,17 @@ export function waitForImageReady(
       options.timeoutMs,
     )
 
-    signal.addEventListener('abort', abort, { once: true })
     if (decode) {
+      // A loaded image the browser refuses to decode ahead still draws, as it does in its slide.
       Promise.resolve()
         .then(decode)
-        .then(loaded, (error: unknown) => finish({ ok: false, error }))
+        .then(loaded, (error: unknown) =>
+          image.complete && image.naturalWidth > 0 ? loaded() : finish({ ok: false, error }),
+        )
     } else {
       image.addEventListener('load', loaded, { once: true })
       image.addEventListener('error', failed, { once: true })
     }
-
-    if (signal.aborted) abort()
+    return cleanup
   })
 }

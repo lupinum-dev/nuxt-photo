@@ -5,11 +5,17 @@ import {
   computeTargetPanForZoom,
   type GestureMode,
 } from '../../core/index'
-import { VelocityTracker } from './velocity'
+import { createVelocityTracker } from './velocity'
 import { createKeyboardWheelHandlers } from './keyboardWheel'
 import type { GestureInputConfig, GestureSession } from './types'
 import { createPointerResources, getPointerPairGeometry } from './pointerResources'
 import { createTapHandler } from './tap'
+
+/** Keep an event from the page and from the other handlers. */
+const swallow = (event: Event) => {
+  event.preventDefault()
+  event.stopPropagation()
+}
 
 /**
  * Classify pointer and wheel input into slide, pan, zoom, and close gestures,
@@ -25,29 +31,11 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
   const pointers = createPointerResources(state.mediaAreaRef)
   const { activePointers, capturedPointers } = pointers
 
-  const velocityTracker = new VelocityTracker(100)
+  const velocityTracker = createVelocityTracker(100)
   const tap = createTapHandler(() => {
     state.uiVisible.value = !state.uiVisible.value
   }, panzoom.toggleZoom)
-  const keyboardWheel = createKeyboardWheelHandlers({
-    isOpen: state.isOpen,
-    direction: state.direction,
-    animating: state.animating,
-    isZoomedIn: state.isZoomedIn,
-    transitionInProgress: state.transitionInProgress,
-    getCurrentScale: panzoom.getCurrentScale,
-    getCurrentPan: panzoom.getCurrentPan,
-    setCurrentPanImmediate: panzoom.setCurrentPanImmediate,
-    clampPan: panzoom.clampPan,
-    applyWheelZoom: panzoom.applyWheelZoom,
-    toggleZoom: panzoom.toggleZoom,
-    goToNext: navigation.goToNext,
-    goToPrev: navigation.goToPrev,
-    goToFirst: navigation.goToFirst,
-    goToLast: navigation.goToLast,
-    close: lifecycle.close,
-    reportAsyncError: lifecycle.reportAsyncError,
-  })
+  const keyboardWheel = createKeyboardWheelHandlers({ ...state, ...panzoom, ...navigation })
 
   function resetGestureState() {
     pointers.releaseAll()
@@ -55,7 +43,11 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     activePointers.clear()
   }
 
-  function classifyGesture(deltaX: number, deltaY: number, pointerType: string): GestureMode {
+  function classifyGesture(
+    deltaX: number,
+    deltaY: number,
+    pointerType: string,
+  ): Exclude<GestureMode, 'pinch'> {
     const photo = state.currentPhoto.value
     if (!photo) return 'idle'
 
@@ -79,7 +71,6 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
 
     const pinch: GestureSession & { kind: 'pinch' } = {
       kind: 'pinch',
-      pointerIds: [pair[0].id, pair[1].id],
       startDistance: distance,
       startCenter: center,
       startScale: panzoom.getCurrentScale(),
@@ -100,8 +91,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     const pinch = session.value
     if (pinch.kind !== 'pinch' || !photo || !pair) return
 
-    event.preventDefault()
-    event.stopPropagation()
+    swallow(event)
 
     const { distance, center } = getPointerPairGeometry(pair)
     const scaleRatio = distance / pinch.startDistance
@@ -180,8 +170,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     })
 
     if (activePointers.size >= 2) {
-      event.preventDefault()
-      event.stopPropagation()
+      swallow(event)
       if (startPinchGesture()) return
       session.value = { kind: 'idle' }
       return
@@ -195,15 +184,19 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     velocityTracker.reset()
     velocityTracker.addSample(event.clientX, event.clientY, event.timeStamp)
 
+    // A pointer that lands on a settling slide holds it and drags it from where it is.
+    const caught = !state.isZoomedIn.value && navigation.catchSlide()
+    if (caught) pointers.capture(event.pointerId)
+
     session.value = {
-      kind: 'tap',
+      kind: caught ? 'slide' : 'tap',
       id: event.pointerId,
       pointerType: event.pointerType,
       startX: event.clientX,
       startY: event.clientY,
-      lastX: event.clientX,
-      lastY: event.clientY,
-      moved: false,
+      lockX: event.clientX,
+      lockY: event.clientY,
+      moved: caught,
       startPan: panzoom.getCurrentPan(),
     }
 
@@ -228,8 +221,7 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     }
 
     if (activePointers.size >= 2) {
-      event.preventDefault()
-      event.stopPropagation()
+      swallow(event)
       if (startPinchGesture()) {
         applyPinchGesture(event)
       }
@@ -245,15 +237,13 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
 
     velocityTracker.addSample(event.clientX, event.clientY, event.timeStamp)
 
-    pointer.lastX = event.clientX
-    pointer.lastY = event.clientY
     pointer.moved = pointer.moved || Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4
 
     if (pointer.kind === 'tap') {
       const mode = classifyGesture(deltaX, deltaY, pointer.pointerType)
       if (mode !== 'idle') {
-        if (mode === 'pinch') return
-        session.value = { ...pointer, kind: mode }
+        // The drag starts here: the slop that decided the direction is not drawn.
+        session.value = { ...pointer, kind: mode, lockX: event.clientX, lockY: event.clientY }
         pointer = session.value as typeof pointer
 
         if (mode === 'close') {
@@ -272,7 +262,8 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
           return
         }
 
-        if (mode === 'slide' && !navigation.usesTrack()) {
+        if (mode === 'slide') {
+          navigation.beginSlide()
           pointers.capture(event.pointerId)
         }
       }
@@ -282,22 +273,24 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
       event.stopPropagation()
     }
 
-    // Without a swipe track the photo itself follows the finger.
-    if (pointer.kind === 'slide' && !navigation.usesTrack()) {
+    const drawnX = event.clientX - pointer.lockX
+    const drawnY = event.clientY - pointer.lockY
+
+    if (pointer.kind === 'slide') {
       event.stopPropagation()
-      navigation.dragSlide(deltaX)
+      navigation.dragSlide(drawnX)
       return
     }
 
     if (pointer.kind === 'close') {
-      lifecycle.setCloseDragY(deltaY)
+      lifecycle.setCloseDragY(drawnY)
       return
     }
 
     if (pointer.kind === 'pan') {
       const targetPan = {
-        x: pointer.startPan.x + deltaX,
-        y: pointer.startPan.y + deltaY,
+        x: pointer.startPan.x + drawnX,
+        y: pointer.startPan.y + drawnY,
       }
       panzoom.setPanzoomImmediate(
         panzoom.getCurrentScale(),
@@ -313,6 +306,11 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
    * can zoom without the controls blinking first.
    */
   function handleTap(event: PointerEvent, pointerType: string) {
+    // A caption is text to read or select, not the backdrop: a tap on it does nothing here.
+    if (event.target instanceof Element && event.target.closest('[data-np-motion="caption"]')) {
+      tap.cancel()
+      return
+    }
     const onPhoto = panzoom.isPointOnPhoto(event.clientX, event.clientY)
     if (pointerType === 'mouse') {
       tap.cancel()
@@ -344,31 +342,21 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
         return
       }
 
-      const pinch = currentSession
-      for (const pointer of activePointers.values()) {
-        pointers.release(pointer.id)
-      }
       resetGestureState()
-      event.preventDefault()
-      event.stopPropagation()
-      if (pinch.moved) {
-        settlePinchGesture()
-      }
+      swallow(event)
+      if (currentSession.moved) settlePinchGesture()
       return
     }
 
     if (currentSession.kind === 'idle') return
     if (event.pointerId !== currentSession.id) return
 
-    if (capturedPointers.has(event.pointerId)) {
-      pointers.release(event.pointerId)
-    }
-
     const deltaX = event.clientX - currentSession.startX
     const deltaY = event.clientY - currentSession.startY
     const mode = currentSession.kind === 'tap' ? 'idle' : currentSession.kind
 
-    const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity()
+    // A pointer that rested before lifting releases without speed.
+    const { vx: velocityX, vy: velocityY } = velocityTracker.getVelocity(event.timeStamp)
 
     resetGestureState()
 
@@ -386,21 +374,26 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
       return
     }
 
-    if (mode === 'slide' && !navigation.usesTrack()) {
+    if (mode === 'slide') {
       event.stopPropagation()
-      navigation.releaseSlide(deltaX, velocityX)
+      navigation.releaseSlide(
+        deltaX,
+        velocityX,
+        currentSession.pointerType,
+        currentSession.lockX - currentSession.startX,
+      )
       return
     }
 
     if (mode === 'pan') {
-      panzoom.settleCurrentTransform({
-        tension: 170,
-        friction: 17,
-      })
+      panzoom.settleCurrentTransform()
     }
   }
 
   function onMediaPointerCancel(event: PointerEvent) {
+    // Taking the capture from a touch's implicit target (the photo) makes that element lose
+    // it; only a capture this area loses ends the gesture.
+    if (event.type === 'lostpointercapture' && event.target !== state.mediaAreaRef.value) return
     const currentSession = session.value
     const wasPinching = currentSession.kind === 'pinch'
     activePointers.delete(event.pointerId)
@@ -418,7 +411,10 @@ export function useLightboxInputHandlers(config: GestureInputConfig) {
     const hadCapture = capturedPointers.has(event.pointerId)
     const wasSliding = currentSession.kind === 'slide'
     resetGestureState()
-    if (wasSliding && !navigation.usesTrack()) navigation.releaseSlide(0, 0)
+    if (wasSliding) {
+      const lead = currentSession.lockX - currentSession.startX
+      navigation.releaseSlide(0, 0, currentSession.pointerType, lead)
+    }
 
     if (state.isZoomedIn.value || hadCapture) {
       panzoom.setCurrentPanImmediate(

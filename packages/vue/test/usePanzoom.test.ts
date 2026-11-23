@@ -2,15 +2,19 @@
 
 import { computed, createApp, defineComponent, ref } from 'vue'
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { computeZoomLevels } from '../src/core/index'
+import { computeZoomLevels, fitRect, type ResolvedPhotoItem } from '../src/core/index'
 import { usePanzoom } from '../src/lightbox/panzoom'
 import { createPhotoSet } from '@test-fixtures/photos'
+
+/** The photo's frame when the lightbox has no mat: fitted in the whole area. */
+const fitted = (area: { value: { width: number; height: number } }) => (photo: ResolvedPhotoItem) =>
+  fitRect({ ...area.value, left: 0, top: 0 }, photo.width / photo.height)
 
 describe('usePanzoom', () => {
   it('refreshes zoom state from the current photo and area metrics', () => {
     const currentPhoto = computed(() => createPhotoSet()[0]!)
     const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+    const panzoom = usePanzoom(currentPhoto, areaMetrics, undefined, fitted(areaMetrics))
 
     panzoom.refreshZoomState(true)
 
@@ -21,7 +25,7 @@ describe('usePanzoom', () => {
   it('returns a centered pan target when zooming back to fit', () => {
     const currentPhoto = computed(() => createPhotoSet()[0]!)
     const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+    const panzoom = usePanzoom(currentPhoto, areaMetrics, undefined, fitted(areaMetrics))
 
     panzoom.refreshZoomState(true)
     panzoom.setPanzoomImmediate(2, { x: 180, y: -90 })
@@ -37,7 +41,7 @@ describe('usePanzoom', () => {
   it('clamps pan after recalculating geometry at the current zoom', () => {
     const currentPhoto = computed(() => createPhotoSet()[0]!)
     const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+    const panzoom = usePanzoom(currentPhoto, areaMetrics, undefined, fitted(areaMetrics))
 
     panzoom.refreshZoomState(true)
     panzoom.setPanzoomImmediate(panzoom.zoomState.value.max, {
@@ -53,7 +57,7 @@ describe('usePanzoom', () => {
   it('applies transforms to the active slide ref only', () => {
     const currentPhoto = computed(() => createPhotoSet()[0]!)
     const areaMetrics = ref({ left: 0, top: 0, width: 1200, height: 800 })
-    const panzoom = usePanzoom(currentPhoto, areaMetrics)
+    const panzoom = usePanzoom(currentPhoto, areaMetrics, undefined, fitted(areaMetrics))
     const inactive = document.createElement('div')
     const active = document.createElement('div')
 
@@ -77,9 +81,12 @@ describe('usePanzoom', () => {
     let panzoom: ReturnType<typeof usePanzoom> | null = null
     const App = defineComponent({
       setup() {
+        const area = ref({ left: 0, top: 0, width: 1200, height: 800 })
         panzoom = usePanzoom(
           computed(() => createPhotoSet()[0]!),
-          ref({ left: 0, top: 0, width: 1200, height: 800 }),
+          area,
+          undefined,
+          fitted(area),
         )
         return () => null
       },

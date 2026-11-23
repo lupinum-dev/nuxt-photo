@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nuxt dev",
     "test:scroll-wait": "playwright test --config tests/perf/playwright.config.ts",
+    "test:gesture": "playwright test --config tests/perf/gesture.playwright.config.ts",
     "types:prepare": "nuxi prepare",
     "build": "nuxt build",
     "generate": "nuxt generate",
@@ -18,6 +19,7 @@
     "nuxt-shiki": "^0.3.2"
   },
   "devDependencies": {
+    "@lupinum/vue-photo": "workspace:*",
     "nuxt-photo-demo": "workspace:*",
     "vite": "catalog:",
     "vue-tsc": "catalog:"

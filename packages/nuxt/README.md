@@ -60,11 +60,19 @@ const photos: PhotoItem[] = [
 - `@lupinum/nuxt-photo` exports the Nuxt module.
 - `@lupinum/nuxt-photo/app` exports the components, types and helpers for
   explicit imports.
+- `@lupinum/nuxt-photo/primitives` exports the lightbox building blocks, an
+  advanced API that may change in a minor version. Register them by name with
+  `components: { primitives: true }`, or import them and add
+  `@lupinum/nuxt-photo/lightbox.css` once.
 - Auto-imports: `useLightbox`, `usePhotoLabels`, `usePhotoFolder` and
   `responsive`.
 
 With `@nuxt/image` installed, images use its provider, `screens` and quality.
 Without it, images use the photo's own `src`.
+
+The `css` option loads `'structure'` (the default), `'all'` (structure and
+theme) or `'none'`. The lightbox CSS loads with the lightbox viewer, which is a
+separate chunk that loads when a visitor reaches for a photo.
 
 Configure everything in `nuxtPhoto` in `nuxt.config.ts`. Labels follow the
 active `@nuxtjs/i18n` locale; ten languages are bundled.

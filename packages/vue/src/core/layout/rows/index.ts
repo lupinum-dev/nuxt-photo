@@ -2,12 +2,18 @@ import type { LayoutGroup, RowsLayoutOptions } from '../../types'
 import { validatePhotoDimensions } from '../types'
 import { findRowBreaks } from './knuthPlass'
 import { pathToGroups } from './pathToGroups'
+import { DEFAULT_PADDING, DEFAULT_SPACING, DEFAULT_TARGET_ROW_HEIGHT } from '../constants'
 
 /** Compute a justified rows layout using the global row-break solver. */
 export function computeRowsLayout<TMeta extends object>(
   options: RowsLayoutOptions<TMeta>,
 ): LayoutGroup<TMeta>[] {
-  const { containerWidth, spacing = 8, padding = 0, targetRowHeight = 300 } = options
+  const {
+    containerWidth,
+    spacing = DEFAULT_SPACING,
+    padding = DEFAULT_PADDING,
+    targetRowHeight = DEFAULT_TARGET_ROW_HEIGHT,
+  } = options
 
   const photos = validatePhotoDimensions(options.photos)
 

@@ -34,6 +34,18 @@ instead, which registers the same components.
 pnpm add @lupinum/vue-photo@next
 ```
 
+With Vite, exclude the package from dependency pre-bundling. It ships Vue
+single-file components; without this line the dev server loads the package
+twice, and `createPhoto` options do not reach the components:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  plugins: [vue()],
+  optimizeDeps: { exclude: ['@lupinum/vue-photo'] },
+})
+```
+
 ## Quick start
 
 ```vue
@@ -56,15 +68,21 @@ provider for the whole app once with `app.use(createPhoto({ ... }))`.
 
 ## Exports
 
-- Components: `Photo`, `PhotoAlbum`, `PhotoGroup`, `PhotoCarousel`, `Lightbox`,
-  and the lightbox building blocks such as `LightboxProvider`, `LightboxRoot`,
-  `PhotoTrigger` and `PhotoImage`.
+- Components: `Photo`, `PhotoAlbum`, `PhotoGroup`, `PhotoCarousel`, `Lightbox`
+  and `PhotoImage`.
 - Functions: `createPhoto`, `definePhotoProvider`, `validatePhotos`,
   `responsive`, `useLightbox` and `usePhotoLabels`.
-- Types such as `PhotoItem`, `GalleryHandle` and `PhotoProvider`, and the
-  stylesheet `@lupinum/vue-photo/styles.css`.
+- Types such as `PhotoItem`, `ResolvedPhotoItem`, `GalleryHandle` and
+  `PhotoProvider`.
+- `@lupinum/vue-photo/primitives`: the lightbox building blocks
+  (`LightboxProvider`, `LightboxRoot`, `PhotoTrigger` and others). This is
+  advanced API and may change in a minor version.
+- Stylesheets: `styles.css` (all), `lightbox.css`, and single files under
+  `styles/*`.
 
-Import from the package root only. Generated files and deep imports are internal.
+The entries `/internal`, `/locales/*` and `/viewer*` are internal to
+`@lupinum/nuxt-photo`. The lightbox viewer is a separate chunk that loads when
+a visitor reaches for a photo.
 
 ## Agent setup
 

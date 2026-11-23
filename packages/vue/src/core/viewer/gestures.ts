@@ -11,7 +11,7 @@ export function classifyGesture(
   isZoomedIn: boolean,
   panBounds: PanBounds,
   currentPan: PanState,
-): GestureMode {
+): Exclude<GestureMode, 'pinch'> {
   const absX = Math.abs(deltaX)
   const absY = Math.abs(deltaY)
   // Touch needs more slack (finger inaccuracy); pointer is mouse-precise.

@@ -7,7 +7,7 @@ import PhotoCarousel from '../src/components/PhotoCarousel.vue'
 import { createPhoto, usePhotoLabels, type PhotoLabels } from '../src'
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
-import { resolvePhotoLabels } from '../src/provide/labels'
+import { resolvePhotoLabels } from '../src/provide/viewerLabels'
 import { flushUi, installBrowserStubs, mountComponent } from './support/runtime'
 
 describe('photo labels', () => {
@@ -41,7 +41,8 @@ describe('photo labels', () => {
     expect(fallback.close).toBe(resolvePhotoLabels('en').close)
   })
 
-  it('renders localized lightbox labels and announcements', async () => {
+  // The viewer's labels load with the viewer chunk; overrides must still reach them.
+  it('applies label overrides to the viewer after it loads', async () => {
     const mounted = await mountComponent(PhotoAlbum, {
       props: {
         photos: [makePhoto({ id: 'l-1' }), makePhoto({ id: 'l-2' })],
@@ -60,10 +61,12 @@ describe('photo labels', () => {
       ],
     })
 
-    ;(mounted.container.querySelector('[role="button"]') as HTMLElement).click()
+    const trigger = mounted.container.querySelector('[role="button"]') as HTMLElement
+    expect(document.body.querySelector('dialog')).toBeNull()
+    trigger.click()
     await flushUi()
 
-    const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement
+    const dialog = document.body.querySelector('dialog') as HTMLElement
     expect(dialog.getAttribute('aria-label')).toBe('Bildbetrachter')
     expect(dialog.textContent).toContain('Bild 1 von 2')
     expect(Array.from(dialog.querySelectorAll('button'), (button) => button.ariaLabel)).toEqual(

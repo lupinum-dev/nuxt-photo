@@ -2,8 +2,7 @@
   <CarouselLayout
     ref="layoutRef"
     v-bind="{ ...$attrs, ...layoutProps }"
-    :on-slide-activate="hasLightbox ? openSlide : undefined"
-    :set-slide-ref="hasLightbox ? setItemRef : undefined"
+    :on-slide-activate="hasLightbox ? activate : undefined"
   >
     <template v-if="$slots.slide" #slide="slotProps">
       <slot name="slide" v-bind="slotProps" />
@@ -39,7 +38,6 @@ import type {
 } from '../types/index'
 import type { InvalidPhotoPolicy, InvalidPhotosEvent } from '../core/index'
 import { useGalleryRuntime } from '../gallery/runtime'
-import { useGalleryModel } from '../gallery/model'
 import { useCollectionLightbox } from './shared/useCollectionLightbox'
 import CarouselLayout from './photo-carousel/CarouselLayout.vue'
 import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
@@ -63,7 +61,7 @@ defineSlots<{
 const props = withDefaults(
   defineProps<{
     /**
-     * Slides in order. Each needs a stable `id`, a `src`, and the real pixel `width` and `height`.
+     * Slides in order. Each needs a `src` and the real pixel `width` and `height`; `id` defaults to `src`.
      */
     photos: readonly PhotoItem<TMeta>[]
     /** Photo ID to open or navigate; null closes. User navigation emits update:active. */
@@ -78,10 +76,14 @@ const props = withDefaults(
     /** Image provider object, or a Nuxt Image provider name. Wins over inherited config. */
     provider?: PhotoProvider | string
     /**
+     * Built-in controls to render: `'arrows'`, `'dots'`, `'counter'`, `'thumbnails'`.
+     * @default ['arrows', 'thumbnails', 'counter']
+     */
+    controls?: CarouselControl[]
+    /**
      * Continue from the last slide to the first.
      * @default false
      */
-    controls?: CarouselControl[]
     loop?: boolean
     /**
      * Let the track stop between slides after a drag.
@@ -148,31 +150,17 @@ const layoutRef = ref<{
 } | null>(null)
 const gallery = useGalleryRuntime(resolvedPhotos, () => layoutRef.value?.root ?? null)
 
-const {
-  hasLightbox,
-  LightboxComponent: lightboxComponent,
-  setItemRef,
-  open,
-  openById,
-  close,
-  isOpen,
-  activeId: ownerActiveId,
-  activePhoto: ownerActivePhoto,
-} = useCollectionLightbox(
-  resolvedPhotos,
-  props,
-  () => layoutRef.value?.root ?? null,
-  'PhotoCarousel',
-  false,
-)
-const openSlide = open
-const { activeId, activePhoto } = useGalleryModel(
-  'PhotoCarousel',
-  () => props.active,
-  () => resolvedPhotos.value,
-  { isOpen, activeId: ownerActiveId, activePhoto: ownerActivePhoto, openById, close },
-  (id) => emit('update:active', id),
-)
+const { lightboxComponent, hasLightbox, activate, handle } = useCollectionLightbox({
+  owner: 'PhotoCarousel',
+  photos: resolvedPhotos,
+  publicPhotos: resolvedPhotos,
+  root: () => layoutRef.value?.root ?? null,
+  lightbox: () => props.lightbox,
+  defaultEnabled: false,
+  active: () => props.active,
+  emitActive: (id) => emit('update:active', id),
+})
+const { open, openById, close, isOpen, activeId, activePhoto } = handle
 function scrollTo(index: number) {
   layoutRef.value?.goTo(index)
 }

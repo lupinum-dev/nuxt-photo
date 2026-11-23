@@ -11,8 +11,8 @@ import { Lightbox } from '@lupinum/nuxt-photo/app'
 
     <template #caption="{ photo, index }">
       <p class="caption-lightbox__eyebrow">Frame {{ index + 1 }}</p>
-      <h2 v-if="photo?.caption" class="caption-lightbox__title">{{ photo.caption }}</h2>
-      <p v-if="photo?.description" class="caption-lightbox__text">{{ photo.description }}</p>
+      <h2 v-if="photo.caption" class="caption-lightbox__title">{{ photo.caption }}</h2>
+      <p v-if="photo.description" class="caption-lightbox__text">{{ photo.description }}</p>
     </template>
   </Lightbox>
 </template>

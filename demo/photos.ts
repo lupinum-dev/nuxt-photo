@@ -1,5 +1,8 @@
 import type { PhotoItem } from '@lupinum/vue-photo'
 
+/** Every demo photo has an id, so pages can open one by it. */
+type DemoPhoto = PhotoItem & { readonly id: string }
+
 // One photo set for the docs and the playground. The images live in ./images;
 // each app links that folder into its public directory as /photos.
 
@@ -11,7 +14,7 @@ function localPhoto(
   caption: string,
   description: string,
   meta?: Record<string, unknown>,
-): PhotoItem {
+): DemoPhoto {
   return {
     id,
     src: `/photos/${id}.jpg`,
@@ -24,7 +27,7 @@ function localPhoto(
   }
 }
 
-export const demoPhotos: PhotoItem[] = [
+export const demoPhotos: DemoPhoto[] = [
   localPhoto(
     'moss-canyon',
     1280,

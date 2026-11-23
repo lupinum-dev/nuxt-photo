@@ -37,8 +37,8 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { PhotoImage } from '../../primitives/index'
-import type { PhotoItem } from '../../core/index'
+import PhotoImage from '../../primitives/PhotoImage.vue'
+import type { ResolvedPhotoItem as PhotoItem } from '../../core/index'
 
 defineProps<{
   photo: PhotoItem<TMeta>

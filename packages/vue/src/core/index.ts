@@ -45,25 +45,27 @@ export type {
 
 export { computeRowsLayout } from './layout/rows/index'
 export {
+  DEFAULT_BENTO_COLUMNS,
+  DEFAULT_BREAKPOINTS,
   DEFAULT_COLUMNS,
   DEFAULT_PADDING,
   DEFAULT_SPACING,
   DEFAULT_TARGET_ROW_HEIGHT,
   computeGaps,
-  computeWidthDivisor,
+  isLayoutType,
+  layoutCropsPhotos,
 } from './layout/constants'
-export {
-  computeBreakpointStyles,
-  type BreakpointStylesOptions,
-} from './layout/rows/containerQueries'
-export { computeColumnsLayout } from './layout/columns'
-export { computeMasonryLayout } from './layout/masonry'
+export type { AlbumPlan, AlbumPlanItem, AlbumPlanWidths } from './layout/plan'
+export { computeRowsPlan, type RowBreakMemo, type RowsPlan } from './layout/rows/plan'
+export { computeColumnsLayout, computeColumnsPlan } from './layout/columns'
+export { computeMasonryLayout, computeMasonryPlan } from './layout/masonry'
 
 export { computePhotoSizes } from './image/sizes'
 export { isUsableRect, fitRect, coverPose, restingClip, rubberband } from './geometry/rect'
+export type { Inset, Pose } from './geometry/rect'
 
+export { DEFAULT_MIN_ZOOM } from './viewer/defaults'
 export {
-  DEFAULT_MIN_ZOOM,
   computeZoomLevels,
   computePanBounds,
   clampPanToBounds,
@@ -72,6 +74,7 @@ export {
   computeTargetPanForZoom,
 } from './viewer/zoom'
 export { classifyGesture, isDoubleTap } from './viewer/gestures'
+export { planSettle } from './viewer/settle'
 
 export {
   DEFAULT_TRANSITION_CONFIG,
@@ -81,4 +84,4 @@ export {
   type TransitionModeConfig,
 } from './transition/transitionChoice'
 
-export { computeFrameLayout, type FrameLayout } from './layout/frame'
+export { computeFramePlan } from './layout/frame'

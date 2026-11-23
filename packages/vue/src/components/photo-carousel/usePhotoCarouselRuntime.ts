@@ -1,6 +1,5 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
-import useEmblaCarousel from 'embla-carousel-vue'
-import type { EmblaCarouselType, EmblaOptionsType } from 'embla-carousel'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch, type Ref } from 'vue'
+import EmblaCarousel, { type EmblaCarouselType, type EmblaOptionsType } from 'embla-carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import type { GalleryRuntime } from '../../gallery/runtime'
 import { createGalleryEmblaBridge } from '../../gallery/embla'
@@ -8,6 +7,15 @@ import type { PhotoCarouselAutoplayOptions, PhotoItem } from '../../core/index'
 
 // Native controls only: a slide with an open-lightbox role must stay draggable.
 const CONTROL_SELECTOR = '.np-carousel__controls, button, a, input, select, textarea'
+
+function sameValues(a: object | null, b: object | null) {
+  if (!a || !b) return a === b
+  const keys = Object.keys(a)
+  return (
+    keys.length === Object.keys(b).length &&
+    keys.every((key) => Reflect.get(a, key) === Reflect.get(b, key))
+  )
+}
 
 export function validatePhotoCarouselBehavior(options: { loop?: boolean; dragFree?: boolean }) {
   if (options.loop !== undefined && typeof options.loop !== 'boolean') {
@@ -94,19 +102,17 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
   // reader's pause has to be remembered here and applied again.
   let pausedByReader = false
 
-  const pluginsRef = computed(() => {
+  const autoplayRef = computed(() => {
     const autoplay = config.autoplay.value
     validatePhotoCarouselAutoplayOptions(autoplay)
-    if (!autoplay || reducedMotion.value) return []
+    if (!autoplay || reducedMotion.value) return null
     const options = typeof autoplay === 'object' ? autoplay : {}
     const delay = options.delayMs === undefined ? {} : { delay: options.delayMs }
-    return [
-      Autoplay({
-        ...delay,
-        stopOnInteraction: options.stopOnInteraction ?? true,
-        stopOnMouseEnter: options.stopOnMouseEnter ?? false,
-      }),
-    ]
+    return {
+      ...delay,
+      stopOnInteraction: options.stopOnInteraction ?? true,
+      stopOnMouseEnter: options.stopOnMouseEnter ?? false,
+    }
   })
   const thumbsOptionsRef = computed<EmblaOptionsType>(() => ({
     containScroll: 'keepSnaps',
@@ -115,8 +121,27 @@ export function usePhotoCarouselRuntime(config: CarouselRuntimeConfig) {
     slidesToScroll: 1,
   }))
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(optionsRef, pluginsRef)
-  const [thumbsRef, thumbsApi] = useEmblaCarousel(thumbsOptionsRef)
+  const emblaRef = shallowRef<HTMLElement>()
+  const emblaApi = shallowRef<EmblaCarouselType>()
+  const thumbsRef = shallowRef<HTMLElement>()
+  const thumbsApi = shallowRef<EmblaCarouselType>()
+  const plugins = () => (autoplayRef.value ? [Autoplay(autoplayRef.value)] : [])
+  onMounted(() => {
+    if (emblaRef.value) emblaApi.value = EmblaCarousel(emblaRef.value, optionsRef.value, plugins())
+    if (thumbsRef.value) thumbsApi.value = EmblaCarousel(thumbsRef.value, thumbsOptionsRef.value)
+  })
+  // A parent that renders `:autoplay="{ ... }"` passes a new object each time; only a changed
+  // value reinitializes Embla, which would restart autoplay.
+  const reInitOnChange = <T extends object | null>(
+    source: Readonly<Ref<T>>,
+    reInit: (value: T) => void,
+  ) =>
+    watch(source, (value, previous) => {
+      if (!sameValues(value, previous)) reInit(value)
+    })
+  reInitOnChange(optionsRef, (options) => emblaApi.value?.reInit(options, plugins()))
+  reInitOnChange(autoplayRef, () => emblaApi.value?.reInit(optionsRef.value, plugins()))
+  reInitOnChange(thumbsOptionsRef, (options) => thumbsApi.value?.reInit(options))
 
   const selectedIndex = gallery.activeIndex
   const selectedSnapIndex = gallery.activeIndex

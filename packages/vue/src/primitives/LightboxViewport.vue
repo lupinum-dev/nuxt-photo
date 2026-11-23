@@ -1,11 +1,6 @@
 <template>
   <div
-    :ref="
-      (el) => {
-        ctx.mediaAreaRef.value = el as HTMLElement | null
-        ctx.setViewportRef(el as Element | null)
-      }
-    "
+    :ref="(el) => (ctx.mediaAreaRef.value = el as HTMLElement | null)"
     v-bind="$attrs"
     data-np-motion="viewport"
     :data-zoomed="ctx.isZoomedIn.value || undefined"
@@ -23,7 +18,7 @@
     <slot
       v-if="ctx.stageMounted.value"
       :photos="ctx.photos.value"
-      :viewport-ref="ctx.emblaRef"
+      :viewport-ref="ctx.trackRef"
       :image-load-failed="ctx.activeImageLoadFailed.value"
       :is-slide-mounted="ctx.isSlideMediaMounted"
     />

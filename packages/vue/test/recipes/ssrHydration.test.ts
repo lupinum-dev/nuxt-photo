@@ -78,42 +78,6 @@ async function hydrateAlbum(props: Record<string, unknown>) {
   return { host, app }
 }
 
-function pixels(css: string, width: number): number {
-  const expression = css.replace(/calc/g, '').replace(/100%/g, String(width)).replace(/px/g, '')
-  const tokens = expression.match(/\d*\.\d+|\d+|[()+*/-]/g)!
-  expect(tokens.join(''), css).toBe(expression.replace(/\s/g, ''))
-  let position = 0
-  function factor(): number {
-    const token = tokens[position++]
-    if (token === '-') return -factor()
-    if (token !== '(') return Number(token)
-    const value = sum()
-    expect(tokens[position++]).toBe(')')
-    return value
-  }
-  function product(): number {
-    let value = factor()
-    while (tokens[position] === '*' || tokens[position] === '/') {
-      const operator = tokens[position++]
-      const right = factor()
-      value = operator === '*' ? value * right : value / right
-    }
-    return value
-  }
-  function sum(): number {
-    let value = product()
-    while (tokens[position] === '+' || tokens[position] === '-') {
-      const operator = tokens[position++]
-      const right = product()
-      value = operator === '+' ? value + right : value - right
-    }
-    return value
-  }
-  const value = sum()
-  expect(position).toBe(tokens.length)
-  return value
-}
-
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', ResizeObserverMock)
   vi.stubGlobal('IntersectionObserver', IntersectionObserverMock)
@@ -149,71 +113,67 @@ afterEach(() => {
 })
 
 describe('SSR hydration', () => {
-  // Catches repartitioning/remounting at the first measurement, even with an SSR estimate.
-  it('keeps SSR columns geometry and image nodes at 1200px and 800px containers', async () => {
-    const ratios = [0.4, 2, 1, 0.7, 1.8, 0.3, 2.5, 1.2, 0.6, 1.4, 0.8, 3]
-    const collection = Array.from({ length: 37 }, (_, index) =>
-      makePhoto({
-        id: `geometry-${index}`,
-        alt: `geometry-${index}`,
-        width: ratios[(index * 17) % ratios.length]! * 1000,
-        height: 1000,
-      }),
-    )
-    // JSDOM does not lay out boxes. Evaluate the rendered CSS lengths against the actual
-    // containing width instead of comparing strings; browser tests also measure real boxes.
-    function widths(host: HTMLElement, width: number) {
-      return [...host.querySelectorAll<HTMLElement>('.np-album__column')].flatMap((column) => {
-        const columnWidth = pixels(column.style.width, width)
-        return [...column.querySelectorAll<HTMLElement>('.np-album__item')].map((item) => ({
-          id: item.querySelector('img')!.getAttribute('alt'),
-          width: pixels(item.style.width, columnWidth),
-        }))
-      })
-    }
-    for (const width of [1200, 800]) {
-      vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockReturnValue({
-        x: 0,
-        y: 0,
-        top: 0,
-        left: 0,
-        right: width,
-        bottom: 600,
-        width,
-        height: 600,
-        toJSON: () => ({}),
-      })
+  // Catches columns or masonry that re-place photos or remount images once the browser measures.
+  it.each(['columns', 'masonry'] as const)(
+    'keeps the server %s CSS and image nodes at 1200px and 800px containers',
+    async (type) => {
+      const ratios = [0.4, 2, 1, 0.7, 1.8, 0.3, 2.5, 1.2, 0.6, 1.4, 0.8, 3]
+      const collection = Array.from({ length: 37 }, (_, index) =>
+        makePhoto({
+          id: `geometry-${index}`,
+          width: ratios[(index * 17) % ratios.length]! * 1000,
+          height: 1000,
+        }),
+      )
       const props = {
         photos: collection,
-        layout: { type: 'columns' as const, columns: 3 },
-        defaultContainerWidth: 1200,
+        layout: { type, columns: 3 },
         spacing: 24,
         padding: 4,
         lightbox: false,
       }
-      const html = await renderToString(createSSRApp({ render: () => h(PhotoAlbum, props) }))
-      const host = document.createElement('div')
-      host.innerHTML = html
-      document.body.appendChild(host)
-      const before = widths(host, width)
-      const images = [...host.querySelectorAll('img')]
-      const app = createSSRApp({ render: () => h(PhotoAlbum, props) })
-      app.mount(host)
-      await nextTick()
-      try {
-        expect(widths(host, width)).toEqual(before)
-        expect(
-          [...host.querySelectorAll('img')].every((image, index) => image === images[index]),
-        ).toBe(true)
-      } finally {
-        app.unmount()
-        host.remove()
+      for (const width of [1200, 800]) {
+        vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockReturnValue({
+          x: 0,
+          y: 0,
+          top: 0,
+          left: 0,
+          right: width,
+          bottom: 600,
+          width,
+          height: 600,
+          toJSON: () => ({}),
+        })
+        const host = document.createElement('div')
+        host.innerHTML = await renderToString(createSSRApp({ render: () => h(PhotoAlbum, props) }))
+        document.body.appendChild(host)
+        const placement = () => ({
+          css: host.querySelector('style')!.textContent,
+          items: [...host.querySelectorAll('.np-album__item')].map(
+            (item) => `${item.getAttribute('class')} ${item.getAttribute('style')}`,
+          ),
+        })
+        const before = placement()
+        const images = [...host.querySelectorAll('img')]
+        const app = createSSRApp({ render: () => h(PhotoAlbum, props) })
+        app.mount(host)
+        await nextTick()
+        try {
+          expect(before.items).toHaveLength(37)
+          expect(placement()).toEqual(before)
+          expect(
+            [...host.querySelectorAll('img')].every((image, index) => image === images[index]),
+          ).toBe(true)
+        } finally {
+          app.unmount()
+          host.remove()
+        }
       }
-    }
-  })
+    },
+  )
 
-  // Catches the SSR flex fallback and first-measurement DP reflow, plus append repartitioning.
-  it('keeps evaluated SSR row geometry at 1200px and 800px, including after append', async () => {
+  // Catches rows that hydrate, measure or append into different positions than the server sent.
+  it('keeps the server rows CSS through hydration, resize and append', async () => {
     const collection = Array.from({ length: 37 }, (_, index) =>
       makePhoto({
         id: `row-${index}`,
@@ -221,77 +181,74 @@ describe('SSR hydration', () => {
         height: 1000,
       }),
     )
-    for (const width of [1200, 800]) {
-      vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockReturnValue({
-        x: 0,
-        y: 0,
-        top: 0,
-        left: 0,
-        right: width,
-        bottom: 600,
-        width,
-        height: 600,
-        toJSON: () => ({}),
+    const items = ref(collection)
+    const render = () =>
+      h(PhotoAlbum, {
+        photos: items.value,
+        layout: 'rows',
+        spacing: 24,
+        padding: 4,
+        lightbox: false,
       })
-      const items = ref(collection)
-      const render = () =>
-        h(PhotoAlbum, {
-          photos: items.value,
-          layout: 'rows',
-          defaultContainerWidth: 1200,
-          spacing: 24,
-          padding: 4,
-          lightbox: false,
-        })
-      const host = document.createElement('div')
-      host.innerHTML = await renderToString(createSSRApp({ render }))
-      document.body.appendChild(host)
-      const geometry = (actualWidth = width) =>
-        [...host.querySelectorAll<HTMLElement>('.np-album__item')].map((item) => ({
-          width: pixels(item.style.width, actualWidth),
-          ratio:
-            item.querySelector('img')!.getAttribute('width')! +
-            '/' +
-            item.querySelector('img')!.getAttribute('height')!,
-        }))
-      const before = geometry()
-      expect(before.every((item) => Number.isFinite(item.width) && item.width > 0)).toBe(true)
-      const images = [...host.querySelectorAll('img')]
-      const app = createSSRApp({ render })
-      app.mount(host)
+    const host = document.createElement('div')
+    host.innerHTML = await renderToString(createSSRApp({ render }))
+    document.body.appendChild(host)
+    const css = () => host.querySelector('style')!.textContent!
+    const itemStyles = () =>
+      [...host.querySelectorAll<HTMLElement>('.np-album__item')].map((item) =>
+        item.getAttribute('style'),
+      )
+    /** Row-end breaks shown by each container query span. */
+    const breaks = () =>
+      css()
+        .split('\n')
+        .map((rule) => [...rule.matchAll(/\.np-br-(\d+)/g)].map((match) => Number(match[1])))
+    const before = { css: css(), styles: itemStyles() }
+    expect(before.css).toContain('@container')
+    const images = [...host.querySelectorAll('img')]
+    const app = createSSRApp({ render })
+    app.mount(host)
+    await nextTick()
+    try {
+      expect(css()).toBe(before.css)
+      expect(itemStyles()).toEqual(before.styles)
+      expect(
+        [...host.querySelectorAll('img')].every((image, index) => image === images[index]),
+      ).toBe(true)
+      resizeCallback(
+        [
+          {
+            target: host.firstElementChild!,
+            contentRect: new DOMRectReadOnly(0, 0, 950, 600),
+            borderBoxSize: [],
+            contentBoxSize: [],
+            devicePixelContentBoxSize: [],
+          },
+        ],
+        {} as ResizeObserver,
+      )
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
       await nextTick()
-      try {
-        expect(geometry()).toEqual(before)
-        expect(
-          [...host.querySelectorAll('img')].every((image, index) => image === images[index]),
-        ).toBe(true)
-        items.value = [
-          ...collection,
-          ...collection.map((photo) => ({ ...photo, id: `${photo.id}-append` })),
-        ]
-        await nextTick()
-        expect(geometry().slice(0, before.length)).toEqual(before)
-        const scaledBeforeResize = geometry(950)
-        const rect = new DOMRectReadOnly(0, 0, 950, 600)
-        resizeCallback(
-          [
-            {
-              target: host.firstElementChild!,
-              contentRect: rect,
-              borderBoxSize: [],
-              contentBoxSize: [],
-              devicePixelContentBoxSize: [],
-            },
-          ],
-          {} as ResizeObserver,
-        )
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-        await nextTick()
-        expect(geometry(950)).not.toEqual(scaledBeforeResize)
-      } finally {
-        app.unmount()
-        host.remove()
+      expect(css()).toBe(before.css)
+
+      const shown = breaks()
+      items.value = [
+        ...collection,
+        ...collection.map((photo) => ({ ...photo, id: `${photo.id}-append` })),
+      ]
+      await nextTick()
+      const appended = breaks()
+      expect(appended).toHaveLength(shown.length)
+      for (const [span, ends] of shown.entries()) {
+        // Rows on screen keep their breaks; the old last photo now ends a row.
+        expect(appended[span]!.filter((end) => end < collection.length)).toEqual([
+          ...ends,
+          collection.length - 1,
+        ])
       }
+    } finally {
+      app.unmount()
+      host.remove()
     }
   })
 
@@ -305,7 +262,6 @@ describe('SSR hydration', () => {
         type: 'columns',
         columns: responsive({ 0: 1, 800: 3 }),
       },
-      defaultContainerWidth: 800,
       lightbox: false,
     })
 
@@ -327,7 +283,6 @@ describe('SSR hydration', () => {
         type: 'masonry',
         columns: responsive({ 0: 1, 800: 3 }),
       },
-      defaultContainerWidth: 800,
       lightbox: false,
     })
 
@@ -371,6 +326,8 @@ describe('SSR hydration', () => {
     }
     const ssrApp = createSSRApp({ render: () => h(PhotoCarousel, props) })
     const html = await renderToString(ssrApp)
+    // The lightbox finds thumbnails by this mark, so it must exist before hydration.
+    expect(html).toContain(`data-np-photo-id="${photos[0]!.id}"`)
     const host = document.createElement('div')
     host.innerHTML = html
     document.body.appendChild(host)

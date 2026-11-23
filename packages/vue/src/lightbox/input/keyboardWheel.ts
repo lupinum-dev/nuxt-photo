@@ -20,8 +20,6 @@ type KeyboardWheelConfig = {
   goToPrev: () => void
   goToFirst: () => void
   goToLast: () => void
-  close: () => Promise<void>
-  reportAsyncError: (operation: string, task: Promise<unknown>) => void
 }
 
 function isEditableKeyTarget(target: EventTarget | null) {
@@ -58,10 +56,6 @@ export function createKeyboardWheelHandlers(config: KeyboardWheelConfig) {
     if (!config.isOpen.value) return
     if (event.defaultPrevented || isEditableKeyTarget(event.target)) return
 
-    if (event.key === 'Escape') {
-      config.reportAsyncError('escape-close', config.close())
-      return
-    }
     if (config.animating.value) return
     if (event.key === 'z' || event.key === 'Z') {
       config.toggleZoom()

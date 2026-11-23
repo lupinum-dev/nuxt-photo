@@ -141,7 +141,8 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
     join(srcDir, 'App.vue'),
     [
       '<script setup lang="ts">',
-      "import { PhotoAlbum, PhotoValidationError, responsive, type LightboxCaptionSlotProps, type PhotoItem } from '@lupinum/vue-photo'",
+      "import { PhotoAlbum, PhotoValidationError, responsive, validatePhotos, type PhotoItem } from '@lupinum/vue-photo'",
+      "import type { LightboxCaptionSlotProps } from '@lupinum/vue-photo/primitives'",
       "import '@lupinum/vue-photo/styles.css'",
       '',
       'const photos: readonly PhotoItem[] = [',
@@ -149,7 +150,7 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
       "  { id: 'forest', src: '/photos/forest.jpg', width: 1200, height: 1600, alt: 'Forest path' },",
       ']',
       'const spacing = responsive({ 0: 4, 800: 8 })',
-      "const caption: LightboxCaptionSlotProps['photo'] = photos[0] ?? null",
+      "const caption: LightboxCaptionSlotProps['photo'] = validatePhotos([...photos]).photos[0] ?? null",
       'void PhotoValidationError',
       'void caption',
       '</script>',
@@ -302,6 +303,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     [
       '<script setup lang="ts">',
       "import { PhotoValidationError, type PhotoItem } from '@lupinum/nuxt-photo/app'",
+      "import { LightboxRoot } from '@lupinum/nuxt-photo/primitives'",
       '',
       'const photos: readonly PhotoItem[] = [',
       "  { id: 'coast', src: '/photos/coast.jpg', width: 1600, height: 1067, alt: 'Rocky coast' },",
@@ -310,6 +312,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       "  { id: 'dunes', src: '/photos/dunes.jpg', width: 1400, height: 933, alt: 'Sand dunes' },",
       ']',
       'void PhotoValidationError',
+      'void LightboxRoot',
       '</script>',
       '',
       '<template>',
@@ -374,8 +377,18 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
       existsSync(join(consumerDir, '.output', 'server', 'index.mjs')),
       'Nuxt-only packed consumer did not produce a server build.',
     )
+    // The build bundles the Vue package; only the dev server loads it from node_modules.
+    run(
+      'node',
+      [join(rootDir, 'scripts/lib/dev-render.mjs'), '/', 'alt="Rocky coast"'],
+      consumerDir,
+    )
 
-    const publicDeclarations = ['dist/index.d.ts', 'dist/components/PhotoCarousel.vue.d.ts']
+    const publicDeclarations = [
+      'dist/index.d.ts',
+      'dist/primitives/index.d.ts',
+      'dist/components/PhotoCarousel.vue.d.ts',
+    ]
     for (const declaration of publicDeclarations) {
       const path = join(exactVueRoot, declaration)
       assert(existsSync(path), `Packed consumer is missing ${declaration}.`)

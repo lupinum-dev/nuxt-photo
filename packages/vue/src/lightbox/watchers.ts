@@ -36,12 +36,10 @@ export function createGeometrySync(
 ) {
   return function syncGeometry() {
     const mediaAreaEl = mediaAreaRef.value
-    if (!mediaAreaEl) return null
+    if (!mediaAreaEl) return
 
     const rect = mediaAreaEl.getBoundingClientRect()
-    if (!isUsableRect(rect)) {
-      return null
-    }
+    if (!isUsableRect(rect)) return
 
     areaMetrics.value = {
       left: rect.left,
@@ -55,8 +53,6 @@ export function createGeometrySync(
       frame && frame.width > 0 && frame.height > 0
         ? { left: frame.left, top: frame.top, width: frame.width, height: frame.height }
         : areaMetrics.value
-
-    return areaMetrics.value
   }
 }
 
@@ -65,7 +61,7 @@ export function useLightboxWindowLifecycle(config: {
   isMounted: Readonly<Ref<boolean>>
   cancelTapTimer: () => void
   detachKeydown: () => void
-  syncGeometry: () => AreaMetrics | null
+  syncGeometry: () => void
   refreshZoomState: (preserveCurrent?: boolean) => void
 }) {
   let didLock = false
@@ -96,21 +92,14 @@ export function useLightboxWindowLifecycle(config: {
     { immediate: true },
   )
 
-  onMounted(() => {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', onResize)
-    }
-  })
+  onMounted(() => window.addEventListener('resize', onResize))
 
   onBeforeUnmount(() => {
     config.cancelTapTimer()
     config.detachKeydown()
+    window.removeEventListener('resize', onResize)
 
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('resize', onResize)
-    }
-
-    if (typeof document !== 'undefined' && didLock) {
+    if (didLock) {
       lockBodyScroll(false)
       didLock = false
     }

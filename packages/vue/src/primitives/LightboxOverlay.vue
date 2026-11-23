@@ -1,10 +1,5 @@
 <template>
-  <div
-    :ref="ctx.setOverlayRef"
-    data-np-motion="backdrop"
-    v-bind="$attrs"
-    @click.self="ctx.handleBackdropClick"
-  >
+  <div data-np-motion="backdrop" v-bind="$attrs" @click.self="ctx.handleBackdropClick">
     <slot />
   </div>
 </template>

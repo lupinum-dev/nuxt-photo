@@ -1,7 +1,7 @@
 import type { NuxtApp } from '#app'
 import { defineNuxtPlugin, useImage } from '#imports'
 import options from '#build/nuxt-photo-options.mjs'
-import { DEFAULT_WIDTHS } from '#build/nuxt-photo-internals.mjs'
+import { DEFAULT_WIDTHS } from '@lupinum/vue-photo/internal'
 import { createNuxtPhotoProviders } from './provider'
 import { installNuxtPhoto } from './install'
 

@@ -17,77 +17,56 @@ describe('LightboxRoot modal ownership', () => {
     document.body.style.paddingRight = ''
   })
 
-  it('isolates late page siblings and restores focus and page state', async () => {
-    const photo = makePhoto({ id: 'focus-photo' })
-    let controller: ReturnType<typeof provideLightbox> | null = null
-    const host = document.createElement('main')
-    document.body.appendChild(host)
-    const App = defineComponent({
-      setup() {
-        controller = provideLightbox([photo], { transition: 'none' })
-        return () =>
-          h('div', [
-            h('button', { id: 'trigger' }, 'Open'),
-            h(
-              LightboxRoot,
-              { 'data-testid': 'lightbox-root' },
-              {
-                default: () => [
-                  h('button', { id: 'inside' }, 'Inside'),
-                  // Like a caption link hidden while zoomed: present, but unable to take focus.
-                  h('a', { href: '#', id: 'hidden-link', style: 'visibility: hidden' }, 'Hidden'),
-                ],
-              },
-            ),
-          ])
-      },
-    })
-    const app = createApp(App)
-    app.mount(host)
-    const trigger = host.querySelector('#trigger') as HTMLButtonElement
-    trigger.focus()
+  // The browser supplies inertness and the focus trap (checked in Playwright). Here: the root
+  // becomes a modal dialog, Escape and a forced close end in the closed state, focus returns.
+  it.each(['cancel', 'forced close'] as const)(
+    'opens as a modal dialog and closes cleanly after %s',
+    async (request) => {
+      const photo = makePhoto({ id: 'focus-photo' })
+      let controller: ReturnType<typeof provideLightbox> | null = null
+      const host = document.createElement('main')
+      document.body.appendChild(host)
+      const showModal = vi.spyOn(HTMLDialogElement.prototype, 'showModal')
+      const App = defineComponent({
+        setup() {
+          controller = provideLightbox([photo], { transition: 'none' })
+          return () =>
+            h('div', [
+              h('button', { id: 'trigger' }, 'Open'),
+              h(LightboxRoot, { 'aria-label': 'Viewer' }, { default: () => h('button', 'Inside') }),
+            ])
+        },
+      })
+      const app = createApp(App)
+      app.mount(host)
+      const trigger = host.querySelector('#trigger') as HTMLButtonElement
+      trigger.focus()
 
-    await controller!.open(0)
-    await flushUi()
-    expect(host.inert).toBe(true)
-    expect(host.getAttribute('aria-hidden')).toBe('true')
-    expect(document.activeElement?.getAttribute('data-testid')).toBe('lightbox-root')
-    const root = document.querySelector('[data-testid="lightbox-root"]') as HTMLElement
-    // jsdom has no layout: provide a rendered rect for the visible button.
-    // Real hidden/unrendered candidates are checked in the browser regression.
-    const rect = new DOMRect(0, 0, 100, 30)
-    vi.spyOn(document.getElementById('inside')!, 'getClientRects').mockReturnValue(
-      Object.assign([rect], { item: (index: number) => (index === 0 ? rect : null) }),
-    )
-    root.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        key: 'Tab',
-        shiftKey: true,
-        bubbles: true,
-      }),
-    )
-    expect(document.activeElement?.id).toBe('inside')
-    document.activeElement?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }),
-    )
-    expect(document.activeElement?.id).toBe('inside')
+      await controller!.open(0)
+      await flushUi()
+      const dialog = document.querySelector('dialog')!
+      expect(dialog.getAttribute('aria-label')).toBe('Viewer')
+      expect(showModal).toHaveBeenCalledOnce()
+      expect(document.activeElement).toBe(dialog)
 
-    const lateSibling = document.createElement('aside')
-    document.body.appendChild(lateSibling)
-    await flushUi()
-    expect(lateSibling.inert).toBe(true)
-    expect(lateSibling.getAttribute('aria-hidden')).toBe('true')
+      if (request === 'cancel') {
+        const cancel = new Event('cancel', { cancelable: true })
+        dialog.dispatchEvent(cancel)
+        expect(cancel.defaultPrevented).toBe(true)
+      } else {
+        // The browser closed the dialog itself; it is shown again until the close finishes.
+        dialog.close()
+        expect(showModal).toHaveBeenCalledTimes(2)
+      }
+      await flushUi()
+      expect(controller!.isOpen.value).toBe(false)
+      expect(document.querySelector('dialog')).toBeNull()
+      expect(document.body.style.overflow).toBe('')
+      expect(document.activeElement).toBe(trigger)
 
-    await controller!.close()
-    await flushUi()
-    expect(host.inert).toBeFalsy()
-    expect(host.hasAttribute('aria-hidden')).toBe(false)
-    expect(lateSibling.inert).toBeFalsy()
-    expect(lateSibling.hasAttribute('aria-hidden')).toBe(false)
-    expect(document.activeElement).toBe(trigger)
-
-    app.unmount()
-  })
+      app.unmount()
+    },
+  )
 
   it('returns focus to the thumbnail of the photo being viewed on close', async () => {
     const photos = [makePhoto({ id: 'first' }), makePhoto({ id: 'second' })]
@@ -96,12 +75,14 @@ describe('LightboxRoot modal ownership', () => {
     document.body.appendChild(host)
     const App = defineComponent({
       setup() {
-        controller = provideLightbox(photos, { transition: 'none' })
+        controller = provideLightbox(
+          photos,
+          { transition: 'none' },
+          { thumbnailFor: (id) => document.getElementById(id) },
+        )
         return () =>
           h('div', [
-            ...photos.map((photo, index) =>
-              h('button', { id: photo.id, ref: controller!.setThumbnailRef(index) }, photo.id),
-            ),
+            ...photos.map((photo) => h('button', { id: photo.id }, photo.id)),
             h(LightboxRoot, null, { default: () => h('button', 'Inside') }),
           ])
       },

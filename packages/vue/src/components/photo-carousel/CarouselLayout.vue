@@ -31,7 +31,7 @@
           v-bind="interactiveAttrs(photo, index)"
         >
           <div
-            :ref="setSlideRef ? setSlideElRef(index) : undefined"
+            :data-np-photo-id="onSlideActivate ? photo.id : undefined"
             style="width: 100%; height: 100%"
           >
             <slot
@@ -39,7 +39,7 @@
               :photo="photo"
               :index="index"
               :selected="selectedSlideSet.has(index)"
-              :open="() => onSlideActivate?.(index)"
+              :open="() => onSlideActivate?.(index, null)"
             >
               <PhotoImage
                 :photo="photo"
@@ -166,9 +166,9 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, ref, toRef, useSlots, type ComponentPublicInstance } from 'vue'
+import { computed, ref, toRef, useSlots } from 'vue'
 import type { PhotoUi, CarouselControl } from '../../types/ui'
-import { PhotoImage } from '../../primitives/index'
+import PhotoImage from '../../primitives/PhotoImage.vue'
 import type {
   CarouselCaptionSlotProps,
   CarouselControlsSlotProps,
@@ -181,11 +181,11 @@ import { createPhotoTriggerBindings } from '../shared/photoTriggerBindings'
 import { useElementWidth } from '../../composables/useElementWidth'
 import { usePhotoCarouselRuntime } from './usePhotoCarouselRuntime'
 import type { GalleryRuntime } from '../../gallery/runtime'
-import { usePhotoLabels } from '../../composables/usePhotoLabels'
+import { useEagerLabels } from '../../provide/labels'
 
 defineOptions({ inheritAttrs: false })
 
-const labels = usePhotoLabels()
+const labels = useEagerLabels()
 
 defineSlots<{
   slide?: (props: CarouselSlideSlotProps<TMeta>) => unknown
@@ -212,9 +212,9 @@ const props = defineProps<{
   gap?: string
   thumbSize?: string
 
-  // Optional lightbox activation and transition-source integration.
-  onSlideActivate?: (index: number) => void | Promise<void>
-  setSlideRef?: (index: number) => (el: Element | ComponentPublicInstance | null) => void
+  // Optional lightbox activation. The inner slide box carries the photo mark because the
+  // slide itself includes the gap padding, which the lightbox flight must not use.
+  onSlideActivate?: (index: number, source: HTMLElement | null) => void | Promise<void>
 }>()
 
 const hasControl = (control: CarouselControl) => props.controls.includes(control)
@@ -282,21 +282,16 @@ const cssVarStyle = computed(() => {
   return vars
 })
 
-function setSlideElRef(index: number) {
-  return (el: Element | ComponentPublicInstance | null) => {
-    props.setSlideRef?.(index)(el)
-  }
-}
-
 function interactiveAttrs(photo: PhotoItem<TMeta>, index: number) {
   if (!props.onSlideActivate) return {}
   return {
     ...createPhotoTriggerBindings(
       photo,
       index,
-      async () => props.onSlideActivate?.(index),
+      async (source) => props.onSlideActivate?.(index, source),
       photo.alt || labels.viewPhoto(index + 1),
     ),
+    'data-np-photo-id': undefined,
     style: { cursor: 'pointer' },
     'data-index': index,
   }

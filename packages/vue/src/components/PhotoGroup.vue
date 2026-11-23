@@ -6,24 +6,15 @@
 </template>
 
 <script setup lang="ts" generic="TMeta extends object = Readonly<Record<string, unknown>>">
-import { computed, provide, ref, shallowRef } from 'vue'
-import { useGalleryRuntime } from '../gallery/runtime'
+import { provide, ref } from 'vue'
 import { useGalleryModel } from '../gallery/model'
-import { provideLightbox } from '../composables/index'
 import type { LightboxProviderController } from '../provide/keys'
 import type { InvalidPhotoPolicy, InvalidPhotosEvent, PhotoItem } from '../core/index'
 import { providePhotoConfig, type LightboxOptions, type PhotoProvider } from '../config'
-import Lightbox from './Lightbox.vue'
-import {
-  PhotoGroupContextKey,
-  type PhotoGroupCapability,
-  type PhotoGroupContext,
-} from './photo-group/context'
-import { warnOnSetupOptionChanges } from '../internal/staticOptionWarnings'
-import { resolveLightboxComponent } from './shared/resolveLightboxComponent'
+import { PhotoGroupContextKey } from './photo-group/context'
+import { usePhotoGroup } from './photo-group/usePhotoGroup'
 import type { PhotoUi } from '../types/ui'
 import { useRecipePhotos } from './shared/useRecipePhotos'
-import { buildPhotoGroupCapabilityIndex } from './photo-group/capabilities'
 
 defineOptions({ inheritAttrs: false })
 
@@ -67,7 +58,7 @@ const emit = defineEmits<{
   invalidPhotos: [event: InvalidPhotosEvent]
 }>()
 
-const photoConfig = providePhotoConfig(() => ({
+providePhotoConfig(() => ({
   provider: props.provider,
   lightbox: typeof props.lightbox === 'object' ? props.lightbox : undefined,
   validation: props.validation,
@@ -80,153 +71,23 @@ const canonicalPhotos = useRecipePhotos<TMeta>(
   (event) => emit('invalidPhotos', event),
 )
 const rootRef = ref<HTMLElement | null>(null)
-useGalleryRuntime(canonicalPhotos, () => rootRef.value)
-
-const capabilityBatches = shallowRef(new Map<symbol, readonly PhotoGroupCapability[]>())
-const canonicalIds = computed(() => new Set(canonicalPhotos.value.map((photo) => photo.id)))
-const canonicalIndexById = computed(
-  () => new Map(canonicalPhotos.value.map((photo, index) => [photo.id, index])),
-)
-const capabilitiesById = computed(() =>
-  buildPhotoGroupCapabilityIndex(canonicalIds.value, capabilityBatches.value),
-)
-
-function hasPhoto(id: string) {
-  return canonicalIds.value.has(id)
-}
-
-const injectedLightbox = photoConfig.value.lightbox.component ?? null
-const lightboxComponent = resolveLightboxComponent(props.lightbox, injectedLightbox, Lightbox, true)
-const enabled = lightboxComponent !== null
-warnOnSetupOptionChanges('PhotoGroup', {
-  lightbox: () =>
-    typeof props.lightbox === 'object' ? (props.lightbox.component ?? true) : props.lightbox,
+const { context, lightboxComponent, open, controller } = usePhotoGroup<TMeta>({
+  owner: 'PhotoGroup',
+  photos: canonicalPhotos,
+  root: () => rootRef.value,
+  lightbox: () => props.lightbox,
+  defaultEnabled: true,
 })
-const lightboxProvider = enabled
-  ? provideLightbox(
-      canonicalPhotos,
-      undefined,
-      (photo) => capabilitiesById.value.get(photo.id)?.renderSlide ?? null,
-    )
-  : null
-
-function replaceCapabilities(owner: symbol, entries: readonly PhotoGroupCapability[]) {
-  for (const entry of entries) {
-    if (!canonicalIds.value.has(entry.id)) {
-      throw new Error(
-        `[nuxt-photo] PhotoGroup descendant photo "${entry.id}" is missing from the canonical photos collection. ` +
-          'Add it to the photos of the surrounding <PhotoGroup>, or render it outside the group. ' +
-          'See https://nuxt-photo.lupinum.com/docs/reference/photo-group',
-      )
-    }
-  }
-
-  const next = new Map(capabilityBatches.value)
-  if (entries.length === 0) next.delete(owner)
-  else next.set(owner, [...entries])
-
-  buildPhotoGroupCapabilityIndex(canonicalIds.value, next)
-  capabilityBatches.value = next
-}
-
-function removeCapabilities(owner: symbol) {
-  if (!capabilityBatches.value.has(owner)) return
-  const next = new Map(capabilityBatches.value)
-  next.delete(owner)
-  capabilityBatches.value = next
-}
-
-function syncThumbnailRefs() {
-  if (!lightboxProvider) return
-  canonicalPhotos.value.forEach((photo, index) => {
-    const element =
-      capabilitiesById.value
-        .get(photo.id)
-        ?.thumbnailCandidates.map((candidate) => candidate())
-        .find((candidate) => candidate?.isConnected) ?? null
-    lightboxProvider.setThumbnailRef(index)(element)
-  })
-}
-
-async function open(index = 0) {
-  if (index < 0 || index >= canonicalPhotos.value.length) {
-    throw new RangeError(`[nuxt-photo] No photo found at index ${String(index)}`)
-  }
-  if (!lightboxProvider) return
-  syncThumbnailRefs()
-  await lightboxProvider.open(index)
-}
-
-async function activateById(id: string, source?: HTMLElement | null) {
-  const index = canonicalIndexById.value.get(id)
-  if (index === undefined) {
-    throw new RangeError(`[nuxt-photo] No photo found for id "${id}"`)
-  }
-  if (!lightboxProvider) return
-  syncThumbnailRefs()
-  if (source) lightboxProvider.setThumbnailRef(index)(source)
-  await lightboxProvider.openById(id)
-}
-
-async function openById(id: string) {
-  await activateById(id)
-}
-
-async function close() {
-  await lightboxProvider?.close()
-}
-
-const disabledController: LightboxProviderController<TMeta> = {
-  photos: computed(() => canonicalPhotos.value),
-  count: computed(() => canonicalPhotos.value.length),
-  activeId: computed(() => null),
-  activeIndex: computed(() => 0),
-  activePhoto: computed(() => null),
-  isOpen: computed(() => false),
-  open,
-  openById,
-  close,
-  next() {},
-  prev() {},
-  toggleZoom() {},
-  hiddenThumbnailIndex: computed(() => null),
-  setThumbnailRef: () => () => {},
-}
-
-const controller: LightboxProviderController<TMeta> = lightboxProvider
-  ? { ...lightboxProvider, open, openById }
-  : disabledController
+provide(PhotoGroupContextKey, context)
 
 const { activeId, activePhoto } = useGalleryModel(
   'PhotoGroup',
   () => props.active,
   () => canonicalPhotos.value,
-  controller,
+  context,
   (id) => emit('update:active', id),
 )
-
-const hiddenPhoto = computed<PhotoItem<TMeta> | null>(() => {
-  if (!lightboxProvider) return null
-  const index = lightboxProvider.hiddenThumbnailIndex.value
-  return index === null ? null : (canonicalPhotos.value[index] ?? null)
-})
-const isOpen = computed(() => lightboxProvider?.isOpen.value ?? false)
-
-const groupContext: PhotoGroupContext = {
-  enabled,
-  hasPhoto,
-  replaceCapabilities,
-  removeCapabilities,
-  open,
-  close,
-  activateById,
-  photos: canonicalPhotos,
-  hiddenPhoto,
-  isOpen,
-  activeId,
-  activePhoto,
-}
-provide(PhotoGroupContextKey, groupContext)
+const { openById, close, isOpen } = context
 
 defineExpose({ open, openById, close, isOpen, activeId, activePhoto })
 </script>

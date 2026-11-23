@@ -1,9 +1,9 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vite-plus/test'
 import {
-  computeBreakpointStyles,
   computeColumnsLayout,
   computeMasonryLayout,
   computeRowsLayout,
+  computeRowsPlan,
   responsive,
   type ResolvedPhotoItem as PhotoItem,
 } from '../../src/core/index'
@@ -70,18 +70,6 @@ function greedyRows(
   }
 
   return groups
-}
-
-function parseItemWidths(css: string) {
-  const widths = new Map<number, { gaps: number; divisor: number }>()
-  const pattern = /\.np-item-(\d+)\{[^}]*width:calc\(\(100% - ([\d.]+)px\) \/ ([\d.]+)\)/g
-  for (const match of css.matchAll(pattern)) {
-    widths.set(Number(match[1]), {
-      gaps: Number(match[2]),
-      divisor: Number(match[3]),
-    })
-  }
-  return widths
 }
 
 describe('layout algorithms', () => {
@@ -159,91 +147,6 @@ describe('layout algorithms', () => {
     expect(rowsBadness(bounded, targetRowHeight)).toBeLessThanOrEqual(
       rowsBadness(greedy, targetRowHeight),
     )
-  })
-
-  it('emits container-query widths that match row layout math inside a stable span', () => {
-    const photos: PhotoItem[] = [
-      { id: 'a', src: '/a.jpg', width: 1000, height: 1000 },
-      { id: 'b', src: '/b.jpg', width: 1000, height: 1000 },
-      { id: 'c', src: '/c.jpg', width: 1000, height: 1000 },
-    ]
-    const css = computeBreakpointStyles({
-      photos,
-      breakpoints: [600, 700],
-      spacing: 10,
-      padding: 2,
-      targetRowHeight: 220,
-      containerName: 'test',
-    })
-    const widths = parseItemWidths(css)
-
-    for (const sampleWidth of [650, 760]) {
-      const layout = computeRowsLayout({
-        photos,
-        containerWidth: sampleWidth,
-        spacing: 10,
-        padding: 2,
-        targetRowHeight: 220,
-      })
-      for (const entry of layout.flatMap((group) => group.entries)) {
-        const rule = widths.get(entry.index)!
-        const cssWidth = (sampleWidth - rule.gaps) / rule.divisor
-        expect(cssWidth).toBeCloseTo(entry.width, 3)
-      }
-    }
-  })
-
-  it('does not collapse container-query spans across responsive parameter changes', () => {
-    const photos = createPhotoSet().slice(0, 4)
-    const css = computeBreakpointStyles({
-      photos,
-      breakpoints: [400, 800],
-      spacing: responsive({ 0: 4, 800: 20 }),
-      padding: responsive({ 0: 0, 800: 8 }),
-      targetRowHeight: 220,
-      containerName: 'responsive-test',
-    })
-
-    expect(css).toContain('width < 800px')
-    expect(css).toContain('width >= 800px')
-    expect(css).toContain('52px')
-    expect(css).toContain('padding:8px')
-  })
-
-  it('uses exact range boundaries for fractional breakpoints', () => {
-    const photos = createPhotoSet().slice(0, 4)
-    const css = computeBreakpointStyles({
-      photos,
-      breakpoints: [400.5, 800.25],
-      spacing: 10,
-      padding: 2,
-      targetRowHeight: 220,
-      containerName: 'fractional-test',
-    })
-
-    expect(css).toContain('width < 800.25px')
-    expect(css).toContain('width >= 800.25px')
-    expect(css).not.toContain('max-width')
-    expect(css).not.toContain('min-width')
-  })
-
-  it('warns when every breakpoint produces an empty layout', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const photos = createPhotoSet().slice(0, 3)
-    const css = computeBreakpointStyles({
-      photos,
-      breakpoints: [320],
-      spacing: 8,
-      padding: 500,
-      targetRowHeight: 220,
-      containerName: 'empty-test',
-    })
-
-    expect(css).toBe('')
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('every breakpoint produced an empty rows layout'),
-    )
-    warn.mockRestore()
   })
 
   it('balances columns while keeping per-column order and valid dimensions', () => {
@@ -404,5 +307,162 @@ describe('layout algorithms', () => {
         padding: 100,
       }),
     ).toEqual([])
+  })
+})
+
+describe('rows plan', () => {
+  const squares = (count: number): PhotoItem[] =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `s${index}`,
+      src: `/s${index}.jpg`,
+      width: 100,
+      height: 100,
+    }))
+  /** Start of each container query span and the items whose line break it shows. */
+  const spans = (plan: ReturnType<typeof computeRowsPlan>) =>
+    plan.css.split('\n').map((rule, index) => ({
+      start: plan.widths[index]!.start,
+      breaks: [...rule.matchAll(/\.np-br-(\d+)/g)].map((match) => Number(match[1])),
+    }))
+
+  it.each([
+    {
+      name: 'one break per row end at each planned width',
+      photos: 4,
+      breakpoints: [100, 200, 400],
+      expected: [
+        { start: 0, breaks: [0, 1, 2] },
+        { start: 200, breaks: [1] },
+        { start: 400, breaks: [] },
+      ],
+    },
+    {
+      name: 'neighbouring widths with equal rows merge',
+      photos: 4,
+      breakpoints: [200, 250],
+      expected: [{ start: 0, breaks: [1] }],
+    },
+    {
+      name: 'a single photo never needs a break',
+      photos: 1,
+      breakpoints: [100, 400],
+      expected: [{ start: 0, breaks: [] }],
+    },
+  ])('$name', ({ photos, breakpoints, expected }) => {
+    const plan = computeRowsPlan({
+      photos: squares(photos),
+      containerName: 'album',
+      breakpoints,
+      spacing: 0,
+      targetRowHeight: 100,
+    })
+    expect(spans(plan)).toEqual(expected)
+  })
+
+  it('plans the default ladder when there are no breakpoints', () => {
+    const plan = computeRowsPlan({ photos: squares(4), containerName: 'album' })
+    expect(spans(plan)).toEqual([
+      { start: 0, breaks: [0, 1, 2] },
+      { start: 480, breaks: [1] },
+      { start: 1024, breaks: [] },
+    ])
+    expect(plan.css).toContain('@container album (width < 480px)')
+  })
+
+  it('evaluates function options at every planned width', () => {
+    const plan = computeRowsPlan({
+      photos: squares(4),
+      containerName: 'album',
+      breakpoints: [200, 400],
+      spacing: (width) => (width < 300 ? 0 : 10),
+      padding: responsive({ 0: 0, 400: 2 }),
+      targetRowHeight: 100,
+    })
+    expect(plan.css.split('\n')).toEqual([
+      '@container album (width < 400px){.np-album__frame{--np-gap:0px;--np-padding:0px}.np-br-1{display:block}}',
+      '@container album (width >= 400px){.np-album__frame{--np-gap:10px;--np-padding:2px}}',
+    ])
+    // Four photos in one row: 3 gaps of 10px and 8 paddings of 2px.
+    expect(plan.widths[1]).toEqual({
+      start: 400,
+      shares: [0.25, 0.25, 0.25, 0.25],
+      gaps: [46, 46, 46, 46],
+    })
+  })
+
+  it('gives each item the width share of its row', () => {
+    const photos: PhotoItem[] = [
+      { id: 'wide', src: '/w.jpg', width: 200, height: 100 },
+      { id: 'square', src: '/s.jpg', width: 100, height: 100 },
+    ]
+    const plan = computeRowsPlan({
+      photos,
+      containerName: 'album',
+      breakpoints: [300],
+      spacing: 10,
+      targetRowHeight: 100,
+    })
+    expect(plan.widths).toEqual([{ start: 0, shares: [2 / 3, 1 / 3], gaps: [10, 10] }])
+    // The narrowest photo grows by 1 so a row is never left partly empty.
+    expect(plan.items.map((item) => item.style['flex-grow'])).toEqual(['2', '1'])
+    expect(plan.items.map((item) => item.breakClass)).toEqual(['np-br-0', undefined])
+  })
+
+  it('keeps rows already shown when photos are appended', () => {
+    const first = computeRowsPlan({
+      photos: squares(3),
+      containerName: 'album',
+      breakpoints: [400],
+      spacing: 0,
+      targetRowHeight: 100,
+    })
+    expect(spans(first)).toEqual([{ start: 0, breaks: [] }])
+    const options = {
+      photos: squares(4),
+      containerName: 'album',
+      breakpoints: [400],
+      spacing: 0,
+      targetRowHeight: 100,
+    }
+    // Alone, four squares make one row; after an append, the first three keep theirs.
+    expect(spans(computeRowsPlan(options))).toEqual([{ start: 0, breaks: [] }])
+    expect(spans(computeRowsPlan(options, first.memo))).toEqual([{ start: 0, breaks: [2] }])
+    // A changed photo is not an append: rows are solved again.
+    const replaced = { ...options, photos: [squares(1)[0]!, ...squares(4).slice(1).reverse()] }
+    expect(spans(computeRowsPlan(replaced, first.memo))).toEqual([{ start: 0, breaks: [] }])
+  })
+
+  it('uses exact range boundaries for fractional breakpoints', () => {
+    const css = computeRowsPlan({
+      photos: createPhotoSet().slice(0, 4),
+      containerName: 'fractional-test',
+      breakpoints: [400.5, 800.25],
+      spacing: 10,
+      padding: 2,
+      targetRowHeight: 220,
+    }).css
+
+    expect(css).toContain('width < 800.25px')
+    expect(css).toContain('width >= 800.25px')
+    expect(css).not.toContain('max-width')
+    expect(css).not.toContain('min-width')
+  })
+
+  it('warns when every planned width produces an empty layout', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const plan = computeRowsPlan({
+      photos: createPhotoSet().slice(0, 3),
+      containerName: 'empty-test',
+      breakpoints: [320],
+      spacing: 8,
+      padding: 500,
+      targetRowHeight: 220,
+    })
+
+    expect(plan.css).toBe('')
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('rows layout is empty at every planned width'),
+    )
+    warn.mockRestore()
   })
 })
