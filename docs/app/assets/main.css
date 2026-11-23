@@ -647,4 +647,6 @@ label.docs-control:not(.docs-control--stacked) span {
   background: none;
   color: inherit;
   font: inherit;
+  /* The theme sets the code size with !important. */
+  font-size: inherit !important;
 }
