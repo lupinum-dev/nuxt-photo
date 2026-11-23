@@ -639,8 +639,9 @@ label.docs-control:not(.docs-control--stacked) span {
 }
 
 /* Every link looks the same. Link text is not written as code (docs/WRITING.md); if it
-   is, it still shows as a plain link, not as a code box with an underline through it. */
-.content-prose a > code {
+   is, it still shows as a plain link, not as a code box with an underline through it.
+   Headings are wrapped in an anchor to themselves and keep their inline code. */
+.content-prose a:not(:where(h1, h2, h3, h4, h5, h6) *) > code {
   padding: 0;
   border: 0;
   border-radius: 0;
