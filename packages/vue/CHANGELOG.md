@@ -1,5 +1,87 @@
 # @lupinum/vue-photo
 
+## 1.0.0-beta.9
+
+### Major Changes
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Remove the `defaultContainerWidth` prop of `PhotoAlbum` and the `.np-album__column` and `.np-album__skeleton` classes: the `rows`, `columns` and `masonry` layouts now render from CSS alone.
+  
+  The server sends an album that CSS places at every container width, so it no longer jumps after hydration, and with JavaScript turned off it looks the same. Layouts are planned at 320, 480, 640, 768, 1024, 1280, 1536, 1920 and 2560 pixels, or at your `breakpoints` and `responsive()` keys from the smallest one up. A function value for `spacing`, `padding`, `targetRowHeight` or `columns` is called at each of these widths instead of only at width 0, and the warning about it is gone. Column widths, spacing and padding stay the same. In `columns` and `masonry`, photos are one flat list in `photos` order, so keyboard focus in `masonry` follows `photos` order instead of going column by column. Photos you append keep their place in `rows` and `masonry`, and a `masonry` photo keeps its column while the container resizes within one column count.
+  
+  Migration: delete `default-container-width` from every `PhotoAlbum`; no layout needs a replacement. Move CSS that targets `.np-album__column` to `.np-album__item` or `.np-album__frame`, and delete rules for `.np-album__skeleton`.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change the lightbox caption to move with its photo. The built-in lightbox renders each photo's caption inside that photo's slide, under the photo, so the caption travels with it during a swipe and fades with it in `fade` and `crossfade`, with no animation of its own. Only the active photo's caption is exposed to assistive technology, and a tap on a caption no longer closes the lightbox. `LightboxSlide` takes the caption in a new `#caption` slot with `{ photo, index }` and a `captionClass` prop; `LightboxCaption` still renders one caption for the active photo. After a drag down, the backdrop now fades over the whole close instead of vanishing in a few frames.
+  
+  Migration: rules that placed or animated `.np-lightbox__caption` through `--np-frame-*` no longer apply, and the `np-caption-enter-*` and `np-caption-leave-*` classes are gone. Set the place with `--np-caption-gap` and `--np-caption-width`, and select the active photo's caption with `[data-np-active] .np-lightbox__caption`. The `caption` slot of `Lightbox` now renders once per mounted slide, and its `photo` is never `null`.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change the Nuxt module to load the lightbox CSS with the viewer, not on every page.
+  
+  The `css` option keeps its meaning: `'structure'` loads the lightbox structure, `'all'` adds its theme, and `'none'` loads neither. A page that opens with a deep-linked photo still has the lightbox CSS in its server HTML. The new entries `@lupinum/nuxt-photo/lightbox.css` and `@lupinum/vue-photo/lightbox.css` hold the lightbox CSS for a lightbox built from primitives. With `components: { primitives: true }` the module still loads the lightbox CSS on every page. `@lupinum/vue-photo/styles.css` is unchanged.
+  
+  Migration: a Nuxt app that renders lightbox primitives imported from `@lupinum/nuxt-photo/primitives`, without `components: { primitives: true }`, imports `@lupinum/nuxt-photo/lightbox.css` once.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change the lightbox root to a native `<dialog>` opened with `showModal()`.
+  
+  The browser now makes the page behind the lightbox inert and keeps focus inside it, so the library no longer sets `inert` and `aria-hidden` on page content or traps Tab itself. Escape and the Android back gesture still play the close animation, and a close the page cannot cancel ends in the closed state with scroll and history restored. The root keeps its accessible name, `ui` classes and passed attributes. A new `[data-np-lightbox-surface]` element inside the root holds the lightbox content and is the element the fullscreen tool enlarges, because browsers cannot show a `<dialog>` fullscreen. Safari users reach the lightbox controls with Option+Tab unless "Press Tab to highlight each item" is on, as on any Safari page.
+  
+  Migration: change CSS that selects direct children of `[data-np-lightbox-root]` to select children of `[data-np-lightbox-surface]`. Remove `role="dialog"` and `aria-modal` from a custom root, and with `css: 'none'` reset the browser's dialog styles (border, padding, size limits, background and `::backdrop`).
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change `PhotoItem.id` to optional: a photo without `id` uses its `src`. An explicit `id` still wins, and deep links, `v-model:active`, `openById()` and `data-np-photo-id` use the resolved ID. Two photos with the same resolved ID raise a `duplicate-id` issue that names both photos' `src`; give each of them an `id`.
+  
+  Remove the `missing-id` validation code. Add the `ResolvedPhotoItem` type: every photo handed back (slot props, `activePhoto`, `useLightbox().photos`, `validatePhotos()`) has `id: string`.
+  
+  Migration: replace a check for the `missing-id` code with nothing, since photos without `id` are now valid. Where two photos share a `src`, give each an `id`. Type values you read back from components as `ResolvedPhotoItem` when you need `id: string`.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change the lightbox primitives to their own entry: `LightboxProvider`, `LightboxRoot`, `LightboxOverlay`, `LightboxAmbient`, `LightboxViewport`, `LightboxSlide`, `LightboxControls`, `LightboxCaption`, `PhotoTrigger` and their slot-prop types now come from `@lupinum/vue-photo/primitives`, or `@lupinum/nuxt-photo/primitives` in Nuxt. The primitives entry is advanced API and may change in a minor version. The root entry and `@lupinum/nuxt-photo/app` keep the stable API, including `PhotoImage`. `components: { primitives: true }` still registers the primitives by name.
+  
+  Migration: `import { LightboxProvider, PhotoTrigger } from '@lupinum/nuxt-photo/app'` becomes `import { LightboxProvider, PhotoTrigger } from '@lupinum/nuxt-photo/primitives'` (in plain Vue, `@lupinum/vue-photo` becomes `@lupinum/vue-photo/primitives`).
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change how the lightbox finds thumbnails: it now looks them up by photo ID.
+  
+  The lightbox reads a thumbnail's `data-np-photo-id` attribute when it opens or closes, so a thumbnail that re-renders while the lightbox is open is still found. The `PhotoGroup` slot controller replaces `hiddenThumbnailIndex` with `hiddenThumbnailId` and drops `setThumbnailRef`.
+  
+  Migration: in the `PhotoGroup` default slot, compare `controller.hiddenThumbnailId` with `photo.id` instead of `hiddenThumbnailIndex` with an index, and replace `:ref="controller.setThumbnailRef(index)"` with `:data-np-photo-id="photo.id"` on your thumbnail element.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change when the lightbox viewer loads: only when a visitor reaches for a photo.
+  
+  A page with `Photo`, `PhotoAlbum`, `PhotoCarousel` or `PhotoGroup` no longer ships the viewer in its first JavaScript. The viewer loads as one separate chunk when a pointer, touch or keyboard focus reaches a photo, when the browser is idle after a photo became visible, or when code opens a photo. The idle load does not happen when the visitor turned on data saving. A page that opens with a deep-linked photo still renders the open lightbox on the server. `useLightbox()` in a component slot works before the viewer has loaded: `open` and `openById` load it and resolve when the lightbox is open. The `columns` and `masonry` layout rules move from the shared stylesheet into the CSS that each such album generates.
+  
+  Migration: a component that you pass as `lightbox.component` now mounts when a photo first opens, not when the page mounts. Move code that must run at page mount out of that component.
+
+### Minor Changes
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Add `@lupinum/vue-photo/styles/*` to import a single stylesheet, for example `@lupinum/vue-photo/styles/lightbox-structure.css`. The Nuxt module now uses the Vue package only through its exports map, so a strict package manager no longer depends on the internal file layout of `@lupinum/vue-photo`. The new entries `@lupinum/vue-photo/internal`, `/locales/photo`, `/locales/viewer`, `/viewer`, `/viewer-structure` and `/viewer-themed` are for `@lupinum/nuxt-photo` of the same version only: semantic versioning does not cover them.
+
+### Patch Changes
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix carousel CSS variables set in app CSS, such as `--np-carousel-gap` on `.np-carousel`, losing to the defaults of the carousel stylesheets. The defaults now have zero specificity, like the lightbox defaults.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Remove the `embla-carousel-vue` dependency. `PhotoCarousel` now creates its Embla instances from `embla-carousel` directly. Its behavior and its server-rendered HTML do not change.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix the lightbox drag feel on touch screens. A swipe, a drag down to close and a pan no longer jump when they start, and the photo stays under the finger while it moves. After the finger lifts, the photo settles with one quick spring that keeps the finger's speed, starts on the first frame and does not bounce. Swiping and the close drag now settle the same way.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix the glow behind the lightbox photo changing after the photo instead of with it.
+  
+  The soft glow of the photo's colours now crosses over while you swipe, follows the photo when you let go, and settles in the same frame as the photo. Keys, buttons and the fade modes change it on the photos' own timing. On open, the glow is ready when the backdrop starts to appear and fades in with it, so the room no longer turns dark first and lighter again. The glow is painted from the thumbnail the page already shows when it can be read. `LightboxAmbient`'s `duration` now applies only to a photo change without motion, such as one set from outside.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix a stutter when the lightbox opens and closes on phones.
+  
+  Every open and close now starts on one frame, so its first frame shows the photo at its starting place. The photo flies on one spring, and a close by a drag down continues the drag's speed. The flying photo shows only once its image is decoded, so it never appears as an empty grey box. In `transition: 'auto'`, a thumbnail partly under a sticky header or partly off screen opens and closes with a fade, so no photo flies over the page's header.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix the lightbox swipe and close drag on touch screens, which stopped after the first move in Chromium.
+  
+  In `slide` mode the lightbox now moves photos with its own pointer code instead of Embla, so the viewer loads less JavaScript. The track follows the pointer one to one, a release goes to the next or previous photo by position and speed, a new drag catches a photo that is still settling, and the collection loops. Arrow keys, buttons and the wheel use the same slide. `PhotoCarousel` still uses Embla.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix an occasional jump in Safari when a swipe or a drag down ends: the first frame after the finger lifts now moves the photo by at most one frame of motion.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix the lightbox swipe on phones. When the finger lifts, the photo keeps moving instead of standing still for a few frames and then jumping. The counter and caption change about 100 ms later, while the photo settles. A close by fade shows the photo's thumbnail again as soon as it starts.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Fix lightbox CSS variables set in app CSS, such as `--np-btn-bg` or `--np-frame-inset-inline` on `.np-lightbox`, losing to the defaults of the lightbox stylesheets. The defaults now have zero specificity, so a rule on `.np-lightbox` wins wherever the lightbox CSS loads.
+
+- [#125](https://github.com/lupinum-dev/nuxt-photo/pull/125) [`37811ec`](https://github.com/lupinum-dev/nuxt-photo/commit/37811ec8dc98e15842dc79363f46143f655ebb92) Thanks [@Mat4m0](https://github.com/Mat4m0)! - Change the label catalogs so that labels only the lightbox viewer shows load with the viewer.
+  
+  A page with an album or a carousel no longer ships the viewer's close, navigation, zoom, tool and error labels before a visitor reaches for a photo. `usePhotoLabels()` still returns every label, and label overrides and locales apply as before.
+
 ## 1.0.0-beta.8
 
 ### Minor Changes
