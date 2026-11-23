@@ -180,6 +180,8 @@ function runVueConsumer(rootDir, artifactByName, rootManifest, catalog) {
       existsSync(join(consumerDir, 'dist', 'index.html')),
       'Vue-only packed consumer did not produce a Vite build.',
     )
+    // The build bundles the package once; only the dev server pre-bundles it beside app files.
+    run('node', [join(rootDir, 'scripts/lib/vite-dev-modules.mjs')], consumerDir)
   } finally {
     if (process.env.KEEP_PACKED_CONSUMERS === '1') {
       process.stdout.write(`Vue packed consumer retained at ${consumerDir}\n`)
@@ -293,7 +295,7 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     [
       'export default defineNuxtConfig({',
       "  modules: ['@lupinum/nuxt-photo'],",
-      "  nuxtPhoto: { css: 'all' },",
+      "  nuxtPhoto: { css: 'all', lightbox: { deepLink: true } },",
       '})',
       '',
     ].join('\n'),
@@ -381,6 +383,13 @@ function runNuxtConsumer(rootDir, artifactByName, rootManifest, catalog) {
     run(
       'node',
       [join(rootDir, 'scripts/lib/dev-render.mjs'), '/', 'alt="Rocky coast"'],
+      consumerDir,
+    )
+    // A deep link renders the viewer on the server, and its themed lightbox CSS must be in the
+    // HTML: Nuxt adds server styles only for components it compiles.
+    run(
+      'node',
+      [join(rootDir, 'scripts/lib/dev-render.mjs'), '/?photo=coast', 'lightbox-theme.css'],
       consumerDir,
     )
 

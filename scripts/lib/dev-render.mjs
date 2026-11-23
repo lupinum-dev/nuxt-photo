@@ -1,6 +1,6 @@
 // Starts `nuxt dev` in the current directory, requests one page and checks its server-rendered
 // HTML. The dev server loads installed packages with Node unless Nuxt is told to transform
-// them, so a package that ships `.vue` files can pass `nuxt build` and still fail here.
+// them, so a package that ships files Node cannot read can pass `nuxt build` and still fail here.
 //
 // Usage: node dev-render.mjs <path> <text the HTML must contain>
 import { spawn } from 'node:child_process'

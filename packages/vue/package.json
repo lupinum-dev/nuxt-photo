@@ -54,14 +54,6 @@
       "types": "./dist/lightbox/viewer.d.ts",
       "import": "./dist/lightbox/viewer.mjs"
     },
-    "./viewer-structure": {
-      "types": "./dist/lightbox/ViewerHostStructure.vue.d.ts",
-      "import": "./dist/lightbox/ViewerHostStructure.vue"
-    },
-    "./viewer-themed": {
-      "types": "./dist/lightbox/ViewerHostThemed.vue.d.ts",
-      "import": "./dist/lightbox/ViewerHostThemed.vue"
-    },
     "./styles.css": {
       "default": "./dist/styles.css"
     },
@@ -86,8 +78,10 @@
     "embla-carousel-autoplay": "8.6.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.9",
     "typescript": "catalog:",
     "unbuild": "^3.6.1",
+    "vite": "catalog:",
     "vue": "catalog:",
     "vue-tsc": "catalog:"
   },

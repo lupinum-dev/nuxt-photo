@@ -300,3 +300,20 @@
   photo change as one tagged state (`idle`, `lead`, `asked`, `jump`) instead of six
   variables and two timers. The open's caption handoff lost its last hand-made curve: it is
   linear like every other part of the open.
+- **D38 (2026-11-23): The Vue package ships compiled components.** `.vue` files in `dist`
+  needed a bundler setting in every app: Nuxt's dev server loaded them with Node (500,
+  "Unknown file extension .vue") unless the module added the package to `build.transpile`,
+  and plain Vite's dev server pre-bundled the entries but loaded the `.vue` files and their imports
+  beside the pre-bundle, so module state existed twice and `createPhoto` options never
+  reached the components. `build.config.ts` keeps `mkdist` for declarations and stylesheets
+  and replaces its JavaScript with a Vite library build (`preserveModules`, one file per
+  source module). Self-references (`@lupinum/vue-photo/viewer`, `/locales/*`) stay bare
+  imports, so Nuxt still aliases them and the viewer stays a lazy chunk. The Nuxt module
+  generates the viewer host as an app component with `<style src>` blocks: a CSS import in a
+  compiled package module loads on the client but is missing from the server HTML of a deep
+  link, because Nuxt inlines and links server styles only for components it compiles. The
+  Vue package's `/viewer-structure` and `/viewer-themed` hosts (never released) are gone.
+  The module keeps `build.transpile`: Nuxt's aliases apply only to code Vite transforms, and
+  without it the dev server loads the package with Node, which renders the default viewer
+  host of a deep link without its lightbox CSS. Sizes did not change. `scripts/lib/vite-dev-modules.mjs` fails a packed consumer whose dev server loads
+  package files beside the pre-bundle.

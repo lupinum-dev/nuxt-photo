@@ -94,8 +94,9 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     // Entries of the Vue exports map, resolved from this module: an app installed with a strict
     // package manager cannot import the Vue package by name itself.
     const vueEntry = (entry: string) => resolver.resolvePath(`@lupinum/vue-photo${entry}`)
-    // The Vue package ships `.vue` files. The dev server would load the installed package with
-    // Node, which cannot read them, so Nuxt has to transform it like app code.
+    // The Vue package imports its label catalogs and viewer host by name, and the aliases below
+    // apply only to code Vite transforms. Without this, the dev server loads the installed
+    // package with Node: the server renders the default viewer host, without its lightbox CSS.
     nuxt.options.build.transpile.push('@lupinum/vue-photo')
 
     // The Vue package imports its label catalogs and its viewer host through named entries of its
@@ -122,10 +123,29 @@ export default defineNuxtModule<NuxtPhotoOptions>({
     // The lazy viewer brings the lightbox CSS of the `css` mode, so pages without a photo
     // component load none and a server-rendered deep link inlines it. Registered primitives
     // keep it global instead (see the CSS list below).
-    if (options.css !== 'none')
-      nuxt.options.alias['@lupinum/vue-photo/viewer'] = await vueEntry(
-        options.css === 'all' ? '/viewer-themed' : '/viewer-structure',
+    // The host is an app component: Nuxt collects and inlines server styles only for the
+    // `<style>` blocks of components it compiles, not for CSS imported by installed packages.
+    if (options.css !== 'none') {
+      const viewer = await vueEntry('/viewer')
+      const styles = await Promise.all(
+        (options.css === 'all'
+          ? ['lightbox-structure', 'lightbox-theme']
+          : ['lightbox-structure']
+        ).map((name) => vueEntry(`/styles/${name}.css`)),
       )
+      nuxt.options.alias['@lupinum/vue-photo/viewer'] = addTemplate({
+        filename: 'nuxt-photo/viewer-host.vue',
+        write: true,
+        getContents: () =>
+          [
+            `<script setup>\nimport ViewerHost from ${JSON.stringify(viewer)}\n</script>`,
+            // Attributes fall through: the bridge prop reaches the host.
+            '<template><ViewerHost /></template>',
+            ...styles.map((css) => `<style src=${JSON.stringify(css)}></style>`),
+            '',
+          ].join('\n'),
+      }).dst
+    }
     addTemplate({
       filename: 'nuxt-photo-options.mjs',
       getContents: () => {
