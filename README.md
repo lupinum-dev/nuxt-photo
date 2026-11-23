@@ -24,9 +24,6 @@
   <a href="https://deepwiki.com/lupinum-dev/nuxt-photo"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-> [!WARNING]
-> Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag.
-
 ## Why use Nuxt Photo?
 
 Nuxt Photo gives albums, carousels, and custom triggers one shared photo model and one lightbox. It uses known image dimensions to create stable layouts during server rendering. You can start with complete components and use lower-level Vue primitives when you need a custom interface.
@@ -51,7 +48,7 @@ Nuxt Photo is not suitable when you only need a plain image grid. It is also not
 Install the Nuxt package:
 
 ```bash
-pnpm add @lupinum/nuxt-photo@next
+pnpm add @lupinum/nuxt-photo
 ```
 
 Add the module:

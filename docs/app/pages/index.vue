@@ -13,7 +13,7 @@ type LocalizableText = string | { en: string; de?: string }
 const localize = (value: LocalizableText) => getLocalizedSiteText(value, locale.value)
 
 const landing = computed(() => ({
-  eyebrow: 'Nuxt Photo 1.0 beta',
+  eyebrow: 'Nuxt Photo 1.0',
   title: localize(config.landing.title),
   description: localize(config.landing.description),
   primary: {

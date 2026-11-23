@@ -13,9 +13,6 @@
   <a href="https://discord.lupinum.com"><img src="https://img.shields.io/badge/Discord-join%20the%20chat-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
-> [!WARNING]
-> Nuxt Photo 1.0 is in beta. Install it from the `next` npm tag.
-
 ## Purpose
 
 Use this package for the standard Nuxt experience. It registers the components, auto-imports the helpers, loads the CSS, and uses Nuxt Image when it is installed.
@@ -29,7 +26,7 @@ Use this package for the standard Nuxt experience. It registers the components, 
 ## Installation
 
 ```bash
-pnpm add @lupinum/nuxt-photo@next
+pnpm add @lupinum/nuxt-photo
 ```
 
 ```ts
