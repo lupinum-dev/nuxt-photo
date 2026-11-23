@@ -34,6 +34,18 @@ instead, which registers the same components.
 pnpm add @lupinum/vue-photo@next
 ```
 
+With Vite, exclude the package from dependency pre-bundling. It ships Vue
+single-file components; without this line the dev server loads the package
+twice, and `createPhoto` options do not reach the components:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  plugins: [vue()],
+  optimizeDeps: { exclude: ['@lupinum/vue-photo'] },
+})
+```
+
 ## Quick start
 
 ```vue
