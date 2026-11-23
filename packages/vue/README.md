@@ -13,9 +13,6 @@
   <a href="https://discord.lupinum.com"><img src="https://img.shields.io/badge/Discord-join%20the%20chat-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
-> [!WARNING]
-> Vue Photo 1.0 is in beta. Install it from the `next` npm tag.
-
 ## Purpose
 
 Use this package in plain Vue applications. Nuxt applications install
@@ -31,7 +28,7 @@ instead, which registers the same components.
 ## Installation
 
 ```bash
-pnpm add @lupinum/vue-photo@next
+pnpm add @lupinum/vue-photo
 ```
 
 With Vite, exclude the package from dependency pre-bundling. It ships Vue

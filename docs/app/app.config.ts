@@ -35,7 +35,7 @@ export default {
         en: 'Render responsive photo layouts on the server, then open the included accessible lightbox. Add Nuxt Image when you need image optimization.',
       },
       primary: {
-        label: { en: 'Install the beta' },
+        label: { en: 'Get started' },
         to: { en: '/docs/start/get-started' },
       },
       secondary: {
@@ -43,7 +43,7 @@ export default {
         to: { en: 'https://github.com/lupinum-dev/nuxt-photo' },
       },
       install: {
-        command: 'pnpm add @lupinum/nuxt-photo@next',
+        command: 'pnpm add @lupinum/nuxt-photo',
       },
       features: [],
     },

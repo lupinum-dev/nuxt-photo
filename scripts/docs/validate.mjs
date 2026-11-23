@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
 
@@ -46,7 +47,12 @@ for (const marker of [
 
 const nuxtPackage = JSON.parse(await readFile(resolve(root, 'packages/nuxt/package.json'), 'utf8'))
 const vuePackage = JSON.parse(await readFile(resolve(root, 'packages/vue/package.json'), 'utf8'))
-const prereleaseDocs = String(nuxtPackage.version).includes('-')
+// The install commands describe the next release from main. After `changeset pre exit` that
+// release is stable, although the manifests keep their prerelease version until it is versioned.
+const prePath = resolve(root, '.changeset/pre.json')
+const leavingPrerelease =
+  existsSync(prePath) && JSON.parse(await readFile(prePath, 'utf8')).mode === 'exit'
+const prereleaseDocs = String(nuxtPackage.version).includes('-') && !leavingPrerelease
 const installationSurfaces = [
   ['README.md', '@lupinum/nuxt-photo'],
   ['packages/nuxt/README.md', '@lupinum/nuxt-photo'],

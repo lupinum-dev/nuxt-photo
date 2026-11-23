@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-Nuxt Photo is pre-1.0. The current minor release receives security fixes. Older
-minor lines receive fixes only when a maintainer explicitly announces an
-extended support window.
+The current minor release of Nuxt Photo receives security fixes. Older minor
+lines receive fixes only when a maintainer explicitly announces an extended
+support window.
 
 | Version line  | Support                             |
 | ------------- | ----------------------------------- |
