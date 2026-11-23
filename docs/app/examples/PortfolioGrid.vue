@@ -28,6 +28,7 @@ defineProps<{ photos: PhotoItem[] }>()
 
 <style scoped>
 .work {
+  position: relative;
   margin: 0;
 }
 
@@ -43,8 +44,14 @@ defineProps<{ photos: PhotoItem[] }>()
   opacity: 0.88;
 }
 
+/* The album sizes each tile from the photo alone, so the caption sits on the photo. */
 .work__caption {
-  margin-top: 8px;
+  position: absolute;
+  inset: auto 0 0;
+  padding: 28px 12px 10px;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.6));
+  color: #fff;
   font-size: 14px;
   font-weight: 500;
 }

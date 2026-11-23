@@ -46,7 +46,7 @@ const agentFiles = [
     .filter((file) => file.endsWith('.md'))
     .map((file) => `raw/${file}`),
 ]
-const placeholders = ['Component omitted', '<example', '<pm-install']
+const placeholders = ['Component omitted', '<example']
 
 for (const file of agentFiles) {
   const markdown = await readFile(`${publicOutput}${file}`, 'utf8')
